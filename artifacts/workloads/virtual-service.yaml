@@ -2,8 +2,8 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   annotations:
-    apps.weave.works/canary-revision: ""
-    apps.weave.works/canary-status: ""
+    apps.weave.works/progressive-revision: ""
+    apps.weave.works/progressive-status: ""
   labels:
     app: podinfo
   name: podinfo

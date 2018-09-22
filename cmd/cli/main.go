@@ -16,18 +16,24 @@ import (
 )
 
 var (
-	namespace   string
-	masterURL   string
-	kubeconfig  string
-	window      time.Duration
+	namespace       string
+	masterURL       string
+	kubeconfig      string
+	window          time.Duration
+	promURL         string
+	threshold       float64
+	thresholdWindow string
 )
 
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 
-	flag.StringVar(&namespace, "namespace", "", "Kubernetes namespace.")
+	flag.StringVar(&namespace, "namespace", "", "Kubernetes namespace")
+	flag.StringVar(&promURL, "prometheus", "https://prometheus.istio.weavedx.com", "Prometheus URL")
 	flag.DurationVar(&window, "window", 10*time.Second, "wait interval between deployment rollouts")
+	flag.Float64Var(&threshold, "threshold", 99, "HTTP request success rate threshold (1-99) to halt the rollout")
+	flag.StringVar(&thresholdWindow, "interval", "1m", "HTTP request success rate query interval 30s 1m")
 }
 
 func main() {
@@ -62,10 +68,14 @@ func main() {
 
 	stopCh := signals.SetupSignalHandler()
 
-	deployer := pd.NewDeployer(kubeClient, istioClient, logger)
+	obs, err := pd.NewObserver(promURL, thresholdWindow)
+	if err != nil {
+		logger.Fatalf("Error parsing Prometheus URL: %v", err)
+	}
 
+	deployer := pd.NewDeployer(kubeClient, istioClient, obs, threshold, logger)
+	deployer.Run(namespace)
 	tickChan := time.NewTicker(window).C
-
 	for {
 		select {
 		case <-tickChan:
@@ -75,4 +85,3 @@ func main() {
 		}
 	}
 }
-
