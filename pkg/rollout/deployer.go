@@ -1,19 +1,19 @@
-package deployer
+package rollout
 
 import (
-	"sync"
-
 	"fmt"
 	"strings"
+	"sync"
 
+	"github.com/fatih/color"
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
+	"github.com/stefanprodan/steerer/pkg/logging"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 const (
@@ -67,9 +67,8 @@ func (d *Deployer) Run(namespace string) {
 	})
 }
 
+// scan for deployments marked for progressive rollout
 func (d *Deployer) scanForDeployments(namespace string) {
-
-	// scan for healthy deployments marked for progressive delivery
 	deployments := make(map[string]appsv1.Deployment)
 	depList, err := d.KubeClientSet.AppsV1().Deployments(namespace).List(v1.ListOptions{})
 	if err != nil {
@@ -79,15 +78,18 @@ func (d *Deployer) scanForDeployments(namespace string) {
 	for _, dep := range depList.Items {
 		if val, ok := dep.Annotations[enabledAnnotation]; ok {
 			if val == "true" && !strings.Contains(dep.GetName(), "-canary") {
-				if msg, healthy := getDeploymentStatus(&dep); healthy {
-					deployments[dep.GetName()] = dep
-				} else {
-					d.Logger.Infof("Ignoring deployment %s.%s %s", dep.GetName(), dep.Namespace, msg)
-				}
+				deployments[dep.GetName()] = dep
 			}
 		}
 	}
 
+	if len(deployments) < 1 {
+		d.Logger.Debugf(
+			"no deployments found with the annotation %s='true' in namespace %s",
+			enabledAnnotation,
+			namespace,
+		)
+	}
 	// sync deployments map
 	d.ProgressiveDeployments.Range(func(key interface{}, value interface{}) bool {
 		_, ok := deployments[key.(string)]
@@ -149,6 +151,12 @@ func (d *Deployer) advanceDeployment(pd *ProgressiveDeployment) {
 	}
 	if msg, healthy := getDeploymentStatus(dep); !healthy {
 		d.Logger.Infof("Ignoring deployment %s.%s %s", dep.GetName(), dep.Namespace, msg)
+		logging.Console(
+			fmt.Sprintf(
+				"rollout halted %s.%s",
+				dep.GetName(),
+				dep.Namespace,
+			), color.YellowString(msg))
 		return
 	}
 
@@ -164,6 +172,12 @@ func (d *Deployer) advanceDeployment(pd *ProgressiveDeployment) {
 	}
 	if msg, healthy := getDeploymentStatus(canary); !healthy {
 		d.Logger.Infof("Ignoring deployment %s.%s %s", canary.GetName(), canary.Namespace, msg)
+		logging.Console(
+			fmt.Sprintf(
+				"rollout halted %s.%s",
+				canary.GetName(),
+				canary.Namespace,
+			), color.YellowString(msg))
 		return
 	}
 
@@ -230,8 +244,38 @@ func (d *Deployer) advanceDeployment(pd *ProgressiveDeployment) {
 	// skip HTTP error rate check when there is no traffic
 	if canaryRoute.Weight == 0 {
 		d.Logger.Infof("Stating progressive deployment for %s.%s", pd.Deployment, pd.Namespace)
+		depMetric, _ := d.checkSuccessRate(pd.Namespace, pd.DeploymentCanary)
+		canaryMetric, _ := d.checkSuccessRate(pd.Namespace, pd.Deployment)
+		logging.Console(fmt.Sprintf(
+			"starting rolling deployment from %s.%s to %s.%s",
+			pd.Deployment, pd.Namespace, pd.DeploymentCanary, pd.Namespace))
+		logging.Console(
+			fmt.Sprintf(
+				"success rate for %s.%s is",
+				pd.Deployment,
+				pd.Namespace,
+			),
+			color.YellowString("%.2f%%", depMetric))
+		logging.Console(
+			fmt.Sprintf(
+				"success rate for %s.%s is",
+				pd.DeploymentCanary,
+				pd.Namespace,
+			),
+			color.YellowString("%.2f%%", canaryMetric))
 	} else {
-		if !d.checkSuccessRate(pd.Namespace, pd.DeploymentCanary) {
+		if val, ok := d.checkSuccessRate(pd.Namespace, pd.DeploymentCanary); !ok {
+			d.Logger.Warnf("%s.%s rollout halted due to low HTTP success rate %v threshold %v",
+				pd.DeploymentCanary, pd.Namespace, val, d.Threshold)
+			logging.Console(
+				fmt.Sprintf(
+					"rollout halted %s.%s success rate",
+					pd.DeploymentCanary,
+					pd.Namespace,
+				),
+				color.RedString("%.2f%%", val),
+				"<",
+				color.GreenString("%v%%", d.Threshold))
 			return
 		}
 	}
@@ -251,11 +295,30 @@ func (d *Deployer) advanceDeployment(pd *ProgressiveDeployment) {
 			return
 		} else {
 			d.Logger.Infof("Advance deployment %s.%s weight %v", pd.DeploymentCanary, pd.Namespace, canaryRoute.Weight)
+			logging.Console(
+				fmt.Sprintf(
+					"advancing deployment %s.%s",
+					pd.DeploymentCanary,
+					pd.Namespace,
+				),
+				"weight",
+				color.GreenString(
+					"%v",
+					canaryRoute.Weight,
+				))
 		}
 
 		if canaryRoute.Weight == 100 {
 			d.Logger.Infof("Copying %s.%s template spec to %s.%s",
 				canary.GetName(), canary.Namespace, dep.GetName(), dep.Namespace)
+			logging.Console(
+				fmt.Sprintf(
+					"copying %s.%s template spec to %s.%s",
+					pd.DeploymentCanary,
+					pd.Namespace,
+					pd.Deployment,
+					pd.Namespace,
+				))
 			dep.Spec.Template.Spec = canary.Spec.Template.Spec
 			_, err = d.KubeClientSet.AppsV1().Deployments(dep.Namespace).Update(dep)
 			if err != nil {
@@ -280,23 +343,29 @@ func (d *Deployer) advanceDeployment(pd *ProgressiveDeployment) {
 		d.Logger.Infof("%s.%s promotion complete! Scaling down %s.%s",
 			dep.GetName(), dep.Namespace, canary.GetName(), canary.Namespace)
 		d.scaleToZeroCanary(pd)
+		logging.Console(fmt.Sprintf(
+			"scaling %s.%s to zero",
+			pd.DeploymentCanary,
+			pd.Namespace,
+		))
+		logging.Console(
+			color.GreenString(
+				"%s.%s promotion completed",
+				pd.DeploymentCanary,
+				pd.Namespace,
+			))
 	}
 }
 
-func (d *Deployer) checkSuccessRate(namespace string, name string) (pass bool) {
+func (d *Deployer) checkSuccessRate(namespace string, name string) (float64, bool) {
 	val, err := d.Observer.GetDeploymentSuccessRate(namespace, name)
 	if err != nil {
 		d.Logger.Errorf("Observer Prometheus query error: %v", err)
-		return false
+		return 0, false
 	}
 
-	pass = val > d.Threshold
+	return val, val > d.Threshold
 
-	if !pass {
-		d.Logger.Warnf("%s.%s rollout halted due to low HTTP success rate %v threshold %v", name, namespace, val, d.Threshold)
-	}
-
-	return pass
 }
 
 func (d *Deployer) scaleToZeroCanary(pd *ProgressiveDeployment) {

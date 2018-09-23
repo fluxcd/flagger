@@ -3,6 +3,8 @@ package logging
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"os"
+	"fmt"
 )
 
 func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
@@ -54,4 +56,12 @@ func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
 		return nil, err
 	}
 	return logger.Sugar(), nil
+}
+
+func Console(a ...interface{}) (n int, err error) {
+	if os.Getenv("console") != "" {
+		return fmt.Fprintln(os.Stdout, a...)
+	}
+
+	return 0, nil
 }

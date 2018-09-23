@@ -1,4 +1,4 @@
-package deployer
+package rollout
 
 import (
 	"encoding/json"

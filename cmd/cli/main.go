@@ -3,13 +3,17 @@ package main
 import (
 	"flag"
 	"log"
-
 	"time"
 
+	"fmt"
+
+	"os"
+
+	"github.com/fatih/color"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	"github.com/knative/pkg/signals"
-	pd "github.com/stefanprodan/steerer/pkg/deployer"
 	"github.com/stefanprodan/steerer/pkg/logging"
+	"github.com/stefanprodan/steerer/pkg/rollout"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
@@ -38,8 +42,8 @@ func init() {
 
 func main() {
 	flag.Parse()
-
-	logger, err := logging.NewLogger("debug")
+	os.Setenv("console", "true")
+	logger, err := logging.NewLogger("error")
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
@@ -68,12 +72,19 @@ func main() {
 
 	stopCh := signals.SetupSignalHandler()
 
-	obs, err := pd.NewObserver(promURL, thresholdWindow)
+	obs, err := rollout.NewObserver(promURL, thresholdWindow)
 	if err != nil {
 		logger.Fatalf("Error parsing Prometheus URL: %v", err)
 	}
 
-	deployer := pd.NewDeployer(kubeClient, istioClient, obs, threshold, logger)
+	fmt.Println(
+		"starting progressive deployment engine control loop",
+		color.GreenString("%vs", window.Seconds()),
+		"threshold",
+		color.GreenString("%v%%", threshold),
+		"range",
+		color.GreenString("%v", thresholdWindow))
+	deployer := rollout.NewDeployer(kubeClient, istioClient, obs, threshold, logger)
 	deployer.Run(namespace)
 	tickChan := time.NewTicker(window).C
 	for {
