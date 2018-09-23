@@ -29,10 +29,11 @@ Rollout flow:
 * check canary HTTP success rate (halt rollout if percentage is under the specified threshold)
 * advance canary traffic wight by 10% till it reaches 100% 
     * halt rollout while canary success rate is under the threshold
-    * halt rollout if the GA or canary deployments becomes unhealthy 
+    * halt rollout if the GA or canary deployment becomes unhealthy 
     * halt rollout while canary deployment is being scaled up/down by HPA
 * promote canary to GA (copy canary deployment spec template over GA)
 * wait for GA rolling update to finish
+* route all traffic to GA
 * scale to zero the canary deployment
 * mark rollout deployment as finished
 * wait for the canary deployment to be updated (revision bump) and start over
