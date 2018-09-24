@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: steerer
+  namespace: istio-system
+  labels:
+    app: steerer
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: steerer
+  template:
+    metadata:
+      labels:
+        app: steerer
+      annotations:
+        prometheus.io.port: "8080"
+    spec:
+      serviceAccountName: steerer
+      containers:
+      - name: steerer
+        image: stefanprodan/steerer:0.0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        command:
+        - ./steerer
+        - -level=info
+        - -prometheus=http://prometheus.istio-system.svc.cluster.local:9090
+        - -window=10s
+        - -logtostderr
+        - -v=1
