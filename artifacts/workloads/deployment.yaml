@@ -67,9 +67,3 @@ spec:
           requests:
             cpu: 1m
             memory: 16Mi
-        volumeMounts:
-        - mountPath: /data
-          name: data
-      volumes:
-      - emptyDir: {}
-        name: data

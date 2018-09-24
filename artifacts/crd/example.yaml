@@ -1,0 +1,24 @@
+apiVersion: apps.weave.works/v1beta1
+kind: Rollout
+metadata:
+  annotations:
+    apps.weave.works/canary-revision: ""
+    apps.weave.works/status: ""
+  name: podinfo
+  namespace: test
+spec:
+  targetKind: Deployment
+  primary:
+    name: podinfo
+    host: podinfo
+  canary:
+    name: podinfo-canary
+    host: podinfo-canary
+  virtualService:
+    name: podinfo
+    weight: 10
+  metric:
+    type: counter
+    name: istio_requests_total
+    interval: 1m
+    threshold: 99

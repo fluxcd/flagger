@@ -4,21 +4,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/knative/pkg/apis/istio/v1alpha3"
+	"sync"
+
+	"github.com/google/go-cmp/cmp"
 	sharedclientset "github.com/knative/pkg/client/clientset/versioned"
-	istioinformers "github.com/knative/pkg/client/informers/externalversions/istio/v1alpha3"
-	istiolisters "github.com/knative/pkg/client/listers/istio/v1alpha3"
+	rolloutv1 "github.com/stefanprodan/steerer/pkg/apis/rollout/v1beta1"
+	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
+	rolloutscheme "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/scheme"
+	rolloutInformers "github.com/stefanprodan/steerer/pkg/client/informers/externalversions/rollout/v1beta1"
+	listers "github.com/stefanprodan/steerer/pkg/client/listers/rollout/v1beta1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	corev1informers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -27,49 +30,69 @@ import (
 const controllerAgentName = "steerer"
 
 type Controller struct {
-	kubeclientset        kubernetes.Interface
-	sharedclientset      sharedclientset.Interface
-	logger               *zap.SugaredLogger
-	serviceLister        corev1listers.ServiceLister
-	serviceSynced        cache.InformerSynced
-	virtualServiceLister istiolisters.VirtualServiceLister
-	virtualServiceSynced cache.InformerSynced
-	workqueue            workqueue.RateLimitingInterface
-	recorder             record.EventRecorder
+	kubeClient    kubernetes.Interface
+	istioClient   sharedclientset.Interface
+	rolloutClient clientset.Interface
+	rolloutLister listers.RolloutLister
+	rolloutSynced cache.InformerSynced
+	workqueue     workqueue.RateLimitingInterface
+	recorder      record.EventRecorder
+	logger        *zap.SugaredLogger
+	rollouts      *sync.Map
 }
 
 func NewController(
-	kubeclientset kubernetes.Interface,
-	sharedclientset sharedclientset.Interface,
+	kubeClient kubernetes.Interface,
+	istioClient sharedclientset.Interface,
+	rolloutClient clientset.Interface,
+	rolloutInformer rolloutInformers.RolloutInformer,
 	logger *zap.SugaredLogger,
-	serviceInformer corev1informers.ServiceInformer,
-	virtualServiceInformer istioinformers.VirtualServiceInformer,
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
+	rolloutscheme.AddToScheme(scheme.Scheme)
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(logger.Named("event-broadcaster").Infof)
+	eventBroadcaster.StartLogging(logger.Named("event-broadcaster").Debugf)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{
-		Interface: kubeclientset.CoreV1().Events(""),
+		Interface: kubeClient.CoreV1().Events(""),
 	})
 	recorder := eventBroadcaster.NewRecorder(
 		scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	ctrl := &Controller{
-		kubeclientset:        kubeclientset,
-		sharedclientset:      sharedclientset,
-		logger:               logger,
-		serviceLister:        serviceInformer.Lister(),
-		serviceSynced:        serviceInformer.Informer().HasSynced,
-		virtualServiceLister: virtualServiceInformer.Lister(),
-		virtualServiceSynced: virtualServiceInformer.Informer().HasSynced,
-		workqueue:            workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		recorder:             recorder,
+		kubeClient:    kubeClient,
+		istioClient:   istioClient,
+		rolloutClient: rolloutClient,
+		rolloutLister: rolloutInformer.Lister(),
+		rolloutSynced: rolloutInformer.Informer().HasSynced,
+		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		recorder:      recorder,
+		logger:        logger,
+		rollouts:      new(sync.Map),
 	}
 
-	virtualServiceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: ctrl.enqueueVirtualService,
+	rolloutInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: ctrl.enqueueRollout,
 		UpdateFunc: func(old, new interface{}) {
-			ctrl.enqueueVirtualService(new)
+			oldRoll, ok := checkCustomResourceType(old, logger)
+			if !ok {
+				return
+			}
+			newRoll, ok := checkCustomResourceType(new, logger)
+			if !ok {
+				return
+			}
+
+			if diff := cmp.Diff(newRoll.Spec, oldRoll.Spec); diff != "" {
+				ctrl.logger.Debugf("Diff detected %s.%s %s", oldRoll.Name, oldRoll.Namespace, diff)
+				ctrl.enqueueRollout(new)
+			}
+		},
+		DeleteFunc: func(old interface{}) {
+			r, ok := checkCustomResourceType(old, logger)
+			if ok {
+				ctrl.logger.Infof("Deleting %s.%s from cache", r.Name, r.Namespace)
+				ctrl.rollouts.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
+			}
 		},
 	})
 
@@ -139,18 +162,20 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	vs, err := c.virtualServiceLister.VirtualServices(namespace).Get(name)
+	rollout, err := c.rolloutLister.Rollouts(namespace).Get(name)
 	if errors.IsNotFound(err) {
-		utilruntime.HandleError(fmt.Errorf("VirtualServices '%s' in work queue no longer exists", key))
+		utilruntime.HandleError(fmt.Errorf("rollout '%s' in work queue no longer exists", key))
 		return nil
 	}
 
-	c.logger.Infof("VirtualService %s.%s", vs.Name, namespace)
+	c.logger.Infof("Adding %s.%s to cache", rollout.Name, rollout.Namespace)
+	c.rollouts.Store(fmt.Sprintf("%s.%s", rollout.Name, rollout.Namespace), rollout)
+	c.recorder.Event(rollout, corev1.EventTypeNormal, "Synced", "Rollout synced successfully with internal cache")
 
 	return nil
 }
 
-func (c *Controller) enqueueVirtualService(obj interface{}) {
+func (c *Controller) enqueueRollout(obj interface{}) {
 	var key string
 	var err error
 	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
@@ -178,49 +203,28 @@ func (c *Controller) handleObject(obj interface{}) {
 	}
 	c.logger.Debugf("Processing object: %s", object.GetName())
 	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
-		if ownerRef.Kind != "VirtualService" {
+		if ownerRef.Kind != "Rollout" {
 			return
 		}
 
-		vs, err := c.serviceLister.Services(object.GetNamespace()).Get(ownerRef.Name)
+		vs, err := c.rolloutLister.Rollouts(object.GetNamespace()).Get(ownerRef.Name)
 		if err != nil {
 			c.logger.Debugf("ignoring orphaned object '%s' of '%s'", object.GetSelfLink(), ownerRef.Name)
 			return
 		}
 
-		c.enqueueVirtualService(vs)
+		c.enqueueRollout(vs)
 		return
 	}
 
 }
 
-func (c *Controller) CreateVirtualService(namespace string, name string, host string, port uint32, gateway string) error {
-	vs := &v1alpha3.VirtualService{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      name,
-		},
-		Spec: v1alpha3.VirtualServiceSpec{
-			Hosts: []string{host},
-			Http: []v1alpha3.HTTPRoute{
-				{
-					Route: []v1alpha3.DestinationWeight{
-						{
-							Destination: v1alpha3.Destination{
-								Host: host,
-							},
-							Weight: 100,
-						},
-					},
-				},
-			},
-		},
+func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (rolloutv1.Rollout, bool) {
+	var roll *rolloutv1.Rollout
+	var ok bool
+	if roll, ok = obj.(*rolloutv1.Rollout); !ok {
+		logger.Errorf("Event Watch received an invalid object: %#v", obj)
+		return rolloutv1.Rollout{}, false
 	}
-
-	if gateway != "" {
-		vs.Spec.Gateways = []string{gateway}
-	}
-
-	_, err := c.sharedclientset.NetworkingV1alpha3().VirtualServices(vs.Namespace).Create(vs)
-	return err
+	return *roll, true
 }
