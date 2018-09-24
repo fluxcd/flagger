@@ -1,5 +1,7 @@
 # steerer
 
+[![Build Status](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
+
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
 
@@ -86,7 +88,7 @@ kubectl -n test describe rollout/podinfo
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
-  Normal   Synced  3m    steerer  Stating rollout for podinfo.test
+  Normal   Synced  3m    steerer  Starting rollout for podinfo.test
   Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 10
   Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 20
   Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 30

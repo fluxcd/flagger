@@ -51,7 +51,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 
 	// skip HTTP error rate check when no traffic is routed to canary
 	if canaryRoute.Weight == 0 {
-		c.recordEventInfof(r, "Stating rollout for %s.%s", r.Name, r.Namespace)
+		c.recordEventInfof(r, "Starting rollout for %s.%s", r.Name, r.Namespace)
 	} else {
 		if ok := c.checkDeploymentSuccessRate(r); !ok {
 			return

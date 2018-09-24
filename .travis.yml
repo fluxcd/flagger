@@ -1,0 +1,26 @@
+sudo: required
+language: go
+
+go:
+- 1.10.x
+
+services:
+- docker
+
+addons:
+  apt:
+    packages:
+    - docker-ce
+
+script:
+- make test
+- make verify-codegen
+- make build
+
+after_success:
+- if [ ! -s "$TRAVIS_TAG" ]; then
+  docker tag stefanprodan/steerer:latest stefanprodan/steerer:$TRAVIS_TAG;
+  echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin;
+  docker push stefanprodan/steerer:latest;
+  docker push stefanprodan/steerer:$TRAVIS_TAG;
+  fi
