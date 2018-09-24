@@ -1,6 +1,30 @@
 # steerer
 
-Istio progressive rollout gated by Prometheus HTTP success rate metric
+Steerer is a Kubernetes operator that automates the promotion of canary deployments
+using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
+
+Gated rollout stages:
+
+* scan for deployments marked for rollout 
+* check Istio virtual service routes are mapped to primary and canary ClusterIP services
+* check primary and canary deployments status
+    * halt rollout if a rolling update is underway
+    * halt rollout if pods are unhealthy
+* increase canary traffic weight percentage by 10%
+* check canary HTTP success rate
+    * halt rollout if percentage is under the specified threshold
+* increase canary traffic wight by 10% till it reaches 100% 
+    * halt rollout while canary success rate is under the threshold
+    * halt rollout if the primary or canary deployment becomes unhealthy 
+    * halt rollout while canary deployment is being scaled up/down by HPA
+* promote canary to primary
+    * copy canary deployment spec template over primary
+* wait for primary rolling update to finish
+    * halt rollout if pods are unhealthy
+* route all traffic to primary
+* scale to zero the canary deployment
+* mark rollout as finished
+* wait for the canary deployment to be updated (revision bump) and start over
 
 ### Usage
 
@@ -13,10 +37,10 @@ kubectl apply -f ./artifacts/steerer
 Create a test namespace:
 
 ```bash
-kubectl apply -f ./artifacts/namespace/
+kubectl apply -f ./artifacts/namespaces/
 ```
 
-Create GA and canary deployments, services, hpa and Istio virtual service:
+Create primary and canary deployments, services, hpa and Istio virtual service:
 
 ```bash
 kubectl apply -f ./artifacts/workloads/
@@ -30,7 +54,7 @@ kubectl apply -f ./artifacts/rollouts/
 
 Rollout output:
 
-```bash
+```
 kubectl -n test describe rollout/podinfo
 
 Events:
@@ -59,29 +83,6 @@ Events:
   Warning  Synced  15s   steerer  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    steerer  Promotion complete! Scaling down podinfo-canary.test
 ```
-
-Rollout flow:
-
-* scan for deployments marked for rollout 
-* check Istio virtual service routes are mapped to primary and canary ClusterIP services
-* check primary and canary deployments status
-    * halt rollout if a rolling update is underway
-    * halt rollout if pods are unhealthy
-* increase canary traffic weight percentage by 10%
-* check canary HTTP success rate
-    * halt rollout if percentage is under the specified threshold
-* increase canary traffic wight by 10% till it reaches 100% 
-    * halt rollout while canary success rate is under the threshold
-    * halt rollout if the primary or canary deployment becomes unhealthy 
-    * halt rollout while canary deployment is being scaled up/down by HPA
-* promote canary to primary
-    * copy canary deployment spec template over primary
-* wait for primary rolling update to finish
-    * halt rollout if pods are unhealthy
-* route all traffic to primary
-* scale to zero the canary deployment
-* mark rollout as finished
-* wait for the canary deployment to be updated (revision bump) and start over
 
 HTTP success rate query:
 
