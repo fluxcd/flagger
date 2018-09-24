@@ -1,10 +1,11 @@
 package logging
 
 import (
+	"fmt"
+	"os"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
-	"fmt"
 )
 
 func NewLogger(logLevel string) (*zap.SugaredLogger, error) {

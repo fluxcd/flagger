@@ -12,6 +12,8 @@ import (
 	informers "github.com/stefanprodan/steerer/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/steerer/pkg/controller"
 	"github.com/stefanprodan/steerer/pkg/logging"
+	"github.com/stefanprodan/steerer/pkg/version"
+	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
@@ -19,23 +21,25 @@ import (
 )
 
 var (
-	masterURL  string
-	kubeconfig string
-	metricServer string
+	masterURL     string
+	kubeconfig    string
+	metricServer  string
 	rolloutWindow time.Duration
+	logLevel      string
 )
 
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	flag.StringVar(&metricServer, "prometheus", "https://prometheus.istio.weavedx.com", "Prometheus URL")
+	flag.StringVar(&metricServer, "prometheus", "http://prometheus:9090", "Prometheus URL")
 	flag.DurationVar(&rolloutWindow, "window", 10*time.Second, "wait interval between deployment rollouts")
+	flag.StringVar(&logLevel, "level", "debug", "Log level can be: debug, info, warning, error.")
 }
 
 func main() {
 	flag.Parse()
 
-	logger, err := logging.NewLogger("debug")
+	logger, err := logging.NewLogger(logLevel)
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
@@ -70,7 +74,12 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error calling Kubernetes API: %v", err)
 	}
-	logger.Infof("Kubernetes version %v", ver)
+
+	logger.Infow("Starting steerer",
+		zap.String("version", version.VERSION),
+		zap.String("revision", version.REVISION),
+		zap.String("metrics provider", metricServer),
+		zap.Any("kubernetes version", ver))
 
 	c := controller.NewController(
 		kubeClient,

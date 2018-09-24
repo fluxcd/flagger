@@ -51,7 +51,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 
 	// skip HTTP error rate check when no traffic is routed to canary
 	if canaryRoute.Weight == 0 {
-		c.recordEventInfof(r,"Stating rollout for %s.%s", r.Name, r.Namespace)
+		c.recordEventInfof(r, "Stating rollout for %s.%s", r.Name, r.Namespace)
 	} else {
 		if ok := c.checkDeploymentSuccessRate(r); !ok {
 			return
@@ -69,20 +69,20 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 
 		_, err := c.istioClient.NetworkingV1alpha3().VirtualServices(r.Namespace).Update(vs)
 		if err != nil {
-			c.recordEventErrorf(r,"VirtualService %s.%s update failed: %v", r.Spec.VirtualService.Name, r.Namespace, err)
+			c.recordEventErrorf(r, "VirtualService %s.%s update failed: %v", r.Spec.VirtualService.Name, r.Namespace, err)
 			return
 		} else {
-			c.recordEventInfof(r,"Advance rollout %s.%s weight %v", r.Name, r.Namespace, canaryRoute.Weight)
+			c.recordEventInfof(r, "Advance rollout %s.%s weight %v", r.Name, r.Namespace, canaryRoute.Weight)
 		}
 
 		if canaryRoute.Weight == 100 {
-			c.recordEventInfof(r,"Copying %s.%s template spec to %s.%s",
+			c.recordEventInfof(r, "Copying %s.%s template spec to %s.%s",
 				canary.GetName(), canary.Namespace, primary.GetName(), primary.Namespace)
 
 			primary.Spec.Template.Spec = canary.Spec.Template.Spec
 			_, err = c.kubeClient.AppsV1().Deployments(primary.Namespace).Update(primary)
 			if err != nil {
-				c.recordEventErrorf(r,"Deployment %s.%s promotion failed: %v", primary.GetName(), primary.Namespace, err)
+				c.recordEventErrorf(r, "Deployment %s.%s promotion failed: %v", primary.GetName(), primary.Namespace, err)
 				return
 			}
 		}
@@ -97,10 +97,10 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 		vs.Annotations[statusAnnotation] = "finished"
 		_, err := c.istioClient.NetworkingV1alpha3().VirtualServices(r.Namespace).Update(vs)
 		if err != nil {
-			c.recordEventErrorf(r,"VirtualService %s.%s annotations update failed: %v", r.Spec.VirtualService.Name, r.Namespace, err)
+			c.recordEventErrorf(r, "VirtualService %s.%s annotations update failed: %v", r.Spec.VirtualService.Name, r.Namespace, err)
 			return
 		}
-		c.recordEventInfof(r,"%s.%s promotion complete! Scaling down %s.%s",
+		c.recordEventInfof(r, "%s.%s promotion complete! Scaling down %s.%s",
 			r.Name, r.Namespace, canary.GetName(), canary.Namespace)
 		c.scaleToZeroCanary(r)
 	}
@@ -109,14 +109,14 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 func (c *Controller) scaleToZeroCanary(r *rolloutv1.Rollout) {
 	canary, err := c.kubeClient.AppsV1().Deployments(r.Namespace).Get(r.Spec.Canary.Name, v1.GetOptions{})
 	if err != nil {
-		c.recordEventErrorf(r,"Deployment %s.%s not found", r.Spec.Canary.Name, r.Namespace)
+		c.recordEventErrorf(r, "Deployment %s.%s not found", r.Spec.Canary.Name, r.Namespace)
 		return
 	}
 	//HPA https://github.com/kubernetes/kubernetes/pull/29212
 	canary.Spec.Replicas = int32p(0)
 	_, err = c.kubeClient.AppsV1().Deployments(canary.Namespace).Update(canary)
 	if err != nil {
-		c.recordEventErrorf(r,"Scaling down %s.%s failed: %v", canary.GetName(), canary.Namespace, err)
+		c.recordEventErrorf(r, "Scaling down %s.%s failed: %v", canary.GetName(), canary.Namespace, err)
 		return
 	}
 }
@@ -124,12 +124,12 @@ func (c *Controller) scaleToZeroCanary(r *rolloutv1.Rollout) {
 func (c *Controller) checkDeploymentSuccessRate(r *rolloutv1.Rollout) bool {
 	val, err := c.getDeploymentMetric(r.Spec.Canary.Name, r.Namespace, r.Spec.Metric.Name, r.Spec.Metric.Interval)
 	if err != nil {
-		c.recordEventErrorf(r,"Metric query error: %v", err)
+		c.recordEventErrorf(r, "Metric query error: %v", err)
 		return false
 	}
 
 	if float64(r.Spec.Metric.Threshold) > val {
-		c.recordEventErrorf(r,"Halt rollout %s.%s success rate %.2f%% < %v%%",
+		c.recordEventErrorf(r, "Halt rollout %s.%s success rate %.2f%% < %v%%",
 			r.Name, r.Namespace, val, r.Spec.Metric.Threshold)
 		return false
 	}
@@ -144,7 +144,7 @@ func (c *Controller) updateRolloutAnnotations(r *rolloutv1.Rollout, canaryVersio
 		r.Annotations[statusAnnotation] = "running"
 		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 		if err != nil {
-			c.recordEventErrorf(r,"Rollout %s.%s annotations update failed: %v", r.Name, r.Namespace, err)
+			c.recordEventErrorf(r, "Rollout %s.%s annotations update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
 		return true
@@ -158,7 +158,7 @@ func (c *Controller) updateRolloutAnnotations(r *rolloutv1.Rollout, canaryVersio
 			r.Annotations[statusAnnotation] = "running"
 			r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 			if err != nil {
-				c.recordEventErrorf(r,"Rollout %s.%s annotations update failed: %v", r.Name, r.Namespace, err)
+				c.recordEventErrorf(r, "Rollout %s.%s annotations update failed: %v", r.Name, r.Namespace, err)
 				return false
 			}
 			return true

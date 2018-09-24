@@ -235,12 +235,12 @@ func (c *Controller) handleObject(obj interface{}) {
 
 }
 
-func (c *Controller) recordEventInfof(r *rolloutv1.Rollout, template string, args ...interface{})  {
+func (c *Controller) recordEventInfof(r *rolloutv1.Rollout, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
 }
 
-func (c *Controller) recordEventErrorf(r *rolloutv1.Rollout, template string, args ...interface{})  {
+func (c *Controller) recordEventErrorf(r *rolloutv1.Rollout, template string, args ...interface{}) {
 	c.logger.Errorf(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
