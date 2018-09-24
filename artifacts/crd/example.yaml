@@ -1,3 +1,4 @@
+# monitor events:  watch "kubectl -n test describe rollout/podinfo | sed -n 35,1000p"
 apiVersion: apps.weave.works/v1beta1
 kind: Rollout
 metadata:

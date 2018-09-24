@@ -35,9 +35,11 @@ type Controller struct {
 	rolloutClient clientset.Interface
 	rolloutLister listers.RolloutLister
 	rolloutSynced cache.InformerSynced
+	rolloutWindow time.Duration
 	workqueue     workqueue.RateLimitingInterface
 	recorder      record.EventRecorder
 	logger        *zap.SugaredLogger
+	metricServer  string
 	rollouts      *sync.Map
 }
 
@@ -46,7 +48,10 @@ func NewController(
 	istioClient sharedclientset.Interface,
 	rolloutClient clientset.Interface,
 	rolloutInformer rolloutInformers.RolloutInformer,
+	rolloutWindow time.Duration,
+	metricServer string,
 	logger *zap.SugaredLogger,
+
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
 	rolloutscheme.AddToScheme(scheme.Scheme)
@@ -68,6 +73,8 @@ func NewController(
 		recorder:      recorder,
 		logger:        logger,
 		rollouts:      new(sync.Map),
+		metricServer:  metricServer,
+		rolloutWindow: rolloutWindow,
 	}
 
 	rolloutInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -113,8 +120,17 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	}
 
 	c.logger.Info("Started workers")
-	<-stopCh
-	c.logger.Info("Shutting down workers")
+
+	tickChan := time.NewTicker(c.rolloutWindow).C
+	for {
+		select {
+		case <-tickChan:
+			c.doRollout()
+		case <-stopCh:
+			c.logger.Info("Shutting down workers")
+			return nil
+		}
+	}
 
 	return nil
 }
@@ -170,7 +186,7 @@ func (c *Controller) syncHandler(key string) error {
 
 	c.logger.Infof("Adding %s.%s to cache", rollout.Name, rollout.Namespace)
 	c.rollouts.Store(fmt.Sprintf("%s.%s", rollout.Name, rollout.Namespace), rollout)
-	c.recorder.Event(rollout, corev1.EventTypeNormal, "Synced", "Rollout synced successfully with internal cache")
+	//c.recorder.Event(rollout, corev1.EventTypeNormal, "Synced", "Rollout synced successfully with internal cache")
 
 	return nil
 }
@@ -217,6 +233,16 @@ func (c *Controller) handleObject(obj interface{}) {
 		return
 	}
 
+}
+
+func (c *Controller) recordEventInfof(r *rolloutv1.Rollout, template string, args ...interface{})  {
+	c.logger.Infof(template, args...)
+	c.recorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
+}
+
+func (c *Controller) recordEventErrorf(r *rolloutv1.Rollout, template string, args ...interface{})  {
+	c.logger.Errorf(template, args...)
+	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
 func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (rolloutv1.Rollout, bool) {

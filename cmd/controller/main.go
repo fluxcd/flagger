@@ -21,11 +21,15 @@ import (
 var (
 	masterURL  string
 	kubeconfig string
+	metricServer string
+	rolloutWindow time.Duration
 )
 
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
+	flag.StringVar(&metricServer, "prometheus", "https://prometheus.istio.weavedx.com", "Prometheus URL")
+	flag.DurationVar(&rolloutWindow, "window", 10*time.Second, "wait interval between deployment rollouts")
 }
 
 func main() {
@@ -73,6 +77,8 @@ func main() {
 		sharedClient,
 		rolloutClient,
 		rolloutInformer,
+		rolloutWindow,
+		metricServer,
 		logger,
 	)
 
