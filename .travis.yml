@@ -13,11 +13,17 @@ addons:
     - docker-ce
 
 script:
+- set -e
 - make test
 - make verify-codegen
 - make build
 
 after_success:
+- if [ ! -s "$DOCKER_USER" ]; then
+  docker tag stefanprodan/steerer:latest stefanprodan/steerer:$TRAVIS_BRANCH-$TRAVIS_COMMIT;
+  echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin;
+  docker push stefanprodan/steerer:$TRAVIS_BRANCH-$TRAVIS_COMMIT;
+  fi
 - if [ ! -s "$TRAVIS_TAG" ]; then
   docker tag stefanprodan/steerer:latest stefanprodan/steerer:$TRAVIS_TAG;
   echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin;
