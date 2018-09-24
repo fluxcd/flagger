@@ -10,7 +10,7 @@ Gated rollout stages:
 * check primary and canary deployments status
     * halt rollout if a rolling update is underway
     * halt rollout if pods are unhealthy
-* increase canary traffic weight percentage by 10%
+* increase canary traffic weight percentage from 0% to 10%
 * check canary HTTP success rate
     * halt rollout if percentage is under the specified threshold
 * increase canary traffic wight by 10% till it reaches 100% 
@@ -25,6 +25,32 @@ Gated rollout stages:
 * scale to zero the canary deployment
 * mark rollout as finished
 * wait for the canary deployment to be updated (revision bump) and start over
+
+A rollout can be defined using steerer's custom resource:
+
+```yaml
+apiVersion: apps.weave.works/v1beta1
+kind: Rollout
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  targetKind: Deployment
+  primary:
+    name: podinfo
+    host: podinfo
+  canary:
+    name: podinfo-canary
+    host: podinfo-canary
+  virtualService:
+    name: podinfo
+    weight: 10
+  metric:
+    type: counter
+    name: istio_requests_total
+    interval: 1m
+    threshold: 99
+```
 
 ### Usage
 
