@@ -5,16 +5,14 @@ import (
 	"log"
 	"time"
 
+	"github.com/golang/glog"
 	sharedclientset "github.com/knative/pkg/client/clientset/versioned"
-	sharedscheme "github.com/knative/pkg/client/clientset/versioned/scheme"
-	sharedinformers "github.com/knative/pkg/client/informers/externalversions"
 	"github.com/knative/pkg/signals"
+	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
+	informers "github.com/stefanprodan/steerer/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/steerer/pkg/controller"
 	"github.com/stefanprodan/steerer/pkg/logging"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
@@ -56,13 +54,13 @@ func main() {
 		logger.Fatalf("Error building shared clientset: %v", err)
 	}
 
-	sharedscheme.AddToScheme(scheme.Scheme)
+	rolloutClient, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		glog.Fatalf("Error building example clientset: %s", err.Error())
+	}
 
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
-	sharedInformerFactory := sharedinformers.NewSharedInformerFactory(sharedClient, time.Second*30)
-
-	coreServiceInformer := kubeInformerFactory.Core().V1().Services()
-	virtualServiceInformer := sharedInformerFactory.Networking().V1alpha3().VirtualServices()
+	rolloutInformerFactory := informers.NewSharedInformerFactory(rolloutClient, time.Second*30)
+	rolloutInformer := rolloutInformerFactory.Apps().V1beta1().Rollouts()
 
 	ver, err := kubeClient.Discovery().ServerVersion()
 	if err != nil {
@@ -70,31 +68,22 @@ func main() {
 	}
 	logger.Infof("Kubernetes version %v", ver)
 
-	opts := v1.ListOptions{}
-	list, err := sharedClient.NetworkingV1alpha3().VirtualServices("demo").List(opts)
-	if err != nil {
-		logger.Fatalf("Error building shared clientset: %v", err)
-	}
-	logger.Infof("VirtualServices %v", len(list.Items))
-
 	c := controller.NewController(
 		kubeClient,
 		sharedClient,
+		rolloutClient,
+		rolloutInformer,
 		logger,
-		coreServiceInformer,
-		virtualServiceInformer,
 	)
 
-	kubeInformerFactory.Start(stopCh)
-	sharedInformerFactory.Start(stopCh)
+	rolloutInformerFactory.Start(stopCh)
 
 	logger.Info("Waiting for informer caches to sync")
-	for i, synced := range []cache.InformerSynced{
-		coreServiceInformer.Informer().HasSynced,
-		virtualServiceInformer.Informer().HasSynced,
+	for _, synced := range []cache.InformerSynced{
+		rolloutInformer.Informer().HasSynced,
 	} {
 		if ok := cache.WaitForCacheSync(stopCh, synced); !ok {
-			logger.Fatalf("failed to wait for cache at index %v to sync", i)
+			logger.Fatalf("failed to wait for cache")
 		}
 	}
 
