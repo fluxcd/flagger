@@ -10,6 +10,14 @@
   version = "v0.28.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:707ebe952a8b3d00b343c01536c79c73771d100f63ec6babeaed5c79e2b8a8dd"
+  name = "github.com/beorn7/perks"
+  packages = ["quantile"]
+  pruneopts = "NUT"
+  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -153,7 +161,7 @@
   revision = "f2b4162afba35581b6d4a50d3b8f34e33c144682"
 
 [[projects]]
-  digest = "1:4c2de34456e71466e2b8282517abb01098b54958a52c0bdc590def7447655840"
+  digest = "1:555e31114bd0e89c6340c47ab73162e8c8d873e4d88914310923566f487bfcd5"
   name = "github.com/knative/pkg"
   packages = [
     "apis",
@@ -169,17 +177,6 @@
     "client/clientset/versioned/typed/authentication/v1alpha1",
     "client/clientset/versioned/typed/duck/v1alpha1",
     "client/clientset/versioned/typed/istio/v1alpha3",
-    "client/informers/externalversions",
-    "client/informers/externalversions/authentication",
-    "client/informers/externalversions/authentication/v1alpha1",
-    "client/informers/externalversions/duck",
-    "client/informers/externalversions/duck/v1alpha1",
-    "client/informers/externalversions/internalinterfaces",
-    "client/informers/externalversions/istio",
-    "client/informers/externalversions/istio/v1alpha3",
-    "client/listers/authentication/v1alpha1",
-    "client/listers/duck/v1alpha1",
-    "client/listers/istio/v1alpha3",
     "signals",
   ]
   pruneopts = "NUT"
@@ -200,6 +197,14 @@
   pruneopts = "NUT"
   revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
   version = "v0.0.4"
+
+[[projects]]
+  digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
+  name = "github.com/matttproud/golang_protobuf_extensions"
+  packages = ["pbutil"]
+  pruneopts = "NUT"
+  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:2f42fa12d6911c7b7659738758631bec870b7e9b4c6be5444f963cdcfccc191f"
@@ -232,6 +237,50 @@
   pruneopts = "NUT"
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  digest = "1:03bca087b180bf24c4f9060775f137775550a0834e18f0bca0520a868679dbd7"
+  name = "github.com/prometheus/client_golang"
+  packages = [
+    "prometheus",
+    "prometheus/promhttp",
+  ]
+  pruneopts = "NUT"
+  revision = "c5b7fccd204277076155f10851dad72b76a49317"
+  version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:2d5cd61daa5565187e1d96bae64dbbc6080dacf741448e9629c64fd93203b0d4"
+  name = "github.com/prometheus/client_model"
+  packages = ["go"]
+  pruneopts = "NUT"
+  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
+
+[[projects]]
+  branch = "master"
+  digest = "1:fad5a35eea6a1a33d6c8f949fbc146f24275ca809ece854248187683f52cc30b"
+  name = "github.com/prometheus/common"
+  packages = [
+    "expfmt",
+    "internal/bitbucket.org/ww/goautoneg",
+    "model",
+  ]
+  pruneopts = "NUT"
+  revision = "c7de2306084e37d54b8be01f3541a8464345e9a5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:26a2f5e891cc4d2321f18a0caa84c8e788663c17bed6a487f3cbe2c4295292d0"
+  name = "github.com/prometheus/procfs"
+  packages = [
+    ".",
+    "internal/util",
+    "nfs",
+    "xfs",
+  ]
+  pruneopts = "NUT"
+  revision = "418d78d0b9a7b7de3a6bbc8a23def624cc977bb2"
 
 [[projects]]
   digest = "1:e3707aeaccd2adc89eba6c062fec72116fe1fc1ba71097da85b4d8ae1668a675"
@@ -489,51 +538,11 @@
   version = "kubernetes-1.11.0"
 
 [[projects]]
-  digest = "1:2e0b969d044ae6c2bc9fdb651b65898bcb984f79f4eb3b2e0ddfe042ec271431"
+  digest = "1:29e55bcff61dd3d1f768724450a3933ea76e6277684796eb7c315154f41db902"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
-    "informers",
-    "informers/admissionregistration",
-    "informers/admissionregistration/v1alpha1",
-    "informers/admissionregistration/v1beta1",
-    "informers/apps",
-    "informers/apps/v1",
-    "informers/apps/v1beta1",
-    "informers/apps/v1beta2",
-    "informers/autoscaling",
-    "informers/autoscaling/v1",
-    "informers/autoscaling/v2beta1",
-    "informers/batch",
-    "informers/batch/v1",
-    "informers/batch/v1beta1",
-    "informers/batch/v2alpha1",
-    "informers/certificates",
-    "informers/certificates/v1beta1",
-    "informers/core",
-    "informers/core/v1",
-    "informers/events",
-    "informers/events/v1beta1",
-    "informers/extensions",
-    "informers/extensions/v1beta1",
-    "informers/internalinterfaces",
-    "informers/networking",
-    "informers/networking/v1",
-    "informers/policy",
-    "informers/policy/v1beta1",
-    "informers/rbac",
-    "informers/rbac/v1",
-    "informers/rbac/v1alpha1",
-    "informers/rbac/v1beta1",
-    "informers/scheduling",
-    "informers/scheduling/v1alpha1",
-    "informers/scheduling/v1beta1",
-    "informers/settings",
-    "informers/settings/v1alpha1",
-    "informers/storage",
-    "informers/storage/v1",
-    "informers/storage/v1alpha1",
-    "informers/storage/v1beta1",
+    "discovery/fake",
     "kubernetes",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1alpha1",
@@ -565,31 +574,6 @@
     "kubernetes/typed/storage/v1",
     "kubernetes/typed/storage/v1alpha1",
     "kubernetes/typed/storage/v1beta1",
-    "listers/admissionregistration/v1alpha1",
-    "listers/admissionregistration/v1beta1",
-    "listers/apps/v1",
-    "listers/apps/v1beta1",
-    "listers/apps/v1beta2",
-    "listers/autoscaling/v1",
-    "listers/autoscaling/v2beta1",
-    "listers/batch/v1",
-    "listers/batch/v1beta1",
-    "listers/batch/v2alpha1",
-    "listers/certificates/v1beta1",
-    "listers/core/v1",
-    "listers/events/v1beta1",
-    "listers/extensions/v1beta1",
-    "listers/networking/v1",
-    "listers/policy/v1beta1",
-    "listers/rbac/v1",
-    "listers/rbac/v1alpha1",
-    "listers/rbac/v1beta1",
-    "listers/scheduling/v1alpha1",
-    "listers/scheduling/v1beta1",
-    "listers/settings/v1alpha1",
-    "listers/storage/v1",
-    "listers/storage/v1alpha1",
-    "listers/storage/v1beta1",
     "pkg/apis/clientauthentication",
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/apis/clientauthentication/v1beta1",
@@ -598,6 +582,7 @@
     "plugin/pkg/client/auth/gcp",
     "rest",
     "rest/watch",
+    "testing",
     "third_party/forked/golang/template",
     "tools/auth",
     "tools/cache",
@@ -682,13 +667,11 @@
   analyzer-version = 1
   input-imports = [
     "github.com/fatih/color",
+    "github.com/google/go-cmp/cmp",
     "github.com/knative/pkg/apis/istio/v1alpha3",
     "github.com/knative/pkg/client/clientset/versioned",
-    "github.com/knative/pkg/client/clientset/versioned/scheme",
-    "github.com/knative/pkg/client/informers/externalversions",
-    "github.com/knative/pkg/client/informers/externalversions/istio/v1alpha3",
-    "github.com/knative/pkg/client/listers/istio/v1alpha3",
     "github.com/knative/pkg/signals",
+    "github.com/prometheus/client_golang/prometheus/promhttp",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",
     "k8s.io/api/apps/v1",
@@ -696,19 +679,26 @@
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/labels",
+    "k8s.io/apimachinery/pkg/runtime",
+    "k8s.io/apimachinery/pkg/runtime/schema",
+    "k8s.io/apimachinery/pkg/runtime/serializer",
+    "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/runtime",
     "k8s.io/apimachinery/pkg/util/sets/types",
     "k8s.io/apimachinery/pkg/util/wait",
-    "k8s.io/client-go/informers",
-    "k8s.io/client-go/informers/core/v1",
+    "k8s.io/apimachinery/pkg/watch",
+    "k8s.io/client-go/discovery",
+    "k8s.io/client-go/discovery/fake",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/kubernetes/typed/core/v1",
-    "k8s.io/client-go/listers/core/v1",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
+    "k8s.io/client-go/rest",
+    "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/record",
+    "k8s.io/client-go/util/flowcontrol",
     "k8s.io/client-go/util/workqueue",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",
