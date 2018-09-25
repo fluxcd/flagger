@@ -17,7 +17,7 @@ spec:
       labels:
         app: steerer
       annotations:
-        prometheus.io.port: "8080"
+        prometheus.io/scrape: "true"
     spec:
       serviceAccountName: steerer
       containers:
@@ -25,11 +25,40 @@ spec:
         image: stefanprodan/steerer:0.0.1
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
         command:
         - ./steerer
         - -level=info
         - -prometheus=http://prometheus.istio-system.svc.cluster.local:9090
         - -window=10s
         - -logtostderr
-        - -v=1
+        - -stderrthreshold=ERROR
+        livenessProbe:
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=2
+            - --spider
+            - http://localhost:8080/readyz
+        readinessProbe:
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=2
+            - --spider
+            - http://localhost:8080/readyz
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsUser: 10001

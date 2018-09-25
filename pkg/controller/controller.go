@@ -2,9 +2,8 @@ package controller
 
 import (
 	"fmt"
-	"time"
-
 	"sync"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	sharedclientset "github.com/knative/pkg/client/clientset/versioned"

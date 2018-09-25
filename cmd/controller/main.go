@@ -5,13 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/golang/glog"
 	sharedclientset "github.com/knative/pkg/client/clientset/versioned"
 	"github.com/knative/pkg/signals"
 	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
 	informers "github.com/stefanprodan/steerer/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/steerer/pkg/controller"
 	"github.com/stefanprodan/steerer/pkg/logging"
+	"github.com/stefanprodan/steerer/pkg/server"
 	"github.com/stefanprodan/steerer/pkg/version"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -26,6 +26,7 @@ var (
 	metricServer  string
 	rolloutWindow time.Duration
 	logLevel      string
+	port          string
 )
 
 func init() {
@@ -34,6 +35,7 @@ func init() {
 	flag.StringVar(&metricServer, "prometheus", "http://prometheus:9090", "Prometheus URL")
 	flag.DurationVar(&rolloutWindow, "window", 10*time.Second, "wait interval between deployment rollouts")
 	flag.StringVar(&logLevel, "level", "debug", "Log level can be: debug, info, warning, error.")
+	flag.StringVar(&port, "port", "8080", "Port to listen on.")
 }
 
 func main() {
@@ -64,7 +66,7 @@ func main() {
 
 	rolloutClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		glog.Fatalf("Error building example clientset: %s", err.Error())
+		logger.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
 	rolloutInformerFactory := informers.NewSharedInformerFactory(rolloutClient, time.Second*30)
@@ -80,6 +82,9 @@ func main() {
 		zap.String("revision", version.REVISION),
 		zap.String("metrics provider", metricServer),
 		zap.Any("kubernetes version", ver))
+
+	// start HTTP server
+	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
 	c := controller.NewController(
 		kubeClient,
@@ -98,13 +103,14 @@ func main() {
 		rolloutInformer.Informer().HasSynced,
 	} {
 		if ok := cache.WaitForCacheSync(stopCh, synced); !ok {
-			logger.Fatalf("failed to wait for cache")
+			logger.Fatalf("Failed to wait for cache sync")
 		}
 	}
 
+	// start controller
 	go func(ctrl *controller.Controller) {
-		if runErr := ctrl.Run(2, stopCh); runErr != nil {
-			logger.Fatalf("Error running controller: %v", runErr)
+		if err := ctrl.Run(2, stopCh); err != nil {
+			logger.Fatalf("Error running controller: %v", err)
 		}
 	}(c)
 
