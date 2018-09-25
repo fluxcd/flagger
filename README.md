@@ -5,8 +5,8 @@
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
 
-Steerer requires two Kubernetes deployments: one for the version you want to upgrade called primary
-and one for the canary. Each deployment has a corresponding ClusterIP service.
+Steerer requires two Kubernetes deployments: one for the version you want to upgrade called _primary_ and one for the _canary_.
+Each deployment must have a corresponding ClusterIP service that exposes a port named http or https.
 These services are used as destinations in a Istio virtual service.
 
 Gated rollout stages:
@@ -32,11 +32,7 @@ Gated rollout stages:
 * mark rollout as finished
 * wait for the canary deployment to be updated (revision bump) and start over
 
-Steerer requires two Kubernetes deployments: one for the version you want to upgrade called primary
-and one for the canary. Each deployment has a corresponding ClusterIP service.
-These services are used as destinations in an Istio virtual service.
-
-Assuming my primary deployment is named podinfo and my canary one podinfo-canary, steerer will require 
+Assuming the primary deployment is named _podinfo_ and the canary one _podinfo-canary_, Steerer will require 
 a virtual service configured with weight-based routing:
 
 ```yaml
@@ -61,7 +57,7 @@ spec:
       weight: 0
 ```
 
-Based on the two deployments, services and virtual service, a rollout can be defined using steerer's custom resource:
+Based on the two deployments, services and virtual service, a rollout can be defined using Steerer's custom resource:
 
 ```yaml
 apiVersion: apps.weave.works/v1beta1
@@ -72,18 +68,22 @@ metadata:
 spec:
   targetKind: Deployment
   primary:
+    # deployment name
     name: podinfo
+    # clusterIP service name
     host: podinfo
   canary:
     name: podinfo-canary
     host: podinfo-canary
   virtualService:
     name: podinfo
+    # used to increment the canary weight
     weight: 10
   metric:
     type: counter
     name: istio_requests_total
     interval: 1m
+    # success rate used in canary analysis
     threshold: 99
 ```
 
