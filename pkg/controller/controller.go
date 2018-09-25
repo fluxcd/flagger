@@ -125,7 +125,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	for {
 		select {
 		case <-tickChan:
-			c.doRollout()
+			c.doRollouts()
 		case <-stopCh:
 			c.logger.Info("Shutting down workers")
 			return nil

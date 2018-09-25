@@ -5,6 +5,10 @@
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
 
+Steerer requires two Kubernetes deployments: one for the version you want to upgrade called primary
+and one for the canary. Each deployment has a corresponding ClusterIP service.
+These services are used as destinations in a Istio virtual service.
+
 Gated rollout stages:
 
 * scan for deployments marked for rollout 
@@ -28,7 +32,36 @@ Gated rollout stages:
 * mark rollout as finished
 * wait for the canary deployment to be updated (revision bump) and start over
 
-A rollout can be defined using steerer's custom resource:
+Steerer requires two Kubernetes deployments: one for the version you want to upgrade called primary
+and one for the canary. Each deployment has a corresponding ClusterIP service.
+These services are used as destinations in an Istio virtual service.
+
+Assuming my primary deployment is named podinfo and my canary one podinfo-canary, steerer will require 
+a virtual service configured with weight-based routing:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: podinfo
+spec:
+  hosts:
+  - podinfo
+  http:
+  - route:
+    - destination:
+        host: podinfo
+        port:
+          number: 9898
+      weight: 100
+    - destination:
+        host: podinfo-canary
+        port:
+          number: 9898
+      weight: 0
+```
+
+Based on the two deployments, services and virtual service, a rollout can be defined using steerer's custom resource:
 
 ```yaml
 apiVersion: apps.weave.works/v1beta1
