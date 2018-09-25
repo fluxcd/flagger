@@ -7,7 +7,7 @@ push:
 	docker push stefanprodan/steerer:$(TAG)
 
 test:
-	go test ./pkg/controller
+	go test ./...
 
 verify-codegen:
 	./hack/verify-codegen.sh
