@@ -14,7 +14,6 @@ import (
 	"github.com/stefanprodan/steerer/pkg/logging"
 	"github.com/stefanprodan/steerer/pkg/server"
 	"github.com/stefanprodan/steerer/pkg/version"
-	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
@@ -73,16 +72,21 @@ func main() {
 	rolloutInformerFactory := informers.NewSharedInformerFactory(rolloutClient, time.Second*30)
 	rolloutInformer := rolloutInformerFactory.Apps().V1beta1().Rollouts()
 
+	logger.Infof("Starting steerer version %s revision %s", version.VERSION, version.REVISION)
+
 	ver, err := kubeClient.Discovery().ServerVersion()
 	if err != nil {
 		logger.Fatalf("Error calling Kubernetes API: %v", err)
 	}
 
-	logger.Infow("Starting steerer",
-		zap.String("version", version.VERSION),
-		zap.String("revision", version.REVISION),
-		zap.String("metrics provider", metricsServer),
-		zap.Any("kubernetes version", ver))
+	logger.Infof("Connected to Kubernetes API %s", ver)
+
+	ok, err := controller.CheckMetricsServer(metricsServer)
+	if ok {
+		logger.Infof("Connected to metrics server %s", metricsServer)
+	} else {
+		logger.Errorf("Metrics server %s unreachable %v", metricsServer, err)
+	}
 
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)

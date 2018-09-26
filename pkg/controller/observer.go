@@ -66,7 +66,6 @@ func (c *Controller) queryMetric(query string) (*VectorQueryResponse, error) {
 	}
 
 	return &values, nil
-
 }
 
 func (c *Controller) getDeploymentMetric(name string, namespace string, counter string, interval string) (float64, error) {
@@ -96,4 +95,43 @@ func (c *Controller) getDeploymentMetric(name string, namespace string, counter 
 		}
 	}
 	return rate, nil
+}
+
+func CheckMetricsServer(address string) (bool, error) {
+	promURL, err := url.Parse(address)
+	if err != nil {
+		return false, err
+	}
+
+	u, err := url.Parse("./api/v1/status/flags")
+	if err != nil {
+		return false, err
+	}
+
+	u = promURL.ResolveReference(u)
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return false, err
+	}
+
+	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	defer cancel()
+
+	r, err := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return false, err
+	}
+	defer r.Body.Close()
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return false, fmt.Errorf("error reading body: %s", err.Error())
+	}
+
+	if 400 <= r.StatusCode {
+		return false, fmt.Errorf("error response: %s", string(b))
+	}
+
+	return true, nil
 }

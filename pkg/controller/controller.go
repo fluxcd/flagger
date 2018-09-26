@@ -158,7 +158,6 @@ func (c *Controller) processNextWorkItem() bool {
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		c.workqueue.Forget(obj)
-		c.logger.Infof("Successfully synced '%s'", key)
 		return nil
 	}(obj)
 
