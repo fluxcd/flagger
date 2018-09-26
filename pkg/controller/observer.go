@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 type VectorQueryResponse struct {
@@ -22,7 +24,7 @@ type VectorQueryResponse struct {
 }
 
 func (c *Controller) queryMetric(query string) (*VectorQueryResponse, error) {
-	promURL, err := url.Parse(c.metricServer)
+	promURL, err := url.Parse(c.metricsServer)
 	if err != nil {
 		return nil, err
 	}
@@ -33,11 +35,21 @@ func (c *Controller) queryMetric(query string) (*VectorQueryResponse, error) {
 	}
 
 	u = promURL.ResolveReference(u)
-	r, err := http.Get(u.String())
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	defer cancel()
+
+	r, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
 	defer r.Body.Close()
+
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error reading body: %s", err.Error())
@@ -46,8 +58,8 @@ func (c *Controller) queryMetric(query string) (*VectorQueryResponse, error) {
 	if 400 <= r.StatusCode {
 		return nil, fmt.Errorf("error response: %s", string(b))
 	}
-	var values VectorQueryResponse
 
+	var values VectorQueryResponse
 	err = json.Unmarshal(b, &values)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling result: %s, '%s'", err.Error(), string(b))

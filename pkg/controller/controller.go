@@ -38,7 +38,7 @@ type Controller struct {
 	workqueue     workqueue.RateLimitingInterface
 	recorder      record.EventRecorder
 	logger        *zap.SugaredLogger
-	metricServer  string
+	metricsServer string
 	rollouts      *sync.Map
 }
 
@@ -72,7 +72,7 @@ func NewController(
 		recorder:      recorder,
 		logger:        logger,
 		rollouts:      new(sync.Map),
-		metricServer:  metricServer,
+		metricsServer: metricServer,
 		rolloutWindow: rolloutWindow,
 	}
 
@@ -185,7 +185,6 @@ func (c *Controller) syncHandler(key string) error {
 
 	c.logger.Infof("Adding %s.%s to cache", rollout.Name, rollout.Namespace)
 	c.rollouts.Store(fmt.Sprintf("%s.%s", rollout.Name, rollout.Namespace), rollout)
-	//c.recorder.Event(rollout, corev1.EventTypeNormal, "Synced", "Rollout synced successfully with internal cache")
 
 	return nil
 }

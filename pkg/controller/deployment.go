@@ -183,7 +183,7 @@ func (c *Controller) getDeployment(name string, namespace string) (*appsv1.Deplo
 func (c *Controller) checkDeploymentSuccessRate(r *rolloutv1.Rollout) bool {
 	val, err := c.getDeploymentMetric(r.Spec.Canary.Name, r.Namespace, r.Spec.Metric.Name, r.Spec.Metric.Interval)
 	if err != nil {
-		c.recordEventErrorf(r, "Metric query error: %v", err)
+		c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.metricsServer, err)
 		return false
 	}
 
