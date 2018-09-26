@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	sharedclientset "github.com/knative/pkg/client/clientset/versioned"
+	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	rolloutv1 "github.com/stefanprodan/steerer/pkg/apis/rollout/v1beta1"
 	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
 	rolloutscheme "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/scheme"
-	rolloutInformers "github.com/stefanprodan/steerer/pkg/client/informers/externalversions/rollout/v1beta1"
-	listers "github.com/stefanprodan/steerer/pkg/client/listers/rollout/v1beta1"
+	rolloutinformers "github.com/stefanprodan/steerer/pkg/client/informers/externalversions/rollout/v1beta1"
+	rolloutlisters "github.com/stefanprodan/steerer/pkg/client/listers/rollout/v1beta1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,9 +30,9 @@ const controllerAgentName = "steerer"
 
 type Controller struct {
 	kubeClient    kubernetes.Interface
-	istioClient   sharedclientset.Interface
+	istioClient   istioclientset.Interface
 	rolloutClient clientset.Interface
-	rolloutLister listers.RolloutLister
+	rolloutLister rolloutlisters.RolloutLister
 	rolloutSynced cache.InformerSynced
 	rolloutWindow time.Duration
 	workqueue     workqueue.RateLimitingInterface
@@ -44,9 +44,9 @@ type Controller struct {
 
 func NewController(
 	kubeClient kubernetes.Interface,
-	istioClient sharedclientset.Interface,
+	istioClient istioclientset.Interface,
 	rolloutClient clientset.Interface,
-	rolloutInformer rolloutInformers.RolloutInformer,
+	rolloutInformer rolloutinformers.RolloutInformer,
 	rolloutWindow time.Duration,
 	metricServer string,
 	logger *zap.SugaredLogger,

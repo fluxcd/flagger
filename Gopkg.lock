@@ -54,11 +54,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e2b86e41f3d669fc36b50d31d32d22c8ac656c75aa5ea89717ce7177e134ff2a"
+  digest = "1:e0f096f9332ad5f84341de82db69fd098864b17c668333a1fbbffd1b846dcc2b"
   name = "github.com/golang/glog"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+  revision = "2cc4b790554d1a0c48fcc3aeb891e3de70cf8de0"
+  source = "github.com/istio/glog"
 
 [[projects]]
   branch = "master"
@@ -152,6 +153,14 @@
   pruneopts = "NUT"
   revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
   version = "v0.3.6"
+
+[[projects]]
+  branch = "master"
+  digest = "1:e0f096f9332ad5f84341de82db69fd098864b17c668333a1fbbffd1b846dcc2b"
+  name = "github.com/istio/glog"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "2cc4b790554d1a0c48fcc3aeb891e3de70cf8de0"
 
 [[projects]]
   digest = "1:0243cffa4a3410f161ee613dfdd903a636d07e838a42d341da95d81f42cd1d41"
@@ -668,6 +677,7 @@
   input-imports = [
     "github.com/fatih/color",
     "github.com/google/go-cmp/cmp",
+    "github.com/istio/glog",
     "github.com/knative/pkg/apis/istio/v1alpha3",
     "github.com/knative/pkg/client/clientset/versioned",
     "github.com/knative/pkg/signals",

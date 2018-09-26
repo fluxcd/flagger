@@ -22,18 +22,16 @@ spec:
       serviceAccountName: steerer
       containers:
       - name: steerer
-        image: stefanprodan/steerer:0.0.1
+        image: stefanprodan/steerer
         imagePullPolicy: Always
         ports:
         - name: http
           containerPort: 8080
         command:
         - ./steerer
-        - -level=info
-        - -prometheus=http://prometheus.istio-system.svc.cluster.local:9090
-        - -window=10s
-        - -logtostderr
-        - -stderrthreshold=ERROR
+        - -log-level=info
+        - -control-loop-interval=10s
+        - -metrics-server=http://prometheus.istio-system.svc.cluster.local:9090
         livenessProbe:
           exec:
             command:
@@ -42,7 +40,7 @@ spec:
             - --tries=1
             - --timeout=2
             - --spider
-            - http://localhost:8080/readyz
+            - http://localhost:8080/healthz
         readinessProbe:
           exec:
             command:
@@ -51,7 +49,7 @@ spec:
             - --tries=1
             - --timeout=2
             - --spider
-            - http://localhost:8080/readyz
+            - http://localhost:8080/healthz
         resources:
           limits:
             memory: "512Mi"

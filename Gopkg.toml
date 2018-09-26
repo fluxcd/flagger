@@ -49,6 +49,10 @@ required = [
   name = "github.com/knative/pkg"
   revision = "c15d7c8f2220a7578b33504df6edefa948c845ae"
 
+[[override]]
+  name = "github.com/golang/glog"
+  source = "github.com/istio/glog"
+
 [prune]
   go-tests = true
   unused-packages = true

@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	_ "github.com/istio/glog"
 	sharedclientset "github.com/knative/pkg/client/clientset/versioned"
 	"github.com/knative/pkg/signals"
 	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
@@ -21,20 +22,20 @@ import (
 )
 
 var (
-	masterURL     string
-	kubeconfig    string
-	metricServer  string
-	rolloutWindow time.Duration
-	logLevel      string
-	port          string
+	masterURL           string
+	kubeconfig          string
+	metricsServer       string
+	controlLoopInterval time.Duration
+	logLevel            string
+	port                string
 )
 
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	flag.StringVar(&metricServer, "prometheus", "http://prometheus:9090", "Prometheus URL")
-	flag.DurationVar(&rolloutWindow, "window", 10*time.Second, "wait interval between deployment rollouts")
-	flag.StringVar(&logLevel, "level", "debug", "Log level can be: debug, info, warning, error.")
+	flag.StringVar(&metricsServer, "metrics-server", "http://prometheus:9090", "Prometheus URL")
+	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "wait interval between rollouts")
+	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
 }
 
@@ -80,7 +81,7 @@ func main() {
 	logger.Infow("Starting steerer",
 		zap.String("version", version.VERSION),
 		zap.String("revision", version.REVISION),
-		zap.String("metrics provider", metricServer),
+		zap.String("metrics provider", metricsServer),
 		zap.Any("kubernetes version", ver))
 
 	// start HTTP server
@@ -91,8 +92,8 @@ func main() {
 		sharedClient,
 		rolloutClient,
 		rolloutInformer,
-		rolloutWindow,
-		metricServer,
+		controlLoopInterval,
+		metricsServer,
 		logger,
 	)
 

@@ -57,6 +57,23 @@ spec:
       weight: 0
 ```
 
+Primary and canary services should expose a port named http:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo-canary
+spec:
+  type: ClusterIP
+  selector:
+    app: podinfo-canary
+  ports:
+  - name: http
+    port: 9898
+    targetPort: 9898
+```
+
 Based on the two deployments, services and virtual service, a rollout can be defined using Steerer's custom resource:
 
 ```yaml
