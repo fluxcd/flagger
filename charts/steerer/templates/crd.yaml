@@ -1,0 +1,58 @@
+{{- if .Values.crd.create }}
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: rollouts.apps.weave.works
+spec:
+  group: apps.weave.works
+  version: v1beta1
+  versions:
+    - name: v1beta1
+      served: true
+      storage: true
+  names:
+    plural: rollouts
+    singular: rollout
+    kind: Rollout
+    shortNames:
+    - roll
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          required:
+            - primary
+            - canary
+            - virtualService
+          properties:
+            primary:
+              properties:
+                name:
+                  type: string
+                host:
+                  type: string
+            canary:
+              properties:
+                name:
+                  type: string
+                host:
+                  type: string
+            virtualService:
+              properties:
+                name:
+                  type: string
+                weight:
+                  type: number
+            metric:
+              properties:
+                type:
+                  type: string
+                name:
+                  type: string
+                interval:
+                  type: string
+                  pattern: "^[0-9]+(m)"
+                threshold:
+                  type: number
+{{- end }}

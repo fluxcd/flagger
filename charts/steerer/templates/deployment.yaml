@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "steerer.fullname" . }}
+  labels:
+    app: {{ include "steerer.name" . }}
+    chart: {{ include "steerer.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ include "steerer.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "steerer.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: steerer
+      containers:
+        - name: steerer
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsUser: 10001
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - name: http
+            containerPort: 8080
+          command:
+          - ./steerer
+          - -log-level=info
+          - -control-loop-interval={{ .Values.controlLoopInterval }}
+          - -metrics-server={{ .Values.metricsServer }}
+          livenessProbe:
+            exec:
+              command:
+              - wget
+              - --quiet
+              - --tries=1
+              - --timeout=2
+              - --spider
+              - http://localhost:8080/healthz
+          readinessProbe:
+            exec:
+              command:
+              - wget
+              - --quiet
+              - --tries=1
+              - --timeout=2
+              - --spider
+              - http://localhost:8080/healthz
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
