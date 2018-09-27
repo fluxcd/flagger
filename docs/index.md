@@ -1,7 +1,7 @@
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
 
-![steerer-overview](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-overview.png)
+![steerer-overview](https://raw.githubusercontent.com/stefanprodan/steerer/master/docs/diagrams/steerer-overview.png)
 
 ### Install 
 
