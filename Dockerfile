@@ -6,10 +6,8 @@ WORKDIR /go/src/github.com/stefanprodan/steerer
 
 COPY . .
 
-RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') && \
-    GIT_COMMIT=$(git rev-list -1 HEAD) && \
+RUN GIT_COMMIT=$(git rev-list -1 HEAD) && \
     CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w \
-    -X github.com/stefanprodan/steerer/pkg/version.VERSION=${VERSION} \
     -X github.com/stefanprodan/steerer/pkg/version.REVISION=${GIT_COMMIT}" \
     -a -installsuffix cgo -o steerer ./cmd/steerer/*
 
