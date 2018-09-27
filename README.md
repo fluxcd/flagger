@@ -1,7 +1,8 @@
 # steerer
 
-[![Build Status](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
-[![Docker Image](https://images.microbadger.com/badges/image/stefanprodan/steerer.svg)](https://github.com/stefanprodan/steerer)
+[![travis](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
+![docker](https://img.shields.io/microbadger/image-size/stefanprodan/steerer.svg)
+![license](https://img.shields.io/github/license/stefanprodan/steerer.svg)
 
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
