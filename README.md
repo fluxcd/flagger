@@ -1,9 +1,30 @@
 # steerer
 
 [![Build Status](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
+[![Docker Image](https://images.microbadger.com/badges/image/stefanprodan/steerer.svg)](https://github.com/stefanprodan/steerer)
 
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
+
+### Install 
+
+Before installing Steerer make sure you have Istio setup up with Prometheus enabled. 
+If you are new to Istio you can follow my [GKE service mesh walk-through](https://github.com/stefanprodan/istio-gke).
+
+Deploy Steerer in the `istio-system` using Helm:
+
+```bash
+# add Steerer Helm repo
+helm repo add steerer https://stefanprodan.github.io/steerer
+
+# install or upgrade Steerer
+helm upgrade --install steerer steerer/steerer \
+--namespace=istio-system \
+--set metricsServer=http://prometheus.istio-system:9090 \
+--set controlLoopInterval=1m
+```
+
+## Usage
 
 Steerer requires two Kubernetes deployments: one for the version you want to upgrade called _primary_ and one for the _canary_.
 Each deployment must have a corresponding ClusterIP service that exposes a port named http or https.
@@ -100,34 +121,68 @@ spec:
     type: counter
     name: istio_requests_total
     interval: 1m
-    # success rate used in canary analysis
+    # success rate percentage used in canary analysis
     threshold: 99
 ```
 
-### Usage
+The canary analysis is using the following promql query to determine the HTTP success rate percentage:
 
-Deploy steerer in `istio-system` namespace:
-
-```bash
-kubectl apply -f ./artifacts/steerer
+```sql
+sum(
+    rate(
+        istio_requests_total{
+          reporter="destination",
+          destination_workload_namespace=~"$namespace",
+          destination_workload=~"$workload",
+          response_code!~"5.*"
+        }[$interval]
+    )
+) 
+/ 
+sum(
+    rate(
+        istio_requests_total{
+          reporter="destination",
+          destination_workload_namespace=~"$namespace",
+          destination_workload=~"$workload"
+        }[$interval]
+    )
+)
 ```
 
-Create a test namespace:
+### Example
+
+Create a test namespace with Istio sidecard injection enabled:
 
 ```bash
 kubectl apply -f ./artifacts/namespaces/
 ```
 
-Create primary and canary deployments, services, hpa and Istio virtual service:
+Create the primary deployment and service:
 
 ```bash
-kubectl apply -f ./artifacts/workloads/
+kubectl apply -f ./artifacts/workloads/deployment.yaml
+kubectl apply -f ./artifacts/workloads/service.yaml
 ```
 
-Create rollout custom resources:
+Create the canary deployment, service and horizontal pod auto-scalar:
 
 ```bash
-kubectl apply -f ./artifacts/rollouts/
+kubectl apply -f ./artifacts/workloads/deployment-canary.yaml
+kubectl apply -f ./artifacts/workloads/service-canary.yaml
+kubectl apply -f ./artifacts/workloads/hpa-canary.yaml
+```
+
+Create a virtual service (replace the gateway and the internet domain with your own):
+
+```yaml
+kubectl apply -f ./artifacts/workloads/virtual-service.yaml
+```
+
+Create a rollout custom resource:
+
+```bash
+kubectl apply -f ./artifacts/rollouts/podinfo.yaml
 ```
 
 Rollout output:
@@ -162,29 +217,11 @@ Events:
   Normal   Synced  5s    steerer  Promotion complete! Scaling down podinfo-canary.test
 ```
 
-HTTP success rate query:
+During the rollout you can generate HTTP 500 errors to test if Steerer pauses the rollout:
 
-```sql
-sum(
-    rate(
-        istio_requests_total{
-          reporter="destination",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload",
-          response_code!~"5.*"
-        }[$interval]
-    )
-) 
-/ 
-sum(
-    rate(
-        istio_requests_total{
-          reporter="destination",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload"
-        }[$interval]
-    )
-)
+```bash
+watch -n 1 curl https://<domain>/status/500
 ```
+
 
 
