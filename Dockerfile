@@ -11,7 +11,7 @@ RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags 
     CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w \
     -X github.com/stefanprodan/steerer/pkg/version.VERSION=${VERSION} \
     -X github.com/stefanprodan/steerer/pkg/version.REVISION=${GIT_COMMIT}" \
-    -a -installsuffix cgo -o steerer ./cmd/controller/*
+    -a -installsuffix cgo -o steerer ./cmd/steerer/*
 
 FROM alpine:3.8
 
@@ -28,4 +28,4 @@ RUN chown -R app:app ./
 USER app
 
 ENTRYPOINT ["./steerer"]
-CMD ["-logtostderr"]
+
