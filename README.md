@@ -24,11 +24,13 @@ helm upgrade --install steerer steerer/steerer \
 --set controlLoopInterval=1m
 ```
 
-## Usage
+### Usage
 
 Steerer requires two Kubernetes deployments: one for the version you want to upgrade called _primary_ and one for the _canary_.
 Each deployment must have a corresponding ClusterIP service that exposes a port named http or https.
 These services are used as destinations in a Istio virtual service.
+
+![steerer-overview](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-overview.png)
 
 Gated rollout stages:
 
