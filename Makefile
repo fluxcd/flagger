@@ -3,6 +3,8 @@ VERSION?=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | t
 VERSION_MINOR:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | rev | cut -d'.' -f2- | rev)
 PATCH:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | awk -F. '{print $$NF}')
 
+run:
+	go run cmd/steerer/* -kubeconfig=$$HOME/.kube/config -log-level=debug -metrics-server=https://prometheus.istio.weavedx.com
 
 build:
 	docker build -t stefanprodan/steerer:$(TAG) . -f Dockerfile

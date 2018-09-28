@@ -44,7 +44,8 @@ Gated rollout stages:
 * check canary HTTP success rate
     * halt rollout if percentage is under the specified threshold
 * increase canary traffic wight by 10% till it reaches 100% 
-    * halt rollout while canary success rate is under the threshold
+    * halt rollout while canary request success rate is under the threshold
+    * halt rollout while canary request duration are over the threshold
     * halt rollout if the primary or canary deployment becomes unhealthy 
     * halt rollout while canary deployment is being scaled up/down by HPA
 * promote canary to primary
@@ -118,17 +119,25 @@ spec:
     host: podinfo-canary
   virtualService:
     name: podinfo
-    # used to increment the canary weight
+    # canary increment step
+    # percentage (0-100)
     weight: 10
-  metric:
-    type: counter
-    name: istio_requests_total
-    interval: 1m
-    # success rate percentage used in canary analysis
+  metrics:
+  - name: istio_requests_total
+    # minimum req success rate (non 5xx responses)
+    # percentage (0-100)
     threshold: 99
+    interval: 1m
+  - name: istio_request_duration_seconds_bucket
+    # maximum req duration P99
+    # milliseconds
+    threshold: 500
+    interval: 1m
 ```
 
-The canary analysis is using the following promql query to determine the HTTP success rate percentage:
+The canary analysis is using the following promql queries:
+ 
+HTTP requests success rate percentage:
 
 ```sql
 sum(
@@ -150,6 +159,22 @@ sum(
           destination_workload=~"$workload"
         }[$interval]
     )
+)
+```
+
+HTTP requests milliseconds duration P99:
+
+```sql
+histogram_quantile(0.99, 
+  sum(
+    irate(
+      istio_request_duration_seconds_bucket{
+        reporter="destination",
+        destination_workload=~"$workload",
+        destination_workload_namespace=~"$namespace"
+      }[$interval]
+    )
+  ) by (le)
 )
 ```
 
@@ -200,16 +225,14 @@ Events:
   Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 10
   Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 20
   Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 30
+  Warning  Synced  3m    steerer  Halt rollout podinfo.test request duration 2.525s > 500ms
+  Warning  Synced  3m    steerer  Halt rollout podinfo.test request duration 1.567s > 500ms
+  Warning  Synced  3m    steerer  Halt rollout podinfo.test request duration 823ms > 500ms
   Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 40
   Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 50
-  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 60
-  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 60
-  Warning  Synced  2m    steerer  Halt rollout podinfo.test success rate 88.89% < 99%
-  Warning  Synced  2m    steerer  Halt rollout podinfo.test success rate 82.86% < 99%
-  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 80.49% < 99%
-  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 82.98% < 99%
-  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 83.33% < 99%
-  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 82.22% < 99%
+  Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 60
+  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 82.33% < 99%
+  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 87.22% < 99%
   Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 94.74% < 99%
   Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 70
   Normal   Synced  55s   steerer  Advance rollout podinfo.test weight 80
@@ -220,11 +243,24 @@ Events:
   Normal   Synced  5s    steerer  Promotion complete! Scaling down podinfo-canary.test
 ```
 
-During the rollout you can generate HTTP 500 errors to test if Steerer pauses the rollout:
+During the rollout you can generate HTTP 500 errors and high latency to test if Steerer pauses the rollout.
+
+Create a tester pod and exec into it:
 
 ```bash
-watch -n 1 curl https://<domain>/status/500
+kubectl -n test run tester --image=quay.io/stefanprodan/podinfo:1.2.1 -- ./podinfo --port=9898
+kubectl -n test exec -it tester-xx-xx sh
 ```
 
+Generate HTTP 500 errors:
 
+```bash
+watch curl http://podinfo-canary:9898/status/500
+```
+
+Generate latency:
+
+```bash
+watch curl http://podinfo-canary:9898/delay/1
+```
 

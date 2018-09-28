@@ -1,4 +1,7 @@
 # monitor events:  watch "kubectl -n test describe rollout/podinfo | sed -n 35,1000p"
+# run tester: kubectl run -n test tester --image=quay.io/stefanprodan/podinfo:1.2.1 -- ./podinfo --port=9898
+# generate latency: watch curl http://podinfo-canary:9898/delay/1
+# generate errors: watch curl http://podinfo-canary:9898/status/500
 apiVersion: apps.weave.works/v1beta1
 kind: Rollout
 metadata:
@@ -17,9 +20,17 @@ spec:
     host: podinfo-canary
   virtualService:
     name: podinfo
+    # canary increment step
+    # percentage (0-100)
     weight: 10
-  metric:
-    type: counter
-    name: istio_requests_total
-    interval: 1m
+  metrics:
+  - name: istio_requests_total
+    # minimum req success rate (non 5xx responses)
+    # percentage (0-100)
     threshold: 99
+    interval: 1m
+  - name: istio_request_duration_seconds_bucket
+    # maximum req duration P99
+    # milliseconds
+    threshold: 500
+    interval: 1m

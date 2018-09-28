@@ -44,15 +44,17 @@ spec:
                   type: string
                 weight:
                   type: number
-            metric:
+            metrics:
+              type: array
               properties:
-                type:
-                  type: string
-                name:
-                  type: string
-                interval:
-                  type: string
-                  pattern: "^[0-9]+(m)"
-                threshold:
-                  type: number
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    interval:
+                      type: string
+                      pattern: "^[0-9]+(m)"
+                    threshold:
+                      type: number
 {{- end }}
