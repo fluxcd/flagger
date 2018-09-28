@@ -179,6 +179,8 @@ histogram_quantile(0.99,
 
 ### Example
 
+![steerer-overview](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-actions.png)
+
 Create a test namespace with Istio sidecard injection enabled:
 
 ```bash
