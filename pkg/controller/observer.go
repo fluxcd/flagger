@@ -104,7 +104,7 @@ func (c *Controller) getDeploymentCounter(name string, namespace string, metric 
 // istio_request_duration_seconds_bucket
 func (c *Controller) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
 	var rate *float64
-	querySt := url.QueryEscape(`histogram_quantile(0.99, sum(irate(` +
+	querySt := url.QueryEscape(`histogram_quantile(0.99, sum(rate(` +
 		metric + `{reporter="destination",destination_workload=~"` +
 		name + `", destination_workload_namespace=~"` +
 		namespace + `"}[` +

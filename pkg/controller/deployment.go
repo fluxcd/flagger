@@ -104,7 +104,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 		}
 
 		// final stage: mark rollout as finished and scale canary to zero replicas
-		c.checkRolloutStatus(r, "finished")
+		c.updateRolloutStatus(r, "finished")
 		c.recordEventInfof(r, "%s.%s promotion complete! Scaling down %s.%s",
 			r.Name, r.Namespace, canary.GetName(), canary.Namespace)
 		c.scaleToZeroCanary(r)
@@ -126,9 +126,11 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion stri
 	if val, ok := r.Annotations[revisionAnnotation]; !ok {
 		r.Annotations[revisionAnnotation] = canaryVersion
 		r.Annotations[statusAnnotation] = "running"
+		r.Status.State = "running"
+		r.Status.CanaryRevision = canaryVersion
 		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 		if err != nil {
-			c.recordEventErrorf(r, "Rollout %s.%s annotations update failed: %v", r.Name, r.Namespace, err)
+			c.recordEventErrorf(r, "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
 		return true
@@ -139,9 +141,11 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion stri
 		if val != canaryVersion {
 			r.Annotations[revisionAnnotation] = canaryVersion
 			r.Annotations[statusAnnotation] = "running"
+			r.Status.State = "running"
+			r.Status.CanaryRevision = canaryVersion
 			r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 			if err != nil {
-				c.recordEventErrorf(r, "Rollout %s.%s annotations update failed: %v", r.Name, r.Namespace, err)
+				c.recordEventErrorf(r, "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 				return false
 			}
 			return true
@@ -152,7 +156,8 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion stri
 
 func (c *Controller) updateRolloutStatus(r *rolloutv1.Rollout, status string) bool {
 	var err error
-	r.Annotations[statusAnnotation] = "running"
+	r.Annotations[statusAnnotation] = status
+	r.Status.State = status
 	r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 	if err != nil {
 		c.recordEventErrorf(r, "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)

@@ -59,8 +59,8 @@ type Metric struct {
 
 // RolloutStatus is the status for a Rollout resource
 type RolloutStatus struct {
-	State        string `json:"state"`
-	CanaryWeight int32  `json:"canary_weight"`
+	State          string `json:"state"`
+	CanaryRevision string `json:"canaryRevision"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
