@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"time"
 
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	rolloutv1 "github.com/stefanprodan/steerer/pkg/apis/rollout/v1beta1"
@@ -32,13 +33,13 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 	}
 
 	// gate stage: check if primary deployment exists and is healthy
-	primary, ok := c.getDeployment(r.Spec.Primary.Name, r.Namespace)
+	primary, ok := c.getDeployment(r, r.Spec.Primary.Name, r.Namespace)
 	if !ok {
 		return
 	}
 
 	// gate stage: check if canary deployment exists and is healthy
-	canary, ok := c.getDeployment(r.Spec.Canary.Name, r.Namespace)
+	canary, ok := c.getDeployment(r, r.Spec.Canary.Name, r.Namespace)
 	if !ok {
 		return
 	}
@@ -60,7 +61,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 	if canaryRoute.Weight == 0 {
 		c.recordEventInfof(r, "Starting rollout for %s.%s", r.Name, r.Namespace)
 	} else {
-		if ok := c.checkDeploymentSuccessRate(r); !ok {
+		if ok := c.checkDeploymentMetrics(r); !ok {
 			return
 		}
 	}
@@ -161,10 +162,10 @@ func (c *Controller) updateRolloutStatus(r *rolloutv1.Rollout, status string) bo
 
 }
 
-func (c *Controller) getDeployment(name string, namespace string) (*appsv1.Deployment, bool) {
+func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace string) (*appsv1.Deployment, bool) {
 	dep, err := c.kubeClient.AppsV1().Deployments(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
-		c.logger.Errorf("Deployment %s.%s not found", name, namespace)
+		c.recordEventErrorf(r, "Deployment %s.%s not found", name, namespace)
 		return nil, false
 	}
 
@@ -180,17 +181,34 @@ func (c *Controller) getDeployment(name string, namespace string) (*appsv1.Deplo
 	return dep, true
 }
 
-func (c *Controller) checkDeploymentSuccessRate(r *rolloutv1.Rollout) bool {
-	val, err := c.getDeploymentMetric(r.Spec.Canary.Name, r.Namespace, r.Spec.Metric.Name, r.Spec.Metric.Interval)
-	if err != nil {
-		c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.metricsServer, err)
-		return false
-	}
+func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
+	for _, metric := range r.Spec.Metrics {
+		if metric.Name == "istio_requests_total" {
+			val, err := c.getDeploymentCounter(r.Spec.Canary.Name, r.Namespace, metric.Name, metric.Interval)
+			if err != nil {
+				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.metricsServer, err)
+				return false
+			}
+			if float64(metric.Threshold) > val {
+				c.recordEventErrorf(r, "Halt rollout %s.%s success rate %.2f%% < %v%%",
+					r.Name, r.Namespace, val, metric.Threshold)
+				return false
+			}
+		}
 
-	if float64(r.Spec.Metric.Threshold) > val {
-		c.recordEventErrorf(r, "Halt rollout %s.%s success rate %.2f%% < %v%%",
-			r.Name, r.Namespace, val, r.Spec.Metric.Threshold)
-		return false
+		if metric.Name == "istio_request_duration_seconds_bucket" {
+			val, err := c.GetDeploymentHistogram(r.Spec.Canary.Name, r.Namespace, metric.Name, metric.Interval)
+			if err != nil {
+				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.metricsServer, err)
+				return false
+			}
+			t := time.Duration(metric.Threshold) * time.Millisecond
+			if val > t {
+				c.recordEventErrorf(r, "Halt rollout %s.%s request duration %v > %v",
+					r.Name, r.Namespace, val, t)
+				return false
+			}
+		}
 	}
 
 	return true

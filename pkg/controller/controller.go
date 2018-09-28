@@ -15,7 +15,6 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -175,7 +174,6 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-
 	rollout, err := c.rolloutLister.Rollouts(namespace).Get(name)
 	if errors.IsNotFound(err) {
 		utilruntime.HandleError(fmt.Errorf("rollout '%s' in work queue no longer exists", key))
@@ -196,40 +194,6 @@ func (c *Controller) enqueueRollout(obj interface{}) {
 		return
 	}
 	c.workqueue.AddRateLimited(key)
-}
-
-func (c *Controller) handleObject(obj interface{}) {
-	var object metav1.Object
-	var ok bool
-	if object, ok = obj.(metav1.Object); !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			utilruntime.HandleError(fmt.Errorf("error decoding object, invalid type"))
-			return
-		}
-		object, ok = tombstone.Obj.(metav1.Object)
-		if !ok {
-			utilruntime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
-			return
-		}
-		c.logger.Debugf("Recovered deleted object '%s' from tombstone", object.GetName())
-	}
-	c.logger.Debugf("Processing object: %s", object.GetName())
-	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
-		if ownerRef.Kind != "Rollout" {
-			return
-		}
-
-		vs, err := c.rolloutLister.Rollouts(object.GetNamespace()).Get(ownerRef.Name)
-		if err != nil {
-			c.logger.Debugf("ignoring orphaned object '%s' of '%s'", object.GetSelfLink(), ownerRef.Name)
-			return
-		}
-
-		c.enqueueRollout(vs)
-		return
-	}
-
 }
 
 func (c *Controller) recordEventInfof(r *rolloutv1.Rollout, template string, args ...interface{}) {

@@ -38,7 +38,7 @@ type RolloutSpec struct {
 	Primary        Target         `json:"primary"`
 	Canary         Target         `json:"canary"`
 	VirtualService VirtualService `json:"virtualService"`
-	Metric         Metric         `json:"metric"`
+	Metrics        []Metric       `json:"metrics"`
 }
 
 type Target struct {
@@ -52,7 +52,6 @@ type VirtualService struct {
 }
 
 type Metric struct {
-	Type      string `json:"type"`
 	Name      string `json:"name"`
 	Interval  string `json:"interval"`
 	Threshold int    `json:"threshold"`

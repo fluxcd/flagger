@@ -68,19 +68,20 @@ func (c *Controller) queryMetric(query string) (*VectorQueryResponse, error) {
 	return &values, nil
 }
 
-func (c *Controller) getDeploymentMetric(name string, namespace string, counter string, interval string) (float64, error) {
-	var rate float64
+// istio_requests_total
+func (c *Controller) getDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
+	var rate *float64
 	querySt := url.QueryEscape(`sum(rate(` +
-		counter + `{reporter="destination",destination_workload_namespace=~"` +
+		metric + `{reporter="destination",destination_workload_namespace=~"` +
 		namespace + `",destination_workload=~"` +
 		name + `",response_code!~"5.*"}[1m])) / sum(rate(` +
-		counter + `{reporter="destination",destination_workload_namespace=~"` +
+		metric + `{reporter="destination",destination_workload_namespace=~"` +
 		namespace + `",destination_workload=~"` +
 		name + `"}[` +
 		interval + `])) * 100 `)
 	result, err := c.queryMetric(querySt)
 	if err != nil {
-		return rate, err
+		return 0, err
 	}
 
 	for _, v := range result.Data.Result {
@@ -89,12 +90,46 @@ func (c *Controller) getDeploymentMetric(name string, namespace string, counter 
 		case string:
 			f, err := strconv.ParseFloat(metricValue.(string), 64)
 			if err != nil {
-				return rate, err
+				return 0, err
 			}
-			rate = f
+			rate = &f
 		}
 	}
-	return rate, nil
+	if rate == nil {
+		return 0, fmt.Errorf("no values found for metric %s", metric)
+	}
+	return *rate, nil
+}
+
+// istio_request_duration_seconds_bucket
+func (c *Controller) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
+	var rate *float64
+	querySt := url.QueryEscape(`histogram_quantile(0.99, sum(irate(` +
+		metric + `{reporter="destination",destination_workload=~"` +
+		name + `", destination_workload_namespace=~"` +
+		namespace + `"}[` +
+		interval + `])) by (le))`)
+	result, err := c.queryMetric(querySt)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, v := range result.Data.Result {
+		metricValue := v.Value[1]
+		switch metricValue.(type) {
+		case string:
+			f, err := strconv.ParseFloat(metricValue.(string), 64)
+			if err != nil {
+				return 0, err
+			}
+			rate = &f
+		}
+	}
+	if rate == nil {
+		return 0, fmt.Errorf("no values found for metric %s", metric)
+	}
+	ms := time.Duration(int64(*rate*1000)) * time.Millisecond
+	return ms, nil
 }
 
 func CheckMetricsServer(address string) (bool, error) {

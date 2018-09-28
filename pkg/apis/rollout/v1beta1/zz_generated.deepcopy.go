@@ -45,7 +45,7 @@ func (in *Rollout) DeepCopyInto(out *Rollout) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -107,7 +107,11 @@ func (in *RolloutSpec) DeepCopyInto(out *RolloutSpec) {
 	out.Primary = in.Primary
 	out.Canary = in.Canary
 	out.VirtualService = in.VirtualService
-	out.Metric = in.Metric
+	if in.Metrics != nil {
+		in, out := &in.Metrics, &out.Metrics
+		*out = make([]Metric, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
