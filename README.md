@@ -1,7 +1,6 @@
 # steerer
 
 [![travis](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
-![docker](https://img.shields.io/microbadger/image-size/stefanprodan/steerer.svg)
 ![license](https://img.shields.io/github/license/stefanprodan/steerer.svg)
 
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
@@ -45,7 +44,7 @@ Gated rollout stages:
     * halt rollout if percentage is under the specified threshold
 * increase canary traffic wight by 10% till it reaches 100% 
     * halt rollout while canary request success rate is under the threshold
-    * halt rollout while canary request duration are over the threshold
+    * halt rollout while canary request duration P99 is over the threshold
     * halt rollout if the primary or canary deployment becomes unhealthy 
     * halt rollout while canary deployment is being scaled up/down by HPA
 * promote canary to primary
