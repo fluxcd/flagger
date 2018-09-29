@@ -180,8 +180,8 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	c.logger.Infof("Adding %s.%s to cache", rollout.Name, rollout.Namespace)
 	c.rollouts.Store(fmt.Sprintf("%s.%s", rollout.Name, rollout.Namespace), rollout)
+	c.logger.Infof("Synced %s", key)
 
 	return nil
 }
@@ -203,6 +203,11 @@ func (c *Controller) recordEventInfof(r *rolloutv1.Rollout, template string, arg
 
 func (c *Controller) recordEventErrorf(r *rolloutv1.Rollout, template string, args ...interface{}) {
 	c.logger.Errorf(template, args...)
+	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
+}
+
+func (c *Controller) recordEventWarningf(r *rolloutv1.Rollout, template string, args ...interface{}) {
+	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 

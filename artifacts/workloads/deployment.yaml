@@ -3,16 +3,13 @@ kind: Deployment
 metadata:
   name: podinfo
   namespace: test
-  annotations:
-    apps.weave.works/progressive: "true"
   labels:
     app: podinfo
 spec:
-  replicas: 2
+  replicas: 1
   strategy:
     rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 1
+      maxUnavailable: 0
     type: RollingUpdate
   selector:
     matchLabels:
@@ -48,6 +45,7 @@ spec:
             - check
             - http
             - localhost:9898/healthz
+          initialDelaySeconds: 5
           failureThreshold: 3
           periodSeconds: 10
           successThreshold: 1
@@ -59,11 +57,15 @@ spec:
             - check
             - http
             - localhost:9898/readyz
+          initialDelaySeconds: 5
           failureThreshold: 3
-          periodSeconds: 10
+          periodSeconds: 3
           successThreshold: 1
           timeoutSeconds: 1
         resources:
+          limits:
+            cpu: 2000m
+            memory: 512Mi
           requests:
-            cpu: 1m
-            memory: 16Mi
+            cpu: 10m
+            memory: 64Mi

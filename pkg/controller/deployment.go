@@ -32,14 +32,20 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 		return
 	}
 
-	// gate stage: check if primary deployment exists and is healthy
-	primary, ok := c.getDeployment(r, r.Spec.Primary.Name, r.Namespace)
-	if !ok {
-		return
+	// set max weight default value to 100%
+	maxWeight := 100
+	if r.Spec.CanaryAnalysis.MaxWeight > 0 {
+		maxWeight = r.Spec.CanaryAnalysis.MaxWeight
 	}
 
 	// gate stage: check if canary deployment exists and is healthy
 	canary, ok := c.getDeployment(r, r.Spec.Canary.Name, r.Namespace)
+	if !ok {
+		return
+	}
+
+	// gate stage: check if primary deployment exists and is healthy
+	primary, ok := c.getDeployment(r, r.Spec.Primary.Name, r.Namespace)
 	if !ok {
 		return
 	}
@@ -67,14 +73,14 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 	}
 
 	// routing stage: increase canary traffic percentage
-	if canaryRoute.Weight != 100 {
-		primaryRoute.Weight -= r.Spec.VirtualService.Weight
-		if primaryRoute.Weight > 100 {
-			primaryRoute.Weight = 100
-		}
-		canaryRoute.Weight += r.Spec.VirtualService.Weight
+	if canaryRoute.Weight < maxWeight {
+		primaryRoute.Weight -= r.Spec.CanaryAnalysis.StepWeight
 		if primaryRoute.Weight < 0 {
 			primaryRoute.Weight = 0
+		}
+		canaryRoute.Weight += r.Spec.CanaryAnalysis.StepWeight
+		if primaryRoute.Weight > 100 {
+			primaryRoute.Weight = 100
 		}
 
 		if ok := c.updateVirtualServiceRoutes(r, vs, primaryRoute, canaryRoute); !ok {
@@ -84,7 +90,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 		c.recordEventInfof(r, "Advance rollout %s.%s weight %v", r.Name, r.Namespace, canaryRoute.Weight)
 
 		// promotion stage: override primary.template.spec with the canary spec
-		if canaryRoute.Weight == 100 {
+		if canaryRoute.Weight == maxWeight {
 			c.recordEventInfof(r, "Copying %s.%s template spec to %s.%s",
 				canary.GetName(), canary.Namespace, primary.GetName(), primary.Namespace)
 
@@ -175,7 +181,7 @@ func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace 
 	}
 
 	if msg, healthy := getDeploymentStatus(dep); !healthy {
-		c.logger.Infof("Halt rollout for %s.%s %s", dep.GetName(), dep.Namespace, msg)
+		c.recordEventWarningf(r, "Halt rollout %s.%s %s", dep.GetName(), dep.Namespace, msg)
 		return nil, false
 	}
 
@@ -187,7 +193,7 @@ func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace 
 }
 
 func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
-	for _, metric := range r.Spec.Metrics {
+	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
 		if metric.Name == "istio_requests_total" {
 			val, err := c.getDeploymentCounter(r.Spec.Canary.Name, r.Namespace, metric.Name, metric.Interval)
 			if err != nil {
@@ -195,7 +201,7 @@ func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
 				return false
 			}
 			if float64(metric.Threshold) > val {
-				c.recordEventErrorf(r, "Halt rollout %s.%s success rate %.2f%% < %v%%",
+				c.recordEventWarningf(r, "Halt rollout %s.%s success rate %.2f%% < %v%%",
 					r.Name, r.Namespace, val, metric.Threshold)
 				return false
 			}
@@ -209,7 +215,7 @@ func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
 			}
 			t := time.Duration(metric.Threshold) * time.Millisecond
 			if val > t {
-				c.recordEventErrorf(r, "Halt rollout %s.%s request duration %v > %v",
+				c.recordEventWarningf(r, "Halt rollout %s.%s request duration %v > %v",
 					r.Name, r.Namespace, val, t)
 				return false
 			}

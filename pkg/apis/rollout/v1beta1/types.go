@@ -37,8 +37,8 @@ type RolloutSpec struct {
 	TargetKind     string         `json:"targetKind"`
 	Primary        Target         `json:"primary"`
 	Canary         Target         `json:"canary"`
+	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
 	VirtualService VirtualService `json:"virtualService"`
-	Metrics        []Metric       `json:"metrics"`
 }
 
 type Target struct {
@@ -47,8 +47,13 @@ type Target struct {
 }
 
 type VirtualService struct {
-	Name   string `json:"name"`
-	Weight int    `json:"weight"`
+	Name string `json:"name"`
+}
+
+type CanaryAnalysis struct {
+	MaxWeight  int      `json:"maxWeight"`
+	StepWeight int      `json:"stepWeight"`
+	Metrics    []Metric `json:"metrics"`
 }
 
 type Metric struct {

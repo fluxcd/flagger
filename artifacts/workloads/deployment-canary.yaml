@@ -57,7 +57,7 @@ spec:
             - http
             - localhost:9898/readyz
           failureThreshold: 3
-          periodSeconds: 10
+          periodSeconds: 3
           successThreshold: 1
           timeoutSeconds: 2
         resources:
@@ -65,7 +65,7 @@ spec:
             cpu: 1000m
             memory: 256Mi
           requests:
-            cpu: 10m
+            cpu: 100m
             memory: 16Mi
         volumeMounts:
         - mountPath: /data

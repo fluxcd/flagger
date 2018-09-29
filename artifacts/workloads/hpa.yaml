@@ -1,15 +1,15 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: podinfo-canary
+  name: podinfo
   namespace: test
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: podinfo-canary
+    name: podinfo
   minReplicas: 2
-  maxReplicas: 3
+  maxReplicas: 4
   metrics:
   - type: Resource
     resource:
@@ -17,7 +17,3 @@ spec:
       # scale up if usage is above
       # 99% of the requested CPU (100m)
       targetAverageUtilization: 99
-  - type: Resource
-    resource:
-      name: memory
-      targetAverageValue: 200Mi

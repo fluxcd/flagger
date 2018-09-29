@@ -22,10 +22,18 @@ spec:
       properties:
         spec:
           required:
+            - targetKind
+            - virtualService
             - primary
             - canary
-            - virtualService
+            - canaryAnalysis
           properties:
+            targetKind:
+              type: string
+            virtualService:
+              properties:
+                name:
+                  type: string
             primary:
               properties:
                 name:
@@ -38,23 +46,23 @@ spec:
                   type: string
                 host:
                   type: string
-            virtualService:
+            canaryAnalysis:
               properties:
-                name:
-                  type: string
-                weight:
+                maxWeight:
                   type: number
-            metrics:
-              type: array
-              properties:
-                items:
-                  type: object
+                stepWeight:
+                  type: number
+                metrics:
+                  type: array
                   properties:
-                    name:
-                      type: string
-                    interval:
-                      type: string
-                      pattern: "^[0-9]+(m)"
-                    threshold:
-                      type: number
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        interval:
+                          type: string
+                          pattern: "^[0-9]+(m)"
+                        threshold:
+                          type: number
 {{- end }}

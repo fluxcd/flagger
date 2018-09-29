@@ -2,14 +2,14 @@ apiVersion: v1
 entries:
   steerer:
   - apiVersion: v1
-    appVersion: 0.0.1-beta.12
-    created: 2018-09-28T16:49:49.90177054+03:00
+    appVersion: 0.0.1-rc.1
+    created: 2018-09-29T11:08:25.598356915+03:00
     description: Steerer is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
-    digest: 792a2bf520cac415a2e2a4a3b2b7142c9fb09a4737ea7135146bd5796c5f9d94
+    digest: af14826edae5afcda1b2afebf17e3b8007f1d2a35e65093ab32e786a6599b201
     name: steerer
     urls:
     - https://stefanprodan.github.io/steerer/steerer-0.0.1.tgz
     version: 0.0.1
-generated: 2018-09-28T16:49:49.900919976+03:00
+generated: 2018-09-29T11:08:25.597473362+03:00

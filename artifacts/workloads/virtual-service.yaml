@@ -1,13 +1,10 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  annotations:
-    apps.weave.works/progressive-revision: ""
-    apps.weave.works/progressive-status: ""
-  labels:
-    app: podinfo
   name: podinfo
   namespace: test
+  labels:
+    app: podinfo
 spec:
   gateways:
   - public-gateway.istio-system.svc.cluster.local
@@ -26,4 +23,7 @@ spec:
         port:
           number: 9898
       weight: 0
-    timeout: 30s
+    timeout: 10s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
