@@ -42,7 +42,7 @@ Gated rollout stages:
 * increase canary traffic weight percentage from 0% to 10%
 * check canary HTTP success rate
     * halt rollout if percentage is under the specified threshold
-* increase canary traffic wight by 10% till it reaches 100% 
+* increase canary traffic wight by 10% (step wight) till it reaches 100% (max weight) 
     * halt rollout while canary request success rate is under the threshold
     * halt rollout while canary request duration P99 is over the threshold
     * halt rollout if the primary or canary deployment becomes unhealthy 
@@ -55,6 +55,8 @@ Gated rollout stages:
 * scale to zero the canary deployment
 * mark rollout as finished
 * wait for the canary deployment to be updated (revision bump) and start over
+
+You can change the canary analysis max weight and the step wight size in the rollout custom resource.
 
 Assuming the primary deployment is named _podinfo_ and the canary one _podinfo-canary_, Steerer will require 
 a virtual service configured with weight-based routing:
@@ -108,30 +110,32 @@ metadata:
   namespace: test
 spec:
   targetKind: Deployment
-  primary:
-    # deployment name
+  virtualService:
     name: podinfo
-    # clusterIP service name
+  primary:
+    name: podinfo
     host: podinfo
   canary:
     name: podinfo-canary
     host: podinfo-canary
-  virtualService:
-    name: podinfo
+  canaryAnalysis:
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 100
     # canary increment step
     # percentage (0-100)
-    weight: 10
-  metrics:
-  - name: istio_requests_total
-    # minimum req success rate (non 5xx responses)
-    # percentage (0-100)
-    threshold: 99
-    interval: 1m
-  - name: istio_request_duration_seconds_bucket
-    # maximum req duration P99
-    # milliseconds
-    threshold: 500
-    interval: 1m
+    stepWeight: 10
+    metrics:
+    - name: istio_requests_total
+      # minimum req success rate (non 5xx responses)
+      # percentage (0-100)
+      threshold: 99
+      interval: 1m
+    - name: istio_request_duration_seconds_bucket
+      # maximum req duration P99
+      # milliseconds
+      threshold: 500
+      interval: 1m
 ```
 
 The canary analysis is using the following promql queries:
