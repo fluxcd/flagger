@@ -14,10 +14,10 @@ If you are new to Istio you can follow my [GKE service mesh walk-through](https:
 Deploy Steerer in the `istio-system` using Helm:
 
 ```bash
-# add Steerer Helm repo
+# add the Helm repository
 helm repo add steerer https://stefanprodan.github.io/steerer
 
-# install or upgrade Steerer
+# install or upgrade
 helm upgrade --install steerer steerer/steerer \
 --namespace=istio-system \
 --set metricsServer=http://prometheus.istio-system:9090 \
@@ -181,41 +181,44 @@ histogram_quantile(0.99,
 )
 ```
 
-### Example
+### Automated canary analysis and promotion
 
-![steerer-overview](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-actions.png)
+![steerer-canary](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-canary.png)
 
-Create a test namespace with Istio sidecard injection enabled:
-
-```bash
-kubectl apply -f ./artifacts/namespaces/
-```
-
-Create the primary deployment and service:
+Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
-kubectl apply -f ./artifacts/workloads/deployment.yaml
-kubectl apply -f ./artifacts/workloads/service.yaml
+export REPO=https://raw.githubusercontent.com/stefanprodan/steerer/master
+
+kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
 ```
 
-Create the canary deployment, service and horizontal pod auto-scalar:
+Create the primary deployment, service and hpa:
 
 ```bash
-kubectl apply -f ./artifacts/workloads/deployment-canary.yaml
-kubectl apply -f ./artifacts/workloads/service-canary.yaml
-kubectl apply -f ./artifacts/workloads/hpa-canary.yaml
+kubectl apply -f ${REPO}/artifacts/workloads/primary-deployment.yaml
+kubectl apply -f ${REPO}/artifacts/workloads/primary-service.yaml
+kubectl apply -f ${REPO}/artifacts/workloads/primary-hpa.yaml
 ```
 
-Create a virtual service (replace the gateway and the internet domain with your own):
+Create the canary deployment, service and hpa:
 
-```yaml
-kubectl apply -f ./artifacts/workloads/virtual-service.yaml
+```bash
+kubectl apply -f ${REPO}/artifacts/workloads/canary-deployment.yaml
+kubectl apply -f ${REPO}/artifacts/workloads/canary-service.yaml
+kubectl apply -f ${REPO}/artifacts/workloads/canary-hpa.yaml
+```
+
+Create a virtual service (replace the Istio gateway and the internet domain with your own):
+
+```bash
+kubectl apply -f ${REPO}/artifacts/workloads/virtual-service.yaml
 ```
 
 Create a rollout custom resource:
 
 ```bash
-kubectl apply -f ./artifacts/rollouts/podinfo.yaml
+kubectl apply -f ${REPO}/artifacts/rollouts/podinfo.yaml
 ```
 
 Rollout output:
