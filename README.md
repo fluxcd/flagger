@@ -1,6 +1,7 @@
 # steerer
 
 [![travis](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
+![release](https://img.shields.io/github/release/stefanprodan/steerer/all.svg)
 ![license](https://img.shields.io/github/license/stefanprodan/steerer.svg)
 
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
