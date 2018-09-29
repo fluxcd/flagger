@@ -183,7 +183,7 @@ histogram_quantile(0.99,
 
 ### Automated canary analysis and promotion
 
-![steerer-canary](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-canary.png)
+![steerer-canary](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-canary-hpa.png)
 
 Create a test namespace with Istio sidecar injection enabled:
 
