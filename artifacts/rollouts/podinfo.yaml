@@ -23,6 +23,9 @@ spec:
     name: podinfo-canary
     host: podinfo-canary
   canaryAnalysis:
+    # max number of failed metric checks
+    # before rolling back the canary
+    threshold: 10
     # max traffic percentage routed to canary
     # percentage (0-100)
     maxWeight: 100

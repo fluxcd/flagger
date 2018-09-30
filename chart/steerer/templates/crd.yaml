@@ -48,6 +48,8 @@ spec:
                   type: string
             canaryAnalysis:
               properties:
+                threshold:
+                  type: number
                 maxWeight:
                   type: number
                 stepWeight:
