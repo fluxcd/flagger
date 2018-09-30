@@ -62,12 +62,36 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 		return
 	}
 
+	// gate stage: check if the number of failed checks reached the threshold
+	if r.Status.State == "running" && r.Status.FailedChecks >= r.Spec.CanaryAnalysis.Threshold {
+		c.recordEventWarningf(r, "Rolling back %s.%s failed checks threshold reached %v",
+			r.Spec.Canary.Name, r.Namespace, r.Status.FailedChecks)
+
+		// route all traffic back to primary
+		primaryRoute.Weight = 100
+		canaryRoute.Weight = 0
+		if ok := c.updateVirtualServiceRoutes(r, vs, primaryRoute, canaryRoute); !ok {
+			return
+		}
+
+		c.recordEventWarningf(r, "Canary failed! Scaling down %s.%s",
+			canary.GetName(), canary.Namespace)
+
+		// shutdown canary
+		c.scaleToZeroCanary(r)
+
+		// mark rollout as failed
+		c.updateRolloutStatus(r, "failed")
+		return
+	}
+
 	// gate stage: check if the canary success rate is above the threshold
 	// skip check if no traffic is routed to canary
 	if canaryRoute.Weight == 0 {
 		c.recordEventInfof(r, "Starting rollout for %s.%s", r.Name, r.Namespace)
 	} else {
 		if ok := c.checkDeploymentMetrics(r); !ok {
+			c.updateRolloutFailedChecks(r, r.Status.FailedChecks+1)
 			return
 		}
 	}
@@ -111,7 +135,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 
 		// final stage: mark rollout as finished and scale canary to zero replicas
 		c.updateRolloutStatus(r, "finished")
-		c.recordEventInfof(r, "%s.%s promotion complete! Scaling down %s.%s",
+		c.recordEventInfof(r, "Promotion completed! Scaling down %s.%s",
 			r.Name, r.Namespace, canary.GetName(), canary.Namespace)
 		c.scaleToZeroCanary(r)
 	}
@@ -129,48 +153,61 @@ func (c *Controller) getRollout(name string, namespace string) (*rolloutv1.Rollo
 
 func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion string) bool {
 	var err error
-	if val, ok := r.Annotations[revisionAnnotation]; !ok {
-		r.Annotations[revisionAnnotation] = canaryVersion
-		r.Annotations[statusAnnotation] = "running"
-		r.Status.State = "running"
-		r.Status.CanaryRevision = canaryVersion
+	if r.Status.State == "" {
+		r.Status = rolloutv1.RolloutStatus{
+			State:          "running",
+			CanaryRevision: canaryVersion,
+			FailedChecks:   0,
+		}
 		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 		if err != nil {
-			c.recordEventErrorf(r, "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+			c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
 		return true
-	} else {
-		if r.Annotations[statusAnnotation] == "running" {
-			return true
-		}
-		if val != canaryVersion {
-			r.Annotations[revisionAnnotation] = canaryVersion
-			r.Annotations[statusAnnotation] = "running"
-			r.Status.State = "running"
-			r.Status.CanaryRevision = canaryVersion
-			r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
-			if err != nil {
-				c.recordEventErrorf(r, "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
-				return false
-			}
-			return true
-		}
 	}
+
+	if r.Status.State == "running" {
+		return true
+	}
+
+	if r.Status.CanaryRevision != canaryVersion {
+		r.Status = rolloutv1.RolloutStatus{
+			State:          "running",
+			CanaryRevision: canaryVersion,
+			FailedChecks:   0,
+		}
+		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+		if err != nil {
+			c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+			return false
+		}
+		return true
+	}
+
 	return false
 }
 
 func (c *Controller) updateRolloutStatus(r *rolloutv1.Rollout, status string) bool {
 	var err error
-	r.Annotations[statusAnnotation] = status
 	r.Status.State = status
 	r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 	if err != nil {
-		c.recordEventErrorf(r, "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+		c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 		return false
 	}
 	return true
+}
 
+func (c *Controller) updateRolloutFailedChecks(r *rolloutv1.Rollout, val int) bool {
+	var err error
+	r.Status.FailedChecks = val
+	r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+	if err != nil {
+		c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+		return false
+	}
+	return true
 }
 
 func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace string) (*appsv1.Deployment, bool) {

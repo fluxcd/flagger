@@ -51,6 +51,7 @@ type VirtualService struct {
 }
 
 type CanaryAnalysis struct {
+	Threshold  int      `json:"threshold"`
 	MaxWeight  int      `json:"maxWeight"`
 	StepWeight int      `json:"stepWeight"`
 	Metrics    []Metric `json:"metrics"`
@@ -66,6 +67,7 @@ type Metric struct {
 type RolloutStatus struct {
 	State          string `json:"state"`
 	CanaryRevision string `json:"canaryRevision"`
+	FailedChecks   int    `json:"failedChecks"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
