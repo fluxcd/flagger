@@ -2,15 +2,18 @@
 
 [![build](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
 [![release](https://img.shields.io/github/release/stefanprodan/steerer/all.svg)](https://github.com/stefanprodan/steerer/releases)
+[![report](https://goreportcard.com/badge/github.com/stefanprodan/steerer)](https://goreportcard.com/report/github.com/stefanprodan/steerer)
 [![license](https://img.shields.io/github/license/stefanprodan/steerer.svg)](https://github.com/stefanprodan/steerer/blob/master/LICENSE)
 
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
+The project is currently in experimental phase and it is expected that breaking changes 
+to the API will be made in the upcoming releases.
 
 ### Install 
 
 Before installing Steerer make sure you have Istio setup up with Prometheus enabled. 
-If you are new to Istio you can follow my [GKE service mesh walk-through](https://github.com/stefanprodan/istio-gke).
+If you are new to Istio you can follow my [Istio service mesh walk-through](https://github.com/stefanprodan/istio-gke).
 
 Deploy Steerer in the `istio-system` namespace using Helm:
 
@@ -24,6 +27,8 @@ helm upgrade --install steerer steerer/steerer \
 --set metricsServer=http://prometheus.istio-system:9090 \
 --set controlLoopInterval=1m
 ```
+
+Steerer is compatible with Kubernetes >1.10.0 and Istio >1.0.0.
 
 ### Usage
 
@@ -149,7 +154,7 @@ spec:
 
 The canary analysis is using the following promql queries:
  
-HTTP requests success rate percentage:
+_HTTP requests success rate percentage_
 
 ```sql
 sum(
@@ -174,7 +179,7 @@ sum(
 )
 ```
 
-HTTP requests milliseconds duration P99:
+_HTTP requests milliseconds duration P99_
 
 ```sql
 histogram_quantile(0.99, 
@@ -190,7 +195,7 @@ histogram_quantile(0.99,
 )
 ```
 
-### Automated canary analysis and promotion
+### Automated canary analysis, promotions and rollbacks
 
 ![steerer-canary](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-canary-hpa.png)
 
@@ -235,6 +240,10 @@ Rollout output:
 ```
 kubectl -n test describe rollout/podinfo
 
+Status:
+  Canary Revision:  16271121
+  Failed Checks:    6
+  State:            finished
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
@@ -306,3 +315,53 @@ Events:
   Warning  Synced  1m    steerer  Rolling back podinfo-canary.test failed checks threshold reached 10
   Warning  Synced  1m    steerer  Canary failed! Scaling down podinfo.test
 ```
+
+Trigger a new rollout by updating the canary image:
+
+```bash
+kubectl -n test set image deployment/podinfo-canary \
+podinfod=quay.io/stefanprodan/podinfo:1.2.1
+
+kubectl -n test scale deployment/podinfo-canary \
+--replicas=1
+```
+
+Steer detects that the canary revision changed and starts a new rollout:
+
+```
+kubectl -n test describe rollout/podinfo
+
+Status:
+  Canary Revision:  16871136
+  Failed Checks:    0
+  State:            finished
+Events:
+  Type     Reason  Age   From     Message
+  ----     ------  ----  ----     -------
+  Normal   Synced  3m    steerer  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
+  Normal   Synced  3m    steerer  Starting rollout for podinfo.test
+  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 10
+  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 20
+  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 30
+  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 40
+  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 50
+  Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 60
+  Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 70
+  Normal   Synced  55s   steerer  Advance rollout podinfo.test weight 80
+  Normal   Synced  45s   steerer  Advance rollout podinfo.test weight 90
+  Normal   Synced  35s   steerer  Advance rollout podinfo.test weight 100
+  Normal   Synced  25s   steerer  Copying podinfo-canary.test template spec to podinfo.test
+  Warning  Synced  15s   steerer  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
+  Normal   Synced  5s    steerer  Promotion completed! Scaling down podinfo-canary.test
+```
+
+### Contributing
+
+Steerer is Apache 2.0 licensed and accepts contributions via GitHub pull requests.
+
+When submitting bug reports please include as much details as possible: 
+* which Steerer version
+* which Steerer CRD version
+* which Kubernetes/Istio version
+* what configuration (rollout, virtual service and workloads definitions)
+* what happened (Steerer, Istio Pilot and Proxy logs)
