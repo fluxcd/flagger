@@ -15,7 +15,6 @@ addons:
 script:
 - set -e
 - make test
-- make verify-codegen
 - make build
 
 after_success:

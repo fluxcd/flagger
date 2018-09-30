@@ -161,7 +161,7 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion stri
 		}
 		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 		if err != nil {
-			c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+			c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
 		return true
@@ -179,7 +179,7 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion stri
 		}
 		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 		if err != nil {
-			c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+			c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
 		return true
@@ -193,7 +193,7 @@ func (c *Controller) updateRolloutStatus(r *rolloutv1.Rollout, status string) bo
 	r.Status.State = status
 	r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 	if err != nil {
-		c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+		c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 		return false
 	}
 	return true
@@ -204,7 +204,7 @@ func (c *Controller) updateRolloutFailedChecks(r *rolloutv1.Rollout, val int) bo
 	r.Status.FailedChecks = val
 	r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
 	if err != nil {
-		c.logger.Errorf( "Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+		c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 		return false
 	}
 	return true

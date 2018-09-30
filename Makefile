@@ -2,7 +2,7 @@ TAG?=latest
 VERSION?=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"')
 VERSION_MINOR:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | rev | cut -d'.' -f2- | rev)
 PATCH:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | awk -F. '{print $$NF}')
-
+SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/logging pkg/version
 run:
 	go run cmd/steerer/* -kubeconfig=$$HOME/.kube/config -log-level=debug -metrics-server=https://prometheus.istio.weavedx.com
 
@@ -12,11 +12,17 @@ build:
 push:
 	docker push stefanprodan/steerer:$(TAG)
 
-test:
-	go test ./...
+fmt:
+	gofmt -l -s -w $(SOURCE_DIRS)
 
-verify-codegen:
+test-fmt:
+	gofmt -l -s $(SOURCE_DIRS) | grep ".*\.go"; if [ "$$?" = "0" ]; then exit 1; fi
+
+test-codegen:
 	./hack/verify-codegen.sh
+
+test: test-fmt test-codegen
+	go test ./...
 
 helm-package:
 	cd chart/ && helm package steerer/
@@ -50,4 +56,14 @@ dev-up: version-up
 	docker push stefanprodan/steerer:$(VERSION)
 	helm upgrade --install steerer ./chart/steerer --namespace=istio-system
 
+release:
+	git tag $(VERSION)
+	git push origin $(VERSION)
+
+release-set: fmt version-set helm-package
+	git add .
+	git commit -m "Release $(VERSION)"
+	git push origin master
+	git tag $(VERSION)
+	git push origin $(VERSION)
 
