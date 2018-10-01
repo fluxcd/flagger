@@ -321,9 +321,6 @@ Trigger a new rollout by updating the canary image:
 ```bash
 kubectl -n test set image deployment/podinfo-canary \
 podinfod=quay.io/stefanprodan/podinfo:1.2.1
-
-kubectl -n test scale deployment/podinfo-canary \
---replicas=1
 ```
 
 Steer detects that the canary revision changed and starts a new rollout:
@@ -332,14 +329,15 @@ Steer detects that the canary revision changed and starts a new rollout:
 kubectl -n test describe rollout/podinfo
 
 Status:
-  Canary Revision:  16871136
+  Canary Revision:  19871136
   Failed Checks:    0
   State:            finished
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
-  Normal   Synced  3m    steerer  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
-  Normal   Synced  3m    steerer  Starting rollout for podinfo.test
+  Normal   Synced  3m    steerer  New revision detected podinfo-canary.test old 17211012 new 17246876
+  Normal   Synced  3m    steerer  Scaling up podinfo.test
+  Warning  Synced  3m    steerer  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
   Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 10
   Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 20
   Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 30

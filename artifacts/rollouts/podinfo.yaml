@@ -7,9 +7,6 @@
 apiVersion: apps.weave.works/v1beta1
 kind: Rollout
 metadata:
-  annotations:
-    apps.weave.works/canary-revision: ""
-    apps.weave.works/status: ""
   name: podinfo
   namespace: test
 spec:

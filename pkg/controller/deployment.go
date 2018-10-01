@@ -10,11 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	revisionAnnotation = "apps.weave.works/canary-revision"
-	statusAnnotation   = "apps.weave.works/status"
-)
-
 func (c *Controller) doRollouts() {
 	c.rollouts.Range(func(key interface{}, value interface{}) bool {
 		r := value.(*rolloutv1.Rollout)
@@ -39,7 +34,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 	}
 
 	// gate stage: check if canary deployment exists and is healthy
-	canary, ok := c.getDeployment(r, r.Spec.Canary.Name, r.Namespace)
+	canary, ok := c.getCanaryDeployment(r, r.Spec.Canary.Name, r.Namespace)
 	if !ok {
 		return
 	}
@@ -58,7 +53,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 	}
 
 	// gate stage: check if rollout should start (canary revision has changes) or continue
-	if ok := c.checkRolloutStatus(r, canary.ResourceVersion); !ok {
+	if ok := c.checkRolloutStatus(r, canary); !ok {
 		return
 	}
 
@@ -81,7 +76,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 		c.scaleToZeroCanary(r)
 
 		// mark rollout as failed
-		c.updateRolloutStatus(r, "failed")
+		c.updateRolloutStatus(r, "promotion-failed")
 		return
 	}
 
@@ -134,10 +129,9 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 		}
 
 		// final stage: mark rollout as finished and scale canary to zero replicas
-		c.updateRolloutStatus(r, "finished")
-		c.recordEventInfof(r, "Promotion completed! Scaling down %s.%s",
-			r.Name, r.Namespace, canary.GetName(), canary.Namespace)
+		c.recordEventInfof(r, "Scaling down %s.%s", canary.GetName(), canary.Namespace)
 		c.scaleToZeroCanary(r)
+		c.updateRolloutStatus(r, "promotion-finished")
 	}
 }
 
@@ -151,12 +145,12 @@ func (c *Controller) getRollout(name string, namespace string) (*rolloutv1.Rollo
 	return r, true
 }
 
-func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion string) bool {
+func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canary *appsv1.Deployment) bool {
 	var err error
 	if r.Status.State == "" {
 		r.Status = rolloutv1.RolloutStatus{
 			State:          "running",
-			CanaryRevision: canaryVersion,
+			CanaryRevision: canary.ResourceVersion,
 			FailedChecks:   0,
 		}
 		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
@@ -171,10 +165,32 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion stri
 		return true
 	}
 
-	if r.Status.CanaryRevision != canaryVersion {
+	if r.Status.State == "promotion-finished" {
+		c.setCanaryRevision(r, "finished")
+		c.logger.Infof("Promotion completed! %s.%s revision %s", r.Spec.Canary.Name, r.Namespace,
+			c.getDeploymentRevision(r.Spec.Canary.Name, r.Namespace))
+		return false
+	}
+
+	if r.Status.State == "promotion-failed" {
+		c.setCanaryRevision(r, "failed")
+		c.logger.Infof("Promotion failed! %s.%s revision %s", r.Spec.Canary.Name, r.Namespace,
+			c.getDeploymentRevision(r.Spec.Canary.Name, r.Namespace))
+		return false
+	}
+
+	if r.Status.CanaryRevision != canary.ResourceVersion {
+		c.recordEventInfof(r, "New revision detected %s.%s old %s new %s",
+			canary.GetName(), canary.Namespace, r.Status.CanaryRevision, canary.ResourceVersion)
+		canary.Spec.Replicas = int32p(1)
+		canary, err = c.kubeClient.AppsV1().Deployments(canary.Namespace).Update(canary)
+		if err != nil {
+			c.recordEventErrorf(r, "Scaling up %s.%s failed: %v", canary.GetName(), canary.Namespace, err)
+			return false
+		}
 		r.Status = rolloutv1.RolloutStatus{
 			State:          "running",
-			CanaryRevision: canaryVersion,
+			CanaryRevision: canary.ResourceVersion,
 			FailedChecks:   0,
 		}
 		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
@@ -182,7 +198,9 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canaryVersion stri
 			c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
-		return true
+		c.recordEventInfof(r, "Scaling up %s.%s", canary.GetName(), canary.Namespace)
+
+		return false
 	}
 
 	return false
@@ -229,6 +247,31 @@ func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace 
 	return dep, true
 }
 
+func (c *Controller) getCanaryDeployment(r *rolloutv1.Rollout, name string, namespace string) (*appsv1.Deployment, bool) {
+	dep, err := c.kubeClient.AppsV1().Deployments(namespace).Get(name, v1.GetOptions{})
+	if err != nil {
+		c.recordEventErrorf(r, "Deployment %s.%s not found", name, namespace)
+		return nil, false
+	}
+
+	if msg, healthy := getDeploymentStatus(dep); !healthy {
+		c.recordEventWarningf(r, "Halt rollout %s.%s %s", dep.GetName(), dep.Namespace, msg)
+		return nil, false
+	}
+
+	return dep, true
+}
+
+func (c *Controller) getDeploymentRevision(name string, namespace string) string {
+	dep, err := c.kubeClient.AppsV1().Deployments(namespace).Get(name, v1.GetOptions{})
+	if err != nil {
+		c.logger.Errorf("Deployment %s.%s not found", name, namespace)
+		return ""
+	}
+
+	return dep.ResourceVersion
+}
+
 func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
 		if metric.Name == "istio_requests_total" {
@@ -270,11 +313,29 @@ func (c *Controller) scaleToZeroCanary(r *rolloutv1.Rollout) {
 	}
 	//HPA https://github.com/kubernetes/kubernetes/pull/29212
 	canary.Spec.Replicas = int32p(0)
-	_, err = c.kubeClient.AppsV1().Deployments(canary.Namespace).Update(canary)
+	canary, err = c.kubeClient.AppsV1().Deployments(canary.Namespace).Update(canary)
 	if err != nil {
 		c.recordEventErrorf(r, "Scaling down %s.%s failed: %v", canary.GetName(), canary.Namespace, err)
 		return
 	}
+}
+
+func (c *Controller) setCanaryRevision(r *rolloutv1.Rollout, status string) {
+	canaryRevision := c.getDeploymentRevision(r.Spec.Canary.Name, r.Namespace)
+	r, ok := c.getRollout(r.Name, r.Namespace)
+	if !ok {
+		return
+	}
+	r.Status = rolloutv1.RolloutStatus{
+		State:          status,
+		CanaryRevision: canaryRevision,
+		FailedChecks:   r.Status.FailedChecks,
+	}
+	r, err := c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+	if err != nil {
+		c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+	}
+	//c.logger.Infof("Rollout %s.%s status %+v", r.Spec.Canary.Name, r.Namespace, r.Status)
 }
 
 func (c *Controller) getVirtualService(r *rolloutv1.Rollout) (
