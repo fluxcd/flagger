@@ -1,15 +1,32 @@
 apiVersion: v1
 entries:
+  podinfo-steerer:
+  - apiVersion: v1
+    appVersion: 1.2.1
+    created: 2018-10-02T00:17:11.434625+03:00
+    description: Podinfo Helm chart for Steerer progressive delivery
+    digest: 6a3cd952095487550b019f6b861c59f243ca62294c01fe58e8f87f7af16d7d25
+    engine: gotpl
+    home: https://github.com/stefanprodan/k8s-podinfo
+    maintainers:
+    - email: stefanprodan@users.noreply.github.com
+      name: stefanprodan
+    name: podinfo-steerer
+    sources:
+    - https://github.com/stefanprodan/steerer
+    urls:
+    - https://stefanprodan.github.io/steerer/podinfo-steerer-1.2.1.tgz
+    version: 1.2.1
   steerer:
   - apiVersion: v1
-    appVersion: 0.0.1-rc.6
-    created: 2018-09-30T09:47:15.355564357+03:00
+    appVersion: 0.0.1-rc.16
+    created: 2018-10-02T00:17:11.435078+03:00
     description: Steerer is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
-    digest: 02c30ba24d2fc0e00238fe12c5cf8525a4dbf5192af555a104f64e7bd2dbb35a
+    digest: 44e8f383aabc9c27cf456ba1ca99ccbca4bc201400f109e6914bad2610253d3e
     name: steerer
     urls:
     - https://stefanprodan.github.io/steerer/steerer-0.0.1.tgz
     version: 0.0.1
-generated: 2018-09-30T09:47:15.354615937+03:00
+generated: 2018-10-02T00:17:11.433476+03:00

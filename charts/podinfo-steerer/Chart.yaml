@@ -1,0 +1,12 @@
+apiVersion: v1
+version: 1.2.1
+appVersion: 1.2.1
+engine: gotpl
+name: podinfo-steerer
+description: Podinfo Helm chart for Steerer progressive delivery
+home: https://github.com/stefanprodan/k8s-podinfo
+maintainers:
+- email: stefanprodan@users.noreply.github.com
+  name: stefanprodan
+sources:
+- https://github.com/stefanprodan/steerer

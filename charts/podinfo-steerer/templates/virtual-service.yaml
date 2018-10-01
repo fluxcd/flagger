@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ template "podinfo-steerer.fullname" . }}
+  labels:
+    app: {{ template "podinfo-steerer.fullname" . }}
+    chart: {{ template "podinfo-steerer.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  hosts:
+    - {{ template "podinfo-steerer.fullname" . }}
+{{- if .Values.gateway.enabled }}
+    - {{ .Values.gateway.host }}
+  gateways:
+  - {{ .Values.gateway.name }}
+{{- end }}
+  http:
+  - route:
+    - destination:
+        host: {{ template "podinfo-steerer.primary" . }}
+        port:
+          number: {{ .Values.containerPort }}
+      weight: 100
+    - destination:
+        host: {{ template "podinfo-steerer.canary" . }}
+        port:
+          number: {{ .Values.containerPort }}
+      weight: 0
+    timeout: {{ .Values.timeout }}
