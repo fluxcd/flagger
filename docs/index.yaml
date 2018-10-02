@@ -1,11 +1,23 @@
 apiVersion: v1
 entries:
+  grafana:
+  - apiVersion: v1
+    appVersion: 5.2.0
+    created: 2018-10-02T17:25:36.079729+03:00
+    description: A Helm chart for monitoring progressive deployments powered by Istio
+      and Steerer
+    digest: e2b6945f133fa0d790f3d07bad079460a9dd8aaea6523fc89906019bae19693e
+    home: https://github.com/stefanprodan/steerer
+    name: grafana
+    urls:
+    - https://stefanprodan.github.io/steerer/grafana-5.2.4.tgz
+    version: 5.2.4
   podinfo-steerer:
   - apiVersion: v1
     appVersion: 1.2.1
-    created: 2018-10-02T00:17:11.434625+03:00
+    created: 2018-10-02T17:25:36.080154+03:00
     description: Podinfo Helm chart for Steerer progressive delivery
-    digest: 6a3cd952095487550b019f6b861c59f243ca62294c01fe58e8f87f7af16d7d25
+    digest: f559f387aa45005be085af207b8b4c91776e489fcb6ca7e60f20913ecd21184e
     engine: gotpl
     home: https://github.com/stefanprodan/k8s-podinfo
     maintainers:
@@ -20,13 +32,13 @@ entries:
   steerer:
   - apiVersion: v1
     appVersion: 0.0.1-rc.16
-    created: 2018-10-02T00:17:11.435078+03:00
+    created: 2018-10-02T17:25:36.080497+03:00
     description: Steerer is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
-    digest: 44e8f383aabc9c27cf456ba1ca99ccbca4bc201400f109e6914bad2610253d3e
+    digest: 8c8a7b0d5cefee676cb9245ad5b897c679741403af8a209b161a61a862dba6cd
     name: steerer
     urls:
     - https://stefanprodan.github.io/steerer/steerer-0.0.1.tgz
     version: 0.0.1
-generated: 2018-10-02T00:17:11.433476+03:00
+generated: 2018-10-02T17:25:36.078744+03:00

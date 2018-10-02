@@ -25,7 +25,7 @@ test: test-fmt test-codegen
 	go test ./...
 
 helm-package:
-	cd charts/ && helm package steerer/ && helm package podinfo-steerer/
+	cd charts/ && helm package steerer/ && helm package podinfo-steerer/ && helm package grafana/
 	mv charts/*.tgz docs/
 	helm repo index docs --url https://stefanprodan.github.io/steerer --merge ./docs/index.yaml
 
