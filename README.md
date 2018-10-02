@@ -1,9 +1,9 @@
 # steerer
 
 [![build](https://travis-ci.org/stefanprodan/steerer.svg?branch=master)](https://travis-ci.org/stefanprodan/steerer)
-[![release](https://img.shields.io/github/release/stefanprodan/steerer/all.svg)](https://github.com/stefanprodan/steerer/releases)
 [![report](https://goreportcard.com/badge/github.com/stefanprodan/steerer)](https://goreportcard.com/report/github.com/stefanprodan/steerer)
 [![license](https://img.shields.io/github/license/stefanprodan/steerer.svg)](https://github.com/stefanprodan/steerer/blob/master/LICENSE)
+[![release](https://img.shields.io/github/release/stefanprodan/steerer/all.svg)](https://github.com/stefanprodan/steerer/releases)
 
 Steerer is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
@@ -353,6 +353,8 @@ Events:
   Normal   Synced  5s    steerer  Promotion completed! Scaling down podinfo-canary.test
 ```
 
+### Monitoring
+
 Steerer comes with a Grafana dashboard made for canary analysis.
 
 Install Grafana with Helm:
@@ -363,7 +365,32 @@ helm upgrade -i steerer-grafana steerer/grafana \
 --set url=http://prometheus.istio-system:9090
 ```
 
+The dashboard shows the RED and USE metrics for the primary and canary workloads:
+
 ![steerer-grafana](https://github.com/stefanprodan/steerer/blob/master/docs/screens/grafana-canary-analysis.png)
+
+The canary errors and latency spikes have been recorded as Kubernetes events and logged by Steerer in json format:
+
+```
+kubectl -n istio-system logs deployment/steerer -f
+
+Starting rollout for podinfo.test
+Advance rollout podinfo.test weight 5
+Advance rollout podinfo.test weight 10
+Advance rollout podinfo.test weight 15
+Advance rollout podinfo.test weight 20
+Advance rollout podinfo.test weight 25
+Advance rollout podinfo.test weight 30
+Advance rollout podinfo.test weight 35
+Halt rollout podinfo.test success rate 98.69% < 99%
+Advance rollout podinfo.test weight 40
+Halt rollout podinfo.test request duration 1.515s > 500ms
+Advance rollout podinfo.test weight 45
+Advance rollout podinfo.test weight 50
+Copying podinfo-canary.test template spec to podinfo-primary.test
+Scaling down podinfo-canary.test
+romotion completed! podinfo-canary.test revision 81289
+```
 
 ### Contributing
 
