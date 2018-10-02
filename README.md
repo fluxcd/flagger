@@ -372,7 +372,7 @@ The dashboard shows the RED and USE metrics for the primary and canary workloads
 The canary errors and latency spikes have been recorded as Kubernetes events and logged by Steerer in json format:
 
 ```
-kubectl -n istio-system logs deployment/steerer -f
+kubectl -n istio-system logs deployment/steerer --tail=100 | jq .msg
 
 Starting rollout for podinfo.test
 Advance rollout podinfo.test weight 5
@@ -389,7 +389,7 @@ Advance rollout podinfo.test weight 45
 Advance rollout podinfo.test weight 50
 Copying podinfo-canary.test template spec to podinfo-primary.test
 Scaling down podinfo-canary.test
-romotion completed! podinfo-canary.test revision 81289
+Promotion completed! podinfo-canary.test revision 81289
 ```
 
 ### Contributing
