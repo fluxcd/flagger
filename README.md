@@ -22,7 +22,7 @@ Deploy Steerer in the `istio-system` namespace using Helm:
 helm repo add steerer https://stefanprodan.github.io/steerer
 
 # install or upgrade
-helm upgrade --install steerer steerer/steerer \
+helm upgrade -i steerer steerer/steerer \
 --namespace=istio-system \
 --set metricsServer=http://prometheus.istio-system:9090 \
 --set controlLoopInterval=1m
@@ -352,6 +352,18 @@ Events:
   Warning  Synced  15s   steerer  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    steerer  Promotion completed! Scaling down podinfo-canary.test
 ```
+
+Steerer comes with a Grafana dashboard made for canary analysis.
+
+Install Grafana with Helm:
+
+```bash
+helm upgrade -i steerer-grafana steerer/grafana \
+--namespace=istio-system \
+--set url=http://prometheus.istio-system:9090
+```
+
+![steerer-grafana](https://github.com/stefanprodan/steerer/blob/master/docs/screens/grafana-canary-analysis.png)
 
 ### Contributing
 
