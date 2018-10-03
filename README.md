@@ -32,9 +32,10 @@ Steerer is compatible with Kubernetes >1.10.0 and Istio >1.0.0.
 
 ### Usage
 
-Steerer requires two Kubernetes deployments: one for the version you want to upgrade called _primary_ and one for the _canary_.
-Each deployment must have a corresponding ClusterIP service that exposes a port named http or https.
-These services are used as destinations in a Istio virtual service.
+Steerer requires two Kubernetes [deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/): 
+one for the version you want to upgrade called _primary_ and one for the _canary_.
+Each deployment must have a corresponding ClusterIP [service](https://kubernetes.io/docs/concepts/services-networking/service/) 
+that exposes a port named http or https. These services are used as destinations in a Istio [virtual service](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService).
 
 ![steerer-overview](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-overview.png)
 
@@ -53,7 +54,7 @@ Gated rollout stages:
     * route all traffic to primary
     * scale to zero the canary deployment and mark it as failed
     * wait for the canary deployment to be updated (revision bump) and start over
-* increase canary traffic wight by 10% (step wight) till it reaches 100% (max weight) 
+* increase canary traffic weight by 10% (step weight) till it reaches 100% (max weight) 
     * halt rollout while canary request success rate is under the threshold
     * halt rollout while canary request duration P99 is over the threshold
     * halt rollout if the primary or canary deployment becomes unhealthy 
@@ -67,7 +68,7 @@ Gated rollout stages:
 * mark rollout as finished
 * wait for the canary deployment to be updated (revision bump) and start over
 
-You can change the canary analysis _max weight_ and the _step wight_ percentage in the rollout custom resource.
+You can change the canary analysis _max weight_ and the _step weight_ percentage in the rollout custom resource.
 
 Assuming the primary deployment is named _podinfo_ and the canary one _podinfo-canary_, Steerer will require 
 a virtual service configured with weight-based routing:
@@ -313,7 +314,7 @@ Events:
   Normal   Synced  2m    steerer  Halt rollout podinfo.test success rate 47.00% < 99%
   Normal   Synced  2m    steerer  (combined from similar events): Halt rollout podinfo.test success rate 38.08% < 99%
   Warning  Synced  1m    steerer  Rolling back podinfo-canary.test failed checks threshold reached 10
-  Warning  Synced  1m    steerer  Canary failed! Scaling down podinfo.test
+  Warning  Synced  1m    steerer  Canary failed! Scaling down podinfo-canary.test
 ```
 
 Trigger a new rollout by updating the canary image:
@@ -391,6 +392,14 @@ Copying podinfo-canary.test template spec to podinfo-primary.test
 Scaling down podinfo-canary.test
 Promotion completed! podinfo-canary.test revision 81289
 ```
+
+### Roadmap
+
+* Extend the canary analysis and promotion to other types than Kubernetes deployments such as Flux Helm releases or OpenFaaS functions
+* Extend the validation mechanism to support other metrics than HTTP success rate and latency
+* Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
+* Alerting: Trigger Alertmanager on successful or failed promotions (Prometheus instrumentation of the canary analysis)  
+* Reporting: publish canary analysis results to Slack/Jira/etc
 
 ### Contributing
 
