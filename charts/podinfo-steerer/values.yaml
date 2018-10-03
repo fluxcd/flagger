@@ -1,6 +1,6 @@
 # Default values for podinfo-steerer.
 
-canary:
+image:
   repository: quay.io/stefanprodan/podinfo
   tag: "1.2.0"
 

@@ -3,10 +3,10 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 5.2.0
-    created: 2018-10-02T17:25:36.079729+03:00
+    created: 2018-10-03T15:13:25.29361+03:00
     description: A Helm chart for monitoring progressive deployments powered by Istio
       and Steerer
-    digest: e2b6945f133fa0d790f3d07bad079460a9dd8aaea6523fc89906019bae19693e
+    digest: 34cfba546cbccadc4907106e0a34dfcd8dad7ddc86517c7b3c29a7f176c91b7b
     home: https://github.com/stefanprodan/steerer
     name: grafana
     urls:
@@ -15,7 +15,23 @@ entries:
   podinfo-steerer:
   - apiVersion: v1
     appVersion: 1.2.1
-    created: 2018-10-02T17:25:36.080154+03:00
+    created: 2018-10-03T15:13:25.294489+03:00
+    description: Podinfo Helm chart for Steerer progressive delivery
+    digest: c56d35abf54959141bc6289af9509c5075233f4b9bda90e5d99510b5187b25a2
+    engine: gotpl
+    home: https://github.com/stefanprodan/k8s-podinfo
+    maintainers:
+    - email: stefanprodan@users.noreply.github.com
+      name: stefanprodan
+    name: podinfo-steerer
+    sources:
+    - https://github.com/stefanprodan/steerer
+    urls:
+    - https://stefanprodan.github.io/steerer/podinfo-steerer-2.0.0.tgz
+    version: 2.0.0
+  - apiVersion: v1
+    appVersion: 1.2.1
+    created: 2018-10-03T15:13:25.294153+03:00
     description: Podinfo Helm chart for Steerer progressive delivery
     digest: f559f387aa45005be085af207b8b4c91776e489fcb6ca7e60f20913ecd21184e
     engine: gotpl
@@ -32,13 +48,13 @@ entries:
   steerer:
   - apiVersion: v1
     appVersion: 0.0.1-rc.16
-    created: 2018-10-02T17:25:36.080497+03:00
+    created: 2018-10-03T15:13:25.294827+03:00
     description: Steerer is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
-    digest: 8c8a7b0d5cefee676cb9245ad5b897c679741403af8a209b161a61a862dba6cd
+    digest: 523e304d6820fdbe06934b61761d7519b89a6c948ed8d0ae812a1d0159f534dd
     name: steerer
     urls:
     - https://stefanprodan.github.io/steerer/steerer-0.0.1.tgz
     version: 0.0.1
-generated: 2018-10-02T17:25:36.078744+03:00
+generated: 2018-10-03T15:13:25.293021+03:00
