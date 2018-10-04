@@ -31,59 +31,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// RolloutInformer provides access to a shared informer and lister for
-// Rollouts.
-type RolloutInformer interface {
+// CanaryInformer provides access to a shared informer and lister for
+// Canaries.
+type CanaryInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.RolloutLister
+	Lister() v1beta1.CanaryLister
 }
 
-type rolloutInformer struct {
+type canaryInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewRolloutInformer constructs a new informer for Rollout type.
+// NewCanaryInformer constructs a new informer for Canary type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewRolloutInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredRolloutInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewCanaryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredCanaryInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredRolloutInformer constructs a new informer for Rollout type.
+// NewFilteredCanaryInformer constructs a new informer for Canary type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredRolloutInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredCanaryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppsV1beta1().Rollouts(namespace).List(options)
+				return client.SteererV1beta1().Canaries(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppsV1beta1().Rollouts(namespace).Watch(options)
+				return client.SteererV1beta1().Canaries(namespace).Watch(options)
 			},
 		},
-		&rolloutv1beta1.Rollout{},
+		&rolloutv1beta1.Canary{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *rolloutInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredRolloutInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *canaryInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredCanaryInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *rolloutInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&rolloutv1beta1.Rollout{}, f.defaultInformer)
+func (f *canaryInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&rolloutv1beta1.Canary{}, f.defaultInformer)
 }
 
-func (f *rolloutInformer) Lister() v1beta1.RolloutLister {
-	return v1beta1.NewRolloutLister(f.Informer().GetIndexer())
+func (f *canaryInformer) Lister() v1beta1.CanaryLister {
+	return v1beta1.NewCanaryLister(f.Informer().GetIndexer())
 }

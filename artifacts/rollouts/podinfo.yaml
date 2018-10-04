@@ -4,8 +4,8 @@
 # generate errors: watch curl http://podinfo-canary:9898/status/500
 # run load test: kubectl run -n test -it --rm --restart=Never hey --image=stefanprodan/loadtest -- sh
 # generate load: hey -z 2m -h2 -m POST -d '{test: 1}' -c 10 -q 5 http://podinfo:9898/api/echo
-apiVersion: apps.weave.works/v1beta1
-kind: Rollout
+apiVersion: steerer.app/v1beta1
+kind: Canary
 metadata:
   name: podinfo
   namespace: test
@@ -22,10 +22,10 @@ spec:
   canaryAnalysis:
     # max number of failed metric checks
     # before rolling back the canary
-    threshold: 10
+    threshold: 5
     # max traffic percentage routed to canary
     # percentage (0-100)
-    maxWeight: 100
+    maxWeight: 50
     # canary increment step
     # percentage (0-100)
     stepWeight: 10

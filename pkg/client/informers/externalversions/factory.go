@@ -172,9 +172,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Apps() rollout.Interface
+	Steerer() rollout.Interface
 }
 
-func (f *sharedInformerFactory) Apps() rollout.Interface {
+func (f *sharedInformerFactory) Steerer() rollout.Interface {
 	return rollout.New(f, f.namespace, f.tweakListOptions)
 }

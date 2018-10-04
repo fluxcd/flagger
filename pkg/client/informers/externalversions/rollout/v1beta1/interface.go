@@ -24,8 +24,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// Rollouts returns a RolloutInformer.
-	Rollouts() RolloutInformer
+	// Canaries returns a CanaryInformer.
+	Canaries() CanaryInformer
 }
 
 type version struct {
@@ -39,7 +39,7 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// Rollouts returns a RolloutInformer.
-func (v *version) Rollouts() RolloutInformer {
-	return &rolloutInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// Canaries returns a CanaryInformer.
+func (v *version) Canaries() CanaryInformer {
+	return &canaryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

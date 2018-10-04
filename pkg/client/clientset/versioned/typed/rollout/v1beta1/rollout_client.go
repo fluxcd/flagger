@@ -25,22 +25,22 @@ import (
 	rest "k8s.io/client-go/rest"
 )
 
-type AppsV1beta1Interface interface {
+type SteererV1beta1Interface interface {
 	RESTClient() rest.Interface
-	RolloutsGetter
+	CanariesGetter
 }
 
-// AppsV1beta1Client is used to interact with features provided by the apps.weave.works group.
-type AppsV1beta1Client struct {
+// SteererV1beta1Client is used to interact with features provided by the steerer.app group.
+type SteererV1beta1Client struct {
 	restClient rest.Interface
 }
 
-func (c *AppsV1beta1Client) Rollouts(namespace string) RolloutInterface {
-	return newRollouts(c, namespace)
+func (c *SteererV1beta1Client) Canaries(namespace string) CanaryInterface {
+	return newCanaries(c, namespace)
 }
 
-// NewForConfig creates a new AppsV1beta1Client for the given config.
-func NewForConfig(c *rest.Config) (*AppsV1beta1Client, error) {
+// NewForConfig creates a new SteererV1beta1Client for the given config.
+func NewForConfig(c *rest.Config) (*SteererV1beta1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
@@ -49,12 +49,12 @@ func NewForConfig(c *rest.Config) (*AppsV1beta1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &AppsV1beta1Client{client}, nil
+	return &SteererV1beta1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new AppsV1beta1Client for the given config and
+// NewForConfigOrDie creates a new SteererV1beta1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *AppsV1beta1Client {
+func NewForConfigOrDie(c *rest.Config) *SteererV1beta1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -62,9 +62,9 @@ func NewForConfigOrDie(c *rest.Config) *AppsV1beta1Client {
 	return client
 }
 
-// New creates a new AppsV1beta1Client for the given RESTClient.
-func New(c rest.Interface) *AppsV1beta1Client {
-	return &AppsV1beta1Client{c}
+// New creates a new SteererV1beta1Client for the given RESTClient.
+func New(c rest.Interface) *SteererV1beta1Client {
+	return &SteererV1beta1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -82,7 +82,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *AppsV1beta1Client) RESTClient() rest.Interface {
+func (c *SteererV1beta1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

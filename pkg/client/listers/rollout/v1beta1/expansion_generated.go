@@ -18,10 +18,10 @@ limitations under the License.
 
 package v1beta1
 
-// RolloutListerExpansion allows custom methods to be added to
-// RolloutLister.
-type RolloutListerExpansion interface{}
+// CanaryListerExpansion allows custom methods to be added to
+// CanaryLister.
+type CanaryListerExpansion interface{}
 
-// RolloutNamespaceListerExpansion allows custom methods to be added to
-// RolloutNamespaceLister.
-type RolloutNamespaceListerExpansion interface{}
+// CanaryNamespaceListerExpansion allows custom methods to be added to
+// CanaryNamespaceLister.
+type CanaryNamespaceListerExpansion interface{}

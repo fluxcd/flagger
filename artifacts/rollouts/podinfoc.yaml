@@ -1,5 +1,5 @@
-apiVersion: apps.weave.works/v1beta1
-kind: Rollout
+apiVersion: steerer.app/v1beta1
+kind: Canary
 metadata:
   name: podinfoc
   namespace: test

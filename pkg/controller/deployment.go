@@ -12,7 +12,7 @@ import (
 
 func (c *Controller) doRollouts() {
 	c.rollouts.Range(func(key interface{}, value interface{}) bool {
-		r := value.(*rolloutv1.Rollout)
+		r := value.(*rolloutv1.Canary)
 		if r.Spec.TargetKind == "Deployment" {
 			go c.advanceDeploymentRollout(r.Name, r.Namespace)
 		}
@@ -83,7 +83,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 	// gate stage: check if the canary success rate is above the threshold
 	// skip check if no traffic is routed to canary
 	if canaryRoute.Weight == 0 {
-		c.recordEventInfof(r, "Starting rollout for %s.%s", r.Name, r.Namespace)
+		c.recordEventInfof(r, "Starting canary deployment for %s.%s", r.Name, r.Namespace)
 	} else {
 		if ok := c.checkDeploymentMetrics(r); !ok {
 			c.updateRolloutFailedChecks(r, r.Status.FailedChecks+1)
@@ -106,7 +106,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 			return
 		}
 
-		c.recordEventInfof(r, "Advance rollout %s.%s weight %v", r.Name, r.Namespace, canaryRoute.Weight)
+		c.recordEventInfof(r, "Advance %s.%s canary weight %v", r.Name, r.Namespace, canaryRoute.Weight)
 
 		// promotion stage: override primary.template.spec with the canary spec
 		if canaryRoute.Weight == maxWeight {
@@ -116,7 +116,7 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 			primary.Spec.Template.Spec = canary.Spec.Template.Spec
 			_, err := c.kubeClient.AppsV1().Deployments(primary.Namespace).Update(primary)
 			if err != nil {
-				c.recordEventErrorf(r, "Deployment %s.%s promotion failed: %v", primary.GetName(), primary.Namespace, err)
+				c.recordEventErrorf(r, "Updating template spec %s.%s failed: %v", primary.GetName(), primary.Namespace, err)
 				return
 			}
 		}
@@ -135,27 +135,27 @@ func (c *Controller) advanceDeploymentRollout(name string, namespace string) {
 	}
 }
 
-func (c *Controller) getRollout(name string, namespace string) (*rolloutv1.Rollout, bool) {
-	r, err := c.rolloutClient.AppsV1beta1().Rollouts(namespace).Get(name, v1.GetOptions{})
+func (c *Controller) getRollout(name string, namespace string) (*rolloutv1.Canary, bool) {
+	r, err := c.rolloutClient.SteererV1beta1().Canaries(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
-		c.logger.Errorf("Rollout %s.%s not found", name, namespace)
+		c.logger.Errorf("Canary %s.%s not found", name, namespace)
 		return nil, false
 	}
 
 	return r, true
 }
 
-func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canary *appsv1.Deployment) bool {
+func (c *Controller) checkRolloutStatus(r *rolloutv1.Canary, canary *appsv1.Deployment) bool {
 	var err error
 	if r.Status.State == "" {
-		r.Status = rolloutv1.RolloutStatus{
+		r.Status = rolloutv1.CanaryStatus{
 			State:          "running",
 			CanaryRevision: canary.ResourceVersion,
 			FailedChecks:   0,
 		}
-		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+		r, err = c.rolloutClient.SteererV1beta1().Canaries(r.Namespace).Update(r)
 		if err != nil {
-			c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+			c.logger.Errorf("Canary %s.%s status update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
 		return true
@@ -188,14 +188,14 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canary *appsv1.Dep
 			c.recordEventErrorf(r, "Scaling up %s.%s failed: %v", canary.GetName(), canary.Namespace, err)
 			return false
 		}
-		r.Status = rolloutv1.RolloutStatus{
+		r.Status = rolloutv1.CanaryStatus{
 			State:          "running",
 			CanaryRevision: canary.ResourceVersion,
 			FailedChecks:   0,
 		}
-		r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+		r, err = c.rolloutClient.SteererV1beta1().Canaries(r.Namespace).Update(r)
 		if err != nil {
-			c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+			c.logger.Errorf("Canary %s.%s status update failed: %v", r.Name, r.Namespace, err)
 			return false
 		}
 		c.recordEventInfof(r, "Scaling up %s.%s", canary.GetName(), canary.Namespace)
@@ -206,29 +206,29 @@ func (c *Controller) checkRolloutStatus(r *rolloutv1.Rollout, canary *appsv1.Dep
 	return false
 }
 
-func (c *Controller) updateRolloutStatus(r *rolloutv1.Rollout, status string) bool {
+func (c *Controller) updateRolloutStatus(r *rolloutv1.Canary, status string) bool {
 	var err error
 	r.Status.State = status
-	r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+	r, err = c.rolloutClient.SteererV1beta1().Canaries(r.Namespace).Update(r)
 	if err != nil {
-		c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+		c.logger.Errorf("Canary %s.%s status update failed: %v", r.Name, r.Namespace, err)
 		return false
 	}
 	return true
 }
 
-func (c *Controller) updateRolloutFailedChecks(r *rolloutv1.Rollout, val int) bool {
+func (c *Controller) updateRolloutFailedChecks(r *rolloutv1.Canary, val int) bool {
 	var err error
 	r.Status.FailedChecks = val
-	r, err = c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+	r, err = c.rolloutClient.SteererV1beta1().Canaries(r.Namespace).Update(r)
 	if err != nil {
-		c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+		c.logger.Errorf("Canary %s.%s status update failed: %v", r.Name, r.Namespace, err)
 		return false
 	}
 	return true
 }
 
-func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace string) (*appsv1.Deployment, bool) {
+func (c *Controller) getDeployment(r *rolloutv1.Canary, name string, namespace string) (*appsv1.Deployment, bool) {
 	dep, err := c.kubeClient.AppsV1().Deployments(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
 		c.recordEventErrorf(r, "Deployment %s.%s not found", name, namespace)
@@ -236,7 +236,7 @@ func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace 
 	}
 
 	if msg, healthy := getDeploymentStatus(dep); !healthy {
-		c.recordEventWarningf(r, "Halt rollout %s.%s %s", dep.GetName(), dep.Namespace, msg)
+		c.recordEventWarningf(r, "Halt %s.%s advancement %s", dep.GetName(), dep.Namespace, msg)
 		return nil, false
 	}
 
@@ -247,7 +247,7 @@ func (c *Controller) getDeployment(r *rolloutv1.Rollout, name string, namespace 
 	return dep, true
 }
 
-func (c *Controller) getCanaryDeployment(r *rolloutv1.Rollout, name string, namespace string) (*appsv1.Deployment, bool) {
+func (c *Controller) getCanaryDeployment(r *rolloutv1.Canary, name string, namespace string) (*appsv1.Deployment, bool) {
 	dep, err := c.kubeClient.AppsV1().Deployments(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
 		c.recordEventErrorf(r, "Deployment %s.%s not found", name, namespace)
@@ -255,7 +255,7 @@ func (c *Controller) getCanaryDeployment(r *rolloutv1.Rollout, name string, name
 	}
 
 	if msg, healthy := getDeploymentStatus(dep); !healthy {
-		c.recordEventWarningf(r, "Halt rollout %s.%s %s", dep.GetName(), dep.Namespace, msg)
+		c.recordEventWarningf(r, "Halt %s.%s advancement %s", dep.GetName(), dep.Namespace, msg)
 		return nil, false
 	}
 
@@ -272,7 +272,7 @@ func (c *Controller) getDeploymentRevision(name string, namespace string) string
 	return dep.ResourceVersion
 }
 
-func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
+func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Canary) bool {
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
 		if metric.Name == "istio_requests_total" {
 			val, err := c.getDeploymentCounter(r.Spec.Canary.Name, r.Namespace, metric.Name, metric.Interval)
@@ -281,7 +281,7 @@ func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
 				return false
 			}
 			if float64(metric.Threshold) > val {
-				c.recordEventWarningf(r, "Halt rollout %s.%s success rate %.2f%% < %v%%",
+				c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
 					r.Name, r.Namespace, val, metric.Threshold)
 				return false
 			}
@@ -295,7 +295,7 @@ func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
 			}
 			t := time.Duration(metric.Threshold) * time.Millisecond
 			if val > t {
-				c.recordEventWarningf(r, "Halt rollout %s.%s request duration %v > %v",
+				c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
 					r.Name, r.Namespace, val, t)
 				return false
 			}
@@ -305,7 +305,7 @@ func (c *Controller) checkDeploymentMetrics(r *rolloutv1.Rollout) bool {
 	return true
 }
 
-func (c *Controller) scaleToZeroCanary(r *rolloutv1.Rollout) {
+func (c *Controller) scaleToZeroCanary(r *rolloutv1.Canary) {
 	canary, err := c.kubeClient.AppsV1().Deployments(r.Namespace).Get(r.Spec.Canary.Name, v1.GetOptions{})
 	if err != nil {
 		c.recordEventErrorf(r, "Deployment %s.%s not found", r.Spec.Canary.Name, r.Namespace)
@@ -320,25 +320,25 @@ func (c *Controller) scaleToZeroCanary(r *rolloutv1.Rollout) {
 	}
 }
 
-func (c *Controller) setCanaryRevision(r *rolloutv1.Rollout, status string) {
+func (c *Controller) setCanaryRevision(r *rolloutv1.Canary, status string) {
 	canaryRevision := c.getDeploymentRevision(r.Spec.Canary.Name, r.Namespace)
 	r, ok := c.getRollout(r.Name, r.Namespace)
 	if !ok {
 		return
 	}
-	r.Status = rolloutv1.RolloutStatus{
+	r.Status = rolloutv1.CanaryStatus{
 		State:          status,
 		CanaryRevision: canaryRevision,
 		FailedChecks:   r.Status.FailedChecks,
 	}
-	r, err := c.rolloutClient.AppsV1beta1().Rollouts(r.Namespace).Update(r)
+	r, err := c.rolloutClient.SteererV1beta1().Canaries(r.Namespace).Update(r)
 	if err != nil {
-		c.logger.Errorf("Rollout %s.%s status update failed: %v", r.Name, r.Namespace, err)
+		c.logger.Errorf("Canary %s.%s status update failed: %v", r.Name, r.Namespace, err)
 	}
-	//c.logger.Infof("Rollout %s.%s status %+v", r.Spec.Canary.Name, r.Namespace, r.Status)
+	//c.logger.Infof("Canary %s.%s status %+v", r.Spec.Canary.Name, r.Namespace, r.Status)
 }
 
-func (c *Controller) getVirtualService(r *rolloutv1.Rollout) (
+func (c *Controller) getVirtualService(r *rolloutv1.Canary) (
 	vs *istiov1alpha3.VirtualService,
 	primary istiov1alpha3.DestinationWeight,
 	canary istiov1alpha3.DestinationWeight,
@@ -373,7 +373,7 @@ func (c *Controller) getVirtualService(r *rolloutv1.Rollout) (
 }
 
 func (c *Controller) updateVirtualServiceRoutes(
-	r *rolloutv1.Rollout,
+	r *rolloutv1.Canary,
 	vs *istiov1alpha3.VirtualService,
 	primary istiov1alpha3.DestinationWeight,
 	canary istiov1alpha3.DestinationWeight,

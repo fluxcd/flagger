@@ -3,10 +3,10 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 5.2.0
-    created: 2018-10-03T15:13:25.29361+03:00
+    created: 2018-10-04T14:48:57.585857+03:00
     description: A Helm chart for monitoring progressive deployments powered by Istio
       and Steerer
-    digest: 34cfba546cbccadc4907106e0a34dfcd8dad7ddc86517c7b3c29a7f176c91b7b
+    digest: f8cac4d99069abdffd432b0c7e741aa1cf3c6f88435fd1cc54c00004514d740d
     home: https://github.com/stefanprodan/steerer
     name: grafana
     urls:
@@ -15,9 +15,9 @@ entries:
   podinfo-steerer:
   - apiVersion: v1
     appVersion: 1.2.1
-    created: 2018-10-03T15:13:25.294489+03:00
+    created: 2018-10-04T14:48:57.586743+03:00
     description: Podinfo Helm chart for Steerer progressive delivery
-    digest: c56d35abf54959141bc6289af9509c5075233f4b9bda90e5d99510b5187b25a2
+    digest: 0d9a5037f9765cb74882bcbc1c873527b49af742bdde5ea9ca8c674efcfcb178
     engine: gotpl
     home: https://github.com/stefanprodan/k8s-podinfo
     maintainers:
@@ -31,7 +31,7 @@ entries:
     version: 2.0.0
   - apiVersion: v1
     appVersion: 1.2.1
-    created: 2018-10-03T15:13:25.294153+03:00
+    created: 2018-10-04T14:48:57.586403+03:00
     description: Podinfo Helm chart for Steerer progressive delivery
     digest: f559f387aa45005be085af207b8b4c91776e489fcb6ca7e60f20913ecd21184e
     engine: gotpl
@@ -47,14 +47,14 @@ entries:
     version: 1.2.1
   steerer:
   - apiVersion: v1
-    appVersion: 0.0.1-rc.16
-    created: 2018-10-03T15:13:25.294827+03:00
+    appVersion: 0.0.1-rc.23
+    created: 2018-10-04T14:48:57.587058+03:00
     description: Steerer is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
-    digest: 523e304d6820fdbe06934b61761d7519b89a6c948ed8d0ae812a1d0159f534dd
+    digest: e403eb0e6aff36146d00f0dc56820fd5a464acf6509b5d715e937757bbb29aac
     name: steerer
     urls:
     - https://stefanprodan.github.io/steerer/steerer-0.0.1.tgz
     version: 0.0.1
-generated: 2018-10-03T15:13:25.293021+03:00
+generated: 2018-10-04T14:48:57.584927+03:00

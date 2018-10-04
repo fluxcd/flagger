@@ -1,20 +1,18 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: rollouts.apps.weave.works
+  name: canaries.steerer.app
 spec:
-  group: apps.weave.works
+  group: steerer.app
   version: v1beta1
   versions:
     - name: v1beta1
       served: true
       storage: true
   names:
-    plural: rollouts
-    singular: rollout
-    kind: Rollout
-    shortNames:
-    - roll
+    plural: canaries
+    singular: canary
+    kind: Canary
   scope: Namespaced
   validation:
     openAPIV3Schema:

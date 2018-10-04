@@ -17,5 +17,5 @@ limitations under the License.
 package rollout
 
 const (
-	GroupName = "apps.weave.works"
+	GroupName = "steerer.app"
 )

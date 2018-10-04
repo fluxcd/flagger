@@ -2,7 +2,7 @@
 
 image:
   repository: stefanprodan/steerer
-  tag: 0.0.1-rc.16
+  tag: 0.0.1-rc.23
   pullPolicy: IfNotPresent
 
 controlLoopInterval: "10s"

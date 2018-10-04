@@ -70,7 +70,7 @@ func main() {
 	}
 
 	rolloutInformerFactory := informers.NewSharedInformerFactory(rolloutClient, time.Second*30)
-	rolloutInformer := rolloutInformerFactory.Apps().V1beta1().Rollouts()
+	rolloutInformer := rolloutInformerFactory.Steerer().V1beta1().Canaries()
 
 	logger.Infof("Starting steerer version %s revision %s", version.VERSION, version.REVISION)
 

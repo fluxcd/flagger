@@ -39,14 +39,14 @@ that exposes a port named http or https. These services are used as destinations
 
 ![steerer-overview](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-overview.png)
 
-Gated rollout stages:
+Gated canary promotion stages:
 
-* scan for deployments marked for rollout 
+* scan for canary deployments
 * check Istio virtual service routes are mapped to primary and canary ClusterIP services
 * check primary and canary deployments status
     * halt rollout if a rolling update is underway
     * halt rollout if pods are unhealthy
-* increase canary traffic weight percentage from 0% to 10%
+* increase canary traffic weight percentage from 0% to 5% (step weight)
 * check canary HTTP request success rate and latency
     * halt rollout if any metric is under the specified threshold
     * increment the failed checks counter
@@ -54,7 +54,7 @@ Gated rollout stages:
     * route all traffic to primary
     * scale to zero the canary deployment and mark it as failed
     * wait for the canary deployment to be updated (revision bump) and start over
-* increase canary traffic weight by 10% (step weight) till it reaches 100% (max weight) 
+* increase canary traffic weight by 5% (step weight) till it reaches 50% (max weight) 
     * halt rollout while canary request success rate is under the threshold
     * halt rollout while canary request duration P99 is over the threshold
     * halt rollout if the primary or canary deployment becomes unhealthy 
@@ -68,7 +68,7 @@ Gated rollout stages:
 * mark rollout as finished
 * wait for the canary deployment to be updated (revision bump) and start over
 
-You can change the canary analysis _max weight_ and the _step weight_ percentage in the rollout custom resource.
+You can change the canary analysis _max weight_ and the _step weight_ percentage in the Steerer's custom resource.
 
 Assuming the primary deployment is named _podinfo_ and the canary one _podinfo-canary_, Steerer will require 
 a virtual service configured with weight-based routing:
@@ -112,11 +112,11 @@ spec:
     targetPort: 9898
 ```
 
-Based on the two deployments, services and virtual service, a rollout can be defined using Steerer's custom resource:
+Based on the two deployments, services and virtual service, a canary promotion can be defined using Steerer's custom resource:
 
 ```yaml
-apiVersion: apps.weave.works/v1beta1
-kind: Rollout
+apiVersion: steerer.app/v1beta1
+kind: Canary
 metadata:
   name: podinfo
   namespace: test
@@ -136,10 +136,10 @@ spec:
     threshold: 10
     # max traffic percentage routed to canary
     # percentage (0-100)
-    maxWeight: 100
+    maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 10
+    stepWeight: 5
     metrics:
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
@@ -150,7 +150,7 @@ spec:
       # maximum req duration P99
       # milliseconds
       threshold: 500
-      interval: 30s
+      interval: 1m
 ```
 
 The canary analysis is using the following promql queries:
@@ -230,16 +230,16 @@ Create a virtual service (replace the Istio gateway and the internet domain with
 kubectl apply -f ${REPO}/artifacts/workloads/virtual-service.yaml
 ```
 
-Create a rollout custom resource:
+Create a canary promotion custom resource:
 
 ```bash
 kubectl apply -f ${REPO}/artifacts/rollouts/podinfo.yaml
 ```
 
-Rollout output:
+Canary promotion output:
 
 ```
-kubectl -n test describe rollout/podinfo
+kubectl -n test describe canary/podinfo
 
 Status:
   Canary Revision:  16271121
@@ -248,29 +248,29 @@ Status:
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
-  Normal   Synced  3m    steerer  Starting rollout for podinfo.test
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 10
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 20
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 30
-  Warning  Synced  3m    steerer  Halt rollout podinfo.test request duration 2.525s > 500ms
-  Warning  Synced  3m    steerer  Halt rollout podinfo.test request duration 1.567s > 500ms
-  Warning  Synced  3m    steerer  Halt rollout podinfo.test request duration 823ms > 500ms
-  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 40
-  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 50
-  Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 60
-  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 82.33% < 99%
-  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 87.22% < 99%
-  Warning  Synced  1m    steerer  Halt rollout podinfo.test success rate 94.74% < 99%
-  Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 70
-  Normal   Synced  55s   steerer  Advance rollout podinfo.test weight 80
-  Normal   Synced  45s   steerer  Advance rollout podinfo.test weight 90
-  Normal   Synced  35s   steerer  Advance rollout podinfo.test weight 100
+  Normal   Synced  3m    steerer  Starting canary deployment for podinfo.test
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 5
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 10
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 15
+  Warning  Synced  3m    steerer  Halt podinfo.test advancement request duration 2.525s > 500ms
+  Warning  Synced  3m    steerer  Halt podinfo.test advancement request duration 1.567s > 500ms
+  Warning  Synced  3m    steerer  Halt podinfo.test advancement request duration 823ms > 500ms
+  Normal   Synced  2m    steerer  Advance podinfo.test canary weight 20
+  Normal   Synced  2m    steerer  Advance podinfo.test canary weight 25
+  Normal   Synced  1m    steerer  Advance podinfo.test canary weight 30
+  Warning  Synced  1m    steerer  Halt podinfo.test advancement success rate 82.33% < 99%
+  Warning  Synced  1m    steerer  Halt podinfo.test advancement success rate 87.22% < 99%
+  Warning  Synced  1m    steerer  Halt podinfo.test advancement success rate 94.74% < 99%
+  Normal   Synced  1m    steerer  Advance podinfo.test canary weight 35
+  Normal   Synced  55s   steerer  Advance podinfo.test canary weight 40
+  Normal   Synced  45s   steerer  Advance podinfo.test canary weight 45
+  Normal   Synced  35s   steerer  Advance podinfo.test canary weight 50
   Normal   Synced  25s   steerer  Copying podinfo-canary.test template spec to podinfo.test
   Warning  Synced  15s   steerer  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    steerer  Promotion completed! Scaling down podinfo-canary.test
 ```
 
-During the rollout you can generate HTTP 500 errors and high latency to test if Steerer pauses the rollout.
+During the canary analysis you can generate HTTP 500 errors and high latency to test if Steerer pauses the rollout.
 
 Create a tester pod and exec into it:
 
@@ -295,7 +295,7 @@ When the number of failed checks reaches the canary analysis threshold, the traf
 the canary is scaled to zero and the rollout is marked as failed. 
 
 ```
-kubectl -n test describe rollout/podinfo
+kubectl -n test describe canary/podinfo
 
 Status:
   Canary Revision:  16695041
@@ -304,20 +304,20 @@ Status:
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
-  Normal   Synced  3m    steerer  Starting rollout for podinfo.test
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 10
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 20
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 30
-  Normal   Synced  3m    steerer  Halt rollout podinfo.test success rate 69.17% < 99%
-  Normal   Synced  2m    steerer  Halt rollout podinfo.test success rate 61.39% < 99%
-  Normal   Synced  2m    steerer  Halt rollout podinfo.test success rate 55.06% < 99%
-  Normal   Synced  2m    steerer  Halt rollout podinfo.test success rate 47.00% < 99%
-  Normal   Synced  2m    steerer  (combined from similar events): Halt rollout podinfo.test success rate 38.08% < 99%
+  Normal   Synced  3m    steerer  Starting canary deployment for podinfo.test
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 5
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 10
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 15
+  Normal   Synced  3m    steerer  Halt podinfo.test advancement success rate 69.17% < 99%
+  Normal   Synced  2m    steerer  Halt podinfo.test advancement success rate 61.39% < 99%
+  Normal   Synced  2m    steerer  Halt podinfo.test advancement success rate 55.06% < 99%
+  Normal   Synced  2m    steerer  Halt podinfo.test advancement success rate 47.00% < 99%
+  Normal   Synced  2m    steerer  (combined from similar events): Halt podinfo.test advancement success rate 38.08% < 99%
   Warning  Synced  1m    steerer  Rolling back podinfo-canary.test failed checks threshold reached 10
   Warning  Synced  1m    steerer  Canary failed! Scaling down podinfo-canary.test
 ```
 
-Trigger a new rollout by updating the canary image:
+Trigger a new canary deployment by updating the canary image:
 
 ```bash
 kubectl -n test set image deployment/podinfo-canary \
@@ -327,7 +327,7 @@ podinfod=quay.io/stefanprodan/podinfo:1.2.1
 Steer detects that the canary revision changed and starts a new rollout:
 
 ```
-kubectl -n test describe rollout/podinfo
+kubectl -n test describe canary/podinfo
 
 Status:
   Canary Revision:  19871136
@@ -339,16 +339,16 @@ Events:
   Normal   Synced  3m    steerer  New revision detected podinfo-canary.test old 17211012 new 17246876
   Normal   Synced  3m    steerer  Scaling up podinfo.test
   Warning  Synced  3m    steerer  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 10
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 20
-  Normal   Synced  3m    steerer  Advance rollout podinfo.test weight 30
-  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 40
-  Normal   Synced  2m    steerer  Advance rollout podinfo.test weight 50
-  Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 60
-  Normal   Synced  1m    steerer  Advance rollout podinfo.test weight 70
-  Normal   Synced  55s   steerer  Advance rollout podinfo.test weight 80
-  Normal   Synced  45s   steerer  Advance rollout podinfo.test weight 90
-  Normal   Synced  35s   steerer  Advance rollout podinfo.test weight 100
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 5
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 10
+  Normal   Synced  3m    steerer  Advance podinfo.test canary weight 15
+  Normal   Synced  2m    steerer  Advance podinfo.test canary weight 20
+  Normal   Synced  2m    steerer  Advance podinfo.test canary weight 25
+  Normal   Synced  1m    steerer  Advance podinfo.test canary weight 30
+  Normal   Synced  1m    steerer  Advance podinfo.test canary weight 35
+  Normal   Synced  55s   steerer  Advance podinfo.test canary weight 40
+  Normal   Synced  45s   steerer  Advance podinfo.test canary weight 45
+  Normal   Synced  35s   steerer  Advance podinfo.test canary weight 50
   Normal   Synced  25s   steerer  Copying podinfo-canary.test template spec to podinfo.test
   Warning  Synced  15s   steerer  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    steerer  Promotion completed! Scaling down podinfo-canary.test
@@ -375,19 +375,19 @@ The canary errors and latency spikes have been recorded as Kubernetes events and
 ```
 kubectl -n istio-system logs deployment/steerer --tail=100 | jq .msg
 
-Starting rollout for podinfo.test
-Advance rollout podinfo.test weight 5
-Advance rollout podinfo.test weight 10
-Advance rollout podinfo.test weight 15
-Advance rollout podinfo.test weight 20
-Advance rollout podinfo.test weight 25
-Advance rollout podinfo.test weight 30
-Advance rollout podinfo.test weight 35
-Halt rollout podinfo.test success rate 98.69% < 99%
-Advance rollout podinfo.test weight 40
-Halt rollout podinfo.test request duration 1.515s > 500ms
-Advance rollout podinfo.test weight 45
-Advance rollout podinfo.test weight 50
+Starting canary deployment for podinfo.test
+Advance podinfo.test canary weight 5
+Advance podinfo.test canary weight 10
+Advance podinfo.test canary weight 15
+Advance podinfo.test canary weight 20
+Advance podinfo.test canary weight 25
+Advance podinfo.test canary weight 30
+Advance podinfo.test canary weight 35
+Halt podinfo.test advancement success rate 98.69% < 99%
+Advance podinfo.test canary weight 40
+Halt podinfo.test advancement request duration 1.515s > 500ms
+Advance podinfo.test canary weight 45
+Advance podinfo.test canary weight 50
 Copying podinfo-canary.test template spec to podinfo-primary.test
 Scaling down podinfo-canary.test
 Promotion completed! podinfo-canary.test revision 81289
@@ -409,5 +409,5 @@ When submitting bug reports please include as much details as possible:
 * which Steerer version
 * which Steerer CRD version
 * which Kubernetes/Istio version
-* what configuration (rollout, virtual service and workloads definitions)
+* what configuration (canary, virtual service and workloads definitions)
 * what happened (Steerer, Istio Pilot and Proxy logs)

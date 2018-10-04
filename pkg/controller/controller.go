@@ -31,7 +31,7 @@ type Controller struct {
 	kubeClient    kubernetes.Interface
 	istioClient   istioclientset.Interface
 	rolloutClient clientset.Interface
-	rolloutLister rolloutlisters.RolloutLister
+	rolloutLister rolloutlisters.CanaryLister
 	rolloutSynced cache.InformerSynced
 	rolloutWindow time.Duration
 	workqueue     workqueue.RateLimitingInterface
@@ -45,7 +45,7 @@ func NewController(
 	kubeClient kubernetes.Interface,
 	istioClient istioclientset.Interface,
 	rolloutClient clientset.Interface,
-	rolloutInformer rolloutinformers.RolloutInformer,
+	rolloutInformer rolloutinformers.CanaryInformer,
 	rolloutWindow time.Duration,
 	metricServer string,
 	logger *zap.SugaredLogger,
@@ -174,7 +174,7 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-	rollout, err := c.rolloutLister.Rollouts(namespace).Get(name)
+	rollout, err := c.rolloutLister.Canaries(namespace).Get(name)
 	if errors.IsNotFound(err) {
 		utilruntime.HandleError(fmt.Errorf("rollout '%s' in work queue no longer exists", key))
 		return nil
@@ -196,27 +196,27 @@ func (c *Controller) enqueueRollout(obj interface{}) {
 	c.workqueue.AddRateLimited(key)
 }
 
-func (c *Controller) recordEventInfof(r *rolloutv1.Rollout, template string, args ...interface{}) {
+func (c *Controller) recordEventInfof(r *rolloutv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
 }
 
-func (c *Controller) recordEventErrorf(r *rolloutv1.Rollout, template string, args ...interface{}) {
+func (c *Controller) recordEventErrorf(r *rolloutv1.Canary, template string, args ...interface{}) {
 	c.logger.Errorf(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
-func (c *Controller) recordEventWarningf(r *rolloutv1.Rollout, template string, args ...interface{}) {
+func (c *Controller) recordEventWarningf(r *rolloutv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
-func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (rolloutv1.Rollout, bool) {
-	var roll *rolloutv1.Rollout
+func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (rolloutv1.Canary, bool) {
+	var roll *rolloutv1.Canary
 	var ok bool
-	if roll, ok = obj.(*rolloutv1.Rollout); !ok {
+	if roll, ok = obj.(*rolloutv1.Canary); !ok {
 		logger.Errorf("Event Watch received an invalid object: %#v", obj)
-		return rolloutv1.Rollout{}, false
+		return rolloutv1.Canary{}, false
 	}
 	return *roll, true
 }

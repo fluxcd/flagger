@@ -20,8 +20,8 @@ package fake
 
 import (
 	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
-	appsv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1"
-	fakeappsv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1/fake"
+	steererv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1"
+	fakesteererv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -71,12 +71,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// AppsV1beta1 retrieves the AppsV1beta1Client
-func (c *Clientset) AppsV1beta1() appsv1beta1.AppsV1beta1Interface {
-	return &fakeappsv1beta1.FakeAppsV1beta1{Fake: &c.Fake}
+// SteererV1beta1 retrieves the SteererV1beta1Client
+func (c *Clientset) SteererV1beta1() steererv1beta1.SteererV1beta1Interface {
+	return &fakesteererv1beta1.FakeSteererV1beta1{Fake: &c.Fake}
 }
 
-// Apps retrieves the AppsV1beta1Client
-func (c *Clientset) Apps() appsv1beta1.AppsV1beta1Interface {
-	return &fakeappsv1beta1.FakeAppsV1beta1{Fake: &c.Fake}
+// Steerer retrieves the SteererV1beta1Client
+func (c *Clientset) Steerer() steererv1beta1.SteererV1beta1Interface {
+	return &fakesteererv1beta1.FakeSteererV1beta1{Fake: &c.Fake}
 }

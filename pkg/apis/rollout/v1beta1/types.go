@@ -23,17 +23,17 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Rollout is a specification for a Rollout resource
-type Rollout struct {
+// Canary is a specification for a Canary resource
+type Canary struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RolloutSpec   `json:"spec"`
-	Status RolloutStatus `json:"status"`
+	Spec   CanarySpec   `json:"spec"`
+	Status CanaryStatus `json:"status"`
 }
 
-// RolloutSpec is the spec for a Rollout resource
-type RolloutSpec struct {
+// CanarySpec is the spec for a Canary resource
+type CanarySpec struct {
 	TargetKind     string         `json:"targetKind"`
 	Primary        Target         `json:"primary"`
 	Canary         Target         `json:"canary"`
@@ -63,8 +63,8 @@ type Metric struct {
 	Threshold int    `json:"threshold"`
 }
 
-// RolloutStatus is the status for a Rollout resource
-type RolloutStatus struct {
+// CanaryStatus is the status for a Canary resource
+type CanaryStatus struct {
 	State          string `json:"state"`
 	CanaryRevision string `json:"canaryRevision"`
 	FailedChecks   int    `json:"failedChecks"`
@@ -72,10 +72,10 @@ type RolloutStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// RolloutList is a list of Rollout resources
-type RolloutList struct {
+// CanaryList is a list of Canary resources
+type CanaryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []Rollout `json:"items"`
+	Items []Canary `json:"items"`
 }

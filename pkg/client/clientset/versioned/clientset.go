@@ -19,7 +19,7 @@ limitations under the License.
 package versioned
 
 import (
-	appsv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1"
+	steererv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -27,27 +27,27 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	AppsV1beta1() appsv1beta1.AppsV1beta1Interface
+	SteererV1beta1() steererv1beta1.SteererV1beta1Interface
 	// Deprecated: please explicitly pick a version if possible.
-	Apps() appsv1beta1.AppsV1beta1Interface
+	Steerer() steererv1beta1.SteererV1beta1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	appsV1beta1 *appsv1beta1.AppsV1beta1Client
+	steererV1beta1 *steererv1beta1.SteererV1beta1Client
 }
 
-// AppsV1beta1 retrieves the AppsV1beta1Client
-func (c *Clientset) AppsV1beta1() appsv1beta1.AppsV1beta1Interface {
-	return c.appsV1beta1
+// SteererV1beta1 retrieves the SteererV1beta1Client
+func (c *Clientset) SteererV1beta1() steererv1beta1.SteererV1beta1Interface {
+	return c.steererV1beta1
 }
 
-// Deprecated: Apps retrieves the default version of AppsClient.
+// Deprecated: Steerer retrieves the default version of SteererClient.
 // Please explicitly pick a version.
-func (c *Clientset) Apps() appsv1beta1.AppsV1beta1Interface {
-	return c.appsV1beta1
+func (c *Clientset) Steerer() steererv1beta1.SteererV1beta1Interface {
+	return c.steererV1beta1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -66,7 +66,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.appsV1beta1, err = appsv1beta1.NewForConfig(&configShallowCopy)
+	cs.steererV1beta1, err = steererv1beta1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.appsV1beta1 = appsv1beta1.NewForConfigOrDie(c)
+	cs.steererV1beta1 = steererv1beta1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -91,7 +91,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.appsV1beta1 = appsv1beta1.New(c)
+	cs.steererV1beta1 = steererv1beta1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

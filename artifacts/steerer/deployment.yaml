@@ -22,7 +22,7 @@ spec:
       serviceAccountName: steerer
       containers:
       - name: steerer
-        image: stefanprodan/steerer:0.0.1-rc.18
+        image: stefanprodan/steerer:0.0.1-rc.23
         imagePullPolicy: Always
         ports:
         - name: http
