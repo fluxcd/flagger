@@ -1,0 +1,64 @@
+title: Steerer - Istio Progressive Delivery Kubernetes Operator
+
+remote_theme: errordeveloper/simple-project-homepage
+repository: stefanprodan/steerer
+by_weaveworks: false
+
+url: "https://stefanprodan.github.io/steerer"
+baseurl: "/"
+
+twitter:
+  username: "stefanprodan"
+author:
+  twitter: "stefanprodan"
+
+# Set default og:image
+defaults:
+- scope: {path: ""}
+  values: {image: "logo/logo-steerer.png"}
+
+# See: https://material.io/guidelines/style/color.html
+# Use color-name-value, like pink-200 or deep-purple-100
+brand_color: "amber-400"
+
+# How article URLs are structured.
+# See: https://jekyllrb.com/docs/permalinks/
+permalink: posts/:title/
+
+# "UA-NNNNNNNN-N"
+google_analytics: ""
+
+# Language. For example, if you write in Japanese, use "ja"
+lang: "en"
+
+# How many posts are visible on the home page without clicking "View More"
+num_posts_visible_initially: 5
+
+# Date format: See http://strftime.net/
+date_format: "%b %-d, %Y"
+
+plugins:
+- jekyll-feed
+- jekyll-readme-index
+- jekyll-seo-tag
+- jekyll-sitemap
+- jemoji
+# # required for local builds with starefossen/github-pages
+# - jekyll-github-metadata
+# - jekyll-mentions
+# - jekyll-redirect-from
+# - jekyll-remote-theme
+
+exclude:
+- CNAME
+- Dockerfile
+- Gopkg.lock
+- Gopkg.toml
+- LICENSE
+- Makefile
+- add-model.sh
+- build
+- cmd
+- pkg
+- tag_release.sh
+- vendor
