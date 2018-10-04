@@ -2,7 +2,7 @@ title: Steerer - Istio Progressive Delivery Kubernetes Operator
 
 remote_theme: errordeveloper/simple-project-homepage
 repository: stefanprodan/steerer
-by_weaveworks: false
+by_weaveworks: true
 
 url: "https://stefanprodan.github.io/steerer"
 baseurl: "/"

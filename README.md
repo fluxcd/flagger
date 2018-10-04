@@ -37,7 +37,7 @@ one for the version you want to upgrade called _primary_ and one for the _canary
 Each deployment must have a corresponding ClusterIP [service](https://kubernetes.io/docs/concepts/services-networking/service/) 
 that exposes a port named http or https. These services are used as destinations in a Istio [virtual service](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService).
 
-![steerer-overview](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-overview.png)
+![steerer-overview](https://raw.githubusercontent.com/stefanprodan/steerer/master/docs/diagrams/steerer-overview.png)
 
 Gated canary promotion stages:
 
@@ -198,7 +198,7 @@ histogram_quantile(0.99,
 
 ### Automated canary analysis, promotions and rollbacks
 
-![steerer-canary](https://github.com/stefanprodan/steerer/blob/master/docs/diagrams/steerer-canary-hpa.png)
+![steerer-canary](https://raw.githubusercontent.com/stefanprodan/steerer/master/docs/diagrams/steerer-canary-hpa.png)
 
 Create a test namespace with Istio sidecar injection enabled:
 
@@ -368,7 +368,7 @@ helm upgrade -i steerer-grafana steerer/grafana \
 
 The dashboard shows the RED and USE metrics for the primary and canary workloads:
 
-![steerer-grafana](https://github.com/stefanprodan/steerer/blob/master/docs/screens/grafana-canary-analysis.png)
+![steerer-grafana](https://raw.githubusercontent.com/stefanprodan/steerer/master/docs/screens/grafana-canary-analysis.png)
 
 The canary errors and latency spikes have been recorded as Kubernetes events and logged by Steerer in json format:
 
