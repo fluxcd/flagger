@@ -1,4 +1,4 @@
-apiVersion: steerer.app/v1beta1
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfoc

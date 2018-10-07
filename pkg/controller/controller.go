@@ -7,11 +7,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	rolloutv1 "github.com/stefanprodan/steerer/pkg/apis/rollout/v1beta1"
-	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
-	rolloutscheme "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/scheme"
-	rolloutinformers "github.com/stefanprodan/steerer/pkg/client/informers/externalversions/rollout/v1beta1"
-	rolloutlisters "github.com/stefanprodan/steerer/pkg/client/listers/rollout/v1beta1"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
+	flaggerscheme "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/scheme"
+	flaggerinformers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
+	flaggerlisters "github.com/stefanprodan/flagger/pkg/client/listers/flagger/v1beta1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,13 +25,13 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
-const controllerAgentName = "steerer"
+const controllerAgentName = "flagger"
 
 type Controller struct {
 	kubeClient    kubernetes.Interface
 	istioClient   istioclientset.Interface
 	rolloutClient clientset.Interface
-	rolloutLister rolloutlisters.CanaryLister
+	rolloutLister flaggerlisters.CanaryLister
 	rolloutSynced cache.InformerSynced
 	rolloutWindow time.Duration
 	workqueue     workqueue.RateLimitingInterface
@@ -45,14 +45,14 @@ func NewController(
 	kubeClient kubernetes.Interface,
 	istioClient istioclientset.Interface,
 	rolloutClient clientset.Interface,
-	rolloutInformer rolloutinformers.CanaryInformer,
+	rolloutInformer flaggerinformers.CanaryInformer,
 	rolloutWindow time.Duration,
 	metricServer string,
 	logger *zap.SugaredLogger,
 
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
-	rolloutscheme.AddToScheme(scheme.Scheme)
+	flaggerscheme.AddToScheme(scheme.Scheme)
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(logger.Named("event-broadcaster").Debugf)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{
@@ -196,27 +196,27 @@ func (c *Controller) enqueueRollout(obj interface{}) {
 	c.workqueue.AddRateLimited(key)
 }
 
-func (c *Controller) recordEventInfof(r *rolloutv1.Canary, template string, args ...interface{}) {
+func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
 }
 
-func (c *Controller) recordEventErrorf(r *rolloutv1.Canary, template string, args ...interface{}) {
+func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Errorf(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
-func (c *Controller) recordEventWarningf(r *rolloutv1.Canary, template string, args ...interface{}) {
+func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
-func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (rolloutv1.Canary, bool) {
-	var roll *rolloutv1.Canary
+func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flaggerv1.Canary, bool) {
+	var roll *flaggerv1.Canary
 	var ok bool
-	if roll, ok = obj.(*rolloutv1.Canary); !ok {
+	if roll, ok = obj.(*flaggerv1.Canary); !ok {
 		logger.Errorf("Event Watch received an invalid object: %#v", obj)
-		return rolloutv1.Canary{}, false
+		return flaggerv1.Canary{}, false
 	}
 	return *roll, true
 }

@@ -1,15 +1,15 @@
 FROM golang:1.10
 
-RUN mkdir -p /go/src/github.com/stefanprodan/steerer/
+RUN mkdir -p /go/src/github.com/stefanprodan/flagger/
 
-WORKDIR /go/src/github.com/stefanprodan/steerer
+WORKDIR /go/src/github.com/stefanprodan/flagger
 
 COPY . .
 
 RUN GIT_COMMIT=$(git rev-list -1 HEAD) && \
     CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w \
-    -X github.com/stefanprodan/steerer/pkg/version.REVISION=${GIT_COMMIT}" \
-    -a -installsuffix cgo -o steerer ./cmd/steerer/*
+    -X github.com/stefanprodan/flagger/pkg/version.REVISION=${GIT_COMMIT}" \
+    -a -installsuffix cgo -o flagger ./cmd/flagger/*
 
 FROM alpine:3.8
 
@@ -19,11 +19,11 @@ RUN addgroup -S app \
 
 WORKDIR /home/app
 
-COPY --from=0 /go/src/github.com/stefanprodan/steerer/steerer .
+COPY --from=0 /go/src/github.com/stefanprodan/flagger/flagger .
 
 RUN chown -R app:app ./
 
 USER app
 
-ENTRYPOINT ["./steerer"]
+ENTRYPOINT ["./flagger"]
 

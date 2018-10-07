@@ -1,5 +1,5 @@
 /*
-Copyright The Authors.
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/stefanprodan/steerer/pkg/client/informers/externalversions/internalinterfaces"
-	rollout "github.com/stefanprodan/steerer/pkg/client/informers/externalversions/rollout"
+	versioned "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
+	flagger "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger"
+	internalinterfaces "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -172,9 +172,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Steerer() rollout.Interface
+	Flagger() flagger.Interface
 }
 
-func (f *sharedInformerFactory) Steerer() rollout.Interface {
-	return rollout.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Flagger() flagger.Interface {
+	return flagger.New(f, f.namespace, f.tweakListOptions)
 }

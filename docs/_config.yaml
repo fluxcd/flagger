@@ -1,10 +1,10 @@
-title: Steerer - Istio Progressive Delivery Kubernetes Operator
+title: Flagger - Istio Progressive Delivery Kubernetes Operator
 
 remote_theme: errordeveloper/simple-project-homepage
-repository: stefanprodan/steerer
+repository: stefanprodan/flagger
 by_weaveworks: true
 
-url: "https://stefanprodan.github.io/steerer"
+url: "https://stefanprodan.github.io/flagger"
 baseurl: "/"
 
 twitter:
@@ -15,7 +15,7 @@ author:
 # Set default og:image
 defaults:
 - scope: {path: ""}
-  values: {image: "logo/logo-steerer.png"}
+  values: {image: "logo/logo-flagger.png"}
 
 # See: https://material.io/guidelines/style/color.html
 # Use color-name-value, like pink-200 or deep-purple-100

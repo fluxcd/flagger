@@ -1,5 +1,5 @@
 /*
-Copyright The Authors.
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 package versioned
 
 import (
-	steererv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1"
+	flaggerv1beta1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -27,27 +27,27 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	SteererV1beta1() steererv1beta1.SteererV1beta1Interface
+	FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface
 	// Deprecated: please explicitly pick a version if possible.
-	Steerer() steererv1beta1.SteererV1beta1Interface
+	Flagger() flaggerv1beta1.FlaggerV1beta1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	steererV1beta1 *steererv1beta1.SteererV1beta1Client
+	flaggerV1beta1 *flaggerv1beta1.FlaggerV1beta1Client
 }
 
-// SteererV1beta1 retrieves the SteererV1beta1Client
-func (c *Clientset) SteererV1beta1() steererv1beta1.SteererV1beta1Interface {
-	return c.steererV1beta1
+// FlaggerV1beta1 retrieves the FlaggerV1beta1Client
+func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
+	return c.flaggerV1beta1
 }
 
-// Deprecated: Steerer retrieves the default version of SteererClient.
+// Deprecated: Flagger retrieves the default version of FlaggerClient.
 // Please explicitly pick a version.
-func (c *Clientset) Steerer() steererv1beta1.SteererV1beta1Interface {
-	return c.steererV1beta1
+func (c *Clientset) Flagger() flaggerv1beta1.FlaggerV1beta1Interface {
+	return c.flaggerV1beta1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -66,7 +66,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.steererV1beta1, err = steererv1beta1.NewForConfig(&configShallowCopy)
+	cs.flaggerV1beta1, err = flaggerv1beta1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.steererV1beta1 = steererv1beta1.NewForConfigOrDie(c)
+	cs.flaggerV1beta1 = flaggerv1beta1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -91,7 +91,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.steererV1beta1 = steererv1beta1.New(c)
+	cs.flaggerV1beta1 = flaggerv1beta1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

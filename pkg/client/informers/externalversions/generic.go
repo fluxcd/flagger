@@ -1,5 +1,5 @@
 /*
-Copyright The Authors.
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1beta1 "github.com/stefanprodan/steerer/pkg/apis/rollout/v1beta1"
+	v1beta1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1beta1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -52,9 +52,9 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=steerer.app, Version=v1beta1
+	// Group=flagger.app, Version=v1beta1
 	case v1beta1.SchemeGroupVersion.WithResource("canaries"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Steerer().V1beta1().Canaries().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1beta1().Canaries().Informer()}, nil
 
 	}
 

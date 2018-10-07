@@ -1,0 +1,32 @@
+# Default values for flagger.
+
+image:
+  repository: stefanprodan/flagger
+  tag: 0.0.1
+  pullPolicy: IfNotPresent
+
+controlLoopInterval: "10s"
+metricsServer: "http://prometheus.istio-system.svc.cluster.local:9090"
+
+crd:
+  create: true
+
+rbac:
+  create: true
+
+nameOverride: ""
+fullnameOverride: ""
+
+resources:
+  limits:
+    memory: "512Mi"
+    cpu: "1000m"
+  requests:
+    memory: "32Mi"
+    cpu: "10m"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

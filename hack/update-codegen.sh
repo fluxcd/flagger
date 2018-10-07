@@ -22,7 +22,7 @@ SCRIPT_ROOT=$(dirname ${BASH_SOURCE})/..
 CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
 
 ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
-  github.com/stefanprodan/steerer/pkg/client github.com/stefanprodan/steerer/pkg/apis \
-  rollout:v1beta1 \
+  github.com/stefanprodan/flagger/pkg/client github.com/stefanprodan/flagger/pkg/apis \
+  flagger:v1beta1 \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
 

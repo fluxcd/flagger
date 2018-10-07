@@ -1,5 +1,5 @@
 /*
-Copyright The Authors.
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 package scheme
 
 import (
-	steererv1beta1 "github.com/stefanprodan/steerer/pkg/apis/rollout/v1beta1"
+	flaggerv1beta1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -50,5 +50,5 @@ func init() {
 // After this, RawExtensions in Kubernetes types will serialize kube-aggregator types
 // correctly.
 func AddToScheme(scheme *runtime.Scheme) {
-	steererv1beta1.AddToScheme(scheme)
+	flaggerv1beta1.AddToScheme(scheme)
 }

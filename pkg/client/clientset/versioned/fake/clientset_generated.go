@@ -1,5 +1,5 @@
 /*
-Copyright The Authors.
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/stefanprodan/steerer/pkg/client/clientset/versioned"
-	steererv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1"
-	fakesteererv1beta1 "github.com/stefanprodan/steerer/pkg/client/clientset/versioned/typed/rollout/v1beta1/fake"
+	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
+	flaggerv1beta1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
+	fakeflaggerv1beta1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -71,12 +71,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// SteererV1beta1 retrieves the SteererV1beta1Client
-func (c *Clientset) SteererV1beta1() steererv1beta1.SteererV1beta1Interface {
-	return &fakesteererv1beta1.FakeSteererV1beta1{Fake: &c.Fake}
+// FlaggerV1beta1 retrieves the FlaggerV1beta1Client
+func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
+	return &fakeflaggerv1beta1.FakeFlaggerV1beta1{Fake: &c.Fake}
 }
 
-// Steerer retrieves the SteererV1beta1Client
-func (c *Clientset) Steerer() steererv1beta1.SteererV1beta1Interface {
-	return &fakesteererv1beta1.FakeSteererV1beta1{Fake: &c.Fake}
+// Flagger retrieves the FlaggerV1beta1Client
+func (c *Clientset) Flagger() flaggerv1beta1.FlaggerV1beta1Interface {
+	return &fakeflaggerv1beta1.FakeFlaggerV1beta1{Fake: &c.Fake}
 }

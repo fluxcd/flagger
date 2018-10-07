@@ -1,5 +1,0 @@
-apiVersion: v1
-name: steerer
-version: 0.0.1
-appVersion: 0.0.1-rc.23
-description: Steerer is a Kubernetes operator that automates the promotion of canary deployments using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
