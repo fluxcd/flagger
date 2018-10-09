@@ -24,7 +24,3 @@ spec:
         port:
           number: 9898
       weight: 0
-    timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 2s

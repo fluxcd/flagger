@@ -19,12 +19,7 @@ spec:
         port:
           number: 9898
       weight: 100
-    - destination:
-        host: podinfo-canary
-        port:
-          number: 9898
-      weight: 0
-    timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
+    mirror:
+      host: podinfo-canary
+      port:
+        number: 9898

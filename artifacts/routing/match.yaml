@@ -3,8 +3,6 @@ kind: VirtualService
 metadata:
   name: podinfo
   namespace: test
-  labels:
-    app: podinfo
 spec:
   gateways:
   - public-gateway.istio-system.svc.cluster.local
@@ -13,18 +11,24 @@ spec:
   - app.istio.weavedx.com
   - podinfo
   http:
+  - match:
+    - headers:
+        user-agent:
+          regex: ^(?!.*Chrome)(?=.*\bSafari\b).*$
+    route:
+    - destination:
+        host: podinfo
+        port:
+          number: 9898
+      weight: 0
+    - destination:
+        host: podinfo-canary
+        port:
+          number: 9898
+      weight: 100
   - route:
     - destination:
         host: podinfo
         port:
           number: 9898
       weight: 100
-    - destination:
-        host: podinfo-canary
-        port:
-          number: 9898
-      weight: 0
-    timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
