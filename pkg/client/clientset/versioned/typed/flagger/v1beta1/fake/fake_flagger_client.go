@@ -32,6 +32,10 @@ func (c *FakeFlaggerV1beta1) Canaries(namespace string) v1beta1.CanaryInterface 
 	return &FakeCanaries{c, namespace}
 }
 
+func (c *FakeFlaggerV1beta1) CanaryDeployments(namespace string) v1beta1.CanaryDeploymentInterface {
+	return &FakeCanaryDeployments{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeFlaggerV1beta1) RESTClient() rest.Interface {

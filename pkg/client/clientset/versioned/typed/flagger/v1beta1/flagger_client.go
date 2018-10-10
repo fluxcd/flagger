@@ -28,6 +28,7 @@ import (
 type FlaggerV1beta1Interface interface {
 	RESTClient() rest.Interface
 	CanariesGetter
+	CanaryDeploymentsGetter
 }
 
 // FlaggerV1beta1Client is used to interact with features provided by the flagger.app group.
@@ -37,6 +38,10 @@ type FlaggerV1beta1Client struct {
 
 func (c *FlaggerV1beta1Client) Canaries(namespace string) CanaryInterface {
 	return newCanaries(c, namespace)
+}
+
+func (c *FlaggerV1beta1Client) CanaryDeployments(namespace string) CanaryDeploymentInterface {
+	return newCanaryDeployments(c, namespace)
 }
 
 // NewForConfig creates a new FlaggerV1beta1Client for the given config.

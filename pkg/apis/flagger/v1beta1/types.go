@@ -17,8 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const CanaryDeploymentKind  = "CanaryDeployment"
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -39,6 +42,23 @@ type CanarySpec struct {
 	Canary         Target         `json:"canary"`
 	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
 	VirtualService VirtualService `json:"virtualService"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// CanaryList is a list of Canary resources
+type CanaryList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []Canary `json:"items"`
+}
+
+// CanaryStatus is used for state persistence (read-only)
+type CanaryStatus struct {
+	State          string `json:"state"`
+	CanaryRevision string `json:"canaryRevision"`
+	FailedChecks   int    `json:"failedChecks"`
 }
 
 type Target struct {
@@ -63,19 +83,49 @@ type Metric struct {
 	Threshold int    `json:"threshold"`
 }
 
-// CanaryStatus is the status for a Canary resource
-type CanaryStatus struct {
-	State          string `json:"state"`
-	CanaryRevision string `json:"canaryRevision"`
-	FailedChecks   int    `json:"failedChecks"`
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Canary is a specification for a Canary resource
+type CanaryDeployment struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   CanaryDeploymentSpec   `json:"spec"`
+	Status CanaryDeploymentStatus `json:"status"`
+}
+
+// CanarySpec is the spec for a Canary resource
+type CanaryDeploymentSpec struct {
+	// reference to target resource
+	TargetRef hpav1.CrossVersionObjectReference `json:"targetRef"`
+
+	// virtual service spec
+	Service CanaryDeploymentService `json:"service"`
+
+	// metrics and thresholds
+	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CanaryList is a list of Canary resources
-type CanaryList struct {
+type CanaryDeploymentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []Canary `json:"items"`
+	Items []CanaryDeployment `json:"items"`
+}
+
+// CanaryStatus is used for state persistence (read-only)
+type CanaryDeploymentStatus struct {
+	State          string `json:"state"`
+	CanaryRevision string `json:"canaryRevision"`
+	FailedChecks   int    `json:"failedChecks"`
+}
+
+type CanaryDeploymentService struct {
+	Port     int32      `json:"port"`
+	Gateways []string `json:"gateways"`
+	Hosts    []string `json:"hosts"`
 }

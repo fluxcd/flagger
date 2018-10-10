@@ -68,3 +68,7 @@ release-set: fmt version-set helm-package
 	git tag $(VERSION)
 	git push origin $(VERSION)
 
+reset-test:
+	kubectl delete -f ./artifacts/namespaces
+	kubectl apply -f ./artifacts/namespaces
+	kubectl apply -f ./artifacts/canaries
