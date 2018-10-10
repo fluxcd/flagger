@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// Canaries returns a CanaryInformer.
 	Canaries() CanaryInformer
+	// CanaryDeployments returns a CanaryDeploymentInformer.
+	CanaryDeployments() CanaryDeploymentInformer
 }
 
 type version struct {
@@ -42,4 +44,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // Canaries returns a CanaryInformer.
 func (v *version) Canaries() CanaryInformer {
 	return &canaryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// CanaryDeployments returns a CanaryDeploymentInformer.
+func (v *version) CanaryDeployments() CanaryDeploymentInformer {
+	return &canaryDeploymentInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

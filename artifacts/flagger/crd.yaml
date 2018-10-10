@@ -64,4 +64,48 @@ spec:
                           pattern: "^[0-9]+(m)"
                         threshold:
                           type: number
-
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: canarydeployments.flagger.app
+spec:
+  group: flagger.app
+  version: v1beta1
+  versions:
+  - name: v1beta1
+    served: true
+    storage: true
+  names:
+    plural: canarydeployments
+    singular: canarydeployment
+    kind: CanaryDeployment
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          required:
+          - canaryAnalysis
+          properties:
+            canaryAnalysis:
+              properties:
+                threshold:
+                  type: number
+                maxWeight:
+                  type: number
+                stepWeight:
+                  type: number
+                metrics:
+                  type: array
+                  properties:
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        interval:
+                          type: string
+                          pattern: "^[0-9]+(m)"
+                        threshold:
+                          type: number

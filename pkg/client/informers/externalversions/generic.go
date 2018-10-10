@@ -55,6 +55,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=flagger.app, Version=v1beta1
 	case v1beta1.SchemeGroupVersion.WithResource("canaries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1beta1().Canaries().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("canarydeployments"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1beta1().CanaryDeployments().Informer()}, nil
 
 	}
 

@@ -1,0 +1,37 @@
+apiVersion: flagger.app/v1beta1
+kind: CanaryDeployment
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  service:
+    port: 9898
+    gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    hosts:
+    - app.istio.weavedx.com
+  canaryAnalysis:
+    # max number of failed metric checks
+    # before rolling back the canary
+    threshold: 5
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 10
+    metrics:
+    - name: istio_requests_total
+      # minimum req success rate (non 5xx responses)
+      # percentage (0-100)
+      threshold: 99
+      interval: 1m
+    - name: istio_request_duration_seconds_bucket
+      # maximum req duration P99
+      # milliseconds
+      threshold: 500
+      interval: 30s

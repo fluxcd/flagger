@@ -25,3 +25,11 @@ type CanaryListerExpansion interface{}
 // CanaryNamespaceListerExpansion allows custom methods to be added to
 // CanaryNamespaceLister.
 type CanaryNamespaceListerExpansion interface{}
+
+// CanaryDeploymentListerExpansion allows custom methods to be added to
+// CanaryDeploymentLister.
+type CanaryDeploymentListerExpansion interface{}
+
+// CanaryDeploymentNamespaceListerExpansion allows custom methods to be added to
+// CanaryDeploymentNamespaceLister.
+type CanaryDeploymentNamespaceListerExpansion interface{}
