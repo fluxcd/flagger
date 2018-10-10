@@ -19,7 +19,7 @@ Deploy Flagger in the `istio-system` namespace using Helm:
 
 ```bash
 # add the Helm repository
-helm repo add flagger https://stefanprodan.github.io/flagger
+helm repo add flagger https://flagger.app
 
 # install or upgrade
 helm upgrade -i flagger flagger/flagger \
@@ -32,10 +32,11 @@ Flagger is compatible with Kubernetes >1.10.0 and Istio >1.0.0.
 
 ### Usage
 
-Flagger requires two Kubernetes [deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/): 
-one for the version you want to upgrade called _primary_ and one for the _canary_.
-Each deployment must have a corresponding ClusterIP [service](https://kubernetes.io/docs/concepts/services-networking/service/) 
-that exposes a port named http or https. These services are used as destinations in a Istio [virtual service](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService).
+Flagger takes a Kubernetes deployment and creates a series of objects 
+(Kubernetes [deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), 
+ClusterIP [services](https://kubernetes.io/docs/concepts/services-networking/service/) and 
+Istio [virtual services](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService)) 
+to drive the canary analysis and promotion.
 
 ![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-overview.png)
 
@@ -70,76 +71,35 @@ Gated canary promotion stages:
 
 You can change the canary analysis _max weight_ and the _step weight_ percentage in the Flagger's custom resource.
 
-Assuming the primary deployment is named _podinfo_ and the canary one _podinfo-canary_, Flagger will require 
-a virtual service configured with weight-based routing:
+For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: podinfo
-spec:
-  hosts:
-  - podinfo
-  http:
-  - route:
-    - destination:
-        host: podinfo
-        port:
-          number: 9898
-      weight: 100
-    - destination:
-        host: podinfo-canary
-        port:
-          number: 9898
-      weight: 0
-```
-
-Primary and canary services should expose a port named http:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: podinfo-canary
-spec:
-  type: ClusterIP
-  selector:
-    app: podinfo-canary
-  ports:
-  - name: http
-    port: 9898
-    targetPort: 9898
-```
-
-Based on the two deployments, services and virtual service, a canary promotion can be defined using Flagger's custom resource:
-
-```yaml
-apiVersion: flagger.app/v1beta1
+apiVersion: flagger.app/v1alpha1
 kind: Canary
 metadata:
   name: podinfo
   namespace: test
 spec:
-  targetKind: Deployment
-  virtualService:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
     name: podinfo
-  primary:
-    name: podinfo
-    host: podinfo
-  canary:
-    name: podinfo-canary
-    host: podinfo-canary
+  service:
+    port: 9898
+    gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    hosts:
+    - podinfo.example.com
   canaryAnalysis:
-    # max number of failed checks
+    # max number of failed metric checks
     # before rolling back the canary
-    threshold: 10
+    threshold: 5
     # max traffic percentage routed to canary
     # percentage (0-100)
     maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 5
+    stepWeight: 10
     metrics:
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
@@ -150,7 +110,7 @@ spec:
       # maximum req duration P99
       # milliseconds
       threshold: 500
-      interval: 1m
+      interval: 30s
 ```
 
 The canary analysis is using the following promql queries:
@@ -198,8 +158,6 @@ histogram_quantile(0.99,
 
 ### Automated canary analysis, promotions and rollbacks
 
-![flagger-canary](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-hpa.png)
-
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
@@ -208,33 +166,18 @@ export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
 kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
 ```
 
-Create the primary deployment, service and hpa:
+Create a deployment:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/workloads/primary-deployment.yaml
-kubectl apply -f ${REPO}/artifacts/workloads/primary-service.yaml
-kubectl apply -f ${REPO}/artifacts/workloads/primary-hpa.yaml
+kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
 ```
-
-Create the canary deployment, service and hpa:
+Create a canary promotion custom resource (replace the Istio gateway and the internet domain with your own)::
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/workloads/canary-deployment.yaml
-kubectl apply -f ${REPO}/artifacts/workloads/canary-service.yaml
-kubectl apply -f ${REPO}/artifacts/workloads/canary-hpa.yaml
+kubectl apply -f ${REPO}/artifacts/canaries/canary.yaml
 ```
 
-Create a virtual service (replace the Istio gateway and the internet domain with your own):
-
-```bash
-kubectl apply -f ${REPO}/artifacts/workloads/virtual-service.yaml
-```
-
-Create a canary promotion custom resource:
-
-```bash
-kubectl apply -f ${REPO}/artifacts/rollouts/podinfo.yaml
-```
+![flagger-canary-steps](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
 Canary promotion output:
 
@@ -265,9 +208,9 @@ Events:
   Normal   Synced  55s   flagger  Advance podinfo.test canary weight 40
   Normal   Synced  45s   flagger  Advance podinfo.test canary weight 45
   Normal   Synced  35s   flagger  Advance podinfo.test canary weight 50
-  Normal   Synced  25s   flagger  Copying podinfo-canary.test template spec to podinfo.test
+  Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
   Warning  Synced  15s   flagger  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
-  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo-canary.test
+  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
@@ -313,14 +256,14 @@ Events:
   Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 55.06% < 99%
   Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 47.00% < 99%
   Normal   Synced  2m    flagger  (combined from similar events): Halt podinfo.test advancement success rate 38.08% < 99%
-  Warning  Synced  1m    flagger  Rolling back podinfo-canary.test failed checks threshold reached 10
-  Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo-canary.test
+  Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
+  Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
 Trigger a new canary deployment by updating the canary image:
 
 ```bash
-kubectl -n test set image deployment/podinfo-canary \
+kubectl -n test set image deployment/podinfo \
 podinfod=quay.io/stefanprodan/podinfo:1.2.1
 ```
 
@@ -349,9 +292,9 @@ Events:
   Normal   Synced  55s   flagger  Advance podinfo.test canary weight 40
   Normal   Synced  45s   flagger  Advance podinfo.test canary weight 45
   Normal   Synced  35s   flagger  Advance podinfo.test canary weight 50
-  Normal   Synced  25s   flagger  Copying podinfo-canary.test template spec to podinfo.test
+  Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
   Warning  Synced  15s   flagger  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
-  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo-canary.test
+  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
 ### Monitoring
@@ -388,7 +331,7 @@ Advance podinfo.test canary weight 40
 Halt podinfo.test advancement request duration 1.515s > 500ms
 Advance podinfo.test canary weight 45
 Advance podinfo.test canary weight 50
-Copying podinfo-canary.test template spec to podinfo-primary.test
+Copying podinfo-canary.test template spec to podinfo.test
 Scaling down podinfo-canary.test
 Promotion completed! podinfo-canary.test revision 81289
 ```
