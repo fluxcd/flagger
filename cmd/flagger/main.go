@@ -5,8 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/stefanprodan/flagger/pkg/operator"
-
 	_ "github.com/istio/glog"
 	sharedclientset "github.com/knative/pkg/client/clientset/versioned"
 	"github.com/knative/pkg/signals"
@@ -71,9 +69,8 @@ func main() {
 		logger.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	rolloutInformerFactory := informers.NewSharedInformerFactory(rolloutClient, time.Second*30)
-	rolloutInformer := rolloutInformerFactory.Flagger().V1beta1().Canaries()
-	canaryDeploymentInformer := rolloutInformerFactory.Flagger().V1beta1().CanaryDeployments()
+	canaryInformerFactory := informers.NewSharedInformerFactory(rolloutClient, time.Second*30)
+	canaryInformer := canaryInformerFactory.Flagger().V1alpha1().Canaries()
 
 	logger.Infof("Starting flagger version %s revision %s", version.VERSION, version.REVISION)
 
@@ -98,28 +95,17 @@ func main() {
 		kubeClient,
 		sharedClient,
 		rolloutClient,
-		rolloutInformer,
+		canaryInformer,
 		controlLoopInterval,
 		metricsServer,
 		logger,
 	)
 
-	cd := operator.NewController(
-		kubeClient,
-		sharedClient,
-		rolloutClient,
-		canaryDeploymentInformer,
-		controlLoopInterval,
-		metricsServer,
-		logger,
-	)
-
-	rolloutInformerFactory.Start(stopCh)
+	canaryInformerFactory.Start(stopCh)
 
 	logger.Info("Waiting for informer caches to sync")
 	for _, synced := range []cache.InformerSynced{
-		rolloutInformer.Informer().HasSynced,
-		canaryDeploymentInformer.Informer().HasSynced,
+		canaryInformer.Informer().HasSynced,
 	} {
 		if ok := cache.WaitForCacheSync(stopCh, synced); !ok {
 			logger.Fatalf("Failed to wait for cache sync")
@@ -132,13 +118,6 @@ func main() {
 			logger.Fatalf("Error running controller: %v", err)
 		}
 	}(c)
-
-	// start controller
-	go func(ctrl *operator.Controller) {
-		if err := ctrl.Run(2, stopCh); err != nil {
-			logger.Fatalf("Error running controller: %v", err)
-		}
-	}(cd)
 
 	<-stopCh
 }

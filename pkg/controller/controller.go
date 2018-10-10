@@ -7,11 +7,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	flaggerscheme "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/scheme"
-	flaggerinformers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
-	flaggerlisters "github.com/stefanprodan/flagger/pkg/client/listers/flagger/v1beta1"
+	flaggerinformers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger/v1alpha1"
+	flaggerlisters "github.com/stefanprodan/flagger/pkg/client/listers/flagger/v1alpha1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -76,7 +76,7 @@ func NewController(
 	}
 
 	rolloutInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: ctrl.enqueueRollout,
+		AddFunc: ctrl.enqueue,
 		UpdateFunc: func(old, new interface{}) {
 			oldRoll, ok := checkCustomResourceType(old, logger)
 			if !ok {
@@ -89,7 +89,7 @@ func NewController(
 
 			if diff := cmp.Diff(newRoll.Spec, oldRoll.Spec); diff != "" {
 				ctrl.logger.Debugf("Diff detected %s.%s %s", oldRoll.Name, oldRoll.Namespace, diff)
-				ctrl.enqueueRollout(new)
+				ctrl.enqueue(new)
 			}
 		},
 		DeleteFunc: func(old interface{}) {
@@ -108,7 +108,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer utilruntime.HandleCrash()
 	defer c.workqueue.ShutDown()
 
-	c.logger.Info("Starting controller")
+	c.logger.Info("Starting operator")
 
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(func() {
@@ -117,7 +117,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 		}, time.Second, stopCh)
 	}
 
-	c.logger.Info("Started workers")
+	c.logger.Info("Started operator workers")
 
 	tickChan := time.NewTicker(c.rolloutWindow).C
 	for {
@@ -125,7 +125,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 		case <-tickChan:
 			c.doRollouts()
 		case <-stopCh:
-			c.logger.Info("Shutting down workers")
+			c.logger.Info("Shutting down operator workers")
 			return nil
 		}
 	}
@@ -174,19 +174,26 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-	rollout, err := c.rolloutLister.Canaries(namespace).Get(name)
+	cd, err := c.rolloutLister.Canaries(namespace).Get(name)
 	if errors.IsNotFound(err) {
-		utilruntime.HandleError(fmt.Errorf("rollout '%s' in work queue no longer exists", key))
+		utilruntime.HandleError(fmt.Errorf("'%s' in work queue no longer exists", key))
 		return nil
 	}
 
-	c.rollouts.Store(fmt.Sprintf("%s.%s", rollout.Name, rollout.Namespace), rollout)
+	c.rollouts.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
+
+	err = c.bootstrapDeployment(cd)
+	if err != nil {
+		c.logger.Warnf("%s.%s bootstrap error %v", cd.Name, cd.Namespace, err)
+		return err
+	}
+
 	c.logger.Infof("Synced %s", key)
 
 	return nil
 }
 
-func (c *Controller) enqueueRollout(obj interface{}) {
+func (c *Controller) enqueue(obj interface{}) {
 	var key string
 	var err error
 	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
@@ -194,6 +201,16 @@ func (c *Controller) enqueueRollout(obj interface{}) {
 		return
 	}
 	c.workqueue.AddRateLimited(key)
+}
+
+func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flaggerv1.Canary, bool) {
+	var roll *flaggerv1.Canary
+	var ok bool
+	if roll, ok = obj.(*flaggerv1.Canary); !ok {
+		logger.Errorf("Event Watch received an invalid object: %#v", obj)
+		return flaggerv1.Canary{}, false
+	}
+	return *roll, true
 }
 
 func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {
@@ -209,14 +226,4 @@ func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, arg
 func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
-}
-
-func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flaggerv1.Canary, bool) {
-	var roll *flaggerv1.Canary
-	var ok bool
-	if roll, ok = obj.(*flaggerv1.Canary); !ok {
-		logger.Errorf("Event Watch received an invalid object: %#v", obj)
-		return flaggerv1.Canary{}, false
-	}
-	return *roll, true
 }

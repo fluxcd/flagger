@@ -1,5 +1,5 @@
-apiVersion: flagger.app/v1beta1
-kind: CanaryDeployment
+apiVersion: flagger.app/v1alpha1
+kind: Canary
 metadata:
   name: podinfo
   namespace: test

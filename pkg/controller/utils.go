@@ -1,4 +1,4 @@
-package operator
+package controller
 
 import (
 	"encoding/base64"
@@ -7,14 +7,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (c *Controller) saveDeploymentSpec(cd *flaggerv1.CanaryDeployment, dep *appsv1.Deployment) error {
+func (c *Controller) saveDeploymentSpec(cd *flaggerv1.Canary, dep *appsv1.Deployment) error {
 	specJson, err := json.Marshal(dep.Spec.Template.Spec)
 	if err != nil {
 		return err
@@ -22,14 +22,14 @@ func (c *Controller) saveDeploymentSpec(cd *flaggerv1.CanaryDeployment, dep *app
 
 	specEnc := base64.StdEncoding.EncodeToString(specJson)
 	cd.Status.CanaryRevision = specEnc
-	cd, err = c.rolloutClient.FlaggerV1beta1().CanaryDeployments(cd.Namespace).Update(cd)
+	cd, err = c.rolloutClient.FlaggerV1alpha1().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Controller) diffDeploymentSpec(cd *flaggerv1.CanaryDeployment, dep *appsv1.Deployment) (bool, error) {
+func (c *Controller) diffDeploymentSpec(cd *flaggerv1.Canary, dep *appsv1.Deployment) (bool, error) {
 	if cd.Status.CanaryRevision == "" {
 		return true, nil
 	}

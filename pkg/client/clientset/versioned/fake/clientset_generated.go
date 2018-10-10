@@ -20,8 +20,8 @@ package fake
 
 import (
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
-	flaggerv1beta1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
-	fakeflaggerv1beta1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1/fake"
+	flaggerv1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha1"
+	fakeflaggerv1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -71,12 +71,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// FlaggerV1beta1 retrieves the FlaggerV1beta1Client
-func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
-	return &fakeflaggerv1beta1.FakeFlaggerV1beta1{Fake: &c.Fake}
+// FlaggerV1alpha1 retrieves the FlaggerV1alpha1Client
+func (c *Clientset) FlaggerV1alpha1() flaggerv1alpha1.FlaggerV1alpha1Interface {
+	return &fakeflaggerv1alpha1.FakeFlaggerV1alpha1{Fake: &c.Fake}
 }
 
-// Flagger retrieves the FlaggerV1beta1Client
-func (c *Clientset) Flagger() flaggerv1beta1.FlaggerV1beta1Interface {
-	return &fakeflaggerv1beta1.FakeFlaggerV1beta1{Fake: &c.Fake}
+// Flagger retrieves the FlaggerV1alpha1Client
+func (c *Clientset) Flagger() flaggerv1alpha1.FlaggerV1alpha1Interface {
+	return &fakeflaggerv1alpha1.FakeFlaggerV1alpha1{Fake: &c.Fake}
 }

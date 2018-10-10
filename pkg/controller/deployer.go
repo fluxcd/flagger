@@ -1,10 +1,10 @@
-package operator
+package controller
 
 import (
 	"fmt"
 
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func (c *Controller) bootstrapDeployment(cd *flaggerv1.CanaryDeployment) error {
+func (c *Controller) bootstrapDeployment(cd *flaggerv1.Canary) error {
 
 	canaryName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
@@ -39,7 +39,7 @@ func (c *Controller) bootstrapDeployment(cd *flaggerv1.CanaryDeployment) error {
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
 						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryDeploymentKind,
+						Kind:    flaggerv1.CanaryKind,
 					}),
 				},
 			},
@@ -83,7 +83,7 @@ func (c *Controller) bootstrapDeployment(cd *flaggerv1.CanaryDeployment) error {
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
 						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryDeploymentKind,
+						Kind:    flaggerv1.CanaryKind,
 					}),
 				},
 			},
@@ -122,7 +122,7 @@ func (c *Controller) bootstrapDeployment(cd *flaggerv1.CanaryDeployment) error {
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
 						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryDeploymentKind,
+						Kind:    flaggerv1.CanaryKind,
 					}),
 				},
 			},
@@ -160,7 +160,7 @@ func (c *Controller) bootstrapDeployment(cd *flaggerv1.CanaryDeployment) error {
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
 						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryDeploymentKind,
+						Kind:    flaggerv1.CanaryKind,
 					}),
 				},
 			},
@@ -201,7 +201,7 @@ func (c *Controller) bootstrapDeployment(cd *flaggerv1.CanaryDeployment) error {
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
 						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryDeploymentKind,
+						Kind:    flaggerv1.CanaryKind,
 					}),
 				},
 			},
