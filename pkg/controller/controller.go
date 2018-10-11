@@ -123,7 +123,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	for {
 		select {
 		case <-tickChan:
-			c.doRollouts()
+			c.scheduleCanaries()
 		case <-stopCh:
 			c.logger.Info("Shutting down operator workers")
 			return nil
@@ -182,13 +182,13 @@ func (c *Controller) syncHandler(key string) error {
 
 	c.rollouts.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
 
-	if cd.Spec.TargetRef.Kind == "Deployment" {
-		err = c.bootstrapDeployment(cd)
-		if err != nil {
-			c.logger.Warnf("%s.%s bootstrap error %v", cd.Name, cd.Namespace, err)
-			return err
-		}
-	}
+	//if cd.Spec.TargetRef.Kind == "Deployment" {
+	//	err = c.bootstrapDeployment(cd)
+	//	if err != nil {
+	//		c.logger.Warnf("%s.%s bootstrap error %v", cd.Name, cd.Namespace, err)
+	//		return err
+	//	}
+	//}
 
 	c.logger.Infof("Synced %s", key)
 
@@ -228,4 +228,8 @@ func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, arg
 func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
+}
+
+func int32p(i int32) *int32 {
+	return &i
 }

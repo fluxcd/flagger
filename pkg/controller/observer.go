@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+type CanaryObserver struct {
+	metricsServer string
+}
+
 type VectorQueryResponse struct {
 	Data struct {
 		Result []struct {
@@ -23,7 +27,7 @@ type VectorQueryResponse struct {
 	}
 }
 
-func (c *Controller) queryMetric(query string) (*VectorQueryResponse, error) {
+func (c *CanaryObserver) queryMetric(query string) (*VectorQueryResponse, error) {
 	promURL, err := url.Parse(c.metricsServer)
 	if err != nil {
 		return nil, err
@@ -69,7 +73,7 @@ func (c *Controller) queryMetric(query string) (*VectorQueryResponse, error) {
 }
 
 // istio_requests_total
-func (c *Controller) getDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
+func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
 	var rate *float64
 	querySt := url.QueryEscape(`sum(rate(` +
 		metric + `{reporter="destination",destination_workload_namespace=~"` +
@@ -102,7 +106,7 @@ func (c *Controller) getDeploymentCounter(name string, namespace string, metric 
 }
 
 // istio_request_duration_seconds_bucket
-func (c *Controller) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
+func (c *CanaryObserver) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
 	var rate *float64
 	querySt := url.QueryEscape(`histogram_quantile(0.99, sum(rate(` +
 		metric + `{reporter="destination",destination_workload=~"` +
