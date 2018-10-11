@@ -64,13 +64,13 @@ func main() {
 		logger.Fatalf("Error building shared clientset: %v", err)
 	}
 
-	rolloutClient, err := clientset.NewForConfig(cfg)
+	flaggerClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	canaryInformerFactory := informers.NewSharedInformerFactory(rolloutClient, time.Second*30)
-	canaryInformer := canaryInformerFactory.Flagger().V1alpha1().Canaries()
+	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, time.Second*30)
+	canaryInformer := flaggerInformerFactory.Flagger().V1alpha1().Canaries()
 
 	logger.Infof("Starting flagger version %s revision %s", version.VERSION, version.REVISION)
 
@@ -94,14 +94,14 @@ func main() {
 	c := controller.NewController(
 		kubeClient,
 		sharedClient,
-		rolloutClient,
+		flaggerClient,
 		canaryInformer,
 		controlLoopInterval,
 		metricsServer,
 		logger,
 	)
 
-	canaryInformerFactory.Start(stopCh)
+	flaggerInformerFactory.Start(stopCh)
 
 	logger.Info("Waiting for informer caches to sync")
 	for _, synced := range []cache.InformerSynced{

@@ -4,7 +4,7 @@ VERSION_MINOR:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 
 PATCH:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | awk -F. '{print $$NF}')
 SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/logging pkg/version
 run:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -metrics-server=https://prometheus.istio.weavedx.com
+	go run -race cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -metrics-server=https://prometheus.istio.weavedx.com
 
 build:
 	docker build -t stefanprodan/flagger:$(TAG) . -f Dockerfile

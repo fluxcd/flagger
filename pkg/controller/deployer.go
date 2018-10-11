@@ -57,9 +57,9 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// IsDeploymentHealthy checks the primary and canary deployment status and returns an error if
-// the deployment is in the middle of a rolling update or if the pods are unhealthy
-func (c *CanaryDeployer) IsDeploymentHealthy(cd *flaggerv1.Canary) error {
+// IsReady checks the primary and canary deployment status and returns an error if
+// the deployments are in the middle of a rolling update or if the pods are unhealthy
+func (c *CanaryDeployer) IsReady(cd *flaggerv1.Canary) error {
 	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -182,25 +182,28 @@ func (c *CanaryDeployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	canary, err = c.kubeClient.AppsV1().Deployments(canary.Namespace).Update(canary)
 	if err != nil {
 		return fmt.Errorf("scaling %s.%s to %v failed: %v", canary.GetName(), canary.Namespace, replicas, err)
-
 	}
-
 	return nil
 }
 
 // Sync creates the primary deployment and hpa
+// and scales to zero the canary deployment
 func (c *CanaryDeployer) Sync(cd *flaggerv1.Canary) error {
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	if err := c.createPrimaryDeployment(cd); err != nil {
-		return err
+		return fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
 	}
 
 	if cd.Status.State == "" {
-		c.Scale(cd, 0)
+		c.logger.Infof("Scaling down %s.%s", primaryName, cd.Namespace)
+		if err := c.Scale(cd, 0); err != nil {
+			return err
+		}
 	}
 
 	if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 		if err := c.createPrimaryHpa(cd); err != nil {
-			return err
+			return fmt.Errorf("creating hpa %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}
 	}
 	return nil

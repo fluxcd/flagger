@@ -30,23 +30,25 @@ const controllerAgentName = "flagger"
 type Controller struct {
 	kubeClient    kubernetes.Interface
 	istioClient   istioclientset.Interface
-	rolloutClient clientset.Interface
-	rolloutLister flaggerlisters.CanaryLister
-	rolloutSynced cache.InformerSynced
-	rolloutWindow time.Duration
+	flaggerClient clientset.Interface
+	flaggerLister flaggerlisters.CanaryLister
+	flaggerSynced cache.InformerSynced
+	flaggerWindow time.Duration
 	workqueue     workqueue.RateLimitingInterface
 	recorder      record.EventRecorder
 	logger        *zap.SugaredLogger
-	metricsServer string
-	rollouts      *sync.Map
+	canaries      *sync.Map
+	deployer      CanaryDeployer
+	router        CanaryRouter
+	observer      CanaryObserver
 }
 
 func NewController(
 	kubeClient kubernetes.Interface,
 	istioClient istioclientset.Interface,
-	rolloutClient clientset.Interface,
-	rolloutInformer flaggerinformers.CanaryInformer,
-	rolloutWindow time.Duration,
+	flaggerClient clientset.Interface,
+	flaggerInformer flaggerinformers.CanaryInformer,
+	flaggerWindow time.Duration,
 	metricServer string,
 	logger *zap.SugaredLogger,
 
@@ -61,21 +63,41 @@ func NewController(
 	recorder := eventBroadcaster.NewRecorder(
 		scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
+	deployer := CanaryDeployer{
+		logger:        logger,
+		kubeClient:    kubeClient,
+		istioClient:   istioClient,
+		flaggerClient: flaggerClient,
+	}
+
+	router := CanaryRouter{
+		logger:        logger,
+		kubeClient:    kubeClient,
+		istioClient:   istioClient,
+		flaggerClient: flaggerClient,
+	}
+
+	observer := CanaryObserver{
+		metricsServer: metricServer,
+	}
+
 	ctrl := &Controller{
 		kubeClient:    kubeClient,
 		istioClient:   istioClient,
-		rolloutClient: rolloutClient,
-		rolloutLister: rolloutInformer.Lister(),
-		rolloutSynced: rolloutInformer.Informer().HasSynced,
+		flaggerClient: flaggerClient,
+		flaggerLister: flaggerInformer.Lister(),
+		flaggerSynced: flaggerInformer.Informer().HasSynced,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
 		recorder:      recorder,
 		logger:        logger,
-		rollouts:      new(sync.Map),
-		metricsServer: metricServer,
-		rolloutWindow: rolloutWindow,
+		canaries:      new(sync.Map),
+		flaggerWindow: flaggerWindow,
+		deployer:      deployer,
+		router:        router,
+		observer:      observer,
 	}
 
-	rolloutInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	flaggerInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: ctrl.enqueue,
 		UpdateFunc: func(old, new interface{}) {
 			oldRoll, ok := checkCustomResourceType(old, logger)
@@ -96,7 +118,7 @@ func NewController(
 			r, ok := checkCustomResourceType(old, logger)
 			if ok {
 				ctrl.logger.Infof("Deleting %s.%s from cache", r.Name, r.Namespace)
-				ctrl.rollouts.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
+				ctrl.canaries.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
 			}
 		},
 	})
@@ -119,7 +141,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 
 	c.logger.Info("Started operator workers")
 
-	tickChan := time.NewTicker(c.rolloutWindow).C
+	tickChan := time.NewTicker(c.flaggerWindow).C
 	for {
 		select {
 		case <-tickChan:
@@ -174,13 +196,13 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-	cd, err := c.rolloutLister.Canaries(namespace).Get(name)
+	cd, err := c.flaggerLister.Canaries(namespace).Get(name)
 	if errors.IsNotFound(err) {
 		utilruntime.HandleError(fmt.Errorf("'%s' in work queue no longer exists", key))
 		return nil
 	}
 
-	c.rollouts.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
+	c.canaries.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
 
 	//if cd.Spec.TargetRef.Kind == "Deployment" {
 	//	err = c.bootstrapDeployment(cd)
