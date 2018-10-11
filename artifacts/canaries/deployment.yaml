@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: podinfod
-        image: quay.io/stefanprodan/podinfo:1.2.0
+        image: quay.io/stefanprodan/podinfo:1.2.1
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9898
@@ -66,5 +66,5 @@ spec:
             cpu: 2000m
             memory: 512Mi
           requests:
-            cpu: 10m
+            cpu: 100m
             memory: 64Mi

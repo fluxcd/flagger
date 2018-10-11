@@ -2,7 +2,7 @@
 
 image:
   repository: stefanprodan/flagger
-  tag: 0.0.1
+  tag: 0.1.0-alpha.1
   pullPolicy: IfNotPresent
 
 controlLoopInterval: "10s"

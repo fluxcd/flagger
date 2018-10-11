@@ -182,10 +182,12 @@ func (c *Controller) syncHandler(key string) error {
 
 	c.rollouts.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
 
-	err = c.bootstrapDeployment(cd)
-	if err != nil {
-		c.logger.Warnf("%s.%s bootstrap error %v", cd.Name, cd.Namespace, err)
-		return err
+	if cd.Spec.TargetRef.Kind == "Deployment" {
+		err = c.bootstrapDeployment(cd)
+		if err != nil {
+			c.logger.Warnf("%s.%s bootstrap error %v", cd.Name, cd.Namespace, err)
+			return err
+		}
 	}
 
 	c.logger.Infof("Synced %s", key)

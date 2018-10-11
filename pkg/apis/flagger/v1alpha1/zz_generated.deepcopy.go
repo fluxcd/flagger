@@ -152,6 +152,7 @@ func (in *CanaryService) DeepCopy() *CanaryService {
 func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 	*out = *in
 	out.TargetRef = in.TargetRef
+	out.AutoscalerRef = in.AutoscalerRef
 	in.Service.DeepCopyInto(&out.Service)
 	in.CanaryAnalysis.DeepCopyInto(&out.CanaryAnalysis)
 	return

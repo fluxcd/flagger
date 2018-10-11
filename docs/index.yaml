@@ -2,8 +2,20 @@ apiVersion: v1
 entries:
   flagger:
   - apiVersion: v1
+    appVersion: 0.1.0-alpha.1
+    created: 2018-10-11T11:16:00.30124+03:00
+    description: Flagger is a Kubernetes operator that automates the promotion of
+      canary deployments using Istio routing for traffic shifting and Prometheus metrics
+      for canary analysis.
+    digest: 3368bc9efbabe6043f399db46884f8a18319756b028ebe007ca69f9e81b72b3b
+    home: https://github.com/stefanprodan/flagger
+    name: flagger
+    urls:
+    - https://stefanprodan.github.io/flagger/flagger-0.1.0.tgz
+    version: 0.1.0
+  - apiVersion: v1
     appVersion: 0.0.1
-    created: 2018-10-11T02:02:20.205592+03:00
+    created: 2018-10-11T11:16:00.300274+03:00
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -16,10 +28,10 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 5.2.0
-    created: 2018-10-11T02:02:20.206046+03:00
+    created: 2018-10-11T11:16:00.302086+03:00
     description: A Helm chart for monitoring progressive deployments powered by Istio
       and Flagger
-    digest: 82e43b6777c39dfc6cf2dabf5d51148a48d64ed0efb3fa0cd09290602ccbfb87
+    digest: 109afd61ac5aaa212f18bfad4a1ad38425458f9d0a492547c5522d3898836faf
     home: https://github.com/stefanprodan/flagger
     name: grafana
     urls:
@@ -28,9 +40,9 @@ entries:
   podinfo-flagger:
   - apiVersion: v1
     appVersion: 1.2.1
-    created: 2018-10-11T02:02:20.206405+03:00
+    created: 2018-10-11T11:16:00.302902+03:00
     description: Podinfo Helm chart for Flagger progressive delivery
-    digest: 2cddd159d311a1e20d08f486481c1743c70f9cecefc3ae7554b357a8186919d9
+    digest: 72d95f4f4ec1eea85ffc2a7cbb9b5f95bb56ea9d934ba24c5dde078d4f9c7605
     engine: gotpl
     home: https://github.com/stefanprodan/k8s-podinfo
     maintainers:
@@ -58,4 +70,4 @@ entries:
     urls:
     - https://stefanprodan.github.io/flagger/podinfo-flagger-1.2.1.tgz
     version: 1.2.1
-generated: 2018-10-11T02:02:20.204687+03:00
+generated: 2018-10-11T11:16:00.298073+03:00

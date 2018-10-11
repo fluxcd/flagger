@@ -4,19 +4,27 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  # deployment reference
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
+  # HPA reference (optional)
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name: podinfo
   service:
+    # container port
     port: 9898
+    # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
+    # Istio virtual service host names (optional)
     hosts:
     - app.istio.weavedx.com
   canaryAnalysis:
-    # max number of failed metric checks
-    # before rolling back the canary
+    # max number of failed metric checks before rollback
     threshold: 5
     # max traffic percentage routed to canary
     # percentage (0-100)

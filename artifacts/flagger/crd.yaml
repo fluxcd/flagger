@@ -31,6 +31,14 @@ spec:
                   type: string
                 name:
                   type: string
+            autoscalerRef:
+              properties:
+                apiVersion:
+                  type: string
+                kind:
+                  type: string
+                name:
+                  type: string
             service:
               properties:
                 port:

@@ -6,6 +6,7 @@ import (
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	hpav1 "k8s.io/api/autoscaling/v2beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -242,5 +243,50 @@ func (c *Controller) bootstrapDeployment(cd *flaggerv1.Canary) error {
 		c.recordEventInfof(cd, "VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
 	}
 
+	if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
+		hpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("HorizontalPodAutoscaler %s.%s not found, retrying in %v",
+					cd.Spec.AutoscalerRef.Name, cd.Namespace, c.rolloutWindow)
+			} else {
+				return err
+			}
+		}
+		primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
+		primaryHpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(primaryHpaName, metav1.GetOptions{})
+
+		if errors.IsNotFound(err) {
+			primaryHpa = &hpav1.HorizontalPodAutoscaler{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      primaryHpaName,
+					Namespace: cd.Namespace,
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(cd, schema.GroupVersionKind{
+							Group:   flaggerv1.SchemeGroupVersion.Group,
+							Version: flaggerv1.SchemeGroupVersion.Version,
+							Kind:    flaggerv1.CanaryKind,
+						}),
+					},
+				},
+				Spec: hpav1.HorizontalPodAutoscalerSpec{
+					ScaleTargetRef: hpav1.CrossVersionObjectReference{
+						Name:       primaryName,
+						Kind:       hpa.Spec.ScaleTargetRef.Kind,
+						APIVersion: hpa.Spec.ScaleTargetRef.APIVersion,
+					},
+					MinReplicas: hpa.Spec.MinReplicas,
+					MaxReplicas: hpa.Spec.MaxReplicas,
+					Metrics:     hpa.Spec.Metrics,
+				},
+			}
+
+			_, err = c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Create(primaryHpa)
+			if err != nil {
+				return err
+			}
+			c.recordEventInfof(cd, "HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
+		}
+	}
 	return nil
 }

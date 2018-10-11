@@ -45,25 +45,25 @@ Gated canary promotion stages:
 * scan for canary deployments
 * check Istio virtual service routes are mapped to primary and canary ClusterIP services
 * check primary and canary deployments status
-    * halt rollout if a rolling update is underway
-    * halt rollout if pods are unhealthy
+    * halt advancement if a rolling update is underway
+    * halt advancement if pods are unhealthy
 * increase canary traffic weight percentage from 0% to 5% (step weight)
 * check canary HTTP request success rate and latency
-    * halt rollout if any metric is under the specified threshold
+    * halt advancement if any metric is under the specified threshold
     * increment the failed checks counter
 * check if the number of failed checks reached the threshold
     * route all traffic to primary
     * scale to zero the canary deployment and mark it as failed
     * wait for the canary deployment to be updated (revision bump) and start over
 * increase canary traffic weight by 5% (step weight) till it reaches 50% (max weight) 
-    * halt rollout while canary request success rate is under the threshold
-    * halt rollout while canary request duration P99 is over the threshold
-    * halt rollout if the primary or canary deployment becomes unhealthy 
-    * halt rollout while canary deployment is being scaled up/down by HPA
+    * halt advancement while canary request success rate is under the threshold
+    * halt advancement while canary request duration P99 is over the threshold
+    * halt advancement if the primary or canary deployment becomes unhealthy 
+    * halt advancement while canary deployment is being scaled up/down by HPA
 * promote canary to primary
     * copy canary deployment spec template over primary
 * wait for primary rolling update to finish
-    * halt rollout if pods are unhealthy
+    * halt advancement if pods are unhealthy
 * route all traffic to primary
 * scale to zero the canary deployment
 * mark rollout as finished
@@ -80,19 +80,27 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  # deployment reference
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
+  # hpa reference (optional)
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name: podinfo
   service:
+    # container port
     port: 9898
+    # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
+    # Istio virtual service host names (optional)
     hosts:
-    - podinfo.example.com
+    - app.istio.weavedx.com
   canaryAnalysis:
-    # max number of failed metric checks
-    # before rolling back the canary
+    # max number of failed metric checks before rollback
     threshold: 5
     # max traffic percentage routed to canary
     # percentage (0-100)
@@ -166,50 +174,68 @@ export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
 kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
 ```
 
-Create a deployment:
+Create a deployment and a horizontal pod autoscaler:
 
 ```bash
 kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
+kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
 ```
-Create a canary promotion custom resource (replace the Istio gateway and the internet domain with your own)::
+Create a canary promotion custom resource (replace the Istio gateway and the internet domain with your own):
 
 ```bash
 kubectl apply -f ${REPO}/artifacts/canaries/canary.yaml
 ```
 
+After a couple of seconds Flagger will create the canary objects:
+
+```bash
+canaries.flagger.app/podinfo
+deployment.apps/podinfo
+deployment.apps/podinfo-primary
+horizontalpodautoscaler.autoscaling/podinfo
+horizontalpodautoscaler.autoscaling/podinfo-primary
+service/podinfo
+service/podinfo-canary
+service/podinfo-primary
+virtualservices.networking.istio.io/podinfo
+```
+
 ![flagger-canary-steps](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
-Canary promotion output:
+Trigger a canary deployment by updating the container image:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=quay.io/stefanprodan/podinfo:1.2.1
+```
+
+Flagger detects that the deployment revision changed and starts a new rollout:
 
 ```
 kubectl -n test describe canary/podinfo
 
 Status:
-  Canary Revision:  16271121
-  Failed Checks:    6
+  Canary Revision:  19871136
+  Failed Checks:    0
   State:            finished
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
-  Normal   Synced  3m    flagger  Starting canary deployment for podinfo.test
+  Normal   Synced  3m    flagger  New revision detected podinfo.test
+  Normal   Synced  3m    flagger  Scaling up podinfo.test
+  Warning  Synced  3m    flagger  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
   Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
   Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
   Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
-  Warning  Synced  3m    flagger  Halt podinfo.test advancement request duration 2.525s > 500ms
-  Warning  Synced  3m    flagger  Halt podinfo.test advancement request duration 1.567s > 500ms
-  Warning  Synced  3m    flagger  Halt podinfo.test advancement request duration 823ms > 500ms
   Normal   Synced  2m    flagger  Advance podinfo.test canary weight 20
   Normal   Synced  2m    flagger  Advance podinfo.test canary weight 25
   Normal   Synced  1m    flagger  Advance podinfo.test canary weight 30
-  Warning  Synced  1m    flagger  Halt podinfo.test advancement success rate 82.33% < 99%
-  Warning  Synced  1m    flagger  Halt podinfo.test advancement success rate 87.22% < 99%
-  Warning  Synced  1m    flagger  Halt podinfo.test advancement success rate 94.74% < 99%
   Normal   Synced  1m    flagger  Advance podinfo.test canary weight 35
   Normal   Synced  55s   flagger  Advance podinfo.test canary weight 40
   Normal   Synced  45s   flagger  Advance podinfo.test canary weight 45
   Normal   Synced  35s   flagger  Advance podinfo.test canary weight 50
   Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
-  Warning  Synced  15s   flagger  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
+  Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
@@ -260,43 +286,6 @@ Events:
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
-Trigger a new canary deployment by updating the canary image:
-
-```bash
-kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.2.1
-```
-
-Steer detects that the canary revision changed and starts a new rollout:
-
-```
-kubectl -n test describe canary/podinfo
-
-Status:
-  Canary Revision:  19871136
-  Failed Checks:    0
-  State:            finished
-Events:
-  Type     Reason  Age   From     Message
-  ----     ------  ----  ----     -------
-  Normal   Synced  3m    flagger  New revision detected podinfo-canary.test old 17211012 new 17246876
-  Normal   Synced  3m    flagger  Scaling up podinfo.test
-  Warning  Synced  3m    flagger  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
-  Normal   Synced  2m    flagger  Advance podinfo.test canary weight 20
-  Normal   Synced  2m    flagger  Advance podinfo.test canary weight 25
-  Normal   Synced  1m    flagger  Advance podinfo.test canary weight 30
-  Normal   Synced  1m    flagger  Advance podinfo.test canary weight 35
-  Normal   Synced  55s   flagger  Advance podinfo.test canary weight 40
-  Normal   Synced  45s   flagger  Advance podinfo.test canary weight 45
-  Normal   Synced  35s   flagger  Advance podinfo.test canary weight 50
-  Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
-  Warning  Synced  15s   flagger  Waiting for podinfo.test rollout to finish: 1 of 2 updated replicas are available
-  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
-```
-
 ### Monitoring
 
 Flagger comes with a Grafana dashboard made for canary analysis.
@@ -331,9 +320,10 @@ Advance podinfo.test canary weight 40
 Halt podinfo.test advancement request duration 1.515s > 500ms
 Advance podinfo.test canary weight 45
 Advance podinfo.test canary weight 50
-Copying podinfo-canary.test template spec to podinfo.test
-Scaling down podinfo-canary.test
-Promotion completed! podinfo-canary.test revision 81289
+Copying podinfo.test template spec to podinfo-primary.test
+Halt podinfo-primary.test advancement waiting for rollout to finish: 1 old replicas are pending termination
+Scaling down podinfo.test
+Promotion completed! podinfo.test
 ```
 
 ### Roadmap
