@@ -189,15 +189,17 @@ kubectl apply -f ${REPO}/artifacts/canaries/canary.yaml
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-canaries.flagger.app/podinfo
+# applied 
 deployment.apps/podinfo
-deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo
+canary.flagger.app/podinfo
+# generated 
+deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
 service/podinfo-canary
 service/podinfo-primary
-virtualservices.networking.istio.io/podinfo
+virtualservice.networking.istio.io/podinfo
 ```
 
 ![flagger-canary-steps](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
