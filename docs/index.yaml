@@ -2,12 +2,12 @@ apiVersion: v1
 entries:
   flagger:
   - apiVersion: v1
-    appVersion: 0.1.0-alpha.1
-    created: 2018-10-11T11:16:00.30124+03:00
+    appVersion: 0.1.0-alpha.2
+    created: 2018-10-15T11:11:04.015162+02:00
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
-    digest: 3368bc9efbabe6043f399db46884f8a18319756b028ebe007ca69f9e81b72b3b
+    digest: dd4a7586924660b48d6dcdd92bf802e78c07ef43e274492f99ac1b239c9f0fe1
     home: https://github.com/stefanprodan/flagger
     name: flagger
     urls:
@@ -15,7 +15,7 @@ entries:
     version: 0.1.0
   - apiVersion: v1
     appVersion: 0.0.1
-    created: 2018-10-11T11:16:00.300274+03:00
+    created: 2018-10-15T11:11:04.014787+02:00
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -28,10 +28,10 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 5.2.0
-    created: 2018-10-11T11:16:00.302086+03:00
+    created: 2018-10-15T11:11:04.015701+02:00
     description: A Helm chart for monitoring progressive deployments powered by Istio
       and Flagger
-    digest: 109afd61ac5aaa212f18bfad4a1ad38425458f9d0a492547c5522d3898836faf
+    digest: df289d9385f841881546d5058ebf8cb15d06b14dc7eaf3f095c00428bc19527c
     home: https://github.com/stefanprodan/flagger
     name: grafana
     urls:
@@ -40,9 +40,9 @@ entries:
   podinfo-flagger:
   - apiVersion: v1
     appVersion: 1.2.1
-    created: 2018-10-11T11:16:00.302902+03:00
+    created: 2018-10-15T11:11:04.016118+02:00
     description: Podinfo Helm chart for Flagger progressive delivery
-    digest: 72d95f4f4ec1eea85ffc2a7cbb9b5f95bb56ea9d934ba24c5dde078d4f9c7605
+    digest: 423d11987d7b2299ad7604920fb466332526fc15b87763051934cdb0fb2e2f7c
     engine: gotpl
     home: https://github.com/stefanprodan/k8s-podinfo
     maintainers:
@@ -70,4 +70,4 @@ entries:
     urls:
     - https://stefanprodan.github.io/flagger/podinfo-flagger-1.2.1.tgz
     version: 1.2.1
-generated: 2018-10-11T11:16:00.298073+03:00
+generated: 2018-10-15T11:11:04.014098+02:00
