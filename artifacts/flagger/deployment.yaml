@@ -22,7 +22,7 @@ spec:
       serviceAccountName: flagger
       containers:
       - name: flagger
-        image: stefanprodan/flagger:0.1.0-alpha.1
+        image: stefanprodan/flagger:0.1.0-alpha.2
         imagePullPolicy: Always
         ports:
         - name: http
