@@ -195,7 +195,7 @@ func (c *CanaryDeployer) Sync(cd *flaggerv1.Canary) error {
 	}
 
 	if cd.Status.State == "" {
-		c.logger.Infof("Scaling down %s.%s", primaryName, cd.Namespace)
+		c.logger.Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
 			return err
 		}
