@@ -215,6 +215,44 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 	}
 }
 
+func TestCanaryDeployer_IsNewSpec(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	dep2 := newTestDeploymentUpdated()
+
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := &CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+
+	err := deployer.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	_, err = kubeClient.AppsV1().Deployments("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	isNew, err := deployer.IsNewSpec(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if !isNew {
+		t.Errorf("Got %v wanted %v", isNew, true)
+	}
+}
+
 func TestCanaryDeployer_Promote(t *testing.T) {
 	canary := newTestCanary()
 	dep := newTestDeployment()
@@ -258,4 +296,181 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 	if primaryImage != sourceImage {
 		t.Errorf("Got image %s wanted %s", primaryImage, sourceImage)
 	}
+}
+
+func TestCanaryDeployer_IsReady(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := &CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+
+	err := deployer.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = deployer.IsReady(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := &CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+
+	err := deployer.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = deployer.SetFailedChecks(canary, 1)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	res, err := flaggerClient.FlaggerV1alpha1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if res.Status.FailedChecks != 1 {
+		t.Errorf("Got %v wanted %v", res.Status.FailedChecks, 1)
+	}
+}
+
+func TestCanaryDeployer_SetState(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := &CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+
+	err := deployer.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = deployer.SetState(canary, "running")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	res, err := flaggerClient.FlaggerV1alpha1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if res.Status.State != "running" {
+		t.Errorf("Got %v wanted %v", res.Status.State, "running")
+	}
+}
+
+func TestCanaryDeployer_SyncStatus(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := &CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+
+	err := deployer.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	status := v1alpha1.CanaryStatus{
+		State:        "running",
+		FailedChecks: 2,
+	}
+	err = deployer.SyncStatus(canary, status)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	res, err := flaggerClient.FlaggerV1alpha1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if res.Status.State != status.State {
+		t.Errorf("Got state %v wanted %v", res.Status.State, status.State)
+	}
+
+	if res.Status.FailedChecks != status.FailedChecks {
+		t.Errorf("Got failed checks %v wanted %v", res.Status.FailedChecks, status.FailedChecks)
+	}
+}
+
+func TestCanaryDeployer_Scale(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := &CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+
+	err := deployer.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = deployer.Scale(canary, 2)
+
+	c, err := kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if *c.Spec.Replicas != 2 {
+		t.Errorf("Got replicas %v wanted %v", *c.Spec.Replicas, 2)
+	}
+
 }
