@@ -214,3 +214,48 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got HPA target %s wanted %s", hpaPrimary.Spec.ScaleTargetRef.Name, depPrimary.Name)
 	}
 }
+
+func TestCanaryDeployer_Promote(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	dep2 := newTestDeploymentUpdated()
+
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := &CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+
+	err := deployer.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	_, err = kubeClient.AppsV1().Deployments("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = deployer.Promote(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depPrimary, err := kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
+	sourceImage := dep2.Spec.Template.Spec.Containers[0].Image
+	if primaryImage != sourceImage {
+		t.Errorf("Got image %s wanted %s", primaryImage, sourceImage)
+	}
+}

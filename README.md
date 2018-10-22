@@ -180,6 +180,7 @@ Create a deployment and a horizontal pod autoscaler:
 kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
 kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
 ```
+
 Create a canary promotion custom resource (replace the Istio gateway and the internet domain with your own):
 
 ```bash
