@@ -163,7 +163,7 @@
   revision = "f2b4162afba35581b6d4a50d3b8f34e33c144682"
 
 [[projects]]
-  digest = "1:555e31114bd0e89c6340c47ab73162e8c8d873e4d88914310923566f487bfcd5"
+  digest = "1:03a74b0d86021c8269b52b7c908eb9bb3852ff590b363dad0a807cf58cec2f89"
   name = "github.com/knative/pkg"
   packages = [
     "apis",
@@ -175,10 +175,14 @@
     "apis/istio/common/v1alpha1",
     "apis/istio/v1alpha3",
     "client/clientset/versioned",
+    "client/clientset/versioned/fake",
     "client/clientset/versioned/scheme",
     "client/clientset/versioned/typed/authentication/v1alpha1",
+    "client/clientset/versioned/typed/authentication/v1alpha1/fake",
     "client/clientset/versioned/typed/duck/v1alpha1",
+    "client/clientset/versioned/typed/duck/v1alpha1/fake",
     "client/clientset/versioned/typed/istio/v1alpha3",
+    "client/clientset/versioned/typed/istio/v1alpha3/fake",
     "signals",
   ]
   pruneopts = "NUT"
@@ -687,6 +691,7 @@
     "github.com/istio/glog",
     "github.com/knative/pkg/apis/istio/v1alpha3",
     "github.com/knative/pkg/client/clientset/versioned",
+    "github.com/knative/pkg/client/clientset/versioned/fake",
     "github.com/knative/pkg/signals",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "go.uber.org/zap",
