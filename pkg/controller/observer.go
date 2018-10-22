@@ -74,6 +74,10 @@ func (c *CanaryObserver) queryMetric(query string) (*VectorQueryResponse, error)
 
 // istio_requests_total
 func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
+	if c.metricsServer == "fake" {
+		return 100, nil
+	}
+
 	var rate *float64
 	querySt := url.QueryEscape(`sum(rate(` +
 		metric + `{reporter="destination",destination_workload_namespace=~"` +
@@ -107,6 +111,9 @@ func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, met
 
 // istio_request_duration_seconds_bucket
 func (c *CanaryObserver) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
+	if c.metricsServer == "fake" {
+		return 1, nil
+	}
 	var rate *float64
 	querySt := url.QueryEscape(`histogram_quantile(0.99, sum(rate(` +
 		metric + `{reporter="destination",destination_workload=~"` +
