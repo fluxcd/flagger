@@ -27,6 +27,7 @@ import (
 
 const controllerAgentName = "flagger"
 
+// Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
 	kubeClient    kubernetes.Interface
 	istioClient   istioclientset.Interface
@@ -126,6 +127,7 @@ func NewController(
 	return ctrl
 }
 
+// Run starts the K8s workers and the canary scheduler
 func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer utilruntime.HandleCrash()
 	defer c.workqueue.ShutDown()
@@ -151,8 +153,6 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 			return nil
 		}
 	}
-
-	return nil
 }
 
 func (c *Controller) processNextWorkItem() bool {

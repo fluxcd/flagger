@@ -15,6 +15,7 @@ addons:
 script:
 - set -e
 - make test
+- go test -race -coverprofile=coverage.txt -covermode=atomic ./pkg/controller/
 - make build
 
 after_success:
@@ -33,6 +34,7 @@ after_success:
     docker push stefanprodan/flagger:latest;
     docker push stefanprodan/flagger:$TRAVIS_TAG;
   fi
+- bash <(curl -s https://codecov.io/bash)
 
 deploy:
 - provider: script

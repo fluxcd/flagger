@@ -17,6 +17,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// CanaryRouter is managing the operations for Kubernetes service kind
+// and Istio virtual services
 type CanaryRouter struct {
 	kubeClient    kubernetes.Interface
 	istioClient   istioclientset.Interface

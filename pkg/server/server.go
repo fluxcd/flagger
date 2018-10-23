@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// ListenAndServe starts a web server and waits for SIGTERM
 func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogger, stopCh <-chan struct{}) {
 	mux := http.DefaultServeMux
 	mux.Handle("/metrics", promhttp.Handler())

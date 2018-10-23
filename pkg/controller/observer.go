@@ -11,11 +11,12 @@ import (
 	"time"
 )
 
+// CanaryObserver is used to query the Istio Prometheus db
 type CanaryObserver struct {
 	metricsServer string
 }
 
-type VectorQueryResponse struct {
+type vectorQueryResponse struct {
 	Data struct {
 		Result []struct {
 			Metric struct {
@@ -27,7 +28,7 @@ type VectorQueryResponse struct {
 	}
 }
 
-func (c *CanaryObserver) queryMetric(query string) (*VectorQueryResponse, error) {
+func (c *CanaryObserver) queryMetric(query string) (*vectorQueryResponse, error) {
 	promURL, err := url.Parse(c.metricsServer)
 	if err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func (c *CanaryObserver) queryMetric(query string) (*VectorQueryResponse, error)
 		return nil, fmt.Errorf("error response: %s", string(b))
 	}
 
-	var values VectorQueryResponse
+	var values vectorQueryResponse
 	err = json.Unmarshal(b, &values)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling result: %s, '%s'", err.Error(), string(b))
@@ -72,7 +73,7 @@ func (c *CanaryObserver) queryMetric(query string) (*VectorQueryResponse, error)
 	return &values, nil
 }
 
-// istio_requests_total
+// GetDeploymentCounter returns the requests success rate using istio_requests_total metric
 func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
 	if c.metricsServer == "fake" {
 		return 100, nil
@@ -109,7 +110,7 @@ func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, met
 	return *rate, nil
 }
 
-// istio_request_duration_seconds_bucket
+// GetDeploymentHistogram returns the 99P requests delay using istio_request_duration_seconds_bucket metrics
 func (c *CanaryObserver) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
 	if c.metricsServer == "fake" {
 		return 1, nil
@@ -143,6 +144,8 @@ func (c *CanaryObserver) GetDeploymentHistogram(name string, namespace string, m
 	return ms, nil
 }
 
+// CheckMetricsServer call Prometheus status endpoint and returns an error if
+// the API is unreachable
 func CheckMetricsServer(address string) (bool, error) {
 	promURL, err := url.Parse(address)
 	if err != nil {

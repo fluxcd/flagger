@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// CanaryDeployer is managing the operations for Kubernetes deployment kind
 type CanaryDeployer struct {
 	kubeClient    kubernetes.Interface
 	istioClient   istioclientset.Interface
@@ -123,7 +124,7 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 	return false, nil
 }
 
-// SyncStatus updates the canary status state
+// SetFailedChecks updates the canary failed checks counter
 func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 	cd.Status.FailedChecks = val
 	cd, err := c.flaggerClient.FlaggerV1alpha1().Canaries(cd.Namespace).Update(cd)
@@ -133,7 +134,7 @@ func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 	return nil
 }
 
-// SyncStatus updates the canary status state
+// SetState updates the canary status state
 func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state string) error {
 	cd.Status.State = state
 	cd, err := c.flaggerClient.FlaggerV1alpha1().Canaries(cd.Namespace).Update(cd)
@@ -217,9 +218,8 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("deployment %s.%s not found, retrying", canaryName, cd.Namespace)
-		} else {
-			return err
 		}
+		return err
 	}
 
 	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
@@ -273,9 +273,8 @@ func (c *CanaryDeployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("HorizontalPodAutoscaler %s.%s not found, retrying",
 				cd.Spec.AutoscalerRef.Name, cd.Namespace)
-		} else {
-			return err
 		}
+		return err
 	}
 	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
 	primaryHpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(primaryHpaName, metav1.GetOptions{})

@@ -67,12 +67,15 @@ type CanaryStatus struct {
 	FailedChecks   int    `json:"failedChecks"`
 }
 
+// CanaryService is used to create ClusterIP services
+// and Istio Virtual Service
 type CanaryService struct {
 	Port     int32    `json:"port"`
 	Gateways []string `json:"gateways"`
 	Hosts    []string `json:"hosts"`
 }
 
+// CanaryAnalysis is used to describe how the analysis should be done
 type CanaryAnalysis struct {
 	Threshold  int            `json:"threshold"`
 	MaxWeight  int            `json:"maxWeight"`
@@ -80,6 +83,7 @@ type CanaryAnalysis struct {
 	Metrics    []CanaryMetric `json:"metrics"`
 }
 
+// CanaryMetric hold the reference to Istio metrics used for canary analysis
 type CanaryMetric struct {
 	Name      string `json:"name"`
 	Interval  string `json:"interval"`

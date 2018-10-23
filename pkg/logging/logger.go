@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// NewLogger returns a zap sugared logger configured with json format and caller id
 func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
 	level := zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	switch logLevel {
@@ -59,6 +60,7 @@ func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
 	return logger.Sugar(), nil
 }
 
+// Console writes to stdout if the console env var exists
 func Console(a ...interface{}) (n int, err error) {
 	if os.Getenv("console") != "" {
 		return fmt.Fprintln(os.Stdout, a...)
