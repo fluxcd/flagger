@@ -2,6 +2,7 @@
 
 [![build](https://travis-ci.org/stefanprodan/flagger.svg?branch=master)](https://travis-ci.org/stefanprodan/flagger)
 [![report](https://goreportcard.com/badge/github.com/stefanprodan/flagger)](https://goreportcard.com/report/github.com/stefanprodan/flagger)
+[![codecov](https://codecov.io/gh/stefanprodan/flagger/branch/master/graph/badge.svg)](https://codecov.io/gh/stefanprodan/flagger)
 [![license](https://img.shields.io/github/license/stefanprodan/flagger.svg)](https://github.com/stefanprodan/flagger/blob/master/LICENSE)
 [![release](https://img.shields.io/github/release/stefanprodan/flagger/all.svg)](https://github.com/stefanprodan/flagger/releases)
 
