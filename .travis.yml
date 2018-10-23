@@ -14,7 +14,8 @@ addons:
 
 script:
 - set -e
-- make test
+- make test-fmt
+- make test-codegen
 - go test -race -coverprofile=coverage.txt -covermode=atomic ./pkg/controller/
 - make build
 

@@ -13,17 +13,17 @@ RUN GIT_COMMIT=$(git rev-list -1 HEAD) && \
 
 FROM alpine:3.8
 
-RUN addgroup -S app \
-    && adduser -S -g app app \
+RUN addgroup -S flagger \
+    && adduser -S -g flagger flagger \
     && apk --no-cache add ca-certificates
 
-WORKDIR /home/app
+WORKDIR /home/flagger
 
 COPY --from=0 /go/src/github.com/stefanprodan/flagger/flagger .
 
-RUN chown -R app:app ./
+RUN chown -R flagger:flagger ./
 
-USER app
+USER flagger
 
 ENTRYPOINT ["./flagger"]
 
