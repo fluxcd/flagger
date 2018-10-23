@@ -1,1 +1,0 @@
- {{ template "podinfo-flagger.fullname" . }} has been deployed successfully!

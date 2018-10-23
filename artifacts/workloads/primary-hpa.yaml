@@ -1,13 +1,13 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: podinfo
+  name: podinfo-primary
   namespace: test
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: podinfo
+    name: podinfo-primary
   minReplicas: 2
   maxReplicas: 4
   metrics:

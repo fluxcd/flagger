@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: podinfo
+  name: podinfo-primary
   namespace: test
   labels:
-    app: podinfo
+    app: podinfo-primary
 spec:
   type: ClusterIP
   selector:
-    app: podinfo
+    app: podinfo-primary
   ports:
   - name: http
     port: 9898

@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: podinfo-canary
+  name: podinfo
   namespace: test
   labels:
-    app: podinfo-canary
+    app: podinfo
 spec:
   replicas: 1
   strategy:
@@ -13,13 +13,13 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: podinfo-canary
+      app: podinfo
   template:
     metadata:
       annotations:
         prometheus.io/scrape: "true"
       labels:
-        app: podinfo-canary
+        app: podinfo
     spec:
       containers:
       - name: podinfod

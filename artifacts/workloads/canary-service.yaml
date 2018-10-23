@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: podinfo-canary
+  name: podinfo
   namespace: test
   labels:
-    app: podinfo-canary
+    app: podinfo
 spec:
   type: ClusterIP
   selector:
-    app: podinfo-canary
+    app: podinfo
   ports:
   - name: http
     port: 9898

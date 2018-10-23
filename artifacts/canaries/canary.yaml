@@ -22,16 +22,16 @@ spec:
     - public-gateway.istio-system.svc.cluster.local
     # Istio virtual service host names (optional)
     hosts:
-    - app.istio.weavedx.com
+    - podinfo.iowa.weavedx.com
   canaryAnalysis:
     # max number of failed metric checks before rollback
-    threshold: 5
+    threshold: 10
     # max traffic percentage routed to canary
     # percentage (0-100)
     maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 10
+    stepWeight: 5
     metrics:
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
