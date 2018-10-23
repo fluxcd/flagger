@@ -21,7 +21,7 @@
   "links": [],
   "panels": [
     {
-      "content": "<div class=\"dashboard-header text-center\">\n<span>RED: $primary.$namespace</span>\n</div>",
+      "content": "<div class=\"dashboard-header text-center\">\n<span>RED: $canary.$namespace</span>\n</div>",
       "gridPos": {
         "h": 3,
         "w": 24,
@@ -568,7 +568,7 @@
       ]
     },
     {
-      "content": "<div class=\"dashboard-header text-center\">\n<span>USE: $primary.$namespace</span>\n</div>",
+      "content": "<div class=\"dashboard-header text-center\">\n<span>USE: $canary.$namespace</span>\n</div>",
       "gridPos": {
         "h": 3,
         "w": 24,
@@ -712,7 +712,7 @@
       "targets": [
         {
           "$$hashKey": "object:1685",
-          "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$canary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$canary.*\", pod_name!~\"$primary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -890,7 +890,7 @@
       "targets": [
         {
           "$$hashKey": "object:1685",
-          "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$canary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
+          "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$canary.*\", pod_name!~\"$primary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1098,7 +1098,7 @@
       "targets": [
         {
           "$$hashKey": "object:2598",
-          "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\"}[1m])) ",
+          "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\",pod_name!~\"$primary.*\"}[1m])) ",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "received",
@@ -1106,7 +1106,7 @@
         },
         {
           "$$hashKey": "object:3245",
-          "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\"}[1m]))",
+          "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\",pod_name!~\"$primary.*\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "transmited",
@@ -1153,7 +1153,7 @@
       ]
     },
     {
-      "content": "<div class=\"dashboard-header text-center\">\n<span>IN/OUTBOUND: $primary.$namespace</span>\n</div>",
+      "content": "<div class=\"dashboard-header text-center\">\n<span>IN/OUTBOUND: $canary.$namespace</span>\n</div>",
       "gridPos": {
         "h": 3,
         "w": 24,
