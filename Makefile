@@ -25,7 +25,7 @@ test: test-fmt test-codegen
 	go test ./...
 
 helm-package:
-	cd charts/ && helm package flagger/ && helm package podinfo-flagger/ && helm package grafana/
+	cd charts/ && helm package flagger/ && helm package grafana/
 	mv charts/*.tgz docs/
 	helm repo index docs --url https://stefanprodan.github.io/flagger --merge ./docs/index.yaml
 
