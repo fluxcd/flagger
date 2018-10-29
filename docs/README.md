@@ -126,7 +126,7 @@ The canary analysis is using the following promql queries:
  
 _HTTP requests success rate percentage_
 
-```sql
+```
 sum(
     rate(
         istio_requests_total{
@@ -151,7 +151,7 @@ sum(
 
 _HTTP requests milliseconds duration P99_
 
-```sql
+```
 histogram_quantile(0.99, 
   sum(
     irate(
@@ -333,13 +333,22 @@ Promotion completed! podinfo.test
 Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and the destination weight values:
 
 ```bash
-# Canary status 
+# Canaries total gauge
+flagger_canary_total{namespace="test"} 1
+
+# Canary promotion last known status gauge
 # 0 - running, 1 - successful, 2 - failed
 flagger_canary_status{name="podinfo" namespace="test"} 1
 
-# Canary traffic weight
+# Canary traffic weight gauge
 flagger_canary_weight{workload="podinfo-primary" namespace="test"} 95
 flagger_canary_weight{workload="podinfo" namespace="test"} 5
+
+# Seconds spent performing canary analysis histogram
+flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="10"} 6
+flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="+Inf"} 6
+flagger_canary_duration_seconds_sum{name="podinfo",namespace="test"} 17.3561329
+flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
 ```
 
 ### Roadmap
@@ -347,7 +356,7 @@ flagger_canary_weight{workload="podinfo" namespace="test"} 5
 * Extend the canary analysis and promotion to other types than Kubernetes deployments such as Flux Helm releases or OpenFaaS functions
 * Extend the validation mechanism to support other metrics than HTTP success rate and latency
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
-* Alerting: Trigger Alertmanager on successful or failed promotions (Prometheus instrumentation of the canary analysis)  
+* Alerting: trigger Alertmanager on successful or failed promotions  
 * Reporting: publish canary analysis results to Slack/Jira/etc
 
 ### Contributing
