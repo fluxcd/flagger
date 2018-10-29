@@ -9,16 +9,28 @@ import (
 )
 
 func (c *Controller) scheduleCanaries() {
+	stats := make(map[string]int)
 	c.canaries.Range(func(key interface{}, value interface{}) bool {
 		r := value.(*flaggerv1.Canary)
 		if r.Spec.TargetRef.Kind == "Deployment" {
 			go c.advanceCanary(r.Name, r.Namespace)
 		}
+
+		t, ok := stats[r.Namespace]
+		if !ok {
+			stats[r.Namespace] = 1
+		} else {
+			stats[r.Namespace] = t + 1
+		}
 		return true
 	})
+	for k, v := range stats {
+		c.recorder.SetTotal(k, v)
+	}
 }
 
 func (c *Controller) advanceCanary(name string, namespace string) {
+	begin := time.Now()
 	// check if the canary exists
 	cd, err := c.flaggerClient.FlaggerV1alpha1().Canaries(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
@@ -58,12 +70,16 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
-	c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+	c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 
 	// check if canary analysis should start (canary revision has changes) or continue
 	if ok := c.checkCanaryStatus(cd, c.deployer); !ok {
 		return
 	}
+
+	defer func() {
+		c.recorder.SetDuration(cd, time.Since(begin))
+	}()
 
 	// check if the number of failed checks reached the threshold
 	if cd.Status.State == "running" && cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold {
@@ -78,7 +94,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
-		c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+		c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 		c.recordEventWarningf(cd, "Canary failed! Scaling down %s.%s",
 			cd.Spec.TargetRef.Name, cd.Namespace)
 
@@ -93,7 +109,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.logger.Errorf("%v", err)
 			return
 		}
-		c.recorder.RecordStatus(cd)
+		c.recorder.SetStatus(cd)
 		return
 	}
 
@@ -127,7 +143,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
-		c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+		c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 		c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryRoute.Weight)
 
 		// promote canary
@@ -149,7 +165,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
-		c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+		c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// shutdown canary
@@ -163,13 +179,13 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
-		c.recorder.RecordStatus(cd)
+		c.recorder.SetStatus(cd)
 	}
 }
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDeployer) bool {
+	c.recorder.SetStatus(cd)
 	if cd.Status.State == "running" {
-		c.recorder.RecordStatus(cd)
 		return true
 	}
 
@@ -178,7 +194,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 			c.logger.Errorf("%v", err)
 			return false
 		}
-		c.recorder.RecordStatus(cd)
+		c.recorder.SetStatus(cd)
 		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
 		return false
 	}
@@ -193,7 +209,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 			c.logger.Errorf("%v", err)
 			return false
 		}
-		c.recorder.RecordStatus(cd)
+		c.recorder.SetStatus(cd)
 		return false
 	}
 	return false
