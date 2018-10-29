@@ -36,6 +36,7 @@ after_success:
     docker push stefanprodan/flagger:$TRAVIS_TAG;
   fi
 - bash <(curl -s https://codecov.io/bash)
+- rm coverage.txt
 
 deploy:
 - provider: script
