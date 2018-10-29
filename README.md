@@ -330,6 +330,18 @@ Scaling down podinfo.test
 Promotion completed! podinfo.test
 ```
 
+Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and the destination weight values:
+
+```bash
+# Canary status 
+# 0 - running, 1 - successful, 2 - failed
+flagger_canary_status{name="podinfo" namespace="test"} 1
+
+# Canary traffic weight
+flagger_canary_weight{workload="podinfo-primary" namespace="test"} 95
+flagger_canary_weight{workload="podinfo" namespace="test"} 5
+```
+
 ### Roadmap
 
 * Extend the canary analysis and promotion to other types than Kubernetes deployments such as Flux Helm releases or OpenFaaS functions
