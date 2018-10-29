@@ -36,12 +36,13 @@ type Controller struct {
 	flaggerSynced cache.InformerSynced
 	flaggerWindow time.Duration
 	workqueue     workqueue.RateLimitingInterface
-	recorder      record.EventRecorder
+	eventRecorder record.EventRecorder
 	logger        *zap.SugaredLogger
 	canaries      *sync.Map
 	deployer      CanaryDeployer
 	router        CanaryRouter
 	observer      CanaryObserver
+	recorder      CanaryRecorder
 }
 
 func NewController(
@@ -61,7 +62,7 @@ func NewController(
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{
 		Interface: kubeClient.CoreV1().Events(""),
 	})
-	recorder := eventBroadcaster.NewRecorder(
+	eventRecorder := eventBroadcaster.NewRecorder(
 		scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	deployer := CanaryDeployer{
@@ -82,6 +83,8 @@ func NewController(
 		metricsServer: metricServer,
 	}
 
+	recorder := NewCanaryRecorder()
+
 	ctrl := &Controller{
 		kubeClient:    kubeClient,
 		istioClient:   istioClient,
@@ -89,13 +92,14 @@ func NewController(
 		flaggerLister: flaggerInformer.Lister(),
 		flaggerSynced: flaggerInformer.Informer().HasSynced,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		recorder:      recorder,
+		eventRecorder: eventRecorder,
 		logger:        logger,
 		canaries:      new(sync.Map),
 		flaggerWindow: flaggerWindow,
 		deployer:      deployer,
 		router:        router,
 		observer:      observer,
+		recorder:      recorder,
 	}
 
 	flaggerInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -239,17 +243,17 @@ func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flagge
 
 func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
-	c.recorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
+	c.eventRecorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
 }
 
 func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Errorf(template, args...)
-	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
+	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
 func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
-	c.recorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
+	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
 func int32p(i int32) *int32 {

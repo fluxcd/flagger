@@ -58,6 +58,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
+	c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+
 	// check if canary analysis should start (canary revision has changes) or continue
 	if ok := c.checkCanaryStatus(cd, c.deployer); !ok {
 		return
@@ -76,6 +78,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
+		c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 		c.recordEventWarningf(cd, "Canary failed! Scaling down %s.%s",
 			cd.Spec.TargetRef.Name, cd.Namespace)
 
@@ -90,6 +93,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.logger.Errorf("%v", err)
 			return
 		}
+		c.recorder.RecordStatus(cd)
 		return
 	}
 
@@ -123,6 +127,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
+		c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 		c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryRoute.Weight)
 
 		// promote canary
@@ -144,6 +149,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
+		c.recorder.RecordWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// shutdown canary
@@ -157,33 +163,37 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
+		c.recorder.RecordStatus(cd)
 	}
 }
 
-func (c *Controller) checkCanaryStatus(r *flaggerv1.Canary, deployer CanaryDeployer) bool {
-	if r.Status.State == "running" {
+func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDeployer) bool {
+	if cd.Status.State == "running" {
+		c.recorder.RecordStatus(cd)
 		return true
 	}
 
-	if r.Status.State == "" {
-		if err := deployer.SyncStatus(r, flaggerv1.CanaryStatus{State: "initialized"}); err != nil {
+	if cd.Status.State == "" {
+		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: "initialized"}); err != nil {
 			c.logger.Errorf("%v", err)
 			return false
 		}
-		c.recordEventInfof(r, "Initialization done! %s.%s", r.Name, r.Namespace)
+		c.recorder.RecordStatus(cd)
+		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
 		return false
 	}
 
-	if diff, err := deployer.IsNewSpec(r); diff {
-		c.recordEventInfof(r, "New revision detected! Scaling up %s.%s", r.Spec.TargetRef.Name, r.Namespace)
-		if err = deployer.Scale(r, 1); err != nil {
-			c.recordEventErrorf(r, "%v", err)
+	if diff, err := deployer.IsNewSpec(cd); diff {
+		c.recordEventInfof(cd, "New revision detected! Scaling up %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		if err = deployer.Scale(cd, 1); err != nil {
+			c.recordEventErrorf(cd, "%v", err)
 			return false
 		}
-		if err := deployer.SyncStatus(r, flaggerv1.CanaryStatus{State: "running"}); err != nil {
+		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: "running"}); err != nil {
 			c.logger.Errorf("%v", err)
 			return false
 		}
+		c.recorder.RecordStatus(cd)
 		return false
 	}
 	return false
