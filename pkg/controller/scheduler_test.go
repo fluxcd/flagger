@@ -62,7 +62,7 @@ func TestScheduler_Init(t *testing.T) {
 		deployer:      deployer,
 		router:        router,
 		observer:      observer,
-		recorder:      NewCanaryRecorder(),
+		recorder:      NewCanaryRecorder(false),
 	}
 	ctrl.flaggerSynced = alwaysReady
 
@@ -116,7 +116,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 		deployer:      deployer,
 		router:        router,
 		observer:      observer,
-		recorder:      NewCanaryRecorder(),
+		recorder:      NewCanaryRecorder(false),
 	}
 	ctrl.flaggerSynced = alwaysReady
 

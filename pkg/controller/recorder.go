@@ -13,22 +13,25 @@ type CanaryRecorder struct {
 	weight *prometheus.GaugeVec
 }
 
-// NewCanaryRecorder registers the Prometheus metrics
-func NewCanaryRecorder() CanaryRecorder {
+// NewCanaryRecorder creates a new recorder and registers the Prometheus metrics
+func NewCanaryRecorder(register bool) CanaryRecorder {
 	// 0 - running, 1 - successful, 2 - failed
 	status := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controllerAgentName,
 		Name:      "canary_status",
 		Help:      "Last canary analysis result",
 	}, []string{"name", "namespace"})
-	prometheus.MustRegister(status)
 
 	weight := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controllerAgentName,
 		Name:      "canary_weight",
 		Help:      "The virtual service destination weight current value",
 	}, []string{"workload", "namespace"})
-	prometheus.MustRegister(weight)
+
+	if register {
+		prometheus.MustRegister(status)
+		prometheus.MustRegister(weight)
+	}
 
 	return CanaryRecorder{
 		status: status,

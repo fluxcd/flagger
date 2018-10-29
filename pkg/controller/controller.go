@@ -83,7 +83,7 @@ func NewController(
 		metricsServer: metricServer,
 	}
 
-	recorder := NewCanaryRecorder()
+	recorder := NewCanaryRecorder(true)
 
 	ctrl := &Controller{
 		kubeClient:    kubeClient,
