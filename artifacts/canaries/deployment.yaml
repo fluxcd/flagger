@@ -48,7 +48,7 @@ spec:
           failureThreshold: 3
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 5
         readinessProbe:
           exec:
             command:
@@ -60,7 +60,7 @@ spec:
           failureThreshold: 3
           periodSeconds: 3
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 5
         resources:
           limits:
             cpu: 2000m
