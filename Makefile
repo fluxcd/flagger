@@ -31,6 +31,7 @@ helm-package:
 
 helm-up:
 	helm upgrade --install flagger ./charts/flagger --namespace=istio-system --set crd.create=false
+	helm upgrade --install flagger-grafana ./charts/grafana --namespace=istio-system
 
 version-set:
 	@next="$(TAG)" && \
