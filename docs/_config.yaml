@@ -15,7 +15,7 @@ author:
 # Set default og:image
 defaults:
 - scope: {path: ""}
-  values: {image: "logo/logo-flagger.png"}
+  values: {image: "diagrams/flagger-overview.png"}
 
 # See: https://material.io/guidelines/style/color.html
 # Use color-name-value, like pink-200 or deep-purple-100
@@ -51,14 +51,4 @@ plugins:
 
 exclude:
 - CNAME
-- Dockerfile
-- Gopkg.lock
-- Gopkg.toml
-- LICENSE
-- Makefile
-- add-model.sh
-- build
-- cmd
-- pkg
-- tag_release.sh
-- vendor
+
