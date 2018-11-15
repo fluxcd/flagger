@@ -4,7 +4,7 @@ remote_theme: errordeveloper/simple-project-homepage
 repository: stefanprodan/flagger
 by_weaveworks: true
 
-url: "https://stefanprodan.github.io/flagger"
+url: "https://flagger.app"
 baseurl: "/"
 
 twitter:
