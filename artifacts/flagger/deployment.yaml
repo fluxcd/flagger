@@ -41,6 +41,7 @@ spec:
             - --timeout=2
             - --spider
             - http://localhost:8080/healthz
+          timeoutSeconds: 5
         readinessProbe:
           exec:
             command:
@@ -50,6 +51,7 @@ spec:
             - --timeout=2
             - --spider
             - http://localhost:8080/healthz
+          timeoutSeconds: 5
         resources:
           limits:
             memory: "512Mi"

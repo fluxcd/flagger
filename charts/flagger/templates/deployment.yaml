@@ -43,18 +43,20 @@ spec:
               - wget
               - --quiet
               - --tries=1
-              - --timeout=2
+              - --timeout=4
               - --spider
               - http://localhost:8080/healthz
+            timeoutSeconds: 5
           readinessProbe:
             exec:
               command:
               - wget
               - --quiet
               - --tries=1
-              - --timeout=2
+              - --timeout=4
               - --spider
               - http://localhost:8080/healthz
+            timeoutSeconds: 5
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}

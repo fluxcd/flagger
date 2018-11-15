@@ -45,9 +45,6 @@ spec:
             - http
             - localhost:9898/healthz
           initialDelaySeconds: 5
-          failureThreshold: 3
-          periodSeconds: 10
-          successThreshold: 1
           timeoutSeconds: 5
         readinessProbe:
           exec:
@@ -57,9 +54,6 @@ spec:
             - http
             - localhost:9898/readyz
           initialDelaySeconds: 5
-          failureThreshold: 3
-          periodSeconds: 3
-          successThreshold: 1
           timeoutSeconds: 5
         resources:
           limits:
