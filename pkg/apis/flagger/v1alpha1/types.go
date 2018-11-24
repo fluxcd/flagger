@@ -65,6 +65,8 @@ type CanaryStatus struct {
 	State          string `json:"state"`
 	CanaryRevision string `json:"canaryRevision"`
 	FailedChecks   int    `json:"failedChecks"`
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 }
 
 // CanaryService is used to create ClusterIP services

@@ -162,7 +162,7 @@ func newTestHPA() *hpav2.HorizontalPodAutoscaler {
 				{
 					Type: "Resource",
 					Resource: &hpav2.ResourceMetricSource{
-						Name: "cpu",
+						Name:                     "cpu",
 						TargetAverageUtilization: int32p(99),
 					},
 				},

@@ -127,6 +127,7 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 // SetFailedChecks updates the canary failed checks counter
 func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 	cd.Status.FailedChecks = val
+	cd.Status.LastTransitionTime = metav1.Now()
 	cd, err := c.flaggerClient.FlaggerV1alpha1().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
@@ -137,6 +138,7 @@ func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 // SetState updates the canary status state
 func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state string) error {
 	cd.Status.State = state
+	cd.Status.LastTransitionTime = metav1.Now()
 	cd, err := c.flaggerClient.FlaggerV1alpha1().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
@@ -163,6 +165,7 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 	cd.Status.State = status.State
 	cd.Status.FailedChecks = status.FailedChecks
 	cd.Status.CanaryRevision = specEnc
+	cd.Status.LastTransitionTime = metav1.Now()
 	cd, err = c.flaggerClient.FlaggerV1alpha1().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
