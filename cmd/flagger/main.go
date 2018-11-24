@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_ "github.com/istio/glog"
-	sharedclientset "github.com/knative/pkg/client/clientset/versioned"
+	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	"github.com/knative/pkg/signals"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
@@ -59,9 +59,9 @@ func main() {
 		logger.Fatalf("Error building kubernetes clientset: %v", err)
 	}
 
-	sharedClient, err := sharedclientset.NewForConfig(cfg)
+	istioClient, err := istioclientset.NewForConfig(cfg)
 	if err != nil {
-		logger.Fatalf("Error building shared clientset: %v", err)
+		logger.Fatalf("Error building istio clientset: %v", err)
 	}
 
 	flaggerClient, err := clientset.NewForConfig(cfg)
@@ -93,7 +93,7 @@ func main() {
 
 	c := controller.NewController(
 		kubeClient,
-		sharedClient,
+		istioClient,
 		flaggerClient,
 		canaryInformer,
 		controlLoopInterval,
