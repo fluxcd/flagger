@@ -6,6 +6,8 @@ metadata:
   labels:
     app: podinfo
 spec:
+  minReadySeconds: 5
+  revisionHistoryLimit: 5
   strategy:
     rollingUpdate:
       maxUnavailable: 0

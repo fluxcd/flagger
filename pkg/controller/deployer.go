@@ -48,6 +48,9 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
 	}
 
+	primary.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
+	primary.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
+	primary.Spec.Strategy = canary.Spec.Strategy
 	primary.Spec.Template.Spec = canary.Spec.Template.Spec
 	_, err = c.kubeClient.AppsV1().Deployments(primary.Namespace).Update(primary)
 	if err != nil {
@@ -241,8 +244,10 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 				},
 			},
 			Spec: appsv1.DeploymentSpec{
-				Replicas: canaryDep.Spec.Replicas,
-				Strategy: canaryDep.Spec.Strategy,
+				MinReadySeconds:      canaryDep.Spec.MinReadySeconds,
+				RevisionHistoryLimit: canaryDep.Spec.RevisionHistoryLimit,
+				Replicas:             canaryDep.Spec.Replicas,
+				Strategy:             canaryDep.Spec.Strategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"app": primaryName,
