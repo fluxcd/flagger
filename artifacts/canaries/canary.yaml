@@ -22,7 +22,7 @@ spec:
     - public-gateway.istio-system.svc.cluster.local
     # Istio virtual service host names (optional)
     hosts:
-    - podinfo.iowa.weavedx.com
+    - app.iowa.weavedx.com
   canaryAnalysis:
     # max number of failed metric checks before rollback
     threshold: 10
