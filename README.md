@@ -351,13 +351,28 @@ flagger_canary_duration_seconds_sum{name="podinfo",namespace="test"} 17.3561329
 flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
 ```
 
+### Alerting
+
+Flagger can be configured to send Slack notifications:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=istio-system \
+--set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
+--set slack.channel=general \
+--set slack.user=flagger
+```
+
+Once configured with a Slack incoming webhook, Flagger will post messages when a canary deployment has been initialized,
+when a new revision has been detected and if the canary analysis failed or succeeded.
+
+![flagger-slack](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/slack-notifications.png)
+
 ### Roadmap
 
 * Extend the canary analysis and promotion to other types than Kubernetes deployments such as Flux Helm releases or OpenFaaS functions
 * Extend the validation mechanism to support other metrics than HTTP success rate and latency
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
-* Alerting: trigger Alertmanager on successful or failed promotions  
-* Reporting: publish canary analysis results to Slack/Jira/etc
 
 ### Contributing
 
