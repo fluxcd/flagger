@@ -8,8 +8,6 @@
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
-The project is currently in experimental phase and it is expected that breaking changes 
-to the API will be made in the upcoming releases.
 
 ### Install 
 
@@ -370,9 +368,9 @@ when a new revision has been detected and if the canary analysis failed or succe
 
 ### Roadmap
 
-* Extend the canary analysis and promotion to other types than Kubernetes deployments such as Flux Helm releases or OpenFaaS functions
 * Extend the validation mechanism to support other metrics than HTTP success rate and latency
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
+* Extend the canary analysis and promotion to other types than Kubernetes deployments such as Flux Helm releases or OpenFaaS functions
 
 ### Contributing
 
