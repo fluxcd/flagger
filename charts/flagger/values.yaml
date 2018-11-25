@@ -8,6 +8,12 @@ image:
 controlLoopInterval: "10s"
 metricsServer: "http://prometheus.istio-system.svc.cluster.local:9090"
 
+slack:
+  user: flagger
+  channel:
+  # incoming webhook https://api.slack.com/incoming-webhooks
+  url:
+
 crd:
   create: true
 
