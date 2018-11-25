@@ -12,6 +12,7 @@ import (
 	flaggerscheme "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/scheme"
 	flaggerinformers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger/v1alpha1"
 	flaggerlisters "github.com/stefanprodan/flagger/pkg/client/listers/flagger/v1alpha1"
+	"github.com/stefanprodan/flagger/pkg/notifier"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -43,6 +44,7 @@ type Controller struct {
 	router        CanaryRouter
 	observer      CanaryObserver
 	recorder      CanaryRecorder
+	notifier      *notifier.Slack
 }
 
 func NewController(
@@ -53,6 +55,7 @@ func NewController(
 	flaggerWindow time.Duration,
 	metricServer string,
 	logger *zap.SugaredLogger,
+	notifier *notifier.Slack,
 
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
@@ -100,6 +103,7 @@ func NewController(
 		router:        router,
 		observer:      observer,
 		recorder:      recorder,
+		notifier:      notifier,
 	}
 
 	flaggerInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -254,6 +258,17 @@ func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, arg
 func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.Infof(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
+}
+
+func (c *Controller) sendNotification(workload string, namespace string, message string, warn bool) {
+	if c.notifier == nil {
+		return
+	}
+
+	err := c.notifier.Post(workload, namespace, message, warn)
+	if err != nil {
+		c.logger.Error(err)
+	}
 }
 
 func int32p(i int32) *int32 {

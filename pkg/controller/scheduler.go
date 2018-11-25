@@ -110,6 +110,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 		c.recorder.SetStatus(cd)
+		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
+			"Canary analysis failed, rollback finished.", true)
 		return
 	}
 
@@ -180,6 +182,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 		c.recorder.SetStatus(cd)
+		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
+			"Canary analysis completed successfully, promotion finished.", false)
 	}
 }
 
@@ -196,11 +200,15 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 		}
 		c.recorder.SetStatus(cd)
 		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
+		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
+			"New deployment detected, initialization completed.", false)
 		return false
 	}
 
 	if diff, err := deployer.IsNewSpec(cd); diff {
 		c.recordEventInfof(cd, "New revision detected! Scaling up %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
+			"New revision detected, starting canary analysis.", false)
 		if err = deployer.Scale(cd, 1); err != nil {
 			c.recordEventErrorf(cd, "%v", err)
 			return false
