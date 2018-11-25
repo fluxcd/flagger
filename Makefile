@@ -56,10 +56,10 @@ version-up:
 
 dev-up: version-up
 	@echo "Starting build/push/deploy pipeline for $(VERSION)"
-	docker build -t stefanprodan/flagger:$(VERSION) . -f Dockerfile
-	docker push stefanprodan/flagger:$(VERSION)
+	docker build -t quay.io/stefanprodan/flagger:$(VERSION) . -f Dockerfile
+	docker push quay.io/stefanprodan/flagger:$(VERSION)
 	kubectl apply -f ./artifacts/flagger/crd.yaml
-	helm upgrade --install flagger ./charts/flagger --namespace=istio-system --set crd.create=false
+	helm upgrade -i flagger ./charts/flagger --namespace=istio-system --set crd.create=false
 
 release:
 	git tag $(VERSION)

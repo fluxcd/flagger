@@ -21,19 +21,18 @@ script:
 
 after_success:
 - if [ -z "$DOCKER_USER" ]; then
-    echo "PR build, skipping Docker Hub push";
+    echo "PR build, skipping image push";
   else
-    docker tag stefanprodan/flagger:latest stefanprodan/flagger:${TRAVIS_COMMIT};
-    echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin;
-    docker push stefanprodan/flagger:${TRAVIS_COMMIT};
+    docker tag stefanprodan/flagger:latest quay.io/stefanprodan/flagger:${TRAVIS_COMMIT};
+    echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin quay.io;
+    docker push quay.io/stefanprodan/flagger:${TRAVIS_COMMIT};
   fi
 - if [ -z "$TRAVIS_TAG" ]; then
-    echo "Not a release, skipping Docker Hub push";
+    echo "Not a release, skipping image push";
   else
-    docker tag stefanprodan/flagger:latest stefanprodan/flagger:$TRAVIS_TAG;
-    echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin;
-    docker push stefanprodan/flagger:latest;
-    docker push stefanprodan/flagger:$TRAVIS_TAG;
+    docker tag stefanprodan/flagger:latest quay.io/stefanprodan/flagger:${TRAVIS_TAG};
+    echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin quay.io;
+    docker push quay.io/stefanprodan/flagger:$TRAVIS_TAG;
   fi
 - bash <(curl -s https://codecov.io/bash)
 - rm coverage.txt
