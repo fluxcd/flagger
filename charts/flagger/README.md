@@ -1,14 +1,20 @@
 # Flagger
 
-Flagger is a Kubernetes operator that automates the promotion of canary deployments
+[Flagger](https://flagger.app) is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
 
 ## Installing the Chart
 
+Add Flagger Hel repository:
+
+```console
+helm repo add flagger https://flagger.app
+```
+
 To install the chart with the release name `flagger`:
 
 ```console
-$ helm upgrade --install flagger ./charts/flagger --namespace=istio-system
+$ helm install --name flagger --namespace istio-system flagger/flagger
 ```
 
 The command deploys Flagger on the Kubernetes cluster in the istio-system namespace.
@@ -30,9 +36,16 @@ The following tables lists the configurable parameters of the Flagger chart and 
 
 Parameter | Description | Default
 --- | --- | ---
-`image.repository` | image repository | `stefanprodan/flagger`
+`image.repository` | image repository | `quay.io/stefanprodan/flagger`
 `image.tag` | image tag | `<VERSION>`
 `image.pullPolicy` | image pull policy | `IfNotPresent`
+`controlLoopInterval` | wait interval between checks | `10s`
+`metricsServer` | Prometheus URL | `http://prometheus.istio-system:9090`
+`slack.url` | Slack incoming webhook | None
+`slack.channel` | Slack channel | None
+`slack.user` | Slack username | `flagger`
+`rbac.create` | if `true`, create and use RBAC resources | `true`
+`crd.create` | if `true`, create Flagger's CRDs | `true`
 `resources.requests/cpu` | pod CPU request | `10m`
 `resources.requests/memory` | pod memory request | `32Mi`
 `resources.limits/cpu` | pod CPU limit | `1000m`
@@ -44,16 +57,16 @@ Parameter | Description | Default
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
 ```console
-$ helm upgrade --install flagger ./charts/flagger \
-  --namespace=istio-system \
-  --set=image.tag=0.0.2
+$ helm upgrade -i flagger flagger/flagger \
+  --namespace istio-system \
+  --set controlLoopInterval=1m
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm upgrade --install flagger ./charts/flagger \
-  --namespace=istio-system \
+$ helm upgrade -i flagger flagger/flagger \
+  --namespace istio-system \
   -f values.yaml
 ```
 
