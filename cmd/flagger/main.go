@@ -12,6 +12,7 @@ import (
 	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/flagger/pkg/controller"
 	"github.com/stefanprodan/flagger/pkg/logging"
+	"github.com/stefanprodan/flagger/pkg/notifier"
 	"github.com/stefanprodan/flagger/pkg/server"
 	"github.com/stefanprodan/flagger/pkg/version"
 	"k8s.io/client-go/kubernetes"
@@ -27,6 +28,9 @@ var (
 	controlLoopInterval time.Duration
 	logLevel            string
 	port                string
+	slackURL            string
+	slackUser           string
+	slackChannel        string
 )
 
 func init() {
@@ -36,6 +40,9 @@ func init() {
 	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "wait interval between rollouts")
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
+	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
+	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
+	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
 }
 
 func main() {
@@ -88,6 +95,16 @@ func main() {
 		logger.Errorf("Metrics server %s unreachable %v", metricsServer, err)
 	}
 
+	var slack *notifier.Slack
+	if slackURL != "" {
+		slack, err = notifier.NewSlack(slackURL, slackUser, slackChannel)
+		if err != nil {
+			logger.Errorf("Notifier %v", err)
+		} else {
+			logger.Infof("Slack notifications enabled for channel %s", slack.Channel)
+		}
+	}
+
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
@@ -99,6 +116,7 @@ func main() {
 		controlLoopInterval,
 		metricsServer,
 		logger,
+		slack,
 	)
 
 	flaggerInformerFactory.Start(stopCh)
