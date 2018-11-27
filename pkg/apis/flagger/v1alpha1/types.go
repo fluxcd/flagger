@@ -48,6 +48,10 @@ type CanarySpec struct {
 
 	// metrics and thresholds
 	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
+
+	// the maximum time in seconds for a canary deployment to make progress
+	// before it is considered to be failed. Defaults to 60s.
+	ProgressDeadlineSeconds *int32 `json:"progressDeadlineSeconds,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
