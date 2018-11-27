@@ -73,9 +73,9 @@ func (cr *CanaryRecorder) SetTotal(namespace string, total int) {
 func (cr *CanaryRecorder) SetStatus(cd *flaggerv1.Canary) {
 	status := 1
 	switch cd.Status.State {
-	case "running":
+	case flaggerv1.CanaryRunning:
 		status = 0
-	case "failed":
+	case flaggerv1.CanaryFailed:
 		status = 2
 	default:
 		status = 1
