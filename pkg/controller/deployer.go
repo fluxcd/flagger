@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -62,37 +63,58 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// IsReady checks the primary and canary deployment status and returns an error if
-// the deployments are in the middle of a rolling update or if the pods are unhealthy
-func (c *CanaryDeployer) IsReady(cd *flaggerv1.Canary) error {
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
-		}
-		return fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
-	}
-	if msg, healthy := c.getDeploymentStatus(canary); !healthy {
-		return fmt.Errorf("Halt %s.%s advancement %s", cd.Name, cd.Namespace, msg)
-	}
-
+// IsPrimaryReady checks the primary deployment status and returns an error if
+// the deployment is in the middle of a rolling update or if the pods are unhealthy
+// it will return a non retriable error if the rolling update is stuck
+func (c *CanaryDeployer) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found", primaryName, cd.Namespace)
+			return true, fmt.Errorf("deployment %s.%s not found", primaryName, cd.Namespace)
 		}
-		return fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
+		return true, fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
 	}
-	if msg, healthy := c.getDeploymentStatus(primary); !healthy {
-		return fmt.Errorf("Halt %s.%s advancement %s", cd.Name, cd.Namespace, msg)
+
+	retriable, err := c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds())
+	if err != nil {
+		if retriable {
+			return retriable, fmt.Errorf("Halt %s.%s advancement %s", cd.Name, cd.Namespace, err.Error())
+		} else {
+			return retriable, err
+		}
 	}
 
 	if primary.Spec.Replicas == int32p(0) {
-		return fmt.Errorf("halt %s.%s advancement %s",
-			cd.Name, cd.Namespace, "primary deployment is scaled to zero")
+		return true, fmt.Errorf("halt %s.%s advancement primary deployment is scaled to zero",
+			cd.Name, cd.Namespace)
 	}
-	return nil
+	return true, nil
+}
+
+// IsCanaryReady checks the primary deployment status and returns an error if
+// the deployment is in the middle of a rolling update or if the pods are unhealthy
+// it will return a non retriable error if the rolling update is stuck
+func (c *CanaryDeployer) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return true, fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
+		}
+		return true, fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+	}
+
+	retriable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
+	if err != nil {
+		if retriable {
+			return retriable, fmt.Errorf("Halt %s.%s advancement %s", cd.Name, cd.Namespace, err.Error())
+		} else {
+			return retriable, fmt.Errorf("deployment does not have minimum availability for more than %vs",
+				cd.GetProgressDeadlineSeconds())
+		}
+	}
+
+	return true, nil
 }
 
 // IsNewSpec returns true if the canary deployment pod spec has changed
@@ -140,7 +162,7 @@ func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 }
 
 // SetState updates the canary status state
-func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state string) error {
+func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state flaggerv1.CanaryState) error {
 	cd.Status.State = state
 	cd.Status.LastTransitionTime = metav1.Now()
 	cd, err := c.flaggerClient.FlaggerV1alpha1().Canaries(cd.Namespace).Update(cd)
@@ -324,26 +346,46 @@ func (c *CanaryDeployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-func (c *CanaryDeployer) getDeploymentStatus(deployment *appsv1.Deployment) (string, bool) {
+// isDeploymentReady determines if a deployment is ready by checking the status conditions
+// if a deployment has exceeded the progress deadline it returns a non retriable error
+func (c *CanaryDeployer) isDeploymentReady(deployment *appsv1.Deployment, deadline int) (bool, error) {
+	retriable := true
+
+	// Determine if the deployment is stuck by checking if there is a minimum replicas unavailable condition
+	// and if the last update time exceeds the deadline
 	if deployment.Generation <= deployment.Status.ObservedGeneration {
-		cond := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
-		if cond != nil && cond.Reason == "ProgressDeadlineExceeded" {
-			return fmt.Sprintf("deployment %q exceeded its progress deadline", deployment.GetName()), false
-		} else if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
-			return fmt.Sprintf("waiting for rollout to finish: %d out of %d new replicas have been updated",
-				deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas), false
-		} else if deployment.Status.Replicas > deployment.Status.UpdatedReplicas {
-			return fmt.Sprintf("waiting for rollout to finish: %d old replicas are pending termination",
-				deployment.Status.Replicas-deployment.Status.UpdatedReplicas), false
-		} else if deployment.Status.AvailableReplicas < deployment.Status.UpdatedReplicas {
-			return fmt.Sprintf("waiting for rollout to finish: %d of %d updated replicas are available",
-				deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas), false
+		progress := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
+		if progress != nil {
+			available := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentAvailable)
+			if available != nil && available.Status == "False" && available.Reason == "MinimumReplicasUnavailable" {
+				from := available.LastUpdateTime
+				delta := time.Duration(deadline) * time.Second
+				retriable = !from.Add(delta).Before(time.Now())
+			}
 		}
-	} else {
-		return "waiting for rollout to finish: observed deployment generation less then desired generation", false
 	}
 
-	return "ready", true
+	if deployment.Generation <= deployment.Status.ObservedGeneration {
+		cond := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
+
+		if cond != nil && cond.Reason == "ProgressDeadlineExceeded" {
+			return false, fmt.Errorf("deployment %q exceeded its progress deadline", deployment.GetName())
+		} else if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
+			return retriable, fmt.Errorf("waiting for rollout to finish: %d out of %d new replicas have been updated",
+				deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
+		} else if deployment.Status.Replicas > deployment.Status.UpdatedReplicas {
+			return retriable, fmt.Errorf("waiting for rollout to finish: %d old replicas are pending termination",
+				deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
+		} else if deployment.Status.AvailableReplicas < deployment.Status.UpdatedReplicas {
+			return retriable, fmt.Errorf("waiting for rollout to finish: %d of %d updated replicas are available",
+				deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
+		}
+
+	} else {
+		return true, fmt.Errorf("waiting for rollout to finish: observed deployment generation less then desired generation")
+	}
+
+	return true, nil
 }
 
 func (c *CanaryDeployer) getDeploymentCondition(
