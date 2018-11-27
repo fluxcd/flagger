@@ -350,12 +350,11 @@ func (c *CanaryDeployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 // if a deployment has exceeded the progress deadline it returns a non retriable error
 func (c *CanaryDeployer) isDeploymentReady(deployment *appsv1.Deployment, deadline int) (bool, error) {
 	retriable := true
-
-	// Determine if the deployment is stuck by checking if there is a minimum replicas unavailable condition
-	// and if the last update time exceeds the deadline
 	if deployment.Generation <= deployment.Status.ObservedGeneration {
 		progress := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
 		if progress != nil {
+			// Determine if the deployment is stuck by checking if there is a minimum replicas unavailable condition
+			// and if the last update time exceeds the deadline
 			available := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentAvailable)
 			if available != nil && available.Status == "False" && available.Reason == "MinimumReplicasUnavailable" {
 				from := available.LastUpdateTime
@@ -363,12 +362,8 @@ func (c *CanaryDeployer) isDeploymentReady(deployment *appsv1.Deployment, deadli
 				retriable = !from.Add(delta).Before(time.Now())
 			}
 		}
-	}
 
-	if deployment.Generation <= deployment.Status.ObservedGeneration {
-		cond := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
-
-		if cond != nil && cond.Reason == "ProgressDeadlineExceeded" {
+		if progress != nil && progress.Reason == "ProgressDeadlineExceeded" {
 			return false, fmt.Errorf("deployment %q exceeded its progress deadline", deployment.GetName())
 		} else if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
 			return retriable, fmt.Errorf("waiting for rollout to finish: %d out of %d new replicas have been updated",
