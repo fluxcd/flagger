@@ -319,7 +319,12 @@ func TestCanaryDeployer_IsReady(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.IsReady(canary)
+	_, err = deployer.IsPrimaryReady(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	_, err = deployer.IsCanaryReady(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
