@@ -9,6 +9,9 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
+  # the maximum time in seconds for the canary deployment
+  # to make progress before it is rollback (default 60s)
+  progressDeadlineSeconds: 60
   # HPA reference (optional)
   autoscalerRef:
     apiVersion: autoscaling/v2beta1

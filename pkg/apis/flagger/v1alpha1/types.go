@@ -21,7 +21,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const CanaryKind = "Canary"
+const (
+	CanaryKind              = "Canary"
+	ProgressDeadlineSeconds = 60
+)
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -48,6 +51,10 @@ type CanarySpec struct {
 
 	// metrics and thresholds
 	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
+
+	// the maximum time in seconds for a canary deployment to make progress
+	// before it is considered to be failed. Defaults to 60s.
+	ProgressDeadlineSeconds *int32 `json:"progressDeadlineSeconds,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -60,11 +67,21 @@ type CanaryList struct {
 	Items []Canary `json:"items"`
 }
 
+// CanaryState used for status state op
+type CanaryState string
+
+const (
+	CanaryRunning     CanaryState = "running"
+	CanaryFinished    CanaryState = "finished"
+	CanaryFailed      CanaryState = "failed"
+	CanaryInitialized CanaryState = "initialized"
+)
+
 // CanaryStatus is used for state persistence (read-only)
 type CanaryStatus struct {
-	State          string `json:"state"`
-	CanaryRevision string `json:"canaryRevision"`
-	FailedChecks   int    `json:"failedChecks"`
+	State          CanaryState `json:"state"`
+	CanaryRevision string      `json:"canaryRevision"`
+	FailedChecks   int         `json:"failedChecks"`
 	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 }
@@ -90,4 +107,12 @@ type CanaryMetric struct {
 	Name      string `json:"name"`
 	Interval  string `json:"interval"`
 	Threshold int    `json:"threshold"`
+}
+
+func (c *Canary) GetProgressDeadlineSeconds() int {
+	if c.Spec.ProgressDeadlineSeconds != nil {
+		return int(*c.Spec.ProgressDeadlineSeconds)
+	}
+
+	return ProgressDeadlineSeconds
 }

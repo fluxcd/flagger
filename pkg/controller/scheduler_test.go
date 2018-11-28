@@ -6,6 +6,7 @@ import (
 	"time"
 
 	fakeIstio "github.com/knative/pkg/client/clientset/versioned/fake"
+	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
 	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/flagger/pkg/logging"
@@ -140,5 +141,73 @@ func TestScheduler_NewRevision(t *testing.T) {
 
 	if *c.Spec.Replicas != 1 {
 		t.Errorf("Got canary replicas %v wanted %v", *c.Spec.Replicas, 1)
+	}
+}
+
+func TestScheduler_Rollback(t *testing.T) {
+	canary := newTestCanary()
+	dep := newTestDeployment()
+	hpa := newTestHPA()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+	kubeClient := fake.NewSimpleClientset(dep, hpa)
+	istioClient := fakeIstio.NewSimpleClientset()
+
+	logger, _ := logging.NewLogger("debug")
+	deployer := CanaryDeployer{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}
+	router := CanaryRouter{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		istioClient:   istioClient,
+		logger:        logger,
+	}
+	observer := CanaryObserver{
+		metricsServer: "fake",
+	}
+
+	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
+	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha1().Canaries()
+
+	ctrl := &Controller{
+		kubeClient:    kubeClient,
+		istioClient:   istioClient,
+		flaggerClient: flaggerClient,
+		flaggerLister: flaggerInformer.Lister(),
+		flaggerSynced: flaggerInformer.Informer().HasSynced,
+		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder: &record.FakeRecorder{},
+		logger:        logger,
+		canaries:      new(sync.Map),
+		flaggerWindow: time.Second,
+		deployer:      deployer,
+		router:        router,
+		observer:      observer,
+		recorder:      NewCanaryRecorder(false),
+	}
+	ctrl.flaggerSynced = alwaysReady
+
+	// init
+	ctrl.advanceCanary("podinfo", "default")
+
+	// update failed checks to max
+	err := deployer.SyncStatus(canary, v1alpha1.CanaryStatus{State: v1alpha1.CanaryRunning, FailedChecks: 11})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect changes
+	ctrl.advanceCanary("podinfo", "default")
+
+	c, err := flaggerClient.FlaggerV1alpha1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if c.Status.State != v1alpha1.CanaryFailed {
+		t.Errorf("Got canary state %v wanted %v", c.Status.State, v1alpha1.CanaryFailed)
 	}
 }

@@ -155,6 +155,11 @@ func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 	out.AutoscalerRef = in.AutoscalerRef
 	in.Service.DeepCopyInto(&out.Service)
 	in.CanaryAnalysis.DeepCopyInto(&out.CanaryAnalysis)
+	if in.ProgressDeadlineSeconds != nil {
+		in, out := &in.ProgressDeadlineSeconds, &out.ProgressDeadlineSeconds
+		*out = new(int32)
+		**out = **in
+	}
 	return
 }
 
