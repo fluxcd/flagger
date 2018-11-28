@@ -23,7 +23,7 @@ import (
 
 const (
 	CanaryKind              = "Canary"
-	ProgressDeadlineSeconds = 60
+	ProgressDeadlineSeconds = 600
 )
 
 // +genclient

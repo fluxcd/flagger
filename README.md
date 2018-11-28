@@ -85,7 +85,7 @@ spec:
     kind: Deployment
     name: podinfo
   # the maximum time in seconds for the canary deployment
-  # to make progress before it is rollback (default 60s)
+  # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
   # hpa reference (optional)
   autoscalerRef:
