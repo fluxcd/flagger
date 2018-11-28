@@ -22,7 +22,7 @@ spec:
       serviceAccountName: flagger
       containers:
       - name: flagger
-        image: quay.io/stefanprodan/flagger:0.1.1
+        image: quay.io/stefanprodan/flagger:0.1.2-alpha.0
         imagePullPolicy: Always
         ports:
         - name: http

@@ -13,7 +13,8 @@ build:
 	docker build -t stefanprodan/flagger:$(TAG) . -f Dockerfile
 
 push:
-	docker push stefanprodan/flagger:$(TAG)
+	docker tag stefanprodan/flagger:$(TAG) quay.io/stefanprodan/flagger:$(VERSION)
+	docker push quay.io/stefanprodan/flagger:$(VERSION)
 
 fmt:
 	gofmt -l -s -w $(SOURCE_DIRS)
