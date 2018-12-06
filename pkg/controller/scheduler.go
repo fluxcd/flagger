@@ -95,11 +95,15 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		if cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold {
 			c.recordEventWarningf(cd, "Rolling back %s.%s failed checks threshold reached %v",
 				cd.Name, cd.Namespace, cd.Status.FailedChecks)
+			c.sendNotification(cd, fmt.Sprintf("Failed checks threshold reached %v", cd.Status.FailedChecks),
+				false, true)
 		}
 
 		if !retriable {
 			c.recordEventWarningf(cd, "Rolling back %s.%s progress deadline exceeded %v",
 				cd.Name, cd.Namespace, err)
+			c.sendNotification(cd, fmt.Sprintf("Progress deadline exceeded %v", err),
+				false, true)
 		}
 
 		// route all traffic back to primary
@@ -112,7 +116,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 		c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 		c.recordEventWarningf(cd, "Canary failed! Scaling down %s.%s",
-			cd.Spec.TargetRef.Name, cd.Namespace)
+			cd.Name, cd.Namespace)
 
 		// shutdown canary
 		if err := c.deployer.Scale(cd, 0); err != nil {
@@ -127,8 +131,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 
 		c.recorder.SetStatus(cd)
-		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
-			"Canary analysis failed, rollback finished.", true)
 		return
 	}
 
@@ -199,8 +201,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 		c.recorder.SetStatus(cd)
-		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
-			"Canary analysis completed successfully, promotion finished.", false)
+		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
+			false, false)
 	}
 }
 
@@ -217,15 +219,15 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 		}
 		c.recorder.SetStatus(cd)
 		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
-		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
-			"New deployment detected, initialization completed.", false)
+		c.sendNotification(cd, "New deployment detected, initialization completed.",
+			true, false)
 		return false
 	}
 
 	if diff, err := deployer.IsNewSpec(cd); diff {
 		c.recordEventInfof(cd, "New revision detected! Scaling up %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		c.sendNotification(cd.Spec.TargetRef.Name, cd.Namespace,
-			"New revision detected, starting canary analysis.", false)
+		c.sendNotification(cd, "New revision detected, starting canary analysis.",
+			true, false)
 		if err = deployer.Scale(cd, 1); err != nil {
 			c.recordEventErrorf(cd, "%v", err)
 			return false

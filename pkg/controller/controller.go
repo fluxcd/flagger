@@ -260,12 +260,36 @@ func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, a
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
-func (c *Controller) sendNotification(workload string, namespace string, message string, warn bool) {
+func (c *Controller) sendNotification(cd *flaggerv1.Canary, message string, metadata bool, warn bool) {
 	if c.notifier == nil {
 		return
 	}
 
-	err := c.notifier.Post(workload, namespace, message, warn)
+	var fields []notifier.SlackField
+
+	if metadata {
+		fields = append(fields,
+			notifier.SlackField{
+				Title: "Target",
+				Value: fmt.Sprintf("%s/%s.%s", cd.Spec.TargetRef.Kind, cd.Spec.TargetRef.Name, cd.Namespace),
+			},
+			notifier.SlackField{
+				Title: "Traffic routing",
+				Value: fmt.Sprintf("Weight step: %v max: %v",
+					cd.Spec.CanaryAnalysis.StepWeight,
+					cd.Spec.CanaryAnalysis.MaxWeight),
+			},
+			notifier.SlackField{
+				Title: "Failed checks threshold",
+				Value: fmt.Sprintf("%v", cd.Spec.CanaryAnalysis.Threshold),
+			},
+			notifier.SlackField{
+				Title: "Progress deadline",
+				Value: fmt.Sprintf("%vs", cd.GetProgressDeadlineSeconds()),
+			},
+		)
+	}
+	err := c.notifier.Post(cd.Name, cd.Namespace, message, fields, warn)
 	if err != nil {
 		c.logger.Error(err)
 	}
