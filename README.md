@@ -367,7 +367,25 @@ helm upgrade -i flagger flagger/flagger \
 Once configured with a Slack incoming webhook, Flagger will post messages when a canary deployment has been initialized,
 when a new revision has been detected and if the canary analysis failed or succeeded.
 
-![flagger-slack](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/slack-notifications.png)
+![flagger-slack](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/slack-canary-success.png)
+
+A canary deployment will be rolled back if the progress deadline exceeded or if the analysis 
+reached the maximum number of failed checks:
+
+![flagger-slack-errors](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/slack-canary-failed.png)
+
+Besides Slack, you can use Alertmanager to trigger alerts when a canary deployment failed:
+
+```yaml
+  - alert: canary_rollback
+    expr: flagger_canary_status > 1
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Canary failed"
+      description: "Workload {{ $labels.name }} namespace {{ $labels.namespace }}"
+```
 
 ### Roadmap
 
