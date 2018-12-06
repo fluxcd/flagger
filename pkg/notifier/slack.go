@@ -30,10 +30,17 @@ type SlackPayload struct {
 
 // SlackAttachment holds the markdown message body
 type SlackAttachment struct {
-	Color      string   `json:"color"`
-	AuthorName string   `json:"author_name"`
-	Text       string   `json:"text"`
-	MrkdwnIn   []string `json:"mrkdwn_in"`
+	Color      string       `json:"color"`
+	AuthorName string       `json:"author_name"`
+	Text       string       `json:"text"`
+	MrkdwnIn   []string     `json:"mrkdwn_in"`
+	Fields     []SlackField `json:"fields"`
+}
+
+type SlackField struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
+	Short bool   `json:"short"`
 }
 
 // NewSlack validates the Slack URL and returns a Slack object
@@ -60,7 +67,7 @@ func NewSlack(hookURL string, username string, channel string) (*Slack, error) {
 }
 
 // Post Slack message
-func (s *Slack) Post(workload string, namespace string, message string, warn bool) error {
+func (s *Slack) Post(workload string, namespace string, message string, fields []SlackField, warn bool) error {
 	payload := SlackPayload{
 		Channel:  s.Channel,
 		Username: s.Username,
@@ -76,6 +83,7 @@ func (s *Slack) Post(workload string, namespace string, message string, warn boo
 		AuthorName: fmt.Sprintf("%s.%s", workload, namespace),
 		Text:       message,
 		MrkdwnIn:   []string{"text"},
+		Fields:     fields,
 	}
 
 	payload.Attachments = []SlackAttachment{a}
