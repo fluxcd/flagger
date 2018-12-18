@@ -12,6 +12,7 @@ sources:
 maintainers:
 - name: stefanprodan
   url: https://github.com/stefanprodan
+  email: stefanprodan@users.noreply.github.com
 keywords:
 - canary
 - istio
