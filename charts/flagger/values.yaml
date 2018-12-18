@@ -14,10 +14,18 @@ slack:
   # incoming webhook https://api.slack.com/incoming-webhooks
   url:
 
-crd:
+serviceAccount:
+  # serviceAccount.create: Whether to create a service account or not
   create: true
+  # serviceAccount.name: The name of the service account to create or use
+  name: ""
 
 rbac:
+  # rbac.create: `true` if rbac resources should be created
+  create: true
+
+crd:
+  # crd.create: `true` if custom resource definitions should be created
   create: true
 
 nameOverride: ""

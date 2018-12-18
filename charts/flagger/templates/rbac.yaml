@@ -29,7 +29,7 @@ roleRef:
   kind: ClusterRole
   name: {{ template "flagger.fullname" . }}
 subjects:
-- name: {{ template "flagger.name" . }}
-  namespace: {{ .Release.Namespace | quote }}
+- name: {{ template "flagger.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
   kind: ServiceAccount
 {{- end }}
