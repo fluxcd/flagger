@@ -1,6 +1,11 @@
 apiVersion: v1
 name: grafana
 version: 0.1.0
-appVersion: 5.3.1
-description: A Grafana Helm chart for monitoring progressive deployments powered by Istio and Flagger
-home: https://github.com/stefanprodan/flagger
+appVersion: 5.4.2
+description: Grafana Helm chart for monitoring progressive deployments powered by Istio and Flagger
+home: https://flagger.app
+sources:
+- https://github.com/stefanprodan/flagger
+maintainers:
+- name: stefanprodan
+  url: https://github.com/stefanprodan

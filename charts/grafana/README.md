@@ -1,16 +1,29 @@
 # Weave Cloud Grafana
 
-Grafana v5 with Kubernetes dashboards and Prometheus and Weave Cloud data sources.
+Grafana Helm chart for monitoring progressive deployments powered by Istio, Prometheus and Flagger.
+
+## Prerequisites
+
+* Kubernetes >= 1.9
+* Istio >= 1.0
+* Prometheus >= 2.6
 
 ## Installing the Chart
 
-To install the chart with the release name `my-release`:
+Add Flagger Helm repository:
 
 ```console
-$ helm install stable/grafana --name my-release \
-    --set service.type=NodePort \
-    --set token=WEAVE-TOKEN \
-    --set password=admin
+helm repo add flagger https://flagger.app
+```
+
+To install the chart with the release name `flagger-grafana`:
+
+```console
+helm upgrade -i flagger-grafana flagger/grafana \
+--namespace=istio-system \
+--set url=http://prometheus:9090 \
+--set user=admin \
+--set password=admin
 ```
 
 The command deploys Grafana on the Kubernetes cluster in the default namespace.
@@ -18,10 +31,10 @@ The [configuration](#configuration) section lists the parameters that can be con
 
 ## Uninstalling the Chart
 
-To uninstall/delete the `my-release` deployment:
+To uninstall/delete the `flagger-grafana` deployment:
 
 ```console
-$ helm delete --purge my-release
+helm delete --purge flagger-grafana
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -34,30 +47,29 @@ Parameter | Description | Default
 --- | --- | ---
 `image.repository` | Image repository | `grafana/grafana`
 `image.pullPolicy` | Image pull policy | `IfNotPresent`
-`image.tag` | Image tag | `5.0.1`
+`image.tag` | Image tag | `<VERSION>`
 `replicaCount` | desired number of pods | `1`
 `resources` | pod resources | `none`
 `tolerations` | List of node taints to tolerate | `[]`
 `affinity` | node/pod affinities | `node`
 `nodeSelector` | node labels for pod assignment | `{}`
-`service.type` | type of service | `LoadBalancer`
-`url` | Prometheus URL, used when Weave token is empty | `http://prometheus:9090`
+`service.type` | type of service | `ClusterIP`
+`url` | Prometheus URL, used when Weave Cloud token is empty | `http://prometheus:9090`
 `token` | Weave Cloud token | `none`
 `user` | Grafana admin username | `admin`
-`password` | Grafana admin password | `none`
+`password` | Grafana admin password | `admin`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```console
-$ helm install stable/grafana --name my-release \
-  --set=token=WEAVE-TOKEN \
-  --set password=admin
+helm install flagger/grafana --name flagger-grafana \
+--set token=WEAVE-CLOUD-TOKEN
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install stable/grafana --name my-release -f values.yaml
+helm install flagger/grafana --name flagger-grafana -f values.yaml
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)

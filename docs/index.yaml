@@ -2,20 +2,30 @@ apiVersion: v1
 entries:
   flagger:
   - apiVersion: v1
-    appVersion: 0.1.2
-    created: 2018-12-06T13:57:50.322474+07:00
+    created: 2018-12-18T12:57:39.345+02:00
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
-    digest: a52bf1bf797d60d3d92f46f84805edbd1ffb7d87504727266f08543532ff5e08
-    home: https://github.com/stefanprodan/flagger
+    digest: c7d65f694bad298a8ae71ed498cd1c69e579f01a1f4b5e77966bedc5fcca5c76
+    engine: gotpl
+    home: https://flagger.app
+    icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
+    keywords:
+    - canary
+    - istio
+    kubeVersion: '>=1.9.0-0'
+    maintainers:
+    - name: stefanprodan
+      url: https://github.com/stefanprodan
     name: flagger
+    sources:
+    - https://github.com/stefanprodan/flagger
     urls:
     - https://stefanprodan.github.io/flagger/flagger-0.1.2.tgz
     version: 0.1.2
   - apiVersion: v1
     appVersion: 0.1.1
-    created: 2018-12-06T13:57:50.322115+07:00
+    created: 2018-12-18T12:57:39.344584+02:00
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -27,7 +37,7 @@ entries:
     version: 0.1.1
   - apiVersion: v1
     appVersion: 0.1.0
-    created: 2018-12-06T13:57:50.321509+07:00
+    created: 2018-12-18T12:57:39.344274+02:00
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -39,14 +49,19 @@ entries:
     version: 0.1.0
   grafana:
   - apiVersion: v1
-    appVersion: 5.3.1
-    created: 2018-12-06T13:57:50.323051+07:00
-    description: A Grafana Helm chart for monitoring progressive deployments powered
+    appVersion: 5.4.2
+    created: 2018-12-18T12:57:39.345442+02:00
+    description: Grafana Helm chart for monitoring progressive deployments powered
       by Istio and Flagger
-    digest: 692b7c545214b652374249cc814d37decd8df4f915530e82dff4d9dfa25e8762
-    home: https://github.com/stefanprodan/flagger
+    digest: ae2707d4a419558fd04aa1572982fad58038a5fb8500249cc3f5bceae4a80ba6
+    home: https://flagger.app
+    maintainers:
+    - name: stefanprodan
+      url: https://github.com/stefanprodan
     name: grafana
+    sources:
+    - https://github.com/stefanprodan/flagger
     urls:
     - https://stefanprodan.github.io/flagger/grafana-0.1.0.tgz
     version: 0.1.0
-generated: 2018-12-06T13:57:50.320726+07:00
+generated: 2018-12-18T12:57:39.343721+02:00
