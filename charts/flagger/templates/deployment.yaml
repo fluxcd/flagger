@@ -3,25 +3,25 @@ kind: Deployment
 metadata:
   name: {{ include "flagger.fullname" . }}
   labels:
-    app: {{ include "flagger.name" . }}
-    chart: {{ include "flagger.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: {{ include "flagger.name" . }}
-      release: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ template "flagger.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ include "flagger.name" . }}
-        release: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ template "flagger.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      serviceAccountName: flagger
+      serviceAccountName: {{ template "flagger.serviceAccountName" . }}
       containers:
         - name: flagger
           securityContext:

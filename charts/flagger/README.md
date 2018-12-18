@@ -1,11 +1,20 @@
 # Flagger
 
 [Flagger](https://flagger.app) is a Kubernetes operator that automates the promotion of canary deployments
-using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
+using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
+like HTTP requests success rate, requests average duration and pods health.
+Based on the KPIs analysis a canary is promoted or aborted and the analysis result is published to Slack.
+
+## Prerequisites
+
+* Kubernetes >= 1.9
+* Istio >= 1.0
+* Prometheus >= 2.6
 
 ## Installing the Chart
 
-Add Flagger Hel repository:
+Add Flagger Helm repository:
 
 ```console
 helm repo add flagger https://flagger.app

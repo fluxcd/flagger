@@ -1,4 +1,10 @@
-{{/* vim: set filetype=mustache: */}}
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "flagger.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{/*
 Expand the name of the chart.
 */}}
@@ -25,8 +31,12 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Create chart name and version as used by the chart label.
+Create the name of the service account to use
 */}}
-{{- define "flagger.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- define "flagger.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "flagger.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
 {{- end -}}

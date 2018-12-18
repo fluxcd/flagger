@@ -4,10 +4,10 @@ kind: ClusterRole
 metadata:
   name: {{ template "flagger.fullname" . }}
   labels:
-    app: {{ template "flagger.name" . }}
-    chart: {{ template "flagger.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 rules:
 - apiGroups: ['*']
   resources: ['*']
@@ -20,16 +20,16 @@ kind: ClusterRoleBinding
 metadata:
   name: {{ template "flagger.fullname" . }}
   labels:
-    app: {{ template "flagger.name" . }}
-    chart: {{ template "flagger.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: {{ template "flagger.fullname" . }}
 subjects:
-- name: {{ template "flagger.name" . }}
-  namespace: {{ .Release.Namespace | quote }}
+- name: {{ template "flagger.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
   kind: ServiceAccount
 {{- end }}
