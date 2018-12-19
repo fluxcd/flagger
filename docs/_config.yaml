@@ -51,4 +51,5 @@ plugins:
 
 exclude:
 - CNAME
+- gitbook
 
