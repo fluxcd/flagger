@@ -1,6 +1,6 @@
 # Install Flagger
 
-Before installing Flagger make sure you have [Istio](https://istio.io/docs/setup/kubernetes/helm-install/) running with Prometheus enabled. If you are new to Istio you can follow this GKE guide [Istio service mesh walk-through](https://github.com/stefanprodan/istio-gke).
+Before installing Flagger make sure you have [Istio](https://istio.io) running with Prometheus enabled. If you are new to Istio you can follow this GKE guide [Istio service mesh walk-through](https://docs.flagger.app/install/install-istio).
 
 **Prerequisites**
 

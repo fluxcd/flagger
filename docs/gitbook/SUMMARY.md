@@ -7,6 +7,7 @@
 
 * [Install Flagger](install/installing-flagger.md)
 * [Install Grafana](install/installing-grafana.md)
+* [Install Istio](install/install-istio.md)
 
 ## Usage
 
