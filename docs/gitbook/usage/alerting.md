@@ -1,7 +1,3 @@
----
-description: Slack & Alertmanager
----
-
 # Alerting
 
 ### Slack

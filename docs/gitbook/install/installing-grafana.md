@@ -1,8 +1,4 @@
----
-description: Helm setup instructions
----
-
-# Installing Grafana
+# Install Grafana
 
 Flagger comes with a Grafana dashboard made for monitoring the canary analysis.
 

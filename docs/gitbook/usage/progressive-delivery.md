@@ -1,7 +1,3 @@
----
-description: 'Automated canary analysis, promotions and rollbacks walkthrough'
----
-
 # Canary Deployments
 
 This guide shows you how to use Istio and Flagger to automate canary deployments.

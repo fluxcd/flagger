@@ -1,7 +1,3 @@
----
-description: Metrics & Logging
----
-
 # Monitoring
 
 ### Grafana

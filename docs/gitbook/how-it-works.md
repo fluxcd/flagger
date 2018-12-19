@@ -1,7 +1,3 @@
----
-description: Automated canary deployment process
----
-
 # How it works
 
 [Flagger](https://github.com/stefanprodan/flagger) takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\) and creates a series of objects \(Kubernetes deployments, ClusterIP services and Istio virtual services\) to drive the canary analysis and promotion. 
