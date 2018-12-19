@@ -12,3 +12,5 @@ Flagger implements a control loop that gradually shifts traffic to the canary wh
 
 Flagger can be configured with Kubernetes custom resources \(canaries.flagger.app kind\) and is compatible with any CI/CD solutions made for Kubernetes. Since Flagger is declarative and reacts to Kubernetes events, it can be used in **GitOps** pipelines together with Weave Flux or JenkinsX.
 
+This project is sponsored by [Weaveworks](https://www.weave.works/)
+
