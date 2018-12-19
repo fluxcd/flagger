@@ -5,8 +5,8 @@
 
 ## Install
 
-* [Installing Flagger](install-1/installing-flagger.md)
-* [Installing Grafana](install-1/installing-grafana.md)
+* [Installing Flagger](install/installing-flagger.md)
+* [Installing Grafana](install/installing-grafana.md)
 
 ## Usage
 
