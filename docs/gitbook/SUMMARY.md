@@ -10,7 +10,7 @@
 
 ## Usage
 
-* [Progressive Delivery](usage/progressive-delivery.md)
+* [Canary Deployments](usage/progressive-delivery.md)
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)
 

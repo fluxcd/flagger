@@ -10,5 +10,5 @@ Flagger implements a control loop that gradually shifts traffic to the canary wh
 
 ![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-overview.png)
 
-Flagger takes a Kubernetes deployment and creates a series of objects \(Kubernetes [deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), ClusterIP [services](https://kubernetes.io/docs/concepts/services-networking/service/) and Istio [virtual services](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService)\) to drive the canary analysis and promotion.
+Flagger can be configured with Kubernetes custom resources \(canaries.flagger.app kind\) and is compatible with any CI/CD solutions made for Kubernetes. Since Flagger is declarative and reacts to Kubernetes events, it can be used in **GitOps** pipelines together with Weave Flux or JenkinsX.
 

@@ -1,5 +1,5 @@
 ---
-description: Automated canary deployments process
+description: Automated canary deployment process
 ---
 
 # How it works
@@ -10,7 +10,7 @@ description: Automated canary deployments process
 
 ### Canary Custom Resource
 
-For a deployment named _**podinfo**_, a canary promotion can be defined using Flagger's custom resource:
+For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
 ```yaml
 apiVersion: flagger.app/v1alpha1
@@ -102,9 +102,9 @@ You can change the canary analysis _max weight_ and the _step weight_ percentage
 
 ### Canary Analisys
 
- The canary analysis is using the following promql queries:
+ The canary analysis is using the following Prometheus queries:
 
-_HTTP requests success rate percentage_
+**HTTP requests success rate percentage**
 
 ```javascript
 sum(
@@ -129,7 +129,7 @@ sum(
 )
 ```
 
-_HTTP requests milliseconds duration P99_
+**HTTP requests milliseconds duration P99**
 
 ```javascript
 histogram_quantile(0.99, 
