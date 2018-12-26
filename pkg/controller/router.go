@@ -5,7 +5,7 @@ import (
 
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"

@@ -19,22 +19,22 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha1"
+	v1alpha2 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha2"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeFlaggerV1alpha1 struct {
+type FakeFlaggerV1alpha2 struct {
 	*testing.Fake
 }
 
-func (c *FakeFlaggerV1alpha1) Canaries(namespace string) v1alpha1.CanaryInterface {
+func (c *FakeFlaggerV1alpha2) Canaries(namespace string) v1alpha2.CanaryInterface {
 	return &FakeCanaries{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeFlaggerV1alpha1) RESTClient() rest.Interface {
+func (c *FakeFlaggerV1alpha2) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }
