@@ -51,6 +51,7 @@ spec:
     webhooks:
       - name: integration-tests
         url: http://podinfo.test:9898/echo
-        timeout: 5s
+        timeout: 1m
         metadata:
           test: "all"
+          token: "16688eb5e9f289f1991c"

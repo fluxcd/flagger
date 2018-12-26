@@ -51,7 +51,7 @@ spec:
                   type: string
             service:
               type: object
-              required: ['number']
+              required: ['port']
               properties:
                 port:
                   type: number
