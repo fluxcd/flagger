@@ -119,6 +119,13 @@ type CanaryWebhook struct {
 	Metadata *map[string]string `json:"metadata,omitempty"`
 }
 
+// CanaryWebhookPayload holds the deployment info and metadata sent to webhooks
+type CanaryWebhookPayload struct {
+	Name      string             `json:"name"`
+	Namespace string             `json:"namespace"`
+	Metadata  *map[string]string `json:"metadata,omitempty"`
+}
+
 // GetProgressDeadlineSeconds returns the progress deadline (default 600s)
 func (c *Canary) GetProgressDeadlineSeconds() int {
 	if c.Spec.ProgressDeadlineSeconds != nil {

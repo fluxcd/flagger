@@ -139,7 +139,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	if canaryRoute.Weight == 0 {
 		c.recordEventInfof(cd, "Starting canary deployment for %s.%s", cd.Name, cd.Namespace)
 	} else {
-		if ok := c.checkCanaryMetrics(cd); !ok {
+		if ok := c.analyseCanary(cd); !ok {
 			if err := c.deployer.SetFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
@@ -242,7 +242,8 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 	return false
 }
 
-func (c *Controller) checkCanaryMetrics(r *flaggerv1.Canary) bool {
+func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
+	// run metrics checks
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
 		if metric.Name == "istio_requests_total" {
 			val, err := c.observer.GetDeploymentCounter(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
@@ -269,6 +270,16 @@ func (c *Controller) checkCanaryMetrics(r *flaggerv1.Canary) bool {
 					r.Name, r.Namespace, val, t)
 				return false
 			}
+		}
+	}
+
+	// run external checks
+	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
+		err := CallWebhook(r.Name, r.Namespace, webhook)
+		if err != nil {
+			c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
+				r.Name, r.Namespace, webhook.Name, err)
+			return false
 		}
 	}
 
