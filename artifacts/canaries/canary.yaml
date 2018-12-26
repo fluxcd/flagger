@@ -1,4 +1,4 @@
-apiVersion: flagger.app/v1alpha1
+apiVersion: flagger.app/v1alpha2
 kind: Canary
 metadata:
   name: podinfo
@@ -35,6 +35,7 @@ spec:
     # canary increment step
     # percentage (0-100)
     stepWeight: 5
+    # Istio Prometheus checks
     metrics:
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
@@ -46,3 +47,10 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
+    # external checks (optional)
+    webhooks:
+      - name: integration-tests
+        url: http://podinfo.test:9898/echo
+        timeout: 5s
+        metadata:
+          test: "all"

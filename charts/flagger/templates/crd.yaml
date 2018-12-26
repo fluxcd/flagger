@@ -3,15 +3,16 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: canaries.flagger.app
-  annotations:
-    "helm.sh/resource-policy": keep
 spec:
   group: flagger.app
-  version: v1alpha1
+  version: v1alpha2
   versions:
-    - name: v1alpha1
+    - name: v1alpha2
       served: true
       storage: true
+    - name: v1alpha1
+      served: true
+      storage: false
   names:
     plural: canaries
     singular: canary
@@ -22,13 +23,15 @@ spec:
       properties:
         spec:
           required:
-          - targetRef
-          - service
-          - canaryAnalysis
+            - targetRef
+            - service
+            - canaryAnalysis
           properties:
             progressDeadlineSeconds:
               type: number
             targetRef:
+              type: object
+              required: ['apiVersion', 'kind', 'name']
               properties:
                 apiVersion:
                   type: string
@@ -37,6 +40,8 @@ spec:
                 name:
                   type: string
             autoscalerRef:
+              type: object
+              required: ['apiVersion', 'kind', 'name']
               properties:
                 apiVersion:
                   type: string
@@ -45,6 +50,8 @@ spec:
                 name:
                   type: string
             service:
+              type: object
+              required: ['number']
               properties:
                 port:
                   type: number
@@ -61,6 +68,7 @@ spec:
                   properties:
                     items:
                       type: object
+                      required: ['name', 'interval', 'threshold']
                       properties:
                         name:
                           type: string
@@ -69,4 +77,20 @@ spec:
                           pattern: "^[0-9]+(m)"
                         threshold:
                           type: number
+                webhooks:
+                  type: array
+                  properties:
+                    items:
+                      type: object
+                      required: ['name', 'url', 'timeout']
+                      properties:
+                        name:
+                          type: string
+                        url:
+                          type: string
+                          format: url
+                        timeout:
+                          type: string
+                          pattern: "^[0-9]+(s)"
+
 {{- end }}

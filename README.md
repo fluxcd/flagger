@@ -73,7 +73,7 @@ You can change the canary analysis _max weight_ and the _step weight_ percentage
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha1
+apiVersion: flagger.app/v1alpha2
 kind: Canary
 metadata:
   name: podinfo
@@ -87,7 +87,7 @@ spec:
   # the maximum time in seconds for the canary deployment
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
-  # hpa reference (optional)
+  # HPA reference (optional)
   autoscalerRef:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
@@ -100,16 +100,17 @@ spec:
     - public-gateway.istio-system.svc.cluster.local
     # Istio virtual service host names (optional)
     hosts:
-    - app.istio.weavedx.com
+    - app.iowa.weavedx.com
   canaryAnalysis:
     # max number of failed metric checks before rollback
-    threshold: 5
+    threshold: 10
     # max traffic percentage routed to canary
     # percentage (0-100)
     maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 10
+    stepWeight: 5
+    # Istio Prometheus checks
     metrics:
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
@@ -121,6 +122,13 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
+    # external checks (optional)
+    webhooks:
+      - name: integration-tests
+        url: http://podinfo.test:9898/echo
+        timeout: 5s
+        metadata:
+          test: "all"
 ```
 
 The canary analysis is using the following promql queries:

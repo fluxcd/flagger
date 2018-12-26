@@ -2,7 +2,7 @@
 
 image:
   repository: quay.io/stefanprodan/flagger
-  tag: 0.1.2
+  tag: 0.2.0-alpha.1
   pullPolicy: IfNotPresent
 
 controlLoopInterval: "10s"

@@ -20,7 +20,7 @@ kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
 Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
-apiVersion: flagger.app/v1alpha1
+apiVersion: v1alpha2
 kind: Canary
 metadata:
   name: podinfo
