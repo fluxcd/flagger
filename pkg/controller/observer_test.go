@@ -42,7 +42,7 @@ func TestCanaryObserver_GetDeploymentHistogram(t *testing.T) {
 		metricsServer: ts.URL,
 	}
 
-	val, err := observer.GetDeploymentHistogram("podinfo", "default", "istio_requests_total", "1m")
+	val, err := observer.GetDeploymentHistogram("podinfo", "default", "istio_request_duration_seconds_bucket", "1m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
