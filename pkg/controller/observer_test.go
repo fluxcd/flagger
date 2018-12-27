@@ -79,6 +79,6 @@ func TestCheckMetricsServer_Offline(t *testing.T) {
 	}
 
 	if ok {
-		t.Errorf("Got %v wanted %v", ok, true)
+		t.Errorf("Got %v wanted %v", ok, false)
 	}
 }
