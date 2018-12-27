@@ -32,7 +32,7 @@ func TestCanaryObserver_GetDeploymentCounter(t *testing.T) {
 
 func TestCanaryObserver_GetDeploymentHistogram(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.596,"1"]}]}}`
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.596,"0.2"]}]}}`
 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte(json))
 	}))
@@ -47,7 +47,7 @@ func TestCanaryObserver_GetDeploymentHistogram(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if val != 1 * time.Second {
-		t.Errorf("Got %v wanted %v", val, 1 * time.Second)
+	if val != 200*time.Millisecond {
+		t.Errorf("Got %v wanted %v", val, 200*time.Millisecond)
 	}
 }
