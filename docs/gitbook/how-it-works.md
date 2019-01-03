@@ -62,9 +62,10 @@ spec:
     webhooks:
       - name: integration-tests
         url: http://podinfo.test:9898/echo
-        timeout: 5s
+        timeout: 1m
         metadata:
           test: "all"
+          token: "16688eb5e9f289f1991c"
 ```
 
 ### Canary Deployment
@@ -105,7 +106,7 @@ You can change the canary analysis _max weight_ and the _step weight_ percentage
 
 ### Canary Analisys
 
- The canary analysis is using the following Prometheus queries:
+The canary analysis is using the following Prometheus queries:
 
 **HTTP requests success rate percentage**
 
@@ -147,4 +148,22 @@ histogram_quantile(0.99,
   ) by (le)
 )
 ```
+
+
+The canary analysis can be extended with webhooks. 
+Flagger would call a URL (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
+
+Webhook payload:
+
+```json
+{
+    "name": "podinfo",
+    "namespace": "test", 
+    "metadata": {
+        "test":  "all",
+        "token":  "16688eb5e9f289f1991c"
+    }
+}
+
+
 
