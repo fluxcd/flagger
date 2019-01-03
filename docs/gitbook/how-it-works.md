@@ -104,11 +104,53 @@ Gated canary promotion stages:
 
 You can change the canary analysis _max weight_ and the _step weight_ percentage in the Flagger's custom resource.
 
-### Canary Analisys
+### Canary Analysis
+
+Spec:
+
+```yaml
+  canaryAnalysis:
+    # max number of failed metric checks before rollback
+    threshold: 10
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 5
+```
+
+You can determine the minimum time that it takes to validate and promote a canary deployment using this formula:
+
+```
+controlLoopInterval * (maxWeight / stepWeight)
+```
+
+And the time it takes for a canary to be rollback:
+
+```
+controlLoopInterval * threshold 
+```
+
+#### HTTP Metrics
 
 The canary analysis is using the following Prometheus queries:
 
 **HTTP requests success rate percentage**
+
+Spec:
+
+```yaml
+  canaryAnalysis:
+    metrics:
+    - name: istio_requests_total
+      # minimum req success rate (non 5xx responses)
+      # percentage (0-100)
+      threshold: 99
+      interval: 1m
+```
+
+Query:
 
 ```javascript
 sum(
@@ -135,6 +177,20 @@ sum(
 
 **HTTP requests milliseconds duration P99**
 
+Spec:
+
+```yaml
+  canaryAnalysis:
+    metrics:
+    - name: istio_request_duration_seconds_bucket
+      # maximum req duration P99
+      # milliseconds
+      threshold: 500
+      interval: 1m
+```
+
+Query:
+
 ```javascript
 histogram_quantile(0.99, 
   sum(
@@ -149,9 +205,23 @@ histogram_quantile(0.99,
 )
 ```
 
+#### Webhooks
 
 The canary analysis can be extended with webhooks. 
 Flagger would call a URL (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
+
+Spec:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: integration-tests
+        url: http://podinfo.test:9898/echo
+        timeout: 1m
+        metadata:
+          test: "all"
+          token: "16688eb5e9f289f1991c"
+```
 
 Webhook payload:
 
