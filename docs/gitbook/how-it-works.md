@@ -132,7 +132,7 @@ And the time it takes for a canary to be rollback:
 controlLoopInterval * threshold 
 ```
 
-#### HTTP Metrics
+### HTTP Metrics
 
 The canary analysis is using the following Prometheus queries:
 
@@ -205,7 +205,7 @@ histogram_quantile(0.99,
 )
 ```
 
-#### Webhooks
+### Webhooks
 
 The canary analysis can be extended with webhooks. 
 Flagger would call a URL (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
@@ -234,6 +234,13 @@ Webhook payload:
         "token":  "16688eb5e9f289f1991c"
     }
 }
+```
 
+Response status codes:
+
+* 200-202 - advance canary by increasing the traffic weight
+* timeout or non-2xx - halt advancement and increment failed checks
+
+On a non-2xx response Flagger will include the response body (if any) in the failed checks log and Kubernetes events.
 
 
