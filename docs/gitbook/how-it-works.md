@@ -9,7 +9,7 @@
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha1
+apiVersion: flagger.app/v1alpha2
 kind: Canary
 metadata:
   name: podinfo
@@ -23,7 +23,7 @@ spec:
   # the maximum time in seconds for the canary deployment
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
-  # hpa reference (optional)
+  # HPA reference (optional)
   autoscalerRef:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
@@ -36,16 +36,17 @@ spec:
     - public-gateway.istio-system.svc.cluster.local
     # Istio virtual service host names (optional)
     hosts:
-    - app.istio.weavedx.com
+    - app.iowa.weavedx.com
   canaryAnalysis:
     # max number of failed metric checks before rollback
-    threshold: 5
+    threshold: 10
     # max traffic percentage routed to canary
     # percentage (0-100)
     maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 10
+    stepWeight: 5
+    # Istio Prometheus checks
     metrics:
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
@@ -57,7 +58,14 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
-      
+    # external checks (optional)
+    webhooks:
+      - name: integration-tests
+        url: http://podinfo.test:9898/echo
+        timeout: 1m
+        metadata:
+          test: "all"
+          token: "16688eb5e9f289f1991c"
 ```
 
 ### Canary Deployment
@@ -96,11 +104,53 @@ Gated canary promotion stages:
 
 You can change the canary analysis _max weight_ and the _step weight_ percentage in the Flagger's custom resource.
 
-### Canary Analisys
+### Canary Analysis
 
- The canary analysis is using the following Prometheus queries:
+Spec:
+
+```yaml
+  canaryAnalysis:
+    # max number of failed metric checks before rollback
+    threshold: 10
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 5
+```
+
+You can determine the minimum time that it takes to validate and promote a canary deployment using this formula:
+
+```
+controlLoopInterval * (maxWeight / stepWeight)
+```
+
+And the time it takes for a canary to be rollback:
+
+```
+controlLoopInterval * threshold 
+```
+
+### HTTP Metrics
+
+The canary analysis is using the following Prometheus queries:
 
 **HTTP requests success rate percentage**
+
+Spec:
+
+```yaml
+  canaryAnalysis:
+    metrics:
+    - name: istio_requests_total
+      # minimum req success rate (non 5xx responses)
+      # percentage (0-100)
+      threshold: 99
+      interval: 1m
+```
+
+Query:
 
 ```javascript
 sum(
@@ -127,6 +177,20 @@ sum(
 
 **HTTP requests milliseconds duration P99**
 
+Spec:
+
+```yaml
+  canaryAnalysis:
+    metrics:
+    - name: istio_request_duration_seconds_bucket
+      # maximum req duration P99
+      # milliseconds
+      threshold: 500
+      interval: 1m
+```
+
+Query:
+
 ```javascript
 histogram_quantile(0.99, 
   sum(
@@ -140,4 +204,43 @@ histogram_quantile(0.99,
   ) by (le)
 )
 ```
+
+### Webhooks
+
+The canary analysis can be extended with webhooks. 
+Flagger would call a URL (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
+
+Spec:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: integration-tests
+        url: http://podinfo.test:9898/echo
+        timeout: 1m
+        metadata:
+          test: "all"
+          token: "16688eb5e9f289f1991c"
+```
+
+Webhook payload:
+
+```json
+{
+    "name": "podinfo",
+    "namespace": "test", 
+    "metadata": {
+        "test":  "all",
+        "token":  "16688eb5e9f289f1991c"
+    }
+}
+```
+
+Response status codes:
+
+* 200-202 - advance canary by increasing the traffic weight
+* timeout or non-2xx - halt advancement and increment failed checks
+
+On a non-2xx response Flagger will include the response body (if any) in the failed checks log and Kubernetes events.
+
 

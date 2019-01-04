@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
 )
 
 // CanaryRecorder records the canary analysis as Prometheus metrics

@@ -3,7 +3,7 @@ package controller
 import (
 	"testing"
 
-	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
+	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
 	"github.com/stefanprodan/flagger/pkg/logging"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,14 +14,14 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func newTestCanary() *v1alpha1.Canary {
-	cd := &v1alpha1.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.SchemeGroupVersion.String()},
+func newTestCanary() *v1alpha2.Canary {
+	cd := &v1alpha2.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha2.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
 		},
-		Spec: v1alpha1.CanarySpec{
+		Spec: v1alpha2.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
@@ -31,13 +31,13 @@ func newTestCanary() *v1alpha1.Canary {
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
-			}, Service: v1alpha1.CanaryService{
+			}, Service: v1alpha2.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: v1alpha1.CanaryAnalysis{
+			}, CanaryAnalysis: v1alpha2.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
-				Metrics: []v1alpha1.CanaryMetric{
+				Metrics: []v1alpha2.CanaryMetric{
 					{
 						Name:      "istio_requests_total",
 						Threshold: 99,
@@ -356,7 +356,7 @@ func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	res, err := flaggerClient.FlaggerV1alpha1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := flaggerClient.FlaggerV1alpha2().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -387,18 +387,18 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.SetState(canary, v1alpha1.CanaryRunning)
+	err = deployer.SetState(canary, v1alpha2.CanaryRunning)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	res, err := flaggerClient.FlaggerV1alpha1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := flaggerClient.FlaggerV1alpha2().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	if res.Status.State != v1alpha1.CanaryRunning {
-		t.Errorf("Got %v wanted %v", res.Status.State, v1alpha1.CanaryRunning)
+	if res.Status.State != v1alpha2.CanaryRunning {
+		t.Errorf("Got %v wanted %v", res.Status.State, v1alpha2.CanaryRunning)
 	}
 }
 
@@ -423,8 +423,8 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	status := v1alpha1.CanaryStatus{
-		State:        v1alpha1.CanaryRunning,
+	status := v1alpha2.CanaryStatus{
+		State:        v1alpha2.CanaryRunning,
 		FailedChecks: 2,
 	}
 	err = deployer.SyncStatus(canary, status)
@@ -432,7 +432,7 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	res, err := flaggerClient.FlaggerV1alpha1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := flaggerClient.FlaggerV1alpha2().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}

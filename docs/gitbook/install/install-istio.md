@@ -333,7 +333,7 @@ kubectl create secret generic cert-manager-credentials \
 Create a letsencrypt issuer for CloudDNS \(replace `email@example.com` with a valid email address and `my-gcp-project`with your project ID\):
 
 ```yaml
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: v1alpha2
 kind: Issuer
 metadata:
   name: letsencrypt-prod
@@ -363,7 +363,7 @@ kubectl apply -f ./letsencrypt-issuer.yaml
 Create a wildcard certificate \(replace `example.com` with your domain\):
 
 ```yaml
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: v1alpha2
 kind: Certificate
 metadata:
   name: istio-gateway

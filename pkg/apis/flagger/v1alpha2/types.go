@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
 	hpav1 "k8s.io/api/autoscaling/v1"
@@ -96,19 +96,37 @@ type CanaryService struct {
 
 // CanaryAnalysis is used to describe how the analysis should be done
 type CanaryAnalysis struct {
-	Threshold  int            `json:"threshold"`
-	MaxWeight  int            `json:"maxWeight"`
-	StepWeight int            `json:"stepWeight"`
-	Metrics    []CanaryMetric `json:"metrics"`
+	Threshold  int             `json:"threshold"`
+	MaxWeight  int             `json:"maxWeight"`
+	StepWeight int             `json:"stepWeight"`
+	Metrics    []CanaryMetric  `json:"metrics"`
+	Webhooks   []CanaryWebhook `json:"webhooks,omitempty"`
 }
 
-// CanaryMetric hold the reference to Istio metrics used for canary analysis
+// CanaryMetric holds the reference to Istio metrics used for canary analysis
 type CanaryMetric struct {
 	Name      string `json:"name"`
 	Interval  string `json:"interval"`
 	Threshold int    `json:"threshold"`
 }
 
+// CanaryWebhook holds the reference to external checks used for canary analysis
+type CanaryWebhook struct {
+	Name    string `json:"name"`
+	URL     string `json:"url"`
+	Timeout string `json:"timeout"`
+	// +optional
+	Metadata *map[string]string `json:"metadata,omitempty"`
+}
+
+// CanaryWebhookPayload holds the deployment info and metadata sent to webhooks
+type CanaryWebhookPayload struct {
+	Name      string             `json:"name"`
+	Namespace string             `json:"namespace"`
+	Metadata  *map[string]string `json:"metadata,omitempty"`
+}
+
+// GetProgressDeadlineSeconds returns the progress deadline (default 600s)
 func (c *Canary) GetProgressDeadlineSeconds() int {
 	if c.Spec.ProgressDeadlineSeconds != nil {
 		return int(*c.Spec.ProgressDeadlineSeconds)

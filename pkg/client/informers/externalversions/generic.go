@@ -21,7 +21,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha1"
+	v1alpha2 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -52,9 +52,9 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=flagger.app, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("canaries"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha1().Canaries().Informer()}, nil
+	// Group=flagger.app, Version=v1alpha2
+	case v1alpha2.SchemeGroupVersion.WithResource("canaries"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha2().Canaries().Informer()}, nil
 
 	}
 
