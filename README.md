@@ -7,7 +7,9 @@
 [![release](https://img.shields.io/github/release/stefanprodan/flagger/all.svg)](https://github.com/stefanprodan/flagger/releases)
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
-using Istio routing for traffic shifting and Prometheus metrics for canary analysis.
+using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
+The canary analysis can be extended with webhooks for running integration tests, load tests or any other custom 
+validation.
 
 ### Install 
 
@@ -37,7 +39,7 @@ ClusterIP [services](https://kubernetes.io/docs/concepts/services-networking/ser
 Istio [virtual services](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService)) 
 to drive the canary analysis and promotion.
 
-![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-overview.png)
+![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-overview.png)
 
 Gated canary promotion stages:
 
@@ -176,7 +178,7 @@ histogram_quantile(0.99,
 ```
 
 The canary analysis can be extended with webhooks. 
-Flagger would call a URL (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
+Flagger will call the webhooks (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
 
 Webhook payload:
 
