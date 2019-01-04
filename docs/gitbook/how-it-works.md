@@ -106,6 +106,9 @@ You can change the canary analysis _max weight_ and the _step weight_ percentage
 
 ### Canary Analysis
 
+The canary analysis runs periodically until it reaches the maximum traffic weight or the failed checks threshold. 
+By default the analysis interval is set to one minute and can be configured with the `controlLoopInterval` command flag.
+
 Spec:
 
 ```yaml
@@ -205,10 +208,12 @@ histogram_quantile(0.99,
 )
 ```
 
+**Note** that the metric interval should be lower or equal to the control loop interval.
+
 ### Webhooks
 
 The canary analysis can be extended with webhooks. 
-Flagger would call a URL (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
+Flagger would call each webhook URL and determine from the response status code (HTTP 2xx) if the canary is failing or not.
 
 Spec:
 
@@ -221,9 +226,17 @@ Spec:
         metadata:
           test: "all"
           token: "16688eb5e9f289f1991c"
+      - name: load-tests
+        url: http://podinfo.test:9898/echo
+        timeout: 30s
+        metadata:
+          key1: "val1"
+          key2: "val2"
 ```
 
-Webhook payload:
+**Note** that the sum of all webhooks timeouts should be lower than the control loop interval. 
+
+Webhook payload (HTTP POST):
 
 ```json
 {

@@ -5,7 +5,7 @@ image:
   tag: 0.2.0
   pullPolicy: IfNotPresent
 
-controlLoopInterval: "10s"
+controlLoopInterval: "1m"
 metricsServer: "http://prometheus.istio-system.svc.cluster.local:9090"
 
 slack:
