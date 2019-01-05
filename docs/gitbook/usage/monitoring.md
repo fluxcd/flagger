@@ -44,7 +44,8 @@ Promotion completed! podinfo.test
 
 ### Metrics
 
-Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and the destination weight values:
+Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and 
+the destination weight values:
 
 ```bash
 # Canaries total gauge
@@ -65,5 +66,4 @@ flagger_canary_duration_seconds_sum{name="podinfo",namespace="test"} 17.3561329
 flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
 ```
 
-#### 
 

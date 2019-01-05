@@ -2,7 +2,7 @@
 
 [Flagger](https://github.com/stefanprodan/flagger) takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\) and creates a series of objects \(Kubernetes deployments, ClusterIP services and Istio virtual services\) to drive the canary analysis and promotion. 
 
-![flagger-canary-hpa](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-hpa.png)
+![Flagger Canary Process](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-hpa.png)
 
 ### Canary Custom Resource
 
@@ -36,7 +36,7 @@ spec:
     - public-gateway.istio-system.svc.cluster.local
     # Istio virtual service host names (optional)
     hosts:
-    - app.iowa.weavedx.com
+    - podinfo.example.com
   canaryAnalysis:
     # max number of failed metric checks before rollback
     threshold: 10
@@ -63,14 +63,35 @@ spec:
       - name: integration-tests
         url: http://podinfo.test:9898/echo
         timeout: 1m
+        # key-value pairs (optional)
         metadata:
           test: "all"
           token: "16688eb5e9f289f1991c"
 ```
 
+**Note** that the target deployment must have a single label selector in the format `app: <DEPLOYMENT-NAME>`:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+```
+
+The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Service and 
+the Istio Virtual Service. The container port from the target deployment should match the `service.port` value.
+
 ### Canary Deployment
 
-![flagger-canary-steps](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
 Gated canary promotion stages:
 
@@ -99,7 +120,7 @@ Gated canary promotion stages:
   * halt advancement if pods are unhealthy
 * route all traffic to primary
 * scale to zero the canary deployment
-* mark rollout as finished
+* mark the canary deployment as finished
 * wait for the canary deployment to be updated \(revision bump\) and start over
 
 You can change the canary analysis _max weight_ and the _step weight_ percentage in the Flagger's custom resource.
@@ -120,9 +141,10 @@ Spec:
     maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 5
+    stepWeight: 2
 ```
 
+The above analysis, if it succeeds, will run for 25 minutes while validating the HTTP metrics and webhooks every minute.
 You can determine the minimum time that it takes to validate and promote a canary deployment using this formula:
 
 ```
@@ -208,12 +230,12 @@ histogram_quantile(0.99,
 )
 ```
 
-**Note** that the metric interval should be lower or equal to the control loop interval.
+> **Note** that the metric interval should be lower or equal to the control loop interval.
 
 ### Webhooks
 
 The canary analysis can be extended with webhooks. 
-Flagger would call each webhook URL and determine from the response status code (HTTP 2xx) if the canary is failing or not.
+Flagger will call each webhook URL and determine from the response status code (HTTP 2xx) if the canary is failing or not.
 
 Spec:
 
@@ -222,7 +244,7 @@ Spec:
     webhooks:
       - name: integration-tests
         url: http://podinfo.test:9898/echo
-        timeout: 1m
+        timeout: 30s
         metadata:
           test: "all"
           token: "16688eb5e9f289f1991c"
@@ -234,7 +256,7 @@ Spec:
           key2: "val2"
 ```
 
-**Note** that the sum of all webhooks timeouts should be lower than the control loop interval. 
+> **Note** that the sum of all webhooks timeouts should be lower than the control loop interval. 
 
 Webhook payload (HTTP POST):
 

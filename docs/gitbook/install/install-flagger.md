@@ -1,6 +1,8 @@
 # Install Flagger
 
-Before installing Flagger make sure you have [Istio](https://istio.io) running with Prometheus enabled. If you are new to Istio you can follow this GKE guide [Istio service mesh walk-through](https://docs.flagger.app/install/install-istio).
+Before installing Flagger make sure you have [Istio](https://istio.io) running with Prometheus enabled. 
+If you are new to Istio you can follow this GKE guide 
+[Istio service mesh walk-through](https://docs.flagger.app/install/install-istio).
 
 **Prerequisites**
 
@@ -61,11 +63,12 @@ helm delete --purge flagger
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-{% hint style="info" %}
-On uninstall the Flagger CRD will not be removed. Deleting the CRD will make Kubernetes remove all the objects owned by the CRD like Istio virtual services, Kubernetes deployments and ClusterIP services.
-{% endhint %}
+> **Note** that on uninstall the Canary CRD will not be removed. 
+Deleting the CRD will make Kubernetes remove all the objects owned by Flagger like Istio virtual services, 
+Kubernetes deployments and ClusterIP services.
 
-If you want to remove all the objects created by Flagger you have delete the canary CRD with kubectl:
+
+If you want to remove all the objects created by Flagger you have delete the Canary CRD with kubectl:
 
 ```text
 kubectl delete crd canaries.flagger.app

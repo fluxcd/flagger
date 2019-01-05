@@ -1,12 +1,14 @@
 # Install Istio
 
-This guide walks you through setting up Istio with Jaeger, Prometheus, Grafana and Let’s Encrypt TLS for ingress gateway on Google Kubernetes Engine.
+This guide walks you through setting up Istio with Jaeger, Prometheus, Grafana and 
+Let’s Encrypt TLS for ingress gateway on Google Kubernetes Engine.
 
 ![Istio GKE diagram](https://raw.githubusercontent.com/stefanprodan/istio-gke/master/docs/screens/istio-gcp-overview.png)
 
 ### Prerequisites
 
-You will be creating a cluster on Google’s Kubernetes Engine \(GKE\), if you don’t have an account you can sign up [here](https://cloud.google.com/free/) for free credits.
+You will be creating a cluster on Google’s Kubernetes Engine \(GKE\), 
+if you don’t have an account you can sign up [here](https://cloud.google.com/free/) for free credits.
 
 Login into GCP, create a project and enable billing for it.
 
@@ -64,7 +66,9 @@ gcloud container clusters create istio \
 --scopes=gke-default,compute-rw,storage-rw
 ```
 
-The above command will create a default node pool consisting of `n1-highcpu-4` \(vCPU: 4, RAM 3.60GB, DISK: 30GB\) preemptible VMs. Preemptible VMs are up to 80% cheaper than regular instances and are terminated and replaced after a maximum of 24 hours.
+The above command will create a default node pool consisting of `n1-highcpu-4` \(vCPU: 4, RAM 3.60GB, DISK: 30GB\) 
+preemptible VMs. Preemptible VMs are up to 80% cheaper than regular instances and are terminated and replaced 
+after a maximum of 24 hours.
 
 Set up credentials for `kubectl`:
 
@@ -330,7 +334,8 @@ kubectl create secret generic cert-manager-credentials \
 --namespace=istio-system
 ```
 
-Create a letsencrypt issuer for CloudDNS \(replace `email@example.com` with a valid email address and `my-gcp-project`with your project ID\):
+Create a letsencrypt issuer for CloudDNS \(replace `email@example.com` with a valid email address and 
+`my-gcp-project`with your project ID\):
 
 ```yaml
 apiVersion: v1alpha2
@@ -403,7 +408,10 @@ Recreate Istio ingress gateway pods:
 kubectl -n istio-system delete pods -l istio=ingressgateway
 ```
 
-Note that Istio gateway doesn't reload the certificates from the TLS secret on cert-manager renewal. Since the GKE cluster is made out of preemptible VMs the gateway pods will be replaced once every 24h, if your not using preemptible nodes then you need to manually kill the gateway pods every two months before the certificate expires.
+Note that Istio gateway doesn't reload the certificates from the TLS secret on cert-manager renewal. 
+Since the GKE cluster is made out of preemptible VMs the gateway pods will be replaced once every 24h, 
+if your not using preemptible nodes then you need to manually kill the gateway pods every two months 
+before the certificate expires.
 
 ### Expose services outside the service mesh
 
