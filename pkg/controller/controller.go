@@ -40,6 +40,7 @@ type Controller struct {
 	eventRecorder record.EventRecorder
 	logger        *zap.SugaredLogger
 	canaries      *sync.Map
+	jobs          map[string]CanaryJob
 	deployer      CanaryDeployer
 	router        CanaryRouter
 	observer      CanaryObserver
@@ -98,6 +99,7 @@ func NewController(
 		eventRecorder: eventRecorder,
 		logger:        logger,
 		canaries:      new(sync.Map),
+		jobs:          map[string]CanaryJob{},
 		flaggerWindow: flaggerWindow,
 		deployer:      deployer,
 		router:        router,
