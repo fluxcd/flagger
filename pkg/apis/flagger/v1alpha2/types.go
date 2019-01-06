@@ -19,11 +19,13 @@ package v1alpha2
 import (
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 const (
 	CanaryKind              = "Canary"
 	ProgressDeadlineSeconds = 600
+	AnalysisInterval        = 60 * time.Second
 )
 
 // +genclient
@@ -96,6 +98,7 @@ type CanaryService struct {
 
 // CanaryAnalysis is used to describe how the analysis should be done
 type CanaryAnalysis struct {
+	Interval   string          `json:"interval"`
 	Threshold  int             `json:"threshold"`
 	MaxWeight  int             `json:"maxWeight"`
 	StepWeight int             `json:"stepWeight"`
@@ -133,4 +136,17 @@ func (c *Canary) GetProgressDeadlineSeconds() int {
 	}
 
 	return ProgressDeadlineSeconds
+}
+
+func (c *Canary) GetAnalysisInterval() time.Duration {
+	if c.Spec.CanaryAnalysis.Interval == "" {
+		return AnalysisInterval
+	}
+
+	interval, err := time.ParseDuration(c.Spec.CanaryAnalysis.Interval)
+	if err != nil {
+		return AnalysisInterval
+	}
+
+	return interval
 }

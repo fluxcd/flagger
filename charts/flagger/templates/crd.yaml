@@ -57,6 +57,9 @@ spec:
                   type: number
             canaryAnalysis:
               properties:
+                interval:
+                  type: string
+                  pattern: "^[0-9]+(m)"
                 threshold:
                   type: number
                 maxWeight:
