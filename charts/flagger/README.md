@@ -48,7 +48,6 @@ Parameter | Description | Default
 `image.repository` | image repository | `quay.io/stefanprodan/flagger`
 `image.tag` | image tag | `<VERSION>`
 `image.pullPolicy` | image pull policy | `IfNotPresent`
-`controlLoopInterval` | wait interval between checks | `10s`
 `metricsServer` | Prometheus URL | `http://prometheus.istio-system:9090`
 `slack.url` | Slack incoming webhook | None
 `slack.channel` | Slack channel | None
@@ -68,7 +67,8 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 $ helm upgrade -i flagger flagger/flagger \
   --namespace istio-system \
-  --set controlLoopInterval=1m
+  --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
+  --set slack.channel=general
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,

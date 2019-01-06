@@ -23,8 +23,7 @@ Deploy Flagger in the _**istio-system**_ namespace:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
---set metricsServer=http://prometheus.istio-system:9090 \
---set controlLoopInterval=1m
+--set metricsServer=http://prometheus.istio-system:9090
 ```
 
 Enable **Slack** notifications:

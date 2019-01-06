@@ -77,7 +77,7 @@ func main() {
 	}
 
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, time.Second*30)
-	canaryInformer := flaggerInformerFactory.Flagger().V1alpha2().Canaries()
+	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
 
 	logger.Infof("Starting flagger version %s revision %s", version.VERSION, version.REVISION)
 

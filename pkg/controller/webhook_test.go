@@ -1,7 +1,7 @@
 package controller
 
 import (
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	"net/http"
 	"net/http/httptest"
 	"testing"

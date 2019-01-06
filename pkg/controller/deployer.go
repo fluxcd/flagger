@@ -9,7 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -154,7 +154,7 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 	cd.Status.FailedChecks = val
 	cd.Status.LastTransitionTime = metav1.Now()
-	cd, err := c.flaggerClient.FlaggerV1alpha2().Canaries(cd.Namespace).Update(cd)
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
@@ -165,7 +165,7 @@ func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state flaggerv1.CanaryState) error {
 	cd.Status.State = state
 	cd.Status.LastTransitionTime = metav1.Now()
-	cd, err := c.flaggerClient.FlaggerV1alpha2().Canaries(cd.Namespace).Update(cd)
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
@@ -192,7 +192,7 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 	cd.Status.FailedChecks = status.FailedChecks
 	cd.Status.CanaryRevision = specEnc
 	cd.Status.LastTransitionTime = metav1.Now()
-	cd, err = c.flaggerClient.FlaggerV1alpha2().Canaries(cd.Namespace).Update(cd)
+	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}

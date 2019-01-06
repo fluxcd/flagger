@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -61,7 +61,7 @@ func (c *Controller) scheduleCanaries() {
 func (c *Controller) advanceCanary(name string, namespace string) {
 	begin := time.Now()
 	// check if the canary exists
-	cd, err := c.flaggerClient.FlaggerV1alpha2().Canaries(namespace).Get(name, v1.GetOptions{})
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
 		c.logger.Errorf("Canary %s.%s not found", name, namespace)
 		return

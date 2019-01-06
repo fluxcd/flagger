@@ -9,7 +9,7 @@
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha2
+apiVersion: flagger.app/v1alpha3
 kind: Canary
 metadata:
   name: podinfo
@@ -38,6 +38,8 @@ spec:
     hosts:
     - podinfo.example.com
   canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 1m
     # max number of failed metric checks before rollback
     threshold: 10
     # max traffic percentage routed to canary
@@ -128,12 +130,13 @@ You can change the canary analysis _max weight_ and the _step weight_ percentage
 ### Canary Analysis
 
 The canary analysis runs periodically until it reaches the maximum traffic weight or the failed checks threshold. 
-By default the analysis interval is set to one minute and can be configured with the `controlLoopInterval` command flag.
 
 Spec:
 
 ```yaml
   canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 1m
     # max number of failed metric checks before rollback
     threshold: 10
     # max traffic percentage routed to canary
@@ -148,13 +151,13 @@ The above analysis, if it succeeds, will run for 25 minutes while validating the
 You can determine the minimum time that it takes to validate and promote a canary deployment using this formula:
 
 ```
-controlLoopInterval * (maxWeight / stepWeight)
+interval * (maxWeight / stepWeight)
 ```
 
 And the time it takes for a canary to be rollback:
 
 ```
-controlLoopInterval * threshold 
+interval * threshold 
 ```
 
 ### HTTP Metrics
