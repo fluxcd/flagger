@@ -154,7 +154,7 @@ You can determine the minimum time that it takes to validate and promote a canar
 interval * (maxWeight / stepWeight)
 ```
 
-And the time it takes for a canary to be rollback:
+And the time it takes for a canary to be rollback when the metrics or webhook checks are failing:
 
 ```
 interval * threshold 

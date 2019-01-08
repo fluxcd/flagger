@@ -17,6 +17,8 @@ func (c *Controller) scheduleCanaries() {
 
 	c.canaries.Range(func(key interface{}, value interface{}) bool {
 		canary := value.(*flaggerv1.Canary)
+
+		// format: <name>.<namespace>
 		name := key.(string)
 		current[name] = true
 
