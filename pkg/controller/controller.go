@@ -7,11 +7,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	flaggerscheme "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/scheme"
-	flaggerinformers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger/v1alpha2"
-	flaggerlisters "github.com/stefanprodan/flagger/pkg/client/listers/flagger/v1alpha2"
+	flaggerinformers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
+	flaggerlisters "github.com/stefanprodan/flagger/pkg/client/listers/flagger/v1alpha3"
 	"github.com/stefanprodan/flagger/pkg/notifier"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -40,6 +40,7 @@ type Controller struct {
 	eventRecorder record.EventRecorder
 	logger        *zap.SugaredLogger
 	canaries      *sync.Map
+	jobs          map[string]CanaryJob
 	deployer      CanaryDeployer
 	router        CanaryRouter
 	observer      CanaryObserver
@@ -98,6 +99,7 @@ func NewController(
 		eventRecorder: eventRecorder,
 		logger:        logger,
 		canaries:      new(sync.Map),
+		jobs:          map[string]CanaryJob{},
 		flaggerWindow: flaggerWindow,
 		deployer:      deployer,
 		router:        router,

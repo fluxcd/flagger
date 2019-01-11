@@ -1,4 +1,4 @@
-apiVersion: flagger.app/v1alpha2
+apiVersion: flagger.app/v1alpha3
 kind: Canary
 metadata:
   name: podinfo
@@ -27,6 +27,8 @@ spec:
     hosts:
     - app.iowa.weavedx.com
   canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 10s
     # max number of failed metric checks before rollback
     threshold: 10
     # max traffic percentage routed to canary
@@ -50,7 +52,7 @@ spec:
     # external checks (optional)
     webhooks:
       - name: integration-tests
-        url: http://podinfo.test:9898/echo
+        url: https://httpbin.org/post
         timeout: 1m
         metadata:
           test: "all"

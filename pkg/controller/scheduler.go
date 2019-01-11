@@ -4,26 +4,57 @@ import (
 	"fmt"
 	"time"
 
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha2"
+	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// scheduleCanaries synchronises the canary map with the jobs map,
+// for new canaries new jobs are created and started
+// for the removed canaries the jobs are stopped and deleted
 func (c *Controller) scheduleCanaries() {
+	current := make(map[string]bool)
 	stats := make(map[string]int)
+
 	c.canaries.Range(func(key interface{}, value interface{}) bool {
-		r := value.(*flaggerv1.Canary)
-		if r.Spec.TargetRef.Kind == "Deployment" {
-			go c.advanceCanary(r.Name, r.Namespace)
+		canary := value.(*flaggerv1.Canary)
+
+		// format: <name>.<namespace>
+		name := key.(string)
+		current[name] = true
+
+		// schedule new jobs
+		if _, exists := c.jobs[name]; !exists {
+			job := CanaryJob{
+				Name:      canary.Name,
+				Namespace: canary.Namespace,
+				function:  c.advanceCanary,
+				done:      make(chan bool),
+				ticker:    time.NewTicker(canary.GetAnalysisInterval()),
+			}
+
+			c.jobs[name] = job
+			job.Start()
 		}
 
-		t, ok := stats[r.Namespace]
+		// compute canaries per namespace total
+		t, ok := stats[canary.Namespace]
 		if !ok {
-			stats[r.Namespace] = 1
+			stats[canary.Namespace] = 1
 		} else {
-			stats[r.Namespace] = t + 1
+			stats[canary.Namespace] = t + 1
 		}
 		return true
 	})
+
+	// cleanup deleted jobs
+	for job := range c.jobs {
+		if _, exists := current[job]; !exists {
+			c.jobs[job].Stop()
+			delete(c.jobs, job)
+		}
+	}
+
+	// set total canaries per namespace metric
 	for k, v := range stats {
 		c.recorder.SetTotal(k, v)
 	}
@@ -32,7 +63,7 @@ func (c *Controller) scheduleCanaries() {
 func (c *Controller) advanceCanary(name string, namespace string) {
 	begin := time.Now()
 	// check if the canary exists
-	cd, err := c.flaggerClient.FlaggerV1alpha2().Canaries(namespace).Get(name, v1.GetOptions{})
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
 		c.logger.Errorf("Canary %s.%s not found", name, namespace)
 		return

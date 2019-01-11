@@ -25,8 +25,7 @@ helm repo add flagger https://flagger.app
 # install or upgrade
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
---set metricsServer=http://prometheus.istio-system:9090 \
---set controlLoopInterval=1m
+--set metricsServer=http://prometheus.istio-system:9090 
 ```
 
 Flagger is compatible with Kubernetes >1.10.0 and Istio >1.0.0.
@@ -75,7 +74,7 @@ You can change the canary analysis _max weight_ and the _step weight_ percentage
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha2
+apiVersion: flagger.app/v1alpha3
 kind: Canary
 metadata:
   name: podinfo
@@ -102,8 +101,10 @@ spec:
     - public-gateway.istio-system.svc.cluster.local
     # Istio virtual service host names (optional)
     hosts:
-    - app.iowa.weavedx.com
+    - podinfo.example.com
   canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 1m
     # max number of failed metric checks before rollback
     threshold: 10
     # max traffic percentage routed to canary

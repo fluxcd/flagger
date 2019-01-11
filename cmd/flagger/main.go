@@ -37,7 +37,7 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&metricsServer, "metrics-server", "http://prometheus:9090", "Prometheus URL")
-	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "wait interval between rollouts")
+	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "Kubernetes API sync interval")
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
@@ -77,7 +77,7 @@ func main() {
 	}
 
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, time.Second*30)
-	canaryInformer := flaggerInformerFactory.Flagger().V1alpha2().Canaries()
+	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
 
 	logger.Infof("Starting flagger version %s revision %s", version.VERSION, version.REVISION)
 

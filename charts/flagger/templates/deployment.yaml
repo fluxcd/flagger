@@ -35,7 +35,6 @@ spec:
           command:
           - ./flagger
           - -log-level=info
-          - -control-loop-interval={{ .Values.controlLoopInterval }}
           - -metrics-server={{ .Values.metricsServer }}
           {{- if .Values.slack.url }}
           - -slack-url={{ .Values.slack.url }}

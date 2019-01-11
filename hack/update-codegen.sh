@@ -23,6 +23,6 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-ge
 
 ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/stefanprodan/flagger/pkg/client github.com/stefanprodan/flagger/pkg/apis \
-  flagger:v1alpha2 \
+  flagger:v1alpha3 \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
 

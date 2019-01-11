@@ -20,7 +20,7 @@ kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
 Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
-apiVersion: v1alpha2
+apiVersion: flagger.app/v1alpha3
 kind: Canary
 metadata:
   name: podinfo
@@ -49,6 +49,8 @@ spec:
     hosts:
     - app.example.com
   canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 1m
     # max number of failed metric checks before rollback
     threshold: 5
     # max traffic percentage routed to canary

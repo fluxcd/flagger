@@ -4,11 +4,14 @@ metadata:
   name: canaries.flagger.app
 spec:
   group: flagger.app
-  version: v1alpha2
+  version: v1alpha3
   versions:
-    - name: v1alpha2
+    - name: v1alpha3
       served: true
       storage: true
+    - name: v1alpha2
+      served: true
+      storage: false
     - name: v1alpha1
       served: true
       storage: false
@@ -39,7 +42,9 @@ spec:
                 name:
                   type: string
             autoscalerRef:
-              type: object
+              anyOf:
+                - type: string
+                - type: object
               required: ['apiVersion', 'kind', 'name']
               properties:
                 apiVersion:
@@ -56,6 +61,9 @@ spec:
                   type: number
             canaryAnalysis:
               properties:
+                interval:
+                  type: string
+                  pattern: "^[0-9]+(m|s)"
                 threshold:
                   type: number
                 maxWeight:
@@ -73,7 +81,7 @@ spec:
                           type: string
                         interval:
                           type: string
-                          pattern: "^[0-9]+(m)"
+                          pattern: "^[0-9]+(m|s)"
                         threshold:
                           type: number
                 webhooks:
@@ -90,4 +98,4 @@ spec:
                           format: url
                         timeout:
                           type: string
-                          pattern: "^[0-9]+(s)"
+                          pattern: "^[0-9]+(m|s)"

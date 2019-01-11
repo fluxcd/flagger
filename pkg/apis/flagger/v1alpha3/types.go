@@ -14,16 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha2
+package v1alpha3
 
 import (
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 const (
 	CanaryKind              = "Canary"
 	ProgressDeadlineSeconds = 600
+	AnalysisInterval        = 60 * time.Second
 )
 
 // +genclient
@@ -44,7 +46,8 @@ type CanarySpec struct {
 	TargetRef hpav1.CrossVersionObjectReference `json:"targetRef"`
 
 	// reference to autoscaling resource
-	AutoscalerRef hpav1.CrossVersionObjectReference `json:"autoscalerRef"`
+	// +optional
+	AutoscalerRef *hpav1.CrossVersionObjectReference `json:"autoscalerRef,omitempty"`
 
 	// virtual service spec
 	Service CanaryService `json:"service"`
@@ -96,6 +99,7 @@ type CanaryService struct {
 
 // CanaryAnalysis is used to describe how the analysis should be done
 type CanaryAnalysis struct {
+	Interval   string          `json:"interval"`
 	Threshold  int             `json:"threshold"`
 	MaxWeight  int             `json:"maxWeight"`
 	StepWeight int             `json:"stepWeight"`
@@ -133,4 +137,17 @@ func (c *Canary) GetProgressDeadlineSeconds() int {
 	}
 
 	return ProgressDeadlineSeconds
+}
+
+func (c *Canary) GetAnalysisInterval() time.Duration {
+	if c.Spec.CanaryAnalysis.Interval == "" {
+		return AnalysisInterval
+	}
+
+	interval, err := time.ParseDuration(c.Spec.CanaryAnalysis.Interval)
+	if err != nil {
+		return AnalysisInterval
+	}
+
+	return interval
 }
