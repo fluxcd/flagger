@@ -27,7 +27,7 @@ func newTestCanary() *v1alpha3.Canary {
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: hpav1.CrossVersionObjectReference{
+			AutoscalerRef: &hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
