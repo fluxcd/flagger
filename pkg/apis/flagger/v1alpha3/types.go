@@ -46,7 +46,8 @@ type CanarySpec struct {
 	TargetRef hpav1.CrossVersionObjectReference `json:"targetRef"`
 
 	// reference to autoscaling resource
-	AutoscalerRef hpav1.CrossVersionObjectReference `json:"autoscalerRef"`
+	// +optional
+	AutoscalerRef *hpav1.CrossVersionObjectReference `json:"autoscalerRef,omitempty"`
 
 	// virtual service spec
 	Service CanaryService `json:"service"`

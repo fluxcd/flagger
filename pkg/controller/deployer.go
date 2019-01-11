@@ -231,7 +231,7 @@ func (c *CanaryDeployer) Sync(cd *flaggerv1.Canary) error {
 		}
 	}
 
-	if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
+	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 		if err := c.createPrimaryHpa(cd); err != nil {
 			return fmt.Errorf("creating hpa %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}

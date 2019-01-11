@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha3
 
 import (
+	v1 "k8s.io/api/autoscaling/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -159,7 +160,11 @@ func (in *CanaryService) DeepCopy() *CanaryService {
 func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 	*out = *in
 	out.TargetRef = in.TargetRef
-	out.AutoscalerRef = in.AutoscalerRef
+	if in.AutoscalerRef != nil {
+		in, out := &in.AutoscalerRef, &out.AutoscalerRef
+		*out = new(v1.CrossVersionObjectReference)
+		**out = **in
+	}
 	in.Service.DeepCopyInto(&out.Service)
 	in.CanaryAnalysis.DeepCopyInto(&out.CanaryAnalysis)
 	if in.ProgressDeadlineSeconds != nil {

@@ -43,7 +43,9 @@ spec:
                 name:
                   type: string
             autoscalerRef:
-              type: object
+              anyOf:
+                - type: string
+                - type: object
               required: ['apiVersion', 'kind', 'name']
               properties:
                 apiVersion:
@@ -98,5 +100,4 @@ spec:
                         timeout:
                           type: string
                           pattern: "^[0-9]+(m|s)"
-
 {{- end }}

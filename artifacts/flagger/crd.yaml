@@ -42,7 +42,9 @@ spec:
                 name:
                   type: string
             autoscalerRef:
-              type: object
+              anyOf:
+                - type: string
+                - type: object
               required: ['apiVersion', 'kind', 'name']
               properties:
                 apiVersion:
