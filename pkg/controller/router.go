@@ -164,12 +164,13 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 }
 
 func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
-	canaryName := cd.Spec.TargetRef.Name
+	canaryName := cd.Name
 	primaryName := fmt.Sprintf("%s-primary", canaryName)
 	hosts := append(cd.Spec.Service.Hosts, canaryName)
 	gateways := append(cd.Spec.Service.Gateways, "mesh")
 	virtualService, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(canaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
+		c.logger.Debugf("VirtualService %s.%s not found", canaryName, cd.Namespace)
 		virtualService = &istiov1alpha3.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      cd.Name,
@@ -212,6 +213,7 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 			},
 		}
 
+		c.logger.Debugf("Creating VirtualService %s.%s", virtualService.GetName(), cd.Namespace)
 		_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Create(virtualService)
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s create error %v", cd.Name, cd.Namespace, err)
