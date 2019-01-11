@@ -192,7 +192,7 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 	cd.Status.FailedChecks = status.FailedChecks
 	cd.Status.CanaryRevision = specEnc
 	cd.Status.LastTransitionTime = metav1.Now()
-	cd, err = c.flaggerClient.FlaggerV1alpha2().Canaries(cd.Namespace).Update(cd)
+	_, err = c.flaggerClient.FlaggerV1alpha2().Canaries(cd.Namespace).Update(cd)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
