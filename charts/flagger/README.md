@@ -8,7 +8,7 @@ Based on the KPIs analysis a canary is promoted or aborted and the analysis resu
 
 ## Prerequisites
 
-* Kubernetes >= 1.9
+* Kubernetes >= 1.11
 * Istio >= 1.0
 * Prometheus >= 2.6
 
