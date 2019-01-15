@@ -164,7 +164,7 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 }
 
 func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
-	canaryName := cd.Name
+	canaryName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", canaryName)
 	hosts := append(cd.Spec.Service.Hosts, canaryName)
 	gateways := append(cd.Spec.Service.Gateways, "mesh")
