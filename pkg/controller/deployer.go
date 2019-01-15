@@ -162,7 +162,7 @@ func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 	cdCopy.Status.FailedChecks = val
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 
-	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
 		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
@@ -175,7 +175,7 @@ func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state flaggerv1.CanarySt
 	cdCopy.Status.State = state
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 
-	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
 		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
@@ -203,7 +203,7 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 	cdCopy.Status.CanaryRevision = base64.StdEncoding.EncodeToString(specJson)
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 
-	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
+	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
 		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
