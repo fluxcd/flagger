@@ -21,6 +21,15 @@ spec:
     singular: canary
     kind: Canary
   scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: Status
+      type: string
+      JSONPath: .status.state
+    - name: LastTransitionTime
+      type: string
+      JSONPath: .status.lastTransitionTime
   validation:
     openAPIV3Schema:
       properties:

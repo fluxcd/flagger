@@ -8,8 +8,8 @@
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
-The canary analysis can be extended with webhooks for running integration tests, load tests or any other custom 
-validation.
+The canary analysis can be extended with webhooks for running integration tests, 
+load tests or any other custom validation.
 
 ### Install 
 
@@ -28,7 +28,7 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://prometheus.istio-system:9090 
 ```
 
-Flagger is compatible with Kubernetes >1.10.0 and Istio >1.0.0.
+Flagger is compatible with Kubernetes >1.11.0 and Istio >1.0.0.
 
 ### Usage
 
