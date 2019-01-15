@@ -49,15 +49,17 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
 	}
 
-	primary.Spec.ProgressDeadlineSeconds = canary.Spec.ProgressDeadlineSeconds
-	primary.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
-	primary.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
-	primary.Spec.Strategy = canary.Spec.Strategy
-	primary.Spec.Template.Spec = canary.Spec.Template.Spec
-	_, err = c.kubeClient.AppsV1().Deployments(primary.Namespace).Update(primary)
-	if err != nil {
-		return fmt.Errorf("updating template spec %s.%s failed: %v", primary.GetName(), primary.Namespace, err)
+	primaryCopy := primary.DeepCopy()
+	primaryCopy.Spec.ProgressDeadlineSeconds = canary.Spec.ProgressDeadlineSeconds
+	primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
+	primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
+	primaryCopy.Spec.Strategy = canary.Spec.Strategy
+	primaryCopy.Spec.Template.Spec = canary.Spec.Template.Spec
 
+	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
+	if err != nil {
+		return fmt.Errorf("updating deployment %s.%s template spec failed: %v",
+			primaryCopy.GetName(), primaryCopy.Namespace, err)
 	}
 
 	return nil
@@ -152,29 +154,33 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 
 // SetFailedChecks updates the canary failed checks counter
 func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
-	cd.Status.FailedChecks = val
-	cd.Status.LastTransitionTime = metav1.Now()
-	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cd)
+	cdCopy := cd.DeepCopy()
+	cdCopy.Status.FailedChecks = val
+	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
 	return nil
 }
 
 // SetState updates the canary status state
 func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state flaggerv1.CanaryState) error {
-	cd.Status.State = state
-	cd.Status.LastTransitionTime = metav1.Now()
-	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cd)
+	cdCopy := cd.DeepCopy()
+	cdCopy.Status.State = state
+	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
 	return nil
 }
 
 // SyncStatus encodes the canary pod spec and updates the canary status
 func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
@@ -182,36 +188,40 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 		return fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
-	specJson, err := json.Marshal(canary.Spec.Template.Spec)
+	specJson, err := json.Marshal(dep.Spec.Template.Spec)
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s marshal error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
-	specEnc := base64.StdEncoding.EncodeToString(specJson)
-	cd.Status.State = status.State
-	cd.Status.FailedChecks = status.FailedChecks
-	cd.Status.CanaryRevision = specEnc
-	cd.Status.LastTransitionTime = metav1.Now()
-	_, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cd)
+	cdCopy := cd.DeepCopy()
+	cdCopy.Status.State = status.State
+	cdCopy.Status.FailedChecks = status.FailedChecks
+	cdCopy.Status.CanaryRevision = base64.StdEncoding.EncodeToString(specJson)
+	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s update error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
 	return nil
 }
 
 // Scale sets the canary deployment replicas
 func (c *CanaryDeployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
 		}
 		return fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
-	canary.Spec.Replicas = int32p(replicas)
-	canary, err = c.kubeClient.AppsV1().Deployments(canary.Namespace).Update(canary)
+
+	depCopy := dep.DeepCopy()
+	depCopy.Spec.Replicas = int32p(replicas)
+
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
 	if err != nil {
-		return fmt.Errorf("scaling %s.%s to %v failed: %v", canary.GetName(), canary.Namespace, replicas, err)
+		return fmt.Errorf("scaling %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}
 	return nil
 }
