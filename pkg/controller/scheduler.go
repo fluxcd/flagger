@@ -12,7 +12,7 @@ import (
 // for new canaries new jobs are created and started
 // for the removed canaries the jobs are stopped and deleted
 func (c *Controller) scheduleCanaries() {
-	current := make(map[string]bool)
+	current := make(map[string]string)
 	stats := make(map[string]int)
 
 	c.canaries.Range(func(key interface{}, value interface{}) bool {
@@ -20,7 +20,7 @@ func (c *Controller) scheduleCanaries() {
 
 		// format: <name>.<namespace>
 		name := key.(string)
-		current[name] = true
+		current[name] = fmt.Sprintf("%s.%s", canary.Spec.TargetRef.Name, canary.Namespace)
 
 		// schedule new jobs
 		if _, exists := c.jobs[name]; !exists {
@@ -51,6 +51,16 @@ func (c *Controller) scheduleCanaries() {
 		if _, exists := current[job]; !exists {
 			c.jobs[job].Stop()
 			delete(c.jobs, job)
+		}
+	}
+
+	// check if multiple canaries have the same target
+	for canaryName, targetName := range current {
+		for name, target := range current {
+			if name != canaryName && target == targetName {
+				c.logger.Errorf("Bad things will happen! Found more than one canary with the same target %s",
+					targetName)
+			}
 		}
 	}
 

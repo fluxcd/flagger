@@ -32,15 +32,17 @@ type CanaryDeployer struct {
 
 // Promote copies the pod spec from canary to primary
 func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	targetName := cd.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
+			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
 		}
-		return fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -98,12 +100,13 @@ func (c *CanaryDeployer) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
 // the deployment is in the middle of a rolling update or if the pods are unhealthy
 // it will return a non retriable error if the rolling update is stuck
 func (c *CanaryDeployer) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	targetName := cd.Spec.TargetRef.Name
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return true, fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
+			return true, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
 		}
-		return true, fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return true, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 
 	retriable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
@@ -121,12 +124,13 @@ func (c *CanaryDeployer) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
 
 // IsNewSpec returns true if the canary deployment pod spec has changed
 func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	targetName := cd.Spec.TargetRef.Name
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return false, fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
+			return false, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
 		}
-		return false, fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return false, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 
 	if cd.Status.CanaryRevision == "" {
@@ -208,12 +212,13 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 
 // Scale sets the canary deployment replicas
 func (c *CanaryDeployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	targetName := cd.Spec.TargetRef.Name
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
+			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
 		}
-		return fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 
 	depCopy := dep.DeepCopy()
@@ -250,13 +255,13 @@ func (c *CanaryDeployer) Sync(cd *flaggerv1.Canary) error {
 }
 
 func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
-	canaryName := cd.Spec.TargetRef.Name
+	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
-	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(canaryName, metav1.GetOptions{})
+	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found, retrying", canaryName, cd.Namespace)
+			return fmt.Errorf("deployment %s.%s not found, retrying", targetName, cd.Namespace)
 		}
 		return err
 	}

@@ -42,13 +42,13 @@ func (c *CanaryRouter) Sync(cd *flaggerv1.Canary) error {
 }
 
 func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
-	canaryName := cd.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", canaryName)
-	canaryService, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(canaryName, metav1.GetOptions{})
+	targetName := cd.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+	canaryService, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		canaryService = &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      canaryName,
+				Name:      targetName,
 				Namespace: cd.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
@@ -60,7 +60,7 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 			},
 			Spec: corev1.ServiceSpec{
 				Type:     corev1.ServiceTypeClusterIP,
-				Selector: map[string]string{"app": canaryName},
+				Selector: map[string]string{"app": targetName},
 				Ports: []corev1.ServicePort{
 					{
 						Name:     "http",
@@ -99,7 +99,7 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 			},
 			Spec: corev1.ServiceSpec{
 				Type:     corev1.ServiceTypeClusterIP,
-				Selector: map[string]string{"app": canaryName},
+				Selector: map[string]string{"app": targetName},
 				Ports: []corev1.ServicePort{
 					{
 						Name:     "http",
@@ -164,16 +164,16 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 }
 
 func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
-	canaryName := cd.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", canaryName)
-	hosts := append(cd.Spec.Service.Hosts, canaryName)
+	targetName := cd.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+	hosts := append(cd.Spec.Service.Hosts, targetName)
 	gateways := append(cd.Spec.Service.Gateways, "mesh")
-	virtualService, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(canaryName, metav1.GetOptions{})
+	virtualService, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		c.logger.Debugf("VirtualService %s.%s not found", canaryName, cd.Namespace)
+		c.logger.Debugf("VirtualService %s.%s not found", targetName, cd.Namespace)
 		virtualService = &istiov1alpha3.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      cd.Name,
+				Name:      targetName,
 				Namespace: cd.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
@@ -200,7 +200,7 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 							},
 							{
 								Destination: istiov1alpha3.Destination{
-									Host: canaryName,
+									Host: targetName,
 									Port: istiov1alpha3.PortSelector{
 										Number: uint32(cd.Spec.Service.Port),
 									},
@@ -216,7 +216,7 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 		c.logger.Debugf("Creating VirtualService %s.%s", virtualService.GetName(), cd.Namespace)
 		_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Create(virtualService)
 		if err != nil {
-			return fmt.Errorf("VirtualService %s.%s create error %v", cd.Name, cd.Namespace, err)
+			return fmt.Errorf("VirtualService %s.%s create error %v", targetName, cd.Namespace, err)
 		}
 		c.logger.Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
 	}
@@ -230,23 +230,24 @@ func (c *CanaryRouter) GetRoutes(cd *flaggerv1.Canary) (
 	canary istiov1alpha3.DestinationWeight,
 	err error,
 ) {
+	targetName := cd.Spec.TargetRef.Name
 	vs := &istiov1alpha3.VirtualService{}
-	vs, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(cd.Name, v1.GetOptions{})
+	vs, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			err = fmt.Errorf("VirtualService %s.%s not found", cd.Name, cd.Namespace)
+			err = fmt.Errorf("VirtualService %s.%s not found", targetName, cd.Namespace)
 			return
 		}
-		err = fmt.Errorf("VirtualService %s.%s query error %v", cd.Name, cd.Namespace, err)
+		err = fmt.Errorf("VirtualService %s.%s query error %v", targetName, cd.Namespace, err)
 		return
 	}
 
 	for _, http := range vs.Spec.Http {
 		for _, route := range http.Route {
-			if route.Destination.Host == fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name) {
+			if route.Destination.Host == fmt.Sprintf("%s-primary", targetName) {
 				primary = route
 			}
-			if route.Destination.Host == cd.Spec.TargetRef.Name {
+			if route.Destination.Host == targetName {
 				canary = route
 			}
 		}
@@ -254,7 +255,7 @@ func (c *CanaryRouter) GetRoutes(cd *flaggerv1.Canary) (
 
 	if primary.Weight == 0 && canary.Weight == 0 {
 		err = fmt.Errorf("VirtualService %s.%s does not contain routes for %s and %s",
-			cd.Name, cd.Namespace, fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name), cd.Spec.TargetRef.Name)
+			targetName, cd.Namespace, fmt.Sprintf("%s-primary", targetName), targetName)
 	}
 
 	return
@@ -266,13 +267,14 @@ func (c *CanaryRouter) SetRoutes(
 	primary istiov1alpha3.DestinationWeight,
 	canary istiov1alpha3.DestinationWeight,
 ) error {
-	vs, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(cd.Name, v1.GetOptions{})
+	targetName := cd.Spec.TargetRef.Name
+	vs, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("VirtualService %s.%s not found", cd.Name, cd.Namespace)
+			return fmt.Errorf("VirtualService %s.%s not found", targetName, cd.Namespace)
 
 		}
-		return fmt.Errorf("VirtualService %s.%s query error %v", cd.Name, cd.Namespace, err)
+		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 	vs.Spec.Http = []istiov1alpha3.HTTPRoute{
 		{
@@ -282,7 +284,7 @@ func (c *CanaryRouter) SetRoutes(
 
 	vs, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(vs)
 	if err != nil {
-		return fmt.Errorf("VirtualService %s.%s update failed: %v", cd.Name, cd.Namespace, err)
+		return fmt.Errorf("VirtualService %s.%s update failed: %v", targetName, cd.Namespace, err)
 
 	}
 	return nil
