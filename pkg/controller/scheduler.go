@@ -137,7 +137,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check if the number of failed checks reached the threshold
-	if cd.Status.State == flaggerv1.CanaryRunning &&
+	if cd.Status.Phase == flaggerv1.CanaryProgressing &&
 		(!retriable || cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold) {
 
 		if cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold {
@@ -173,7 +173,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 
 		// mark canary as failed
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: flaggerv1.CanaryFailed}); err != nil {
+		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryFailed}); err != nil {
 			c.logger.Errorf("%v", err)
 			return
 		}
@@ -244,7 +244,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 
 		// update status
-		if err := c.deployer.SetState(cd, flaggerv1.CanaryFinished); err != nil {
+		if err := c.deployer.SetState(cd, flaggerv1.CanarySucceeded); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -256,12 +256,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDeployer) bool {
 	c.recorder.SetStatus(cd)
-	if cd.Status.State == flaggerv1.CanaryRunning {
+	if cd.Status.Phase == flaggerv1.CanaryProgressing {
 		return true
 	}
 
-	if cd.Status.State == "" {
-		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: flaggerv1.CanaryInitialized}); err != nil {
+	if cd.Status.Phase == "" {
+		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryInitialized}); err != nil {
 			c.logger.Errorf("%v", err)
 			return false
 		}
@@ -280,7 +280,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 			c.recordEventErrorf(cd, "%v", err)
 			return false
 		}
-		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: flaggerv1.CanaryRunning}); err != nil {
+		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryProgressing}); err != nil {
 			c.logger.Errorf("%v", err)
 			return false
 		}

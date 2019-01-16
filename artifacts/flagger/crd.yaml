@@ -25,7 +25,7 @@ spec:
   additionalPrinterColumns:
     - name: Status
       type: string
-      JSONPath: .status.state
+      JSONPath: .status.phase
     - name: LastTransitionTime
       type: string
       JSONPath: .status.lastTransitionTime
