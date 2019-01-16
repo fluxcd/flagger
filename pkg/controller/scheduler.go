@@ -91,6 +91,13 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
+	if ok, err := c.deployer.ShouldAdvance(cd); !ok {
+		if err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+		}
+		return
+	}
+
 	// set max weight default value to 100%
 	maxWeight := 100
 	if cd.Spec.CanaryAnalysis.MaxWeight > 0 {
@@ -249,7 +256,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDeployer) bool {
 	c.recorder.SetStatus(cd)
-	if cd.Status.State == "running" {
+	if cd.Status.State == flaggerv1.CanaryRunning {
 		return true
 	}
 

@@ -140,7 +140,7 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 	newSpec := &canary.Spec.Template.Spec
 	oldSpecJson, err := base64.StdEncoding.DecodeString(cd.Status.CanaryRevision)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("%s.%s decode error %v", cd.Name, cd.Namespace, err)
 	}
 	oldSpec := &corev1.PodSpec{}
 	err = json.Unmarshal(oldSpecJson, oldSpec)
@@ -154,6 +154,14 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// ShouldAdvance determines if the canary analysis can proceed
+func (c *CanaryDeployer) ShouldAdvance(cd *flaggerv1.Canary) (bool, error) {
+	if cd.Status.CanaryRevision == "" || cd.Status.State == flaggerv1.CanaryRunning {
+		return true, nil
+	}
+	return c.IsNewSpec(cd)
 }
 
 // SetFailedChecks updates the canary failed checks counter
