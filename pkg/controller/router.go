@@ -276,13 +276,15 @@ func (c *CanaryRouter) SetRoutes(
 		}
 		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, cd.Namespace, err)
 	}
-	vs.Spec.Http = []istiov1alpha3.HTTPRoute{
+
+	vsCopy := vs.DeepCopy()
+	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 		{
 			Route: []istiov1alpha3.DestinationWeight{primary, canary},
 		},
 	}
 
-	vs, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(vs)
+	vs, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(vsCopy)
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update failed: %v", targetName, cd.Namespace, err)
 
