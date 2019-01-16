@@ -164,8 +164,8 @@ func (c *CanaryDeployer) ShouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 	return c.IsNewSpec(cd)
 }
 
-// SetFailedChecks updates the canary failed checks counter
-func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
+// SetStatusFailedChecks updates the canary failed checks counter
+func (c *CanaryDeployer) SetStatusFailedChecks(cd *flaggerv1.Canary, val int) error {
 	cdCopy := cd.DeepCopy()
 	cdCopy.Status.FailedChecks = val
 	cdCopy.Status.LastTransitionTime = metav1.Now()
@@ -177,11 +177,28 @@ func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
 	return nil
 }
 
-// SetState updates the canary status state
-func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state flaggerv1.CanaryPhase) error {
+// SetStatusWeight updates the canary status weight value
+func (c *CanaryDeployer) SetStatusWeight(cd *flaggerv1.Canary, val int) error {
 	cdCopy := cd.DeepCopy()
-	cdCopy.Status.Phase = state
+	cdCopy.Status.CanaryWeight = val
 	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+	if err != nil {
+		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
+	}
+	return nil
+}
+
+// SetStatusPhase updates the canary status phase
+func (c *CanaryDeployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
+	cdCopy := cd.DeepCopy()
+	cdCopy.Status.Phase = phase
+	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	if phase != flaggerv1.CanaryProgressing {
+		cdCopy.Status.CanaryWeight = 0
+	}
 
 	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
@@ -207,6 +224,7 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 
 	cdCopy := cd.DeepCopy()
 	cdCopy.Status.Phase = status.Phase
+	cdCopy.Status.CanaryWeight = status.CanaryWeight
 	cdCopy.Status.FailedChecks = status.FailedChecks
 	cdCopy.Status.LastAppliedSpec = base64.StdEncoding.EncodeToString(specJson)
 	cdCopy.Status.LastTransitionTime = metav1.Now()

@@ -91,6 +91,7 @@ const (
 type CanaryStatus struct {
 	Phase        CanaryPhase `json:"phase"`
 	FailedChecks int         `json:"failedChecks"`
+	CanaryWeight int         `json:"canaryWeight"`
 	// +optional
 	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`
 	// +optional

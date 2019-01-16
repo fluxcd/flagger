@@ -173,7 +173,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 
 		// mark canary as failed
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryFailed}); err != nil {
+		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryFailed, CanaryWeight: 0}); err != nil {
 			c.logger.Errorf("%v", err)
 			return
 		}
@@ -188,7 +188,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		c.recordEventInfof(cd, "Starting canary deployment for %s.%s", cd.Name, cd.Namespace)
 	} else {
 		if ok := c.analyseCanary(cd); !ok {
-			if err := c.deployer.SetFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
+			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -208,6 +208,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 
 		if err := c.router.SetRoutes(cd, primaryRoute, canaryRoute); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+
+		// update weight status
+		if err := c.deployer.SetStatusWeight(cd, canaryRoute.Weight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -243,8 +249,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
-		// update status
-		if err := c.deployer.SetState(cd, flaggerv1.CanarySucceeded); err != nil {
+		// update status phase
+		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanarySucceeded); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}

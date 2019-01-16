@@ -351,7 +351,7 @@ func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.SetFailedChecks(canary, 1)
+	err = deployer.SetStatusFailedChecks(canary, 1)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -387,7 +387,7 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.SetState(canary, v1alpha3.CanaryProgressing)
+	err = deployer.SetStatusPhase(canary, v1alpha3.CanaryProgressing)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
