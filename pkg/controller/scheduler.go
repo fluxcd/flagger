@@ -75,7 +75,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// check if the canary exists
 	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
-		c.logger.Errorf("Canary %s.%s not found", name, namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).Errorf("Canary %s.%s not found", name, namespace)
 		return
 	}
 
@@ -174,7 +174,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 		// mark canary as failed
 		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryFailed, CanaryWeight: 0}); err != nil {
-			c.logger.Errorf("%v", err)
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return
 		}
 
@@ -268,7 +268,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 
 	if cd.Status.Phase == "" {
 		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryInitialized}); err != nil {
-			c.logger.Errorf("%v", err)
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
 		c.recorder.SetStatus(cd)
@@ -287,7 +287,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 			return false
 		}
 		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryProgressing}); err != nil {
-			c.logger.Errorf("%v", err)
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
 		c.recorder.SetStatus(cd)

@@ -248,17 +248,17 @@ func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flagge
 }
 
 func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {
-	c.logger.Infof(template, args...)
+	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
 }
 
 func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, args ...interface{}) {
-	c.logger.Errorf(template, args...)
+	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 
 func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
-	c.logger.Infof(template, args...)
+	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 }
 

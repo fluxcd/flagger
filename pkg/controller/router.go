@@ -79,7 +79,7 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 		if err != nil {
 			return err
 		}
-		c.logger.Infof("Service %s.%s created", canaryService.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Service %s.%s created", canaryService.GetName(), cd.Namespace)
 	}
 
 	canaryTestServiceName := fmt.Sprintf("%s-canary", cd.Spec.TargetRef.Name)
@@ -118,7 +118,7 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 		if err != nil {
 			return err
 		}
-		c.logger.Infof("Service %s.%s created", canaryTestService.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Service %s.%s created", canaryTestService.GetName(), cd.Namespace)
 	}
 
 	primaryService, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(primaryName, metav1.GetOptions{})
@@ -157,7 +157,7 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 			return err
 		}
 
-		c.logger.Infof("Service %s.%s created", primaryService.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Service %s.%s created", primaryService.GetName(), cd.Namespace)
 	}
 
 	return nil
@@ -218,7 +218,7 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s create error %v", targetName, cd.Namespace, err)
 		}
-		c.logger.Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
 	}
 
 	return nil

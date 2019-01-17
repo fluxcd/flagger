@@ -266,7 +266,7 @@ func (c *CanaryDeployer) Sync(cd *flaggerv1.Canary) error {
 	}
 
 	if cd.Status.Phase == "" {
-		c.logger.Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
 			return err
 		}
@@ -333,7 +333,7 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 			return err
 		}
 
-		c.logger.Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
 	return nil
@@ -381,7 +381,7 @@ func (c *CanaryDeployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 		if err != nil {
 			return err
 		}
-		c.logger.Infof("HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
 	}
 
 	return nil
