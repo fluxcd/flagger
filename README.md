@@ -8,8 +8,8 @@
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
-The canary analysis can be extended with webhooks for running integration tests, load tests or any other custom 
-validation.
+The canary analysis can be extended with webhooks for running integration tests, 
+load tests or any other custom validation.
 
 ### Install 
 
@@ -28,7 +28,7 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://prometheus.istio-system:9090 
 ```
 
-Flagger is compatible with Kubernetes >1.10.0 and Istio >1.0.0.
+Flagger is compatible with Kubernetes >1.11.0 and Istio >1.0.0.
 
 ### Usage
 
@@ -242,15 +242,16 @@ kubectl -n test set image deployment/podinfo \
 podinfod=quay.io/stefanprodan/podinfo:1.2.1
 ```
 
-Flagger detects that the deployment revision changed and starts a new rollout:
+Flagger detects that the deployment revision changed and starts a new canary analysis:
 
 ```
 kubectl -n test describe canary/podinfo
 
 Status:
-  Canary Revision:  19871136
-  Failed Checks:    0
-  State:            finished
+  Canary Weight:         0
+  Failed Checks:         0
+  Last Transition Time:  2019-01-16T13:47:16Z
+  Phase:                 Succeeded
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
@@ -270,6 +271,15 @@ Events:
   Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
   Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
+```
+
+You can monitor all canaries with:
+
+```bash
+watch kubectl get canaries --all-namespaces
+
+NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
+test        podinfo   Progressing   5        2019-01-16T14:05:07Z
 ```
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
@@ -300,9 +310,10 @@ the canary is scaled to zero and the rollout is marked as failed.
 kubectl -n test describe canary/podinfo
 
 Status:
-  Canary Revision:  16695041
-  Failed Checks:    10
-  State:            failed
+  Canary Weight:         0
+  Failed Checks:         10
+  Last Transition Time:  2019-01-16T13:47:16Z
+  Phase:                 Failed
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------

@@ -133,14 +133,14 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 		return false, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 
-	if cd.Status.CanaryRevision == "" {
+	if cd.Status.LastAppliedSpec == "" {
 		return true, nil
 	}
 
 	newSpec := &canary.Spec.Template.Spec
-	oldSpecJson, err := base64.StdEncoding.DecodeString(cd.Status.CanaryRevision)
+	oldSpecJson, err := base64.StdEncoding.DecodeString(cd.Status.LastAppliedSpec)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("%s.%s decode error %v", cd.Name, cd.Namespace, err)
 	}
 	oldSpec := &corev1.PodSpec{}
 	err = json.Unmarshal(oldSpecJson, oldSpec)
@@ -156,26 +156,51 @@ func (c *CanaryDeployer) IsNewSpec(cd *flaggerv1.Canary) (bool, error) {
 	return false, nil
 }
 
-// SetFailedChecks updates the canary failed checks counter
-func (c *CanaryDeployer) SetFailedChecks(cd *flaggerv1.Canary, val int) error {
+// ShouldAdvance determines if the canary analysis can proceed
+func (c *CanaryDeployer) ShouldAdvance(cd *flaggerv1.Canary) (bool, error) {
+	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryProgressing {
+		return true, nil
+	}
+	return c.IsNewSpec(cd)
+}
+
+// SetStatusFailedChecks updates the canary failed checks counter
+func (c *CanaryDeployer) SetStatusFailedChecks(cd *flaggerv1.Canary, val int) error {
 	cdCopy := cd.DeepCopy()
 	cdCopy.Status.FailedChecks = val
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 
-	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
 		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
 	return nil
 }
 
-// SetState updates the canary status state
-func (c *CanaryDeployer) SetState(cd *flaggerv1.Canary, state flaggerv1.CanaryState) error {
+// SetStatusWeight updates the canary status weight value
+func (c *CanaryDeployer) SetStatusWeight(cd *flaggerv1.Canary, val int) error {
 	cdCopy := cd.DeepCopy()
-	cdCopy.Status.State = state
+	cdCopy.Status.CanaryWeight = val
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 
-	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+	if err != nil {
+		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
+	}
+	return nil
+}
+
+// SetStatusPhase updates the canary status phase
+func (c *CanaryDeployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
+	cdCopy := cd.DeepCopy()
+	cdCopy.Status.Phase = phase
+	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	if phase != flaggerv1.CanaryProgressing {
+		cdCopy.Status.CanaryWeight = 0
+	}
+
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
 		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
@@ -198,12 +223,13 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 	}
 
 	cdCopy := cd.DeepCopy()
-	cdCopy.Status.State = status.State
+	cdCopy.Status.Phase = status.Phase
+	cdCopy.Status.CanaryWeight = status.CanaryWeight
 	cdCopy.Status.FailedChecks = status.FailedChecks
-	cdCopy.Status.CanaryRevision = base64.StdEncoding.EncodeToString(specJson)
+	cdCopy.Status.LastAppliedSpec = base64.StdEncoding.EncodeToString(specJson)
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 
-	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Update(cdCopy)
+	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
 		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
 	}
@@ -239,8 +265,8 @@ func (c *CanaryDeployer) Sync(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
 	}
 
-	if cd.Status.State == "" {
-		c.logger.Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+	if cd.Status.Phase == "" {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
 			return err
 		}
@@ -307,7 +333,7 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 			return err
 		}
 
-		c.logger.Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
 	return nil
@@ -355,7 +381,7 @@ func (c *CanaryDeployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 		if err != nil {
 			return err
 		}
-		c.logger.Infof("HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
 	}
 
 	return nil

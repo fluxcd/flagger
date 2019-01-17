@@ -351,7 +351,7 @@ func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.SetFailedChecks(canary, 1)
+	err = deployer.SetStatusFailedChecks(canary, 1)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -387,7 +387,7 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.SetState(canary, v1alpha3.CanaryRunning)
+	err = deployer.SetStatusPhase(canary, v1alpha3.CanaryProgressing)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -397,8 +397,8 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if res.Status.State != v1alpha3.CanaryRunning {
-		t.Errorf("Got %v wanted %v", res.Status.State, v1alpha3.CanaryRunning)
+	if res.Status.Phase != v1alpha3.CanaryProgressing {
+		t.Errorf("Got %v wanted %v", res.Status.Phase, v1alpha3.CanaryProgressing)
 	}
 }
 
@@ -424,7 +424,7 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 	}
 
 	status := v1alpha3.CanaryStatus{
-		State:        v1alpha3.CanaryRunning,
+		Phase:        v1alpha3.CanaryProgressing,
 		FailedChecks: 2,
 	}
 	err = deployer.SyncStatus(canary, status)
@@ -437,8 +437,8 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if res.Status.State != status.State {
-		t.Errorf("Got state %v wanted %v", res.Status.State, status.State)
+	if res.Status.Phase != status.Phase {
+		t.Errorf("Got state %v wanted %v", res.Status.Phase, status.Phase)
 	}
 
 	if res.Status.FailedChecks != status.FailedChecks {

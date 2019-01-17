@@ -56,7 +56,7 @@ type CanarySpec struct {
 	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
 
 	// the maximum time in seconds for a canary deployment to make progress
-	// before it is considered to be failed. Defaults to 60s.
+	// before it is considered to be failed. Defaults to ten minutes.
 	ProgressDeadlineSeconds *int32 `json:"progressDeadlineSeconds,omitempty"`
 }
 
@@ -70,21 +70,30 @@ type CanaryList struct {
 	Items []Canary `json:"items"`
 }
 
-// CanaryState used for status state op
-type CanaryState string
+// CanaryPhase is a label for the condition of a canary at the current time
+type CanaryPhase string
 
 const (
-	CanaryRunning     CanaryState = "running"
-	CanaryFinished    CanaryState = "finished"
-	CanaryFailed      CanaryState = "failed"
-	CanaryInitialized CanaryState = "initialized"
+	// CanaryInitialized means the primary deployment, hpa and ClusterIP services
+	// have been created along with the Istio virtual service
+	CanaryInitialized CanaryPhase = "Initialized"
+	// CanaryProgressing means the canary analysis is underway
+	CanaryProgressing CanaryPhase = "Progressing"
+	// CanarySucceeded means the canary analysis has been successful
+	// and the canary deployment has been promoted
+	CanarySucceeded CanaryPhase = "Succeeded"
+	// CanaryFailed means the canary analysis failed
+	// and the canary deployment has been scaled to zero
+	CanaryFailed CanaryPhase = "Failed"
 )
 
 // CanaryStatus is used for state persistence (read-only)
 type CanaryStatus struct {
-	State          CanaryState `json:"state"`
-	CanaryRevision string      `json:"canaryRevision"`
-	FailedChecks   int         `json:"failedChecks"`
+	Phase        CanaryPhase `json:"phase"`
+	FailedChecks int         `json:"failedChecks"`
+	CanaryWeight int         `json:"canaryWeight"`
+	// +optional
+	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`
 	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 }
@@ -139,6 +148,7 @@ func (c *Canary) GetProgressDeadlineSeconds() int {
 	return ProgressDeadlineSeconds
 }
 
+// GetAnalysisInterval returns the canary analysis interval (default 60s)
 func (c *Canary) GetAnalysisInterval() time.Duration {
 	if c.Spec.CanaryAnalysis.Interval == "" {
 		return AnalysisInterval

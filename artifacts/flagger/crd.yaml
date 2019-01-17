@@ -19,7 +19,21 @@ spec:
     plural: canaries
     singular: canary
     kind: Canary
+    categories:
+      - all
   scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: Status
+      type: string
+      JSONPath: .status.phase
+    - name: Weight
+      type: string
+      JSONPath: .status.canaryWeight
+    - name: LastTransitionTime
+      type: string
+      JSONPath: .status.lastTransitionTime
   validation:
     openAPIV3Schema:
       properties:

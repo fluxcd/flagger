@@ -75,7 +75,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// check if the canary exists
 	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
-		c.logger.Errorf("Canary %s.%s not found", name, namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).Errorf("Canary %s.%s not found", name, namespace)
 		return
 	}
 
@@ -88,6 +88,13 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// create ClusterIP services and virtual service if needed
 	if err := c.router.Sync(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
+	if ok, err := c.deployer.ShouldAdvance(cd); !ok {
+		if err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+		}
 		return
 	}
 
@@ -130,7 +137,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check if the number of failed checks reached the threshold
-	if cd.Status.State == flaggerv1.CanaryRunning &&
+	if cd.Status.Phase == flaggerv1.CanaryProgressing &&
 		(!retriable || cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold) {
 
 		if cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold {
@@ -166,8 +173,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 
 		// mark canary as failed
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: flaggerv1.CanaryFailed}); err != nil {
-			c.logger.Errorf("%v", err)
+		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryFailed, CanaryWeight: 0}); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return
 		}
 
@@ -181,7 +188,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		c.recordEventInfof(cd, "Starting canary deployment for %s.%s", cd.Name, cd.Namespace)
 	} else {
 		if ok := c.analyseCanary(cd); !ok {
-			if err := c.deployer.SetFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
+			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -201,6 +208,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 
 		if err := c.router.SetRoutes(cd, primaryRoute, canaryRoute); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+
+		// update weight status
+		if err := c.deployer.SetStatusWeight(cd, canaryRoute.Weight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -236,8 +249,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 
-		// update status
-		if err := c.deployer.SetState(cd, flaggerv1.CanaryFinished); err != nil {
+		// update status phase
+		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanarySucceeded); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -249,13 +262,13 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDeployer) bool {
 	c.recorder.SetStatus(cd)
-	if cd.Status.State == "running" {
+	if cd.Status.Phase == flaggerv1.CanaryProgressing {
 		return true
 	}
 
-	if cd.Status.State == "" {
-		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: flaggerv1.CanaryInitialized}); err != nil {
-			c.logger.Errorf("%v", err)
+	if cd.Status.Phase == "" {
+		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryInitialized}); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
 		c.recorder.SetStatus(cd)
@@ -273,8 +286,8 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, deployer CanaryDepl
 			c.recordEventErrorf(cd, "%v", err)
 			return false
 		}
-		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{State: flaggerv1.CanaryRunning}); err != nil {
-			c.logger.Errorf("%v", err)
+		if err := deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryProgressing}); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
 		c.recorder.SetStatus(cd)

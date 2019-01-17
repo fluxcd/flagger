@@ -6,7 +6,7 @@ If you are new to Istio you can follow this GKE guide
 
 **Prerequisites**
 
-* Kubernetes &gt;= 1.9
+* Kubernetes &gt;= 1.11
 * Istio &gt;= 1.0
 * Prometheus &gt;= 2.6
 

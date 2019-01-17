@@ -108,9 +108,9 @@ Flagger detects that the deployment revision changed and starts a new rollout:
 kubectl -n test describe canary/podinfo
 
 Status:
-  Canary Revision:  19871136
-  Failed Checks:    0
-  State:            finished
+  Canary Weight:         0
+  Failed Checks:         0
+  Phase:                 Succeeded
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
@@ -130,6 +130,17 @@ Events:
   Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
   Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
+```
+
+You can monitor all canaries with:
+
+```bash
+watch kubectl get canaries --all-namespaces
+
+NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
+test        podinfo   Progressing   15       2019-01-16T14:05:07Z
+prod        frontend  Succeeded     0        2019-01-15T16:15:07Z
+prod        backend   Failed        0        2019-01-14T17:05:07Z
 ```
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
@@ -162,9 +173,9 @@ When the number of failed checks reaches the canary analysis threshold, the traf
 kubectl -n test describe canary/podinfo
 
 Status:
-  Canary Revision:  16695041
-  Failed Checks:    10
-  State:            failed
+  Canary Weight:         0
+  Failed Checks:         10
+  Phase:                 Failed
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
@@ -180,6 +191,4 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
-
-#### 
 

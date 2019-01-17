@@ -194,7 +194,7 @@ func TestScheduler_Rollback(t *testing.T) {
 	ctrl.advanceCanary("podinfo", "default")
 
 	// update failed checks to max
-	err := deployer.SyncStatus(canary, v1alpha3.CanaryStatus{State: v1alpha3.CanaryRunning, FailedChecks: 11})
+	err := deployer.SyncStatus(canary, v1alpha3.CanaryStatus{Phase: v1alpha3.CanaryProgressing, FailedChecks: 11})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -207,7 +207,7 @@ func TestScheduler_Rollback(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.State != v1alpha3.CanaryFailed {
-		t.Errorf("Got canary state %v wanted %v", c.Status.State, v1alpha3.CanaryFailed)
+	if c.Status.Phase != v1alpha3.CanaryFailed {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryFailed)
 	}
 }
