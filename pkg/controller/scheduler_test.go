@@ -1,12 +1,16 @@
 package controller
 
 import (
+	"go.uber.org/zap"
+	"k8s.io/client-go/kubernetes"
 	"sync"
 	"testing"
 	"time"
 
+	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	fakeIstio "github.com/knative/pkg/client/clientset/versioned/fake"
 	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
 	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/flagger/pkg/logging"
@@ -20,6 +24,39 @@ var (
 	alwaysReady        = func() bool { return true }
 	noResyncPeriodFunc = func() time.Duration { return 0 }
 )
+
+func newTestController(
+	kubeClient kubernetes.Interface,
+	istioClient istioclientset.Interface,
+	flaggerClient clientset.Interface,
+	logger *zap.SugaredLogger,
+	deployer CanaryDeployer,
+	router CanaryRouter,
+	observer CanaryObserver,
+) *Controller {
+	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
+	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
+
+	ctrl := &Controller{
+		kubeClient:    kubeClient,
+		istioClient:   istioClient,
+		flaggerClient: flaggerClient,
+		flaggerLister: flaggerInformer.Lister(),
+		flaggerSynced: flaggerInformer.Informer().HasSynced,
+		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder: &record.FakeRecorder{},
+		logger:        logger,
+		canaries:      new(sync.Map),
+		flaggerWindow: time.Second,
+		deployer:      deployer,
+		router:        router,
+		observer:      observer,
+		recorder:      NewCanaryRecorder(false),
+	}
+	ctrl.flaggerSynced = alwaysReady
+
+	return ctrl
+}
 
 func TestScheduler_Init(t *testing.T) {
 	canary := newTestCanary()
@@ -45,27 +82,7 @@ func TestScheduler_Init(t *testing.T) {
 	observer := CanaryObserver{
 		metricsServer: "fake",
 	}
-
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		router:        router,
-		observer:      observer,
-		recorder:      NewCanaryRecorder(false),
-	}
-	ctrl.flaggerSynced = alwaysReady
+	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
 
 	ctrl.advanceCanary("podinfo", "default", false)
 
@@ -99,27 +116,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 	observer := CanaryObserver{
 		metricsServer: "fake",
 	}
-
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		router:        router,
-		observer:      observer,
-		recorder:      NewCanaryRecorder(false),
-	}
-	ctrl.flaggerSynced = alwaysReady
+	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", false)
@@ -168,27 +165,7 @@ func TestScheduler_Rollback(t *testing.T) {
 	observer := CanaryObserver{
 		metricsServer: "fake",
 	}
-
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		router:        router,
-		observer:      observer,
-		recorder:      NewCanaryRecorder(false),
-	}
-	ctrl.flaggerSynced = alwaysReady
+	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", true)
@@ -236,27 +213,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 	observer := CanaryObserver{
 		metricsServer: "fake",
 	}
-
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		router:        router,
-		observer:      observer,
-		recorder:      NewCanaryRecorder(false),
-	}
-	ctrl.flaggerSynced = alwaysReady
+	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", false)
@@ -334,27 +291,7 @@ func TestScheduler_Promotion(t *testing.T) {
 	observer := CanaryObserver{
 		metricsServer: "fake",
 	}
-
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		router:        router,
-		observer:      observer,
-		recorder:      NewCanaryRecorder(false),
-	}
-	ctrl.flaggerSynced = alwaysReady
+	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", false)
