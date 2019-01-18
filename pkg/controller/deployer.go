@@ -82,15 +82,11 @@ func (c *CanaryDeployer) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
 
 	retriable, err := c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds())
 	if err != nil {
-		if retriable {
-			return retriable, fmt.Errorf("Halt %s.%s advancement %s", cd.Name, cd.Namespace, err.Error())
-		} else {
-			return retriable, err
-		}
+		return retriable, fmt.Errorf("Halt advancement %s.%s %s", primaryName, cd.Namespace, err.Error())
 	}
 
 	if primary.Spec.Replicas == int32p(0) {
-		return true, fmt.Errorf("halt %s.%s advancement primary deployment is scaled to zero",
+		return true, fmt.Errorf("Halt %s.%s advancement primary deployment is scaled to zero",
 			cd.Name, cd.Namespace)
 	}
 	return true, nil
@@ -112,7 +108,7 @@ func (c *CanaryDeployer) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
 	retriable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
 	if err != nil {
 		if retriable {
-			return retriable, fmt.Errorf("Halt %s.%s advancement %s", cd.Name, cd.Namespace, err.Error())
+			return retriable, fmt.Errorf("Halt advancement %s.%s %s", targetName, cd.Namespace, err.Error())
 		} else {
 			return retriable, fmt.Errorf("deployment does not have minimum availability for more than %vs",
 				cd.GetProgressDeadlineSeconds())
