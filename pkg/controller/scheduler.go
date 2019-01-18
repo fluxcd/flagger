@@ -69,7 +69,7 @@ func (c *Controller) scheduleCanaries() {
 	}
 }
 
-func (c *Controller) advanceCanary(name string, namespace string) {
+func (c *Controller) advanceCanary(name string, namespace string, skipLivenessChecks bool) {
 	begin := time.Now()
 	// check if the canary exists
 	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, v1.GetOptions{})
@@ -104,9 +104,11 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check primary deployment status
-	if _, err := c.deployer.IsPrimaryReady(cd); err != nil {
-		c.recordEventWarningf(cd, "%v", err)
-		return
+	if !skipLivenessChecks {
+		if _, err := c.deployer.IsPrimaryReady(cd); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
 	}
 
 	// check if virtual service exists
@@ -155,10 +157,13 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}()
 
 	// check canary deployment status
-	retriable, err := c.deployer.IsCanaryReady(cd)
-	if err != nil && retriable {
-		c.recordEventWarningf(cd, "%v", err)
-		return
+	var retriable = true
+	if !skipLivenessChecks {
+		retriable, err = c.deployer.IsCanaryReady(cd)
+		if err != nil && retriable {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
 	}
 
 	// check if the number of failed checks reached the threshold

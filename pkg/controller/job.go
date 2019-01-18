@@ -6,7 +6,8 @@ import "time"
 type CanaryJob struct {
 	Name      string
 	Namespace string
-	function  func(name string, namespace string)
+	SkipTests bool
+	function  func(name string, namespace string, skipTests bool)
 	done      chan bool
 	ticker    *time.Ticker
 }
@@ -15,11 +16,11 @@ type CanaryJob struct {
 func (j CanaryJob) Start() {
 	go func() {
 		// run the infra bootstrap on job creation
-		j.function(j.Name, j.Namespace)
+		j.function(j.Name, j.Namespace, j.SkipTests)
 		for {
 			select {
 			case <-j.ticker.C:
-				j.function(j.Name, j.Namespace)
+				j.function(j.Name, j.Namespace, j.SkipTests)
 			case <-j.done:
 				return
 			}
