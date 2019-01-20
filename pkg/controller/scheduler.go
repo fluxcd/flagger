@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
@@ -336,12 +337,27 @@ func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 }
 
 func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
+	// run external checks
+	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
+		err := CallWebhook(r.Name, r.Namespace, webhook)
+		if err != nil {
+			c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
+				r.Name, r.Namespace, webhook.Name, err)
+			return false
+		}
+	}
+
 	// run metrics checks
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
 		if metric.Name == "istio_requests_total" {
 			val, err := c.observer.GetDeploymentCounter(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
 			if err != nil {
-				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+				if strings.Contains(err.Error(), "no values found"){
+					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+				}else {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+				}
 				return false
 			}
 			if float64(metric.Threshold) > val {
@@ -363,16 +379,6 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					r.Name, r.Namespace, val, t)
 				return false
 			}
-		}
-	}
-
-	// run external checks
-	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
-		err := CallWebhook(r.Name, r.Namespace, webhook)
-		if err != nil {
-			c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
-				r.Name, r.Namespace, webhook.Name, err)
-			return false
 		}
 	}
 

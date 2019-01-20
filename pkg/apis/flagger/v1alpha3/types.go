@@ -136,7 +136,7 @@ type CanaryWebhook struct {
 type CanaryWebhookPayload struct {
 	Name      string             `json:"name"`
 	Namespace string             `json:"namespace"`
-	Metadata  *map[string]string `json:"metadata,omitempty"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
 }
 
 // GetProgressDeadlineSeconds returns the progress deadline (default 600s)

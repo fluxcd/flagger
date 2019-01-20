@@ -234,13 +234,9 @@ func (in *CanaryWebhookPayload) DeepCopyInto(out *CanaryWebhookPayload) {
 	*out = *in
 	if in.Metadata != nil {
 		in, out := &in.Metadata, &out.Metadata
-		*out = new(map[string]string)
-		if **in != nil {
-			in, out := *in, *out
-			*out = make(map[string]string, len(*in))
-			for key, val := range *in {
-				(*out)[key] = val
-			}
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
 		}
 	}
 	return
