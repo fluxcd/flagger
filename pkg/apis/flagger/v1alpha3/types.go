@@ -134,8 +134,8 @@ type CanaryWebhook struct {
 
 // CanaryWebhookPayload holds the deployment info and metadata sent to webhooks
 type CanaryWebhookPayload struct {
-	Name      string             `json:"name"`
-	Namespace string             `json:"namespace"`
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
 }
 
