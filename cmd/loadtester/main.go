@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/knative/pkg/signals"
-	"github.com/stefanprodan/flagger/pkg/loadtest"
+	"github.com/stefanprodan/flagger/pkg/loadtester"
 	"github.com/stefanprodan/flagger/pkg/logging"
 	"log"
 	"time"
@@ -32,10 +32,10 @@ func main() {
 
 	stopCh := signals.SetupSignalHandler()
 
-	taskRunner := loadtest.NewTaskRunner(logger, timeout)
+	taskRunner := loadtester.NewTaskRunner(logger, timeout)
 
 	go taskRunner.Start(100*time.Millisecond, stopCh)
 
 	logger.Infof("Starting HTTP server on port %s", port)
-	loadtest.ListenAndServe(port, time.Minute, logger, taskRunner, stopCh)
+	loadtester.ListenAndServe(port, time.Minute, logger, taskRunner, stopCh)
 }

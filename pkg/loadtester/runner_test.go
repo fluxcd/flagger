@@ -1,4 +1,4 @@
-package loadtest
+package loadtester
 
 import (
 	"github.com/stefanprodan/flagger/pkg/logging"

@@ -22,9 +22,9 @@ WORKDIR /go/src/github.com/stefanprodan/flagger
 
 COPY . .
 
-RUN go test -race ./pkg/loadtest/
+RUN go test -race ./pkg/loadtester/
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o loadtest ./cmd/loadtest/*
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o loadtester ./cmd/loadtester/*
 
 FROM alpine:3.8
 
@@ -35,10 +35,10 @@ RUN addgroup -S app \
 WORKDIR /home/app
 
 COPY --from=hey-builder /go/bin/hey /usr/local/bin/hey
-COPY --from=builder /go/src/github.com/stefanprodan/flagger/loadtest .
+COPY --from=builder /go/src/github.com/stefanprodan/flagger/loadtester .
 
 RUN chown -R app:app ./
 
 USER app
 
-ENTRYPOINT ["./loadtest"]
+ENTRYPOINT ["./loadtester"]

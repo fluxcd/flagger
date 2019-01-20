@@ -1,4 +1,4 @@
-package loadtest
+package loadtester
 
 import (
 	"context"

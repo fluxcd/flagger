@@ -77,3 +77,7 @@ reset-test:
 	kubectl delete -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/canaries
+
+loadtester-push:
+	docker build -t quay.io/stefanprodan/flagger-loadtester:$(TAG) . -f Dockerfile.loadtester
+	docker push quay.io/stefanprodan/flagger-loadtester:$(TAG)
