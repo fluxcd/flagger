@@ -281,4 +281,45 @@ Response status codes:
 
 On a non-2xx response Flagger will include the response body (if any) in the failed checks log and Kubernetes events.
 
+### Load Testing
+
+For workloads that are not receiving constant traffic Flagger can be configured with a webhook, 
+that when called, will start a load test for the target workload.
+If the target workload doesn't receive any traffic during the canary analysis, 
+Flagger metric checks will fail with "no values found for metric istio_requests_total".
+
+Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) 
+that generates traffic during analysis when configured as a webhook.
+
+First you need to deploy the load test runner in a namespace with Istio sidecar injection enabled:
+
+```bash
+export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
+
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+```
+
+When deployed the load tester API will be available at `http://flagger-loadtester.test/`. 
+
+Now you can add webhooks to the canary analysis spec:
+
+```yaml
+webhooks:
+  - name: load-test-get
+    url: http://flagger-loadtester.test/
+    timeout: 5s
+    metadata:
+      cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
+  - name: load-test-post
+    url: http://flagger-loadtester.test/
+    timeout: 5s
+    metadata:
+      cmd: "hey -z 1m -q 10 -c 2 -m POST -d '{test: 2}' http://podinfo.test:9898/echo"
+```
+
+When the canary analysis starts, Flagger will call the webhooks and the load tester will run the `hey` commands 
+in the background, if they are not already running. This will ensure that during the 
+analysis, the `podinfo.test` virtual service will receive a steady steam of GET and POST requests.
+
 

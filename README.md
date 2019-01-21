@@ -127,12 +127,11 @@ spec:
       interval: 30s
     # external checks (optional)
     webhooks:
-      - name: integration-tests
-        url: http://podinfo.test:9898/echo
-        timeout: 1m
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
         metadata:
-          test: "all"
-          token: "16688eb5e9f289f1991c"
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
 ```
 
 The canary analysis is using the following promql queries:
@@ -211,6 +210,13 @@ kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
 kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
 ```
 
+Deploy the load testing service to generate traffic during the canary analysis:
+
+```bash
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+```
+
 Create a canary promotion custom resource (replace the Istio gateway and the internet domain with your own):
 
 ```bash
@@ -239,7 +245,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.2.1
+podinfod=quay.io/stefanprodan/podinfo:1.4.0
 ```
 
 Flagger detects that the deployment revision changed and starts a new canary analysis:
