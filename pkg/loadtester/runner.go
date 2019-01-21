@@ -3,6 +3,7 @@ package loadtester
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"go.uber.org/zap"
 	"hash/fnv"
 	"os/exec"
@@ -17,6 +18,7 @@ type TaskRunner struct {
 	todoTasks    *sync.Map
 	runningTasks *sync.Map
 	totalExecs   uint64
+	logCmdOutput bool
 }
 
 type Task struct {
@@ -30,12 +32,13 @@ func (t Task) Hash() string {
 	return hex.EncodeToString(fnvBytes[:])
 }
 
-func NewTaskRunner(logger *zap.SugaredLogger, timeout time.Duration) *TaskRunner {
+func NewTaskRunner(logger *zap.SugaredLogger, timeout time.Duration, logCmdOutput bool) *TaskRunner {
 	return &TaskRunner{
 		logger:       logger,
 		todoTasks:    new(sync.Map),
 		runningTasks: new(sync.Map),
 		timeout:      timeout,
+		logCmdOutput: logCmdOutput,
 	}
 }
 
@@ -74,6 +77,9 @@ func (tr *TaskRunner) runAll() {
 				if err != nil {
 					tr.logger.With("canary", t.Canary).Errorf("command failed %s %v %s", t.Command, err, out)
 				} else {
+					if tr.logCmdOutput {
+						fmt.Printf("%s\n", out)
+					}
 					tr.logger.With("canary", t.Canary).Infof("command finished %s", t.Command)
 				}
 

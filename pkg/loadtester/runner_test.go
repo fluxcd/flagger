@@ -9,7 +9,7 @@ import (
 func TestTaskRunner_Start(t *testing.T) {
 	stop := make(chan struct{})
 	logger, _ := logging.NewLogger("debug")
-	tr := NewTaskRunner(logger, time.Hour)
+	tr := NewTaskRunner(logger, time.Hour, false)
 
 	go tr.Start(10*time.Millisecond, stop)
 

@@ -9,16 +9,19 @@ import (
 	"time"
 )
 
+var VERSION = "0.0.2"
 var (
-	logLevel string
-	port     string
-	timeout  time.Duration
+	logLevel     string
+	port         string
+	timeout      time.Duration
+	logCmdOutput bool
 )
 
 func init() {
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "9090", "Port to listen on.")
 	flag.DurationVar(&timeout, "timeout", time.Hour, "Command exec timeout.")
+	flag.BoolVar(&logCmdOutput, "log-cmd-output", true, "Log command output to stderr")
 }
 
 func main() {
@@ -32,10 +35,10 @@ func main() {
 
 	stopCh := signals.SetupSignalHandler()
 
-	taskRunner := loadtester.NewTaskRunner(logger, timeout)
+	taskRunner := loadtester.NewTaskRunner(logger, timeout, logCmdOutput)
 
 	go taskRunner.Start(100*time.Millisecond, stopCh)
 
-	logger.Infof("Starting HTTP server on port %s", port)
+	logger.Infof("Starting load tester v%s API on port %s", VERSION, port)
 	loadtester.ListenAndServe(port, time.Minute, logger, taskRunner, stopCh)
 }
