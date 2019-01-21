@@ -1,0 +1,1 @@
+Flagger's load testing service is available at http://{{ include "loadtester.fullname" . }}.{{ .Release.Namespace }}/
