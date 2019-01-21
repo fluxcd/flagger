@@ -291,6 +291,8 @@ Flagger metric checks will fail with "no values found for metric istio_requests_
 Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) 
 that generates traffic during analysis when configured as a webhook.
 
+![Flagger Load Testing Webhook](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-load-testing.png)
+
 First you need to deploy the load test runner in a namespace with Istio sidecar injection enabled:
 
 ```bash
