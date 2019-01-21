@@ -13,11 +13,11 @@ spec:
       labels:
         app: flagger-loadtester
       annotations:
-        prometheus.io/scrape: "false"
+        prometheus.io/scrape: "true"
     spec:
       containers:
         - name: loadtester
-          image: quay.io/stefanprodan/flagger-loadtester:0.0.1
+          image: quay.io/stefanprodan/flagger-loadtester:0.0.2
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -27,6 +27,7 @@ spec:
             - -port=8080
             - -log-level=info
             - -timeout=1h
+            - -log-cmd-output=true
           livenessProbe:
             exec:
               command:

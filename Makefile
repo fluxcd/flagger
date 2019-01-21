@@ -79,5 +79,6 @@ reset-test:
 	kubectl apply -f ./artifacts/canaries
 
 loadtester-push:
-	docker build -t quay.io/stefanprodan/flagger-loadtester:$(TAG) . -f Dockerfile.loadtester
-	docker push quay.io/stefanprodan/flagger-loadtester:$(TAG)
+	LT_VESION=$$(grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' | tr -d '"') && \
+	docker build -t quay.io/stefanprodan/flagger-loadtester:$$LT_VESION . -f Dockerfile.loadtester && \
+	docker push quay.io/stefanprodan/flagger-loadtester:$$LT_VESION
