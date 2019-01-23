@@ -1,6 +1,8 @@
 # How it works
 
-[Flagger](https://github.com/stefanprodan/flagger) takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\) and creates a series of objects \(Kubernetes deployments, ClusterIP services and Istio virtual services\) to drive the canary analysis and promotion. 
+[Flagger](https://github.com/stefanprodan/flagger) takes a Kubernetes deployment and optionally 
+a horizontal pod autoscaler \(HPA\) and creates a series of objects 
+\(Kubernetes deployments, ClusterIP services and Istio virtual services\) to drive the canary analysis and promotion. 
 
 ![Flagger Canary Process](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-hpa.png)
 
@@ -112,10 +114,11 @@ Gated canary promotion stages:
   * scale to zero the canary deployment and mark it as failed
   * wait for the canary deployment to be updated \(revision bump\) and start over
 * increase canary traffic weight by 5% \(step weight\) till it reaches 50% \(max weight\)
-  * halt advancement while canary request success rate is under the threshold
-  * halt advancement while canary request duration P99 is over the threshold
   * halt advancement if the primary or canary deployment becomes unhealthy
   * halt advancement while canary deployment is being scaled up/down by HPA
+  * halt advancement if any of the webhook calls are failing
+  * halt advancement while canary request success rate is under the threshold
+  * halt advancement while canary request duration P99 is over the threshold
 * promote canary to primary
   * copy canary deployment spec template over primary
 * wait for primary rolling update to finish
@@ -302,6 +305,17 @@ kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
 kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
 ```
 
+Or by using Helm:
+
+```bash
+helm repo add flagger https://flagger.app
+
+helm upgrade -i flagger-loadtester flagger/loadtester \
+--namepace=test \
+--set cmd.logOutput=true \
+--set cmd.timeout=1h
+```
+
 When deployed the load tester API will be available at `http://flagger-loadtester.test/`. 
 
 Now you can add webhooks to the canary analysis spec:
@@ -324,4 +338,24 @@ When the canary analysis starts, Flagger will call the webhooks and the load tes
 in the background, if they are not already running. This will ensure that during the 
 analysis, the `podinfo.test` virtual service will receive a steady steam of GET and POST requests.
 
+If your workload is exposed outside the mesh with the Istio Gateway and TLS you can point `hey` to the 
+public URL and use HTTP2.
 
+```yaml
+webhooks:
+  - name: load-test-get
+    url: http://flagger-loadtester.test/
+    timeout: 5s
+    metadata:
+      cmd: "hey -z 1m -q 10 -c 2 -h2 https://podinfo.example.com/"
+```
+
+The load tester can run arbitrary commands as long as the binary is present in the container image.
+For example if you you want to replace `hey` with another CLI, you can create your own Docker image:
+
+```dockerfile
+FROM quay.io/stefanprodan/flagger-loadtester:<VER>
+
+RUN curl -Lo /usr/local/bin/my-cli https://github.com/user/repo/releases/download/ver/my-cli \
+    && chmod +x /usr/local/bin/my-cli
+```
