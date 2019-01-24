@@ -17,6 +17,13 @@ kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
 kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
 ```
 
+Deploy the load testing service to generate traffic during the canary analysis:
+
+```bash
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+```
+
 Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
@@ -70,6 +77,13 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
+    # generate traffic during analysis
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
@@ -99,7 +113,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.2.1
+podinfod=quay.io/stefanprodan/podinfo:1.4.0
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:

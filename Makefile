@@ -3,6 +3,8 @@ VERSION?=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | t
 VERSION_MINOR:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | rev | cut -d'.' -f2- | rev)
 PATCH:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | awk -F. '{print $$NF}')
 SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/logging pkg/version
+LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' | tr -d '"' | head -n1)
+
 run:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info \
 	-metrics-server=https://prometheus.iowa.weavedx.com \
@@ -29,7 +31,7 @@ test: test-fmt test-codegen
 	go test ./...
 
 helm-package:
-	cd charts/ && helm package flagger/ && helm package grafana/
+	cd charts/ && helm package flagger/ && helm package grafana/ && helm package loadtester/
 	mv charts/*.tgz docs/
 	helm repo index docs --url https://stefanprodan.github.io/flagger --merge ./docs/index.yaml
 
@@ -77,3 +79,7 @@ reset-test:
 	kubectl delete -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/canaries
+
+loadtester-push:
+	docker build -t quay.io/stefanprodan/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
+	docker push quay.io/stefanprodan/flagger-loadtester:$(LT_VERSION)

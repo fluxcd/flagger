@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/stefanprodan/flagger-loadtester
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+
+logLevel: info
+cmd:
+  logOutput: true
+  timeout: 1h
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

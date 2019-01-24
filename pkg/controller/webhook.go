@@ -19,7 +19,10 @@ func CallWebhook(name string, namepace string, w flaggerv1.CanaryWebhook) error 
 	payload := flaggerv1.CanaryWebhookPayload{
 		Name:      name,
 		Namespace: namepace,
-		Metadata:  w.Metadata,
+	}
+
+	if w.Metadata != nil {
+		payload.Metadata = *w.Metadata
 	}
 
 	payloadBin, err := json.Marshal(payload)

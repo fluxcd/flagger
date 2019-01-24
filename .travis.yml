@@ -23,9 +23,10 @@ after_success:
 - if [ -z "$DOCKER_USER" ]; then
     echo "PR build, skipping image push";
   else
-    docker tag stefanprodan/flagger:latest quay.io/stefanprodan/flagger:${TRAVIS_COMMIT};
+    BRANCH_COMMIT=${TRAVIS_BRANCH}-$(echo ${TRAVIS_COMMIT} | head -c7);
+    docker tag stefanprodan/flagger:latest quay.io/stefanprodan/flagger:${BRANCH_COMMIT};
     echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin quay.io;
-    docker push quay.io/stefanprodan/flagger:${TRAVIS_COMMIT};
+    docker push quay.io/stefanprodan/flagger:${BRANCH_COMMIT};
   fi
 - if [ -z "$TRAVIS_TAG" ]; then
     echo "Not a release, skipping image push";

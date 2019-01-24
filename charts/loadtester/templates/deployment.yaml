@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "loadtester.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "loadtester.name" . }}
+    helm.sh/chart: {{ include "loadtester.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "loadtester.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "loadtester.name" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          command:
+            - ./loadtester
+            - -port=8080
+            - -log-level={{ .Values.logLevel }}
+            - -timeout={{ .Values.cmd.timeout }}
+            - -log-cmd-output={{ .Values.cmd.logOutput }}
+          livenessProbe:
+            exec:
+              command:
+                - wget
+                - --quiet
+                - --tries=1
+                - --timeout=4
+                - --spider
+                - http://localhost:8080/healthz
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - wget
+                - --quiet
+                - --tries=1
+                - --timeout=4
+                - --spider
+                - http://localhost:8080/healthz
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

@@ -1,0 +1,44 @@
+FROM golang:1.11 AS hey-builder
+
+RUN mkdir -p /go/src/github.com/rakyll/hey/
+
+WORKDIR /go/src/github.com/rakyll/hey
+
+ADD https://github.com/rakyll/hey/archive/v0.1.1.tar.gz .
+
+RUN tar xzf v0.1.1.tar.gz --strip 1
+
+RUN go get ./...
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+  go install -ldflags '-w -extldflags "-static"' \
+  /go/src/github.com/rakyll/hey
+
+FROM golang:1.11 AS builder
+
+RUN mkdir -p /go/src/github.com/stefanprodan/flagger/
+
+WORKDIR /go/src/github.com/stefanprodan/flagger
+
+COPY . .
+
+RUN go test -race ./pkg/loadtester/
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o loadtester ./cmd/loadtester/*
+
+FROM alpine:3.8
+
+RUN addgroup -S app \
+    && adduser -S -g app app \
+    && apk --no-cache add ca-certificates curl
+
+WORKDIR /home/app
+
+COPY --from=hey-builder /go/bin/hey /usr/local/bin/hey
+COPY --from=builder /go/src/github.com/stefanprodan/flagger/loadtester .
+
+RUN chown -R app:app ./
+
+USER app
+
+ENTRYPOINT ["./loadtester"]
