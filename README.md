@@ -9,3 +9,4 @@ a canary is promoted or aborted and the analysis result is published to Slack.
 
 ### For the install instructions and usage examples please see [docs.flagger.app](https://docs.flagger.app)
 
+This project is sponsored by [Weaveworks](https://www.weave.works/)
