@@ -22,6 +22,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 
 	dep := newTestDeployment()
 	configMap := NewTestConfigMap()
+	configMapForEnv := NewTestConfigMapForEnv()
 	secret := NewTestSecret()
 
 	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
@@ -37,6 +38,15 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 
 	if hpaPrimary.Spec.ScaleTargetRef.Name != depPrimary.Name {
 		t.Errorf("Got HPA target %s wanted %s", hpaPrimary.Spec.ScaleTargetRef.Name, depPrimary.Name)
+	}
+
+	configPrimaryForEnv, err := kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-all-env-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if configPrimaryForEnv.Data["a"] != configMapForEnv.Data["a"] {
+		t.Errorf("Got ConfigMap %s wanted %s", configPrimaryForEnv.Data["a"], configMapForEnv.Data["color"])
 	}
 
 	configPrimary, err := kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})

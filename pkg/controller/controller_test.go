@@ -40,11 +40,12 @@ func SetupTest() (
 ) {
 	canary = newTestCanary()
 	configMap := NewTestConfigMap()
+	configMapForEnv := NewTestConfigMapForEnv()
 	secret := NewTestSecret()
 	dep := newTestDeployment()
 	hpa := newTestHPA()
 
-	kubeClient = fake.NewSimpleClientset(secret, configMap, dep, hpa)
+	kubeClient = fake.NewSimpleClientset(secret, configMap, configMapForEnv, dep, hpa)
 
 	istioClient = fakeIstio.NewSimpleClientset()
 
@@ -135,6 +136,34 @@ func NewTestConfigMapUpdated() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color":  "blue",
 			"output": "console",
+		},
+	}
+}
+
+func NewTestConfigMapForEnv() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-all-env",
+		},
+		Data: map[string]string{
+			"a": "b",
+			"c": "d",
+		},
+	}
+}
+
+func NewTestConfigMapForEnvUpdated() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-all-env",
+		},
+		Data: map[string]string{
+			"x": "y",
+			"c": "d",
 		},
 	}
 }
@@ -269,6 +298,15 @@ func newTestDeployment() *appsv1.Deployment {
 									},
 								},
 							},
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									ConfigMapRef: &corev1.ConfigMapEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "podinfo-config-all-env",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -334,6 +372,15 @@ func newTestDeploymentUpdated() *appsv1.Deployment {
 												Name: "podinfo-secret-env",
 											},
 											Key: "apiKey",
+										},
+									},
+								},
+							},
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									ConfigMapRef: &corev1.ConfigMapEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "podinfo-config-all-env",
 										},
 									},
 								},
