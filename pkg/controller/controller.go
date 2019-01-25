@@ -74,6 +74,11 @@ func NewController(
 		kubeClient:    kubeClient,
 		istioClient:   istioClient,
 		flaggerClient: flaggerClient,
+		configTracker: ConfigTracker{
+			logger:        logger,
+			kubeClient:    kubeClient,
+			flaggerClient: flaggerClient,
+		},
 	}
 
 	router := CanaryRouter{

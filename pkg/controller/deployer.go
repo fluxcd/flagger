@@ -28,9 +28,10 @@ type CanaryDeployer struct {
 	istioClient   istioclientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
+	configTracker ConfigTracker
 }
 
-// Promote copies the pod spec from canary to primary
+// Promote copies the pod spec, secrets and config maps from canary to primary
 func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
@@ -51,12 +52,23 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
 	}
 
+	// promote secrets and config maps
+	configRefs, err := c.configTracker.GetTargetConfigs(cd)
+	if err != nil {
+		return err
+	}
+	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+		return err
+	}
+
 	primaryCopy := primary.DeepCopy()
 	primaryCopy.Spec.ProgressDeadlineSeconds = canary.Spec.ProgressDeadlineSeconds
 	primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
 	primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
 	primaryCopy.Spec.Strategy = canary.Spec.Strategy
-	primaryCopy.Spec.Template.Spec = canary.Spec.Template.Spec
+
+	// update spec with primary secrets and config maps
+	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
 
 	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
@@ -290,6 +302,15 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 
 	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
+		// create primary secrets and config maps
+		configRefs, err := c.configTracker.GetTargetConfigs(cd)
+		if err != nil {
+			return err
+		}
+		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+			return err
+		}
+		// create primary deployment
 		primaryDep = &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        primaryName,
@@ -319,7 +340,8 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 						Labels:      map[string]string{"app": primaryName},
 						Annotations: canaryDep.Spec.Template.Annotations,
 					},
-					Spec: canaryDep.Spec.Template.Spec,
+					// update spec with the primary secrets and config maps
+					Spec: c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, configRefs),
 				},
 			},
 		}
