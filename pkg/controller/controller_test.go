@@ -27,18 +27,20 @@ var (
 	noResyncPeriodFunc = func() time.Duration { return 0 }
 )
 
-func SetupTest() (
-	canary *v1alpha3.Canary,
-	kubeClient kubernetes.Interface,
-	istioClient istioclientset.Interface,
-	flaggerClient clientset.Interface,
-	deployer CanaryDeployer,
-	router CanaryRouter,
-	observer CanaryObserver,
-	controller *Controller,
-	logger *zap.SugaredLogger,
-) {
-	canary = newTestCanary()
+type Mocks struct {
+	canary        *v1alpha3.Canary
+	kubeClient    kubernetes.Interface
+	istioClient   istioclientset.Interface
+	flaggerClient clientset.Interface
+	deployer      CanaryDeployer
+	router        CanaryRouter
+	observer      CanaryObserver
+	ctrl          *Controller
+	logger        *zap.SugaredLogger
+}
+
+func SetupMocks() Mocks {
+	canary := newTestCanary()
 	configMap := NewTestConfigMap()
 	configMapEnv := NewTestConfigMapEnv()
 	configMapVol := NewTestConfigMapVol()
@@ -48,19 +50,19 @@ func SetupTest() (
 	dep := newTestDeployment()
 	hpa := newTestHPA()
 
-	kubeClient = fake.NewSimpleClientset(secret, secretEnv, secretVol, configMap, configMapEnv, configMapVol, dep, hpa)
+	kubeClient := fake.NewSimpleClientset(secret, secretEnv, secretVol, configMap, configMapEnv, configMapVol, dep, hpa)
 
-	istioClient = fakeIstio.NewSimpleClientset()
+	istioClient := fakeIstio.NewSimpleClientset()
 
-	flaggerClient = fakeFlagger.NewSimpleClientset(canary)
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
-	logger, _ = logging.NewLogger("debug")
+	logger, _ := logging.NewLogger("debug")
 
-	observer = CanaryObserver{
+	observer := CanaryObserver{
 		metricsServer: "fake",
 	}
 
-	deployer = CanaryDeployer{
+	deployer := CanaryDeployer{
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
 		logger:        logger,
@@ -71,16 +73,26 @@ func SetupTest() (
 		},
 	}
 
-	router = CanaryRouter{
+	router := CanaryRouter{
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
 		istioClient:   istioClient,
 		logger:        logger,
 	}
 
-	controller = newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
+	controller := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
 
-	return
+	return Mocks{
+		canary:        canary,
+		observer:      observer,
+		router:        router,
+		deployer:      deployer,
+		logger:        logger,
+		flaggerClient: flaggerClient,
+		istioClient:   istioClient,
+		kubeClient:    kubeClient,
+		ctrl:          controller,
+	}
 }
 
 func newTestController(
@@ -129,7 +141,7 @@ func NewTestConfigMap() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapUpdated() *corev1.ConfigMap {
+func NewTestConfigMapV2() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -183,7 +195,7 @@ func NewTestSecret() *corev1.Secret {
 	}
 }
 
-func NewTestSecretUpdated() *corev1.Secret {
+func NewTestSecretV2() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -385,7 +397,7 @@ func newTestDeployment() *appsv1.Deployment {
 	return d
 }
 
-func newTestDeploymentUpdated() *appsv1.Deployment {
+func newTestDeploymentV2() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{

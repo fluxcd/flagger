@@ -8,14 +8,13 @@ import (
 )
 
 func TestCanaryDeployer_Sync(t *testing.T) {
-	canary, kubeClient, _, _, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	depPrimary, err := kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -30,7 +29,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got image %s wanted %s", primaryImage, sourceImage)
 	}
 
-	hpaPrimary, err := kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get("podinfo-primary", metav1.GetOptions{})
+	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -39,7 +38,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got HPA target %s wanted %s", hpaPrimary.Spec.ScaleTargetRef.Name, depPrimary.Name)
 	}
 
-	configPrimary, err := kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -48,7 +47,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got ConfigMap color %s wanted %s", configPrimary.Data["color"], configMap.Data["color"])
 	}
 
-	configPrimaryEnv, err := kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-all-env-primary", metav1.GetOptions{})
+	configPrimaryEnv, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-all-env-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -57,7 +56,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got ConfigMap %s wanted %s", configPrimaryEnv.Data["a"], configMap.Data["color"])
 	}
 
-	configPrimaryVol, err := kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-vol-primary", metav1.GetOptions{})
+	configPrimaryVol, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-vol-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -66,7 +65,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got ConfigMap color %s wanted %s", configPrimary.Data["color"], configMap.Data["color"])
 	}
 
-	secretPrimary, err := kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-env-primary", metav1.GetOptions{})
+	secretPrimary, err := mocks.kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-env-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -75,7 +74,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret.Data["apiKey"])
 	}
 
-	secretPrimaryEnv, err := kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-all-env-primary", metav1.GetOptions{})
+	secretPrimaryEnv, err := mocks.kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-all-env-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -84,7 +83,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret.Data["apiKey"])
 	}
 
-	secretPrimaryVol, err := kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-vol-primary", metav1.GetOptions{})
+	secretPrimaryVol, err := mocks.kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-vol-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -95,20 +94,19 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 }
 
 func TestCanaryDeployer_IsNewSpec(t *testing.T) {
-	canary, kubeClient, _, _, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	dep2 := newTestDeploymentUpdated()
-	_, err = kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newTestDeploymentV2()
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	isNew, err := deployer.IsNewSpec(canary)
+	isNew, err := mocks.deployer.IsNewSpec(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -119,31 +117,30 @@ func TestCanaryDeployer_IsNewSpec(t *testing.T) {
 }
 
 func TestCanaryDeployer_Promote(t *testing.T) {
-	canary, kubeClient, _, _, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	dep2 := newTestDeploymentUpdated()
-	_, err = kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newTestDeploymentV2()
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	config2 := NewTestConfigMapUpdated()
-	_, err = kubeClient.CoreV1().ConfigMaps("default").Update(config2)
+	config2 := NewTestConfigMapV2()
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.Promote(canary)
+	err = mocks.deployer.Promote(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	depPrimary, err := kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -154,7 +151,7 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 		t.Errorf("Got image %s wanted %s", primaryImage, sourceImage)
 	}
 
-	configPrimary, err := kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -165,38 +162,36 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 }
 
 func TestCanaryDeployer_IsReady(t *testing.T) {
-	canary, _, _, _, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	_, err = deployer.IsPrimaryReady(canary)
+	_, err = mocks.deployer.IsPrimaryReady(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	_, err = deployer.IsCanaryReady(canary)
+	_, err = mocks.deployer.IsCanaryReady(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 }
 
 func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
-	canary, _, _, flaggerClient, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.SetStatusFailedChecks(canary, 1)
+	err = mocks.deployer.SetStatusFailedChecks(mocks.canary, 1)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	res, err := flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -207,19 +202,18 @@ func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
 }
 
 func TestCanaryDeployer_SetState(t *testing.T) {
-	canary, _, _, flaggerClient, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.SetStatusPhase(canary, v1alpha3.CanaryProgressing)
+	err = mocks.deployer.SetStatusPhase(mocks.canary, v1alpha3.CanaryProgressing)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	res, err := flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -230,9 +224,8 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 }
 
 func TestCanaryDeployer_SyncStatus(t *testing.T) {
-	canary, _, _, flaggerClient, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -241,12 +234,12 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		Phase:        v1alpha3.CanaryProgressing,
 		FailedChecks: 2,
 	}
-	err = deployer.SyncStatus(canary, status)
+	err = mocks.deployer.SyncStatus(mocks.canary, status)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	res, err := flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -261,16 +254,15 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 }
 
 func TestCanaryDeployer_Scale(t *testing.T) {
-	canary, kubeClient, _, _, deployer, _, _, _, _ := SetupTest()
-
-	err := deployer.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	err = deployer.Scale(canary, 2)
+	err = mocks.deployer.Scale(mocks.canary, 2)
 
-	c, err := kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
+	c, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
