@@ -157,6 +157,12 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
+	secret2 := NewTestSecretUpdated()
+	_, err = kubeClient.CoreV1().Secrets("default").Update(secret2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
 	// advance
 	ctrl.advanceCanary("podinfo", "default", true)
 
@@ -194,6 +200,15 @@ func TestScheduler_Promotion(t *testing.T) {
 
 	if configPrimary.Data["color"] != config2.Data["color"] {
 		t.Errorf("Got primary ConfigMap color %s wanted %s", configPrimary.Data["color"], config2.Data["color"])
+	}
+
+	secretPrimary, err := kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-env-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if string(secretPrimary.Data["apiKey"]) != string(secret2.Data["apiKey"]) {
+		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret2.Data["apiKey"])
 	}
 
 	c, err := flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})

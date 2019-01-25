@@ -22,6 +22,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 
 	dep := newTestDeployment()
 	configMap := NewTestConfigMap()
+	secret := NewTestSecret()
 
 	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
@@ -45,6 +46,15 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 
 	if configPrimary.Data["color"] != configMap.Data["color"] {
 		t.Errorf("Got ConfigMap color %s wanted %s", configPrimary.Data["color"], configMap.Data["color"])
+	}
+
+	secretPrimary, err := kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-env-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if string(secretPrimary.Data["apiKey"]) != string(secret.Data["apiKey"]) {
+		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret.Data["apiKey"])
 	}
 }
 

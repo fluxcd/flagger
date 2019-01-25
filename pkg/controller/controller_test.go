@@ -40,10 +40,11 @@ func SetupTest() (
 ) {
 	canary = newTestCanary()
 	configMap := NewTestConfigMap()
+	secret := NewTestSecret()
 	dep := newTestDeployment()
 	hpa := newTestHPA()
 
-	kubeClient = fake.NewSimpleClientset(configMap, dep, hpa)
+	kubeClient = fake.NewSimpleClientset(secret, configMap, dep, hpa)
 
 	istioClient = fakeIstio.NewSimpleClientset()
 
@@ -138,6 +139,34 @@ func NewTestConfigMapUpdated() *corev1.ConfigMap {
 	}
 }
 
+func NewTestSecret() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-env",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
+func NewTestSecretUpdated() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-env",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test2"),
+		},
+	}
+}
+
 func newTestCanary() *v1alpha3.Canary {
 	cd := &v1alpha3.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
@@ -228,6 +257,17 @@ func newTestDeployment() *appsv1.Deployment {
 										},
 									},
 								},
+								{
+									Name: "API_KEY",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "podinfo-secret-env",
+											},
+											Key: "apiKey",
+										},
+									},
+								},
 							},
 						},
 					},
@@ -283,6 +323,17 @@ func newTestDeploymentUpdated() *appsv1.Deployment {
 												Name: "podinfo-config-env",
 											},
 											Key: "color",
+										},
+									},
+								},
+								{
+									Name: "API_KEY",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "podinfo-secret-env",
+											},
+											Key: "apiKey",
 										},
 									},
 								},
