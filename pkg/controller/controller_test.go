@@ -40,12 +40,15 @@ func SetupTest() (
 ) {
 	canary = newTestCanary()
 	configMap := NewTestConfigMap()
-	configMapForEnv := NewTestConfigMapForEnv()
+	configMapEnv := NewTestConfigMapEnv()
+	configMapVol := NewTestConfigMapVol()
 	secret := NewTestSecret()
+	secretEnv := NewTestSecretEnv()
+	secretVol := NewTestSecretVol()
 	dep := newTestDeployment()
 	hpa := newTestHPA()
 
-	kubeClient = fake.NewSimpleClientset(secret, configMap, configMapForEnv, dep, hpa)
+	kubeClient = fake.NewSimpleClientset(secret, secretEnv, secretVol, configMap, configMapEnv, configMapVol, dep, hpa)
 
 	istioClient = fakeIstio.NewSimpleClientset()
 
@@ -140,7 +143,7 @@ func NewTestConfigMapUpdated() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapForEnv() *corev1.ConfigMap {
+func NewTestConfigMapEnv() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -148,22 +151,20 @@ func NewTestConfigMapForEnv() *corev1.ConfigMap {
 			Name:      "podinfo-config-all-env",
 		},
 		Data: map[string]string{
-			"a": "b",
-			"c": "d",
+			"color": "red",
 		},
 	}
 }
 
-func NewTestConfigMapForEnvUpdated() *corev1.ConfigMap {
+func NewTestConfigMapVol() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
-			Name:      "podinfo-config-all-env",
+			Name:      "podinfo-config-vol",
 		},
 		Data: map[string]string{
-			"x": "y",
-			"c": "d",
+			"color": "red",
 		},
 	}
 }
@@ -192,6 +193,34 @@ func NewTestSecretUpdated() *corev1.Secret {
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"apiKey": []byte("test2"),
+		},
+	}
+}
+
+func NewTestSecretEnv() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-all-env",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
+func NewTestSecretVol() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-vol",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
 		},
 	}
 }
@@ -306,6 +335,45 @@ func newTestDeployment() *appsv1.Deployment {
 										},
 									},
 								},
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "podinfo-secret-all-env",
+										},
+									},
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "config",
+									MountPath: "/etc/podinfo/config",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "secret",
+									MountPath: "/etc/podinfo/secret",
+									ReadOnly:  true,
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "podinfo-config-vol",
+									},
+								},
+							},
+						},
+						{
+							Name: "secret",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "podinfo-secret-vol",
+								},
 							},
 						},
 					},
@@ -383,6 +451,38 @@ func newTestDeploymentUpdated() *appsv1.Deployment {
 											Name: "podinfo-config-all-env",
 										},
 									},
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "config",
+									MountPath: "/etc/podinfo/config",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "secret",
+									MountPath: "/etc/podinfo/secret",
+									ReadOnly:  true,
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "podinfo-config-vol",
+									},
+								},
+							},
+						},
+						{
+							Name: "secret",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "podinfo-secret-vol",
 								},
 							},
 						},
