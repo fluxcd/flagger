@@ -1,88 +1,13 @@
 package controller
 
 import (
-	"go.uber.org/zap"
-	"k8s.io/client-go/kubernetes"
-	"sync"
-	"testing"
-	"time"
-
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	fakeIstio "github.com/knative/pkg/client/clientset/versioned/fake"
 	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
-	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
-	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
-	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
-	"github.com/stefanprodan/flagger/pkg/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/workqueue"
+	"testing"
 )
-
-var (
-	alwaysReady        = func() bool { return true }
-	noResyncPeriodFunc = func() time.Duration { return 0 }
-)
-
-func newTestController(
-	kubeClient kubernetes.Interface,
-	istioClient istioclientset.Interface,
-	flaggerClient clientset.Interface,
-	logger *zap.SugaredLogger,
-	deployer CanaryDeployer,
-	router CanaryRouter,
-	observer CanaryObserver,
-) *Controller {
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		router:        router,
-		observer:      observer,
-		recorder:      NewCanaryRecorder(false),
-	}
-	ctrl.flaggerSynced = alwaysReady
-
-	return ctrl
-}
 
 func TestScheduler_Init(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-	deployer := CanaryDeployer{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		logger:        logger,
-	}
-	router := CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-	observer := CanaryObserver{
-		metricsServer: "fake",
-	}
-	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
+	_, kubeClient, _, _, _, _, _, ctrl, _ := SetupTest()
 
 	ctrl.advanceCanary("podinfo", "default", false)
 
@@ -93,30 +18,7 @@ func TestScheduler_Init(t *testing.T) {
 }
 
 func TestScheduler_NewRevision(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-	deployer := CanaryDeployer{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		logger:        logger,
-	}
-	router := CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-	observer := CanaryObserver{
-		metricsServer: "fake",
-	}
-	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
+	_, kubeClient, _, _, _, _, _, ctrl, _ := SetupTest()
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", false)
@@ -142,30 +44,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 }
 
 func TestScheduler_Rollback(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-	deployer := CanaryDeployer{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		logger:        logger,
-	}
-	router := CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-	observer := CanaryObserver{
-		metricsServer: "fake",
-	}
-	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
+	canary, _, _, flaggerClient, deployer, _, _, ctrl, _ := SetupTest()
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", true)
@@ -190,30 +69,7 @@ func TestScheduler_Rollback(t *testing.T) {
 }
 
 func TestScheduler_NewRevisionReset(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-	deployer := CanaryDeployer{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		logger:        logger,
-	}
-	router := CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-	observer := CanaryObserver{
-		metricsServer: "fake",
-	}
-	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
+	canary, kubeClient, _, _, _, router, _, ctrl, _ := SetupTest()
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", false)
@@ -268,30 +124,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 }
 
 func TestScheduler_Promotion(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-	deployer := CanaryDeployer{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		logger:        logger,
-	}
-	router := CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-	observer := CanaryObserver{
-		metricsServer: "fake",
-	}
-	ctrl := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
+	canary, kubeClient, _, flaggerClient, _, router, _, ctrl, _ := SetupTest()
 
 	// init
 	ctrl.advanceCanary("podinfo", "default", false)
@@ -314,6 +147,12 @@ func TestScheduler_Promotion(t *testing.T) {
 	primaryRoute.Weight = 60
 	canaryRoute.Weight = 40
 	err = ctrl.router.SetRoutes(canary, primaryRoute, canaryRoute)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	config2 := NewTestConfigMapUpdated()
+	_, err = kubeClient.CoreV1().ConfigMaps("default").Update(config2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -346,6 +185,15 @@ func TestScheduler_Promotion(t *testing.T) {
 	canaryImage := dep2.Spec.Template.Spec.Containers[0].Image
 	if primaryImage != canaryImage {
 		t.Errorf("Got primary image %v wanted %v", primaryImage, canaryImage)
+	}
+
+	configPrimary, err := kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if configPrimary.Data["color"] != config2.Data["color"] {
+		t.Errorf("Got primary ConfigMap color %s wanted %s", configPrimary.Data["color"], config2.Data["color"])
 	}
 
 	c, err := flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
