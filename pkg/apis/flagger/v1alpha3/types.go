@@ -93,6 +93,8 @@ type CanaryStatus struct {
 	FailedChecks int         `json:"failedChecks"`
 	CanaryWeight int         `json:"canaryWeight"`
 	// +optional
+	TrackedConfigs *map[string]string `json:"trackedConfigs,omitempty"`
+	// +optional
 	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`
 	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
