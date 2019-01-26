@@ -182,6 +182,54 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 	return res, nil
 }
 
+// GetConfigRefs returns a map of configs and their checksum
+func (ct *ConfigTracker) GetConfigRefs(cd *flaggerv1.Canary) (*map[string]string, error) {
+	res := make(map[string]string)
+	configs, err := ct.GetTargetConfigs(cd)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cfg := range configs {
+		res[cfg.GetName()] = cfg.Checksum
+	}
+
+	return &res, nil
+}
+
+// HasConfigChanged checks for changes in ConfigMaps and Secretes by comparing
+// the checksum for each ConfigRef stored in Canary.Status.TrackedConfigs
+func (ct *ConfigTracker) HasConfigChanged(cd *flaggerv1.Canary) (bool, error) {
+	configs, err := ct.GetTargetConfigs(cd)
+	if err != nil {
+		return false, err
+	}
+
+	if len(configs) == 0 && cd.Status.TrackedConfigs == nil {
+		return false, nil
+	}
+
+	if len(configs) > 0 && cd.Status.TrackedConfigs == nil {
+		return true, nil
+	}
+
+	trackedConfigs := *cd.Status.TrackedConfigs
+
+	if len(configs) != len(trackedConfigs) {
+		return true, nil
+	}
+
+	for _, cfg := range configs {
+		if trackedConfigs[cfg.GetName()] != cfg.Checksum {
+			ct.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+				Infof("%s %s has changed", cfg.Type, cfg.Name)
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 // CreatePrimaryConfigs syncs the primary Kubernetes ConfigMaps and Secretes
 // with those found in the target deployment
 func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[string]ConfigRef) error {

@@ -40,28 +40,26 @@ type Mocks struct {
 }
 
 func SetupMocks() Mocks {
+	// init canary
 	canary := newTestCanary()
-	configMap := NewTestConfigMap()
-	configMapEnv := NewTestConfigMapEnv()
-	configMapVol := NewTestConfigMapVol()
-	secret := NewTestSecret()
-	secretEnv := NewTestSecretEnv()
-	secretVol := NewTestSecretVol()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	kubeClient := fake.NewSimpleClientset(secret, secretEnv, secretVol, configMap, configMapEnv, configMapVol, dep, hpa)
-
-	istioClient := fakeIstio.NewSimpleClientset()
-
 	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
+	// init kube clientset and register mock objects
+	kubeClient := fake.NewSimpleClientset(
+		newTestDeployment(),
+		newTestHPA(),
+		NewTestConfigMap(),
+		NewTestConfigMapEnv(),
+		NewTestConfigMapVol(),
+		NewTestSecret(),
+		NewTestSecretEnv(),
+		NewTestSecretVol(),
+	)
+
+	istioClient := fakeIstio.NewSimpleClientset()
 	logger, _ := logging.NewLogger("debug")
 
-	observer := CanaryObserver{
-		metricsServer: "fake",
-	}
-
+	// init controller helpers
 	deployer := CanaryDeployer{
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
@@ -72,38 +70,17 @@ func SetupMocks() Mocks {
 			flaggerClient: flaggerClient,
 		},
 	}
-
 	router := CanaryRouter{
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
 		istioClient:   istioClient,
 		logger:        logger,
 	}
-
-	controller := newTestController(kubeClient, istioClient, flaggerClient, logger, deployer, router, observer)
-
-	return Mocks{
-		canary:        canary,
-		observer:      observer,
-		router:        router,
-		deployer:      deployer,
-		logger:        logger,
-		flaggerClient: flaggerClient,
-		istioClient:   istioClient,
-		kubeClient:    kubeClient,
-		ctrl:          controller,
+	observer := CanaryObserver{
+		metricsServer: "fake",
 	}
-}
 
-func newTestController(
-	kubeClient kubernetes.Interface,
-	istioClient istioclientset.Interface,
-	flaggerClient clientset.Interface,
-	logger *zap.SugaredLogger,
-	deployer CanaryDeployer,
-	router CanaryRouter,
-	observer CanaryObserver,
-) *Controller {
+	// init controller
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
 	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
 
@@ -125,7 +102,17 @@ func newTestController(
 	}
 	ctrl.flaggerSynced = alwaysReady
 
-	return ctrl
+	return Mocks{
+		canary:        canary,
+		observer:      observer,
+		router:        router,
+		deployer:      deployer,
+		logger:        logger,
+		flaggerClient: flaggerClient,
+		istioClient:   istioClient,
+		kubeClient:    kubeClient,
+		ctrl:          ctrl,
+	}
 }
 
 func NewTestConfigMap() *corev1.ConfigMap {

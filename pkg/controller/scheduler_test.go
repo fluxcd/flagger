@@ -130,7 +130,22 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	// detect changes
+	// detect pod spec changes
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	config2 := NewTestConfigMapV2()
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	secret2 := NewTestSecretV2()
+	_, err = mocks.kubeClient.CoreV1().Secrets("default").Update(secret2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect configs changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	primaryRoute, canaryRoute, err := mocks.router.GetRoutes(mocks.canary)
@@ -141,18 +156,6 @@ func TestScheduler_Promotion(t *testing.T) {
 	primaryRoute.Weight = 60
 	canaryRoute.Weight = 40
 	err = mocks.ctrl.router.SetRoutes(mocks.canary, primaryRoute, canaryRoute)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	config2 := NewTestConfigMapV2()
-	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	secret2 := NewTestSecretV2()
-	_, err = mocks.kubeClient.CoreV1().Secrets("default").Update(secret2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

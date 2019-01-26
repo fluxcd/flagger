@@ -251,6 +251,15 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 	if res.Status.FailedChecks != status.FailedChecks {
 		t.Errorf("Got failed checks %v wanted %v", res.Status.FailedChecks, status.FailedChecks)
 	}
+
+	if res.Status.TrackedConfigs == nil {
+		t.Fatalf("Status tracking configs are empty")
+	}
+	configs := *res.Status.TrackedConfigs
+	secret := NewTestSecret()
+	if _, exists := configs["secret/"+secret.GetName()]; !exists {
+		t.Errorf("Secret %s not found in status", secret.GetName())
+	}
 }
 
 func TestCanaryDeployer_Scale(t *testing.T) {

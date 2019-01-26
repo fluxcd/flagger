@@ -169,7 +169,22 @@ func (c *CanaryDeployer) ShouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryProgressing {
 		return true, nil
 	}
-	return c.IsNewSpec(cd)
+
+	newDep, err := c.IsNewSpec(cd)
+	if err != nil {
+		return false, err
+	}
+	if newDep {
+		return newDep, nil
+	}
+
+	newCfg, err := c.configTracker.HasConfigChanged(cd)
+	if err != nil {
+		return false, err
+	}
+
+	return newCfg, nil
+
 }
 
 // SetStatusFailedChecks updates the canary failed checks counter
@@ -230,12 +245,18 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 		return fmt.Errorf("deployment %s.%s marshal error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
+	configs, err := c.configTracker.GetConfigRefs(cd)
+	if err != nil {
+		return fmt.Errorf("configs query error %v", err)
+	}
+
 	cdCopy := cd.DeepCopy()
 	cdCopy.Status.Phase = status.Phase
 	cdCopy.Status.CanaryWeight = status.CanaryWeight
 	cdCopy.Status.FailedChecks = status.FailedChecks
 	cdCopy.Status.LastAppliedSpec = base64.StdEncoding.EncodeToString(specJson)
 	cdCopy.Status.LastTransitionTime = metav1.Now()
+	cdCopy.Status.TrackedConfigs = configs
 
 	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {

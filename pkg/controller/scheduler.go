@@ -91,10 +91,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	if ok, err := c.deployer.ShouldAdvance(cd); !ok {
-		if err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-		}
+	shouldAdvance, err := c.deployer.ShouldAdvance(cd)
+	if err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
+	if !shouldAdvance {
 		return
 	}
 
@@ -123,7 +126,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
 
 	// check if canary analysis should start (canary revision has changes) or continue
-	if ok := c.checkCanaryStatus(cd); !ok {
+	if ok := c.checkCanaryStatus(cd, shouldAdvance); !ok {
 		return
 	}
 
@@ -291,7 +294,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 }
 
-func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary) bool {
+func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
 	c.recorder.SetStatus(cd)
 	if cd.Status.Phase == flaggerv1.CanaryProgressing {
 		return true
@@ -309,11 +312,11 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary) bool {
 		return false
 	}
 
-	if diff, err := c.deployer.IsNewSpec(cd); diff {
+	if shouldAdvance {
 		c.recordEventInfof(cd, "New revision detected! Scaling up %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		c.sendNotification(cd, "New revision detected, starting canary analysis.",
 			true, false)
-		if err = c.deployer.Scale(cd, 1); err != nil {
+		if err := c.deployer.Scale(cd, 1); err != nil {
 			c.recordEventErrorf(cd, "%v", err)
 			return false
 		}
@@ -330,6 +333,9 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary) bool {
 func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 	if cd.Status.Phase == flaggerv1.CanaryProgressing {
 		if diff, _ := c.deployer.IsNewSpec(cd); diff {
+			return true
+		}
+		if diff, _ := c.deployer.configTracker.HasConfigChanged(cd); diff {
 			return true
 		}
 	}
