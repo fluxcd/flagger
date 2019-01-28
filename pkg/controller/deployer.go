@@ -73,7 +73,7 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
 
 	// update pod annotations to ensure a rolling update
-	annotations, err := c.makeAnnotations(primaryCopy.Spec.Template.Annotations)
+	annotations, err := c.makeAnnotations(canary.Spec.Template.Annotations)
 	if err != nil {
 		return err
 	}
