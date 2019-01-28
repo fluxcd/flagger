@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -69,6 +71,13 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 
 	// update spec with primary secrets and config maps
 	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
+
+	// update pod annotations to ensure a rolling update
+	annotations, err := c.makeAnnotations(primaryCopy.Spec.Template.Annotations)
+	if err != nil {
+		return err
+	}
+	primaryCopy.Spec.Template.Annotations = annotations
 
 	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
@@ -331,12 +340,17 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
 			return err
 		}
+		annotations, err := c.makeAnnotations(canaryDep.Spec.Template.Annotations)
+		if err != nil {
+			return err
+		}
+
 		// create primary deployment
 		primaryDep = &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        primaryName,
-				Annotations: canaryDep.Annotations,
-				Namespace:   cd.Namespace,
+				Name:      primaryName,
+				Labels:    canaryDep.Labels,
+				Namespace: cd.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -359,7 +373,7 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels:      map[string]string{"app": primaryName},
-						Annotations: canaryDep.Spec.Template.Annotations,
+						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
 					Spec: c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, configRefs),
@@ -396,6 +410,7 @@ func (c *CanaryDeployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      primaryHpaName,
 				Namespace: cd.Namespace,
+				Labels:    hpa.Labels,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -474,4 +489,27 @@ func (c *CanaryDeployer) getDeploymentCondition(
 		}
 	}
 	return nil
+}
+
+// makeAnnotations appends an unique ID to annotations map
+func (c *CanaryDeployer) makeAnnotations(annotations map[string]string) (map[string]string, error) {
+	idKey := "flagger-id"
+	res := make(map[string]string)
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		return res, err
+	}
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	id := fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
+
+	for k, v := range annotations {
+		if k != idKey {
+			res[k] = v
+		}
+	}
+	res[idKey] = id
+
+	return res, nil
 }

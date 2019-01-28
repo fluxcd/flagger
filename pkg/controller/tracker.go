@@ -243,9 +243,9 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 			primaryName := fmt.Sprintf("%s-primary", config.GetName())
 			primaryConfigMap := &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:        primaryName,
-					Namespace:   cd.Namespace,
-					Annotations: config.Annotations,
+					Name:      primaryName,
+					Namespace: cd.Namespace,
+					Labels:    config.Labels,
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 							Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -280,9 +280,9 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 			primaryName := fmt.Sprintf("%s-primary", secret.GetName())
 			primarySecret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:        primaryName,
-					Namespace:   cd.Namespace,
-					Annotations: secret.Annotations,
+					Name:      primaryName,
+					Namespace: cd.Namespace,
+					Labels:    secret.Labels,
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 							Group:   flaggerv1.SchemeGroupVersion.Group,
