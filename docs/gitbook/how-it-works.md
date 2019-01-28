@@ -97,38 +97,42 @@ the Istio Virtual Service. The container port from the target deployment should 
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
+A canary deployment is triggered by changes in any of the following objects:
+
+* Deployment PodSpec (container image, command, ports, env, resources, etc)
+* ConfigMaps mounted as volumes or mapped to environment variables
+* Secrets mounted as volumes or mapped to environment variables
+
 Gated canary promotion stages:
 
 * scan for canary deployments
-* creates the primary deployment if needed
 * check Istio virtual service routes are mapped to primary and canary ClusterIP services
 * check primary and canary deployments status
-  * halt advancement if a rolling update is underway
-  * halt advancement if pods are unhealthy
-* increase canary traffic weight percentage from 0% to 5% \(step weight\)
+    * halt advancement if a rolling update is underway
+    * halt advancement if pods are unhealthy
+* increase canary traffic weight percentage from 0% to 5% (step weight)
+* call webhooks and check results
 * check canary HTTP request success rate and latency
-  * halt advancement if any metric is under the specified threshold
-  * increment the failed checks counter
+    * halt advancement if any metric is under the specified threshold
+    * increment the failed checks counter
 * check if the number of failed checks reached the threshold
-  * route all traffic to primary
-  * scale to zero the canary deployment and mark it as failed
-  * wait for the canary deployment to be updated \(revision bump\) and start over
-* increase canary traffic weight by 5% \(step weight\) till it reaches 50% \(max weight\)
-  * halt advancement if the primary or canary deployment becomes unhealthy
-  * halt advancement while canary deployment is being scaled up/down by HPA
-  * halt advancement if any of the webhook calls are failing
-  * halt advancement while canary request success rate is under the threshold
-  * halt advancement while canary request duration P99 is over the threshold
+    * route all traffic to primary
+    * scale to zero the canary deployment and mark it as failed
+    * wait for the canary deployment to be updated and start over
+* increase canary traffic weight by 5% (step weight) till it reaches 50% (max weight) 
+    * halt advancement while canary request success rate is under the threshold
+    * halt advancement while canary request duration P99 is over the threshold
+    * halt advancement if the primary or canary deployment becomes unhealthy 
+    * halt advancement while canary deployment is being scaled up/down by HPA
 * promote canary to primary
-  * copy canary deployment spec template over primary
+    * copy ConfigMaps and Secrets from canary to primary
+    * copy canary deployment spec template over primary
 * wait for primary rolling update to finish
-  * halt advancement if pods are unhealthy
+    * halt advancement if pods are unhealthy
 * route all traffic to primary
 * scale to zero the canary deployment
-* mark the canary deployment as finished
-* wait for the canary deployment to be updated \(revision bump\) and start over
-
-You can change the canary analysis _max weight_ and the _step weight_ percentage in the Flagger's custom resource.
+* mark rollout as finished
+* wait for the canary deployment to be updated and start over
 
 ### Canary Analysis
 
