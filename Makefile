@@ -46,6 +46,7 @@ version-set:
 	sed -i '' "s/flagger:$$current/flagger:$$next/g" artifacts/flagger/deployment.yaml && \
 	sed -i '' "s/tag: $$current/tag: $$next/g" charts/flagger/values.yaml && \
 	sed -i '' "s/appVersion: $$current/appVersion: $$next/g" charts/flagger/Chart.yaml && \
+	sed -i '' "s/version: $$current/version: $$next/g" charts/flagger/Chart.yaml && \
 	echo "Version $$next set in code, deployment and charts"
 
 version-up:
