@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -28,9 +30,10 @@ type CanaryDeployer struct {
 	istioClient   istioclientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
+	configTracker ConfigTracker
 }
 
-// Promote copies the pod spec from canary to primary
+// Promote copies the pod spec, secrets and config maps from canary to primary
 func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
@@ -51,12 +54,30 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
 	}
 
+	// promote secrets and config maps
+	configRefs, err := c.configTracker.GetTargetConfigs(cd)
+	if err != nil {
+		return err
+	}
+	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+		return err
+	}
+
 	primaryCopy := primary.DeepCopy()
 	primaryCopy.Spec.ProgressDeadlineSeconds = canary.Spec.ProgressDeadlineSeconds
 	primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
 	primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
 	primaryCopy.Spec.Strategy = canary.Spec.Strategy
-	primaryCopy.Spec.Template.Spec = canary.Spec.Template.Spec
+
+	// update spec with primary secrets and config maps
+	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
+
+	// update pod annotations to ensure a rolling update
+	annotations, err := c.makeAnnotations(canary.Spec.Template.Annotations)
+	if err != nil {
+		return err
+	}
+	primaryCopy.Spec.Template.Annotations = annotations
 
 	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
@@ -157,7 +178,22 @@ func (c *CanaryDeployer) ShouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryProgressing {
 		return true, nil
 	}
-	return c.IsNewSpec(cd)
+
+	newDep, err := c.IsNewSpec(cd)
+	if err != nil {
+		return false, err
+	}
+	if newDep {
+		return newDep, nil
+	}
+
+	newCfg, err := c.configTracker.HasConfigChanged(cd)
+	if err != nil {
+		return false, err
+	}
+
+	return newCfg, nil
+
 }
 
 // SetStatusFailedChecks updates the canary failed checks counter
@@ -218,12 +254,18 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 		return fmt.Errorf("deployment %s.%s marshal error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
+	configs, err := c.configTracker.GetConfigRefs(cd)
+	if err != nil {
+		return fmt.Errorf("configs query error %v", err)
+	}
+
 	cdCopy := cd.DeepCopy()
 	cdCopy.Status.Phase = status.Phase
 	cdCopy.Status.CanaryWeight = status.CanaryWeight
 	cdCopy.Status.FailedChecks = status.FailedChecks
 	cdCopy.Status.LastAppliedSpec = base64.StdEncoding.EncodeToString(specJson)
 	cdCopy.Status.LastTransitionTime = metav1.Now()
+	cdCopy.Status.TrackedConfigs = configs
 
 	cd, err = c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 	if err != nil {
@@ -290,11 +332,25 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 
 	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
+		// create primary secrets and config maps
+		configRefs, err := c.configTracker.GetTargetConfigs(cd)
+		if err != nil {
+			return err
+		}
+		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+			return err
+		}
+		annotations, err := c.makeAnnotations(canaryDep.Spec.Template.Annotations)
+		if err != nil {
+			return err
+		}
+
+		// create primary deployment
 		primaryDep = &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        primaryName,
-				Annotations: canaryDep.Annotations,
-				Namespace:   cd.Namespace,
+				Name:      primaryName,
+				Labels:    canaryDep.Labels,
+				Namespace: cd.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -317,9 +373,10 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels:      map[string]string{"app": primaryName},
-						Annotations: canaryDep.Spec.Template.Annotations,
+						Annotations: annotations,
 					},
-					Spec: canaryDep.Spec.Template.Spec,
+					// update spec with the primary secrets and config maps
+					Spec: c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, configRefs),
 				},
 			},
 		}
@@ -353,6 +410,7 @@ func (c *CanaryDeployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      primaryHpaName,
 				Namespace: cd.Namespace,
+				Labels:    hpa.Labels,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -431,4 +489,27 @@ func (c *CanaryDeployer) getDeploymentCondition(
 		}
 	}
 	return nil
+}
+
+// makeAnnotations appends an unique ID to annotations map
+func (c *CanaryDeployer) makeAnnotations(annotations map[string]string) (map[string]string, error) {
+	idKey := "flagger-id"
+	res := make(map[string]string)
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		return res, err
+	}
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	id := fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
+
+	for k, v := range annotations {
+		if k != idKey {
+			res[k] = v
+		}
+	}
+	res[idKey] = id
+
+	return res, nil
 }

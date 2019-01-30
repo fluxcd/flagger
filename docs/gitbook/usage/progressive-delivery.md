@@ -24,7 +24,7 @@ kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
 kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
 ```
 
-Create a canary custom resource \(replace example.com with your own domain\):
+Create a canary custom resource (replace example.com with your own domain):
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -146,6 +146,8 @@ Events:
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
+**Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
+
 You can monitor all canaries with:
 
 ```bash
@@ -181,7 +183,8 @@ Generate latency:
 watch curl http://podinfo-canary:9898/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
+the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo

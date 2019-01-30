@@ -5,37 +5,17 @@ import (
 	"testing"
 
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
-	fakeIstio "github.com/knative/pkg/client/clientset/versioned/fake"
-	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
-	"github.com/stefanprodan/flagger/pkg/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestCanaryRouter_Sync(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-
-	router := &CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-
-	err := router.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.router.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	canarySvc, err := kubeClient.CoreV1().Services("default").Get("podinfo", metav1.GetOptions{})
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -48,7 +28,7 @@ func TestCanaryRouter_Sync(t *testing.T) {
 		t.Errorf("Got svc port %v wanted %v", canarySvc.Spec.Ports[0].Port, 9898)
 	}
 
-	primarySvc, err := kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
+	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -61,7 +41,7 @@ func TestCanaryRouter_Sync(t *testing.T) {
 		t.Errorf("Got primary svc port %v wanted %v", primarySvc.Spec.Ports[0].Port, 9898)
 	}
 
-	vs, err := istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -76,29 +56,13 @@ func TestCanaryRouter_Sync(t *testing.T) {
 }
 
 func TestCanaryRouter_GetRoutes(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-
-	router := &CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-
-	err := router.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.router.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	p, c, err := router.GetRoutes(canary)
+	p, c, err := mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -113,29 +77,13 @@ func TestCanaryRouter_GetRoutes(t *testing.T) {
 }
 
 func TestCanaryRouter_SetRoutes(t *testing.T) {
-	canary := newTestCanary()
-	dep := newTestDeployment()
-	hpa := newTestHPA()
-
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
-	kubeClient := fake.NewSimpleClientset(dep, hpa)
-	istioClient := fakeIstio.NewSimpleClientset()
-
-	logger, _ := logging.NewLogger("debug")
-
-	router := &CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
-
-	err := router.Sync(canary)
+	mocks := SetupMocks()
+	err := mocks.router.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	p, c, err := router.GetRoutes(canary)
+	p, c, err := mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -143,12 +91,12 @@ func TestCanaryRouter_SetRoutes(t *testing.T) {
 	p.Weight = 50
 	c.Weight = 50
 
-	err = router.SetRoutes(canary, p, c)
+	err = mocks.router.SetRoutes(mocks.canary, p, c)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	vs, err := istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -158,10 +106,10 @@ func TestCanaryRouter_SetRoutes(t *testing.T) {
 
 	for _, http := range vs.Spec.Http {
 		for _, route := range http.Route {
-			if route.Destination.Host == fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name) {
+			if route.Destination.Host == fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name) {
 				pRoute = route
 			}
-			if route.Destination.Host == canary.Spec.TargetRef.Name {
+			if route.Destination.Host == mocks.canary.Spec.TargetRef.Name {
 				cRoute = route
 			}
 		}

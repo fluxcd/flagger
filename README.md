@@ -38,6 +38,9 @@ ClusterIP [services](https://kubernetes.io/docs/concepts/services-networking/ser
 Istio [virtual services](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService)) 
 to drive the canary analysis and promotion.
 
+Flagger keeps track of ConfigMaps and Secrets referenced by a Kubernetes Deployment and triggers a canary analysis if any of those objects change. 
+When promoting a workload in production, both code (container images) and configuration (config maps and secrets) are being synchronised.
+
 ![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-overview.png)
 
 Gated canary promotion stages:
@@ -48,28 +51,28 @@ Gated canary promotion stages:
     * halt advancement if a rolling update is underway
     * halt advancement if pods are unhealthy
 * increase canary traffic weight percentage from 0% to 5% (step weight)
+* call webhooks and check results
 * check canary HTTP request success rate and latency
     * halt advancement if any metric is under the specified threshold
     * increment the failed checks counter
 * check if the number of failed checks reached the threshold
     * route all traffic to primary
     * scale to zero the canary deployment and mark it as failed
-    * wait for the canary deployment to be updated (revision bump) and start over
+    * wait for the canary deployment to be updated and start over
 * increase canary traffic weight by 5% (step weight) till it reaches 50% (max weight) 
     * halt advancement while canary request success rate is under the threshold
     * halt advancement while canary request duration P99 is over the threshold
     * halt advancement if the primary or canary deployment becomes unhealthy 
     * halt advancement while canary deployment is being scaled up/down by HPA
 * promote canary to primary
+    * copy ConfigMaps and Secrets from canary to primary
     * copy canary deployment spec template over primary
 * wait for primary rolling update to finish
     * halt advancement if pods are unhealthy
 * route all traffic to primary
 * scale to zero the canary deployment
 * mark rollout as finished
-* wait for the canary deployment to be updated (revision bump) and start over
-
-You can change the canary analysis _max weight_ and the _step weight_ percentage in the Flagger's custom resource.
+* wait for the canary deployment to be updated and start over
 
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
@@ -248,6 +251,9 @@ kubectl -n test set image deployment/podinfo \
 podinfod=quay.io/stefanprodan/podinfo:1.4.0
 ```
 
+**Note** that Flagger tracks changes in the deployment `PodSpec` but also in `ConfigMaps` and `Secrets` 
+that are referenced in the pod's volumes and containers environment variables.
+
 Flagger detects that the deployment revision changed and starts a new canary analysis:
 
 ```
@@ -335,6 +341,8 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
+
+**Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
 
 ### Monitoring
 
