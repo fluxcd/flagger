@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 
 Track changes in ConfigMaps and Secrets [#37](https://github.com/stefanprodan/flagger/pull/37)
 
-##### Features
+#### Features
 
 - Promote configmaps and secrets changes from canary to primary
 - Detect changes in configmaps and/or secrets and (re)start canary analysis
@@ -14,7 +14,7 @@ Track changes in ConfigMaps and Secrets [#37](https://github.com/stefanprodan/fl
 - Create primary configmaps and secrets at bootstrap
 - Scan canary volumes and containers for configmaps and secrets
 
-##### Fixes
+#### Fixes
 
 - Copy deployment labels from canary to primary at bootstrap and promotion
 
@@ -22,13 +22,13 @@ Track changes in ConfigMaps and Secrets [#37](https://github.com/stefanprodan/fl
 
 Load testing webhook [#35](https://github.com/stefanprodan/flagger/pull/35)
 
-##### Features
+#### Features
 
 - Add the load tester chart to Flagger Helm repository
 - Implement a load test runner based on [rakyll/hey](https://github.com/rakyll/hey)
 - Log warning when no values are found for Istio metric due to lack of traffic
 
-##### Fixes
+#### Fixes
 
 - Run wekbooks before the metrics checks to avoid failures when using a load tester
 
@@ -36,17 +36,17 @@ Load testing webhook [#35](https://github.com/stefanprodan/flagger/pull/35)
 
 Restart canary analysis if revision changes [#31](https://github.com/stefanprodan/flagger/pull/31)
 
-##### Breaking changes
+#### Breaking changes
 
 - Drop support for Kubernetes 1.10
 
-##### Features
+#### Features
 
 - Detect changes during canary analysis and reset advancement
 - Add status and additional printer columns to CRD
 - Add canary name and namespace to controller structured logs
 
-##### Fixes
+#### Fixes
 
 - Allow canary name to be different to the target name
 - Check if multiple canaries have the same target and log error
@@ -57,11 +57,11 @@ Restart canary analysis if revision changes [#31](https://github.com/stefanproda
 
 Configurable canary analysis duration [#20](https://github.com/stefanprodan/flagger/pull/20)
 
-##### Breaking changes
+#### Breaking changes
 
 - Helm chart: flag `controlLoopInterval` has been removed
 
-##### Features
+#### Features
 
 - CRD: canaries.flagger.app v1alpha3
 - Schedule canary analysis independently based on `canaryAnalysis.interval`
@@ -72,6 +72,8 @@ Configurable canary analysis duration [#20](https://github.com/stefanprodan/flag
 
 Webhooks [#18](https://github.com/stefanprodan/flagger/pull/18)
 
+#### Features
+
 - CRD: canaries.flagger.app v1alpha2
 - Implement canary external checks based on webhooks HTTP POST calls
 - Add webhooks to Canary CRD
@@ -81,7 +83,7 @@ Webhooks [#18](https://github.com/stefanprodan/flagger/pull/18)
 
 Improve Slack notifications
 
-##### Features
+#### Features
 
 - Add canary analysis metadata to init and start Slack messages
 - Add rollback reason to failed canary Slack messages
@@ -90,7 +92,7 @@ Improve Slack notifications
 
 Canary progress deadline
 
-##### Features
+#### Features
 
 - Rollback canary based on the deployment progress deadline check
 - Add progress deadline to Canary CRD (defaults to 10 minutes)
@@ -99,7 +101,7 @@ Canary progress deadline
 
 First stable release
 
-##### Features
+#### Features
 
 - CRD: canaries.flagger.app v1alpha1
 - Notifications: post canary events to Slack
@@ -112,7 +114,7 @@ First stable release
 
 Initial semver release
 
-##### Features
+#### Features
 
 - Implement canary rollback based on failed checks threshold
 - Scale up the deployment when canary revision changes
