@@ -81,7 +81,7 @@ Webhooks [#18](https://github.com/stefanprodan/flagger/pull/18)
 
 ## 0.1.2 (2018-12-06)
 
-Improve Slack notifications
+Improve Slack notifications [#14](https://github.com/stefanprodan/flagger/pull/14)
 
 #### Features
 
@@ -90,7 +90,7 @@ Improve Slack notifications
 
 ## 0.1.1 (2018-11-28)
 
-Canary progress deadline
+Canary progress deadline [#10](https://github.com/stefanprodan/flagger/pull/10)
 
 #### Features
 
