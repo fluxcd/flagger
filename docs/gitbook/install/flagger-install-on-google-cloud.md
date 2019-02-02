@@ -33,16 +33,10 @@ gcloud services enable container.googleapis.com
 gcloud services enable dns.googleapis.com
 ```
 
-Install the `kubectl` command-line tool:
+Install the kubectl command-line tool:
 
 ```text
 gcloud components install kubectl
-```
-
-Install the `helm` command-line tool:
-
-```text
-brew install kubernetes-helm
 ```
 
 ### GKE cluster setup
@@ -152,7 +146,13 @@ Verify that the wildcard DNS is working \(replace `example.com` with your domain
 watch host test.example.com
 ```
 
-### Install cert-manager
+### Install Helm
+
+Install the [Helm](https://docs.helm.sh/using_helm/#installing-helm) command-line tool:
+
+```text
+brew install kubernetes-helm
+```
 
 Create a service account and a cluster role binding for Tiller:
 
@@ -160,8 +160,8 @@ Create a service account and a cluster role binding for Tiller:
 kubectl -n kube-system create sa tiller
 
 kubectl create clusterrolebinding tiller-cluster-rule \
-    --clusterrole=cluster-admin \
-    --serviceaccount=kube-system:tiller 
+--clusterrole=cluster-admin \
+--serviceaccount=kube-system:tiller 
 ```
 
 Deploy Tiller in the `kube-system` namespace:
@@ -170,12 +170,22 @@ Deploy Tiller in the `kube-system` namespace:
 helm init --service-account tiller
 ```
 
+You should consider using SSL between Helm and Tiller, for more information on securing your Helm 
+installation see [docs.helm.sh](https://docs.helm.sh/using_helm/#securing-your-helm-installation).
+
+### Install cert-manager
+
+Jetstack's [cert-manager](https://github.com/jetstack/cert-manager) 
+is a Kubernetes operator that automatically creates and manages TLS certs issued by Let’s Encrypt.
+
+You'll be using cert-manager to provision a wildcard certificate for the Istio ingress gateway. 
+
 Install cert-manager's CRDs:
 
 ```bash
-CM_REPO=https://raw.githubusercontent.com/jetstack/cert-manager
+CERT_REPO=https://raw.githubusercontent.com/jetstack/cert-manager
 
-kubectl apply -f ${CM_REPO}/release-0.6/deploy/manifests/00-crds.yaml
+kubectl apply -f ${CERT_REPO}/release-0.6/deploy/manifests/00-crds.yaml
 ```
 
 Create the cert-manager namespace and disable resource validation:
@@ -186,11 +196,10 @@ kubectl create namespace cert-manager
 kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
 ```
 
-Install cert-manager:
+Install cert-manager with Helm:
 
 ```bash
-helm repo update && helm install \
---name cert-manager \
+helm repo update && helm upgrade -i cert-manager \
 --namespace cert-manager \
 --version v0.6.0 \
 stable/cert-manager
@@ -198,7 +207,7 @@ stable/cert-manager
 
 ### Istio Gateway TLS setup
 
-![Istio Let&apos;s Encrypt](https://raw.githubusercontent.com/stefanprodan/istio-gke/master/docs/screens/istio-cert-manager-gcp.png)
+![Istio Let&apos;s Encrypt](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/istio-cert-manager-gke.png)
 
 Create a generic Istio Gateway to expose services outside the mesh on HTTPS:
 
