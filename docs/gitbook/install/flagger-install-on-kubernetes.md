@@ -62,6 +62,24 @@ helm template flagger/flagger \
 kubectl apply -f $HOME/flagger.yaml
 ```
 
+To uninstall the Flagger release with Helm run:
+
+```text
+helm delete --purge flagger
+```
+
+The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+> **Note** that on uninstall the Canary CRD will not be removed. 
+Deleting the CRD will make Kubernetes remove all the objects owned by Flagger like Istio virtual services, 
+Kubernetes deployments and ClusterIP services.
+
+If you want to remove all the objects created by Flagger you have delete the Canary CRD with kubectl:
+
+```text
+kubectl delete crd canaries.flagger.app
+```
+
 ### Install Grafana
 
 Flagger comes with a Grafana dashboard made for monitoring the canary analysis.
@@ -98,28 +116,28 @@ You can access Grafana using port forwarding:
 kubectl -n istio-system port-forward svc/flagger-grafana 3000:3000
 ```
 
-###  Uninstall Flagger and Grafana
+###  Install Load Tester
 
-To uninstall the Flagger release with Helm run:
+Flagger comes with an optional load testing service that generates traffic 
+during canary analysis when configured as a webhook.
 
-```text
-helm delete --purge flagger
+Deploy the load test runner with Helm:
+
+```bash
+helm upgrade -i flagger-loadtester flagger/loadtester \
+--namepace=test \
+--set cmd.logOutput=true \
+--set cmd.timeout=1h
 ```
 
-> **Note** that on uninstall the Canary CRD will not be removed. 
-Deleting the CRD will make Kubernetes remove all the objects owned by Flagger like Istio virtual services, 
-Kubernetes deployments and ClusterIP services.
+Deploy with kubectl:
 
-If you want to remove all the objects created by Flagger you have delete the Canary CRD with kubectl:
+```bash
+export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
 
-```text
-kubectl delete crd canaries.flagger.app
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
+kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
 ```
 
-To uninstall the Grafana release with Helm run:
+> **Note** that the load tester should be deployed in a namespace with Istio sidecar injection enabled.
 
-```text
-helm delete --purge flagger-grafana
-```
-
-The command removes all the Kubernetes components associated with the chart and deletes the release.
