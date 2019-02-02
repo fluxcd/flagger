@@ -5,13 +5,14 @@
 
 ## Install
 
-* [Install Flagger](install/install-flagger.md)
-* [Install Grafana](install/install-grafana.md)
-* [Install Istio](install/install-istio.md)
+* [Flagger Install on Kubernetes](install/flagger-install-on-kubernetes.md)
+* [Flagger Install on Google Cloud](install/flagger-install-on-google-cloud.md)
 
 ## Usage
 
 * [Canary Deployments](usage/progressive-delivery.md)
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)
+
+
 

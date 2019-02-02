@@ -252,14 +252,14 @@ Spec:
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: integration-tests
-        url: http://podinfo.test:9898/echo
+      - name: integration-test
+        url: http://int-runner.test:8080/
         timeout: 30s
         metadata:
           test: "all"
           token: "16688eb5e9f289f1991c"
-      - name: load-tests
-        url: http://podinfo.test:9898/echo
+      - name: db-test
+        url: http://migration-check.db/query
         timeout: 30s
         metadata:
           key1: "val1"
