@@ -4,21 +4,21 @@ This guide walks you through setting up Flagger on a Kubernetes cluster.
 
 ### Prerequisites
 
-Flagger requires a Kubernetes cluster v1.11 or newer with the 
-MutatingAdmissionWebhook and ValidatingAdmissionWebhook admission controllers enabled. 
+Flagger requires a Kubernetes cluster **v1.11** or newer with the following admission controllers enabled:
 
-Flagger depends on Istio v1.0.3 or newer configured with the following components:
+* MutatingAdmissionWebhook
+* ValidatingAdmissionWebhook 
 
-* istio-citadel
-* istio-ingressgateway
+Flagger depends on [Istio](https://istio.io/docs/setup/kubernetes/quick-start/) **v1.0.3** or newer 
+with traffic management, telemetry and Prometheus enabled. 
+
+A minimal Istio installation should contain the following services:
+
 * istio-pilot
-* istio-policy
+* istio-ingressgateway
 * istio-sidecar-injector
 * istio-telemetry
 * prometheus
-
-To install and configure Istio you can follow the instructions on 
-[istio.io](https://istio.io/docs/setup/kubernetes/quick-start/).
 
 ### Install Flagger
 
@@ -35,6 +35,8 @@ helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
 --set metricsServer=http://prometheus.istio-system:9090
 ```
+
+You can install Flagger in any namespace as long as it can talk to the Istio Prometheus service on port 9090.
 
 Enable **Slack** notifications:
 
@@ -69,9 +71,9 @@ Deploy Grafana in the _**istio-system**_ namespace:
 ```bash
 helm upgrade -i flagger-grafana flagger/grafana \
 --namespace=istio-system \
---set url=http://prometheus:9090 \
+--set url=http://prometheus.istio-system:9090 \
 --set user=admin \
---set password=admin
+--set password=change-me
 ```
 
 Or use helm template command and apply the generated yaml with kubectl:
@@ -81,15 +83,16 @@ Or use helm template command and apply the generated yaml with kubectl:
 helm template flagger/grafana \
 --name flagger-grafana \
 --namespace=istio-system \
+--set url=http://prometheus.istio-system:9090 \
 --set user=admin \
---set password=admin \
+--set password=change-me \
 > $HOME/flagger-grafana.yaml
 
 # apply
 kubectl apply -f $HOME/flagger-grafana.yaml
 ```
 
-You access Grafana using port forwarding:
+You can access Grafana using port forwarding:
 
 ```bash
 kubectl -n istio-system port-forward svc/flagger-grafana 3000:3000
