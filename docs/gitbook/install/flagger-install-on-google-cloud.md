@@ -56,7 +56,7 @@ gcloud beta container clusters create istio \
 --no-enable-cloud-logging \
 --disk-size=30 \
 --enable-autorepair \
---addons=Istio \
+--addons=HorizontalPodAutoscaling,Istio \
 --istio-config=auth=MTLS_PERMISSIVE
 ```
 
