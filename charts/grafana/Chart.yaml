@@ -1,7 +1,7 @@
 apiVersion: v1
 name: grafana
-version: 0.1.0
-appVersion: 5.4.2
+version: 1.0.0
+appVersion: 5.4.3
 description: Grafana dashboards for monitoring Flagger canary deployments
 icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
 home: https://flagger.app

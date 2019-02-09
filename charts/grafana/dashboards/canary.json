@@ -2,7 +2,6 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:1587",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -16,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1534587617141,
+  "id": 1,
+  "iteration": 1549736611069,
   "links": [],
   "panels": [
     {
@@ -179,7 +178,6 @@
       "tableColumn": "",
       "targets": [
         {
-          "$$hashKey": "object:2857",
           "expr": "sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$primary\",response_code!~\"5.*\"}[30s])) / sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$primary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
@@ -344,7 +342,6 @@
       "tableColumn": "",
       "targets": [
         {
-          "$$hashKey": "object:2810",
           "expr": "sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$canary\",response_code!~\"5.*\"}[30s])) / sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$canary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
@@ -363,7 +360,7 @@
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "aliasColors": {},
@@ -432,6 +429,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Primary: Request Duration",
       "tooltip": {
@@ -464,7 +462,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -533,6 +535,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Canary: Request Duration",
       "tooltip": {
@@ -565,7 +568,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "content": "<div class=\"dashboard-header text-center\">\n<span>USE: $canary.$namespace</span>\n</div>",
@@ -623,7 +630,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:1685",
           "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$primary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
           "format": "time_series",
           "hide": false,
@@ -634,6 +640,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Primary: CPU Usage by Pod",
       "tooltip": {
@@ -651,7 +658,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1845",
           "format": "s",
           "label": "CPU seconds / second",
           "logBase": 1,
@@ -660,7 +666,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1846",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -668,7 +673,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -711,7 +720,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:1685",
           "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$canary.*\", pod_name!~\"$primary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
           "format": "time_series",
           "hide": false,
@@ -722,6 +730,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Canary: CPU Usage by Pod",
       "tooltip": {
@@ -739,7 +748,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1845",
           "format": "s",
           "label": "CPU seconds / second",
           "logBase": 1,
@@ -748,7 +756,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1846",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -756,7 +763,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -799,7 +810,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:1685",
           "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$primary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
           "format": "time_series",
           "hide": false,
@@ -811,6 +821,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Primary: Memory Usage by Pod",
       "tooltip": {
@@ -828,7 +839,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1845",
           "decimals": null,
           "format": "bytes",
           "label": "",
@@ -838,7 +848,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1846",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -846,7 +855,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -889,7 +902,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:1685",
           "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$canary.*\", pod_name!~\"$primary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
           "format": "time_series",
           "hide": false,
@@ -901,6 +913,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Canary: Memory Usage by Pod",
       "tooltip": {
@@ -918,7 +931,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1845",
           "decimals": null,
           "format": "bytes",
           "label": "",
@@ -928,7 +940,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1846",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -936,7 +947,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -975,12 +990,10 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "$$hashKey": "object:3641",
           "alias": "received",
           "color": "#f9d9f9"
         },
         {
-          "$$hashKey": "object:3649",
           "alias": "transmited",
           "color": "#f29191"
         }
@@ -990,7 +1003,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:2598",
           "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$primary.*\"}[1m])) ",
           "format": "time_series",
           "intervalFactor": 1,
@@ -998,7 +1010,6 @@
           "refId": "A"
         },
         {
-          "$$hashKey": "object:3245",
           "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$primary.*\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
@@ -1008,6 +1019,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Primary: Network I/O",
       "tooltip": {
@@ -1025,7 +1037,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1845",
           "decimals": null,
           "format": "Bps",
           "label": "",
@@ -1035,7 +1046,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1846",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1043,7 +1053,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1082,12 +1096,10 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "$$hashKey": "object:3641",
           "alias": "received",
           "color": "#f9d9f9"
         },
         {
-          "$$hashKey": "object:3649",
           "alias": "transmited",
           "color": "#f29191"
         }
@@ -1097,7 +1109,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:2598",
           "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\",pod_name!~\"$primary.*\"}[1m])) ",
           "format": "time_series",
           "intervalFactor": 1,
@@ -1105,7 +1116,6 @@
           "refId": "A"
         },
         {
-          "$$hashKey": "object:3245",
           "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\",pod_name!~\"$primary.*\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
@@ -1115,6 +1125,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Canary: Network I/O",
       "tooltip": {
@@ -1132,7 +1143,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1845",
           "decimals": null,
           "format": "Bps",
           "label": "",
@@ -1142,7 +1152,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1846",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1150,7 +1159,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "content": "<div class=\"dashboard-header text-center\">\n<span>IN/OUTBOUND: $canary.$namespace</span>\n</div>",
@@ -1205,7 +1218,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:1953",
           "expr": "round(sum(irate(istio_requests_total{connection_security_policy=\"mutual_tls\", destination_workload_namespace=~\"$namespace\", destination_workload=~\"$primary\", reporter=\"destination\"}[30s])) by (source_workload, source_workload_namespace, response_code), 0.001)",
           "format": "time_series",
           "hide": false,
@@ -1215,7 +1227,6 @@
           "step": 2
         },
         {
-          "$$hashKey": "object:1954",
           "expr": "round(sum(irate(istio_requests_total{connection_security_policy!=\"mutual_tls\", destination_workload_namespace=~\"$namespace\", destination_workload=~\"$primary\", reporter=\"destination\"}[30s])) by (source_workload, source_workload_namespace, response_code), 0.001)",
           "format": "time_series",
           "hide": false,
@@ -1227,6 +1238,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Primary: Incoming Requests by Source And Response Code",
       "tooltip": {
@@ -1246,7 +1258,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1999",
           "format": "ops",
           "label": null,
           "logBase": 1,
@@ -1255,7 +1266,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:2000",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1263,7 +1273,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1323,6 +1337,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Canary: Incoming Requests by Source And Response Code",
       "tooltip": {
@@ -1357,7 +1372,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1416,6 +1435,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Primary: Outgoing Requests by Destination And Response Code",
       "tooltip": {
@@ -1450,7 +1470,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1509,6 +1533,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Canary: Outgoing Requests by Destination And Response Code",
       "tooltip": {
@@ -1543,7 +1568,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": "10s",
@@ -1555,10 +1584,12 @@
       {
         "allValue": null,
         "current": {
-          "text": "demo",
-          "value": "demo"
+          "selected": true,
+          "text": "test",
+          "value": "test"
         },
         "datasource": "prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Namespace",
@@ -1568,6 +1599,7 @@
         "query": "query_result(sum(istio_requests_total) by (destination_workload_namespace) or sum(istio_tcp_sent_bytes_total) by (destination_workload_namespace))",
         "refresh": 1,
         "regex": "/.*_namespace=\"([^\"]*).*/",
+        "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
         "tags": [],
@@ -1578,10 +1610,12 @@
       {
         "allValue": null,
         "current": {
-          "text": "primary",
-          "value": "primary"
+          "selected": false,
+          "text": "backend-primary",
+          "value": "backend-primary"
         },
         "datasource": "prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Primary",
@@ -1591,6 +1625,7 @@
         "query": "query_result(sum(istio_requests_total{destination_workload_namespace=~\"$namespace\"}) by (destination_service_name))",
         "refresh": 1,
         "regex": "/.*destination_service_name=\"([^\"]*).*/",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -1601,10 +1636,12 @@
       {
         "allValue": null,
         "current": {
-          "text": "canary",
-          "value": "canary"
+          "selected": true,
+          "text": "backend",
+          "value": "backend"
         },
         "datasource": "prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Canary",
@@ -1614,6 +1651,7 @@
         "query": "query_result(sum(istio_requests_total{destination_workload_namespace=~\"$namespace\"}) by (destination_service_name))",
         "refresh": 1,
         "regex": "/.*destination_service_name=\"([^\"]*).*/",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -1653,7 +1691,7 @@
     ]
   },
   "timezone": "",
-  "title": "Canary analysis",
+  "title": "Flagger canary",
   "uid": "RdykD7tiz",
-  "version": 2
+  "version": 3
 }
