@@ -54,6 +54,7 @@ gcloud beta container clusters create istio \
 --machine-type=n1-highcpu-4 \
 --preemptible \
 --no-enable-cloud-logging \
+--no-enable-cloud-monitoring \
 --disk-size=30 \
 --enable-autorepair \
 --addons=HorizontalPodAutoscaling,Istio \
