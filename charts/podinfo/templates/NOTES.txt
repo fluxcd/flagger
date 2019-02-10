@@ -1,0 +1,1 @@
+podinfo {{ .Release.Name }} deployed!
