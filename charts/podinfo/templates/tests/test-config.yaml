@@ -1,8 +1,4 @@
-{{- $suffix := "" -}}
-{{- if .Values.canary.enabled -}}
-{{- $suffix = "-primary" -}}
-{{- end -}}
-{{- $url := printf "%s%s:%v" (include "podinfo.fullname" .) $suffix .Values.service.port -}}
+{{- $url := printf "%s%s.%s:%v" (include "podinfo.fullname" .) (include "podinfo.suffix" .) .Release.Namespace .Values.service.port -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
