@@ -330,6 +330,11 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 		return err
 	}
 
+	if appSel, ok := canaryDep.Spec.Selector.MatchLabels["app"]; !ok || appSel != canaryDep.Name {
+		return fmt.Errorf("invalid label selector! Deployment %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
+			targetName, cd.Namespace, targetName)
+	}
+
 	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// create primary secrets and config maps
