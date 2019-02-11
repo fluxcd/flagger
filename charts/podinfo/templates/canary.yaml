@@ -1,0 +1,54 @@
+{{- if .Values.canary.enabled }}
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: {{ template "podinfo.fullname" . }}
+  labels:
+    app: {{ template "podinfo.name" . }}
+    chart: {{ template "podinfo.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name:  {{ template "podinfo.fullname" . }}
+  progressDeadlineSeconds: 60
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name:  {{ template "podinfo.fullname" . }}
+  service:
+    port: {{ .Values.service.port }}
+    {{- if .Values.canary.istioIngress.enabled }}
+    gateways:
+    -  {{ .Values.canary.istioIngress.gateway }}
+    hosts:
+    - {{ .Values.canary.istioIngress.host }}
+    {{- end }}
+  canaryAnalysis:
+    interval: {{ .Values.canary.analysis.interval }}
+    threshold: {{ .Values.canary.analysis.threshold }}
+    maxWeight: {{ .Values.canary.analysis.maxWeight }}
+    stepWeight: {{ .Values.canary.analysis.stepWeight }}
+    metrics:
+    - name: istio_requests_total
+      threshold: {{ .Values.canary.thresholds.successRate }}
+      interval: 1m
+    - name: istio_request_duration_seconds_bucket
+      threshold: {{ .Values.canary.thresholds.latency }}
+      interval: 1m
+    {{- if .Values.canary.loadtest.enabled }}
+    webhooks:
+      - name: load-test-get
+        url: {{ .Values.canary.loadtest.url }}
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 1m -q 5 -c 2 http://{{ template "podinfo.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}"
+      - name: load-test-post
+        url: {{ .Values.canary.loadtest.url }}
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 1m -q 5 -c 2 -m POST -d '{\"test\": true}' http://{{ template "podinfo.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}/echo"
+    {{- end }}
+{{- end }}

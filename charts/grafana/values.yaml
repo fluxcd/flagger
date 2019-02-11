@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: grafana/grafana
-  tag: 5.4.2
+  tag: 5.4.3
   pullPolicy: IfNotPresent
 
 service:
@@ -28,7 +28,7 @@ tolerations: []
 affinity: {}
 
 user: admin
-password: admin
+password:
 
 # Istio Prometheus instance
 url: http://prometheus:9090

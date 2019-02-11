@@ -1,0 +1,70 @@
+# Default values for podinfo.
+image:
+  repository: quay.io/stefanprodan/podinfo
+  tag: 1.4.0
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 9898
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  cpu: 80
+  memory: 512Mi
+
+canary:
+  enabled: false
+  istioIngress:
+    enabled: false
+    # Istio ingress gateway name
+    gateway: public-gateway.istio-system.svc.cluster.local
+    # external host name eg. podinfo.example.com
+    host:
+  analysis:
+    # schedule interval (default 60s)
+    interval: 15s
+    # max number of failed metric checks before rollback
+    threshold: 10
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 2
+  thresholds:
+    # minimum req success rate (non 5xx responses)
+    # percentage (0-100)
+    successRate: 99
+    # maximum req duration P99
+    # milliseconds
+    latency: 500
+  loadtest:
+    enabled: true
+    # load tester address
+    url: http://flagger-loadtester.test/
+
+resources:
+  limits:
+  requests:
+    cpu: 100m
+    memory: 32Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+logLevel: info
+backend: #http://backend-podinfo:9898/echo
+message: #UI greetings
+
+faults:
+  delay: false
+  error: false

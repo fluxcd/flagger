@@ -1,0 +1,22 @@
+{{- $url := printf "%s%s.%s:%v" (include "podinfo.fullname" .) (include "podinfo.suffix" .) .Release.Namespace .Values.service.port -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  {{ template "podinfo.fullname" . }}-tests
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ template "podinfo.name" . }}
+data:
+  run.sh: |-
+    @test "HTTP POST /echo" {
+      run curl --retry 3 --connect-timeout 2 -sSX POST -d 'test' {{ $url }}/echo
+      [ $output = "test" ]
+    }
+    @test "HTTP POST /store" {
+      curl --retry 3 --connect-timeout 2 -sSX POST -d 'test' {{ $url }}/store
+    }
+    @test "HTTP GET /" {
+      curl --retry 3 --connect-timeout 2 -sS {{ $url }} | grep hostname
+    }
