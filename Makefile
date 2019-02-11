@@ -7,7 +7,7 @@ LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' 
 
 run:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info \
-	-metrics-server=https://prometheus.iowa.weavedx.com \
+	-metrics-server=https://prometheus.istio.weavedx.com \
 	-slack-url=https://hooks.slack.com/services/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 \
 	-slack-channel="devops-alerts"
 
@@ -31,7 +31,7 @@ test: test-fmt test-codegen
 	go test ./...
 
 helm-package:
-	cd charts/ && helm package flagger/ && helm package grafana/ && helm package loadtester/
+	cd charts/ && helm package ./*
 	mv charts/*.tgz docs/
 	helm repo index docs --url https://stefanprodan.github.io/flagger --merge ./docs/index.yaml
 
