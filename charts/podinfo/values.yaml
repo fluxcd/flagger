@@ -25,7 +25,7 @@ canary:
     host:
   analysis:
     # schedule interval (default 60s)
-    interval: 15s
+    interval: 10s
     # max number of failed metric checks before rollback
     threshold: 10
     # max traffic percentage routed to canary
@@ -33,7 +33,7 @@ canary:
     maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 2
+    stepWeight: 5
   thresholds:
     # minimum req success rate (non 5xx responses)
     # percentage (0-100)

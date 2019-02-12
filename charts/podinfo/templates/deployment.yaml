@@ -33,6 +33,7 @@ spec:
             - --level={{ .Values.logLevel }}
             - --random-delay={{ .Values.faults.delay }}
             - --random-error={{ .Values.faults.error }}
+            - --config-path=/podinfo/config
           env:
           {{- if .Values.message }}
           - name: PODINFO_UI_MESSAGE
@@ -67,6 +68,9 @@ spec:
           volumeMounts:
           - name: data
             mountPath: /data
+          - name: config
+            mountPath: /podinfo/config
+            readOnly: true
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}
@@ -84,3 +88,6 @@ spec:
       volumes:
       - name: data
         emptyDir: {}
+      - name: config
+        configMap:
+          name: {{ template "podinfo.fullname" . }}
