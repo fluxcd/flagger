@@ -11,5 +11,5 @@ data:
   config.yaml: |-
     # http settings
     http-client-timeout: 1m
-    http-server-timeout: 30s
+    http-server-timeout: {{ .Values.httpServer.timeout }}
     http-server-shutdown-timeout: 5s

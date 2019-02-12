@@ -11,12 +11,12 @@ service:
 hpa:
   enabled: true
   minReplicas: 2
-  maxReplicas: 4
+  maxReplicas: 2
   cpu: 80
   memory: 512Mi
 
 canary:
-  enabled: false
+  enabled: true
   istioIngress:
     enabled: false
     # Istio ingress gateway name
@@ -25,7 +25,7 @@ canary:
     host:
   analysis:
     # schedule interval (default 60s)
-    interval: 10s
+    interval: 15s
     # max number of failed metric checks before rollback
     threshold: 10
     # max traffic percentage routed to canary
@@ -42,7 +42,7 @@ canary:
     # milliseconds
     latency: 500
   loadtest:
-    enabled: true
+    enabled: false
     # load tester address
     url: http://flagger-loadtester.test/
 
@@ -68,3 +68,6 @@ message: #UI greetings
 faults:
   delay: false
   error: false
+
+httpServer:
+  timeout: 30s
