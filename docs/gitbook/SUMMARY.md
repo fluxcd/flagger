@@ -14,5 +14,7 @@
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)
 
+# Tutorials
 
+* [Canary Deployments with Helm](tutorials/canary-helm-chart.md)
 
