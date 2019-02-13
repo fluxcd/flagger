@@ -105,6 +105,9 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
+  # for emergency cases when you want to ship changes
+  # in production without analysing the canary
+  skipAnalysis: false
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 1m

@@ -39,6 +39,9 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
+  # for emergency cases when you want to ship changes
+  # in production without analysing the canary
+  skipAnalysis: false
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 1m
@@ -166,6 +169,11 @@ And the time it takes for a canary to be rollback when the metrics or webhook ch
 ```
 interval * threshold 
 ```
+
+In emergency cases, you may want to skip the analysis phase and ship changes directly to production. 
+At any time you can set the `spec.skipAnalysis: true`. 
+When skip analysis is enabled, Flagger checks if the canary deployment is healthy and 
+promotes it without analysing it. If an analysis is underway, Flagger cancels it and runs the promotion.
 
 ### HTTP Metrics
 
