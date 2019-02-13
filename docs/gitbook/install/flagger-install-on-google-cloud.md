@@ -327,9 +327,9 @@ before the certificate expires.
 
 ### Install Prometheus
 
-The GKE Istio add-on does not include a Prometheus instance that scraps the Istio telemetry service. 
-Because Flagger uses the Istio HTTP metrics to run the canary analysis you have to
-deploy the following Prometheus configuration that's similar to the one that comes with the official Istio Helm chart. 
+The GKE Istio add-on does not include a Prometheus instance that scrapes the Istio telemetry service. 
+Because Flagger uses the Istio HTTP metrics to run the canary analysis you have to deploy the following 
+Prometheus configuration that's similar to the one that comes with the official Istio Helm chart.
 
 ```bash
 REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
