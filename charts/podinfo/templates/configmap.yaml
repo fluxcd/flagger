@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "podinfo.fullname" . }}
+  labels:
+    app: {{ template "podinfo.name" . }}
+    chart: {{ template "podinfo.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  config.yaml: |-
+    # http settings
+    http-client-timeout: 1m
+    http-server-timeout: {{ .Values.httpServer.timeout }}
+    http-server-shutdown-timeout: 5s

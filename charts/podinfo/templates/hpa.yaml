@@ -3,6 +3,11 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ template "podinfo.fullname" . }}
+  labels:
+    app: {{ template "podinfo.name" . }}
+    chart: {{ template "podinfo.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1beta2
