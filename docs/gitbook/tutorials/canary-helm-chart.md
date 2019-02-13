@@ -4,7 +4,7 @@ This guide shows you how to package a web app into a Helm chart and trigger a ca
 
 ### Packaging
 
-You'll be be using the [podinfo](https://github.com/stefanprodan/flagger/tree/master/charts/podinfo) chart. 
+You'll be using the [podinfo](https://github.com/stefanprodan/flagger/tree/master/charts/podinfo) chart. 
 This chart packages a web app made with Go, it's configuration, a horizontal pod autoscaler (HPA) 
 and the canary configuration file.
 
@@ -37,7 +37,7 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
-Install podinfo  with the release name `frontend` (replace `example.com` with your own domain):
+Install podinfo with the release name `frontend` (replace `example.com` with your own domain):
 
 ```bash
 helm upgrade -i frontend flagger/podinfo \
@@ -69,8 +69,8 @@ service/frontend-primary
 virtualservice.networking.istio.io/frontend
 ```
 
-After the `frontend-primary` deployment is available, Flagger will scale to zero the `frontend` deployment
-and route all traffic to the primary pods. 
+When the `frontend-primary` deployment comes online, 
+Flagger will route all traffic to the primary pods and scale to zero the `frontend` deployment.
 
 Open your browser and navigate to the frontend URL:
 
@@ -101,6 +101,9 @@ that will reach the `backend` app:
 
 ![Jaeger](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/demo-frontend-jaeger.png)
 
+We'll use the `/echo` endpoint (same as the one the ping button calls) 
+to generate load on both apps during a canary deployment.
+
 ### Upgrade
 
 First let's install a load testing service that will generate traffic during analysis:
@@ -110,7 +113,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 --namepace=test
 ```
 
-Let's enable the load tester and deploy a new `frontend` version:
+Enable the load tester and deploy a new `frontend` version:
 
 ```bash
 helm upgrade -i frontend flagger/podinfo/ \
@@ -143,13 +146,13 @@ Halt advancement frontend-primary.test waiting for rollout to finish: 1 old repl
 Promotion completed! Scaling down frontend.test
 ```
 
-You can monitor the canary deployment with Grafana, open the Flagger dashboard, 
+You can monitor the canary deployment with Grafana. Open the Flagger dashboard, 
 select `test` from the namespace dropdown, `frontend-primary` from the primary dropdown and `frontend` from the
 canary dropdown.
 
 ![Flagger Grafana Dashboard](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/demo-frontend-dashboard.png)
 
-Now let's trigger a canary deployment for the `backend` app, but this time you'll change a value in the configmap:
+Now trigger a canary deployment for the `backend` app, but this time you'll change a value in the configmap:
 
 ```bash
 helm upgrade -i backend flagger/podinfo/ \
@@ -179,7 +182,9 @@ Flagger detects the config map change and starts a canary analysis. Flagger will
 when the HTTP success rate drops under 99% or when the average request duration in the last minute is over 500ms:
 
 ```
-kubectl -n istio-system logs deployment/flagger -f | jq .msg
+kubectl -n test describe canary backend
+
+Events:
 
 ConfigMap backend has changed
 New revision detected! Scaling up backend.test
@@ -219,4 +224,75 @@ frontend   Failed        0        2019-02-12T19:47:20Z
 If you've enabled the Slack notifications, you'll receive an alert with the reason why the `backend` promotion failed.
 
 
+### GitOps automation
+
+Instead of using Helm CLI from a CI tool to perform the install and upgrade, you could use a Git based approach. 
+
+![Helm GitOps Canary Deployment](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-flux-gitops.png)
+
+Create a git repository with the following content:
+
+```
+├── namespaces
+│   └── test.yaml
+└── releases
+    └── test
+        ├── backend.yaml
+        ├── frontend.yaml
+        └── loadtester.yaml
+``` 
+
+Define the `frontend` release using Flux `HelmRelease` custom resource:
+
+```yaml
+apiVersion: flux.weave.works/v1beta1
+kind: HelmRelease
+metadata:
+  name: frontend
+  namespace: test
+  annotations:
+    flux.weave.works/automated: "true"
+    flux.weave.works/tag.chart-image: semver:~1.4
+spec:
+  releaseName: frontend
+  chart:
+    repository: https://stefanprodan.github.io/flagger/
+    name: podinfo
+    version: 2.0.0
+  values:
+    image:
+      repository: quay.io/stefanprodan/podinfo
+      tag: 1.4.0
+      backend: http://backend-podinfo:9898/echo
+      canary:
+        enabled: true
+        istioIngress:
+          enabled: true
+          gateway: public-gateway.istio-system.svc.cluster.local
+          host: frontend.istio.example.com
+        loadtest:
+          enabled: true
+```
+
+In the `chart` section I've defined the release source by specifying the Helm repository (hosted on GitHub Pages), chart name and version.
+In the `values` section I've overwritten the defaults set in values.yaml.
+
+With the `flux.weave.works` annotations I instruct Flux to automate this release. 
+When a image tag in the sem ver range of `1.4.0 - 1.4.99` is pushed to Quay, 
+Flux will upgrade the Helm release and from there Flagger will pick up the change and start a canary deployment.
+
+A CI/CD pipeline for the frontend release could look like this:
+
+* cut a release from the master branch of the podinfo code repo with the git tag `1.4.1`
+* CI builds the image and pushes the `podinfo:1.4.1` image to the container registry
+* Flux scans the registry and updates the Helm release `image.tag` to `1.4.1`
+* Flux commits and push the change to the cluster repo
+* Flux applies the updated Helm release on the cluster
+* Flux Helm Operator picks up the change and calls Tiller to upgrade the release
+* Flagger detects a revision change and scales up the `frontend` deployment
+* Flagger starts the load test and runs the canary analysis 
+* Based on the analysis result the canary deployment is promoted to production or rolled back
+* Flagger sends a Slack notification with the canary result
+
+If the canary fails, fix the bug, do another patch release eg `1.4.2` and the whole process will run again.
 
