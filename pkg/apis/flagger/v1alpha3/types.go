@@ -58,6 +58,10 @@ type CanarySpec struct {
 	// the maximum time in seconds for a canary deployment to make progress
 	// before it is considered to be failed. Defaults to ten minutes.
 	ProgressDeadlineSeconds *int32 `json:"progressDeadlineSeconds,omitempty"`
+
+	// promote the canary without analysing it
+	// +optional
+	SkipAnalysis bool `json:"skipAnalysis,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -8,8 +8,35 @@
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
-The canary analysis can be extended with webhooks for running integration tests, 
+The canary analysis can be extended with webhooks for running acceptance tests, 
 load tests or any other custom validation.
+
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance 
+indicators like HTTP requests success rate, requests average duration and pods health. 
+Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
+
+![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-overview.png)
+
+### Documentation
+
+Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.app)
+
+* Install
+    * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
+    * [Flagger install on GKE](https://docs.flagger.app/install/flagger-install-on-google-cloud)
+* How it works
+    * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
+    * [Canary deployment stages](https://docs.flagger.app/how-it-works#canary-deployment)
+    * [Canary analysis](https://docs.flagger.app/how-it-works#canary-analysis)
+    * [HTTP metrics](https://docs.flagger.app/how-it-works#http-metrics)
+    * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
+    * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
+* Usage
+    * [Canary promotions and rollbacks](https://docs.flagger.app/usage/progressive-delivery)
+    * [Monitoring](https://docs.flagger.app/usage/monitoring)
+    * [Alerting](https://docs.flagger.app/usage/alerting)
+* Tutorials
+    * [Canary deployments with Helm charts and Weave Flux](https://docs.flagger.app/tutorials/canary-helm-gitops)
 
 ### Install 
 
@@ -30,49 +57,14 @@ helm upgrade -i flagger flagger/flagger \
 
 Flagger is compatible with Kubernetes >1.11.0 and Istio >1.0.0.
 
-### Usage
+### Canary CRD
 
-Flagger takes a Kubernetes deployment and creates a series of objects 
-(Kubernetes [deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), 
-ClusterIP [services](https://kubernetes.io/docs/concepts/services-networking/service/) and 
-Istio [virtual services](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#VirtualService)) 
-to drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
+then creates a series of objects (Kubernetes deployments, ClusterIP services and Istio virtual services).
+These objects expose the application on the mesh and drive the canary analysis and promotion.
 
 Flagger keeps track of ConfigMaps and Secrets referenced by a Kubernetes Deployment and triggers a canary analysis if any of those objects change. 
 When promoting a workload in production, both code (container images) and configuration (config maps and secrets) are being synchronised.
-
-![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-overview.png)
-
-Gated canary promotion stages:
-
-* scan for canary deployments
-* check Istio virtual service routes are mapped to primary and canary ClusterIP services
-* check primary and canary deployments status
-    * halt advancement if a rolling update is underway
-    * halt advancement if pods are unhealthy
-* increase canary traffic weight percentage from 0% to 5% (step weight)
-* call webhooks and check results
-* check canary HTTP request success rate and latency
-    * halt advancement if any metric is under the specified threshold
-    * increment the failed checks counter
-* check if the number of failed checks reached the threshold
-    * route all traffic to primary
-    * scale to zero the canary deployment and mark it as failed
-    * wait for the canary deployment to be updated and start over
-* increase canary traffic weight by 5% (step weight) till it reaches 50% (max weight) 
-    * halt advancement while canary request success rate is under the threshold
-    * halt advancement while canary request duration P99 is over the threshold
-    * halt advancement if the primary or canary deployment becomes unhealthy 
-    * halt advancement while canary deployment is being scaled up/down by HPA
-* promote canary to primary
-    * copy ConfigMaps and Secrets from canary to primary
-    * copy canary deployment spec template over primary
-* wait for primary rolling update to finish
-    * halt advancement if pods are unhealthy
-* route all traffic to primary
-* scale to zero the canary deployment
-* mark rollout as finished
-* wait for the canary deployment to be updated and start over
 
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
@@ -105,6 +97,9 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
+  # for emergency cases when you want to ship changes
+  # in production without analysing the canary
+  skipAnalysis: false
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 1m
@@ -137,308 +132,7 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
 ```
 
-The canary analysis is using the following promql queries:
- 
-_HTTP requests success rate percentage_
-
-```sql
-sum(
-    rate(
-        istio_requests_total{
-          reporter="destination",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload",
-          response_code!~"5.*"
-        }[$interval]
-    )
-) 
-/ 
-sum(
-    rate(
-        istio_requests_total{
-          reporter="destination",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload"
-        }[$interval]
-    )
-)
-```
-
-_HTTP requests milliseconds duration P99_
-
-```sql
-histogram_quantile(0.99, 
-  sum(
-    irate(
-      istio_request_duration_seconds_bucket{
-        reporter="destination",
-        destination_workload=~"$workload",
-        destination_workload_namespace=~"$namespace"
-      }[$interval]
-    )
-  ) by (le)
-)
-```
-
-The canary analysis can be extended with webhooks. 
-Flagger will call the webhooks (HTTP POST) and determine from the response status code (HTTP 2xx) if the canary is failing or not.
-
-Webhook payload:
-
-```json
-{
-    "name": "podinfo",
-    "namespace": "test", 
-    "metadata": {
-        "test":  "all",
-        "token":  "16688eb5e9f289f1991c"
-    }
-}
-```
-
-### Automated canary analysis, promotions and rollbacks
-
-Create a test namespace with Istio sidecar injection enabled:
-
-```bash
-export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
-```
-
-Create a deployment and a horizontal pod autoscaler:
-
-```bash
-kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
-```
-
-Deploy the load testing service to generate traffic during the canary analysis:
-
-```bash
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
-```
-
-Create a canary promotion custom resource (replace the Istio gateway and the internet domain with your own):
-
-```bash
-kubectl apply -f ${REPO}/artifacts/canaries/canary.yaml
-```
-
-After a couple of seconds Flagger will create the canary objects:
-
-```bash
-# applied 
-deployment.apps/podinfo
-horizontalpodautoscaler.autoscaling/podinfo
-canary.flagger.app/podinfo
-# generated 
-deployment.apps/podinfo-primary
-horizontalpodautoscaler.autoscaling/podinfo-primary
-service/podinfo
-service/podinfo-canary
-service/podinfo-primary
-virtualservice.networking.istio.io/podinfo
-```
-
-![flagger-canary-steps](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
-
-Trigger a canary deployment by updating the container image:
-
-```bash
-kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.0
-```
-
-**Note** that Flagger tracks changes in the deployment `PodSpec` but also in `ConfigMaps` and `Secrets` 
-that are referenced in the pod's volumes and containers environment variables.
-
-Flagger detects that the deployment revision changed and starts a new canary analysis:
-
-```
-kubectl -n test describe canary/podinfo
-
-Status:
-  Canary Weight:         0
-  Failed Checks:         0
-  Last Transition Time:  2019-01-16T13:47:16Z
-  Phase:                 Succeeded
-Events:
-  Type     Reason  Age   From     Message
-  ----     ------  ----  ----     -------
-  Normal   Synced  3m    flagger  New revision detected podinfo.test
-  Normal   Synced  3m    flagger  Scaling up podinfo.test
-  Warning  Synced  3m    flagger  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
-  Normal   Synced  2m    flagger  Advance podinfo.test canary weight 20
-  Normal   Synced  2m    flagger  Advance podinfo.test canary weight 25
-  Normal   Synced  1m    flagger  Advance podinfo.test canary weight 30
-  Normal   Synced  1m    flagger  Advance podinfo.test canary weight 35
-  Normal   Synced  55s   flagger  Advance podinfo.test canary weight 40
-  Normal   Synced  45s   flagger  Advance podinfo.test canary weight 45
-  Normal   Synced  35s   flagger  Advance podinfo.test canary weight 50
-  Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
-  Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
-  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
-```
-
-You can monitor all canaries with:
-
-```bash
-watch kubectl get canaries --all-namespaces
-
-NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
-test        podinfo   Progressing   5        2019-01-16T14:05:07Z
-```
-
-During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
-
-Create a tester pod and exec into it:
-
-```bash
-kubectl -n test run tester --image=quay.io/stefanprodan/podinfo:1.2.1 -- ./podinfo --port=9898
-kubectl -n test exec -it tester-xx-xx sh
-```
-
-Generate HTTP 500 errors:
-
-```bash
-watch curl http://podinfo-canary:9898/status/500
-```
-
-Generate latency:
-
-```bash
-watch curl http://podinfo-canary:9898/delay/1
-```
-
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
-the canary is scaled to zero and the rollout is marked as failed. 
-
-```
-kubectl -n test describe canary/podinfo
-
-Status:
-  Canary Weight:         0
-  Failed Checks:         10
-  Last Transition Time:  2019-01-16T13:47:16Z
-  Phase:                 Failed
-Events:
-  Type     Reason  Age   From     Message
-  ----     ------  ----  ----     -------
-  Normal   Synced  3m    flagger  Starting canary deployment for podinfo.test
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
-  Normal   Synced  3m    flagger  Halt podinfo.test advancement success rate 69.17% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 61.39% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 55.06% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 47.00% < 99%
-  Normal   Synced  2m    flagger  (combined from similar events): Halt podinfo.test advancement success rate 38.08% < 99%
-  Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
-  Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
-```
-
-**Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
-
-### Monitoring
-
-Flagger comes with a Grafana dashboard made for canary analysis.
-
-Install Grafana with Helm:
-
-```bash
-helm upgrade -i flagger-grafana flagger/grafana \
---namespace=istio-system \
---set url=http://prometheus.istio-system:9090
-```
-
-The dashboard shows the RED and USE metrics for the primary and canary workloads:
-
-![flagger-grafana](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/grafana-canary-analysis.png)
-
-The canary errors and latency spikes have been recorded as Kubernetes events and logged by Flagger in json format:
-
-```
-kubectl -n istio-system logs deployment/flagger --tail=100 | jq .msg
-
-Starting canary deployment for podinfo.test
-Advance podinfo.test canary weight 5
-Advance podinfo.test canary weight 10
-Advance podinfo.test canary weight 15
-Advance podinfo.test canary weight 20
-Advance podinfo.test canary weight 25
-Advance podinfo.test canary weight 30
-Advance podinfo.test canary weight 35
-Halt podinfo.test advancement success rate 98.69% < 99%
-Advance podinfo.test canary weight 40
-Halt podinfo.test advancement request duration 1.515s > 500ms
-Advance podinfo.test canary weight 45
-Advance podinfo.test canary weight 50
-Copying podinfo.test template spec to podinfo-primary.test
-Halt podinfo-primary.test advancement waiting for rollout to finish: 1 old replicas are pending termination
-Scaling down podinfo.test
-Promotion completed! podinfo.test
-```
-
-Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and the destination weight values:
-
-```bash
-# Canaries total gauge
-flagger_canary_total{namespace="test"} 1
-
-# Canary promotion last known status gauge
-# 0 - running, 1 - successful, 2 - failed
-flagger_canary_status{name="podinfo" namespace="test"} 1
-
-# Canary traffic weight gauge
-flagger_canary_weight{workload="podinfo-primary" namespace="test"} 95
-flagger_canary_weight{workload="podinfo" namespace="test"} 5
-
-# Seconds spent performing canary analysis histogram
-flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="10"} 6
-flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="+Inf"} 6
-flagger_canary_duration_seconds_sum{name="podinfo",namespace="test"} 17.3561329
-flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
-```
-
-### Alerting
-
-Flagger can be configured to send Slack notifications:
-
-```bash
-helm upgrade -i flagger flagger/flagger \
---namespace=istio-system \
---set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
---set slack.channel=general \
---set slack.user=flagger
-```
-
-Once configured with a Slack incoming webhook, Flagger will post messages when a canary deployment has been initialized,
-when a new revision has been detected and if the canary analysis failed or succeeded.
-
-![flagger-slack](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/slack-canary-notifications.png)
-
-A canary deployment will be rolled back if the progress deadline exceeded or if the analysis 
-reached the maximum number of failed checks:
-
-![flagger-slack-errors](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/slack-canary-failed.png)
-
-Besides Slack, you can use Alertmanager to trigger alerts when a canary deployment failed:
-
-```yaml
-  - alert: canary_rollback
-    expr: flagger_canary_status > 1
-    for: 1m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Canary failed"
-      description: "Workload {{ $labels.name }} namespace {{ $labels.namespace }}"
-```
+For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/how-it-works).
 
 ### Roadmap
 

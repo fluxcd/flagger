@@ -16,4 +16,4 @@
 
 ## Tutorials
 
-* [Canary Deployments with Helm charts](tutorials/canary-helm-gitops.md)
+* [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)

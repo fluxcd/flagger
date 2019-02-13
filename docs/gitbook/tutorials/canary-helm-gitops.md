@@ -1,4 +1,4 @@
-# Canary Deployments with Helm charts
+# Canary Deployments with Helm Charts and GitOps
 
 This guide shows you how to package a web app into a Helm chart, trigger canary deployments on Helm upgrade
 and automate the chart release process with Weave Flux.
@@ -230,9 +230,19 @@ If you've enabled the Slack notifications, you'll receive an alert with the reas
 
 ### GitOps automation
 
-Instead of using Helm CLI from a CI tool to perform the install and upgrade, you could use a Git based approach. 
+Instead of using Helm CLI from a CI tool to perform the install and upgrade, 
+you could use a Git based approach. GitOps is a way to do Continuous Delivery, 
+it works by using Git as a source of truth for declarative infrastructure and workloads.
+In the [GitOps model](https://www.weave.works/technologies/gitops/), 
+any change to production must be committed in source control
+prior to being applied on the cluster. This way rollback and audit logs are provided by Git.
 
 ![Helm GitOps Canary Deployment](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-flux-gitops.png)
+
+In order to apply the GitOps pipeline model to Flagger canary deployments you'll need 
+a Git repository with your workloads definitions in YAML format, 
+a container registry where your CI system pushes immutable images and 
+an operator that synchronizes the Git repo with the cluster state.
 
 Create a git repository with the following content:
 
@@ -287,7 +297,34 @@ With the `flux.weave.works` annotations I instruct Flux to automate this release
 When an image tag in the sem ver range of `1.4.0 - 1.4.99` is pushed to Quay, 
 Flux will upgrade the Helm release and from there Flagger will pick up the change and start a canary deployment.
 
-A CI/CD pipeline for the frontend release could look like this:
+Install [Weave Flux](https://github.com/weaveworks/flux) and its Helm Operator by specifying your Git repo URL:
+
+```bash
+helm repo add weaveworks https://weaveworks.github.io/flux
+
+helm install --name flux \
+--set helmOperator.create=true \
+--set git.url=git@github.com:<USERNAME>/<REPOSITORY> \
+--namespace flux \
+weaveworks/flux
+```
+
+At startup Flux generates a SSH key and logs the public key. Find the SSH public key with:
+
+```bash
+kubectl -n flux logs deployment/flux | grep identity.pub | cut -d '"' -f2
+```
+
+In order to sync your cluster state with Git you need to copy the public key and create a 
+deploy key with write access on your GitHub repository.
+
+Open GitHub, navigate to your fork, go to _Setting > Deploy keys_ click on _Add deploy key_, 
+check _Allow write access_, paste the Flux public key and click _Add key_.
+
+After a couple of seconds Flux will apply the Kubernetes resources from Git and Flagger will
+launch the `frontend` and `backend` apps. 
+
+A CI/CD pipeline for the `frontend` release could look like this:
 
 * cut a release from the master branch of the podinfo code repo with the git tag `1.4.1`
 * CI builds the image and pushes the `podinfo:1.4.1` image to the container registry
@@ -302,7 +339,7 @@ A CI/CD pipeline for the frontend release could look like this:
 
 If the canary fails, fix the bug, do another patch release eg `1.4.2` and the whole process will run again.
 
-There are a couple of reasons why a canary deployment fails:
+A canary deployment can fail due to any of the following reasons:
 
 * the container image can't be downloaded 
 * the deployment replica set is stuck for more then ten minutes (eg. due to a container crash loop)
@@ -312,4 +349,5 @@ There are a couple of reasons why a canary deployment fails:
 * the Istio telemetry service is unable to collect traffic metrics
 * the metrics server (Prometheus) can't be reached
 
-
+If you want to find out more about managing Helm releases with Flux here is an in-depth guide 
+[github.com/stefanprodan/gitops-helm](https://github.com/stefanprodan/gitops-helm).
