@@ -64,6 +64,47 @@ func TestScheduler_Rollback(t *testing.T) {
 	}
 }
 
+func TestScheduler_SkipAnalysis(t *testing.T) {
+	mocks := SetupMocks()
+	// init
+	mocks.ctrl.advanceCanary("podinfo", "default", false)
+
+	// enable skip
+	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	cd.Spec.SkipAnalysis = true
+	_, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cd)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// update
+	dep2 := newTestDeploymentV2()
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect changes
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// advance
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if !c.Spec.SkipAnalysis {
+		t.Errorf("Got skip analysis %v wanted %v", c.Spec.SkipAnalysis, true)
+	}
+
+	if c.Status.Phase != v1alpha3.CanarySucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanarySucceeded)
+	}
+}
+
 func TestScheduler_NewRevisionReset(t *testing.T) {
 	mocks := SetupMocks()
 	// init
