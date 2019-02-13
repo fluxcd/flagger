@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -170,6 +171,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 	}
 
+	// check if analysis should be skipped
+	if skip := c.shouldSkipAnalysis(cd, primaryRoute, canaryRoute); skip {
+		return
+	}
+
 	// check if the number of failed checks reached the threshold
 	if cd.Status.Phase == flaggerv1.CanaryProgressing &&
 		(!retriable || cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold) {
@@ -292,6 +298,50 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 			false, false)
 	}
+}
+
+func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, primary istiov1alpha3.DestinationWeight, canary istiov1alpha3.DestinationWeight) bool {
+	if !cd.Spec.SkipAnalysis {
+		return false
+	}
+
+	// route all traffic to primary
+	primary.Weight = 100
+	canary.Weight = 0
+	if err := c.router.SetRoutes(cd, primary, canary); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return false
+	}
+	c.recorder.SetWeight(cd, primary.Weight, canary.Weight)
+
+	// copy spec and configs from canary to primary
+	c.recordEventInfof(cd, "Copying %s.%s template spec to %s-primary.%s",
+		cd.Spec.TargetRef.Name, cd.Namespace, cd.Spec.TargetRef.Name, cd.Namespace)
+	if err := c.deployer.Promote(cd); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return false
+	}
+
+	// shutdown canary
+	if err := c.deployer.Scale(cd, 0); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return false
+	}
+
+	// update status phase
+	if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanarySucceeded); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return false
+	}
+
+	// notify
+	c.recorder.SetStatus(cd)
+	c.recordEventInfof(cd, "Promotion completed! Canary analysis was skipped for %s.%s",
+		cd.Spec.TargetRef.Name, cd.Namespace)
+	c.sendNotification(cd, "Canary analysis was skipped, promotion finished.",
+		false, false)
+
+	return true
 }
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
