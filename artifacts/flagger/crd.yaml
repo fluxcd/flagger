@@ -73,6 +73,8 @@ spec:
               properties:
                 port:
                   type: number
+            skipAnalysis:
+              type: boolean
             canaryAnalysis:
               properties:
                 interval:
