@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.5.1 (2019-02-14)
+
+Allows skipping the analysis phase to ship changes directly to production
+
+#### Features
+
+- Add option to skip the canary analysis [#46](https://github.com/stefanprodan/flagger/pull/46)
+
+#### Fixes
+
+- Reject deployment if the pod label selector doesn't match `app: <DEPLOYMENT_NAME>` [#43](https://github.com/stefanprodan/flagger/pull/43)
+
 ## 0.5.0 (2019-01-30)
 
 Track changes in ConfigMaps and Secrets [#37](https://github.com/stefanprodan/flagger/pull/37)
