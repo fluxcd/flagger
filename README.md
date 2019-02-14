@@ -10,6 +10,23 @@ a canary is promoted or aborted and the analysis result is published to Slack.
 
 With Flagger you don't have to worry about keeping code and configuration changes in sync. Flagger keeps track of ConfigMaps and Secrets referenced by a Kubernetes Deployment and triggers a canary analysis if any of those objects change. When promoting a workload in production, both code (container images) and configuration (config maps and secrets) are being synchronised.
 
-### For the install instructions and usage examples please see [docs.flagger.app](https://docs.flagger.app)
+### Documentation
+
+Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.app)
+
+* Install
+    * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
+    * [Flagger install on GKE](https://docs.flagger.app/install/flagger-install-on-google-cloud)
+* How it works
+    * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
+    * [Canary deployment stages](https://docs.flagger.app/how-it-works#canary-deployment)
+    * [Canary analysis](https://docs.flagger.app/how-it-works#canary-analysis)
+    * [HTTP metrics](https://docs.flagger.app/how-it-works#http-metrics)
+    * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
+    * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
+* Usage
+    * [Canary promotions and rollbacks](https://docs.flagger.app/usage/progressive-delivery)
+    * [Monitoring](https://docs.flagger.app/usage/monitoring)
+    * [Alerting](https://docs.flagger.app/usage/alerting)
 
 This project is sponsored by [Weaveworks](https://www.weave.works/)
