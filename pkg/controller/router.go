@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"reflect"
 
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
@@ -169,6 +170,35 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 	hosts := append(cd.Spec.Service.Hosts, targetName)
 	gateways := append(cd.Spec.Service.Gateways, "mesh")
 	virtualService, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	newSpec := istiov1alpha3.VirtualServiceSpec{
+		Hosts:    hosts,
+		Gateways: gateways,
+		Http: []istiov1alpha3.HTTPRoute{
+			{
+				Route: []istiov1alpha3.DestinationWeight{
+					{
+						Destination: istiov1alpha3.Destination{
+							Host: primaryName,
+							Port: istiov1alpha3.PortSelector{
+								Number: uint32(cd.Spec.Service.Port),
+							},
+						},
+						Weight: 100,
+					},
+					{
+						Destination: istiov1alpha3.Destination{
+							Host: targetName,
+							Port: istiov1alpha3.PortSelector{
+								Number: uint32(cd.Spec.Service.Port),
+							},
+						},
+						Weight: 0,
+					},
+				},
+			},
+		},
+	}
+
 	if errors.IsNotFound(err) {
 		c.logger.Debugf("VirtualService %s.%s not found", targetName, cd.Namespace)
 		virtualService = &istiov1alpha3.VirtualService{
@@ -183,42 +213,22 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 					}),
 				},
 			},
-			Spec: istiov1alpha3.VirtualServiceSpec{
-				Hosts:    hosts,
-				Gateways: gateways,
-				Http: []istiov1alpha3.HTTPRoute{
-					{
-						Route: []istiov1alpha3.DestinationWeight{
-							{
-								Destination: istiov1alpha3.Destination{
-									Host: primaryName,
-									Port: istiov1alpha3.PortSelector{
-										Number: uint32(cd.Spec.Service.Port),
-									},
-								},
-								Weight: 100,
-							},
-							{
-								Destination: istiov1alpha3.Destination{
-									Host: targetName,
-									Port: istiov1alpha3.PortSelector{
-										Number: uint32(cd.Spec.Service.Port),
-									},
-								},
-								Weight: 0,
-							},
-						},
-					},
-				},
-			},
+			Spec: newSpec,
 		}
-
 		c.logger.Debugf("Creating VirtualService %s.%s", virtualService.GetName(), cd.Namespace)
 		_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Create(virtualService)
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s create error %v", targetName, cd.Namespace, err)
 		}
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
+	} else if !reflect.DeepEqual(virtualService.Spec.Hosts, newSpec.Hosts) || !reflect.DeepEqual(virtualService.Spec.Gateways, newSpec.Gateways) {
+		virtualService.Spec = newSpec
+		c.logger.Debugf("Updating VirtualService %s.%s", virtualService.GetName(), cd.Namespace)
+		_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(virtualService)
+		if err != nil {
+			return fmt.Errorf("VirtualService %s.%s update error %v", targetName, cd.Namespace, err)
+		}
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("VirtualService %s.%s updated", virtualService.GetName(), cd.Namespace)
 	}
 
 	return nil
