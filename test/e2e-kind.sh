@@ -89,7 +89,7 @@ count=0
 ok=false
 until ${ok}; do
     kubectl -n test get canary/podinfo | grep 'Initialized' && ok=true || ok=false
-    sleep 2
+    sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
         echo "No more retries left"
@@ -108,7 +108,7 @@ count=0
 ok=false
 until ${ok}; do
     kubectl -n test describe deployment/podinfo-primary | grep '1.4.2' && ok=true || ok=false
-    sleep 2
+    sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
         echo "No more retries left"
