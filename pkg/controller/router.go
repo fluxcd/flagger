@@ -2,8 +2,8 @@ package controller
 
 import (
 	"fmt"
-	"reflect"
-
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
@@ -221,7 +221,8 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("VirtualService %s.%s create error %v", targetName, cd.Namespace, err)
 		}
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
-	} else if !reflect.DeepEqual(virtualService.Spec.Hosts, newSpec.Hosts) || !reflect.DeepEqual(virtualService.Spec.Gateways, newSpec.Gateways) {
+	} else if diff := cmp.Diff(newSpec, virtualService.Spec, cmpopts.IgnoreTypes(istiov1alpha3.DestinationWeight{})); diff != "" {
+		//fmt.Println(diff)
 		virtualService.Spec = newSpec
 		c.logger.Debugf("Updating VirtualService %s.%s", virtualService.GetName(), cd.Namespace)
 		_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(virtualService)
