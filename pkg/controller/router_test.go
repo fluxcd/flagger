@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestCanaryRouter_Sync(t *testing.T) {
+func TestCanaryRouter_SyncClusterIPServices(t *testing.T) {
 	mocks := SetupMocks()
 	err := mocks.router.Sync(mocks.canary)
 	if err != nil {
@@ -40,19 +40,6 @@ func TestCanaryRouter_Sync(t *testing.T) {
 	if primarySvc.Spec.Ports[0].Port != 9898 {
 		t.Errorf("Got primary svc port %v wanted %v", primarySvc.Spec.Ports[0].Port, 9898)
 	}
-
-	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if len(vs.Spec.Http) != 1 {
-		t.Errorf("Got Istio VS Http %v wanted %v", len(vs.Spec.Http), 1)
-	}
-
-	if len(vs.Spec.Http[0].Route) != 2 {
-		t.Errorf("Got Istio VS routes %v wanted %v", len(vs.Spec.Http[0].Route), 2)
-	}
 }
 
 func TestCanaryRouter_GetRoutes(t *testing.T) {
@@ -73,6 +60,87 @@ func TestCanaryRouter_GetRoutes(t *testing.T) {
 
 	if c.Weight != 0 {
 		t.Errorf("Got canary weight %v wanted %v", c.Weight, 0)
+	}
+}
+
+func TestCanaryRouter_SyncVirtualService(t *testing.T) {
+	mocks := SetupMocks()
+	err := mocks.router.Sync(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// test insert
+	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(vs.Spec.Http) != 1 {
+		t.Errorf("Got Istio VS Http %v wanted %v", len(vs.Spec.Http), 1)
+	}
+
+	if len(vs.Spec.Http[0].Route) != 2 {
+		t.Errorf("Got Istio VS routes %v wanted %v", len(vs.Spec.Http[0].Route), 2)
+	}
+
+	// test update
+	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	cdClone := cd.DeepCopy()
+	hosts := cdClone.Spec.Service.Hosts
+	hosts = append(hosts, "test.example.com")
+	cdClone.Spec.Service.Hosts = hosts
+	canary, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cdClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// apply change
+	err = mocks.router.Sync(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// verify
+	vs, err = mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if len(vs.Spec.Hosts) != 2 {
+		t.Errorf("Got Istio VS hosts %v wanted %v", vs.Spec.Hosts, 2)
+	}
+
+	// test drift
+	vsClone := vs.DeepCopy()
+	gateways := vsClone.Spec.Gateways
+	gateways = append(gateways, "test-gateway.istio-system")
+	vsClone.Spec.Gateways = gateways
+
+	vsGateways, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Update(vsClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if len(vsGateways.Spec.Gateways) != 2 {
+		t.Errorf("Got Istio VS gateway %v wanted %v", vsGateways.Spec.Gateways, 2)
+	}
+
+	// undo change
+	err = mocks.router.Sync(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// verify
+	vs, err = mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if len(vs.Spec.Gateways) != 1 {
+		t.Errorf("Got Istio VS gateways %v wanted %v", vs.Spec.Gateways, 1)
 	}
 }
 
