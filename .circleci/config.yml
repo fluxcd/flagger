@@ -1,0 +1,16 @@
+version: 2.1
+jobs:
+  e2e-testing:
+    machine: true
+    steps:
+      - checkout
+      - run: test/e2e-kind.sh
+      - run: test/e2e-istio.sh
+      - run: test/e2e-build.sh
+      - run: test/e2e-tests.sh
+
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - e2e-testing

@@ -12,12 +12,17 @@ addons:
     packages:
     - docker-ce
 
+#before_script:
+#  - go get -u sigs.k8s.io/kind
+#  - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+#  - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+
 script:
-- set -e
-- make test-fmt
-- make test-codegen
-- go test -race -coverprofile=coverage.txt -covermode=atomic ./pkg/controller/
-- make build
+  - set -e
+  - make test-fmt
+  - make test-codegen
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./pkg/controller/
+  - make build
 
 after_success:
 - if [ -z "$DOCKER_USER" ]; then

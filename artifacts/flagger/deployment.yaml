@@ -23,7 +23,7 @@ spec:
       containers:
       - name: flagger
         image: quay.io/stefanprodan/flagger:0.5.1
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         ports:
         - name: http
           containerPort: 8080
