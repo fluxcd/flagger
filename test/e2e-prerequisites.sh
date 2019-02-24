@@ -2,7 +2,7 @@
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
-echo ">>> Building sigs.k8s.io/kind"
+echo ">>> Building sigs.k8s.io/kind with docker"
 docker build -t kind:src . -f ${REPO_ROOT}/test/Dockerfile
 docker create -ti --name dummy kind:src sh
 docker cp dummy:/go/bin/kind ./kind
