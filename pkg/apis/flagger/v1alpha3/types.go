@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha3
 
 import (
+	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
@@ -107,9 +108,11 @@ type CanaryStatus struct {
 // CanaryService is used to create ClusterIP services
 // and Istio Virtual Service
 type CanaryService struct {
-	Port     int32    `json:"port"`
-	Gateways []string `json:"gateways"`
-	Hosts    []string `json:"hosts"`
+	Port     int32                            `json:"port"`
+	Gateways []string                         `json:"gateways"`
+	Hosts    []string                         `json:"hosts"`
+	Match    []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+	Rewrite  *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done
