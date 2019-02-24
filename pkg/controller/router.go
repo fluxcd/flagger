@@ -27,15 +27,14 @@ type CanaryRouter struct {
 	logger        *zap.SugaredLogger
 }
 
-// Sync creates the primary and canary ClusterIP services
-// and sets up a virtual service with routes for the two services
-// all traffic goes to primary
+// Sync creates or updates the primary and canary ClusterIP services
+// and the Istio virtual service.
 func (c *CanaryRouter) Sync(cd *flaggerv1.Canary) error {
 	err := c.createServices(cd)
 	if err != nil {
 		return err
 	}
-	err = c.createVirtualService(cd)
+	err = c.syncVirtualService(cd)
 	if err != nil {
 		return err
 	}
@@ -164,7 +163,7 @@ func (c *CanaryRouter) createServices(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
+func (c *CanaryRouter) syncVirtualService(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	hosts := append(cd.Spec.Service.Hosts, targetName)
@@ -199,8 +198,8 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 		},
 	}
 
+	// insert
 	if errors.IsNotFound(err) {
-		c.logger.Debugf("VirtualService %s.%s not found", targetName, cd.Namespace)
 		virtualService = &istiov1alpha3.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      targetName,
@@ -215,21 +214,33 @@ func (c *CanaryRouter) createVirtualService(cd *flaggerv1.Canary) error {
 			},
 			Spec: newSpec,
 		}
-		c.logger.Debugf("Creating VirtualService %s.%s", virtualService.GetName(), cd.Namespace)
 		_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Create(virtualService)
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s create error %v", targetName, cd.Namespace, err)
 		}
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
-	} else if diff := cmp.Diff(newSpec, virtualService.Spec, cmpopts.IgnoreTypes(istiov1alpha3.DestinationWeight{})); diff != "" {
-		//fmt.Println(diff)
-		virtualService.Spec = newSpec
-		c.logger.Debugf("Updating VirtualService %s.%s", virtualService.GetName(), cd.Namespace)
-		_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(virtualService)
-		if err != nil {
-			return fmt.Errorf("VirtualService %s.%s update error %v", targetName, cd.Namespace, err)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, cd.Namespace, err)
+	}
+
+	// update service
+	if virtualService != nil {
+		if diff := cmp.Diff(newSpec, virtualService.Spec, cmpopts.IgnoreTypes(istiov1alpha3.DestinationWeight{})); diff != "" {
+			vtClone := virtualService.DeepCopy()
+			vtClone.Spec = newSpec
+			//TODO: keep original destination weights
+			//vtClone.Spec.Http = virtualService.Spec.Http
+			_, err = c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(vtClone)
+			if err != nil {
+				return fmt.Errorf("VirtualService %s.%s update error %v", targetName, cd.Namespace, err)
+			}
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+				Infof("VirtualService %s.%s updated", virtualService.GetName(), cd.Namespace)
 		}
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("VirtualService %s.%s updated", virtualService.GetName(), cd.Namespace)
 	}
 
 	return nil
