@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# This script runs e2e tests for Canary initialization, analysis and promotion
+# Prerequisites: Kubernetes Kind, Helm and Istio
+
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -66,7 +69,7 @@ until ${ok}; do
     fi
 done
 
-echo '>>> Canary initialization test passed ✔︎'
+echo '✔ Canary initialization test passed'
 
 echo '>>> Triggering canary deployment'
 kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.1
@@ -78,18 +81,19 @@ ok=false
 until ${ok}; do
     kubectl -n test describe deployment/podinfo-primary | grep '1.4.1' && ok=true || ok=false
     sleep 5
+    kubectl -n istio-system logs deployment/flagger --tail 1
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
         kubectl -n test describe deployment/podinfo
-        kubectl -n test describe deployment/podinfo-canary
+        kubectl -n test describe deployment/podinfo-primary
         kubectl -n istio-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi
 done
 
-echo '>>> Canary promotion test passed ✔︎'
+echo '✔ Canary promotion test passed'
 
 kubectl -n istio-system logs deployment/flagger
 
-echo '>>> All tests passed ✔︎'
+echo '✔ All tests passed'
