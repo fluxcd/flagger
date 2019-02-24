@@ -5,7 +5,7 @@ jobs:
     steps:
       - checkout
       - run: test/e2e-prerequisites.sh
-      - run: test/e2e-kind.sh
+      - run: test/e2e-tests.sh
 
 workflows:
   version: 2

@@ -4,11 +4,9 @@ set -o errexit
 
 ISTIO_VER="1.1.0-rc.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
+export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo ">>> Starting e2e testing using Istio ${ISTIO_VER}"
-export KUBECONFIG="$(kind get kubeconfig-path)"
-kubectl version
-
 helm repo add istio.io https://storage.googleapis.com/istio-release/releases/${ISTIO_VER}/charts
 
 echo '>>> Installing Istio CRDs'
@@ -23,8 +21,10 @@ helm upgrade -i istio istio.io/istio --wait --namespace istio-system -f ${REPO_R
 
 export KUBECONFIG="$(kind get kubeconfig-path)"
 
-echo '>>> Installing Flagger'
+echo '>>> Building Flagger'
 cd ${REPO_ROOT} && docker build -t test/flagger:latest . -f Dockerfile
+
+echo '>>> Installing Flagger'
 kind load docker-image test/flagger:latest
 kubectl apply -f ${REPO_ROOT}/artifacts/flagger/
 kubectl -n istio-system set image deployment/flagger flagger=test/flagger:latest

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -o errexit
+
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo ">>> Installing kubectl"
@@ -17,6 +19,8 @@ echo ">>> Installing kind"
 chmod +x kind
 sudo mv kind /usr/local/bin/
 kind create cluster --wait 5m
+
+export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo ">>> Installing helm"
 curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
