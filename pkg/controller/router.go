@@ -168,36 +168,39 @@ func (c *CanaryRouter) syncVirtualService(cd *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	hosts := append(cd.Spec.Service.Hosts, targetName)
 	gateways := append(cd.Spec.Service.Gateways, "mesh")
-	virtualService, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	route := []istiov1alpha3.DestinationWeight{
+		{
+			Destination: istiov1alpha3.Destination{
+				Host: primaryName,
+				Port: istiov1alpha3.PortSelector{
+					Number: uint32(cd.Spec.Service.Port),
+				},
+			},
+			Weight: 100,
+		},
+		{
+			Destination: istiov1alpha3.Destination{
+				Host: targetName,
+				Port: istiov1alpha3.PortSelector{
+					Number: uint32(cd.Spec.Service.Port),
+				},
+			},
+			Weight: 0,
+		},
+	}
 	newSpec := istiov1alpha3.VirtualServiceSpec{
 		Hosts:    hosts,
 		Gateways: gateways,
 		Http: []istiov1alpha3.HTTPRoute{
 			{
-				Route: []istiov1alpha3.DestinationWeight{
-					{
-						Destination: istiov1alpha3.Destination{
-							Host: primaryName,
-							Port: istiov1alpha3.PortSelector{
-								Number: uint32(cd.Spec.Service.Port),
-							},
-						},
-						Weight: 100,
-					},
-					{
-						Destination: istiov1alpha3.Destination{
-							Host: targetName,
-							Port: istiov1alpha3.PortSelector{
-								Number: uint32(cd.Spec.Service.Port),
-							},
-						},
-						Weight: 0,
-					},
-				},
+				Match:   cd.Spec.Service.Match,
+				Rewrite: cd.Spec.Service.Rewrite,
+				Route:   route,
 			},
 		},
 	}
 
+	virtualService, err := c.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
 		virtualService = &istiov1alpha3.VirtualService{
