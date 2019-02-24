@@ -31,7 +31,7 @@ helm upgrade -i istio istio.io/istio --wait --namespace istio-system -f ${REPO_R
 export KUBECONFIG="$(kind get kubeconfig-path)"
 
 echo '>>> Installing Flagger'
-cd ${REPO_ROOT} && docker build -t stefanprodan/flagger:latest . -f Dockerfile
+cd ${REPO_ROOT} && docker build -t test/flagger:latest . -f Dockerfile
 kind load docker-image test/flagger:latest
 kubectl apply -f ${REPO_ROOT}/artifacts/flagger/
 kubectl -n istio-system set image deployment/flagger flagger=test/flagger:latest
