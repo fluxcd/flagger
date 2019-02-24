@@ -26,15 +26,15 @@ kubectl -n istio-system wait --for=condition=complete job/istio-init-crd-10
 kubectl -n istio-system wait --for=condition=complete job/istio-init-crd-11
 
 echo 'Installing Istio control plane'
-helm upgrade -i istio istio.io/istio --wait --namespace istio-system -f ${REPO_ROOT}/e2e/istio-values.yaml
+helm upgrade -i istio istio.io/istio --wait --namespace istio-system -f ${REPO_ROOT}/test/e2e-istio-values.yaml
 
 export KUBECONFIG="$(kind get kubeconfig-path)"
 
 echo '>>> Installing Flagger'
-#cd ${REPO_ROOT} && docker build -t stefanprodan/flagger:latest . -f Dockerfile
-#kind load docker-image stefanprodan/flagger:latest
+cd ${REPO_ROOT} && docker build -t stefanprodan/flagger:latest . -f Dockerfile
+kind load docker-image test/flagger:latest
 kubectl apply -f ${REPO_ROOT}/artifacts/flagger/
-#kubectl -n istio-system set image deployment/flagger flagger=stefanprodan/flagger:latest
+kubectl -n istio-system set image deployment/flagger flagger=test/flagger:latest
 kubectl -n istio-system rollout status deployment/flagger
 
 echo '>>> Creating test namespace'
@@ -46,7 +46,7 @@ kubectl -n test apply -f ${REPO_ROOT}/artifacts/loadtester/
 kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Initialising canary'
-kubectl apply -f ${REPO_ROOT}/e2e/workload.yaml
+kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3
