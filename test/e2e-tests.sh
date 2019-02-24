@@ -5,15 +5,6 @@ set -o errexit
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
-echo '>>> Building Flagger'
-cd ${REPO_ROOT} && docker build -t test/flagger:latest . -f Dockerfile
-
-echo '>>> Installing Flagger'
-kind load docker-image test/flagger:latest
-kubectl apply -f ${REPO_ROOT}/artifacts/flagger/
-kubectl -n istio-system set image deployment/flagger flagger=test/flagger:latest
-kubectl -n istio-system rollout status deployment/flagger
-
 echo '>>> Creating test namespace'
 kubectl create namespace test
 kubectl label namespace test istio-injection=enabled
@@ -56,7 +47,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
+          cmd: "hey -z 10m -q 10 -c 2 http://podinfo.test:9898/"
 
 EOF
 
@@ -78,17 +69,19 @@ done
 echo '>>> Canary initialization test passed ✔︎'
 
 echo '>>> Triggering canary deployment'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.2
+kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.1
 
 echo '>>> Waiting for canary promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '1.4.2' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '1.4.1' && ok=true || ok=false
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n test describe deployment/podinfo
+        kubectl -n test describe deployment/podinfo-canary
         kubectl -n istio-system logs deployment/flagger
         echo "No more retries left"
         exit 1
