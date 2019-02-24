@@ -6,15 +6,8 @@ ISTIO_VER="1.1.0-rc.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo ">>> Starting e2e testing using Istio ${ISTIO_VER}"
-kind create cluster --wait 5m
-
 export KUBECONFIG="$(kind get kubeconfig-path)"
 kubectl version
-
-echo '>>> Installing Tiller'
-kubectl --namespace kube-system create sa tiller
-kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-helm init --service-account tiller --upgrade --wait
 
 helm repo add istio.io https://storage.googleapis.com/istio-release/releases/${ISTIO_VER}/charts
 
