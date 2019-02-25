@@ -26,6 +26,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Flagger install on GKE](https://docs.flagger.app/install/flagger-install-on-google-cloud)
 * How it works
     * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
+    * [Virtual Service](https://docs.flagger.app/how-it-works#virtual-service)
     * [Canary deployment stages](https://docs.flagger.app/how-it-works#canary-deployment)
     * [Canary analysis](https://docs.flagger.app/how-it-works#canary-analysis)
     * [HTTP metrics](https://docs.flagger.app/how-it-works#http-metrics)
@@ -105,7 +106,7 @@ spec:
     rewrite:
       uri: /
   # for emergency cases when you want to ship changes
-  # in production without analysing the canary
+  # in production without analysing the canary (default false)
   skipAnalysis: false
   canaryAnalysis:
     # schedule interval (default 60s)
