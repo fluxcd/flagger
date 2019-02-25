@@ -163,12 +163,9 @@
   revision = "f2b4162afba35581b6d4a50d3b8f34e33c144682"
 
 [[projects]]
-  digest = "1:03a74b0d86021c8269b52b7c908eb9bb3852ff590b363dad0a807cf58cec2f89"
+  digest = "1:05ddd9088c0cfb8eaa3adf3626977caa6d96b3959a3bd8c91fef932fd1696c34"
   name = "github.com/knative/pkg"
   packages = [
-    "apis",
-    "apis/duck",
-    "apis/duck/v1alpha1",
     "apis/istio",
     "apis/istio/authentication",
     "apis/istio/authentication/v1alpha1",
@@ -179,14 +176,12 @@
     "client/clientset/versioned/scheme",
     "client/clientset/versioned/typed/authentication/v1alpha1",
     "client/clientset/versioned/typed/authentication/v1alpha1/fake",
-    "client/clientset/versioned/typed/duck/v1alpha1",
-    "client/clientset/versioned/typed/duck/v1alpha1/fake",
     "client/clientset/versioned/typed/istio/v1alpha3",
     "client/clientset/versioned/typed/istio/v1alpha3/fake",
     "signals",
   ]
   pruneopts = "NUT"
-  revision = "c15d7c8f2220a7578b33504df6edefa948c845ae"
+  revision = "f9612ef73847258e381e749c4f45b0f5e03b66e9"
 
 [[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
@@ -476,10 +471,9 @@
   version = "kubernetes-1.11.0"
 
 [[projects]]
-  digest = "1:4b0d523ee389c762d02febbcfa0734c4530ebe87abe925db18f05422adcb33e8"
+  digest = "1:83b01e3d6f85c4e911de84febd69a2d3ece614c5a4a518fbc2b5d59000645980"
   name = "k8s.io/apimachinery"
   packages = [
-    "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
@@ -693,6 +687,7 @@
     "github.com/knative/pkg/client/clientset/versioned",
     "github.com/knative/pkg/client/clientset/versioned/fake",
     "github.com/knative/pkg/signals",
+    "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",

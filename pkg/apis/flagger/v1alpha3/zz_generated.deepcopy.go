@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha3
 
 import (
+	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/api/autoscaling/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -142,6 +143,18 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		in, out := &in.Hosts, &out.Hosts
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.Match != nil {
+		in, out := &in.Match, &out.Match
+		*out = make([]istiov1alpha3.HTTPMatchRequest, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Rewrite != nil {
+		in, out := &in.Rewrite, &out.Rewrite
+		*out = new(istiov1alpha3.HTTPRewrite)
+		**out = **in
 	}
 	return
 }

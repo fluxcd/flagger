@@ -47,7 +47,7 @@ required = [
 
 [[constraint]]
   name = "github.com/knative/pkg"
-  revision = "c15d7c8f2220a7578b33504df6edefa948c845ae"
+  revision = "f9612ef73847258e381e749c4f45b0f5e03b66e9"
 
 [[override]]
   name = "github.com/golang/glog"

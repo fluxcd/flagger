@@ -15,7 +15,7 @@ func TestCanaryRouter_SyncClusterIPServices(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo", metav1.GetOptions{})
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -177,7 +177,7 @@ func TestCanaryRouter_SetRoutes(t *testing.T) {
 			if route.Destination.Host == fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name) {
 				pRoute = route
 			}
-			if route.Destination.Host == mocks.canary.Spec.TargetRef.Name {
+			if route.Destination.Host == fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name) {
 				cRoute = route
 			}
 		}
