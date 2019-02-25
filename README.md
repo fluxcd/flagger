@@ -97,6 +97,13 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
+    # Istio virtual service HTTP match conditions (optional)
+    match:
+      - uri:
+          prefix: /
+    # Istio virtual service HTTP rewrite (optional)
+    rewrite:
+      uri: /
   # for emergency cases when you want to ship changes
   # in production without analysing the canary
   skipAnalysis: false
