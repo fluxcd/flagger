@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.6.0 (2019-02-25)
+
+Allows for [HTTPMatchRequests](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#HTTPMatchRequest) 
+and [HTTPRewrite](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#HTTPRewrite) 
+to be customized in the service spec of the canary custom resource.
+
+#### Features
+
+- Add HTTP match conditions and URI rewrite to the canary service spec [#55](https://github.com/stefanprodan/flagger/pull/55)
+- Update virtual service when the canary service spec changes 
+    [#54](https://github.com/stefanprodan/flagger/pull/54)
+    [#51](https://github.com/stefanprodan/flagger/pull/51)
+
+#### Improvements 
+
+- Run e2e testing on [Kubernetes Kind](https://github.com/kubernetes-sigs/kind) for canary promotion 
+    [#53](https://github.com/stefanprodan/flagger/pull/53)
+
+
 ## 0.5.1 (2019-02-14)
 
 Allows skipping the analysis phase to ship changes directly to production
