@@ -377,6 +377,49 @@ histogram_quantile(0.99,
 
 > **Note** that the metric interval should be lower or equal to the control loop interval.
 
+### Custom Metrics
+
+The canary analysis can be extended with custom Prometheus queries. 
+
+```yaml
+  canaryAnalysis:
+    threshold: 1
+    maxWeight: 50
+    stepWeight: 5
+    metrics:
+    - name: "404s percentage"
+      threshold: 5
+      query: |
+        100 - sum(
+            rate(
+                istio_requests_total{
+                  reporter="destination",
+                  destination_workload_namespace="test",
+                  destination_workload="podinfo",
+                  response_code!="404"
+                }[1m]
+            )
+        )
+        /
+        sum(
+            rate(
+                istio_requests_total{
+                  reporter="destination",
+                  destination_workload_namespace="test",
+                  destination_workload="podinfo"
+                }[1m]
+            )
+        ) * 100
+```
+
+The above configuration validates the canary by checking
+if the HTTP 404 req/sec percentage is below 5 percent of the total traffic.
+If the 404s rate reaches the 5% threshold, then the canary fails.
+
+When specifying a query, Flagger will run the promql query and convert the result to float64. 
+Then it compares the query result value with the metric threshold value.
+
+
 ### Webhooks
 
 The canary analysis can be extended with webhooks. 
