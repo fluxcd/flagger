@@ -27,6 +27,7 @@ const (
 	CanaryKind              = "Canary"
 	ProgressDeadlineSeconds = 600
 	AnalysisInterval        = 60 * time.Second
+	MetricInterval          = "1m"
 )
 
 // +genclient
@@ -127,9 +128,11 @@ type CanaryAnalysis struct {
 
 // CanaryMetric holds the reference to Istio metrics used for canary analysis
 type CanaryMetric struct {
-	Name      string `json:"name"`
-	Interval  string `json:"interval"`
-	Threshold int    `json:"threshold"`
+	Name      string  `json:"name"`
+	Interval  string  `json:"interval,omitempty"`
+	Threshold float64 `json:"threshold"`
+	// +optional
+	Query string `json:"query,omitempty"`
 }
 
 // CanaryWebhook holds the reference to external checks used for canary analysis
@@ -169,4 +172,9 @@ func (c *Canary) GetAnalysisInterval() time.Duration {
 	}
 
 	return interval
+}
+
+// GetMetricInterval returns the metric interval default value (1m)
+func (c *Canary) GetMetricInterval() string {
+	return MetricInterval
 }
