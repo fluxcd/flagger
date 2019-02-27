@@ -89,6 +89,9 @@ spec:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
     name: podinfo
+  service:
+    # container port
+    port: 9898
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
@@ -123,6 +126,7 @@ spec:
     stepWeight: 5
     # Istio Prometheus checks
     metrics:
+    # builtin Istio checks
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
@@ -133,6 +137,16 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
+    # custom check
+    - name: "kafka lag"
+      threshold: 100
+      query: |
+        avg_over_time(
+          kafka_consumergroup_lag{
+            consumergroup=~"podinfo-consumer-.*",
+            topic="podinfo"
+          }[1m]
+        )
     # external checks (optional)
     webhooks:
       - name: load-test
