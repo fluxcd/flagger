@@ -89,25 +89,27 @@ spec:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
     name: podinfo
-  service:
-    # container port
-    port: 9898
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
-    # Istio virtual service HTTP match conditions (optional)
+    # HTTP match conditions (optional)
     match:
       - uri:
           prefix: /
-    # Istio virtual service HTTP rewrite (optional)
+    # HTTP rewrite (optional)
     rewrite:
       uri: /
-  # for emergency cases when you want to ship changes
-  # in production without analysing the canary (default false)
+    # timeout for HTTP requests (optional)
+    timeout: 5s
+    # retry policy when a HTTP request fails (optional)
+    retries:
+      attempts: 3
+  # promote the canary without analysing it (default false)
   skipAnalysis: false
+  # define the canary analysis timing and KPIs
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 1m
