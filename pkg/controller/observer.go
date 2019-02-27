@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -71,6 +72,38 @@ func (c *CanaryObserver) queryMetric(query string) (*vectorQueryResponse, error)
 	}
 
 	return &values, nil
+}
+
+// GetScalar runs the promql query and returns the first value found
+func (c *CanaryObserver) GetScalar(query string) (float64, error) {
+	if c.metricsServer == "fake" {
+		return 100, nil
+	}
+
+	query = strings.Replace(query, "\n","",-1)
+	query = strings.Replace(query, " ","",-1)
+
+	var value *float64
+	result, err := c.queryMetric(query)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, v := range result.Data.Result {
+		metricValue := v.Value[1]
+		switch metricValue.(type) {
+		case string:
+			f, err := strconv.ParseFloat(metricValue.(string), 64)
+			if err != nil {
+				return 0, err
+			}
+			value = &f
+		}
+	}
+	if value == nil {
+		return 0, fmt.Errorf("no values found for query %s", query)
+	}
+	return *value, nil
 }
 
 // GetDeploymentCounter returns the requests success rate using istio_requests_total metric

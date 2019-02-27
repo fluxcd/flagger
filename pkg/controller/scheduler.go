@@ -436,6 +436,24 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 				return false
 			}
 		}
+
+		if metric.Query != "" {
+			val, err := c.observer.GetScalar(metric.Query)
+			if err != nil {
+				if strings.Contains(err.Error(), "no values found") {
+					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+				} else {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+				}
+				return false
+			}
+			if val > float64(metric.Threshold) {
+				c.recordEventWarningf(r, "Halt %s.%s advancement %s %.2f > %v",
+					r.Name, r.Namespace, metric.Name, val, metric.Threshold)
+				return false
+			}
+		}
 	}
 
 	return true
