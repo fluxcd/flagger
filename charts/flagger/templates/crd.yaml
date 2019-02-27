@@ -74,6 +74,8 @@ spec:
               properties:
                 port:
                   type: number
+                timeout:
+                  type: string
             skipAnalysis:
               type: boolean
             canaryAnalysis:
