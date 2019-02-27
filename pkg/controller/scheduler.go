@@ -405,6 +405,10 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 
 	// run metrics checks
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
+		if metric.Interval == "" {
+			metric.Interval = r.GetMetricInterval()
+		}
+
 		if metric.Name == "istio_requests_total" {
 			val, err := c.observer.GetDeploymentCounter(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
 			if err != nil {

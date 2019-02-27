@@ -80,8 +80,8 @@ func (c *CanaryObserver) GetScalar(query string) (float64, error) {
 		return 100, nil
 	}
 
-	query = strings.Replace(query, "\n","",-1)
-	query = strings.Replace(query, " ","",-1)
+	query = strings.Replace(query, "\n", "", -1)
+	query = strings.Replace(query, " ", "", -1)
 
 	var value *float64
 	result, err := c.queryMetric(query)

@@ -91,7 +91,7 @@ spec:
                   properties:
                     items:
                       type: object
-                      required: ['name', 'interval', 'threshold']
+                      required: ['name', 'threshold']
                       properties:
                         name:
                           type: string
