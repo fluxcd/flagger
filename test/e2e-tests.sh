@@ -45,6 +45,30 @@ spec:
     - name: istio_request_duration_seconds_bucket
       threshold: 500
       interval: 30s
+    - name: "404s percentage"
+      threshold: 5
+      interval: 1m
+      query: |
+        100 - sum(
+            rate(
+                istio_requests_total{
+                  reporter="destination",
+                  destination_workload_namespace=~"test",
+                  destination_workload=~"podinfo",
+                  response_code!="404"
+                }[1m]
+            )
+        )
+        /
+        sum(
+            rate(
+                istio_requests_total{
+                  reporter="destination",
+                  destination_workload_namespace=~"test",
+                  destination_workload=~"podinfo"
+                }[1m]
+            )
+        ) * 100
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
