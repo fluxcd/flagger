@@ -160,8 +160,8 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
-* Extend the validation mechanism to support other metrics than HTTP success rate and latency
 * Add A/B testing capabilities using fixed routing based on HTTP headers and cookies match conditions
+* Integrate with other service mesh technologies like AWS AppMesh and Linkerd v2
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
 ### Contributing
