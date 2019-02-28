@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.7.0 (2019-02-28)
+
+Adds support for custom metric checks, HTTP timeouts and HTTP retries
+
+#### Features
+
+- Allow custom promql queries in the canary analysis spec [##60](https://github.com/stefanprodan/flagger/pull/#60)
+- Add HTTP timeout and retries to canary service spec [##62](https://github.com/stefanprodan/flagger/pull/#62)
+
 ## 0.6.0 (2019-02-25)
 
 Allows for [HTTPMatchRequests](https://istio.io/docs/reference/config/istio.networking.v1alpha3/#HTTPMatchRequest) 
@@ -19,7 +28,6 @@ to be customized in the service spec of the canary custom resource.
 
 - Run e2e testing on [Kubernetes Kind](https://github.com/kubernetes-sigs/kind) for canary promotion 
     [#53](https://github.com/stefanprodan/flagger/pull/53)
-
 
 ## 0.5.1 (2019-02-14)
 
