@@ -23,6 +23,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Canary deployment stages](https://docs.flagger.app/how-it-works#canary-deployment)
     * [Canary analysis](https://docs.flagger.app/how-it-works#canary-analysis)
     * [HTTP metrics](https://docs.flagger.app/how-it-works#http-metrics)
+    * [Custom metrics](https://docs.flagger.app/how-it-works#custom-metrics)
     * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
 * Usage
