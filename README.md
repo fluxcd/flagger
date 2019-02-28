@@ -98,16 +98,21 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
-    # Istio virtual service HTTP match conditions (optional)
+    # HTTP match conditions (optional)
     match:
       - uri:
           prefix: /
-    # Istio virtual service HTTP rewrite (optional)
+    # HTTP rewrite (optional)
     rewrite:
       uri: /
-  # for emergency cases when you want to ship changes
-  # in production without analysing the canary (default false)
+    # timeout for HTTP requests (optional)
+    timeout: 5s
+    # retry policy when a HTTP request fails (optional)
+    retries:
+      attempts: 3
+  # promote the canary without analysing it (default false)
   skipAnalysis: false
+  # define the canary analysis timing and KPIs
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 1m
@@ -121,6 +126,7 @@ spec:
     stepWeight: 5
     # Istio Prometheus checks
     metrics:
+    # builtin Istio checks
     - name: istio_requests_total
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
@@ -131,6 +137,16 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
+    # custom check
+    - name: "kafka lag"
+      threshold: 100
+      query: |
+        avg_over_time(
+          kafka_consumergroup_lag{
+            consumergroup=~"podinfo-consumer-.*",
+            topic="podinfo"
+          }[1m]
+        )
     # external checks (optional)
     webhooks:
       - name: load-test
@@ -144,8 +160,8 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
-* Extend the validation mechanism to support other metrics than HTTP success rate and latency
 * Add A/B testing capabilities using fixed routing based on HTTP headers and cookies match conditions
+* Integrate with other service mesh technologies like AWS AppMesh and Linkerd v2
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
 ### Contributing

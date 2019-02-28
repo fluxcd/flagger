@@ -114,6 +114,8 @@ type CanaryService struct {
 	Hosts    []string                         `json:"hosts"`
 	Match    []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
 	Rewrite  *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
+	Timeout  string                           `json:"timeout,omitempty"`
+	Retries  *istiov1alpha3.HTTPRetry         `json:"retries,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done

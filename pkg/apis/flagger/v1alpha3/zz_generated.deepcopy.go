@@ -156,6 +156,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(istiov1alpha3.HTTPRewrite)
 		**out = **in
 	}
+	if in.Retries != nil {
+		in, out := &in.Retries, &out.Retries
+		*out = new(istiov1alpha3.HTTPRetry)
+		**out = **in
+	}
 	return
 }
 

@@ -195,6 +195,8 @@ func (c *CanaryRouter) syncVirtualService(cd *flaggerv1.Canary) error {
 			{
 				Match:   cd.Spec.Service.Match,
 				Rewrite: cd.Spec.Service.Rewrite,
+				Timeout: cd.Spec.Service.Timeout,
+				Retries: cd.Spec.Service.Retries,
 				Route:   route,
 			},
 		},
@@ -309,6 +311,8 @@ func (c *CanaryRouter) SetRoutes(
 		{
 			Match:   cd.Spec.Service.Match,
 			Rewrite: cd.Spec.Service.Rewrite,
+			Timeout: cd.Spec.Service.Timeout,
+			Retries: cd.Spec.Service.Retries,
 			Route:   []istiov1alpha3.DestinationWeight{primary, canary},
 		},
 	}
