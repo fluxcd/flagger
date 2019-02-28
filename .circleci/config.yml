@@ -13,4 +13,9 @@ workflows:
   version: 2
   build-and-test:
     jobs:
-      - e2e-testing
+      - e2e-testing:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+                - /docs-.*/
