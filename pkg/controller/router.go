@@ -167,7 +167,17 @@ func (c *CanaryRouter) syncVirtualService(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	hosts := append(cd.Spec.Service.Hosts, targetName)
-	gateways := append(cd.Spec.Service.Gateways, "mesh")
+	gateways := cd.Spec.Service.Gateways
+	var hasMeshGateway bool
+	for _, g := range gateways {
+		if g == "mesh" {
+			hasMeshGateway = true
+		}
+	}
+	if !hasMeshGateway {
+		gateways = append(gateways, "mesh")
+	}
+
 	route := []istiov1alpha3.DestinationWeight{
 		{
 			Destination: istiov1alpha3.Destination{
