@@ -175,3 +175,16 @@ When submitting bug reports please include as much details as possible:
 * which Kubernetes/Istio version
 * what configuration (canary, virtual service and workloads definitions)
 * what happened (Flagger, Istio Pilot and Proxy logs)
+
+### Getting Help
+
+If you have any questions about Flagger and progressive delivery:
+
+* Read the Flagger [docs](https://docs.flagger.app).
+* Invite yourself to the [Weave community slack](https://slack.weave.works/) 
+  and join the [#flagger](https://weave-community.slack.com/messages/flagger/) channel.
+* Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks, 
+  hands-on training and meetups in your area.
+* File an [issue](https://github.com/stefanprodan/flagger/issues/new).
+
+Your feedback is always welcome!

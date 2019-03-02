@@ -8,8 +8,8 @@ Adds support for custom metric checks, HTTP timeouts and HTTP retries
 
 #### Features
 
-- Allow custom promql queries in the canary analysis spec [##60](https://github.com/stefanprodan/flagger/pull/#60)
-- Add HTTP timeout and retries to canary service spec [##62](https://github.com/stefanprodan/flagger/pull/#62)
+- Allow custom promql queries in the canary analysis spec [#60](https://github.com/stefanprodan/flagger/pull/60)
+- Add HTTP timeout and retries to canary service spec [#62](https://github.com/stefanprodan/flagger/pull/62)
 
 ## 0.6.0 (2019-02-25)
 
