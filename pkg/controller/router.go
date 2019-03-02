@@ -203,11 +203,12 @@ func (c *CanaryRouter) syncVirtualService(cd *flaggerv1.Canary) error {
 		Gateways: gateways,
 		Http: []istiov1alpha3.HTTPRoute{
 			{
-				Match:   cd.Spec.Service.Match,
-				Rewrite: cd.Spec.Service.Rewrite,
-				Timeout: cd.Spec.Service.Timeout,
-				Retries: cd.Spec.Service.Retries,
-				Route:   route,
+				Match:         cd.Spec.Service.Match,
+				Rewrite:       cd.Spec.Service.Rewrite,
+				Timeout:       cd.Spec.Service.Timeout,
+				Retries:       cd.Spec.Service.Retries,
+				AppendHeaders: cd.Spec.Service.AppendHeaders,
+				Route:         route,
 			},
 		},
 	}
@@ -319,11 +320,12 @@ func (c *CanaryRouter) SetRoutes(
 	vsCopy := vs.DeepCopy()
 	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 		{
-			Match:   cd.Spec.Service.Match,
-			Rewrite: cd.Spec.Service.Rewrite,
-			Timeout: cd.Spec.Service.Timeout,
-			Retries: cd.Spec.Service.Retries,
-			Route:   []istiov1alpha3.DestinationWeight{primary, canary},
+			Match:         cd.Spec.Service.Match,
+			Rewrite:       cd.Spec.Service.Rewrite,
+			Timeout:       cd.Spec.Service.Timeout,
+			Retries:       cd.Spec.Service.Retries,
+			AppendHeaders: cd.Spec.Service.AppendHeaders,
+			Route:         []istiov1alpha3.DestinationWeight{primary, canary},
 		},
 	}
 
