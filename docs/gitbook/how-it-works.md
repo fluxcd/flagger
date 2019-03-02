@@ -134,6 +134,9 @@ metadata:
     match:
       - uri:
           prefix: /
+    # HTTP rewrite (optional)
+    rewrite:
+      uri: /
     # Envoy timeout and retry policy (optional)
     appendHeaders:
       x-envoy-upstream-rq-timeout-ms: "15000"
