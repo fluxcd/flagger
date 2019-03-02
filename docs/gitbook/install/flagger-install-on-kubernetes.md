@@ -125,7 +125,7 @@ Deploy the load test runner with Helm:
 
 ```bash
 helm upgrade -i flagger-loadtester flagger/loadtester \
---namepace=test \
+--namespace=test \
 --set cmd.logOutput=true \
 --set cmd.timeout=1h
 ```
