@@ -106,11 +106,11 @@ spec:
     # HTTP rewrite (optional)
     rewrite:
       uri: /
-    # timeout for HTTP requests (optional)
-    timeout: 5s
-    # retry policy when a HTTP request fails (optional)
-    retries:
-      attempts: 3
+    # Envoy timeout and retry policy (optional)
+    appendHeaders:
+      x-envoy-upstream-rq-timeout-ms: "15000"
+      x-envoy-max-retries: "10"
+      x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   # define the canary analysis timing and KPIs
