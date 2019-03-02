@@ -131,13 +131,19 @@ metadata:
     # Istio virtual service host names (optional)
     hosts:
     - frontend.example.com
-    # Istio virtual service HTTP match conditions (optional)
+    # HTTP match conditions (optional)
     match:
       - uri:
           prefix: /
-    # Istio virtual service HTTP rewrite (optional)
+    # HTTP rewrite (optional)
     rewrite:
       uri: /
+    # timeout for HTTP requests (optional)
+    timeout: 5s
+    # retry policy when a HTTP request fails (optional)
+    retries:
+      attempts: 3
+      perTryTimeout: 3s
 ```
 
 For the above spec Flagger will generate the following virtual service:
@@ -168,6 +174,10 @@ spec:
             prefix: /
       rewrite:
         uri: /
+      timeout: 5s
+      retries:
+        attempts: 3
+        perTryTimeout: 3s
       route:
         - destination:
             host: frontend-primary

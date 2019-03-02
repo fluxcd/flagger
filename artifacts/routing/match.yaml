@@ -8,13 +8,17 @@ spec:
   - public-gateway.istio-system.svc.cluster.local
   - mesh
   hosts:
-  - podinfo.iowa.weavedx.com
+  - app.istio.weavedx.com
   - podinfo
   http:
   - match:
     - headers:
         user-agent:
           regex: ^(?!.*Chrome)(?=.*\bSafari\b).*$
+      uri:
+        prefix: "/version/"
+    rewrite:
+      uri: /api/info
     route:
     - destination:
         host: podinfo-primary
@@ -26,7 +30,12 @@ spec:
         port:
           number: 9898
       weight: 100
-  - route:
+  - match:
+      - uri:
+          prefix: "/version/"
+    rewrite:
+      uri: /api/info
+    route:
     - destination:
         host: podinfo-primary
         port:
