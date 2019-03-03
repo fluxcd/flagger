@@ -509,7 +509,7 @@ Or by using Helm:
 helm repo add flagger https://flagger.app
 
 helm upgrade -i flagger-loadtester flagger/loadtester \
---namepace=test \
+--namespace=test \
 --set cmd.logOutput=true \
 --set cmd.timeout=1h
 ```

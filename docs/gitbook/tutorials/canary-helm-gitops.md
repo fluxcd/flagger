@@ -115,7 +115,7 @@ First let's install a load testing service that will generate traffic during ana
 
 ```bash
 helm upgrade -i flagger-loadtester flagger/loadtester \
---namepace=test
+--namespace=test
 ```
 
 Enable the load tester and deploy a new `frontend` version:
