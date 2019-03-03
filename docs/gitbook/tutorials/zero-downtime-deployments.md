@@ -95,6 +95,37 @@ Your app container should have a `preStop` hook that delays the container shutdo
 This will allow the service mesh to drain the traffic and remove this pod from all other Envoy sidecars before your app 
 becomes unavailable.
 
+### Delay Envoy shutdown
+
+Even if your app reacts to `SIGTERM` and tries to complete the inflight requests before shutdown, that 
+doesn't mean that the response will make it back to the caller. If the Envoy sidecar shuts down before your app, then 
+the caller will receive a 503 error.
+
+To mitigate this issue you can add a `preStop` hook to the Istio proxy and wait for the main app to exist before Envoy exists.
+
+```bash
+#!/bin/bash
+set -e
+if ! pidof envoy &>/dev/null; then
+  exit 0
+fi
+
+if ! pidof pilot-agent &>/dev/null; then
+  exit 0
+fi
+
+while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l | xargs) -ne 0 ]; do
+  sleep 1;
+done
+
+exit 0
+```
+
+You'll have to build your own Envoy docker image with the above script and
+modify the Istio injection webhook with the `preStop` directive. 
+
+Thanks to Stono for his excellent [tips](https://github.com/istio/istio/issues/12183) on minimising 503s. 
+
 ### Resource requests and limits
 
 Setting CPU and memory requests/limits for all workloads is a mandatory step if you're running a production system.
