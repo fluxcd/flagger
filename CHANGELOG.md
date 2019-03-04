@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+#### Features
+
+- Allow headers to be appended to HTTP requests [#70](https://github.com/stefanprodan/flagger/pull/70)
+
 ## 0.7.0 (2019-02-28)
 
 Adds support for custom metric checks, HTTP timeouts and HTTP retries

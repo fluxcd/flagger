@@ -17,3 +17,4 @@
 ## Tutorials
 
 * [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)
+* [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
