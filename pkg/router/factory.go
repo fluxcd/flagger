@@ -26,8 +26,8 @@ func NewFactory(kubeClient kubernetes.Interface,
 	}
 }
 
-func (factory *Factory) ServiceRouter() *ServiceRouter {
-	return &ServiceRouter{
+func (factory *Factory) KubernetesRouter() *KubernetesRouter {
+	return &KubernetesRouter{
 		logger:        factory.logger,
 		flaggerClient: factory.flaggerClient,
 		kubeClient:    factory.kubeClient,

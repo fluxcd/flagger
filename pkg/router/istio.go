@@ -126,20 +126,20 @@ func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
 }
 
 // GetRoutes returns the destinations weight for primary and canary
-func (ir *IstioRouter) GetRoutes(cd *flaggerv1.Canary) (
+func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
 	err error,
 ) {
-	targetName := cd.Spec.TargetRef.Name
+	targetName := canary.Spec.TargetRef.Name
 	vs := &istiov1alpha3.VirtualService{}
-	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, v1.GetOptions{})
+	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			err = fmt.Errorf("VirtualService %s.%s not found", targetName, cd.Namespace)
+			err = fmt.Errorf("VirtualService %s.%s not found", targetName, canary.Namespace)
 			return
 		}
-		err = fmt.Errorf("VirtualService %s.%s query error %v", targetName, cd.Namespace, err)
+		err = fmt.Errorf("VirtualService %s.%s query error %v", targetName, canary.Namespace, err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (ir *IstioRouter) GetRoutes(cd *flaggerv1.Canary) (
 
 	if primaryWeight == 0 && canaryWeight == 0 {
 		err = fmt.Errorf("VirtualService %s.%s does not contain routes for %s-primary and %s-canary",
-			targetName, cd.Namespace, targetName, targetName)
+			targetName, canary.Namespace, targetName, targetName)
 	}
 
 	return
@@ -164,34 +164,34 @@ func (ir *IstioRouter) GetRoutes(cd *flaggerv1.Canary) (
 
 // SetRoutes updates the destinations weight for primary and canary
 func (ir *IstioRouter) SetRoutes(
-	cd *flaggerv1.Canary,
+	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
 ) error {
-	targetName := cd.Spec.TargetRef.Name
-	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, v1.GetOptions{})
+	targetName := canary.Spec.TargetRef.Name
+	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("VirtualService %s.%s not found", targetName, cd.Namespace)
+			return fmt.Errorf("VirtualService %s.%s not found", targetName, canary.Namespace)
 
 		}
-		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, cd.Namespace, err)
+		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, canary.Namespace, err)
 	}
 
 	vsCopy := vs.DeepCopy()
 	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 		{
-			Match:         cd.Spec.Service.Match,
-			Rewrite:       cd.Spec.Service.Rewrite,
-			Timeout:       cd.Spec.Service.Timeout,
-			Retries:       cd.Spec.Service.Retries,
-			AppendHeaders: cd.Spec.Service.AppendHeaders,
+			Match:         canary.Spec.Service.Match,
+			Rewrite:       canary.Spec.Service.Rewrite,
+			Timeout:       canary.Spec.Service.Timeout,
+			Retries:       canary.Spec.Service.Retries,
+			AppendHeaders: canary.Spec.Service.AppendHeaders,
 			Route: []istiov1alpha3.DestinationWeight{
 				{
 					Destination: istiov1alpha3.Destination{
 						Host: fmt.Sprintf("%s-primary", targetName),
 						Port: istiov1alpha3.PortSelector{
-							Number: uint32(cd.Spec.Service.Port),
+							Number: uint32(canary.Spec.Service.Port),
 						},
 					},
 					Weight: primaryWeight,
@@ -200,7 +200,7 @@ func (ir *IstioRouter) SetRoutes(
 					Destination: istiov1alpha3.Destination{
 						Host: fmt.Sprintf("%s-canary", targetName),
 						Port: istiov1alpha3.PortSelector{
-							Number: uint32(cd.Spec.Service.Port),
+							Number: uint32(canary.Spec.Service.Port),
 						},
 					},
 					Weight: canaryWeight,
@@ -209,9 +209,9 @@ func (ir *IstioRouter) SetRoutes(
 		},
 	}
 
-	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(vsCopy)
+	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vsCopy)
 	if err != nil {
-		return fmt.Errorf("VirtualService %s.%s update failed: %v", targetName, cd.Namespace, err)
+		return fmt.Errorf("VirtualService %s.%s update failed: %v", targetName, canary.Namespace, err)
 
 	}
 	return nil

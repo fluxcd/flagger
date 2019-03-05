@@ -7,7 +7,7 @@ import (
 
 func TestServiceRouter_Sync(t *testing.T) {
 	mocks := setupfakeClients()
-	router := &ServiceRouter{
+	router := &KubernetesRouter{
 		kubeClient:    mocks.kubeClient,
 		flaggerClient: mocks.flaggerClient,
 		logger:        mocks.logger,

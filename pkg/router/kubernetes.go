@@ -13,15 +13,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// ServiceRouter is managing ClusterIP services
-type ServiceRouter struct {
+// KubernetesRouter is managing ClusterIP services
+type KubernetesRouter struct {
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 }
 
 // Sync creates to updates the primary and canary services
-func (c *ServiceRouter) Sync(cd *flaggerv1.Canary) error {
+func (c *KubernetesRouter) Sync(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryService, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
@@ -143,10 +143,10 @@ func (c *ServiceRouter) Sync(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-func (c *ServiceRouter) SetRoutes(canary flaggerv1.Canary, primaryRoute int, canaryRoute int) error {
+func (c *KubernetesRouter) SetRoutes(canary *flaggerv1.Canary, primaryRoute int, canaryRoute int) error {
 	return nil
 }
 
-func (c *ServiceRouter) GetRoutes(canary flaggerv1.Canary) (primaryRoute int, canaryRoute int, err error) {
+func (c *KubernetesRouter) GetRoutes(canary *flaggerv1.Canary) (primaryRoute int, canaryRoute int, err error) {
 	return 0, 0, nil
 }

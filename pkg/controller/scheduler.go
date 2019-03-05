@@ -92,7 +92,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	meshRouter = rf.IstioRouter()
 
 	// create ClusterIP services and virtual service if needed
-	if err := rf.ServiceRouter().Sync(cd); err != nil {
+	if err := rf.KubernetesRouter().Sync(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
