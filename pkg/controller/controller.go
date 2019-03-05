@@ -42,7 +42,6 @@ type Controller struct {
 	canaries      *sync.Map
 	jobs          map[string]CanaryJob
 	deployer      CanaryDeployer
-	router        CanaryRouter
 	observer      CanaryObserver
 	recorder      CanaryRecorder
 	notifier      *notifier.Slack
@@ -81,13 +80,6 @@ func NewController(
 		},
 	}
 
-	router := CanaryRouter{
-		logger:        logger,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-	}
-
 	observer := CanaryObserver{
 		metricsServer: metricServer,
 	}
@@ -107,7 +99,6 @@ func NewController(
 		jobs:          map[string]CanaryJob{},
 		flaggerWindow: flaggerWindow,
 		deployer:      deployer,
-		router:        router,
 		observer:      observer,
 		recorder:      recorder,
 		notifier:      notifier,

@@ -2,10 +2,10 @@ package controller
 
 import (
 	"fmt"
+	"github.com/stefanprodan/flagger/pkg/router"
 	"strings"
 	"time"
 
-	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -86,8 +86,19 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
+	// init routers
+	rf := router.NewFactory(c.kubeClient, c.flaggerClient, c.logger, c.istioClient)
+	var meshRouter router.Interface
+	meshRouter = rf.IstioRouter()
+
 	// create ClusterIP services and virtual service if needed
-	if err := c.router.Sync(cd); err != nil {
+	if err := rf.ServiceRouter().Sync(cd); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
+	// create or update virtual service
+	if err := meshRouter.Sync(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -118,13 +129,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check if virtual service exists
 	// and if it contains weighted destination routes to the primary and canary services
-	primaryRoute, canaryRoute, err := c.router.GetRoutes(cd)
+	primaryWeight, canaryWeight, err := meshRouter.GetRoutes(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
 
-	c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+	c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
 
 	// check if canary analysis should start (canary revision has changes) or continue
 	if ok := c.checkCanaryStatus(cd, shouldAdvance); !ok {
@@ -137,9 +148,9 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// route all traffic back to primary
-		primaryRoute.Weight = 100
-		canaryRoute.Weight = 0
-		if err := c.router.SetRoutes(cd, primaryRoute, canaryRoute); err != nil {
+		primaryWeight = 100
+		canaryWeight = 0
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -172,7 +183,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check if analysis should be skipped
-	if skip := c.shouldSkipAnalysis(cd, primaryRoute, canaryRoute); skip {
+	if skip := c.shouldSkipAnalysis(cd, meshRouter, primaryWeight, canaryWeight); skip {
 		return
 	}
 
@@ -195,14 +206,14 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 
 		// route all traffic back to primary
-		primaryRoute.Weight = 100
-		canaryRoute.Weight = 0
-		if err := c.router.SetRoutes(cd, primaryRoute, canaryRoute); err != nil {
+		primaryWeight = 100
+		canaryWeight = 0
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
 
-		c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
 		c.recordEventWarningf(cd, "Canary failed! Scaling down %s.%s",
 			cd.Name, cd.Namespace)
 
@@ -224,7 +235,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check if the canary success rate is above the threshold
 	// skip check if no traffic is routed to canary
-	if canaryRoute.Weight == 0 {
+	if canaryWeight == 0 {
 		c.recordEventInfof(cd, "Starting canary analysis for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 	} else {
 		if ok := c.analyseCanary(cd); !ok {
@@ -237,33 +248,33 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// increase canary traffic percentage
-	if canaryRoute.Weight < maxWeight {
-		primaryRoute.Weight -= cd.Spec.CanaryAnalysis.StepWeight
-		if primaryRoute.Weight < 0 {
-			primaryRoute.Weight = 0
+	if canaryWeight < maxWeight {
+		primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
+		if primaryWeight < 0 {
+			primaryWeight = 0
 		}
-		canaryRoute.Weight += cd.Spec.CanaryAnalysis.StepWeight
-		if primaryRoute.Weight > 100 {
-			primaryRoute.Weight = 100
+		canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
+		if primaryWeight > 100 {
+			primaryWeight = 100
 		}
 
-		if err := c.router.SetRoutes(cd, primaryRoute, canaryRoute); err != nil {
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
 
 		// update weight status
-		if err := c.deployer.SetStatusWeight(cd, canaryRoute.Weight); err != nil {
+		if err := c.deployer.SetStatusWeight(cd, canaryWeight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
 
-		c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
-		c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryRoute.Weight)
+		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
+		c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryWeight)
 
 		// promote canary
 		primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-		if canaryRoute.Weight == maxWeight {
+		if canaryWeight == maxWeight {
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
 			if err := c.deployer.Promote(cd); err != nil {
@@ -273,14 +284,14 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 	} else {
 		// route all traffic back to primary
-		primaryRoute.Weight = 100
-		canaryRoute.Weight = 0
-		if err := c.router.SetRoutes(cd, primaryRoute, canaryRoute); err != nil {
+		primaryWeight = 100
+		canaryWeight = 0
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
 
-		c.recorder.SetWeight(cd, primaryRoute.Weight, canaryRoute.Weight)
+		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// shutdown canary
@@ -300,19 +311,19 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 }
 
-func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, primary istiov1alpha3.DestinationWeight, canary istiov1alpha3.DestinationWeight) bool {
+func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.Interface, primaryWeight int, canaryWeight int) bool {
 	if !cd.Spec.SkipAnalysis {
 		return false
 	}
 
 	// route all traffic to primary
-	primary.Weight = 100
-	canary.Weight = 0
-	if err := c.router.SetRoutes(cd, primary, canary); err != nil {
+	primaryWeight = 100
+	canaryWeight = 0
+	if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return false
 	}
-	c.recorder.SetWeight(cd, primary.Weight, canary.Weight)
+	c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
 
 	// copy spec and configs from canary to primary
 	c.recordEventInfof(cd, "Copying %s.%s template spec to %s-primary.%s",
