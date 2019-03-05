@@ -45,10 +45,6 @@ required = [
   name = "github.com/google/go-cmp"
   version = "v0.2.0"
 
-[[constraint]]
-  name = "github.com/knative/pkg"
-  revision = "f9612ef73847258e381e749c4f45b0f5e03b66e9"
-
 [[override]]
   name = "github.com/golang/glog"
   source = "github.com/istio/glog"
