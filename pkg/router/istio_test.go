@@ -149,3 +149,31 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
 	}
 }
+
+func TestIstioRouter_GetRoutes(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.istioClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Sync(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	p, c, err := router.GetRoutes(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if p != 100 {
+		t.Errorf("Got primary weight %v wanted %v", p, 100)
+	}
+
+	if c != 0 {
+		t.Errorf("Got canary weight %v wanted %v", c, 0)
+	}
+}
