@@ -8,6 +8,7 @@ import (
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
 	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/flagger/pkg/logging"
+	"github.com/stefanprodan/flagger/pkg/router"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v1"
@@ -33,10 +34,10 @@ type Mocks struct {
 	istioClient   istioclientset.Interface
 	flaggerClient clientset.Interface
 	deployer      CanaryDeployer
-	router        CanaryRouter
 	observer      CanaryObserver
 	ctrl          *Controller
 	logger        *zap.SugaredLogger
+	router        router.Interface
 }
 
 func SetupMocks() Mocks {
@@ -70,12 +71,6 @@ func SetupMocks() Mocks {
 			flaggerClient: flaggerClient,
 		},
 	}
-	router := CanaryRouter{
-		flaggerClient: flaggerClient,
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		logger:        logger,
-	}
 	observer := CanaryObserver{
 		metricsServer: "fake",
 	}
@@ -96,22 +91,26 @@ func SetupMocks() Mocks {
 		canaries:      new(sync.Map),
 		flaggerWindow: time.Second,
 		deployer:      deployer,
-		router:        router,
 		observer:      observer,
 		recorder:      NewCanaryRecorder(false),
 	}
 	ctrl.flaggerSynced = alwaysReady
 
+	// init router
+	rf := router.NewFactory(kubeClient, flaggerClient, logger, istioClient)
+	var meshRouter router.Interface
+	meshRouter = rf.IstioRouter()
+
 	return Mocks{
 		canary:        canary,
 		observer:      observer,
-		router:        router,
 		deployer:      deployer,
 		logger:        logger,
 		flaggerClient: flaggerClient,
 		istioClient:   istioClient,
 		kubeClient:    kubeClient,
 		ctrl:          ctrl,
+		router:        meshRouter,
 	}
 }
 

@@ -21,7 +21,7 @@ script:
   - set -e
   - make test-fmt
   - make test-codegen
-  - go test -race -coverprofile=coverage.txt -covermode=atomic ./pkg/controller/
+  - go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
   - make build
 
 after_success:

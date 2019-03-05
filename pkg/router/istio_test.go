@@ -1,71 +1,22 @@
-package controller
+package router
 
 import (
 	"fmt"
-	"testing"
-
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"testing"
 )
 
-func TestCanaryRouter_SyncClusterIPServices(t *testing.T) {
-	mocks := SetupMocks()
-	err := mocks.router.Sync(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
+func TestIstioRouter_Sync(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.istioClient,
+		kubeClient:    mocks.kubeClient,
 	}
 
-	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if canarySvc.Spec.Ports[0].Name != "http" {
-		t.Errorf("Got svc port name %s wanted %s", canarySvc.Spec.Ports[0].Name, "http")
-	}
-
-	if canarySvc.Spec.Ports[0].Port != 9898 {
-		t.Errorf("Got svc port %v wanted %v", canarySvc.Spec.Ports[0].Port, 9898)
-	}
-
-	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if primarySvc.Spec.Ports[0].Name != "http" {
-		t.Errorf("Got primary svc port name %s wanted %s", primarySvc.Spec.Ports[0].Name, "http")
-	}
-
-	if primarySvc.Spec.Ports[0].Port != 9898 {
-		t.Errorf("Got primary svc port %v wanted %v", primarySvc.Spec.Ports[0].Port, 9898)
-	}
-}
-
-func TestCanaryRouter_GetRoutes(t *testing.T) {
-	mocks := SetupMocks()
-	err := mocks.router.Sync(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	p, c, err := mocks.router.GetRoutes(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if p.Weight != 100 {
-		t.Errorf("Got primary weight %v wanted %v", p.Weight, 100)
-	}
-
-	if c.Weight != 0 {
-		t.Errorf("Got canary weight %v wanted %v", c.Weight, 0)
-	}
-}
-
-func TestCanaryRouter_SyncVirtualService(t *testing.T) {
-	mocks := SetupMocks()
-	err := mocks.router.Sync(mocks.canary)
+	err := router.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -100,7 +51,7 @@ func TestCanaryRouter_SyncVirtualService(t *testing.T) {
 	}
 
 	// apply change
-	err = mocks.router.Sync(canary)
+	err = router.Sync(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -129,7 +80,7 @@ func TestCanaryRouter_SyncVirtualService(t *testing.T) {
 	}
 
 	// undo change
-	err = mocks.router.Sync(mocks.canary)
+	err = router.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -144,22 +95,29 @@ func TestCanaryRouter_SyncVirtualService(t *testing.T) {
 	}
 }
 
-func TestCanaryRouter_SetRoutes(t *testing.T) {
-	mocks := SetupMocks()
-	err := mocks.router.Sync(mocks.canary)
+func TestIstioRouter_SetRoutes(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.istioClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Sync(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	p, c, err := mocks.router.GetRoutes(mocks.canary)
+	p, c, err := router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	p.Weight = 50
-	c.Weight = 50
+	p = 50
+	c = 50
 
-	err = mocks.router.SetRoutes(mocks.canary, p, c)
+	err = router.SetRoutes(mocks.canary, p, c)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -183,11 +141,39 @@ func TestCanaryRouter_SetRoutes(t *testing.T) {
 		}
 	}
 
-	if pRoute.Weight != p.Weight {
-		t.Errorf("Got primary weight %v wanted %v", pRoute.Weight, c.Weight)
+	if pRoute.Weight != p {
+		t.Errorf("Got primary weight %v wanted %v", pRoute.Weight, p)
 	}
 
-	if cRoute.Weight != c.Weight {
-		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c.Weight)
+	if cRoute.Weight != c {
+		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
+	}
+}
+
+func TestIstioRouter_GetRoutes(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.istioClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Sync(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	p, c, err := router.GetRoutes(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if p != 100 {
+		t.Errorf("Got primary weight %v wanted %v", p, 100)
+	}
+
+	if c != 0 {
+		t.Errorf("Got canary weight %v wanted %v", c, 0)
 	}
 }

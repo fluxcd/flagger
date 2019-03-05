@@ -122,17 +122,17 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 	// advance
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryRoute, canaryRoute, err := mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, err := mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	if primaryRoute.Weight != 90 {
-		t.Errorf("Got primary route %v wanted %v", primaryRoute.Weight, 90)
+	if primaryWeight != 90 {
+		t.Errorf("Got primary route %v wanted %v", primaryWeight, 90)
 	}
 
-	if canaryRoute.Weight != 10 {
-		t.Errorf("Got canary route %v wanted %v", canaryRoute.Weight, 10)
+	if canaryWeight != 10 {
+		t.Errorf("Got canary route %v wanted %v", canaryWeight, 10)
 	}
 
 	// second update
@@ -145,17 +145,17 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 	// detect changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryRoute, canaryRoute, err = mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, err = mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	if primaryRoute.Weight != 100 {
-		t.Errorf("Got primary route %v wanted %v", primaryRoute.Weight, 100)
+	if primaryWeight != 100 {
+		t.Errorf("Got primary route %v wanted %v", primaryWeight, 100)
 	}
 
-	if canaryRoute.Weight != 0 {
-		t.Errorf("Got canary route %v wanted %v", canaryRoute.Weight, 0)
+	if canaryWeight != 0 {
+		t.Errorf("Got canary route %v wanted %v", canaryWeight, 0)
 	}
 }
 
@@ -189,14 +189,14 @@ func TestScheduler_Promotion(t *testing.T) {
 	// detect configs changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryRoute, canaryRoute, err := mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, err := mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	primaryRoute.Weight = 60
-	canaryRoute.Weight = 40
-	err = mocks.ctrl.router.SetRoutes(mocks.canary, primaryRoute, canaryRoute)
+	primaryWeight = 60
+	canaryWeight = 40
+	err = mocks.router.SetRoutes(mocks.canary, primaryWeight, canaryWeight)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -207,17 +207,17 @@ func TestScheduler_Promotion(t *testing.T) {
 	// promote
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryRoute, canaryRoute, err = mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, err = mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	if primaryRoute.Weight != 100 {
-		t.Errorf("Got primary route %v wanted %v", primaryRoute.Weight, 100)
+	if primaryWeight != 100 {
+		t.Errorf("Got primary route %v wanted %v", primaryWeight, 100)
 	}
 
-	if canaryRoute.Weight != 0 {
-		t.Errorf("Got canary route %v wanted %v", canaryRoute.Weight, 0)
+	if canaryWeight != 0 {
+		t.Errorf("Got canary route %v wanted %v", canaryWeight, 0)
 	}
 
 	primaryDep, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
