@@ -36,7 +36,7 @@ spec:
           - ./flagger
           - -log-level=info
           - -metrics-server={{ .Values.metricsServer }}
-          {{- if .Values.slack.url }}
+          {{- if .Values.slack.enable }}
           - -slack-url={{ .Values.slack.url }}
           - -slack-user={{ .Values.slack.user }}
           - -slack-channel={{ .Values.slack.channel }}

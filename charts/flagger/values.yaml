@@ -8,6 +8,7 @@ image:
 metricsServer: "http://prometheus.istio-system.svc.cluster.local:9090"
 
 slack:
+  enable: false
   user: flagger
   channel:
   # incoming webhook https://api.slack.com/incoming-webhooks
