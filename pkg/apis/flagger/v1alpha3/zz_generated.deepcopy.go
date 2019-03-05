@@ -21,7 +21,7 @@ limitations under the License.
 package v1alpha3
 
 import (
-	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
+	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/api/autoscaling/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )

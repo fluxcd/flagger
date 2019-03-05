@@ -1,23 +1,8 @@
-/*
-Copyright 2018 The Knative Authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
+// proto: https://github.com/istio/api/blob/master/networking/v1alpha3/virtual_service.proto
 package v1alpha3
 
 import (
-	"github.com/knative/pkg/apis/istio/common/v1alpha1"
+	"github.com/stefanprodan/flagger/pkg/apis/istio/common/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,7 +17,7 @@ type VirtualService struct {
 	Spec VirtualServiceSpec `json:"spec"`
 }
 
-// A VirtualService defines a set of traffic routing rules to apply when a host is
+// VirtualServiceSpec defines a set of traffic routing rules to apply when a host is
 // addressed. Each routing rule defines matching criteria for traffic of a specific
 // protocol. If the traffic is matched, then it is sent to a named destination service
 // (or subset/version of it) defined in the registry.
@@ -40,105 +25,262 @@ type VirtualService struct {
 // The source of traffic can also be matched in a routing rule. This allows routing
 // to be customized for specific client contexts.
 //
-// The following example routes all HTTP traffic by default to
+// The following example on Kubernetes, routes all HTTP traffic by default to
 // pods of the reviews service with label "version: v1". In addition,
-// HTTP requests containing /wpcatalog/, /consumercatalog/ url prefixes will
-// be rewritten to /newcatalog and sent to pods with label "version: v2". The
-// rules will be applied at the gateway named "bookinfo" as well as at all
-// the sidecars in the mesh (indicated by the reserved gateway name
-// "mesh").
+// HTTP requests with path starting with /wpcatalog/ or /consumercatalog/ will
+// be rewritten to /newcatalog and sent to pods with label "version: v2".
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: reviews-route
-//     spec:
-//       hosts:
-//       - reviews
-//       gateways: # if omitted, defaults to "mesh"
-//       - bookinfo
-//       - mesh
-//       http:
-//       - match:
-//         - uri:
-//             prefix: "/wpcatalog"
-//         - uri:
-//             prefix: "/consumercatalog"
-//         rewrite:
-//           uri: "/newcatalog"
-//         route:
-//         - destination:
-//             host: reviews
-//             subset: v2
-//       - route:
-//         - destination:
-//             host: reviews
-//             subset: v1
+//
+// ```yaml
+// apiVersion: networking.istio.io/v1alpha3
+// kind: VirtualService
+// metadata:
+//   name: reviews-route
+// spec:
+//   hosts:
+//   - reviews.prod.svc.cluster.local
+//   http:
+//   - match:
+//     - uri:
+//         prefix: "/wpcatalog"
+//     - uri:
+//         prefix: "/consumercatalog"
+//     rewrite:
+//       uri: "/newcatalog"
+//     route:
+//     - destination:
+//         host: reviews.prod.svc.cluster.local
+//         subset: v2
+//   - route:
+//     - destination:
+//         host: reviews.prod.svc.cluster.local
+//         subset: v1
+// ```
 //
 // A subset/version of a route destination is identified with a reference
 // to a named service subset which must be declared in a corresponding
-// DestinationRule.
+// `DestinationRule`.
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: DestinationRule
-//     metadata:
-//       name: reviews-destination
-//     spec:
-//       host: reviews
-//       subsets:
-//       - name: v1
-//         labels:
-//           version: v1
-//       - name: v2
-//         labels:
-//           version: v2
+// ```yaml
+// apiVersion: networking.istio.io/v1alpha3
+// kind: DestinationRule
+// metadata:
+//   name: reviews-destination
+// spec:
+//   host: reviews.prod.svc.cluster.local
+//   subsets:
+//   - name: v1
+//     labels:
+//       version: v1
+//   - name: v2
+//     labels:
+//       version: v2
+// ```
 //
-// A host name can be defined by only one VirtualService. A single
-// VirtualService can be used to describe traffic properties for multiple
-// HTTP and TCP ports.
 type VirtualServiceSpec struct {
-	// REQUIRED. The destination address for traffic captured by this virtual
-	// service. Could be a DNS name with wildcard prefix or a CIDR
-	// prefix. Depending on the platform, short-names can also be used
-	// instead of a FQDN (i.e. has no dots in the name). In such a scenario,
-	// the FQDN of the host would be derived based on the underlying
-	// platform.
+	// REQUIRED. The destination hosts to which traffic is being sent. Could
+	// be a DNS name with wildcard prefix or an IP address.  Depending on the
+	// platform, short-names can also be used instead of a FQDN (i.e. has no
+	// dots in the name). In such a scenario, the FQDN of the host would be
+	// derived based on the underlying platform.
 	//
-	// For example on Kubernetes, when hosts contains a short name, Istio will
-	// interpret the short name based on the namespace of the rule. Thus, when a
-	// client namespace applies a rule in the "default" namespace containing a name
-	// "reviews, Istio will setup routes to the "reviews.default.svc.cluster.local"
-	// service. However, if a different name such as "reviews.sales.svc.cluster.local"
-	// is used, it would be treated as a FQDN during virtual host matching.
-	// In Consul, a plain service name would be resolved to the FQDN
-	// "reviews.service.consul".
+	// **A host name can be defined by only one VirtualService**. A single
+	// VirtualService can be used to describe traffic properties for multiple
+	// HTTP and TCP ports.
 	//
-	// Note that the hosts field applies to both HTTP and TCP
-	// services. Service inside the mesh, i.e., those found in the service
-	// registry, must always be referred to using their alphanumeric
-	// names. IP addresses or CIDR prefixes are allowed only for services
-	// defined via the Gateway.
+	// *Note for Kubernetes users*: When short names are used (e.g. "reviews"
+	// instead of "reviews.default.svc.cluster.local"), Istio will interpret
+	// the short name based on the namespace of the rule, not the service. A
+	// rule in the "default" namespace containing a host "reviews will be
+	// interpreted as "reviews.default.svc.cluster.local", irrespective of
+	// the actual namespace associated with the reviews service. _To avoid
+	// potential misconfigurations, it is recommended to always use fully
+	// qualified domain names over short names._
+	//
+	// The hosts field applies to both HTTP and TCP services. Service inside
+	// the mesh, i.e., those found in the service registry, must always be
+	// referred to using their alphanumeric names. IP addresses are allowed
+	// only for services defined via the Gateway.
 	Hosts []string `json:"hosts"`
 
 	// The names of gateways and sidecars that should apply these routes. A
-	// single VirtualService is used for sidecars inside the mesh as well
-	// as for one or more gateways. The selection condition imposed by this field
-	// can be overridden using the source field in the match conditions of HTTP/TCP
-	// routes. The reserved word "mesh" is used to imply all the sidecars in
-	// the mesh. When this field is omitted, the default gateway ("mesh")
-	// will be used, which would apply the rule to all sidecars in the
-	// mesh. If a list of gateway names is provided, the rules will apply
-	// only to the gateways. To apply the rules to both gateways and sidecars,
-	// specify "mesh" as one of the gateway names.
+	// single VirtualService is used for sidecars inside the mesh as well as
+	// for one or more gateways. The selection condition imposed by this
+	// field can be overridden using the source field in the match conditions
+	// of protocol-specific routes. The reserved word `mesh` is used to imply
+	// all the sidecars in the mesh. When this field is omitted, the default
+	// gateway (`mesh`) will be used, which would apply the rule to all
+	// sidecars in the mesh. If a list of gateway names is provided, the
+	// rules will apply only to the gateways. To apply the rules to both
+	// gateways and sidecars, specify `mesh` as one of the gateway names.
 	Gateways []string `json:"gateways,omitempty"`
 
-	// An ordered list of route rules for HTTP traffic.
-	// The first rule matching an incoming request is used.
+	// An ordered list of route rules for HTTP traffic. HTTP routes will be
+	// applied to platform service ports named 'http-*'/'http2-*'/'grpc-*', gateway
+	// ports with protocol HTTP/HTTP2/GRPC/ TLS-terminated-HTTPS and service
+	// entry ports using HTTP/HTTP2/GRPC protocols.  The first rule matching
+	// an incoming request is used.
 	Http []HTTPRoute `json:"http,omitempty"`
 
-	// An ordered list of route rules for TCP traffic.
-	// The first rule matching an incoming request is used.
+	// An ordered list of route rules for opaque TCP traffic. TCP routes will
+	// be applied to any port that is not a HTTP or TLS port. The first rule
+	// matching an incoming request is used.
 	Tcp []TCPRoute `json:"tcp,omitempty"`
+}
+
+// Destination indicates the network addressable service to which the
+// request/connection will be sent after processing a routing rule. The
+// destination.host should unambiguously refer to a service in the service
+// registry. Istio's service registry is composed of all the services found
+// in the platform's service registry (e.g., Kubernetes services, Consul
+// services), as well as services declared through the
+// [ServiceEntry](#ServiceEntry) resource.
+//
+// *Note for Kubernetes users*: When short names are used (e.g. "reviews"
+// instead of "reviews.default.svc.cluster.local"), Istio will interpret
+// the short name based on the namespace of the rule, not the service. A
+// rule in the "default" namespace containing a host "reviews will be
+// interpreted as "reviews.default.svc.cluster.local", irrespective of the
+// actual namespace associated with the reviews service. _To avoid potential
+// misconfigurations, it is recommended to always use fully qualified
+// domain names over short names._
+//
+// The following Kubernetes example routes all traffic by default to pods
+// of the reviews service with label "version: v1" (i.e., subset v1), and
+// some to subset v2, in a kubernetes environment.
+//
+// ```yaml
+// apiVersion: networking.istio.io/v1alpha3
+// kind: VirtualService
+// metadata:
+//   name: reviews-route
+//   namespace: foo
+// spec:
+//   hosts:
+//   - reviews # interpreted as reviews.foo.svc.cluster.local
+//   http:
+//   - match:
+//     - uri:
+//         prefix: "/wpcatalog"
+//     - uri:
+//         prefix: "/consumercatalog"
+//     rewrite:
+//       uri: "/newcatalog"
+//     route:
+//     - destination:
+//         host: reviews # interpreted as reviews.foo.svc.cluster.local
+//         subset: v2
+//   - route:
+//     - destination:
+//         host: reviews # interpreted as reviews.foo.svc.cluster.local
+//         subset: v1
+// ```
+//
+// And the associated DestinationRule
+//
+// ```yaml
+// apiVersion: networking.istio.io/v1alpha3
+// kind: DestinationRule
+// metadata:
+//   name: reviews-destination
+//   namespace: foo
+// spec:
+//   host: reviews # interpreted as reviews.foo.svc.cluster.local
+//   subsets:
+//   - name: v1
+//     labels:
+//       version: v1
+//   - name: v2
+//     labels:
+//       version: v2
+// ```
+//
+// The following VirtualService sets a timeout of 5s for all calls to
+// productpage.prod.svc.cluster.local service in Kubernetes. Notice that
+// there are no subsets defined in this rule. Istio will fetch all
+// instances of productpage.prod.svc.cluster.local service from the service
+// registry and populate the sidecar's load balancing pool. Also, notice
+// that this rule is set in the istio-system namespace but uses the fully
+// qualified domain name of the productpage service,
+// productpage.prod.svc.cluster.local. Therefore the rule's namespace does
+// not have an impact in resolving the name of the productpage service.
+//
+// ```yaml
+// apiVersion: networking.istio.io/v1alpha3
+// kind: VirtualService
+// metadata:
+//   name: my-productpage-rule
+//   namespace: istio-system
+// spec:
+//   hosts:
+//   - productpage.prod.svc.cluster.local # ignores rule namespace
+//   http:
+//   - timeout: 5s
+//     route:
+//     - destination:
+//         host: productpage.prod.svc.cluster.local
+// ```
+//
+// To control routing for traffic bound to services outside the mesh, external
+// services must first be added to Istio's internal service registry using the
+// ServiceEntry resource. VirtualServices can then be defined to control traffic
+// bound to these external services. For example, the following rules define a
+// Service for wikipedia.org and set a timeout of 5s for http requests.
+//
+// ```yaml
+// apiVersion: networking.istio.io/v1alpha3
+// kind: ServiceEntry
+// metadata:
+//   name: external-svc-wikipedia
+// spec:
+//   hosts:
+//   - wikipedia.org
+//   location: MESH_EXTERNAL
+//   ports:
+//   - number: 80
+//     name: example-http
+//     protocol: HTTP
+//   resolution: DNS
+//
+// apiVersion: networking.istio.io/v1alpha3
+// kind: VirtualService
+// metadata:
+//   name: my-wiki-rule
+// spec:
+//   hosts:
+//   - wikipedia.org
+//   http:
+//   - timeout: 5s
+//     route:
+//     - destination:
+//         host: wikipedia.org
+// ```
+type Destination struct {
+	// REQUIRED. The name of a service from the service registry. Service
+	// names are looked up from the platform's service registry (e.g.,
+	// Kubernetes services, Consul services, etc.) and from the hosts
+	// declared by [ServiceEntry](#ServiceEntry). Traffic forwarded to
+	// destinations that are not found in either of the two, will be dropped.
+	//
+	// *Note for Kubernetes users*: When short names are used (e.g. "reviews"
+	// instead of "reviews.default.svc.cluster.local"), Istio will interpret
+	// the short name based on the namespace of the rule, not the service. A
+	// rule in the "default" namespace containing a host "reviews will be
+	// interpreted as "reviews.default.svc.cluster.local", irrespective of
+	// the actual namespace associated with the reviews service. _To avoid
+	// potential misconfigurations, it is recommended to always use fully
+	// qualified domain names over short names._
+	Host string `json:"host"`
+
+	// The name of a subset within the service. Applicable only to services
+	// within the mesh. The subset must be defined in a corresponding
+	// DestinationRule.
+	Subset string `json:"subset,omitempty"`
+
+	// Specifies the port on the host that is being addressed. If a service
+	// exposes only a single port it is not required to explicitly select the
+	// port.
+	Port PortSelector `json:"port,omitempty"`
 }
 
 // Describes match conditions and actions for routing HTTP/1.1, HTTP2, and
@@ -166,15 +308,6 @@ type HTTPRoute struct {
 	// Redirect primitive. Rewrite will be performed before forwarding.
 	Rewrite *HTTPRewrite `json:"rewrite,omitempty"`
 
-	// Indicates that a HTTP/1.1 client connection to this particular route
-	// should be allowed (and expected) to upgrade to a WebSocket connection.
-	// The default is false. Istio's reference sidecar implementation (Envoy)
-	// expects the first request to this route to contain the WebSocket
-	// upgrade headers. Otherwise, the request will be rejected. Note that
-	// Websocket allows secondary protocol negotiation which may then be
-	// subject to further routing rules based on the protocol selected.
-	WebsocketUpgrade bool `json:"websocketUpgrade,omitempty"`
-
 	// Timeout for HTTP requests.
 	Timeout string `json:"timeout,omitempty"`
 
@@ -191,6 +324,8 @@ type HTTPRoute struct {
 	// original destination.  Statistics will be generated for the mirrored
 	// destination.
 	Mirror *Destination `json:"mirror,omitempty"`
+
+	CorsPolicy *CorsPolicy `json:"CorsPolicy,omitempty"`
 
 	// Additional HTTP headers to add before forwarding a request to the
 	// destination service.
@@ -283,6 +418,22 @@ type HTTPMatchRequest struct {
 	//
 	// **Note:** The keys `uri`, `scheme`, `method`, and `authority` will be ignored.
 	Headers map[string]v1alpha1.StringMatch `json:"headers,omitempty"`
+
+	// Specifies the ports on the host that is being addressed. Many services
+	// only expose a single port or label ports with the protocols they support,
+	// in these cases it is not required to explicitly select the port.
+	Port uint32 `json:"port,omitempty"`
+
+	// One or more labels that constrain the applicability of a rule to
+	// workloads with the given labels. If the VirtualService has a list of
+	// gateways specified at the top, it should include the reserved gateway
+	// `mesh` in order for this field to be applicable.
+	SourceLabels map[string]string `json:"sourceLabels,omitempty"`
+
+	// Names of gateways where the rule should be applied to. Gateway names
+	// at the top of the VirtualService (if any) are overridden. The gateway match is
+	// independent of sourceLabels.
+	Gateways []string `json:"gateways,omitempty"`
 }
 
 type DestinationWeight struct {
@@ -295,137 +446,6 @@ type DestinationWeight struct {
 	// If there is only destination in a rule, the weight value is assumed to
 	// be 100.
 	Weight int `json:"weight"`
-}
-
-// Destination indicates the network addressable service to which the
-// request/connection will be sent after processing a routing rule. The
-// destination.name should unambiguously refer to a service in the service
-// registry. It can be a short name or a fully qualified domain name from
-// the service registry, a resolvable DNS name, an IP address or a service
-// name from the service registry and a subset name. The order of inference
-// is as follows:
-//
-// 1. Service registry lookup. The entire name is looked up in the service
-// registry. If the lookup succeeds, the search terminates. The requests
-// will be routed to any instance of the service in the mesh. When the
-// service name consists of a single word, the FQDN will be constructed in
-// a platform specific manner. For example, in Kubernetes, the namespace
-// associated with the routing rule will be used to identify the service as
-// <servicename>.<rulenamespace>. However, if the service name contains
-// multiple words separated by a dot (e.g., reviews.prod), the name in its
-// entirety would be looked up in the service registry.
-//
-// 2. Runtime DNS lookup by the proxy. If step 1 fails, and the name is not
-// an IP address, it will be considered as a DNS name that is not in the
-// service registry (e.g., wikipedia.org). The sidecar/gateway will resolve
-// the DNS and load balance requests appropriately. See Envoy's strict_dns
-// for details.
-//
-// The following example routes all traffic by default to pods of the
-// reviews service with label "version: v1" (i.e., subset v1), and some
-// to subset v2, in a kubernetes environment.
-//
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: reviews-route
-//     spec:
-//       hosts:
-//       - reviews # namespace is same as the client/caller's namespace
-//       http:
-//       - match:
-//         - uri:
-//             prefix: "/wpcatalog"
-//         - uri:
-//             prefix: "/consumercatalog"
-//         rewrite:
-//           uri: "/newcatalog"
-//         route:
-//         - destination:
-//             host: reviews
-//             subset: v2
-//       - route:
-//         - destination:
-//             host: reviews
-//             subset: v1
-//
-// And the associated DestinationRule
-//
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: DestinationRule
-//     metadata:
-//       name: reviews-destination
-//     spec:
-//       host: reviews
-//       subsets:
-//       - name: v1
-//         labels:
-//           version: v1
-//       - name: v2
-//         labels:
-//           version: v2
-//
-// The following VirtualService sets a timeout of 5s for all calls to
-// productpage.prod service. Notice that there are no subsets defined in
-// this rule. Istio will fetch all instances of productpage.prod service
-// from the service registry and populate the sidecar's load balancing
-// pool.
-//
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: my-productpage-rule
-//     spec:
-//       hosts:
-//       - productpage.prod # in kubernetes, this applies only to prod namespace
-//       http:
-//       - timeout: 5s
-//         route:
-//         - destination:
-//             host: productpage.prod
-//
-// The following sets a timeout of 5s for all calls to the external
-// service wikipedia.org, as there is no internal service of that name.
-//
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: my-wiki-rule
-//     spec:
-//       hosts:
-//       - wikipedia.org
-//       http:
-//       - timeout: 5s
-//         route:
-//         - destination:
-//             host: wikipedia.org
-//
-type Destination struct {
-	// REQUIRED. The name of a service from the service registry. Service
-	// names are looked up from the platform's service registry (e.g.,
-	// Kubernetes services, Consul services, etc.) and from the hosts
-	// declared by [ServiceEntry](#ServiceEntry). Traffic forwarded to
-	// destinations that are not found in either of the two, will be dropped.
-	//
-	// *Note for Kubernetes users*: When short names are used (e.g. "reviews"
-	// instead of "reviews.default.svc.cluster.local"), Istio will interpret
-	// the short name based on the namespace of the rule, not the service. A
-	// rule in the "default" namespace containing a host "reviews will be
-	// interpreted as "reviews.default.svc.cluster.local", irrespective of
-	// the actual namespace associated with the reviews service. _To avoid
-	// potential misconfigurations, it is recommended to always use fully
-	// qualified domain names over short names._
-	Host string `json:"host"`
-
-	// The name of a subset within the service. Applicable only to services
-	// within the mesh. The subset must be defined in a corresponding
-	// DestinationRule.
-	Subset string `json:"subset,omitempty"`
-
-	// Specifies the port on the host that is being addressed. If a service
-	// exposes only a single port it is not required to explicitly select the
-	// port.
-	Port PortSelector `json:"port,omitempty"`
 }
 
 // PortSelector specifies the number of a port to be used for
@@ -578,21 +598,24 @@ type HTTPRewrite struct {
 // example, the following rule sets the maximum number of retries to 3 when
 // calling ratings:v1 service, with a 2s timeout per retry attempt.
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: ratings-route
-//     spec:
-//       hosts:
-//       - ratings
-//       http:
-//       - route:
-//         - destination:
-//             host: ratings
-//             subset: v1
-//         retries:
-//           attempts: 3
-//           perTryTimeout: 2s
+// ```yaml
+// apiVersion: networking.istio.io/v1alpha3
+// kind: VirtualService
+// metadata:
+//   name: ratings-route
+// spec:
+//   hosts:
+//   - ratings.prod.svc.cluster.local
+//   http:
+//   - route:
+//     - destination:
+//         host: ratings.prod.svc.cluster.local
+//         subset: v1
+//     retries:
+//       attempts: 3
+//       perTryTimeout: 2s
+//       retryOn: gateway-error,connect-failure,refused-stream
+// ```
 //
 type HTTPRetry struct {
 	// REQUIRED. Number of retries for a given request. The interval
@@ -602,6 +625,13 @@ type HTTPRetry struct {
 
 	// Timeout per retry attempt for a given request. format: 1h/1m/1s/1ms. MUST BE >=1ms.
 	PerTryTimeout string `json:"perTryTimeout"`
+
+	// Specifies the conditions under which retry takes place.
+	// One or more policies can be specified using a ‘,’ delimited list.
+	// The supported policies can be found in
+	// <https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#x-envoy-retry-on>
+	// and <https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#x-envoy-retry-grpc-on>
+	RetryOn string `json:"retryOn"`
 }
 
 // Describes the Cross-Origin Resource Sharing (CORS) policy, for a given

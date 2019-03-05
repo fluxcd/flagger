@@ -26,6 +26,7 @@ import (
 	versioned "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	flagger "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger"
 	internalinterfaces "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	istio "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/istio"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -173,8 +174,13 @@ type SharedInformerFactory interface {
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
 	Flagger() flagger.Interface
+	Networking() istio.Interface
 }
 
 func (f *sharedInformerFactory) Flagger() flagger.Interface {
 	return flagger.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Networking() istio.Interface {
+	return istio.New(f, f.namespace, f.tweakListOptions)
 }

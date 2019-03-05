@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
@@ -27,7 +26,6 @@ import (
 // CanaryDeployer is managing the operations for Kubernetes deployment kind
 type CanaryDeployer struct {
 	kubeClient    kubernetes.Interface
-	istioClient   istioclientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 	configTracker ConfigTracker

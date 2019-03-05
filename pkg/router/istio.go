@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +18,7 @@ import (
 // IstioRouter is managing Istio virtual services
 type IstioRouter struct {
 	kubeClient    kubernetes.Interface
-	istioClient   istioclientset.Interface
+	istioClient   clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 }

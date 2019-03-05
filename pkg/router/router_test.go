@@ -1,8 +1,6 @@
 package router
 
 import (
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	fakeIstio "github.com/knative/pkg/client/clientset/versioned/fake"
 	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
@@ -19,7 +17,7 @@ import (
 type fakeClients struct {
 	canary        *v1alpha3.Canary
 	kubeClient    kubernetes.Interface
-	istioClient   istioclientset.Interface
+	istioClient   clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 }
@@ -32,7 +30,7 @@ func setupfakeClients() fakeClients {
 		newMockDeployment(),
 	)
 
-	istioClient := fakeIstio.NewSimpleClientset()
+	istioClient := fakeFlagger.NewSimpleClientset()
 	logger, _ := logging.NewLogger("debug")
 
 	return fakeClients{

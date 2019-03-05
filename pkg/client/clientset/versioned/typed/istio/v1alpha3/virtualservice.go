@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Knative Authors
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ limitations under the License.
 package v1alpha3
 
 import (
-	v1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
-	scheme "github.com/knative/pkg/client/clientset/versioned/scheme"
+	v1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
+	scheme "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

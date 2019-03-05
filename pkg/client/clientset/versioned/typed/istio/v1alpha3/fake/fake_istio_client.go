@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Knative Authors
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,21 +19,13 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha3 "github.com/knative/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	v1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
 type FakeNetworkingV1alpha3 struct {
 	*testing.Fake
-}
-
-func (c *FakeNetworkingV1alpha3) DestinationRules(namespace string) v1alpha3.DestinationRuleInterface {
-	return &FakeDestinationRules{c, namespace}
-}
-
-func (c *FakeNetworkingV1alpha3) Gateways(namespace string) v1alpha3.GatewayInterface {
-	return &FakeGateways{c, namespace}
 }
 
 func (c *FakeNetworkingV1alpha3) VirtualServices(namespace string) v1alpha3.VirtualServiceInterface {

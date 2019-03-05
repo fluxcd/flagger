@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	v1alpha3 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -55,6 +56,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=flagger.app, Version=v1alpha3
 	case v1alpha3.SchemeGroupVersion.WithResource("canaries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha3().Canaries().Informer()}, nil
+
+		// Group=networking.istio.io, Version=v1alpha3
+	case istiov1alpha3.SchemeGroupVersion.WithResource("virtualservices"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1alpha3().VirtualServices().Informer()}, nil
 
 	}
 

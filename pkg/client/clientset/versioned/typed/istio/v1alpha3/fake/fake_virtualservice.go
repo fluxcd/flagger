@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Knative Authors
+Copyright The Flagger Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
+	v1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

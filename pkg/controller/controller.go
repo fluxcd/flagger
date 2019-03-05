@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	flaggerscheme "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/scheme"
@@ -31,7 +30,7 @@ const controllerAgentName = "flagger"
 // Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
 	kubeClient    kubernetes.Interface
-	istioClient   istioclientset.Interface
+	istioClient   clientset.Interface
 	flaggerClient clientset.Interface
 	flaggerLister flaggerlisters.CanaryLister
 	flaggerSynced cache.InformerSynced
@@ -49,7 +48,7 @@ type Controller struct {
 
 func NewController(
 	kubeClient kubernetes.Interface,
-	istioClient istioclientset.Interface,
+	istioClient clientset.Interface,
 	flaggerClient clientset.Interface,
 	flaggerInformer flaggerinformers.CanaryInformer,
 	flaggerWindow time.Duration,
@@ -71,7 +70,6 @@ func NewController(
 	deployer := CanaryDeployer{
 		logger:        logger,
 		kubeClient:    kubeClient,
-		istioClient:   istioClient,
 		flaggerClient: flaggerClient,
 		configTracker: ConfigTracker{
 			logger:        logger,
