@@ -24,22 +24,38 @@ type IstioRouter struct {
 	logger        *zap.SugaredLogger
 }
 
-// Sync creates or updates the the Istio virtual service.
+// Sync creates or updates the Istio virtual service
 func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
-	hosts := append(cd.Spec.Service.Hosts, targetName)
+
+	// set hosts and add the ClusterIP service host if it doesn't exists
+	hosts := cd.Spec.Service.Hosts
+	var hasServiceHost bool
+	for _, h := range hosts {
+		if h == targetName {
+			hasServiceHost = true
+			break
+		}
+	}
+	if !hasServiceHost {
+		hosts = append(hosts, targetName)
+	}
+
+	// set gateways and add the mesh gateway if it doesn't exists
 	gateways := cd.Spec.Service.Gateways
 	var hasMeshGateway bool
 	for _, g := range gateways {
 		if g == "mesh" {
 			hasMeshGateway = true
+			break
 		}
 	}
 	if !hasMeshGateway {
 		gateways = append(gateways, "mesh")
 	}
 
+	// create destinations with primary weight 100% and canary weight 0%
 	route := []istiov1alpha3.DestinationWeight{
 		{
 			Destination: istiov1alpha3.Destination{
