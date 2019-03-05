@@ -10,6 +10,11 @@ import (
 
 // NewLogger returns a zap sugared logger configured with json format and caller id
 func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
+	return NewLoggerWithEncoding(logLevel, "json")
+}
+
+// NewLoggerWithEncoding returns a zap sugared logger configured with provided format, e.g. console or json, and caller id
+func NewLoggerWithEncoding(logLevel, zapEncoding string) (*zap.SugaredLogger, error) {
 	level := zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	switch logLevel {
 	case "debug":
@@ -47,7 +52,7 @@ func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
 			Initial:    100,
 			Thereafter: 100,
 		},
-		Encoding:         "json",
+		Encoding:         zapEncoding,
 		EncoderConfig:    zapEncoderConfig,
 		OutputPaths:      []string{"stderr"},
 		ErrorOutputPaths: []string{"stderr"},

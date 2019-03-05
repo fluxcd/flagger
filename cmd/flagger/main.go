@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"go.uber.org/zap"
 	"log"
 	"time"
 
@@ -31,6 +32,9 @@ var (
 	slackURL            string
 	slackUser           string
 	slackChannel        string
+	threadiness         int
+	zapReplaceGlobals   bool
+	zapEncoding         string
 )
 
 func init() {
@@ -43,15 +47,22 @@ func init() {
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
+	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
+	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
+	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 }
 
 func main() {
 	flag.Parse()
 
-	logger, err := logging.NewLogger(logLevel)
+	logger, err := logging.NewLoggerWithEncoding(logLevel, zapEncoding)
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
+	if zapReplaceGlobals {
+		zap.ReplaceGlobals(logger.Desugar())
+	}
+
 	defer logger.Sync()
 
 	stopCh := signals.SetupSignalHandler()
@@ -132,7 +143,7 @@ func main() {
 
 	// start controller
 	go func(ctrl *controller.Controller) {
-		if err := ctrl.Run(2, stopCh); err != nil {
+		if err := ctrl.Run(threadiness, stopCh); err != nil {
 			logger.Fatalf("Error running controller: %v", err)
 		}
 	}(c)

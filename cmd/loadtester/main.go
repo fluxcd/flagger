@@ -5,16 +5,19 @@ import (
 	"github.com/knative/pkg/signals"
 	"github.com/stefanprodan/flagger/pkg/loadtester"
 	"github.com/stefanprodan/flagger/pkg/logging"
+	"go.uber.org/zap"
 	"log"
 	"time"
 )
 
 var VERSION = "0.1.0"
 var (
-	logLevel     string
-	port         string
-	timeout      time.Duration
-	logCmdOutput bool
+	logLevel          string
+	port              string
+	timeout           time.Duration
+	logCmdOutput      bool
+	zapReplaceGlobals bool
+	zapEncoding       string
 )
 
 func init() {
@@ -22,15 +25,21 @@ func init() {
 	flag.StringVar(&port, "port", "9090", "Port to listen on.")
 	flag.DurationVar(&timeout, "timeout", time.Hour, "Command exec timeout.")
 	flag.BoolVar(&logCmdOutput, "log-cmd-output", true, "Log command output to stderr")
+	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
+	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 }
 
 func main() {
 	flag.Parse()
 
-	logger, err := logging.NewLogger(logLevel)
+	logger, err := logging.NewLoggerWithEncoding(logLevel, zapEncoding)
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
+	if zapReplaceGlobals {
+		zap.ReplaceGlobals(logger.Desugar())
+	}
+
 	defer logger.Sync()
 
 	stopCh := signals.SetupSignalHandler()
