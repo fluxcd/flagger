@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
@@ -9,19 +8,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var (
-	replaceGlobals bool
-	encoding       string
-)
-
-func init() {
-	flag.BoolVar(&replaceGlobals, "zap-replace-globals", false, "Whether to change level of global zap logger.")
-	flag.StringVar(&encoding, "zap-encoding", "json", "Zap logger encoding.")
-
-}
-
 // NewLogger returns a zap sugared logger configured with json format and caller id
 func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
+	return NewLoggerWithEncoding(logLevel, "json")
+}
+
+// NewLoggerWithEncoding returns a zap sugared logger configured with provided format, e.g. console or json, and caller id
+func NewLoggerWithEncoding(logLevel, zapEncoding string) (*zap.SugaredLogger, error) {
 	level := zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	switch logLevel {
 	case "debug":
@@ -59,7 +52,7 @@ func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
 			Initial:    100,
 			Thereafter: 100,
 		},
-		Encoding:         encoding,
+		Encoding:         zapEncoding,
 		EncoderConfig:    zapEncoderConfig,
 		OutputPaths:      []string{"stderr"},
 		ErrorOutputPaths: []string{"stderr"},
@@ -70,12 +63,6 @@ func NewLogger(logLevel string) (*zap.SugaredLogger, error) {
 		return nil, err
 	}
 	return logger.Sugar(), nil
-}
-
-func ReplaceGlobalIf(logger *zap.Logger) {
-	if replaceGlobals {
-		zap.ReplaceGlobals(logger)
-	}
 }
 
 // Console writes to stdout if the console env var exists
