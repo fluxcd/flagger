@@ -31,6 +31,7 @@ var (
 	slackURL            string
 	slackUser           string
 	slackChannel        string
+	threadiness         int
 )
 
 func init() {
@@ -43,6 +44,7 @@ func init() {
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
+	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 }
 
 func main() {
@@ -52,6 +54,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
+	logging.ReplaceGlobalIf(logger.Desugar())
 	defer logger.Sync()
 
 	stopCh := signals.SetupSignalHandler()
@@ -132,7 +135,7 @@ func main() {
 
 	// start controller
 	go func(ctrl *controller.Controller) {
-		if err := ctrl.Run(2, stopCh); err != nil {
+		if err := ctrl.Run(threadiness, stopCh); err != nil {
 			logger.Fatalf("Error running controller: %v", err)
 		}
 	}(c)
