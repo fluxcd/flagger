@@ -36,6 +36,9 @@ spec:
           - ./flagger
           - -log-level=info
           - -metrics-server={{ .Values.metricsServer }}
+          {{- if .Values.namespace }}
+          - -namespace={{ .Values.namespace }}
+          {{- end }}
           {{- if .Values.slack.url }}
           - -slack-url={{ .Values.slack.url }}
           - -slack-user={{ .Values.slack.user }}

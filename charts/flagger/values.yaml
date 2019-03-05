@@ -7,6 +7,9 @@ image:
 
 metricsServer: "http://prometheus.istio-system.svc.cluster.local:9090"
 
+# Namespace that flagger will watch for Canary objects
+namespace: ""
+
 slack:
   user: flagger
   channel:
