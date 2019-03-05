@@ -6,3 +6,6 @@ coverage:
         threshold: 50
         base: auto
     patch: off
+
+comment:
+  require_changes: yes
