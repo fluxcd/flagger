@@ -33,10 +33,12 @@ spec:
   progressDeadlineSeconds: 60
   service:
     port: 9898
-    appendHeaders:
-      x-envoy-upstream-rq-timeout-ms: "15000"
-      x-envoy-max-retries: "10"
-      x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+    headers:
+      request:
+        add:
+          x-envoy-upstream-rq-timeout-ms: "15000"
+          x-envoy-max-retries: "10"
+          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
   canaryAnalysis:
     interval: 15s
     threshold: 15
