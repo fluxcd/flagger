@@ -60,7 +60,7 @@ func newMockCanary() *v1alpha3.Canary {
 				Port: 9898,
 				Headers: &istiov1alpha3.Headers{
 					Request: &istiov1alpha3.HeaderOperations{
-						Set: map[string]string{
+						Add: map[string]string{
 							"x-envoy-upstream-rq-timeout-ms": "15000",
 						},
 					},
