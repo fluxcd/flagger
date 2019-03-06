@@ -85,6 +85,7 @@ func (ir *IstioRouter) Sync(canary *flaggerv1.Canary) error {
 				Rewrite:       canary.Spec.Service.Rewrite,
 				Timeout:       canary.Spec.Service.Timeout,
 				Retries:       canary.Spec.Service.Retries,
+				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
 				Route:         route,
 			},
@@ -201,6 +202,7 @@ func (ir *IstioRouter) SetRoutes(
 			Rewrite:       canary.Spec.Service.Rewrite,
 			Timeout:       canary.Spec.Service.Timeout,
 			Retries:       canary.Spec.Service.Retries,
+			CorsPolicy:    canary.Spec.Service.CorsPolicy,
 			AppendHeaders: addHeaders(canary),
 			Route: []istiov1alpha3.DestinationWeight{
 				{

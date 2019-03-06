@@ -109,6 +109,7 @@ kind: Canary
 metadata:
   name: frontend
   namespace: test
+spec:
   service:
     # container port
     port: 9898
@@ -132,6 +133,16 @@ metadata:
           x-envoy-upstream-rq-timeout-ms: "15000"
           x-envoy-max-retries: "10"
           x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+    # cross-origin resource sharing policy (optional)
+    corsPolicy:
+      allowOrigin:
+        - example.com
+      allowMethods:
+        - GET
+      allowCredentials: false
+      allowHeaders:
+        - x-some-header
+      maxAge: 24h
     # retry policy when a HTTP request fails (optional)
     retries:
       attempts: 3
@@ -165,6 +176,14 @@ spec:
       x-envoy-max-retries: "10"
       x-envoy-retry-on: gateway-error,connect-failure,refused-stream
       x-envoy-upstream-rq-timeout-ms: "15000"
+    corsPolicy:
+      allowHeaders:
+      - x-some-header
+      allowMethods:
+      - GET
+      allowOrigin:
+      - example.com
+      maxAge: 24h
     match:
     - uri:
         prefix: /

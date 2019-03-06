@@ -166,6 +166,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(istiov1alpha3.Headers)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.CorsPolicy != nil {
+		in, out := &in.CorsPolicy, &out.CorsPolicy
+		*out = new(istiov1alpha3.CorsPolicy)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
