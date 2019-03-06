@@ -35,6 +35,7 @@ var (
 	threadiness         int
 	zapReplaceGlobals   bool
 	zapEncoding         string
+	namespace           string
 )
 
 func init() {
@@ -50,6 +51,7 @@ func init() {
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
+	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object")
 }
 
 func main() {
@@ -87,7 +89,14 @@ func main() {
 		logger.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, time.Second*30)
+	if namespace == "" {
+		logger.Infof("Flagger Canary's Watcher is on all namespace")
+	} else {
+		logger.Infof("Flagger Canary's Watcher is on namespace %s", namespace)
+	}
+
+	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
+
 	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
 
 	logger.Infof("Starting flagger version %s revision %s", version.VERSION, version.REVISION)
