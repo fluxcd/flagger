@@ -85,7 +85,7 @@ func (ir *IstioRouter) Sync(canary *flaggerv1.Canary) error {
 				Rewrite:       canary.Spec.Service.Rewrite,
 				Timeout:       canary.Spec.Service.Timeout,
 				Retries:       canary.Spec.Service.Retries,
-				AppendHeaders: setHeaders(canary),
+				AppendHeaders: addHeaders(canary),
 				Route:         route,
 			},
 		},
@@ -201,7 +201,7 @@ func (ir *IstioRouter) SetRoutes(
 			Rewrite:       canary.Spec.Service.Rewrite,
 			Timeout:       canary.Spec.Service.Timeout,
 			Retries:       canary.Spec.Service.Retries,
-			AppendHeaders: setHeaders(canary),
+			AppendHeaders: addHeaders(canary),
 			Route: []istiov1alpha3.DestinationWeight{
 				{
 					Destination: istiov1alpha3.Destination{
@@ -233,13 +233,13 @@ func (ir *IstioRouter) SetRoutes(
 	return nil
 }
 
-// setHeaders applies headers before forwarding a request to the destination service
+// addHeaders applies headers before forwarding a request to the destination service
 // compatible with Istio 1.0.x and 1.1.0
-func setHeaders(canary *flaggerv1.Canary) (headers map[string]string) {
+func addHeaders(canary *flaggerv1.Canary) (headers map[string]string) {
 	if canary.Spec.Service.Headers != nil &&
 		canary.Spec.Service.Headers.Request != nil &&
-		len(canary.Spec.Service.Headers.Request.Set) > 0 {
-		headers = canary.Spec.Service.Headers.Request.Set
+		len(canary.Spec.Service.Headers.Request.Add) > 0 {
+		headers = canary.Spec.Service.Headers.Request.Add
 	}
 
 	return
