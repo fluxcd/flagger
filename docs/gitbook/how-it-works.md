@@ -109,6 +109,7 @@ kind: Canary
 metadata:
   name: frontend
   namespace: test
+spec:
   service:
     # container port
     port: 9898
