@@ -345,11 +345,11 @@ type HTTPRoute struct {
 type Headers struct {
 	// Header manipulation rules to apply before forwarding a request
 	// to the destination service
-	Request HeaderOperations `json:"request,omitempty"`
+	Request *HeaderOperations `json:"request,omitempty"`
 
 	// Header manipulation rules to apply before returning a response
 	// to the caller
-	Response HeaderOperations `json:"response,omitempty"`
+	Response *HeaderOperations `json:"response,omitempty"`
 }
 
 // HeaderOperations Describes the header manipulations to apply

@@ -161,12 +161,10 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(istiov1alpha3.HTTPRetry)
 		**out = **in
 	}
-	if in.AppendHeaders != nil {
-		in, out := &in.AppendHeaders, &out.AppendHeaders
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
+	if in.Headers != nil {
+		in, out := &in.Headers, &out.Headers
+		*out = new(istiov1alpha3.Headers)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }
