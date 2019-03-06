@@ -192,7 +192,6 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	// test insert
 	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
@@ -205,5 +204,38 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 	timeout := vs.Spec.Http[0].AppendHeaders["x-envoy-upstream-rq-timeout-ms"]
 	if timeout != "15000" {
 		t.Errorf("Got timeout %v wanted %v", timeout, "15000")
+	}
+}
+
+func TestIstioRouter_CORS(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.istioClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Sync(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(vs.Spec.Http) != 1 {
+		t.Fatalf("Got HTTPRoute %v wanted %v", len(vs.Spec.Http), 1)
+	}
+
+	if vs.Spec.Http[0].CorsPolicy == nil {
+		t.Fatal("Got not CORS policy")
+	}
+
+	methods := vs.Spec.Http[0].CorsPolicy.AllowMethods
+	if len(methods) != 2 {
+		t.Fatalf("Got CORS allow methods %v wanted %v", len(methods), 2)
 	}
 }

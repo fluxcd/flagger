@@ -65,6 +65,12 @@ func newMockCanary() *v1alpha3.Canary {
 						},
 					},
 				},
+				CorsPolicy: &istiov1alpha3.CorsPolicy{
+					AllowMethods: []string{
+						"GET",
+						"POST",
+					},
+				},
 			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
