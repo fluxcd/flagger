@@ -328,7 +328,7 @@ type HTTPRoute struct {
 	// Cross-Origin Resource Sharing policy (CORS). Refer to
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 	// for further details about cross origin resource sharing.
-	CorsPolicy *CorsPolicy `json:"CorsPolicy,omitempty"`
+	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 
 	// Additional HTTP headers to add before forwarding a request to the
 	// destination service.
