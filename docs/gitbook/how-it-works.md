@@ -96,9 +96,11 @@ spec:
 The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Service and 
 the Istio Virtual Service. The container port from the target deployment should match the `service.port` value.
 
-### Virtual Service
+### Istio routing
 
-Flagger creates an Istio Virtual Service based on the Canary service spec.
+Flagger creates an Istio Virtual Service based on the Canary service spec. The service configuration lets you expose 
+an app inside or outside the mesh.
+You can also define HTTP match conditions, URI rewrite rules, CORS policies, timeout and retries.
 
 The following spec exposes the `frontend` workload inside the mesh on `frontend.test.svc.cluster.local:9898` 
 and outside the mesh on `frontend.example.com`. You'll have to specify an Istio ingress gateway for external hosts.
@@ -143,10 +145,6 @@ spec:
       allowHeaders:
         - x-some-header
       maxAge: 24h
-    # retry policy when a HTTP request fails (optional)
-    retries:
-      attempts: 3
-      perTryTimeout: 3s
 ```
 
 For the above spec Flagger will generate the following virtual service:
@@ -202,7 +200,7 @@ spec:
       weight: 0
 ```
 
-Flagger keeps in sync the virtual service with the canary service spec. Any direct modification of the virtual 
+Flagger keeps in sync the virtual service with the canary service spec. Any direct modification to the virtual 
 service spec will be overwritten.
 
 To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9898`,

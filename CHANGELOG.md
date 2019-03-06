@@ -2,11 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 0.8.0 (2019-03-06)
+
+Adds support for CORS policy and HTTP request headers manipulation
 
 #### Features
 
-- Allow headers to be appended to HTTP requests [#70](https://github.com/stefanprodan/flagger/pull/70)
+- CORS policy support [#83](https://github.com/stefanprodan/flagger/pull/83)
+- Allow headers to be appended to HTTP requests [#82](https://github.com/stefanprodan/flagger/pull/82)
+
+#### Improvements 
+
+- Refactor the routing management 
+    [#72](https://github.com/stefanprodan/flagger/pull/72) 
+    [#80](https://github.com/stefanprodan/flagger/pull/80)
+- Fine-grained RBAC [#73](https://github.com/stefanprodan/flagger/pull/73)
+- Add option to limit Flagger to a single namespace [#78](https://github.com/stefanprodan/flagger/pull/78)
 
 ## 0.7.0 (2019-02-28)
 
