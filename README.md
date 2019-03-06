@@ -107,10 +107,12 @@ spec:
     rewrite:
       uri: /
     # Envoy timeout and retry policy (optional)
-    appendHeaders:
-      x-envoy-upstream-rq-timeout-ms: "15000"
-      x-envoy-max-retries: "10"
-      x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+    headers:
+      request:
+        set:
+          x-envoy-upstream-rq-timeout-ms: "15000"
+          x-envoy-max-retries: "10"
+          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   # define the canary analysis timing and KPIs
