@@ -24,12 +24,12 @@ type IstioRouter struct {
 }
 
 // Sync creates or updates the Istio virtual service
-func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
-	targetName := cd.Spec.TargetRef.Name
+func (ir *IstioRouter) Sync(canary *flaggerv1.Canary) error {
+	targetName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
 	// set hosts and add the ClusterIP service host if it doesn't exists
-	hosts := cd.Spec.Service.Hosts
+	hosts := canary.Spec.Service.Hosts
 	var hasServiceHost bool
 	for _, h := range hosts {
 		if h == targetName {
@@ -42,7 +42,7 @@ func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
 	}
 
 	// set gateways and add the mesh gateway if it doesn't exists
-	gateways := cd.Spec.Service.Gateways
+	gateways := canary.Spec.Service.Gateways
 	var hasMeshGateway bool
 	for _, g := range gateways {
 		if g == "mesh" {
@@ -60,7 +60,7 @@ func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
 			Destination: istiov1alpha3.Destination{
 				Host: primaryName,
 				Port: istiov1alpha3.PortSelector{
-					Number: uint32(cd.Spec.Service.Port),
+					Number: uint32(canary.Spec.Service.Port),
 				},
 			},
 			Weight: 100,
@@ -69,36 +69,37 @@ func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
 			Destination: istiov1alpha3.Destination{
 				Host: fmt.Sprintf("%s-canary", targetName),
 				Port: istiov1alpha3.PortSelector{
-					Number: uint32(cd.Spec.Service.Port),
+					Number: uint32(canary.Spec.Service.Port),
 				},
 			},
 			Weight: 0,
 		},
 	}
+
 	newSpec := istiov1alpha3.VirtualServiceSpec{
 		Hosts:    hosts,
 		Gateways: gateways,
 		Http: []istiov1alpha3.HTTPRoute{
 			{
-				Match:         cd.Spec.Service.Match,
-				Rewrite:       cd.Spec.Service.Rewrite,
-				Timeout:       cd.Spec.Service.Timeout,
-				Retries:       cd.Spec.Service.Retries,
-				AppendHeaders: cd.Spec.Service.AppendHeaders,
+				Match:         canary.Spec.Service.Match,
+				Rewrite:       canary.Spec.Service.Rewrite,
+				Timeout:       canary.Spec.Service.Timeout,
+				Retries:       canary.Spec.Service.Retries,
+				AppendHeaders: addHeaders(canary),
 				Route:         route,
 			},
 		},
 	}
 
-	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
 		virtualService = &istiov1alpha3.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      targetName,
-				Namespace: cd.Namespace,
+				Namespace: canary.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
+					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
 						Version: flaggerv1.SchemeGroupVersion.Version,
 						Kind:    flaggerv1.CanaryKind,
@@ -107,17 +108,17 @@ func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
 			},
 			Spec: newSpec,
 		}
-		_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Create(virtualService)
+		_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Create(virtualService)
 		if err != nil {
-			return fmt.Errorf("VirtualService %s.%s create error %v", targetName, cd.Namespace, err)
+			return fmt.Errorf("VirtualService %s.%s create error %v", targetName, canary.Namespace, err)
 		}
-		ir.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("VirtualService %s.%s created", virtualService.GetName(), cd.Namespace)
+		ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Infof("VirtualService %s.%s created", virtualService.GetName(), canary.Namespace)
 		return nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, cd.Namespace, err)
+		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, canary.Namespace, err)
 	}
 
 	// update service but keep the original destination weights
@@ -128,12 +129,12 @@ func (ir *IstioRouter) Sync(cd *flaggerv1.Canary) error {
 			if len(virtualService.Spec.Http) > 0 {
 				vtClone.Spec.Http[0].Route = virtualService.Spec.Http[0].Route
 			}
-			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(cd.Namespace).Update(vtClone)
+			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vtClone)
 			if err != nil {
-				return fmt.Errorf("VirtualService %s.%s update error %v", targetName, cd.Namespace, err)
+				return fmt.Errorf("VirtualService %s.%s update error %v", targetName, canary.Namespace, err)
 			}
-			ir.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-				Infof("VirtualService %s.%s updated", virtualService.GetName(), cd.Namespace)
+			ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("VirtualService %s.%s updated", virtualService.GetName(), canary.Namespace)
 		}
 	}
 
@@ -200,7 +201,7 @@ func (ir *IstioRouter) SetRoutes(
 			Rewrite:       canary.Spec.Service.Rewrite,
 			Timeout:       canary.Spec.Service.Timeout,
 			Retries:       canary.Spec.Service.Retries,
-			AppendHeaders: canary.Spec.Service.AppendHeaders,
+			AppendHeaders: addHeaders(canary),
 			Route: []istiov1alpha3.DestinationWeight{
 				{
 					Destination: istiov1alpha3.Destination{
@@ -230,4 +231,16 @@ func (ir *IstioRouter) SetRoutes(
 
 	}
 	return nil
+}
+
+// addHeaders applies headers before forwarding a request to the destination service
+// compatible with Istio 1.0.x and 1.1.0
+func addHeaders(canary *flaggerv1.Canary) (headers map[string]string) {
+	if canary.Spec.Service.Headers != nil &&
+		canary.Spec.Service.Headers.Request != nil &&
+		len(canary.Spec.Service.Headers.Request.Add) > 0 {
+		headers = canary.Spec.Service.Headers.Request.Add
+	}
+
+	return
 }

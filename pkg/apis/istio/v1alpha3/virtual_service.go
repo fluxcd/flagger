@@ -325,6 +325,9 @@ type HTTPRoute struct {
 	// destination.
 	Mirror *Destination `json:"mirror,omitempty"`
 
+	// Cross-Origin Resource Sharing policy (CORS). Refer to
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+	// for further details about cross origin resource sharing.
 	CorsPolicy *CorsPolicy `json:"CorsPolicy,omitempty"`
 
 	// Additional HTTP headers to add before forwarding a request to the
@@ -333,6 +336,33 @@ type HTTPRoute struct {
 
 	// Http headers to remove before returning the response to the caller
 	RemoveResponseHeaders map[string]string `json:"removeResponseHeaders,omitempty"`
+
+	// Header manipulation rules
+	Headers *Headers `json:"headers,omitempty"`
+}
+
+// Header manipulation rules
+type Headers struct {
+	// Header manipulation rules to apply before forwarding a request
+	// to the destination service
+	Request *HeaderOperations `json:"request,omitempty"`
+
+	// Header manipulation rules to apply before returning a response
+	// to the caller
+	Response *HeaderOperations `json:"response,omitempty"`
+}
+
+// HeaderOperations Describes the header manipulations to apply
+type HeaderOperations struct {
+	// Overwrite the headers specified by key with the given values
+	Set map[string]string `json:"set"`
+
+	// Append the given values to the headers specified by keys
+	// (will create a comma-separated list of values)
+	Add map[string]string `json:"add"`
+
+	// Remove the specified headers
+	Remove []string `json:"remove"`
 }
 
 // HttpMatchRequest specifies a set of criterion to be met in order for the

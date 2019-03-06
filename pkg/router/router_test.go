@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
 	"github.com/stefanprodan/flagger/pkg/logging"
@@ -57,6 +58,13 @@ func newMockCanary() *v1alpha3.Canary {
 			},
 			Service: v1alpha3.CanaryService{
 				Port: 9898,
+				Headers: &istiov1alpha3.Headers{
+					Request: &istiov1alpha3.HeaderOperations{
+						Add: map[string]string{
+							"x-envoy-upstream-rq-timeout-ms": "15000",
+						},
+					},
+				},
 			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,

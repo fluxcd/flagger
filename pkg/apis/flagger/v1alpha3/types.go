@@ -109,14 +109,14 @@ type CanaryStatus struct {
 // CanaryService is used to create ClusterIP services
 // and Istio Virtual Service
 type CanaryService struct {
-	Port          int32                            `json:"port"`
-	Gateways      []string                         `json:"gateways"`
-	Hosts         []string                         `json:"hosts"`
-	Match         []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
-	Rewrite       *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
-	Timeout       string                           `json:"timeout,omitempty"`
-	Retries       *istiov1alpha3.HTTPRetry         `json:"retries,omitempty"`
-	AppendHeaders map[string]string                `json:"appendHeaders,omitempty"`
+	Port     int32                            `json:"port"`
+	Gateways []string                         `json:"gateways"`
+	Hosts    []string                         `json:"hosts"`
+	Match    []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+	Rewrite  *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
+	Timeout  string                           `json:"timeout,omitempty"`
+	Retries  *istiov1alpha3.HTTPRetry         `json:"retries,omitempty"`
+	Headers  *istiov1alpha3.Headers           `json:"headers,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done

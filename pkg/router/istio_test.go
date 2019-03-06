@@ -177,3 +177,33 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 		t.Errorf("Got canary weight %v wanted %v", c, 0)
 	}
 }
+
+func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.istioClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Sync(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// test insert
+	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(vs.Spec.Http) != 1 {
+		t.Fatalf("Got HTTPRoute %v wanted %v", len(vs.Spec.Http), 1)
+	}
+
+	timeout := vs.Spec.Http[0].AppendHeaders["x-envoy-upstream-rq-timeout-ms"]
+	if timeout != "15000" {
+		t.Errorf("Got timeout %v wanted %v", timeout, "15000")
+	}
+}

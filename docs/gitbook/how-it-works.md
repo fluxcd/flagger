@@ -39,18 +39,6 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
-    # HTTP match conditions (optional)
-    match:
-      - uri:
-          prefix: /
-    # HTTP rewrite (optional)
-    rewrite:
-      uri: /
-    # Envoy timeout and retry policy (optional)
-    appendHeaders:
-      x-envoy-upstream-rq-timeout-ms: "15000"
-      x-envoy-max-retries: "10"
-      x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   # define the canary analysis timing and KPIs
@@ -138,10 +126,12 @@ metadata:
     rewrite:
       uri: /
     # Envoy timeout and retry policy (optional)
-    appendHeaders:
-      x-envoy-upstream-rq-timeout-ms: "15000"
-      x-envoy-max-retries: "10"
-      x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+    headers:
+      request:
+        add:
+          x-envoy-upstream-rq-timeout-ms: "15000"
+          x-envoy-max-retries: "10"
+          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
     # retry policy when a HTTP request fails (optional)
     retries:
       attempts: 3
@@ -171,26 +161,26 @@ spec:
     - frontend.example.com
     - frontend
   http:
-    - match:
-        - uri:
-            prefix: /
-      rewrite:
-        uri: /
-      appendHeaders:
-        x-envoy-upstream-rq-timeout-ms: "15000"
-        x-envoy-max-retries: "10"
-        x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
-      route:
-        - destination:
-            host: frontend-primary
-            port:
-              number: 9898
-          weight: 100
-        - destination:
-            host: frontend-canary
-            port:
-              number: 9898
-          weight: 0
+  - appendHeaders:
+      x-envoy-max-retries: "10"
+      x-envoy-retry-on: gateway-error,connect-failure,refused-stream
+      x-envoy-upstream-rq-timeout-ms: "15000"
+    match:
+    - uri:
+        prefix: /
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: podinfo-primary
+        port:
+          number: 9898
+      weight: 100
+    - destination:
+        host: podinfo-canary
+        port:
+          number: 9898
+      weight: 0
 ```
 
 Flagger keeps in sync the virtual service with the canary service spec. Any direct modification of the virtual 
