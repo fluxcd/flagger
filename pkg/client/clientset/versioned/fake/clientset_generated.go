@@ -22,6 +22,8 @@ import (
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	flaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
 	fakeflaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3/fake"
+	networkingv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	fakenetworkingv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -79,4 +81,14 @@ func (c *Clientset) FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface {
 // Flagger retrieves the FlaggerV1alpha3Client
 func (c *Clientset) Flagger() flaggerv1alpha3.FlaggerV1alpha3Interface {
 	return &fakeflaggerv1alpha3.FakeFlaggerV1alpha3{Fake: &c.Fake}
+}
+
+// NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
+func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface {
+	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
+}
+
+// Networking retrieves the NetworkingV1alpha3Client
+func (c *Clientset) Networking() networkingv1alpha3.NetworkingV1alpha3Interface {
+	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
 }

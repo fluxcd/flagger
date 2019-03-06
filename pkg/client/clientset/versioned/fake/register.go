@@ -20,6 +20,7 @@ package fake
 
 import (
 	flaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	networkingv1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,4 +52,5 @@ func init() {
 // correctly.
 func AddToScheme(scheme *runtime.Scheme) {
 	flaggerv1alpha3.AddToScheme(scheme)
+	networkingv1alpha3.AddToScheme(scheme)
 }

@@ -2,24 +2,22 @@ package main
 
 import (
 	"flag"
-	"go.uber.org/zap"
-	"log"
-	"time"
-
 	_ "github.com/istio/glog"
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	"github.com/knative/pkg/signals"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
 	"github.com/stefanprodan/flagger/pkg/controller"
 	"github.com/stefanprodan/flagger/pkg/logging"
 	"github.com/stefanprodan/flagger/pkg/notifier"
 	"github.com/stefanprodan/flagger/pkg/server"
+	"github.com/stefanprodan/flagger/pkg/signals"
 	"github.com/stefanprodan/flagger/pkg/version"
+	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+	"log"
+	"time"
 )
 
 var (
@@ -79,7 +77,7 @@ func main() {
 		logger.Fatalf("Error building kubernetes clientset: %v", err)
 	}
 
-	istioClient, err := istioclientset.NewForConfig(cfg)
+	istioClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building istio clientset: %v", err)
 	}

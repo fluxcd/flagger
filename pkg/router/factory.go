@@ -1,7 +1,6 @@
 package router
 
 import (
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -9,7 +8,7 @@ import (
 
 type Factory struct {
 	kubeClient    kubernetes.Interface
-	istioClient   istioclientset.Interface
+	istioClient   clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 }
@@ -17,7 +16,7 @@ type Factory struct {
 func NewFactory(kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
 	logger *zap.SugaredLogger,
-	istioClient istioclientset.Interface) *Factory {
+	istioClient clientset.Interface) *Factory {
 	return &Factory{
 		istioClient:   istioClient,
 		kubeClient:    kubeClient,

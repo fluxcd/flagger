@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/knative/pkg/signals"
 	"github.com/stefanprodan/flagger/pkg/loadtester"
 	"github.com/stefanprodan/flagger/pkg/logging"
+	"github.com/stefanprodan/flagger/pkg/signals"
 	"go.uber.org/zap"
 	"log"
 	"time"

@@ -1,8 +1,6 @@
 package controller
 
 import (
-	istioclientset "github.com/knative/pkg/client/clientset/versioned"
-	fakeIstio "github.com/knative/pkg/client/clientset/versioned/fake"
 	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
@@ -31,7 +29,7 @@ var (
 type Mocks struct {
 	canary        *v1alpha3.Canary
 	kubeClient    kubernetes.Interface
-	istioClient   istioclientset.Interface
+	istioClient   clientset.Interface
 	flaggerClient clientset.Interface
 	deployer      CanaryDeployer
 	observer      CanaryObserver
@@ -57,7 +55,6 @@ func SetupMocks() Mocks {
 		NewTestSecretVol(),
 	)
 
-	istioClient := fakeIstio.NewSimpleClientset()
 	logger, _ := logging.NewLogger("debug")
 
 	// init controller helpers
@@ -81,7 +78,7 @@ func SetupMocks() Mocks {
 
 	ctrl := &Controller{
 		kubeClient:    kubeClient,
-		istioClient:   istioClient,
+		istioClient:   flaggerClient,
 		flaggerClient: flaggerClient,
 		flaggerLister: flaggerInformer.Lister(),
 		flaggerSynced: flaggerInformer.Informer().HasSynced,
@@ -97,7 +94,7 @@ func SetupMocks() Mocks {
 	ctrl.flaggerSynced = alwaysReady
 
 	// init router
-	rf := router.NewFactory(kubeClient, flaggerClient, logger, istioClient)
+	rf := router.NewFactory(kubeClient, flaggerClient, logger, flaggerClient)
 	var meshRouter router.Interface
 	meshRouter = rf.IstioRouter()
 
@@ -107,7 +104,7 @@ func SetupMocks() Mocks {
 		deployer:      deployer,
 		logger:        logger,
 		flaggerClient: flaggerClient,
-		istioClient:   istioClient,
+		istioClient:   flaggerClient,
 		kubeClient:    kubeClient,
 		ctrl:          ctrl,
 		router:        meshRouter,
