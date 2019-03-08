@@ -259,7 +259,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-			c.recorder.SetWeight(cd, 100, 0)
+			c.recorder.SetWeight(cd, 0, 100)
 
 			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
