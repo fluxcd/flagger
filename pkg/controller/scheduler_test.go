@@ -7,7 +7,7 @@ import (
 )
 
 func TestScheduler_Init(t *testing.T) {
-	mocks := SetupMocks()
+	mocks := SetupMocks(false)
 	mocks.ctrl.advanceCanary("podinfo", "default", false)
 
 	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -17,7 +17,7 @@ func TestScheduler_Init(t *testing.T) {
 }
 
 func TestScheduler_NewRevision(t *testing.T) {
-	mocks := SetupMocks()
+	mocks := SetupMocks(false)
 	mocks.ctrl.advanceCanary("podinfo", "default", false)
 
 	// update
@@ -41,7 +41,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 }
 
 func TestScheduler_Rollback(t *testing.T) {
-	mocks := SetupMocks()
+	mocks := SetupMocks(false)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -65,7 +65,7 @@ func TestScheduler_Rollback(t *testing.T) {
 }
 
 func TestScheduler_SkipAnalysis(t *testing.T) {
-	mocks := SetupMocks()
+	mocks := SetupMocks(false)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", false)
 
@@ -106,7 +106,7 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 }
 
 func TestScheduler_NewRevisionReset(t *testing.T) {
-	mocks := SetupMocks()
+	mocks := SetupMocks(false)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", false)
 
@@ -160,7 +160,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 }
 
 func TestScheduler_Promotion(t *testing.T) {
-	mocks := SetupMocks()
+	mocks := SetupMocks(false)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", false)
 
@@ -249,6 +249,77 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret2.Data["apiKey"])
 	}
 
+	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if c.Status.Phase != v1alpha3.CanarySucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanarySucceeded)
+	}
+}
+
+func TestScheduler_ABTesting(t *testing.T) {
+	mocks := SetupMocks(true)
+	// init
+	mocks.ctrl.advanceCanary("podinfo", "default", false)
+
+	// update
+	dep2 := newTestDeploymentV2()
+	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect pod spec changes
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// advance
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// check if traffic is routed to canary
+	primaryWeight, canaryWeight, err := mocks.router.GetRoutes(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if primaryWeight != 0 {
+		t.Errorf("Got primary route %v wanted %v", primaryWeight, 0)
+	}
+
+	if canaryWeight != 100 {
+		t.Errorf("Got canary route %v wanted %v", canaryWeight, 100)
+	}
+
+	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// set max iterations
+	if err := mocks.deployer.SetStatusIterations(cd, 10); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// promote
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// check if the container image tag was updated
+	primaryDep, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	primaryImage := primaryDep.Spec.Template.Spec.Containers[0].Image
+	canaryImage := dep2.Spec.Template.Spec.Containers[0].Image
+	if primaryImage != canaryImage {
+		t.Errorf("Got primary image %v wanted %v", primaryImage, canaryImage)
+	}
+
+	// shutdown canary
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// check rollout status
 	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
