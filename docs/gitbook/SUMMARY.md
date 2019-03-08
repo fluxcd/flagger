@@ -11,6 +11,7 @@
 ## Usage
 
 * [Canary Deployments](usage/progressive-delivery.md)
+* [A/B Testing](usage/ab-testing.md)
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)
 

@@ -29,13 +29,13 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Routing](https://docs.flagger.app/how-it-works#istio-routing)
     * [Canary deployment stages](https://docs.flagger.app/how-it-works#canary-deployment)
     * [Canary analysis](https://docs.flagger.app/how-it-works#canary-analysis)
-    * [A/B testing](https://docs.flagger.app/how-it-works#ab-testing)
     * [HTTP metrics](https://docs.flagger.app/how-it-works#http-metrics)
     * [Custom metrics](https://docs.flagger.app/how-it-works#custom-metrics)
     * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
 * Usage
     * [Canary promotions and rollbacks](https://docs.flagger.app/usage/progressive-delivery)
+    * [A/B testing](https://docs.flagger.app/usage/ab-testing)
     * [Monitoring](https://docs.flagger.app/usage/monitoring)
     * [Alerting](https://docs.flagger.app/usage/alerting)
 * Tutorials
