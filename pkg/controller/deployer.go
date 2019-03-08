@@ -220,7 +220,7 @@ func (c *CanaryDeployer) SetStatusWeight(cd *flaggerv1.Canary, val int) error {
 	return nil
 }
 
-// SetStatusWeight updates the canary status weight value
+// SetStatusIterations updates the canary status iterations value
 func (c *CanaryDeployer) SetStatusIterations(cd *flaggerv1.Canary, val int) error {
 	cdCopy := cd.DeepCopy()
 	cdCopy.Status.Iterations = val

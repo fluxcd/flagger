@@ -471,13 +471,6 @@ func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 	return false
 }
 
-func (c *Controller) hasMaxIterations(cd *flaggerv1.Canary) bool {
-	if cd.Status.Iterations == cd.Status.Iterations {
-		return true
-	}
-	return false
-}
-
 func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
