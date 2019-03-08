@@ -83,6 +83,8 @@ spec:
                 interval:
                   type: string
                   pattern: "^[0-9]+(m|s)"
+                iterations:
+                  type: number
                 threshold:
                   type: number
                 maxWeight:
