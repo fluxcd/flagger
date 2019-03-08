@@ -9,18 +9,13 @@ import (
 func TestTaskRunner_Start(t *testing.T) {
 	stop := make(chan struct{})
 	logger, _ := logging.NewLogger("debug")
-	tr := NewTaskRunner(logger, time.Hour, false)
+	tr := NewTaskRunner(logger, time.Hour)
 
 	go tr.Start(10*time.Millisecond, stop)
 
-	task1 := Task{
-		Canary:  "podinfo.default",
-		Command: "sleep 0.6",
-	}
-	task2 := Task{
-		Canary:  "podinfo.default",
-		Command: "sleep 0.7",
-	}
+	taskFactory, _ := GetTaskFactory(TaskTypeShell)
+	task1, _ := taskFactory(map[string]string{"cmd": "sleep 0.6"}, "podinfo.default", logger)
+	task2, _ := taskFactory(map[string]string{"cmd": "sleep 0.7"}, "podinfo.default", logger)
 
 	tr.Add(task1)
 	tr.Add(task2)

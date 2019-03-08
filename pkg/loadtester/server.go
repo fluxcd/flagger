@@ -39,16 +39,25 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		}
 
 		if len(payload.Metadata) > 0 {
-			if cmd, ok := payload.Metadata["cmd"]; ok {
-				taskRunner.Add(Task{
-					Canary:  fmt.Sprintf("%s.%s", payload.Name, payload.Namespace),
-					Command: cmd,
-				})
-			} else {
+			metadata := payload.Metadata
+			var typ, ok = metadata["type"]
+			if !ok {
+				typ = TaskTypeShell
+			}
+			taskFactory, ok := GetTaskFactory(typ)
+			if !ok {
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte("cmd not found in metadata"))
+				w.Write([]byte(fmt.Sprintf("unknown task type %s", typ)))
 				return
 			}
+			canary := fmt.Sprintf("%s.%s", payload.Name, payload.Namespace)
+			task, err := taskFactory(metadata, canary, logger)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			taskRunner.Add(task)
 		} else {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("metadata not found in payload"))

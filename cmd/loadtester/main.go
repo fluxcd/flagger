@@ -23,8 +23,7 @@ var (
 func init() {
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "9090", "Port to listen on.")
-	flag.DurationVar(&timeout, "timeout", time.Hour, "Command exec timeout.")
-	flag.BoolVar(&logCmdOutput, "log-cmd-output", true, "Log command output to stderr")
+	flag.DurationVar(&timeout, "timeout", time.Hour, "Load test exec timeout.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 }
@@ -44,7 +43,7 @@ func main() {
 
 	stopCh := signals.SetupSignalHandler()
 
-	taskRunner := loadtester.NewTaskRunner(logger, timeout, logCmdOutput)
+	taskRunner := loadtester.NewTaskRunner(logger, timeout)
 
 	go taskRunner.Start(100*time.Millisecond, stopCh)
 

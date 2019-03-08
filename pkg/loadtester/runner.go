@@ -2,11 +2,7 @@ package loadtester
 
 import (
 	"context"
-	"encoding/hex"
-	"fmt"
 	"go.uber.org/zap"
-	"hash/fnv"
-	"os/exec"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,24 +17,12 @@ type TaskRunner struct {
 	logCmdOutput bool
 }
 
-type Task struct {
-	Canary  string
-	Command string
-}
-
-func (t Task) Hash() string {
-	fnvHash := fnv.New32()
-	fnvBytes := fnvHash.Sum([]byte(t.Canary + t.Command))
-	return hex.EncodeToString(fnvBytes[:])
-}
-
-func NewTaskRunner(logger *zap.SugaredLogger, timeout time.Duration, logCmdOutput bool) *TaskRunner {
+func NewTaskRunner(logger *zap.SugaredLogger, timeout time.Duration) *TaskRunner {
 	return &TaskRunner{
 		logger:       logger,
 		todoTasks:    new(sync.Map),
 		runningTasks: new(sync.Map),
 		timeout:      timeout,
-		logCmdOutput: logCmdOutput,
 	}
 }
 
@@ -69,24 +53,15 @@ func (tr *TaskRunner) runAll() {
 				// increment the total exec counter
 				atomic.AddUint64(&tr.totalExecs, 1)
 
-				tr.logger.With("canary", t.Canary).Infof("command starting %s", t.Command)
-				cmd := exec.CommandContext(ctx, "sh", "-c", t.Command)
+				tr.logger.With("canary", t.Canary()).Infof("task starting %s", t)
 
-				// execute task
-				out, err := cmd.CombinedOutput()
-				if err != nil {
-					tr.logger.With("canary", t.Canary).Errorf("command failed %s %v %s", t.Command, err, out)
-				} else {
-					if tr.logCmdOutput {
-						fmt.Printf("%s\n", out)
-					}
-					tr.logger.With("canary", t.Canary).Infof("command finished %s", t.Command)
-				}
+				// run task with the timeout context
+				t.Run(ctx)
 
 				// remove task from the running list
 				tr.runningTasks.Delete(t.Hash())
 			} else {
-				tr.logger.With("canary", t.Canary).Infof("command skipped %s is already running", t.Command)
+				tr.logger.With("canary", t.Canary()).Infof("command skipped %s is already running", t)
 			}
 		}(task)
 		return true
