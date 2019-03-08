@@ -129,6 +129,14 @@
   revision = "3befbb6ad0cc97d4c25d851e9528915809e1a22f"
 
 [[projects]]
+  digest = "1:7313d6b9095eb86581402557bbf3871620cf82adf41853c5b9bee04b894290c7"
+  name = "github.com/h2non/parth"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "b4df798d65426f8c8ab5ca5f9987aec5575d26c9"
+  version = "v2.0.1"
+
+[[projects]]
   digest = "1:52094d0f8bdf831d1a2401e9b6fee5795fdc0b2a2d1f8bb1980834c289e79129"
   name = "github.com/hashicorp/golang-lru"
   packages = [
@@ -404,6 +412,14 @@
   pruneopts = "NUT"
   revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
   version = "v1.4.0"
+
+[[projects]]
+  digest = "1:fe9eb931d7b59027c4a3467f7edc16cc8552dac5328039bec05045143c18e1ce"
+  name = "gopkg.in/h2non/gock.v1"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "ba88c4862a27596539531ce469478a91bc5a0511"
+  version = "v1.0.14"
 
 [[projects]]
   digest = "1:2d1fbdc6777e5408cabeb02bf336305e724b925ff4546ded0fa8715a7267922a"
@@ -684,6 +700,7 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",
+    "gopkg.in/h2non/gock.v1",
     "k8s.io/api/apps/v1",
     "k8s.io/api/autoscaling/v1",
     "k8s.io/api/autoscaling/v2beta1",
