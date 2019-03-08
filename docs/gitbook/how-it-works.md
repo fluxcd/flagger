@@ -327,6 +327,46 @@ At any time you can set the `spec.skipAnalysis: true`.
 When skip analysis is enabled, Flagger checks if the canary deployment is healthy and 
 promotes it without analysing it. If an analysis is underway, Flagger cancels it and runs the promotion.
 
+### A/B Testing
+
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
+In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
+
+Spec:
+
+```yaml
+  canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 1m
+    # total number of iterations
+    iterations: 10
+    # max number of failed iterations before rollback
+    threshold: 2
+    # canary match condition
+    match:
+      - headers:
+          user-agent:
+            regex: "^(?!.*Chrome)(?=.*\bSafari\b).*$"
+      - headers:
+          cookie:
+            regex: "^(.*?;)?(user=test)(;.*)?$"
+```
+
+The above configuration will run an analysis for ten minutes targeting the Safari users and those that have a test cookie.
+You can determine the minimum time that it takes to validate and promote a canary deployment using this formula:
+
+```
+interval * iterations
+```
+
+And the time it takes for a canary to be rollback when the metrics or webhook checks are failing:
+
+```
+interval * threshold 
+```
+
+Make sure that the analysis threshold is lower than the number of iterations.
+
 ### HTTP Metrics
 
 The canary analysis is using the following Prometheus queries:

@@ -29,6 +29,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Routing](https://docs.flagger.app/how-it-works#istio-routing)
     * [Canary deployment stages](https://docs.flagger.app/how-it-works#canary-deployment)
     * [Canary analysis](https://docs.flagger.app/how-it-works#canary-analysis)
+    * [A/B testing](https://docs.flagger.app/how-it-works#ab-testing)
     * [HTTP metrics](https://docs.flagger.app/how-it-works#http-metrics)
     * [Custom metrics](https://docs.flagger.app/how-it-works#custom-metrics)
     * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
@@ -167,7 +168,6 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
-* Add A/B testing capabilities using fixed routing based on HTTP headers and cookies match conditions
 * Integrate with other service mesh technologies like AWS AppMesh and Linkerd v2
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
