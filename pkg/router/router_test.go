@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha1 "github.com/stefanprodan/flagger/pkg/apis/istio/common/v1alpha1"
 	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
@@ -17,6 +18,7 @@ import (
 
 type fakeClients struct {
 	canary        *v1alpha3.Canary
+	abtest        *v1alpha3.Canary
 	kubeClient    kubernetes.Interface
 	istioClient   clientset.Interface
 	flaggerClient clientset.Interface
@@ -25,17 +27,17 @@ type fakeClients struct {
 
 func setupfakeClients() fakeClients {
 	canary := newMockCanary()
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+	abtest := newMockABTest()
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary, abtest)
 
-	kubeClient := fake.NewSimpleClientset(
-		newMockDeployment(),
-	)
+	kubeClient := fake.NewSimpleClientset(newMockDeployment(), newMockABTestDeployment())
 
 	istioClient := fakeFlagger.NewSimpleClientset()
 	logger, _ := logging.NewLogger("debug")
 
 	return fakeClients{
 		canary:        canary,
+		abtest:        abtest,
 		kubeClient:    kubeClient,
 		istioClient:   istioClient,
 		flaggerClient: flaggerClient,
@@ -93,6 +95,51 @@ func newMockCanary() *v1alpha3.Canary {
 	return cd
 }
 
+func newMockABTest() *v1alpha3.Canary {
+	cd := &v1alpha3.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "abtest",
+		},
+		Spec: v1alpha3.CanarySpec{
+			TargetRef: hpav1.CrossVersionObjectReference{
+				Name:       "abtest",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: v1alpha3.CanaryService{
+				Port: 9898,
+			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+				Threshold:  10,
+				Iterations: 2,
+				Match: []istiov1alpha3.HTTPMatchRequest{
+					{
+						Headers: map[string]istiov1alpha1.StringMatch{
+							"x-user-type": {
+								Exact: "test",
+							},
+						},
+					},
+				},
+				Metrics: []v1alpha3.CanaryMetric{
+					{
+						Name:      "istio_requests_total",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "istio_request_duration_seconds_bucket",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
 func newMockDeployment() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
@@ -110,6 +157,51 @@ func newMockDeployment() *appsv1.Deployment {
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"app": "podinfo",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "podinfo",
+							Image: "quay.io/stefanprodan/podinfo:1.4.0",
+							Command: []string{
+								"./podinfo",
+								"--port=9898",
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "http",
+									ContainerPort: 9898,
+									Protocol:      corev1.ProtocolTCP,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return d
+}
+
+func newMockABTestDeployment() *appsv1.Deployment {
+	d := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "abtest",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "abtest",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "abtest",
 					},
 				},
 				Spec: corev1.PodSpec{
