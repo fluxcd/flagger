@@ -220,6 +220,32 @@ func (c *CanaryDeployer) SetStatusWeight(cd *flaggerv1.Canary, val int) error {
 	return nil
 }
 
+// SetStatusWeight updates the canary status weight value
+func (c *CanaryDeployer) SetStatusIterations(cd *flaggerv1.Canary, val int) error {
+	cdCopy := cd.DeepCopy()
+	cdCopy.Status.Iterations = val
+	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+	if err != nil {
+		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
+	}
+	return nil
+}
+
+// SetStatusWeight updates the canary status weight value
+func (c *CanaryDeployer) IncrementStatusIterations(cd *flaggerv1.Canary) error {
+	cdCopy := cd.DeepCopy()
+	cdCopy.Status.Iterations = cdCopy.Status.Iterations + 1
+	cdCopy.Status.LastTransitionTime = metav1.Now()
+
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+	if err != nil {
+		return fmt.Errorf("canary %s.%s status update error %v", cdCopy.Name, cdCopy.Namespace, err)
+	}
+	return nil
+}
+
 // SetStatusPhase updates the canary status phase
 func (c *CanaryDeployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
 	cdCopy := cd.DeepCopy()
@@ -228,6 +254,7 @@ func (c *CanaryDeployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.Ca
 
 	if phase != flaggerv1.CanaryProgressing {
 		cdCopy.Status.CanaryWeight = 0
+		cdCopy.Status.Iterations = 0
 	}
 
 	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
@@ -261,6 +288,7 @@ func (c *CanaryDeployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Canar
 	cdCopy.Status.Phase = status.Phase
 	cdCopy.Status.CanaryWeight = status.CanaryWeight
 	cdCopy.Status.FailedChecks = status.FailedChecks
+	cdCopy.Status.Iterations = status.Iterations
 	cdCopy.Status.LastAppliedSpec = base64.StdEncoding.EncodeToString(specJson)
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 	cdCopy.Status.TrackedConfigs = configs

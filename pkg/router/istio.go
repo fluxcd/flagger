@@ -55,7 +55,7 @@ func (ir *IstioRouter) Sync(canary *flaggerv1.Canary) error {
 	}
 
 	// create destinations with primary weight 100% and canary weight 0%
-	route := []istiov1alpha3.DestinationWeight{
+	canaryRoute := []istiov1alpha3.DestinationWeight{
 		{
 			Destination: istiov1alpha3.Destination{
 				Host: primaryName,
@@ -87,9 +87,43 @@ func (ir *IstioRouter) Sync(canary *flaggerv1.Canary) error {
 				Retries:       canary.Spec.Service.Retries,
 				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
-				Route:         route,
+				Route:         canaryRoute,
 			},
 		},
+	}
+
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+		canaryMatch := append(canary.Spec.Service.Match, canary.Spec.CanaryAnalysis.Match...)
+		newSpec.Http = []istiov1alpha3.HTTPRoute{
+			{
+				Match:         canaryMatch,
+				Rewrite:       canary.Spec.Service.Rewrite,
+				Timeout:       canary.Spec.Service.Timeout,
+				Retries:       canary.Spec.Service.Retries,
+				CorsPolicy:    canary.Spec.Service.CorsPolicy,
+				AppendHeaders: addHeaders(canary),
+				Route:         canaryRoute,
+			},
+			{
+				Match:         canary.Spec.Service.Match,
+				Rewrite:       canary.Spec.Service.Rewrite,
+				Timeout:       canary.Spec.Service.Timeout,
+				Retries:       canary.Spec.Service.Retries,
+				CorsPolicy:    canary.Spec.Service.CorsPolicy,
+				AppendHeaders: addHeaders(canary),
+				Route: []istiov1alpha3.DestinationWeight{
+					{
+						Destination: istiov1alpha3.Destination{
+							Host: primaryName,
+							Port: istiov1alpha3.PortSelector{
+								Number: uint32(canary.Spec.Service.Port),
+							},
+						},
+						Weight: 100,
+					},
+				},
+			},
+		}
 	}
 
 	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, metav1.GetOptions{})
@@ -160,14 +194,22 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 		return
 	}
 
+	var httpRoute istiov1alpha3.HTTPRoute
 	for _, http := range vs.Spec.Http {
-		for _, route := range http.Route {
-			if route.Destination.Host == fmt.Sprintf("%s-primary", targetName) {
-				primaryWeight = route.Weight
+		for _, r := range http.Route {
+			if r.Destination.Host == fmt.Sprintf("%s-canary", targetName) {
+				httpRoute = http
+				break
 			}
-			if route.Destination.Host == fmt.Sprintf("%s-canary", targetName) {
-				canaryWeight = route.Weight
-			}
+		}
+	}
+
+	for _, route := range httpRoute.Route {
+		if route.Destination.Host == fmt.Sprintf("%s-primary", targetName) {
+			primaryWeight = route.Weight
+		}
+		if route.Destination.Host == fmt.Sprintf("%s-canary", targetName) {
+			canaryWeight = route.Weight
 		}
 	}
 
@@ -196,6 +238,8 @@ func (ir *IstioRouter) SetRoutes(
 	}
 
 	vsCopy := vs.DeepCopy()
+
+	// weighted routing (progressive canary)
 	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 		{
 			Match:         canary.Spec.Service.Match,
@@ -225,6 +269,61 @@ func (ir *IstioRouter) SetRoutes(
 				},
 			},
 		},
+	}
+
+	// fix routing (A/B testing)
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+		// merge the common routes with the canary ones
+		canaryMatch := append(canary.Spec.Service.Match, canary.Spec.CanaryAnalysis.Match...)
+		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
+			{
+				Match:         canaryMatch,
+				Rewrite:       canary.Spec.Service.Rewrite,
+				Timeout:       canary.Spec.Service.Timeout,
+				Retries:       canary.Spec.Service.Retries,
+				CorsPolicy:    canary.Spec.Service.CorsPolicy,
+				AppendHeaders: addHeaders(canary),
+				Route: []istiov1alpha3.DestinationWeight{
+					{
+						Destination: istiov1alpha3.Destination{
+							Host: fmt.Sprintf("%s-primary", targetName),
+							Port: istiov1alpha3.PortSelector{
+								Number: uint32(canary.Spec.Service.Port),
+							},
+						},
+						Weight: primaryWeight,
+					},
+					{
+						Destination: istiov1alpha3.Destination{
+							Host: fmt.Sprintf("%s-canary", targetName),
+							Port: istiov1alpha3.PortSelector{
+								Number: uint32(canary.Spec.Service.Port),
+							},
+						},
+						Weight: canaryWeight,
+					},
+				},
+			},
+			{
+				Match:         canary.Spec.Service.Match,
+				Rewrite:       canary.Spec.Service.Rewrite,
+				Timeout:       canary.Spec.Service.Timeout,
+				Retries:       canary.Spec.Service.Retries,
+				CorsPolicy:    canary.Spec.Service.CorsPolicy,
+				AppendHeaders: addHeaders(canary),
+				Route: []istiov1alpha3.DestinationWeight{
+					{
+						Destination: istiov1alpha3.Destination{
+							Host: fmt.Sprintf("%s-primary", targetName),
+							Port: istiov1alpha3.PortSelector{
+								Number: uint32(canary.Spec.Service.Port),
+							},
+						},
+						Weight: primaryWeight,
+					},
+				},
+			},
+		}
 	}
 
 	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vsCopy)

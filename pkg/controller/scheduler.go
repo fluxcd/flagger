@@ -76,9 +76,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	// check if the canary exists
 	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, v1.GetOptions{})
 	if err != nil {
-		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).Errorf("Canary %s.%s not found", name, namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
+			Errorf("Canary %s.%s not found", name, namespace)
 		return
 	}
+
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	// create primary deployment and hpa if needed
 	if err := c.deployer.Sync(cd); err != nil {
@@ -160,6 +163,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			Phase:        flaggerv1.CanaryProgressing,
 			CanaryWeight: 0,
 			FailedChecks: 0,
+			Iterations:   0,
 		}
 		if err := c.deployer.SyncStatus(cd, status); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
@@ -247,7 +251,72 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 	}
 
-	// increase canary traffic percentage
+	// canary fix routing: A/B testing
+	if len(cd.Spec.CanaryAnalysis.Match) > 0 {
+		// route traffic to canary and increment iterations
+		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
+			if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			c.recorder.SetWeight(cd, 100, 0)
+
+			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			c.recordEventInfof(cd, "Advance %s.%s canary iteration %v/%v",
+				cd.Name, cd.Namespace, cd.Status.Iterations+1, cd.Spec.CanaryAnalysis.Iterations)
+			return
+		}
+
+		// promote canary - max iterations reached
+		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
+			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
+				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
+			if err := c.deployer.Promote(cd); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			// increment iterations
+			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			return
+		}
+
+		// shutdown canary
+		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
+			// route all traffic to the primary
+			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			c.recorder.SetWeight(cd, 100, 0)
+			c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+
+			// canary scale to zero
+			if err := c.deployer.Scale(cd, 0); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+
+			// update status phase
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanarySucceeded); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			c.recorder.SetStatus(cd)
+			c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
+				false, false)
+			return
+		}
+
+		return
+	}
+
+	// canary incremental traffic weight
 	if canaryWeight < maxWeight {
 		primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
 		if primaryWeight < 0 {
@@ -273,7 +342,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryWeight)
 
 		// promote canary
-		primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 		if canaryWeight == maxWeight {
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
@@ -399,6 +467,13 @@ func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 		if diff, _ := c.deployer.configTracker.HasConfigChanged(cd); diff {
 			return true
 		}
+	}
+	return false
+}
+
+func (c *Controller) hasMaxIterations(cd *flaggerv1.Canary) bool {
+	if cd.Status.Iterations == cd.Status.Iterations {
+		return true
 	}
 	return false
 }
