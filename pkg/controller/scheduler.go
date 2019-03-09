@@ -24,18 +24,24 @@ func (c *Controller) scheduleCanaries() {
 		name := key.(string)
 		current[name] = fmt.Sprintf("%s.%s", canary.Spec.TargetRef.Name, canary.Namespace)
 
-		// schedule new jobs
-		if _, exists := c.jobs[name]; !exists {
-			job := CanaryJob{
-				Name:      canary.Name,
-				Namespace: canary.Namespace,
-				function:  c.advanceCanary,
-				done:      make(chan bool),
-				ticker:    time.NewTicker(canary.GetAnalysisInterval()),
+		job, exists := c.jobs[name]
+		// schedule new job for exsiting job with different analysisInterval or non-existing job
+		if (exists && job.GetCanaryAnalysisInterval() != canary.GetAnalysisInterval()) || !exists {
+			if exists {
+				job.Stop()
 			}
 
-			c.jobs[name] = job
-			job.Start()
+			newJob := CanaryJob{
+				Name:             canary.Name,
+				Namespace:        canary.Namespace,
+				function:         c.advanceCanary,
+				done:             make(chan bool),
+				ticker:           time.NewTicker(canary.GetAnalysisInterval()),
+				analysisInterval: canary.GetAnalysisInterval(),
+			}
+
+			c.jobs[name] = newJob
+			newJob.Start()
 		}
 
 		// compute canaries per namespace total

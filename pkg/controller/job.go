@@ -4,12 +4,13 @@ import "time"
 
 // CanaryJob holds the reference to a canary deployment schedule
 type CanaryJob struct {
-	Name      string
-	Namespace string
-	SkipTests bool
-	function  func(name string, namespace string, skipTests bool)
-	done      chan bool
-	ticker    *time.Ticker
+	Name             string
+	Namespace        string
+	SkipTests        bool
+	function         func(name string, namespace string, skipTests bool)
+	done             chan bool
+	ticker           *time.Ticker
+	analysisInterval time.Duration
 }
 
 // Start runs the canary analysis on a schedule
@@ -32,4 +33,8 @@ func (j CanaryJob) Start() {
 func (j CanaryJob) Stop() {
 	close(j.done)
 	j.ticker.Stop()
+}
+
+func (j CanaryJob) GetCanaryAnalysisInterval() time.Duration {
+	return j.analysisInterval
 }
