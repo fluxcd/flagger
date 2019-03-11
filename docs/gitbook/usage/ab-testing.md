@@ -93,7 +93,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
+          cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo.test:9898/"
 ```
 
 The above configuration will run an analysis for ten minutes targeting Safari users and those that have an insider cookie.
