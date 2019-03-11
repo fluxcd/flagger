@@ -35,6 +35,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
 * Usage
     * [Canary promotions and rollbacks](https://docs.flagger.app/usage/progressive-delivery)
+    * [A/B testing](https://docs.flagger.app/usage/ab-testing)
     * [Monitoring](https://docs.flagger.app/usage/monitoring)
     * [Alerting](https://docs.flagger.app/usage/alerting)
 * Tutorials
@@ -167,7 +168,6 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
-* Add A/B testing capabilities using fixed routing based on HTTP headers and cookies match conditions
 * Integrate with other service mesh technologies like AWS AppMesh and Linkerd v2
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 

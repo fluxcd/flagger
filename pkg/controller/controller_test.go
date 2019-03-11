@@ -2,6 +2,8 @@ package controller
 
 import (
 	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha1 "github.com/stefanprodan/flagger/pkg/apis/istio/common/v1alpha1"
+	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
 	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
@@ -38,9 +40,12 @@ type Mocks struct {
 	router        router.Interface
 }
 
-func SetupMocks() Mocks {
+func SetupMocks(abtest bool) Mocks {
 	// init canary
 	canary := newTestCanary()
+	if abtest {
+		canary = newTestCanaryAB()
+	}
 	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
 	// init kube clientset and register mock objects
@@ -243,6 +248,55 @@ func newTestCanary() *v1alpha3.Canary {
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
+				Metrics: []v1alpha3.CanaryMetric{
+					{
+						Name:      "istio_requests_total",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "istio_request_duration_seconds_bucket",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newTestCanaryAB() *v1alpha3.Canary {
+	cd := &v1alpha3.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: v1alpha3.CanarySpec{
+			TargetRef: hpav1.CrossVersionObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			AutoscalerRef: &hpav1.CrossVersionObjectReference{
+				Name:       "podinfo",
+				APIVersion: "autoscaling/v2beta1",
+				Kind:       "HorizontalPodAutoscaler",
+			}, Service: v1alpha3.CanaryService{
+				Port: 9898,
+			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+				Threshold:  10,
+				Iterations: 10,
+				Match: []istiov1alpha3.HTTPMatchRequest{
+					{
+						Headers: map[string]istiov1alpha1.StringMatch{
+							"x-user-type": {
+								Exact: "test",
+							},
+						},
+					},
+				},
 				Metrics: []v1alpha3.CanaryMetric{
 					{
 						Name:      "istio_requests_total",

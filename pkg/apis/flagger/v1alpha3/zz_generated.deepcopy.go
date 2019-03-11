@@ -69,6 +69,13 @@ func (in *CanaryAnalysis) DeepCopyInto(out *CanaryAnalysis) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Match != nil {
+		in, out := &in.Match, &out.Match
+		*out = make([]istiov1alpha3.HTTPMatchRequest, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 

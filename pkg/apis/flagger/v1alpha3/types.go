@@ -98,6 +98,7 @@ type CanaryStatus struct {
 	Phase        CanaryPhase `json:"phase"`
 	FailedChecks int         `json:"failedChecks"`
 	CanaryWeight int         `json:"canaryWeight"`
+	Iterations   int         `json:"iterations"`
 	// +optional
 	TrackedConfigs *map[string]string `json:"trackedConfigs,omitempty"`
 	// +optional
@@ -122,12 +123,14 @@ type CanaryService struct {
 
 // CanaryAnalysis is used to describe how the analysis should be done
 type CanaryAnalysis struct {
-	Interval   string          `json:"interval"`
-	Threshold  int             `json:"threshold"`
-	MaxWeight  int             `json:"maxWeight"`
-	StepWeight int             `json:"stepWeight"`
-	Metrics    []CanaryMetric  `json:"metrics"`
-	Webhooks   []CanaryWebhook `json:"webhooks,omitempty"`
+	Interval   string                           `json:"interval"`
+	Threshold  int                              `json:"threshold"`
+	MaxWeight  int                              `json:"maxWeight"`
+	StepWeight int                              `json:"stepWeight"`
+	Metrics    []CanaryMetric                   `json:"metrics"`
+	Webhooks   []CanaryWebhook                  `json:"webhooks,omitempty"`
+	Match      []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+	Iterations int                              `json:"iterations,omitempty"`
 }
 
 // CanaryMetric holds the reference to Istio metrics used for canary analysis

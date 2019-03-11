@@ -87,12 +87,6 @@ func main() {
 		logger.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	if namespace == "" {
-		logger.Infof("Flagger Canary's Watcher is on all namespace")
-	} else {
-		logger.Infof("Flagger Canary's Watcher is on namespace %s", namespace)
-	}
-
 	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
 
 	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
@@ -105,6 +99,9 @@ func main() {
 	}
 
 	logger.Infof("Connected to Kubernetes API %s", ver)
+	if namespace != "" {
+		logger.Infof("Watching namespace %s", namespace)
+	}
 
 	ok, err := controller.CheckMetricsServer(metricsServer)
 	if ok {

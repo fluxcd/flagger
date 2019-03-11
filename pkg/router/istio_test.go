@@ -239,3 +239,63 @@ func TestIstioRouter_CORS(t *testing.T) {
 		t.Fatalf("Got CORS allow methods %v wanted %v", len(methods), 2)
 	}
 }
+
+func TestIstioRouter_ABTest(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.istioClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Sync(mocks.abtest)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// test insert
+	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("abtest", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(vs.Spec.Http) != 2 {
+		t.Errorf("Got Istio VS Http %v wanted %v", len(vs.Spec.Http), 2)
+	}
+
+	p := 0
+	c := 100
+
+	err = router.SetRoutes(mocks.abtest, p, c)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	vs, err = mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("abtest", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	pRoute := istiov1alpha3.DestinationWeight{}
+	cRoute := istiov1alpha3.DestinationWeight{}
+
+	for _, http := range vs.Spec.Http {
+		for _, route := range http.Route {
+			if route.Destination.Host == fmt.Sprintf("%s-primary", mocks.abtest.Spec.TargetRef.Name) {
+				pRoute = route
+			}
+			if route.Destination.Host == fmt.Sprintf("%s-canary", mocks.abtest.Spec.TargetRef.Name) {
+				cRoute = route
+			}
+		}
+	}
+
+	if pRoute.Weight != p {
+		t.Errorf("Got primary weight %v wanted %v", pRoute.Weight, p)
+	}
+
+	if cRoute.Weight != c {
+		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
+	}
+}
