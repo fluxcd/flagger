@@ -28,6 +28,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
 * Usage
     * [Canary promotions and rollbacks](https://docs.flagger.app/usage/progressive-delivery)
+    * [A/B testing](https://docs.flagger.app/usage/ab-testing)
     * [Monitoring](https://docs.flagger.app/usage/monitoring)
     * [Alerting](https://docs.flagger.app/usage/alerting)
 
