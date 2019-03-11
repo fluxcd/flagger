@@ -347,7 +347,7 @@ You can enable A/B testing by specifying the HTTP match conditions and the numbe
     match:
       - headers:
           user-agent:
-            regex: "^(?!.*Chrome)(?=.*\bSafari\b).*$"
+            regex: "^(?!.*Chrome).*Safari.*"
       - headers:
           cookie:
             regex: "^(.*?;)?(user=test)(;.*)?$"

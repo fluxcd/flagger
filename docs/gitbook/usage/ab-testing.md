@@ -72,7 +72,7 @@ spec:
     match:
       - headers:
           user-agent:
-            regex: "^(?!.*Chrome)(?=.*\bSafari\b).*$"
+            regex: "^(?!.*Chrome).*Safari.*"
       - headers:
           cookie:
             regex: "^(.*?;)?(type=insider)(;.*)?$"

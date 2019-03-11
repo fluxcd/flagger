@@ -93,7 +93,7 @@ func (ir *IstioRouter) Sync(canary *flaggerv1.Canary) error {
 	}
 
 	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
-		canaryMatch := append(canary.Spec.Service.Match, canary.Spec.CanaryAnalysis.Match...)
+		canaryMatch := mergeMatchConditions(canary.Spec.CanaryAnalysis.Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
 			{
 				Match:         canaryMatch,
@@ -274,7 +274,7 @@ func (ir *IstioRouter) SetRoutes(
 	// fix routing (A/B testing)
 	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
 		// merge the common routes with the canary ones
-		canaryMatch := append(canary.Spec.Service.Match, canary.Spec.CanaryAnalysis.Match...)
+		canaryMatch := mergeMatchConditions(canary.Spec.CanaryAnalysis.Match, canary.Spec.Service.Match)
 		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 			{
 				Match:         canaryMatch,
@@ -344,4 +344,17 @@ func addHeaders(canary *flaggerv1.Canary) (headers map[string]string) {
 	}
 
 	return
+}
+
+// mergeMatchConditions appends the URI match rules to canary conditions
+func mergeMatchConditions(canary, defaults []istiov1alpha3.HTTPMatchRequest) []istiov1alpha3.HTTPMatchRequest {
+	for i := range canary {
+		for _, d := range defaults {
+			if d.Uri != nil {
+				canary[i].Uri = d.Uri
+			}
+		}
+	}
+
+	return canary
 }
