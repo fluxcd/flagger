@@ -333,7 +333,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
 This is particularly useful for frontend applications that require session affinity.
 
-Spec:
+You can enable A/B testing by specifying the HTTP match conditions and the number of iterations:
 
 ```yaml
   canaryAnalysis:
@@ -352,6 +352,8 @@ Spec:
           cookie:
             regex: "^(.*?;)?(user=test)(;.*)?$"
 ```
+
+If Flagger finds a HTTP match condition, it will ignore the `maxWeight` and `stepWeight` settings.
 
 The above configuration will run an analysis for ten minutes targeting the Safari users and those that have a test cookie.
 You can determine the minimum time that it takes to validate and promote a canary deployment using this formula:
