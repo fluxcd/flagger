@@ -11,6 +11,10 @@ required = [
   name = "go.uber.org/zap"
   version = "v1.9.1"
 
+[[constraint]]
+  name = "gopkg.in/h2non/gock.v1"
+  version = "v1.0.14"
+
 [[override]]
   name = "gopkg.in/yaml.v2"
   version = "v2.2.1"
