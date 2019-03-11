@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.9.0 (2019-03-11)
+
+Allows A/B testing scenarios where instead of weighted routing, the traffic is split between the 
+primary and canary based on HTTP headers or cookies.
+
+#### Features
+
+- A/B testing - canary with session affinity [#88](https://github.com/stefanprodan/flagger/pull/88)
+
+#### Fixes
+
+- Update the analysis interval when the custom resource changes [#91](https://github.com/stefanprodan/flagger/pull/91)
+
 ## 0.8.0 (2019-03-06)
 
 Adds support for CORS policy and HTTP request headers manipulation
