@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: loadtester
-          image: quay.io/stefanprodan/flagger-loadtester:0.1.0
+          image: quay.io/stefanprodan/flagger-loadtester:0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -27,7 +27,6 @@ spec:
             - -port=8080
             - -log-level=info
             - -timeout=1h
-            - -log-cmd-output=true
           livenessProbe:
             exec:
               command:

@@ -80,7 +80,9 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
+          type: cmd
           cmd: "hey -z 10m -q 10 -c 2 http://podinfo.test:9898/"
+          logCmdOutput: "true"
 
 EOF
 
