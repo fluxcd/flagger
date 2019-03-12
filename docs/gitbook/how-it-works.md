@@ -586,9 +586,9 @@ webhooks:
       type: ngrinder
       # base url of your nGrinder controller server
       server: http://ngrinder-server:port
-      # ID of an existing test to clone from
+      # id of the test to clone from, the test must have been defined.
       clone: 100
-      # user name and bae64 encoded password to authenticate against the nGrinder server
+      # user name and base64 encoded password to authenticate against the nGrinder server
       username: admin
       passwd: YWRtaW4=
       # the interval between between nGrinder test status polling, default to 1s
