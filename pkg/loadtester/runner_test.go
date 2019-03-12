@@ -14,8 +14,8 @@ func TestTaskRunner_Start(t *testing.T) {
 	go tr.Start(10*time.Millisecond, stop)
 
 	taskFactory, _ := GetTaskFactory(TaskTypeShell)
-	task1, _ := taskFactory(map[string]string{"cmd": "sleep 0.6"}, "podinfo.default", logger)
-	task2, _ := taskFactory(map[string]string{"cmd": "sleep 0.7"}, "podinfo.default", logger)
+	task1, _ := taskFactory(map[string]string{"type": "cmd", "cmd": "sleep 0.6"}, "podinfo.default", logger)
+	task2, _ := taskFactory(map[string]string{"cmd": "sleep 0.7", "logCmdOutput": "true"}, "podinfo.default", logger)
 
 	tr.Add(task1)
 	tr.Add(task2)
