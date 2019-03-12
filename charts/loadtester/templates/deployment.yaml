@@ -29,7 +29,6 @@ spec:
             - -port=8080
             - -log-level={{ .Values.logLevel }}
             - -timeout={{ .Values.cmd.timeout }}
-            - -log-cmd-output={{ .Values.cmd.logOutput }}
           livenessProbe:
             exec:
               command:

@@ -519,7 +519,6 @@ helm repo add flagger https://flagger.app
 
 helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test \
---set cmd.logOutput=true \
 --set cmd.timeout=1h
 ```
 
@@ -533,11 +532,13 @@ webhooks:
     url: http://flagger-loadtester.test/
     timeout: 5s
     metadata:
+      type: cmd
       cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
   - name: load-test-post
     url: http://flagger-loadtester.test/
     timeout: 5s
     metadata:
+      type: cmd
       cmd: "hey -z 1m -q 10 -c 2 -m POST -d '{test: 2}' http://podinfo.test:9898/echo"
 ```
 
@@ -554,6 +555,7 @@ webhooks:
     url: http://flagger-loadtester.test/
     timeout: 5s
     metadata:
+      type: cmd
       cmd: "hey -z 1m -q 10 -c 2 -h2 https://podinfo.example.com/"
 ```
 
