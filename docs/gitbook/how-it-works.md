@@ -568,3 +568,32 @@ FROM quay.io/stefanprodan/flagger-loadtester:<VER>
 RUN curl -Lo /usr/local/bin/my-cli https://github.com/user/repo/releases/download/ver/my-cli \
     && chmod +x /usr/local/bin/my-cli
 ```
+
+### Load Testing Delegation
+
+The load tester can also forward testing tasks to external tools, by now [nGrinder](https://github.com/naver/ngrinder)
+is supported.
+
+To use this feature, add a load test task of type 'ngrinder' to the canary analysis spec:
+
+```yaml
+webhooks:
+  - name: load-test-post
+    url: http://flagger-loadtester.test/
+    timeout: 5s
+    metadata:
+      # type of this load test task, cmd or ngrinder
+      type: ngrinder
+      # base url of your nGrinder controller server
+      server: http://ngrinder-server:port
+      # ID of an existing test to clone from
+      clone: 100
+      # user name and bae64 encoded password to authenticate against the nGrinder server
+      username: admin
+      passwd: YWRtaW4=
+      # the interval between between nGrinder test status polling, default to 1s
+      pollInterval: 5s
+```
+When the canary analysis starts, the load tester will initiate a [clone_and_start request](https://github.com/naver/ngrinder/wiki/REST-API-PerfTest)
+to the nGrinder server and start a new performance test. the load tester will periodically poll the nGrinder server
+for the status of the test, and prevent duplicate requests from being sent in subsequent analysis loops.
