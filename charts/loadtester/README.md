@@ -56,15 +56,13 @@ Parameter | Description | Default
 `nodeSelector` | node labels for pod assignment | `{}`
 `service.type` | type of service | `ClusterIP`
 `service.port` | ClusterIP port | `80`
-`cmd.logOutput` | Log the command output to stderr | `true`
 `cmd.timeout` | Command execution timeout | `1h`
 `logLevel` | Log level can be debug, info, warning, error or panic | `info`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```console
-helm install flagger/loadtester --name flagger-loadtester \
---set cmd.logOutput=false
+helm install flagger/loadtester --name flagger-loadtester
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,

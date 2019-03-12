@@ -7,7 +7,6 @@ image:
 
 logLevel: info
 cmd:
-  logOutput: true
   timeout: 1h
 
 nameOverride: ""
