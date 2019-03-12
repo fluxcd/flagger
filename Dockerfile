@@ -11,7 +11,7 @@ RUN GIT_COMMIT=$(git rev-list -1 HEAD) && \
     -X github.com/stefanprodan/flagger/pkg/version.REVISION=${GIT_COMMIT}" \
     -a -installsuffix cgo -o flagger ./cmd/flagger/*
 
-FROM alpine:3.8
+FROM alpine:3.9
 
 RUN addgroup -S flagger \
     && adduser -S -g flagger flagger \
