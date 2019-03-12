@@ -15,7 +15,6 @@ var (
 	logLevel          string
 	port              string
 	timeout           time.Duration
-	logCmdOutput      bool
 	zapReplaceGlobals bool
 	zapEncoding       string
 )
