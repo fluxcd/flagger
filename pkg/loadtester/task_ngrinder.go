@@ -39,14 +39,14 @@ func init() {
 		if err != nil {
 			return nil, errors.New("metadata auth provided is invalid, base64 encoded username:password required")
 		}
-		interval, err := strconv.Atoi(pollInterval)
+		interval, err := time.ParseDuration(pollInterval)
 		if err != nil {
 			interval = 1
 		}
 
 		return &NGrinderTask{
 			TaskBase{canary, logger},
-			baseUrl, cloneId, username, string(passwdDecoded), -1, time.Duration(interval),
+			baseUrl, cloneId, username, string(passwdDecoded), -1, interval,
 		}, nil
 	})
 }

@@ -33,7 +33,7 @@ func TestTaskNGrinder(t *testing.T) {
 			"clone":        cloneId,
 			"username":     "admin",
 			"passwd":       "YWRtaW4=",
-			"pollInterval": "1",
+			"pollInterval": "1s",
 		}, canary, logger)
 		if err != nil {
 			t.Fatalf("Failed to create ngrinder task: %s", err.Error())
