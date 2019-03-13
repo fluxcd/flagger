@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: podinfod
-        image: quay.io/stefanprodan/podinfo:1.2.0
+        image: quay.io/stefanprodan/podinfo:1.4.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9898
@@ -67,9 +67,3 @@ spec:
           requests:
             cpu: 100m
             memory: 16Mi
-        volumeMounts:
-        - mountPath: /data
-          name: data
-      volumes:
-      - emptyDir: {}
-        name: data
