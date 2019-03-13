@@ -20,7 +20,7 @@ type KubernetesRouter struct {
 	logger        *zap.SugaredLogger
 }
 
-// Sync creates to updates the primary and canary services
+// Sync creates or updates the primary and canary services
 func (c *KubernetesRouter) Sync(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
@@ -40,7 +40,7 @@ func (c *KubernetesRouter) Sync(cd *flaggerv1.Canary) error {
 			},
 			Spec: corev1.ServiceSpec{
 				Type:     corev1.ServiceTypeClusterIP,
-				Selector: map[string]string{"app": targetName},
+				Selector: map[string]string{"app": primaryName},
 				Ports: []corev1.ServicePort{
 					{
 						Name:     "http",

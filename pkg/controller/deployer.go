@@ -77,6 +77,8 @@ func (c *CanaryDeployer) Promote(cd *flaggerv1.Canary) error {
 	}
 	primaryCopy.Spec.Template.Annotations = annotations
 
+	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName)
+
 	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
 		return fmt.Errorf("updating deployment %s.%s template spec failed: %v",
@@ -403,7 +405,7 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Labels:      map[string]string{"app": primaryName},
+						Labels:      makePrimaryLabels(canaryDep.Spec.Template.Labels, primaryName),
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
@@ -543,4 +545,17 @@ func (c *CanaryDeployer) makeAnnotations(annotations map[string]string) (map[str
 	res[idKey] = id
 
 	return res, nil
+}
+
+func makePrimaryLabels(labels map[string]string, primaryName string) map[string]string {
+	idKey := "app"
+	res := make(map[string]string)
+	for k, v := range labels {
+		if k != idKey {
+			res[k] = v
+		}
+	}
+	res[idKey] = primaryName
+
+	return res
 }
