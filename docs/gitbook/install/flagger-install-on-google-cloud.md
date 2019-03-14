@@ -284,7 +284,7 @@ metadata:
   name: istio-gateway
   namespace: istio-system
 spec:
-  secretname: istio-ingressgateway-certs
+  secretName: istio-ingressgateway-certs
   issuerRef:
     name: letsencrypt-prod
   commonName: "*.example.com"
