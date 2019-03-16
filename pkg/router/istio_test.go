@@ -12,7 +12,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.istioClient,
+		istioClient:   mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -22,7 +22,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	}
 
 	// test insert
-	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -57,7 +57,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	}
 
 	// verify
-	vs, err = mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -71,7 +71,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	gateways = append(gateways, "test-gateway.istio-system")
 	vsClone.Spec.Gateways = gateways
 
-	vsGateways, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Update(vsClone)
+	vsGateways, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Update(vsClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -86,7 +86,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	}
 
 	// verify
-	vs, err = mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -100,7 +100,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.istioClient,
+		istioClient:   mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -122,7 +122,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -155,7 +155,7 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.istioClient,
+		istioClient:   mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -183,7 +183,7 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.istioClient,
+		istioClient:   mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -192,7 +192,7 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -212,7 +212,7 @@ func TestIstioRouter_CORS(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.istioClient,
+		istioClient:   mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -221,7 +221,7 @@ func TestIstioRouter_CORS(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -245,7 +245,7 @@ func TestIstioRouter_ABTest(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.istioClient,
+		istioClient:   mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -255,7 +255,7 @@ func TestIstioRouter_ABTest(t *testing.T) {
 	}
 
 	// test insert
-	vs, err := mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("abtest", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("abtest", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -272,7 +272,7 @@ func TestIstioRouter_ABTest(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	vs, err = mocks.istioClient.NetworkingV1alpha3().VirtualServices("default").Get("abtest", metav1.GetOptions{})
+	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("abtest", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
