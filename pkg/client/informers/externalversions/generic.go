@@ -21,6 +21,7 @@ package externalversions
 import (
 	"fmt"
 
+	v1alpha1 "github.com/stefanprodan/flagger/pkg/apis/appmesh/v1alpha1"
 	v1alpha3 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
 	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -53,7 +54,15 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=flagger.app, Version=v1alpha3
+	// Group=appmesh.k8s.aws, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("meshes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1alpha1().Meshes().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("virtualnodes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1alpha1().VirtualNodes().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("virtualservices"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1alpha1().VirtualServices().Informer()}, nil
+
+		// Group=flagger.app, Version=v1alpha3
 	case v1alpha3.SchemeGroupVersion.WithResource("canaries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha3().Canaries().Informer()}, nil
 
