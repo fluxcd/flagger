@@ -11,7 +11,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	router := &AppmeshRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		appMeshClient: mocks.meshClient,
+		appmeshClient: mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -22,7 +22,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 
 	// check virtual service
 	vsName := fmt.Sprintf("%s.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
-	vs, err := router.appMeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	vs, err := router.appmeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -39,7 +39,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 
 	// check virtual node
 	vnName := fmt.Sprintf("%s-%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
-	vn, err := router.appMeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnName, metav1.GetOptions{})
+	vn, err := router.appmeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -73,7 +73,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 
 	// verify
 	vnCanaryName := fmt.Sprintf("%s-canary-%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
-	vnCanary, err := router.appMeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnCanaryName, metav1.GetOptions{})
+	vnCanary, err := router.appmeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnCanaryName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -96,7 +96,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	vs, err = router.appMeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	vs, err = router.appmeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -119,7 +119,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	vs, err = router.appMeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	vs, err = router.appmeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -127,5 +127,38 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	prefix := vs.Spec.Routes[0].Http.Match.Prefix
 	if prefix != "/" {
 		t.Errorf("Got prefix %v wanted %v", prefix, "/")
+	}
+}
+
+func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &AppmeshRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Sync(mocks.appmeshCanary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = router.SetRoutes(mocks.appmeshCanary, 60, 40)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	p, c, err := router.GetRoutes(mocks.appmeshCanary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if p != 60 {
+		t.Errorf("Got primary weight %v wanted %v", p, 60)
+	}
+
+	if c != 40 {
+		t.Errorf("Got canary weight %v wanted %v", c, 40)
 	}
 }

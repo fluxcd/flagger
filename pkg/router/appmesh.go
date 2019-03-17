@@ -279,11 +279,11 @@ func (ar *AppmeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 }
 
 // SetRoutes updates the destinations weight for primary and canary
-func (ar *AppmeshRouter)SetRoutes(
+func (ar *AppmeshRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
-) error  {
+) error {
 	targetName := canary.Spec.TargetRef.Name
 	vsName := fmt.Sprintf("%s.%s", targetName, canary.Namespace)
 	vs, err := ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
