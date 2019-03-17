@@ -165,11 +165,11 @@ func TestCanaryDeployer_IsReady(t *testing.T) {
 	mocks := SetupMocks(false)
 	err := mocks.deployer.Sync(mocks.canary)
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Error("Expected primary readiness check to fail")
 	}
 
 	_, err = mocks.deployer.IsPrimaryReady(mocks.canary)
-	if err != nil {
+	if err == nil {
 		t.Fatal(err.Error())
 	}
 
