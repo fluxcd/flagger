@@ -14,10 +14,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// IstioRouter is managing Istio virtual services
+// AppmeshRouter is managing AppMesh virtual services
 type AppmeshRouter struct {
 	kubeClient    kubernetes.Interface
-	appMeshClient clientset.Interface
+	appmeshClient clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 }
@@ -96,7 +96,7 @@ func (ar *AppmeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 		Backends: backends,
 	}
 
-	virtualnode, err := ar.appMeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Get(name, metav1.GetOptions{})
+	virtualnode, err := ar.appmeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Get(name, metav1.GetOptions{})
 
 	// create virtual node
 	if errors.IsNotFound(err) {
@@ -114,7 +114,7 @@ func (ar *AppmeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 			},
 			Spec: vnSpec,
 		}
-		_, err = ar.appMeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Create(virtualnode)
+		_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Create(virtualnode)
 		if err != nil {
 			return fmt.Errorf("VirtualNode %s.%s create error %v", name, canary.Namespace, err)
 		}
@@ -132,7 +132,7 @@ func (ar *AppmeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 		if diff := cmp.Diff(vnSpec, virtualnode.Spec); diff != "" {
 			vnClone := virtualnode.DeepCopy()
 			vnClone.Spec = vnSpec
-			_, err = ar.appMeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Update(vnClone)
+			_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Update(vnClone)
 			if err != nil {
 				return fmt.Errorf("VirtualNode %s update error %v", name, err)
 			}
@@ -144,6 +144,7 @@ func (ar *AppmeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 	return nil
 }
 
+// syncVirtualService creates or updates a virtual service
 func (ar *AppmeshRouter) syncVirtualService(canary *flaggerv1.Canary, name string) error {
 	targetName := canary.Spec.TargetRef.Name
 	canaryVirtualNode := fmt.Sprintf("%s-canary-%s", targetName, canary.Namespace)
@@ -186,7 +187,7 @@ func (ar *AppmeshRouter) syncVirtualService(canary *flaggerv1.Canary, name strin
 		},
 	}
 
-	virtualService, err := ar.appMeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(name, metav1.GetOptions{})
+	virtualService, err := ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(name, metav1.GetOptions{})
 
 	// create virtual service
 	if errors.IsNotFound(err) {
@@ -204,7 +205,7 @@ func (ar *AppmeshRouter) syncVirtualService(canary *flaggerv1.Canary, name strin
 			},
 			Spec: vsSpec,
 		}
-		_, err = ar.appMeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Create(virtualService)
+		_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Create(virtualService)
 		if err != nil {
 			return fmt.Errorf("VirtualService %s create error %v", name, err)
 		}
@@ -224,13 +225,92 @@ func (ar *AppmeshRouter) syncVirtualService(canary *flaggerv1.Canary, name strin
 			vsClone.Spec = vsSpec
 			vsClone.Spec.Routes[0].Http.Action = virtualService.Spec.Routes[0].Http.Action
 
-			_, err = ar.appMeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Update(vsClone)
+			_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Update(vsClone)
 			if err != nil {
 				return fmt.Errorf("VirtualService %s update error %v", name, err)
 			}
 			ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 				Infof("VirtualService %s updated", virtualService.GetName())
 		}
+	}
+
+	return nil
+}
+
+// GetRoutes returns the destinations weight for primary and canary
+func (ar *AppmeshRouter) GetRoutes(canary *flaggerv1.Canary) (
+	primaryWeight int,
+	canaryWeight int,
+	err error,
+) {
+	targetName := canary.Spec.TargetRef.Name
+	vsName := fmt.Sprintf("%s.%s", targetName, canary.Namespace)
+	vs, err := ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			err = fmt.Errorf("VirtualService %s not found", vsName)
+			return
+		}
+		err = fmt.Errorf("VirtualService %s query error %v", vsName, err)
+		return
+	}
+
+	if len(vs.Spec.Routes) < 1 || len(vs.Spec.Routes[0].Http.Action.WeightedTargets) != 2 {
+		err = fmt.Errorf("VirtualService routes %s not found", vsName)
+		return
+	}
+
+	targets := vs.Spec.Routes[0].Http.Action.WeightedTargets
+	for _, t := range targets {
+		if t.VirtualNodeName == fmt.Sprintf("%s-canary-%s", targetName, canary.Namespace) {
+			canaryWeight = int(t.Weight)
+		}
+		if t.VirtualNodeName == fmt.Sprintf("%s-primary-%s", targetName, canary.Namespace) {
+			primaryWeight = int(t.Weight)
+		}
+	}
+
+	if primaryWeight == 0 && canaryWeight == 0 {
+		err = fmt.Errorf("VirtualService %s does not contain routes for %s-primary and %s-canary",
+			vsName, targetName, targetName)
+	}
+
+	return
+}
+
+// SetRoutes updates the destinations weight for primary and canary
+func (ar *AppmeshRouter)SetRoutes(
+	canary *flaggerv1.Canary,
+	primaryWeight int,
+	canaryWeight int,
+) error  {
+	targetName := canary.Spec.TargetRef.Name
+	vsName := fmt.Sprintf("%s.%s", targetName, canary.Namespace)
+	vs, err := ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("VirtualService %s not found", vsName)
+		}
+		return fmt.Errorf("VirtualService %s query error %v", vsName, err)
+	}
+
+	vsClone := vs.DeepCopy()
+	vsClone.Spec.Routes[0].Http.Action = appmeshv1alpha1.HttpRouteAction{
+		WeightedTargets: []appmeshv1alpha1.WeightedTarget{
+			{
+				VirtualNodeName: fmt.Sprintf("%s-canary-%s", targetName, canary.Namespace),
+				Weight:          int64(canaryWeight),
+			},
+			{
+				VirtualNodeName: fmt.Sprintf("%s-primary-%s", targetName, canary.Namespace),
+				Weight:          int64(primaryWeight),
+			},
+		},
+	}
+
+	_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Update(vsClone)
+	if err != nil {
+		return fmt.Errorf("VirtualService %s update error %v", vsName, err)
 	}
 
 	return nil
