@@ -31,7 +31,7 @@ var (
 type Mocks struct {
 	canary        *v1alpha3.Canary
 	kubeClient    kubernetes.Interface
-	istioClient   clientset.Interface
+	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
 	deployer      CanaryDeployer
 	observer      CanaryObserver
@@ -100,8 +100,7 @@ func SetupMocks(abtest bool) Mocks {
 
 	// init router
 	rf := router.NewFactory(kubeClient, flaggerClient, logger, flaggerClient)
-	var meshRouter router.Interface
-	meshRouter = rf.IstioRouter()
+	meshRouter := rf.MeshRouter("istio")
 
 	return Mocks{
 		canary:        canary,
@@ -109,7 +108,7 @@ func SetupMocks(abtest bool) Mocks {
 		deployer:      deployer,
 		logger:        logger,
 		flaggerClient: flaggerClient,
-		istioClient:   flaggerClient,
+		meshClient:    flaggerClient,
 		kubeClient:    kubeClient,
 		ctrl:          ctrl,
 		router:        meshRouter,
