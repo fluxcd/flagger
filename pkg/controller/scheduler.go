@@ -96,12 +96,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// init routers
-	rf := router.NewFactory(c.kubeClient, c.flaggerClient, c.logger, c.istioClient)
-	var meshRouter router.Interface
-	meshRouter = rf.IstioRouter()
+	routerFactory := router.NewFactory(c.kubeClient, c.flaggerClient, c.logger, c.istioClient)
+	meshRouter := routerFactory.MeshRouter(c.meshProvider)
 
 	// create ClusterIP services and virtual service if needed
-	if err := rf.KubernetesRouter().Sync(cd); err != nil {
+	if err := routerFactory.KubernetesRouter().Sync(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}

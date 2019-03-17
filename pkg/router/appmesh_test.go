@@ -8,7 +8,7 @@ import (
 
 func TestAppmeshRouter_Sync(t *testing.T) {
 	mocks := setupfakeClients()
-	router := &AppmeshRouter{
+	router := &AppMeshRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
 		appmeshClient: mocks.meshClient,
@@ -132,7 +132,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 
 func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
 	mocks := setupfakeClients()
-	router := &AppmeshRouter{
+	router := &AppMeshRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
 		appmeshClient: mocks.meshClient,

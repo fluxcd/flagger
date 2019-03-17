@@ -134,6 +134,7 @@ func main() {
 		metricsServer,
 		logger,
 		slack,
+		meshProvider,
 	)
 
 	flaggerInformerFactory.Start(stopCh)

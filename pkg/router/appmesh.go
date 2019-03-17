@@ -14,8 +14,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// AppmeshRouter is managing AppMesh virtual services
-type AppmeshRouter struct {
+// AppMeshRouter is managing AppMesh virtual services
+type AppMeshRouter struct {
 	kubeClient    kubernetes.Interface
 	appmeshClient clientset.Interface
 	flaggerClient clientset.Interface
@@ -23,7 +23,7 @@ type AppmeshRouter struct {
 }
 
 // Sync creates or updates App Mesh virtual nodes and virtual services
-func (ar *AppmeshRouter) Sync(canary *flaggerv1.Canary) error {
+func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
 	if canary.Spec.Service.MeshName == "" {
 		return fmt.Errorf("mesh name cannot be empty")
 	}
@@ -67,7 +67,7 @@ func (ar *AppmeshRouter) Sync(canary *flaggerv1.Canary) error {
 
 // syncVirtualNode creates or updates a virtual node
 // the virtual node naming format is name-role-namespace
-func (ar *AppmeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, host string) error {
+func (ar *AppMeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, host string) error {
 	backends := []appmeshv1alpha1.Backend{}
 	for _, b := range canary.Spec.Service.Backends {
 		backend := appmeshv1alpha1.Backend{
@@ -145,7 +145,7 @@ func (ar *AppmeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 }
 
 // syncVirtualService creates or updates a virtual service
-func (ar *AppmeshRouter) syncVirtualService(canary *flaggerv1.Canary, name string) error {
+func (ar *AppMeshRouter) syncVirtualService(canary *flaggerv1.Canary, name string) error {
 	targetName := canary.Spec.TargetRef.Name
 	canaryVirtualNode := fmt.Sprintf("%s-canary-%s", targetName, canary.Namespace)
 	primaryVirtualNode := fmt.Sprintf("%s-primary-%s", targetName, canary.Namespace)
@@ -238,7 +238,7 @@ func (ar *AppmeshRouter) syncVirtualService(canary *flaggerv1.Canary, name strin
 }
 
 // GetRoutes returns the destinations weight for primary and canary
-func (ar *AppmeshRouter) GetRoutes(canary *flaggerv1.Canary) (
+func (ar *AppMeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
 	err error,
@@ -279,7 +279,7 @@ func (ar *AppmeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 }
 
 // SetRoutes updates the destinations weight for primary and canary
-func (ar *AppmeshRouter) SetRoutes(
+func (ar *AppMeshRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,

@@ -44,6 +44,7 @@ type Controller struct {
 	observer      CanaryObserver
 	recorder      CanaryRecorder
 	notifier      *notifier.Slack
+	meshProvider  string
 }
 
 func NewController(
@@ -55,6 +56,7 @@ func NewController(
 	metricServer string,
 	logger *zap.SugaredLogger,
 	notifier *notifier.Slack,
+	meshProvider string,
 
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
@@ -100,6 +102,7 @@ func NewController(
 		observer:      observer,
 		recorder:      recorder,
 		notifier:      notifier,
+		meshProvider:  meshProvider,
 	}
 
 	flaggerInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
