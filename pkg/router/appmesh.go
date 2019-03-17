@@ -68,16 +68,6 @@ func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
 // syncVirtualNode creates or updates a virtual node
 // the virtual node naming format is name-role-namespace
 func (ar *AppMeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, host string) error {
-	backends := []appmeshv1alpha1.Backend{}
-	for _, b := range canary.Spec.Service.Backends {
-		backend := appmeshv1alpha1.Backend{
-			VirtualService: appmeshv1alpha1.VirtualServiceBackend{
-				VirtualServiceName: b,
-			},
-		}
-		backends = append(backends, backend)
-	}
-
 	vnSpec := &appmeshv1alpha1.VirtualNodeSpec{
 		MeshName: canary.Spec.Service.MeshName,
 		Listeners: []appmeshv1alpha1.Listener{
@@ -93,7 +83,19 @@ func (ar *AppMeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 				HostName: host,
 			},
 		},
-		Backends: backends,
+	}
+
+	backends := []appmeshv1alpha1.Backend{}
+	for _, b := range canary.Spec.Service.Backends {
+		backend := appmeshv1alpha1.Backend{
+			VirtualService: appmeshv1alpha1.VirtualServiceBackend{
+				VirtualServiceName: b,
+			},
+		}
+		backends = append(backends, backend)
+	}
+	if len(backends) > 0 {
+		vnSpec.Backends = backends
 	}
 
 	virtualnode, err := ar.appmeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Get(name, metav1.GetOptions{})
@@ -161,11 +163,11 @@ func (ar *AppMeshRouter) syncVirtualService(canary *flaggerv1.Canary, name strin
 	vsSpec := &appmeshv1alpha1.VirtualServiceSpec{
 		MeshName: canary.Spec.Service.MeshName,
 		VirtualRouter: &appmeshv1alpha1.VirtualRouter{
-			Name: fmt.Sprintf("%s-router", name),
+			Name: fmt.Sprintf("%s-%s-router", targetName, canary.Namespace),
 		},
 		Routes: []appmeshv1alpha1.Route{
 			{
-				Name: fmt.Sprintf("%s-route", name),
+				Name: fmt.Sprintf("%s-%s-route", targetName, canary.Namespace),
 				Http: appmeshv1alpha1.HttpRoute{
 					Match: appmeshv1alpha1.HttpRouteMatch{
 						Prefix: routePrefix,
