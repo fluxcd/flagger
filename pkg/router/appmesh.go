@@ -33,6 +33,7 @@ func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	primaryHost := fmt.Sprintf("%s.%s", primaryName, canary.Namespace)
 	canaryName := fmt.Sprintf("%s-canary", targetName)
+	canaryHost := fmt.Sprintf("%s.%s", canaryName, canary.Namespace)
 
 	// sync virtual node e.g. app-namespace
 	// DNS app.namespace
@@ -50,7 +51,7 @@ func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
 
 	// sync virtual node e.g. app-canary-namespace
 	// DNS app-canary.namespace
-	err = ar.syncVirtualNode(canary, fmt.Sprintf("%s-%s", canaryName, canary.Namespace), targetHost)
+	err = ar.syncVirtualNode(canary, fmt.Sprintf("%s-%s", canaryName, canary.Namespace), canaryHost)
 	if err != nil {
 		return err
 	}
