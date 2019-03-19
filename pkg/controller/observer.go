@@ -106,6 +106,42 @@ func (c *CanaryObserver) GetScalar(query string) (float64, error) {
 	return *value, nil
 }
 
+func (c *CanaryObserver) GetEnvoySuccessRate(name string, namespace string, metric string, interval string) (float64, error) {
+	if c.metricsServer == "fake" {
+		return 100, nil
+	}
+
+	var rate *float64
+	querySt := url.QueryEscape(`sum(rate(` +
+		metric + `{kubernetes_namespace="` +
+		namespace + `",app="` +
+		name + `",envoy_response_code!~"5.*"}[1m])) / sum(rate(` +
+		metric + `{kubernetes_namespace="` +
+		namespace + `",app="` +
+		name + `"}[` +
+		interval + `])) * 100 `)
+	result, err := c.queryMetric(querySt)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, v := range result.Data.Result {
+		metricValue := v.Value[1]
+		switch metricValue.(type) {
+		case string:
+			f, err := strconv.ParseFloat(metricValue.(string), 64)
+			if err != nil {
+				return 0, err
+			}
+			rate = &f
+		}
+	}
+	if rate == nil {
+		return 0, fmt.Errorf("no values found for metric %s", metric)
+	}
+	return *rate, nil
+}
+
 // GetDeploymentCounter returns the requests success rate using istio_requests_total metric
 func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
 	if c.metricsServer == "fake" {

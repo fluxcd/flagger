@@ -493,6 +493,24 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 			metric.Interval = r.GetMetricInterval()
 		}
 
+		if metric.Name == "envoy_cluster_upstream_rq" {
+			val, err := c.observer.GetEnvoySuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+			if err != nil {
+				if strings.Contains(err.Error(), "no values found") {
+					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+				} else {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+				}
+				return false
+			}
+			if float64(metric.Threshold) > val {
+				c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
+					r.Name, r.Namespace, val, metric.Threshold)
+				return false
+			}
+		}
+
 		if metric.Name == "istio_requests_total" {
 			val, err := c.observer.GetDeploymentCounter(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
 			if err != nil {
