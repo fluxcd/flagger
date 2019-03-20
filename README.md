@@ -7,7 +7,7 @@
 [![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
-using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
+using Istio or App Mesh routing for traffic shifting and Prometheus metrics for canary analysis. 
 The canary analysis can be extended with webhooks for running acceptance tests, 
 load tests or any other custom validation.
 
@@ -24,6 +24,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 * Install
     * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
     * [Flagger install on GKE](https://docs.flagger.app/install/flagger-install-on-google-cloud)
+    * [Flagger install on EKS App Mesh](https://docs.flagger.app/install/flagger-install-on-eks-appmesh)
 * How it works
     * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
     * [Routing](https://docs.flagger.app/how-it-works#istio-routing)

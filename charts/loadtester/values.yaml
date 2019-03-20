@@ -27,7 +27,8 @@ tolerations: []
 
 affinity: {}
 
+# App Mesh virtual node settings
 meshName: ""
 #backends:
-#  - test
-#  - test2
+#  - app1.namespace
+#  - app2.namespace
