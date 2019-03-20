@@ -35,6 +35,9 @@ spec:
           command:
           - ./flagger
           - -log-level=info
+          {{- if .Values.meshProvider }}
+          - -mesh-provider={{ .Values.meshProvider }}
+          {{- end }}
           - -metrics-server={{ .Values.metricsServer }}
           {{- if .Values.namespace }}
           - -namespace={{ .Values.namespace }}
