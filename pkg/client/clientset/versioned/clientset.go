@@ -19,9 +19,9 @@ limitations under the License.
 package versioned
 
 import (
-	appmeshv1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1"
-	flaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
-	networkingv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	appmeshv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1"
+	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
+	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

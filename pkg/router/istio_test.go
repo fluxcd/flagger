@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
+	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )

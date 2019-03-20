@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	rollout "github.com/stefanprodan/flagger/pkg/apis/flagger"
+	rollout "github.com/weaveworks/flagger/pkg/apis/flagger"
 )
 
 // SchemeGroupVersion is group version used to register these objects

@@ -4,7 +4,7 @@ description: Flagger is an Istio progressive delivery Kubernetes operator
 
 # Introduction
 
-[Flagger](https://github.com/stefanprodan/flagger) is a **Kubernetes** operator that automates the promotion of canary 
+[Flagger](https://github.com/weaveworks/flagger) is a **Kubernetes** operator that automates the promotion of canary 
 deployments using **Istio** routing for traffic shifting and **Prometheus** metrics for canary analysis.
 The canary analysis can be extended with webhooks for running 
 system integration/acceptance tests, load tests, or any other custom validation.

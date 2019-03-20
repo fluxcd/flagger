@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
-	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v2beta1"

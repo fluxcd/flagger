@@ -3,7 +3,7 @@ package loadtester
 import (
 	"context"
 	"fmt"
-	"github.com/stefanprodan/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logging"
 	"gopkg.in/h2non/gock.v1"
 	"testing"
 	"time"

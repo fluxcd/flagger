@@ -19,13 +19,13 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
-	appmeshv1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1"
-	fakeappmeshv1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1/fake"
-	flaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
-	fakeflaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3/fake"
-	networkingv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
-	fakenetworkingv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	appmeshv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1"
+	fakeappmeshv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1/fake"
+	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
+	fakeflaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3/fake"
+	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	fakenetworkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

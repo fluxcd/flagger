@@ -1,10 +1,10 @@
 # flagger
 
 [![build](https://travis-ci.org/stefanprodan/flagger.svg?branch=master)](https://travis-ci.org/stefanprodan/flagger)
-[![report](https://goreportcard.com/badge/github.com/stefanprodan/flagger)](https://goreportcard.com/report/github.com/stefanprodan/flagger)
+[![report](https://goreportcard.com/badge/github.com/weaveworks/flagger)](https://goreportcard.com/report/github.com/weaveworks/flagger)
 [![codecov](https://codecov.io/gh/stefanprodan/flagger/branch/master/graph/badge.svg)](https://codecov.io/gh/stefanprodan/flagger)
-[![license](https://img.shields.io/github/license/stefanprodan/flagger.svg)](https://github.com/stefanprodan/flagger/blob/master/LICENSE)
-[![release](https://img.shields.io/github/release/stefanprodan/flagger/all.svg)](https://github.com/stefanprodan/flagger/releases)
+[![license](https://img.shields.io/github/license/stefanprodan/flagger.svg)](https://github.com/weaveworks/flagger/blob/master/LICENSE)
+[![release](https://img.shields.io/github/release/stefanprodan/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
@@ -44,7 +44,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 ### Install 
 
 Before installing Flagger make sure you have Istio setup up with Prometheus enabled. 
-If you are new to Istio you can follow my [Istio service mesh walk-through](https://github.com/stefanprodan/istio-gke).
+If you are new to Istio you can follow my [Istio service mesh walk-through](https://github.com/weaveworks/istio-gke).
 
 Deploy Flagger in the `istio-system` namespace using Helm:
 
@@ -191,6 +191,6 @@ If you have any questions about Flagger and progressive delivery:
   and join the [#flagger](https://weave-community.slack.com/messages/flagger/) channel.
 * Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks, 
   hands-on training and meetups in your area.
-* File an [issue](https://github.com/stefanprodan/flagger/issues/new).
+* File an [issue](https://github.com/weaveworks/flagger/issues/new).
 
 Your feedback is always welcome!
