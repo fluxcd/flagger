@@ -96,12 +96,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// init routers
-	rf := router.NewFactory(c.kubeClient, c.flaggerClient, c.logger, c.istioClient)
-	var meshRouter router.Interface
-	meshRouter = rf.IstioRouter()
+	routerFactory := router.NewFactory(c.kubeClient, c.flaggerClient, c.logger, c.istioClient)
+	meshRouter := routerFactory.MeshRouter(c.meshProvider)
 
 	// create ClusterIP services and virtual service if needed
-	if err := rf.KubernetesRouter().Sync(cd); err != nil {
+	if err := routerFactory.KubernetesRouter().Sync(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -492,6 +491,24 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
 		if metric.Interval == "" {
 			metric.Interval = r.GetMetricInterval()
+		}
+
+		if metric.Name == "envoy_cluster_upstream_rq" {
+			val, err := c.observer.GetEnvoySuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+			if err != nil {
+				if strings.Contains(err.Error(), "no values found") {
+					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+				} else {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+				}
+				return false
+			}
+			if float64(metric.Threshold) > val {
+				c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
+					r.Name, r.Namespace, val, metric.Threshold)
+				return false
+			}
 		}
 
 		if metric.Name == "istio_requests_total" {

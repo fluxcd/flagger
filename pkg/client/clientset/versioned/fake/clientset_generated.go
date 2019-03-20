@@ -20,6 +20,8 @@ package fake
 
 import (
 	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
+	appmeshv1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1"
+	fakeappmeshv1alpha1 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/appmesh/v1alpha1/fake"
 	flaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
 	fakeflaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3/fake"
 	networkingv1alpha3 "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
@@ -72,6 +74,16 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 }
 
 var _ clientset.Interface = &Clientset{}
+
+// AppmeshV1alpha1 retrieves the AppmeshV1alpha1Client
+func (c *Clientset) AppmeshV1alpha1() appmeshv1alpha1.AppmeshV1alpha1Interface {
+	return &fakeappmeshv1alpha1.FakeAppmeshV1alpha1{Fake: &c.Fake}
+}
+
+// Appmesh retrieves the AppmeshV1alpha1Client
+func (c *Clientset) Appmesh() appmeshv1alpha1.AppmeshV1alpha1Interface {
+	return &fakeappmeshv1alpha1.FakeAppmeshV1alpha1{Fake: &c.Fake}
+}
 
 // FlaggerV1alpha3 retrieves the FlaggerV1alpha3Client
 func (c *Clientset) FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface {

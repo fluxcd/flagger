@@ -24,6 +24,7 @@ import (
 	time "time"
 
 	versioned "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
+	appmesh "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/appmesh"
 	flagger "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger"
 	internalinterfaces "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/istio"
@@ -173,8 +174,13 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
+	Appmesh() appmesh.Interface
 	Flagger() flagger.Interface
 	Networking() istio.Interface
+}
+
+func (f *sharedInformerFactory) Appmesh() appmesh.Interface {
+	return appmesh.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Flagger() flagger.Interface {

@@ -378,6 +378,11 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 			return err
 		}
 
+		replicas := int32(1)
+		if canaryDep.Spec.Replicas != nil && *canaryDep.Spec.Replicas > 0 {
+			replicas = *canaryDep.Spec.Replicas
+		}
+
 		// create primary deployment
 		primaryDep = &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -396,7 +401,7 @@ func (c *CanaryDeployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 				ProgressDeadlineSeconds: canaryDep.Spec.ProgressDeadlineSeconds,
 				MinReadySeconds:         canaryDep.Spec.MinReadySeconds,
 				RevisionHistoryLimit:    canaryDep.Spec.RevisionHistoryLimit,
-				Replicas:                canaryDep.Spec.Replicas,
+				Replicas:                int32p(replicas),
 				Strategy:                canaryDep.Spec.Strategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{

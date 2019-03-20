@@ -19,8 +19,9 @@ import (
 type fakeClients struct {
 	canary        *v1alpha3.Canary
 	abtest        *v1alpha3.Canary
+	appmeshCanary *v1alpha3.Canary
 	kubeClient    kubernetes.Interface
-	istioClient   clientset.Interface
+	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 }
@@ -28,21 +29,57 @@ type fakeClients struct {
 func setupfakeClients() fakeClients {
 	canary := newMockCanary()
 	abtest := newMockABTest()
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary, abtest)
+	appmeshCanary := newMockCanaryAppMesh()
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary, abtest, appmeshCanary)
 
 	kubeClient := fake.NewSimpleClientset(newMockDeployment(), newMockABTestDeployment())
 
-	istioClient := fakeFlagger.NewSimpleClientset()
+	meshClient := fakeFlagger.NewSimpleClientset()
 	logger, _ := logging.NewLogger("debug")
 
 	return fakeClients{
 		canary:        canary,
 		abtest:        abtest,
+		appmeshCanary: appmeshCanary,
 		kubeClient:    kubeClient,
-		istioClient:   istioClient,
+		meshClient:    meshClient,
 		flaggerClient: flaggerClient,
 		logger:        logger,
 	}
+}
+
+func newMockCanaryAppMesh() *v1alpha3.Canary {
+	cd := &v1alpha3.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "appmesh",
+		},
+		Spec: v1alpha3.CanarySpec{
+			TargetRef: hpav1.CrossVersionObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: v1alpha3.CanaryService{
+				Port:     9898,
+				MeshName: "global",
+				Backends: []string{"backend.default"},
+			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []v1alpha3.CanaryMetric{
+					{
+						Name:      "appmesh_requests_total",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
 }
 
 func newMockCanary() *v1alpha3.Canary {

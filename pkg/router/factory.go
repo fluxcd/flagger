@@ -8,7 +8,7 @@ import (
 
 type Factory struct {
 	kubeClient    kubernetes.Interface
-	istioClient   clientset.Interface
+	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 }
@@ -16,15 +16,16 @@ type Factory struct {
 func NewFactory(kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
 	logger *zap.SugaredLogger,
-	istioClient clientset.Interface) *Factory {
+	meshClient clientset.Interface) *Factory {
 	return &Factory{
-		istioClient:   istioClient,
+		meshClient:    meshClient,
 		kubeClient:    kubeClient,
 		flaggerClient: flaggerClient,
 		logger:        logger,
 	}
 }
 
+// KubernetesRouter returns a ClusterIP service router
 func (factory *Factory) KubernetesRouter() *KubernetesRouter {
 	return &KubernetesRouter{
 		logger:        factory.logger,
@@ -33,11 +34,20 @@ func (factory *Factory) KubernetesRouter() *KubernetesRouter {
 	}
 }
 
-func (factory *Factory) IstioRouter() *IstioRouter {
+// MeshRouter returns a service mesh router (Istio or AppMesh)
+func (factory *Factory) MeshRouter(provider string) Interface {
+	if provider == "appmesh" {
+		return &AppMeshRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			appmeshClient: factory.meshClient,
+		}
+	}
 	return &IstioRouter{
 		logger:        factory.logger,
 		flaggerClient: factory.flaggerClient,
 		kubeClient:    factory.kubeClient,
-		istioClient:   factory.istioClient,
+		istioClient:   factory.meshClient,
 	}
 }

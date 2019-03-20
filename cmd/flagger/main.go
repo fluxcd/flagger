@@ -34,6 +34,7 @@ var (
 	zapReplaceGlobals   bool
 	zapEncoding         string
 	namespace           string
+	meshProvider        string
 )
 
 func init() {
@@ -50,6 +51,7 @@ func init() {
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object")
+	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio or appmesh")
 }
 
 func main() {
@@ -77,7 +79,7 @@ func main() {
 		logger.Fatalf("Error building kubernetes clientset: %v", err)
 	}
 
-	istioClient, err := clientset.NewForConfig(cfg)
+	meshClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building istio clientset: %v", err)
 	}
@@ -125,13 +127,14 @@ func main() {
 
 	c := controller.NewController(
 		kubeClient,
-		istioClient,
+		meshClient,
 		flaggerClient,
 		canaryInformer,
 		controlLoopInterval,
 		metricsServer,
 		logger,
 		slack,
+		meshProvider,
 	)
 
 	flaggerInformerFactory.Start(stopCh)
