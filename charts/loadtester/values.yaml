@@ -26,3 +26,8 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+meshName: ""
+#backends:
+#  - test
+#  - test2
