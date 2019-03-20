@@ -12,11 +12,11 @@ run:
 	-slack-channel="devops-alerts"
 
 build:
-	docker build -t stefanprodan/flagger:$(TAG) . -f Dockerfile
+	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
 
 push:
-	docker tag stefanprodan/flagger:$(TAG) quay.io/stefanprodan/flagger:$(VERSION)
-	docker push quay.io/stefanprodan/flagger:$(VERSION)
+	docker tag weaveworks/flagger:$(TAG) quay.io/weaveworks/flagger:$(VERSION)
+	docker push quay.io/weaveworks/flagger:$(VERSION)
 
 fmt:
 	gofmt -l -s -w $(SOURCE_DIRS)
@@ -33,7 +33,7 @@ test: test-fmt test-codegen
 helm-package:
 	cd charts/ && helm package ./*
 	mv charts/*.tgz docs/
-	helm repo index docs --url https://stefanprodan.github.io/flagger --merge ./docs/index.yaml
+	helm repo index docs --url https://weaveworks.github.io/flagger --merge ./docs/index.yaml
 
 helm-up:
 	helm upgrade --install flagger ./charts/flagger --namespace=istio-system --set crd.create=false
@@ -82,5 +82,5 @@ reset-test:
 	kubectl apply -f ./artifacts/canaries
 
 loadtester-push:
-	docker build -t quay.io/stefanprodan/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
-	docker push quay.io/stefanprodan/flagger-loadtester:$(LT_VERSION)
+	docker build -t quay.io/weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
+	docker push quay.io/weaveworks/flagger-loadtester:$(LT_VERSION)

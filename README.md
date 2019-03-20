@@ -1,10 +1,10 @@
 # flagger
 
-[![build](https://travis-ci.org/stefanprodan/flagger.svg?branch=master)](https://travis-ci.org/stefanprodan/flagger)
+[![build](https://travis-ci.org/weaveworks/flagger.svg?branch=master)](https://travis-ci.org/weaveworks/flagger)
 [![report](https://goreportcard.com/badge/github.com/weaveworks/flagger)](https://goreportcard.com/report/github.com/weaveworks/flagger)
-[![codecov](https://codecov.io/gh/stefanprodan/flagger/branch/master/graph/badge.svg)](https://codecov.io/gh/stefanprodan/flagger)
-[![license](https://img.shields.io/github/license/stefanprodan/flagger.svg)](https://github.com/weaveworks/flagger/blob/master/LICENSE)
-[![release](https://img.shields.io/github/release/stefanprodan/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
+[![codecov](https://codecov.io/gh/weaveworks/flagger/branch/master/graph/badge.svg)](https://codecov.io/gh/weaveworks/flagger)
+[![license](https://img.shields.io/github/license/weaveworks/flagger.svg)](https://github.com/weaveworks/flagger/blob/master/LICENSE)
+[![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
 using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
@@ -15,7 +15,7 @@ Flagger implements a control loop that gradually shifts traffic to the canary wh
 indicators like HTTP requests success rate, requests average duration and pods health. 
 Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
 
-![flagger-overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-overview.png)
+![flagger-overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-overview.png)
 
 ### Documentation
 
@@ -44,7 +44,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 ### Install 
 
 Before installing Flagger make sure you have Istio setup up with Prometheus enabled. 
-If you are new to Istio you can follow my [Istio service mesh walk-through](https://github.com/weaveworks/istio-gke).
+If you are new to Istio you can follow my [Istio service mesh walk-through](https://github.com/stefanprodan/istio-gke).
 
 Deploy Flagger in the `istio-system` namespace using Helm:
 
