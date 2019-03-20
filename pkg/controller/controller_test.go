@@ -1,14 +1,14 @@
 package controller
 
 import (
-	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
-	istiov1alpha1 "github.com/stefanprodan/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
-	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
-	fakeFlagger "github.com/stefanprodan/flagger/pkg/client/clientset/versioned/fake"
-	informers "github.com/stefanprodan/flagger/pkg/client/informers/externalversions"
-	"github.com/stefanprodan/flagger/pkg/logging"
-	"github.com/stefanprodan/flagger/pkg/router"
+	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha1 "github.com/weaveworks/flagger/pkg/apis/istio/common/v1alpha1"
+	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
+	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
+	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/router"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v1"

@@ -21,10 +21,10 @@ package v1alpha3
 import (
 	time "time"
 
-	flaggerv1alpha3 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
-	versioned "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha3 "github.com/stefanprodan/flagger/pkg/client/listers/flagger/v1alpha3"
+	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	versioned "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha3 "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

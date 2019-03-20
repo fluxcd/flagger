@@ -1,7 +1,7 @@
 package loadtester
 
 import (
-	"github.com/stefanprodan/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logging"
 	"testing"
 	"time"
 )

@@ -16,9 +16,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM golang:1.11 AS builder
 
-RUN mkdir -p /go/src/github.com/stefanprodan/flagger/
+RUN mkdir -p /go/src/github.com/weaveworks/flagger/
 
-WORKDIR /go/src/github.com/stefanprodan/flagger
+WORKDIR /go/src/github.com/weaveworks/flagger
 
 COPY . .
 
@@ -35,7 +35,7 @@ RUN addgroup -S app \
 WORKDIR /home/app
 
 COPY --from=hey-builder /go/bin/hey /usr/local/bin/hey
-COPY --from=builder /go/src/github.com/stefanprodan/flagger/loadtester .
+COPY --from=builder /go/src/github.com/weaveworks/flagger/loadtester .
 
 RUN chown -R app:app ./
 

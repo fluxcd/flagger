@@ -19,8 +19,8 @@ limitations under the License.
 package flagger
 
 import (
-	v1alpha3 "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
-	internalinterfaces "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha3 "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
+	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

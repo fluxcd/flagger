@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/stefanprodan/flagger/pkg/loadtester"
-	"github.com/stefanprodan/flagger/pkg/logging"
-	"github.com/stefanprodan/flagger/pkg/signals"
+	"github.com/weaveworks/flagger/pkg/loadtester"
+	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/signals"
 	"go.uber.org/zap"
 	"log"
 	"time"

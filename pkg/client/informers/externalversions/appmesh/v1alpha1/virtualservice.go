@@ -21,10 +21,10 @@ package v1alpha1
 import (
 	time "time"
 
-	appmeshv1alpha1 "github.com/stefanprodan/flagger/pkg/apis/appmesh/v1alpha1"
-	versioned "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/stefanprodan/flagger/pkg/client/listers/appmesh/v1alpha1"
+	appmeshv1alpha1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1alpha1"
+	versioned "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/weaveworks/flagger/pkg/client/listers/appmesh/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

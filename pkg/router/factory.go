@@ -1,7 +1,7 @@
 package router
 
 import (
-	clientset "github.com/stefanprodan/flagger/pkg/client/clientset/versioned"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 )

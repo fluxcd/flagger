@@ -1,6 +1,6 @@
 # Flagger load testing service
 
-[Flagger's](https://github.com/stefanprodan/flagger) load testing service is based on 
+[Flagger's](https://github.com/weaveworks/flagger) load testing service is based on 
 [rakyll/hey](https://github.com/rakyll/hey) 
 and can be used to generates traffic during canary analysis when configured as a webhook.
 

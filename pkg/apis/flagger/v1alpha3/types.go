@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha3
 
 import (
-	istiov1alpha3 "github.com/stefanprodan/flagger/pkg/apis/istio/v1alpha3"
+	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"

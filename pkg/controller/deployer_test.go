@@ -3,7 +3,7 @@ package controller
 import (
 	"testing"
 
-	"github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

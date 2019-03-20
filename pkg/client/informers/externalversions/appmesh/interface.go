@@ -19,8 +19,8 @@ limitations under the License.
 package appmesh
 
 import (
-	v1alpha1 "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/appmesh/v1alpha1"
-	internalinterfaces "github.com/stefanprodan/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/weaveworks/flagger/pkg/client/informers/externalversions/appmesh/v1alpha1"
+	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

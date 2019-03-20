@@ -8,7 +8,7 @@ description: Flagger's load testing services based on rakyll/hey that generates 
 home: https://docs.flagger.app
 icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
 sources:
-  - https://github.com/stefanprodan/flagger
+  - https://github.com/weaveworks/flagger
 maintainers:
   - name: stefanprodan
     url: https://github.com/stefanprodan

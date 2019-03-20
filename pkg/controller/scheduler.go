@@ -2,11 +2,11 @@ package controller
 
 import (
 	"fmt"
-	"github.com/stefanprodan/flagger/pkg/router"
+	"github.com/weaveworks/flagger/pkg/router"
 	"strings"
 	"time"
 
-	flaggerv1 "github.com/stefanprodan/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
