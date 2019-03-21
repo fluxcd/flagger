@@ -33,6 +33,8 @@ spec:
   service:
     # container port
     port: 9898
+    # service port name (optional, will default to "http")
+    portName: http-podinfo
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
@@ -115,6 +117,8 @@ spec:
   service:
     # container port
     port: 9898
+    # service port name (optional, will default to "http")
+    portName: http-frontend
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
