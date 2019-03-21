@@ -488,6 +488,37 @@ The above configuration validates the canary by checking
 if the HTTP 404 req/sec percentage is below 5 percent of the total traffic.
 If the 404s rate reaches the 5% threshold, then the canary fails.
 
+```yaml
+  canaryAnalysis:
+    threshold: 1
+    maxWeight: 50
+    stepWeight: 5
+    metrics:
+    - name: "rpc error rate"
+      threshold: 5
+      query: |
+        100 - (sum
+            rate(
+                grpc_server_handled_total{
+                  grpc_service="my.TestService",
+                  grpc_code!="OK"
+                }[1m]
+            )
+        )
+        /
+        sum(
+            rate(
+                grpc_server_started_total{
+                  grpc_service="my.TestService"
+                }[1m]
+            )
+        ) * 100
+```
+
+The above configuration validates the canary by checking if the percentage of
+non-OK GRPC req/sec is below 5 percent of the total requests. If the non-OK
+rate reaches the 5% threshold, then the canary fails.
+
 When specifying a query, Flagger will run the promql query and convert the result to float64. 
 Then it compares the query result value with the metric threshold value.
 
