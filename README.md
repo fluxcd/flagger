@@ -169,7 +169,7 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
-* Integrate with other service mesh technologies like AWS AppMesh and Linkerd v2
+* Integrate with other service mesh technologies like Linkerd v2 or Consul Mesh
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
 ### Contributing
