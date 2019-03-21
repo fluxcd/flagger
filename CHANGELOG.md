@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased 
+
+Adds support for AWS App Mesh EKS
+
+#### Features
+
+- AWS App Mesh integration [#107](https://github.com/weaveworks/flagger/pull/107)
+
+#### Fixes
+
+- Copy pod labels from canary to primary [#105](https://github.com/weaveworks/flagger/pull/105)
+
 ## 0.9.0 (2019-03-11)
 
 Allows A/B testing scenarios where instead of weighted routing, the traffic is split between the 

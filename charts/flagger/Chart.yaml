@@ -16,4 +16,5 @@ maintainers:
 keywords:
 - canary
 - istio
+- appmesh
 - gitops

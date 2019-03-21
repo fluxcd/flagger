@@ -5,12 +5,12 @@ image:
   tag: 0.9.0
   pullPolicy: IfNotPresent
 
-metricsServer: "http://prometheus.istio-system.svc.cluster.local:9090"
+metricsServer: "http://prometheus:9090"
 
 # accepted values are istio or appmesh (defaults to istio)
 meshProvider: ""
 
-# namespace that flagger will watch for Canary objects
+# single namespace restriction
 namespace: ""
 
 slack:
