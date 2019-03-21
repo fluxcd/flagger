@@ -185,15 +185,13 @@ Deploy Grafana in the _**appmesh-system**_ namespace:
 ```bash
 helm upgrade -i flagger-grafana flagger/grafana \
 --namespace=appmesh-system \
---set url=http://prometheus.appmesh-system:9090 \
---set user=admin \
---set password=change-me
+--set url=http://prometheus.appmesh-system:9090
 ```
 
 You can access Grafana using port forwarding:
 
 ```bash
-kubectl -n appmesh-system port-forward svc/flagger-grafana 3000:3000
+kubectl -n appmesh-system port-forward svc/flagger-grafana 3000:80
 ```
 
 ###  Install the load tester

@@ -113,7 +113,7 @@ kubectl apply -f $HOME/flagger-grafana.yaml
 You can access Grafana using port forwarding:
 
 ```bash
-kubectl -n istio-system port-forward svc/flagger-grafana 3000:3000
+kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 ```
 
 ###  Install Load Tester
