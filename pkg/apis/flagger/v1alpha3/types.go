@@ -17,10 +17,11 @@ limitations under the License.
 package v1alpha3
 
 import (
+	"time"
+
 	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 const (
@@ -111,6 +112,7 @@ type CanaryStatus struct {
 // and Istio Virtual Service
 type CanaryService struct {
 	Port       int32                            `json:"port"`
+	PortName   string                           `json:"portName,omitempty"`
 	Match      []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
 	Rewrite    *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
 	Timeout    string                           `json:"timeout,omitempty"`

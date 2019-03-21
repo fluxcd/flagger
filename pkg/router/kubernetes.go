@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
@@ -24,6 +25,11 @@ type KubernetesRouter struct {
 func (c *KubernetesRouter) Sync(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
+	portName := cd.Spec.Service.PortName
+	if portName == "" {
+		portName = "http"
+	}
+
 	canaryService, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		canaryService = &corev1.Service{
@@ -43,7 +49,7 @@ func (c *KubernetesRouter) Sync(cd *flaggerv1.Canary) error {
 				Selector: map[string]string{"app": primaryName},
 				Ports: []corev1.ServicePort{
 					{
-						Name:     "http",
+						Name:     portName,
 						Protocol: corev1.ProtocolTCP,
 						Port:     cd.Spec.Service.Port,
 						TargetPort: intstr.IntOrString{
@@ -82,7 +88,7 @@ func (c *KubernetesRouter) Sync(cd *flaggerv1.Canary) error {
 				Selector: map[string]string{"app": targetName},
 				Ports: []corev1.ServicePort{
 					{
-						Name:     "http",
+						Name:     portName,
 						Protocol: corev1.ProtocolTCP,
 						Port:     cd.Spec.Service.Port,
 						TargetPort: intstr.IntOrString{
@@ -120,7 +126,7 @@ func (c *KubernetesRouter) Sync(cd *flaggerv1.Canary) error {
 				Selector: map[string]string{"app": primaryName},
 				Ports: []corev1.ServicePort{
 					{
-						Name:     "http",
+						Name:     portName,
 						Protocol: corev1.ProtocolTCP,
 						Port:     cd.Spec.Service.Port,
 						TargetPort: intstr.IntOrString{
