@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
-  "iteration": 1549736611069,
+  "id": 2,
+  "iteration": 1553160305729,
   "links": [],
   "panels": [
     {
@@ -95,9 +95,10 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$primary\"}[30s])), 0.001)",
+          "expr": "round(sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s])), 0.001)",
           "format": "time_series",
           "intervalFactor": 1,
+          "legendFormat": "",
           "refId": "A",
           "step": 4
         }
@@ -178,9 +179,10 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$primary\",response_code!~\"5.*\"}[30s])) / sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$primary\"}[30s]))",
+          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\",response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
+          "legendFormat": "",
           "refId": "B"
         }
       ],
@@ -259,9 +261,10 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$canary\"}[30s])), 0.001)",
+          "expr": "round(sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s])), 0.001)",
           "format": "time_series",
           "intervalFactor": 1,
+          "legendFormat": "",
           "refId": "A",
           "step": 4
         }
@@ -342,9 +345,10 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$canary\",response_code!~\"5.*\"}[30s])) / sum(irate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"$namespace\",destination_workload=~\"$canary\"}[30s]))",
+          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\",response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
+          "legendFormat": "",
           "refId": "B"
         }
       ],
@@ -403,35 +407,19 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(irate(istio_request_duration_seconds_bucket{reporter=\"destination\",destination_workload=~\"$primary\", destination_workload_namespace=~\"$namespace\"}[1m])) by (le))",
+          "expr": "(sum(rate(envoy_cluster_upstream_cx_rx_bytes_total{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s])))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "P50",
+          "legendFormat": "traffic",
           "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.90, sum(irate(istio_request_duration_seconds_bucket{reporter=\"destination\",destination_workload=~\"$primary\", destination_workload_namespace=~\"$namespace\"}[1m])) by (le))",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "P90",
-          "refId": "B"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum(irate(istio_request_duration_seconds_bucket{reporter=\"destination\",destination_workload=~\"$primary\", destination_workload_namespace=~\"$namespace\"}[1m])) by (le))",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "P99",
-          "refId": "C"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Primary: Request Duration",
+      "title": "Primary: Incoming Traffic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -447,7 +435,7 @@
       },
       "yaxes": [
         {
-          "format": "s",
+          "format": "Bps",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -509,35 +497,19 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(irate(istio_request_duration_seconds_bucket{reporter=\"destination\",destination_workload=~\"$canary\", destination_workload_namespace=~\"$namespace\"}[1m])) by (le))",
+          "expr": "(sum(rate(envoy_cluster_upstream_cx_rx_bytes_total{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s])))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "P50",
+          "legendFormat": "traffic",
           "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.90, sum(irate(istio_request_duration_seconds_bucket{reporter=\"destination\",destination_workload=~\"$canary\", destination_workload_namespace=~\"$namespace\"}[1m])) by (le))",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "P90",
-          "refId": "B"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum(irate(istio_request_duration_seconds_bucket{reporter=\"destination\",destination_workload=~\"$canary\", destination_workload_namespace=~\"$namespace\"}[1m])) by (le))",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "P99",
-          "refId": "C"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Canary: Request Duration",
+      "title": "Canary: Incoming Traffic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -553,7 +525,7 @@
       },
       "yaxes": [
         {
-          "format": "s",
+          "format": "Bps",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -1164,415 +1136,6 @@
         "align": false,
         "alignLevel": null
       }
-    },
-    {
-      "content": "<div class=\"dashboard-header text-center\">\n<span>IN/OUTBOUND: $canary.$namespace</span>\n</div>",
-      "gridPos": {
-        "h": 3,
-        "w": 24,
-        "x": 0,
-        "y": 32
-      },
-      "id": 45,
-      "links": [],
-      "mode": "html",
-      "title": "",
-      "transparent": true,
-      "type": "text"
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "prometheus",
-      "fill": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 35
-      },
-      "id": 25,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "hideEmpty": true,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null as zero",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy=\"mutual_tls\", destination_workload_namespace=~\"$namespace\", destination_workload=~\"$primary\", reporter=\"destination\"}[30s])) by (source_workload, source_workload_namespace, response_code), 0.001)",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "{{ source_workload }}.{{ source_workload_namespace }} : {{ response_code }} (🔐mTLS)",
-          "refId": "B",
-          "step": 2
-        },
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy!=\"mutual_tls\", destination_workload_namespace=~\"$namespace\", destination_workload=~\"$primary\", reporter=\"destination\"}[30s])) by (source_workload, source_workload_namespace, response_code), 0.001)",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "{{ source_workload }}.{{ source_workload_namespace }} : {{ response_code }}",
-          "refId": "A",
-          "step": 2
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Primary: Incoming Requests by Source And Response Code",
-      "tooltip": {
-        "shared": false,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": [
-          "total"
-        ]
-      },
-      "yaxes": [
-        {
-          "format": "ops",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "prometheus",
-      "fill": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 35
-      },
-      "id": 92,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "hideEmpty": true,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null as zero",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy=\"mutual_tls\", destination_workload_namespace=~\"$namespace\", destination_workload=~\"$canary\", reporter=\"destination\"}[30s])) by (source_workload, source_workload_namespace, response_code), 0.001)",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "{{ source_workload }}.{{ source_workload_namespace }} : {{ response_code }} (🔐mTLS)",
-          "refId": "B",
-          "step": 2
-        },
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy!=\"mutual_tls\", destination_workload_namespace=~\"$namespace\", destination_workload=~\"$canary\", reporter=\"destination\"}[30s])) by (source_workload, source_workload_namespace, response_code), 0.001)",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "{{ source_workload }}.{{ source_workload_namespace }} : {{ response_code }}",
-          "refId": "A",
-          "step": 2
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Canary: Incoming Requests by Source And Response Code",
-      "tooltip": {
-        "shared": false,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": [
-          "total"
-        ]
-      },
-      "yaxes": [
-        {
-          "format": "ops",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "prometheus",
-      "fill": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 41
-      },
-      "id": 70,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "hideEmpty": true,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null as zero",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy=\"mutual_tls\", source_workload_namespace=~\"$namespace\", source_workload=~\"$primary\", reporter=\"source\"}[30s])) by (destination_service, response_code), 0.001)",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{ destination_service }} : {{ response_code }} (🔐mTLS)",
-          "refId": "B",
-          "step": 2
-        },
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy!=\"mutual_tls\", source_workload_namespace=~\"$namespace\", source_workload=~\"$primary\", reporter=\"source\"}[30s])) by (destination_service, response_code), 0.001)",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "{{ destination_service }} : {{ response_code }}",
-          "refId": "A",
-          "step": 2
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Primary: Outgoing Requests by Destination And Response Code",
-      "tooltip": {
-        "shared": false,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": [
-          "total"
-        ]
-      },
-      "yaxes": [
-        {
-          "format": "ops",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "prometheus",
-      "fill": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 41
-      },
-      "id": 94,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "hideEmpty": true,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null as zero",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy=\"mutual_tls\", source_workload_namespace=~\"$namespace\", source_workload=~\"$canary\", reporter=\"source\"}[30s])) by (destination_service, response_code), 0.001)",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{ destination_service }} : {{ response_code }} (🔐mTLS)",
-          "refId": "B",
-          "step": 2
-        },
-        {
-          "expr": "round(sum(irate(istio_requests_total{connection_security_policy!=\"mutual_tls\", source_workload_namespace=~\"$namespace\", source_workload=~\"$canary\", reporter=\"source\"}[30s])) by (destination_service, response_code), 0.001)",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 1,
-          "legendFormat": "{{ destination_service }} : {{ response_code }}",
-          "refId": "A",
-          "step": 2
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Canary: Outgoing Requests by Destination And Response Code",
-      "tooltip": {
-        "shared": false,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": [
-          "total"
-        ]
-      },
-      "yaxes": [
-        {
-          "format": "ops",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
     }
   ],
   "refresh": "10s",
@@ -1583,20 +1146,16 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "selected": true,
-          "text": "test",
-          "value": "test"
-        },
+        "current": null,
         "datasource": "prometheus",
-        "definition": "",
+        "definition": "query_result(sum(envoy_cluster_upstream_rq) by (kubernetes_namespace))",
         "hide": 0,
         "includeAll": false,
         "label": "Namespace",
         "multi": false,
         "name": "namespace",
         "options": [],
-        "query": "query_result(sum(istio_requests_total) by (destination_workload_namespace) or sum(istio_tcp_sent_bytes_total) by (destination_workload_namespace))",
+        "query": "query_result(sum(envoy_cluster_upstream_rq) by (kubernetes_namespace))",
         "refresh": 1,
         "regex": "/.*_namespace=\"([^\"]*).*/",
         "skipUrlSync": false,
@@ -1609,22 +1168,18 @@
       },
       {
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "backend-primary",
-          "value": "backend-primary"
-        },
+        "current": null,
         "datasource": "prometheus",
-        "definition": "",
+        "definition": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app=~\".*-primary\"}) by (app))",
         "hide": 0,
         "includeAll": false,
         "label": "Primary",
         "multi": false,
         "name": "primary",
         "options": [],
-        "query": "query_result(sum(istio_requests_total{destination_workload_namespace=~\"$namespace\"}) by (destination_service_name))",
+        "query": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app=~\".*-primary\"}) by (app))",
         "refresh": 1,
-        "regex": "/.*destination_service_name=\"([^\"]*).*/",
+        "regex": "/.*app=\"([^\"]*).*/",
         "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
@@ -1635,22 +1190,18 @@
       },
       {
         "allValue": null,
-        "current": {
-          "selected": true,
-          "text": "backend",
-          "value": "backend"
-        },
+        "current": null,
         "datasource": "prometheus",
-        "definition": "",
+        "definition": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app!~\".*-primary\"}) by (app))",
         "hide": 0,
         "includeAll": false,
         "label": "Canary",
         "multi": false,
         "name": "canary",
         "options": [],
-        "query": "query_result(sum(istio_requests_total{destination_workload_namespace=~\"$namespace\"}) by (destination_service_name))",
+        "query": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app!~\".*-primary\"}) by (app))",
         "refresh": 1,
-        "regex": "/.*destination_service_name=\"([^\"]*).*/",
+        "regex": "/.*app=\"([^\"]*).*/",
         "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
@@ -1691,7 +1242,7 @@
     ]
   },
   "timezone": "",
-  "title": "Flagger canary",
-  "uid": "RdykD7tiz",
-  "version": 3
+  "title": "AppMesh Canary",
+  "uid": "wI-fAb3mz",
+  "version": 4
 }
