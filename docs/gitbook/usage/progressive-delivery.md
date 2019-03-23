@@ -5,7 +5,7 @@ This guide shows you how to use Istio and Flagger to automate canary deployments
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
+export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
 kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
 ```

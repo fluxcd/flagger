@@ -13,7 +13,7 @@ Flagger implements a control loop that gradually shifts traffic to the canary wh
 indicators like HTTP requests success rate, requests average duration and pods health. 
 Based on analysis of the **KPIs** a canary is promoted or aborted, and the analysis result is published to **Slack**.
 
-![Flagger overview diagram](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-overview.png)
+![Flagger overview diagram](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-overview.png)
 
 Flagger can be configured with Kubernetes custom resources and is compatible with 
 any CI/CD solutions made for Kubernetes. Since Flagger is declarative and reacts to Kubernetes events, 

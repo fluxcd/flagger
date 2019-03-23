@@ -2,7 +2,7 @@
 
 This guide walks you through setting up Flagger and Istio on Google Kubernetes Engine.
 
-![GKE Cluster Overview](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-gke-istio.png)
+![GKE Cluster Overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-gke-istio.png)
 
 ### Prerequisites
 
@@ -208,12 +208,12 @@ stable/cert-manager
 
 ### Istio Gateway TLS setup
 
-![Istio Let&apos;s Encrypt](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/istio-cert-manager-gke.png)
+![Istio Let&apos;s Encrypt](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/istio-cert-manager-gke.png)
 
 Create a generic Istio Gateway to expose services outside the mesh on HTTPS:
 
 ```bash
-REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
+REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
 kubectl apply -f ${REPO}/artifacts/gke/istio-gateway.yaml
 ```
@@ -332,7 +332,7 @@ Because Flagger uses the Istio HTTP metrics to run the canary analysis you have 
 Prometheus configuration that's similar to the one that comes with the official Istio Helm chart.
 
 ```bash
-REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
+REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
 kubectl apply -f ${REPO}/artifacts/gke/istio-prometheus.yaml
 ```

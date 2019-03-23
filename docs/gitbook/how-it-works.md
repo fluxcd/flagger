@@ -4,7 +4,7 @@
 a horizontal pod autoscaler \(HPA\) and creates a series of objects 
 \(Kubernetes deployments, ClusterIP services and Istio virtual services\) to drive the canary analysis and promotion. 
 
-![Flagger Canary Process](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-hpa.png)
+![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
 
 ### Canary Custom Resource
 
@@ -251,7 +251,7 @@ and for backend HTTP APIs that are accessible only from inside the mesh.
 
 ### Canary Stages
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
 A canary deployment is triggered by changes in any of the following objects:
 
@@ -579,12 +579,12 @@ Flagger metric checks will fail with "no values found for metric istio_requests_
 Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) 
 that generates traffic during analysis when configured as a webhook.
 
-![Flagger Load Testing Webhook](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-load-testing.png)
+![Flagger Load Testing Webhook](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-load-testing.png)
 
 First you need to deploy the load test runner in a namespace with Istio sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
+export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
 kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
 kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml

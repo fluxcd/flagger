@@ -14,7 +14,7 @@ helm upgrade -i flagger-grafana flagger/grafana \
 
 The dashboard shows the RED and USE metrics for the primary and canary workloads:
 
-![canary dashboard](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/grafana-canary-analysis.png)
+![canary dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/grafana-canary-analysis.png)
 
 ### Logging
 
