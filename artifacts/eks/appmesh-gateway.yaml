@@ -36,8 +36,8 @@ data:
                             - match:
                                 prefix: "/"
                               route:
-                                cluster: frontend
-                                host_rewrite: frontend.test
+                                cluster: podinfo
+                                host_rewrite: podinfo.test
                                 timeout: 15s
                                 retry_policy:
                                   retry_on: "gateway-error,connect-failure,refused-stream"
@@ -51,7 +51,7 @@ data:
           http2_protocol_options: {}
           hosts:
             - socket_address:
-                address: frontend.test
+                address: podinfo.test
                 port_value: 9898
     admin:
       access_log_path: /dev/null
@@ -157,3 +157,21 @@ spec:
       port: 443
       targetPort: 443
   type: LoadBalancer
+---
+apiVersion: appmesh.k8s.aws/v1alpha1
+kind: VirtualNode
+metadata:
+  name: ingress
+  namespace: test
+spec:
+  meshName: global.appmesh-system
+  listeners:
+    - portMapping:
+        port: 80
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostName: ingress.test
+  backends:
+    - virtualService:
+        virtualServiceName: podinfo.test
