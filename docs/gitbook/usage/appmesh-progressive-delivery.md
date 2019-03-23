@@ -2,7 +2,7 @@
 
 This guide shows you how to use App Mesh and Flagger to automate canary deployments.
 
-### Deploy web applications with Flagger
+### Bootstrap
 
 Create a mesh called `global` in the `appmesh-system` namespace:
 
@@ -117,7 +117,30 @@ virtualnode.appmesh.k8s.aws/podinfo-primary
 virtualservice.appmesh.k8s.aws/podinfo.test
 ```
 
-### Automated canary analysis and promotion
+### Setup App Mesh ingress
+
+In order to expose the podinfo app outside the mesh you'll be using an Envoy ingress and an AWS classic load balancer.
+The ingress binds to an internet domain and forwards the calls into the mesh through the App Mesh sidecar.
+If podinfo becomes unavailable due to a HPA downscaling or a node restart,
+the ingress will retry the calls for a short period of time.
+
+Deploy the ingress and the AWS ELB service:
+
+```bash
+kubectl apply -f ${REPO}/artifacts/appmesh/ingress.yaml
+```
+
+Find the ingress public address:
+
+```bash
+kubectl -n test describe svc/ingress | grep Ingress
+
+LoadBalancer Ingress:     yyy-xx.us-west-2.elb.amazonaws.com
+```
+
+Open your browser and navigate to the ingress address to access podinfo UI.
+
+### Automated canary promotion
 
 Trigger a canary deployment by updating the container image:
 
@@ -157,6 +180,10 @@ Events:
 ```
 
 **Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
+
+During the analysis the canary’s progress can be monitored with Grafana:
+
+![App Mesh Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-grafana-appmesh.png)
 
 You can monitor all canaries with:
 
@@ -218,25 +245,3 @@ Events:
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
-### Setup App Mesh ingress
-
-In order to expose the podinfo app outside the mesh you'll be using an Envoy ingress and an AWS classic load balancer.
-The ingress binds to an internet domain and forwards the calls into the mesh through the App Mesh sidecar.
-If podinfo becomes unavailable due to a HPA downscaling or a node restart,
-the ingress will retry the calls for a short period of time.
-
-Deploy the ingress and the AWS ELB service:
-
-```bash
-kubectl apply -f ${REPO}/artifacts/appmesh/ingress.yaml
-```
-
-Find the ingress public address:
-
-```bash
-kubectl -n test describe svc/ingress | grep Ingress
-
-LoadBalancer Ingress:     yyy-xx.us-west-2.elb.amazonaws.com
-```
-
-Open your browser and navigate to the ingress address to access podinfo UI.
