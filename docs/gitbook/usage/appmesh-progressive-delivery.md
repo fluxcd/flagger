@@ -1,30 +1,38 @@
-# Istio Canary Deployments
+# App Mesh Canary Deployments
 
-This guide shows you how to use Istio and Flagger to automate canary deployments.
+This guide shows you how to use App Mesh and Flagger to automate canary deployments.
 
-Create a test namespace with Istio sidecar injection enabled:
+Create a mesh called `global` in the `appmesh-system` namespace:
 
 ```bash
 export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
+kubectl apply -f ${REPO}/artifacts/appmesh/global-mesh.yaml
+```
+
+Create a test namespace with App Mesh sidecar injection enabled:
+
+```bash
 kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
+kubectl apply -f ${REPO}/artifacts/appmesh/deployment.yaml
+kubectl apply -f ${REPO}/artifacts/appmesh/hpa.yaml
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+helm upgrade -i flagger-loadtester flagger/loadtester \
+--namespace=test \
+--set meshName=global.appmesh-system \
+--set backends[0]=frontend.test
 ```
 
-Create a canary custom resource (replace example.com with your own domain):
+Create a canary custom resource:
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -49,35 +57,28 @@ spec:
   service:
     # container port
     port: 9898
-    # Istio gateways (optional)
-    gateways:
-    - public-gateway.istio-system.svc.cluster.local
-    # Istio virtual service host names (optional)
-    hosts:
-    - app.example.com
+    # App Mesh reference
+    meshName: global.appmesh-system
+  # define the canary analysis timing and KPIs
   canaryAnalysis:
     # schedule interval (default 60s)
-    interval: 1m
+    interval: 10s
     # max number of failed metric checks before rollback
-    threshold: 5
+    threshold: 10
     # max traffic percentage routed to canary
     # percentage (0-100)
     maxWeight: 50
     # canary increment step
     # percentage (0-100)
-    stepWeight: 10
+    stepWeight: 5
+    # App Mesh Prometheus checks
     metrics:
-    - name: istio_requests_total
+    - name: envoy_cluster_upstream_rq
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       threshold: 99
       interval: 1m
-    - name: istio_request_duration_seconds_bucket
-      # maximum req duration P99
-      # milliseconds
-      threshold: 500
-      interval: 30s
-    # generate traffic during analysis
+    # external checks (optional)
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
@@ -100,13 +101,18 @@ deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo
 
-# generated 
+# generated Kubernetes objects
 deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
 service/podinfo-canary
 service/podinfo-primary
-virtualservice.networking.istio.io/podinfo
+
+# generated App Mesh objects
+virtualnode.appmesh.k8s.aws/podinfo
+virtualnode.appmesh.k8s.aws/podinfo-canary
+virtualnode.appmesh.k8s.aws/podinfo-primary
+virtualservice.appmesh.k8s.aws/podinfo.test
 ```
 
 Trigger a canary deployment by updating the container image:
@@ -154,33 +160,23 @@ You can monitor all canaries with:
 watch kubectl get canaries --all-namespaces
 
 NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
-test        podinfo   Progressing   15       2019-01-16T14:05:07Z
-prod        frontend  Succeeded     0        2019-01-15T16:15:07Z
-prod        backend   Failed        0        2019-01-14T17:05:07Z
+test        podinfo   Progressing   15       2019-03-16T14:05:07Z
+prod        frontend  Succeeded     0        2019-03-15T16:15:07Z
+prod        backend   Failed        0        2019-03-14T17:05:07Z
 ```
 
-During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
+During the canary analysis you can generate HTTP 500 errors to test if Flagger pauses the rollout.
 
-Create a tester pod and exec into it:
+Exec into the load tester pod with:
 
 ```bash
-kubectl -n test run tester \
---image=quay.io/stefanprodan/podinfo:1.2.1 \
--- ./podinfo --port=9898
-
-kubectl -n test exec -it tester-xx-xx sh
+kubectl -n test exec -it flagger-loadtester-xx-xx sh
 ```
 
 Generate HTTP 500 errors:
 
 ```bash
-watch curl http://podinfo-canary:9898/status/500
-```
-
-Generate latency:
-
-```bash
-watch curl http://podinfo-canary:9898/delay/1
+hey -z 1m -c 5 -q 5 http://podinfo.test:9898/status/500
 ```
 
 When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
@@ -208,4 +204,3 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
-

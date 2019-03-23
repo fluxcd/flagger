@@ -1,5 +1,5 @@
 ---
-description: Flagger is an Istio progressive delivery Kubernetes operator
+description: Flagger is a progressive delivery Kubernetes operator
 ---
 
 # Introduction

@@ -1,6 +1,6 @@
-# A/B Testing 
+# Istio A/B Testing 
 
-This guide shows you how to automate A/B testing with Flagger.
+This guide shows you how to automate A/B testing with Istio and Flagger.
 
 Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
 In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
