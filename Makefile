@@ -13,7 +13,7 @@ run:
 
 run-appmesh:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=appmesh \
-	-metrics-server=http://ab3325177465c11e9a94c02c4171f346-2027522465.us-west-2.elb.amazonaws.com:9090 \
+	-metrics-server=http://acfc235624ca911e9a94c02c4171f346-1585187926.us-west-2.elb.amazonaws.com:9090 \
 	-slack-url=https://hooks.slack.com/services/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 \
 	-slack-channel="devops-alerts"
 
