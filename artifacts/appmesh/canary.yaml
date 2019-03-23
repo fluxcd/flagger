@@ -1,0 +1,50 @@
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  # deployment reference
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  # the maximum time in seconds for the canary deployment
+  # to make progress before it is rollback (default 600s)
+  progressDeadlineSeconds: 60
+  # HPA reference (optional)
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  service:
+    # container port
+    port: 9898
+    # App Mesh reference
+    meshName: global.appmesh-system
+  # define the canary analysis timing and KPIs
+  canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 10s
+    # max number of failed metric checks before rollback
+    threshold: 10
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 5
+    # App Mesh Prometheus checks
+    metrics:
+    - name: envoy_cluster_upstream_rq
+      # minimum req success rate (non 5xx responses)
+      # percentage (0-100)
+      threshold: 99
+      interval: 1m
+    # external checks (optional)
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
