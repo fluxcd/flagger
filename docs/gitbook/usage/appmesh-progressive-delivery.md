@@ -1,6 +1,8 @@
 # App Mesh Canary Deployments
 
-This guide shows you how to use App Mesh and Flagger to automate canary deployments.
+This guide shows you how to use App Mesh and Flagger to automate canary deployments. 
+You'll need an EKS cluster configured with App Mesh, you can find the install guide 
+[here](https://docs.flagger.app/install/flagger-install-on-eks-appmesh).
 
 ### Bootstrap
 
@@ -31,7 +33,7 @@ Deploy the load testing service to generate traffic during the canary analysis:
 helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test \
 --set meshName=global.appmesh-system \
---set backends[0]=frontend.test
+--set backends[0]=podinfo.test
 ```
 
 Create a canary custom resource:
@@ -196,6 +198,10 @@ prod        frontend  Succeeded     0        2019-03-15T16:15:07Z
 prod        backend   Failed        0        2019-03-14T17:05:07Z
 ```
 
+If you’ve enabled the Slack notifications, you should receive the following messages:
+
+![flagger-slack](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+
 ### Automated rollback
 
 During the canary analysis you can generate HTTP 500 errors to test if Flagger pauses the rollout.
@@ -244,4 +250,9 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
+
+If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, 
+or if the analysis reached the maximum number of failed checks:
+
+![flagger-slack-errors](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
 
