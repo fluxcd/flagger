@@ -37,21 +37,21 @@ func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
 
 	// sync virtual node e.g. app-namespace
 	// DNS app.namespace
-	err := ar.syncVirtualNode(canary, fmt.Sprintf("%s-%s", targetName, canary.Namespace), primaryHost)
+	err := ar.syncVirtualNode(canary, targetName, primaryHost)
 	if err != nil {
 		return err
 	}
 
 	// sync virtual node e.g. app-primary-namespace
 	// DNS app-primary.namespace
-	err = ar.syncVirtualNode(canary, fmt.Sprintf("%s-%s", primaryName, canary.Namespace), primaryHost)
+	err = ar.syncVirtualNode(canary, primaryName, primaryHost)
 	if err != nil {
 		return err
 	}
 
 	// sync virtual node e.g. app-canary-namespace
 	// DNS app-canary.namespace
-	err = ar.syncVirtualNode(canary, fmt.Sprintf("%s-%s", canaryName, canary.Namespace), canaryHost)
+	err = ar.syncVirtualNode(canary, canaryName, canaryHost)
 	if err != nil {
 		return err
 	}
@@ -150,8 +150,8 @@ func (ar *AppMeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 // syncVirtualService creates or updates a virtual service
 func (ar *AppMeshRouter) syncVirtualService(canary *flaggerv1.Canary, name string) error {
 	targetName := canary.Spec.TargetRef.Name
-	canaryVirtualNode := fmt.Sprintf("%s-canary-%s", targetName, canary.Namespace)
-	primaryVirtualNode := fmt.Sprintf("%s-primary-%s", targetName, canary.Namespace)
+	canaryVirtualNode := fmt.Sprintf("%s-canary", targetName)
+	primaryVirtualNode := fmt.Sprintf("%s-primary", targetName)
 
 	// App Mesh supports only URI prefix
 	routePrefix := "/"
@@ -164,11 +164,11 @@ func (ar *AppMeshRouter) syncVirtualService(canary *flaggerv1.Canary, name strin
 	vsSpec := &appmeshv1alpha1.VirtualServiceSpec{
 		MeshName: canary.Spec.Service.MeshName,
 		VirtualRouter: &appmeshv1alpha1.VirtualRouter{
-			Name: fmt.Sprintf("%s-%s-router", targetName, canary.Namespace),
+			Name: fmt.Sprintf("%s-router", targetName),
 		},
 		Routes: []appmeshv1alpha1.Route{
 			{
-				Name: fmt.Sprintf("%s-%s-route", targetName, canary.Namespace),
+				Name: fmt.Sprintf("%s-route", targetName),
 				Http: appmeshv1alpha1.HttpRoute{
 					Match: appmeshv1alpha1.HttpRouteMatch{
 						Prefix: routePrefix,
@@ -265,10 +265,10 @@ func (ar *AppMeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 
 	targets := vs.Spec.Routes[0].Http.Action.WeightedTargets
 	for _, t := range targets {
-		if t.VirtualNodeName == fmt.Sprintf("%s-canary-%s", targetName, canary.Namespace) {
+		if t.VirtualNodeName == fmt.Sprintf("%s-canary", targetName) {
 			canaryWeight = int(t.Weight)
 		}
-		if t.VirtualNodeName == fmt.Sprintf("%s-primary-%s", targetName, canary.Namespace) {
+		if t.VirtualNodeName == fmt.Sprintf("%s-primary", targetName) {
 			primaryWeight = int(t.Weight)
 		}
 	}
@@ -301,11 +301,11 @@ func (ar *AppMeshRouter) SetRoutes(
 	vsClone.Spec.Routes[0].Http.Action = appmeshv1alpha1.HttpRouteAction{
 		WeightedTargets: []appmeshv1alpha1.WeightedTarget{
 			{
-				VirtualNodeName: fmt.Sprintf("%s-canary-%s", targetName, canary.Namespace),
+				VirtualNodeName: fmt.Sprintf("%s-canary", targetName),
 				Weight:          int64(canaryWeight),
 			},
 			{
-				VirtualNodeName: fmt.Sprintf("%s-primary-%s", targetName, canary.Namespace),
+				VirtualNodeName: fmt.Sprintf("%s-primary", targetName),
 				Weight:          int64(primaryWeight),
 			},
 		},

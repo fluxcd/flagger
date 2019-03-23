@@ -38,7 +38,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	}
 
 	// check virtual node
-	vnName := fmt.Sprintf("%s-%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
+	vnName := mocks.appmeshCanary.Spec.TargetRef.Name
 	vn, err := router.appmeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
@@ -72,7 +72,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	}
 
 	// verify
-	vnCanaryName := fmt.Sprintf("%s-canary-%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
+	vnCanaryName := fmt.Sprintf("%s-canary", mocks.appmeshCanary.Spec.TargetRef.Name)
 	vnCanary, err := router.appmeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnCanaryName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
