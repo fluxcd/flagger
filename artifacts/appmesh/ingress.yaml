@@ -44,7 +44,7 @@ data:
                                   num_retries: 10
                                   per_try_timeout: 5s
       clusters:
-        - name: frontend
+        - name: podinfo
           connect_timeout: 0.30s
           type: strict_dns
           lb_policy: round_robin

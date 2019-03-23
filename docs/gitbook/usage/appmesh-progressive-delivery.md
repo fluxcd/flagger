@@ -2,6 +2,8 @@
 
 This guide shows you how to use App Mesh and Flagger to automate canary deployments.
 
+### Deploy web applications with Flagger
+
 Create a mesh called `global` in the `appmesh-system` namespace:
 
 ```bash
@@ -115,6 +117,8 @@ virtualnode.appmesh.k8s.aws/podinfo-primary
 virtualservice.appmesh.k8s.aws/podinfo.test
 ```
 
+### Automated canary analysis and promotion
+
 Trigger a canary deployment by updating the container image:
 
 ```bash
@@ -165,7 +169,16 @@ prod        frontend  Succeeded     0        2019-03-15T16:15:07Z
 prod        backend   Failed        0        2019-03-14T17:05:07Z
 ```
 
+### Automated rollback
+
 During the canary analysis you can generate HTTP 500 errors to test if Flagger pauses the rollout.
+
+Trigger a canary deployment:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=quay.io/stefanprodan/podinfo:1.4.2
+```
 
 Exec into the load tester pod with:
 
@@ -204,3 +217,26 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
+
+### Setup App Mesh ingress
+
+In order to expose the podinfo app outside the mesh you'll be using an Envoy ingress and an AWS classic load balancer.
+The ingress binds to an internet domain and forwards the calls into the mesh through the App Mesh sidecar.
+If podinfo becomes unavailable due to a HPA downscaling or a node restart,
+the ingress will retry the calls for a short period of time.
+
+Deploy the ingress and the AWS ELB service:
+
+```bash
+kubectl apply -f ${REPO}/artifacts/appmesh/ingress.yaml
+```
+
+Find the ingress public address:
+
+```bash
+kubectl -n test describe svc/ingress | grep Ingress
+
+LoadBalancer Ingress:     yyy-xx.us-west-2.elb.amazonaws.com
+```
+
+Open your browser and navigate to the ingress address to access podinfo UI.
