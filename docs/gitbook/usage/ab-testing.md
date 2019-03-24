@@ -1,17 +1,17 @@
-# A/B Testing 
+# Istio A/B Testing 
 
-This guide shows you how to automate A/B testing with Flagger.
+This guide shows you how to automate A/B testing with Istio and Flagger.
 
 Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
 In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
 This is particularly useful for frontend applications that require session affinity.
 
-![Flagger A/B Testing Stages](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/diagrams/flagger-abtest-steps.png)
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
 
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
+export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
 kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
 ```

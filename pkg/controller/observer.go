@@ -114,11 +114,12 @@ func (c *CanaryObserver) GetEnvoySuccessRate(name string, namespace string, metr
 	var rate *float64
 	querySt := url.QueryEscape(`sum(rate(` +
 		metric + `{kubernetes_namespace="` +
-		namespace + `",app="` +
-		name + `",envoy_response_code!~"5.*"}[1m])) / sum(rate(` +
+		namespace + `",kubernetes_pod_name=~"` +
+		name + `-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",envoy_response_code!~"5.*"}[` +
+		interval + `])) / sum(rate(` +
 		metric + `{kubernetes_namespace="` +
-		namespace + `",app="` +
-		name + `"}[` +
+		namespace + `",kubernetes_pod_name=~"` +
+		name + `-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"}[` +
 		interval + `])) * 100 `)
 	result, err := c.queryMetric(querySt)
 	if err != nil {
@@ -152,7 +153,8 @@ func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, met
 	querySt := url.QueryEscape(`sum(rate(` +
 		metric + `{reporter="destination",destination_workload_namespace=~"` +
 		namespace + `",destination_workload=~"` +
-		name + `",response_code!~"5.*"}[1m])) / sum(rate(` +
+		name + `",response_code!~"5.*"}[` +
+		interval + `])) / sum(rate(` +
 		metric + `{reporter="destination",destination_workload_namespace=~"` +
 		namespace + `",destination_workload=~"` +
 		name + `"}[` +

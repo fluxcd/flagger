@@ -2,7 +2,7 @@
 
 Grafana dashboards for monitoring progressive deployments powered by Istio, Prometheus and Flagger.
 
-![flagger-grafana](https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/screens/grafana-canary-analysis.png)
+![flagger-grafana](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/grafana-canary-analysis.png)
 
 ## Prerequisites
 

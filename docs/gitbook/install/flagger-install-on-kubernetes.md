@@ -132,7 +132,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 Deploy with kubectl:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/stefanprodan/flagger/master
+export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
 kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
 kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml

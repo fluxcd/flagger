@@ -25,7 +25,7 @@ func (c *Controller) scheduleCanaries() {
 		current[name] = fmt.Sprintf("%s.%s", canary.Spec.TargetRef.Name, canary.Namespace)
 
 		job, exists := c.jobs[name]
-		// schedule new job for exsiting job with different analysisInterval or non-existing job
+		// schedule new job for existing job with different analysis interval or non-existing job
 		if (exists && job.GetCanaryAnalysisInterval() != canary.GetAnalysisInterval()) || !exists {
 			if exists {
 				job.Stop()

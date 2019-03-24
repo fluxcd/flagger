@@ -11,8 +11,9 @@
 
 ## Usage
 
-* [Canary Deployments](usage/progressive-delivery.md)
-* [A/B Testing](usage/ab-testing.md)
+* [Istio Canary Deployments](usage/progressive-delivery.md)
+* [Istio A/B Testing](usage/ab-testing.md)
+* [App Mesh Canary Deployments](usage/appmesh-progressive-delivery.md)
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)
 
