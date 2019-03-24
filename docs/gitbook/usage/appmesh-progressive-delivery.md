@@ -63,6 +63,9 @@ spec:
     port: 9898
     # App Mesh reference
     meshName: global.appmesh-system
+    # App Mesh egress (optional) 
+    backends:
+      - backend.test
   # define the canary analysis timing and KPIs
   canaryAnalysis:
     # schedule interval (default 60s)
@@ -118,6 +121,20 @@ virtualnode.appmesh.k8s.aws/podinfo-canary
 virtualnode.appmesh.k8s.aws/podinfo-primary
 virtualservice.appmesh.k8s.aws/podinfo.test
 ```
+
+The App Mesh specific settings are:
+
+```yaml
+  service:
+    port: 9898
+    meshName: global.appmesh-system
+    backends:
+      - backend1.test
+      - backend2.test
+```
+
+App Mesh blocks all egress traffic by default. If your application needs to call another service, you have to create an
+App Mesh virtual service for it and add the virtual service name to the backend list.
 
 ### Setup App Mesh ingress
 
