@@ -6,6 +6,11 @@ You'll need an EKS cluster configured with App Mesh, you can find the install gu
 
 ### Bootstrap
 
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA), 
+then creates a series of objects (Kubernetes deployments, ClusterIP services, App Mesh virtual nodes and services). 
+These objects expose the application on the mesh and drive the canary analysis and promotion.
+The only App Mesh object you need to creat by yourself is the mesh resource.
+
 Create a mesh called `global` in the `appmesh-system` namespace:
 
 ```bash
@@ -136,7 +141,7 @@ The App Mesh specific settings are:
 App Mesh blocks all egress traffic by default. If your application needs to call another service, you have to create an
 App Mesh virtual service for it and add the virtual service name to the backend list.
 
-### Setup App Mesh ingress
+### Setup App Mesh ingress (optional)
 
 In order to expose the podinfo app outside the mesh you'll be using an Envoy ingress and an AWS classic load balancer.
 The ingress binds to an internet domain and forwards the calls into the mesh through the App Mesh sidecar.
@@ -272,4 +277,3 @@ If you’ve enabled the Slack notifications, you’ll receive a message if the p
 or if the analysis reached the maximum number of failed checks:
 
 ![flagger-slack-errors](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
-
