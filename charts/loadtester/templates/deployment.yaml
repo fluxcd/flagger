@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: {{ include "loadtester.name" . }}
+      annotations:
+        appmesh.k8s.aws/ports: "444"
     spec:
       containers:
         - name: {{ .Chart.Name }}

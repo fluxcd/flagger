@@ -12,7 +12,7 @@ spec:
   meshName: {{ .Values.meshName }}
   listeners:
     - portMapping:
-        port: 80
+        port: 444
         protocol: http
   serviceDiscovery:
     dns:
