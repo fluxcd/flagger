@@ -97,39 +97,21 @@ kubectl -n kube-system top pods
 
 ### Install the App Mesh components
 
-Clone the config repo:
+Run the App Mesh installer:
 
 ```bash
-git clone https://github.com/stefanprodan/appmesh-eks
-cd appmesh-eks
+curl -fsSL https://git.io/get-app-mesh-eks.sh | bash -
 ```
 
-Create the `appmesh-system` namespace:
+The installer will do the following:
 
-```bash
-kubectl apply -f /namespaces/appmesh-system.yaml
-```
-
-Deploy the App Mesh Kubernetes CRDs and controller:
-
-```bash
-kubectl apply -f ./operator/
-```
-
-Install the App Mesh sidecar injector in the `appmesh-system` namespace:
-
-```bash
-./injector/install.sh
-```
-
-The above script generates a certificate signed by Kubernetes CA,
-registers the App Mesh mutating webhook and deploys the injector.
-
-Create a mesh called global in the `appmesh-system` namespace:
-
-```bash
-kubectl apply -f ./appmesh/global.yaml
-```
+* creates the `appmesh-system` namespace
+* generates a certificate with openssl signed by Kubernetes CA
+* registers the App Mesh mutating webhook
+* deploys the App Mesh webhook
+* deploys the App Mesh CRDs
+* deploys the App Mesh controller
+* creates a mesh called `global` in the `appmesh-system` namespace
 
 Verify that the global mesh is active:
 
@@ -201,23 +183,3 @@ You can access Grafana using port forwarding:
 kubectl -n appmesh-system port-forward svc/flagger-grafana 3000:80
 ```
 
-###  Install the load tester
-
-Flagger comes with an optional load testing service that generates traffic 
-during canary analysis when configured as a webhook.
-
-Create a test namespace with sidecar injector enabled:
-
-```bash
-kubectl apply -f ./namespaces/test.yaml
-```
-
-Deploy the load test runner with Helm:
-
-```bash
-helm upgrade -i flagger-loadtester flagger/loadtester \
---namespace=test \
---set meshName=global.appmesh-system \
---set backends[0]=frontend.test \
---set backends[1]=backend.test
-```
