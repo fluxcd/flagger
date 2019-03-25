@@ -238,7 +238,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 
-		c.recorder.SetStatus(cd)
+		c.recorder.SetStatus(cd, flaggerv1.CanaryFailed)
 		return
 	}
 
@@ -312,7 +312,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-			c.recorder.SetStatus(cd)
+			c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
 			c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 				false, false)
 			return
@@ -378,7 +378,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
-		c.recorder.SetStatus(cd)
+		c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
 		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 			false, false)
 	}
@@ -419,7 +419,7 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	}
 
 	// notify
-	c.recorder.SetStatus(cd)
+	c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
 	c.recordEventInfof(cd, "Promotion completed! Canary analysis was skipped for %s.%s",
 		cd.Spec.TargetRef.Name, cd.Namespace)
 	c.sendNotification(cd, "Canary analysis was skipped, promotion finished.",
@@ -429,7 +429,7 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 }
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
-	c.recorder.SetStatus(cd)
+	c.recorder.SetStatus(cd, cd.Status.Phase)
 	if cd.Status.Phase == flaggerv1.CanaryProgressing {
 		return true
 	}
@@ -439,7 +439,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
-		c.recorder.SetStatus(cd)
+		c.recorder.SetStatus(cd, flaggerv1.CanaryInitialized)
 		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
 		c.sendNotification(cd, "New deployment detected, initialization completed.",
 			true, false)
@@ -458,7 +458,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
-		c.recorder.SetStatus(cd)
+		c.recorder.SetStatus(cd, flaggerv1.CanaryProgressing)
 		return false
 	}
 	return false
