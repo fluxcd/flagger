@@ -9,7 +9,7 @@ You'll need an EKS cluster configured with App Mesh, you can find the install gu
 Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA), 
 then creates a series of objects (Kubernetes deployments, ClusterIP services, App Mesh virtual nodes and services). 
 These objects expose the application on the mesh and drive the canary analysis and promotion.
-The only App Mesh object you need to creat by yourself is the mesh resource.
+The only App Mesh object you need to create by yourself is the mesh resource.
 
 Create a mesh called `global` in the `appmesh-system` namespace:
 
@@ -160,6 +160,12 @@ Find the ingress public address:
 kubectl -n test describe svc/ingress | grep Ingress
 
 LoadBalancer Ingress:     yyy-xx.us-west-2.elb.amazonaws.com
+```
+
+Wait for the ELB to become active:
+
+```bash
+ watch curl -sS ${INGRESS_URL}
 ```
 
 Open your browser and navigate to the ingress address to access podinfo UI.

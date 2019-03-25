@@ -23,11 +23,11 @@ Prerequisites:
 
 ### Create a Kubernetes cluster
 
-In order to create an EKS cluster you can use [eksctl](https://eksctl.io).
-Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon, 
+In order to create an EKS cluster you can use [EKSctl](https://eksctl.io).
+EKSctl is an open source command-line utility made by Weaveworks in collaboration with Amazon, 
 it's written in Go and is based on EKS CloudFormation templates.
 
-On MacOS you can install eksctl with Homebrew:
+On MacOS you can install EKSctl with Homebrew:
 
 ```bash
 brew tap weaveworks/tap
@@ -126,8 +126,8 @@ Status:
 
 ### Install Prometheus
 
-In order to expose the App Mesh metrics to Flagger, 
-you'll need to use Prometheus to scrapes the Envoy sidecars.
+In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, 
+you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
 
 Deploy Prometheus in the `appmesh-system` namespace:
 
