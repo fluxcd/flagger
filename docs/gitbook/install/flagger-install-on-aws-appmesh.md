@@ -23,11 +23,11 @@ Prerequisites:
 
 ### Create a Kubernetes cluster
 
-In order to create an EKS cluster you can use [EKSctl](https://eksctl.io).
-EKSctl is an open source command-line utility made by Weaveworks in collaboration with Amazon, 
+In order to create an EKS cluster you can use [eksctl](https://eksctl.io).
+Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon, 
 it's written in Go and is based on EKS CloudFormation templates.
 
-On MacOS you can install EKSctl with Homebrew:
+On MacOS you can install eksctl with Homebrew:
 
 ```bash
 brew tap weaveworks/tap
@@ -97,21 +97,45 @@ kubectl -n kube-system top pods
 
 ### Install the App Mesh components
 
-Run the App Mesh installer:
+Clone the config repo:
 
 ```bash
-curl -fsSL https://git.io/get-app-mesh-eks.sh | bash -
+git clone https://github.com/stefanprodan/appmesh-eks
+cd appmesh-eks
 ```
 
-The installer will do the following:
+Create the `appmesh-system` namespace:
 
-* creates the `appmesh-system` namespace
-* generates a certificate with openssl signed by Kubernetes CA
-* registers the App Mesh mutating webhook
-* deploys the App Mesh webhook
-* deploys the App Mesh CRDs
-* deploys the App Mesh controller
-* creates a mesh called `global` in the `appmesh-system` namespace
+```bash
+kubectl apply -f /namespaces/appmesh-system.yaml
+```
+
+Deploy the App Mesh Kubernetes CRDs and controller:
+
+```bash
+kubectl apply -f ./operator/
+```
+
+Install the App Mesh sidecar injector in the `appmesh-system` namespace:
+
+```bash
+./injector/install.sh
+```
+
+The above script generates a certificate signed by Kubernetes CA,
+registers the App Mesh mutating webhook and deploys the injector.
+
+Deploy Prometheus in the `appmesh-system` namespace:
+
+```bash
+kubectl apply -f ./prometheus
+```
+
+Create a mesh called global in the `appmesh-system` namespace:
+
+```bash
+kubectl apply -f ./appmesh/global.yaml
+```
 
 Verify that the global mesh is active:
 
@@ -121,20 +145,7 @@ kubectl -n appmesh-system describe mesh
 Status:
   Mesh Condition:
     Status:                True
-    Type:                  MeshActive
-```
-
-### Install Prometheus
-
-In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, 
-you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
-
-Deploy Prometheus in the `appmesh-system` namespace:
-
-```bash
-REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/eks/appmesh-prometheus.yaml
+    Type:                  Active
 ```
 
 ### Install Flagger and Grafana
@@ -151,7 +162,7 @@ Deploy Flagger in the _**appmesh-system**_ namespace:
 helm upgrade -i flagger flagger/flagger \
 --namespace=appmesh-system \
 --set meshProvider=appmesh \
---set metricsServer=http://prometheus.appmesh-system:9090
+--set metricsServer=http://prometheus.appmesh:9090
 ```
 
 You can install Flagger in any namespace as long as it can talk to the Istio Prometheus service on port 9090.
@@ -183,3 +194,23 @@ You can access Grafana using port forwarding:
 kubectl -n appmesh-system port-forward svc/flagger-grafana 3000:80
 ```
 
+###  Install the load tester
+
+Flagger comes with an optional load testing service that generates traffic 
+during canary analysis when configured as a webhook.
+
+Create a test namespace with sidecar injector enabled:
+
+```bash
+kubectl apply -f ./namespaces/test.yaml
+```
+
+Deploy the load test runner with Helm:
+
+```bash
+helm upgrade -i flagger-loadtester flagger/loadtester \
+--namespace=test \
+--set meshName=global.appmesh-system \
+--set backends[0]=frontend.test \
+--set backends[1]=backend.test
+```
