@@ -184,3 +184,5 @@ You can access Grafana using port forwarding:
 kubectl -n appmesh-system port-forward svc/flagger-grafana 3000:80
 ```
 
+Now that you have Flagger running you can try the
+[App Mesh canary deployments tutorial](https://docs.flagger.app/usage/appmesh-progressive-delivery).
