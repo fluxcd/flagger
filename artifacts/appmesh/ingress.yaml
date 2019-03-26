@@ -158,13 +158,13 @@ spec:
       targetPort: 443
   type: LoadBalancer
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: ingress
   namespace: test
 spec:
-  meshName: global.appmesh-system
+  meshName: global
   listeners:
     - portMapping:
         port: 80

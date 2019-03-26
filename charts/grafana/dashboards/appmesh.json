@@ -179,7 +179,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\",response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s]))",
+          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\",envoy_response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -345,7 +345,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\",response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s]))",
+          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\",envoy_response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",

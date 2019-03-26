@@ -1,5 +1,5 @@
 {{- if .Values.meshName }}
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: {{ include "loadtester.fullname" . }}

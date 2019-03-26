@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	appmeshv1alpha1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1alpha1"
+	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
 	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,7 +52,7 @@ func init() {
 // After this, RawExtensions in Kubernetes types will serialize kube-aggregator types
 // correctly.
 func AddToScheme(scheme *runtime.Scheme) {
-	appmeshv1alpha1.AddToScheme(scheme)
+	appmeshv1beta1.AddToScheme(scheme)
 	flaggerv1alpha3.AddToScheme(scheme)
 	networkingv1alpha3.AddToScheme(scheme)
 }

@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1alpha1"
+	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,30 +30,27 @@ import (
 
 // FakeMeshes implements MeshInterface
 type FakeMeshes struct {
-	Fake *FakeAppmeshV1alpha1
-	ns   string
+	Fake *FakeAppmeshV1beta1
 }
 
-var meshesResource = schema.GroupVersionResource{Group: "appmesh.k8s.aws", Version: "v1alpha1", Resource: "meshes"}
+var meshesResource = schema.GroupVersionResource{Group: "appmesh.k8s.aws", Version: "v1beta1", Resource: "meshes"}
 
-var meshesKind = schema.GroupVersionKind{Group: "appmesh.k8s.aws", Version: "v1alpha1", Kind: "Mesh"}
+var meshesKind = schema.GroupVersionKind{Group: "appmesh.k8s.aws", Version: "v1beta1", Kind: "Mesh"}
 
 // Get takes name of the mesh, and returns the corresponding mesh object, and an error if there is any.
-func (c *FakeMeshes) Get(name string, options v1.GetOptions) (result *v1alpha1.Mesh, err error) {
+func (c *FakeMeshes) Get(name string, options v1.GetOptions) (result *v1beta1.Mesh, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(meshesResource, c.ns, name), &v1alpha1.Mesh{})
-
+		Invokes(testing.NewRootGetAction(meshesResource, name), &v1beta1.Mesh{})
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Mesh), err
+	return obj.(*v1beta1.Mesh), err
 }
 
 // List takes label and field selectors, and returns the list of Meshes that match those selectors.
-func (c *FakeMeshes) List(opts v1.ListOptions) (result *v1alpha1.MeshList, err error) {
+func (c *FakeMeshes) List(opts v1.ListOptions) (result *v1beta1.MeshList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(meshesResource, meshesKind, c.ns, opts), &v1alpha1.MeshList{})
-
+		Invokes(testing.NewRootListAction(meshesResource, meshesKind, opts), &v1beta1.MeshList{})
 	if obj == nil {
 		return nil, err
 	}
@@ -62,8 +59,8 @@ func (c *FakeMeshes) List(opts v1.ListOptions) (result *v1alpha1.MeshList, err e
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.MeshList{ListMeta: obj.(*v1alpha1.MeshList).ListMeta}
-	for _, item := range obj.(*v1alpha1.MeshList).Items {
+	list := &v1beta1.MeshList{ListMeta: obj.(*v1beta1.MeshList).ListMeta}
+	for _, item := range obj.(*v1beta1.MeshList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -74,67 +71,61 @@ func (c *FakeMeshes) List(opts v1.ListOptions) (result *v1alpha1.MeshList, err e
 // Watch returns a watch.Interface that watches the requested meshes.
 func (c *FakeMeshes) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(meshesResource, c.ns, opts))
-
+		InvokesWatch(testing.NewRootWatchAction(meshesResource, opts))
 }
 
 // Create takes the representation of a mesh and creates it.  Returns the server's representation of the mesh, and an error, if there is any.
-func (c *FakeMeshes) Create(mesh *v1alpha1.Mesh) (result *v1alpha1.Mesh, err error) {
+func (c *FakeMeshes) Create(mesh *v1beta1.Mesh) (result *v1beta1.Mesh, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(meshesResource, c.ns, mesh), &v1alpha1.Mesh{})
-
+		Invokes(testing.NewRootCreateAction(meshesResource, mesh), &v1beta1.Mesh{})
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Mesh), err
+	return obj.(*v1beta1.Mesh), err
 }
 
 // Update takes the representation of a mesh and updates it. Returns the server's representation of the mesh, and an error, if there is any.
-func (c *FakeMeshes) Update(mesh *v1alpha1.Mesh) (result *v1alpha1.Mesh, err error) {
+func (c *FakeMeshes) Update(mesh *v1beta1.Mesh) (result *v1beta1.Mesh, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(meshesResource, c.ns, mesh), &v1alpha1.Mesh{})
-
+		Invokes(testing.NewRootUpdateAction(meshesResource, mesh), &v1beta1.Mesh{})
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Mesh), err
+	return obj.(*v1beta1.Mesh), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMeshes) UpdateStatus(mesh *v1alpha1.Mesh) (*v1alpha1.Mesh, error) {
+func (c *FakeMeshes) UpdateStatus(mesh *v1beta1.Mesh) (*v1beta1.Mesh, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(meshesResource, "status", c.ns, mesh), &v1alpha1.Mesh{})
-
+		Invokes(testing.NewRootUpdateSubresourceAction(meshesResource, "status", mesh), &v1beta1.Mesh{})
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Mesh), err
+	return obj.(*v1beta1.Mesh), err
 }
 
 // Delete takes name of the mesh and deletes it. Returns an error if one occurs.
 func (c *FakeMeshes) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(meshesResource, c.ns, name), &v1alpha1.Mesh{})
-
+		Invokes(testing.NewRootDeleteAction(meshesResource, name), &v1beta1.Mesh{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeMeshes) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(meshesResource, c.ns, listOptions)
+	action := testing.NewRootDeleteCollectionAction(meshesResource, listOptions)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.MeshList{})
+	_, err := c.Fake.Invokes(action, &v1beta1.MeshList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched mesh.
-func (c *FakeMeshes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Mesh, err error) {
+func (c *FakeMeshes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.Mesh, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(meshesResource, c.ns, name, data, subresources...), &v1alpha1.Mesh{})
-
+		Invokes(testing.NewRootPatchSubresourceAction(meshesResource, name, data, subresources...), &v1beta1.Mesh{})
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Mesh), err
+	return obj.(*v1beta1.Mesh), err
 }

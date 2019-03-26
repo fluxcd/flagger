@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1alpha1"
+	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,29 +30,29 @@ import (
 
 // FakeVirtualServices implements VirtualServiceInterface
 type FakeVirtualServices struct {
-	Fake *FakeAppmeshV1alpha1
+	Fake *FakeAppmeshV1beta1
 	ns   string
 }
 
-var virtualservicesResource = schema.GroupVersionResource{Group: "appmesh.k8s.aws", Version: "v1alpha1", Resource: "virtualservices"}
+var virtualservicesResource = schema.GroupVersionResource{Group: "appmesh.k8s.aws", Version: "v1beta1", Resource: "virtualservices"}
 
-var virtualservicesKind = schema.GroupVersionKind{Group: "appmesh.k8s.aws", Version: "v1alpha1", Kind: "VirtualService"}
+var virtualservicesKind = schema.GroupVersionKind{Group: "appmesh.k8s.aws", Version: "v1beta1", Kind: "VirtualService"}
 
 // Get takes name of the virtualService, and returns the corresponding virtualService object, and an error if there is any.
-func (c *FakeVirtualServices) Get(name string, options v1.GetOptions) (result *v1alpha1.VirtualService, err error) {
+func (c *FakeVirtualServices) Get(name string, options v1.GetOptions) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(virtualservicesResource, c.ns, name), &v1alpha1.VirtualService{})
+		Invokes(testing.NewGetAction(virtualservicesResource, c.ns, name), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }
 
 // List takes label and field selectors, and returns the list of VirtualServices that match those selectors.
-func (c *FakeVirtualServices) List(opts v1.ListOptions) (result *v1alpha1.VirtualServiceList, err error) {
+func (c *FakeVirtualServices) List(opts v1.ListOptions) (result *v1beta1.VirtualServiceList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(virtualservicesResource, virtualservicesKind, c.ns, opts), &v1alpha1.VirtualServiceList{})
+		Invokes(testing.NewListAction(virtualservicesResource, virtualservicesKind, c.ns, opts), &v1beta1.VirtualServiceList{})
 
 	if obj == nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *FakeVirtualServices) List(opts v1.ListOptions) (result *v1alpha1.Virtua
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.VirtualServiceList{ListMeta: obj.(*v1alpha1.VirtualServiceList).ListMeta}
-	for _, item := range obj.(*v1alpha1.VirtualServiceList).Items {
+	list := &v1beta1.VirtualServiceList{ListMeta: obj.(*v1beta1.VirtualServiceList).ListMeta}
+	for _, item := range obj.(*v1beta1.VirtualServiceList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -79,43 +79,43 @@ func (c *FakeVirtualServices) Watch(opts v1.ListOptions) (watch.Interface, error
 }
 
 // Create takes the representation of a virtualService and creates it.  Returns the server's representation of the virtualService, and an error, if there is any.
-func (c *FakeVirtualServices) Create(virtualService *v1alpha1.VirtualService) (result *v1alpha1.VirtualService, err error) {
+func (c *FakeVirtualServices) Create(virtualService *v1beta1.VirtualService) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(virtualservicesResource, c.ns, virtualService), &v1alpha1.VirtualService{})
+		Invokes(testing.NewCreateAction(virtualservicesResource, c.ns, virtualService), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }
 
 // Update takes the representation of a virtualService and updates it. Returns the server's representation of the virtualService, and an error, if there is any.
-func (c *FakeVirtualServices) Update(virtualService *v1alpha1.VirtualService) (result *v1alpha1.VirtualService, err error) {
+func (c *FakeVirtualServices) Update(virtualService *v1beta1.VirtualService) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(virtualservicesResource, c.ns, virtualService), &v1alpha1.VirtualService{})
+		Invokes(testing.NewUpdateAction(virtualservicesResource, c.ns, virtualService), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeVirtualServices) UpdateStatus(virtualService *v1alpha1.VirtualService) (*v1alpha1.VirtualService, error) {
+func (c *FakeVirtualServices) UpdateStatus(virtualService *v1beta1.VirtualService) (*v1beta1.VirtualService, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(virtualservicesResource, "status", c.ns, virtualService), &v1alpha1.VirtualService{})
+		Invokes(testing.NewUpdateSubresourceAction(virtualservicesResource, "status", c.ns, virtualService), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }
 
 // Delete takes name of the virtualService and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServices) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(virtualservicesResource, c.ns, name), &v1alpha1.VirtualService{})
+		Invokes(testing.NewDeleteAction(virtualservicesResource, c.ns, name), &v1beta1.VirtualService{})
 
 	return err
 }
@@ -124,17 +124,17 @@ func (c *FakeVirtualServices) Delete(name string, options *v1.DeleteOptions) err
 func (c *FakeVirtualServices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(virtualservicesResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.VirtualServiceList{})
+	_, err := c.Fake.Invokes(action, &v1beta1.VirtualServiceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched virtualService.
-func (c *FakeVirtualServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.VirtualService, err error) {
+func (c *FakeVirtualServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(virtualservicesResource, c.ns, name, data, subresources...), &v1alpha1.VirtualService{})
+		Invokes(testing.NewPatchSubresourceAction(virtualservicesResource, c.ns, name, data, subresources...), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }

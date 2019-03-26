@@ -104,20 +104,20 @@ Run the App Mesh installer:
 curl -fsSL https://git.io/get-app-mesh-eks.sh | bash -
 ```
 
-The installer will do the following:
+The installer does the following:
 
 * creates the `appmesh-system` namespace
-* generates a certificate with openssl signed by Kubernetes CA
+* generates a certificate signed by Kubernetes CA
 * registers the App Mesh mutating webhook
-* deploys the App Mesh webhook
+* deploys the App Mesh webhook in `appmesh-system` namespace
 * deploys the App Mesh CRDs
-* deploys the App Mesh controller
-* creates a mesh called `global` in the `appmesh-system` namespace
+* deploys the App Mesh controller `appmesh-system` namespace
+* creates a mesh called `global`
 
 Verify that the global mesh is active:
 
 ```bash
-kubectl -n appmesh-system describe mesh
+kubectl describe mesh
 
 Status:
   Mesh Condition:
