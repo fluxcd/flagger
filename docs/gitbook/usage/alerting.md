@@ -15,12 +15,12 @@ helm upgrade -i flagger flagger/flagger \
 Once configured with a Slack incoming **webhook**, Flagger will post messages when a canary deployment 
 has been initialised, when a new revision has been detected and if the canary analysis failed or succeeded.
 
-![flagger-slack](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+![Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
 
 A canary deployment will be rolled back if the progress deadline exceeded or if the analysis reached the 
 maximum number of failed checks:
 
-![flagger-slack-errors](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+![Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
 
 ### Prometheus Alert Manager
 

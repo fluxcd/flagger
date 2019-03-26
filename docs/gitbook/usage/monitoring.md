@@ -6,15 +6,13 @@ Flagger comes with a Grafana dashboard made for canary analysis. Install Grafana
 
 ```bash
 helm upgrade -i flagger-grafana flagger/grafana \
---namespace=istio-system \
---set url=http://prometheus:9090 \
---set user=admin \
---set password=admin
+--namespace=istio-system \ # or appmesh-system
+--set url=http://prometheus:9090
 ```
 
 The dashboard shows the RED and USE metrics for the primary and canary workloads:
 
-![canary dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/grafana-canary-analysis.png)
+![Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/grafana-canary-analysis.png)
 
 ### Logging
 

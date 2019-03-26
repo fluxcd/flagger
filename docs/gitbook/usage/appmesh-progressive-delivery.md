@@ -229,7 +229,7 @@ prod        backend   Failed        0        2019-03-14T17:05:07Z
 
 If you’ve enabled the Slack notifications, you should receive the following messages:
 
-![flagger-slack](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
 
 ### Automated rollback
 
@@ -283,4 +283,4 @@ Events:
 If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, 
 or if the analysis reached the maximum number of failed checks:
 
-![flagger-slack-errors](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
