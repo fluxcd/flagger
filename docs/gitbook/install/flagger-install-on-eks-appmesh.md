@@ -24,11 +24,11 @@ Prerequisites:
 
 ### Create a Kubernetes cluster
 
-In order to create an EKS cluster you can use [EKSctl](https://eksctl.io).
-EKSctl is an open source command-line utility made by Weaveworks in collaboration with Amazon, 
-it's written in Go and is based on EKS CloudFormation templates.
+In order to create an EKS cluster you can use [eksctl](https://eksctl.io).
+Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon, 
+it’s a Kubernetes-native tool written in Go.
 
-On MacOS you can install EKSctl with Homebrew:
+On MacOS you can install eksctl with Homebrew:
 
 ```bash
 brew tap weaveworks/tap

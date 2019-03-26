@@ -2,6 +2,8 @@
 
 This guide shows you how to use Istio and Flagger to automate canary deployments.
 
+### Bootstrap
+
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
@@ -109,6 +111,8 @@ service/podinfo-primary
 virtualservice.networking.istio.io/podinfo
 ```
 
+### Automated canary promotion
+
 Trigger a canary deployment by updating the container image:
 
 ```bash
@@ -158,6 +162,8 @@ test        podinfo   Progressing   15       2019-01-16T14:05:07Z
 prod        frontend  Succeeded     0        2019-01-15T16:15:07Z
 prod        backend   Failed        0        2019-01-14T17:05:07Z
 ```
+
+### Automated rollback
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
 

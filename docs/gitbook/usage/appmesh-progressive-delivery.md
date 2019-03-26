@@ -38,7 +38,7 @@ Deploy the load testing service to generate traffic during the canary analysis:
 helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test \
 --set meshName=global.appmesh-system \
---set backends[0]=podinfo.test
+--set "backends[0]=podinfo.test"
 ```
 
 Create a canary custom resource:
