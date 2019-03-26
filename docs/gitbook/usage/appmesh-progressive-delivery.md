@@ -212,7 +212,7 @@ Events:
 **Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
 
 During the analysis the canary’s progress can be monitored with Grafana. The App Mesh dashboard URL is 
-http://localhost:3000/d/wI-fAb3mz/appmesh-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo
+http://localhost:3000/d/flagger-appmesh/appmesh-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo
 
 ![App Mesh Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-grafana-appmesh.png)
 
