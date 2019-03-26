@@ -21,26 +21,26 @@ type KubernetesRouter struct {
 	logger        *zap.SugaredLogger
 }
 
-// Sync creates or updates the primary and canary services
-func (c *KubernetesRouter) Sync(canary *flaggerv1.Canary) error {
+// Reconcile creates or updates the primary and canary services
+func (c *KubernetesRouter) Reconcile(canary *flaggerv1.Canary) error {
 	targetName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryName := fmt.Sprintf("%s-canary", targetName)
 
 	// main svc
-	err := c.syncService(canary, targetName, primaryName)
+	err := c.reconcileService(canary, targetName, primaryName)
 	if err != nil {
 		return err
 	}
 
 	// canary svc
-	err = c.syncService(canary, canaryName, targetName)
+	err = c.reconcileService(canary, canaryName, targetName)
 	if err != nil {
 		return err
 	}
 
 	// primary svc
-	err = c.syncService(canary, primaryName, primaryName)
+	err = c.reconcileService(canary, primaryName, primaryName)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (c *KubernetesRouter) GetRoutes(canary *flaggerv1.Canary) (primaryRoute int
 	return 0, 0, nil
 }
 
-func (c *KubernetesRouter) syncService(canary *flaggerv1.Canary, name string, target string) error {
+func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name string, target string) error {
 	portName := canary.Spec.Service.PortName
 	if portName == "" {
 		portName = "http"

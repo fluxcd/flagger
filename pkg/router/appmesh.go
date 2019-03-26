@@ -22,8 +22,8 @@ type AppMeshRouter struct {
 	logger        *zap.SugaredLogger
 }
 
-// Sync creates or updates App Mesh virtual nodes and virtual services
-func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
+// Reconcile creates or updates App Mesh virtual nodes and virtual services
+func (ar *AppMeshRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if canary.Spec.Service.MeshName == "" {
 		return fmt.Errorf("mesh name cannot be empty")
 	}
@@ -37,28 +37,28 @@ func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
 
 	// sync virtual node e.g. app-namespace
 	// DNS app.namespace
-	err := ar.syncVirtualNode(canary, targetName, primaryHost)
+	err := ar.reconcileVirtualNode(canary, targetName, primaryHost)
 	if err != nil {
 		return err
 	}
 
 	// sync virtual node e.g. app-primary-namespace
 	// DNS app-primary.namespace
-	err = ar.syncVirtualNode(canary, primaryName, primaryHost)
+	err = ar.reconcileVirtualNode(canary, primaryName, primaryHost)
 	if err != nil {
 		return err
 	}
 
 	// sync virtual node e.g. app-canary-namespace
 	// DNS app-canary.namespace
-	err = ar.syncVirtualNode(canary, canaryName, canaryHost)
+	err = ar.reconcileVirtualNode(canary, canaryName, canaryHost)
 	if err != nil {
 		return err
 	}
 
 	// sync virtual service e.g. app.namespace
 	// DNS app.namespace
-	err = ar.syncVirtualService(canary, targetHost)
+	err = ar.reconcileVirtualService(canary, targetHost)
 	if err != nil {
 		return err
 	}
@@ -66,9 +66,9 @@ func (ar *AppMeshRouter) Sync(canary *flaggerv1.Canary) error {
 	return nil
 }
 
-// syncVirtualNode creates or updates a virtual node
+// reconcileVirtualNode creates or updates a virtual node
 // the virtual node naming format is name-role-namespace
-func (ar *AppMeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, host string) error {
+func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name string, host string) error {
 	vnSpec := &appmeshv1alpha1.VirtualNodeSpec{
 		MeshName: canary.Spec.Service.MeshName,
 		Listeners: []appmeshv1alpha1.Listener{
@@ -147,8 +147,8 @@ func (ar *AppMeshRouter) syncVirtualNode(canary *flaggerv1.Canary, name string, 
 	return nil
 }
 
-// syncVirtualService creates or updates a virtual service
-func (ar *AppMeshRouter) syncVirtualService(canary *flaggerv1.Canary, name string) error {
+// reconcileVirtualService creates or updates a virtual service
+func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name string) error {
 	targetName := canary.Spec.TargetRef.Name
 	canaryVirtualNode := fmt.Sprintf("%s-canary", targetName)
 	primaryVirtualNode := fmt.Sprintf("%s-primary", targetName)

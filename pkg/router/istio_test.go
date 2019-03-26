@@ -16,7 +16,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -51,7 +51,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	}
 
 	// apply change
-	err = router.Sync(canary)
+	err = router.Reconcile(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -80,7 +80,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	}
 
 	// undo change
-	err = router.Sync(mocks.canary)
+	err = router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -104,7 +104,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -159,7 +159,7 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -187,7 +187,7 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -216,7 +216,7 @@ func TestIstioRouter_CORS(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -249,7 +249,7 @@ func TestIstioRouter_ABTest(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.abtest)
+	err := router.Reconcile(mocks.abtest)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

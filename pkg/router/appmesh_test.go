@@ -15,7 +15,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.appmeshCanary)
+	err := router.Reconcile(mocks.appmeshCanary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -66,7 +66,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	}
 
 	// apply change
-	err = router.Sync(canary)
+	err = router.Reconcile(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -92,7 +92,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	}
 
 	// apply change
-	err = router.Sync(canary)
+	err = router.Reconcile(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -115,7 +115,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	}
 
 	// apply change
-	err = router.Sync(canary)
+	err = router.Reconcile(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -139,7 +139,7 @@ func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	err := router.Sync(mocks.appmeshCanary)
+	err := router.Reconcile(mocks.appmeshCanary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
