@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	appmeshv1alpha1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1alpha1"
+	AppmeshV1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
@@ -69,27 +69,27 @@ func (ar *AppMeshRouter) Reconcile(canary *flaggerv1.Canary) error {
 // reconcileVirtualNode creates or updates a virtual node
 // the virtual node naming format is name-role-namespace
 func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name string, host string) error {
-	vnSpec := &appmeshv1alpha1.VirtualNodeSpec{
+	vnSpec := AppmeshV1beta1.VirtualNodeSpec{
 		MeshName: canary.Spec.Service.MeshName,
-		Listeners: []appmeshv1alpha1.Listener{
+		Listeners: []AppmeshV1beta1.Listener{
 			{
-				PortMapping: appmeshv1alpha1.PortMapping{
+				PortMapping: AppmeshV1beta1.PortMapping{
 					Port:     int64(canary.Spec.Service.Port),
 					Protocol: "http",
 				},
 			},
 		},
-		ServiceDiscovery: &appmeshv1alpha1.ServiceDiscovery{
-			Dns: &appmeshv1alpha1.DnsServiceDiscovery{
+		ServiceDiscovery: &AppmeshV1beta1.ServiceDiscovery{
+			Dns: &AppmeshV1beta1.DnsServiceDiscovery{
 				HostName: host,
 			},
 		},
 	}
 
-	backends := []appmeshv1alpha1.Backend{}
+	backends := []AppmeshV1beta1.Backend{}
 	for _, b := range canary.Spec.Service.Backends {
-		backend := appmeshv1alpha1.Backend{
-			VirtualService: appmeshv1alpha1.VirtualServiceBackend{
+		backend := AppmeshV1beta1.Backend{
+			VirtualService: AppmeshV1beta1.VirtualServiceBackend{
 				VirtualServiceName: b,
 			},
 		}
@@ -99,11 +99,11 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 		vnSpec.Backends = backends
 	}
 
-	virtualnode, err := ar.appmeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Get(name, metav1.GetOptions{})
+	virtualnode, err := ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Get(name, metav1.GetOptions{})
 
 	// create virtual node
 	if errors.IsNotFound(err) {
-		virtualnode = &appmeshv1alpha1.VirtualNode{
+		virtualnode = &AppmeshV1beta1.VirtualNode{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: canary.Namespace,
@@ -117,7 +117,7 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 			},
 			Spec: vnSpec,
 		}
-		_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Create(virtualnode)
+		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Create(virtualnode)
 		if err != nil {
 			return fmt.Errorf("VirtualNode %s.%s create error %v", name, canary.Namespace, err)
 		}
@@ -135,7 +135,7 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 		if diff := cmp.Diff(vnSpec, virtualnode.Spec); diff != "" {
 			vnClone := virtualnode.DeepCopy()
 			vnClone.Spec = vnSpec
-			_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualNodes(canary.Namespace).Update(vnClone)
+			_, err = ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Update(vnClone)
 			if err != nil {
 				return fmt.Errorf("VirtualNode %s update error %v", name, err)
 			}
@@ -161,20 +161,20 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		routePrefix = canary.Spec.Service.Match[0].Uri.Prefix
 	}
 
-	vsSpec := &appmeshv1alpha1.VirtualServiceSpec{
+	vsSpec := AppmeshV1beta1.VirtualServiceSpec{
 		MeshName: canary.Spec.Service.MeshName,
-		VirtualRouter: &appmeshv1alpha1.VirtualRouter{
+		VirtualRouter: &AppmeshV1beta1.VirtualRouter{
 			Name: fmt.Sprintf("%s-router", targetName),
 		},
-		Routes: []appmeshv1alpha1.Route{
+		Routes: []AppmeshV1beta1.Route{
 			{
 				Name: fmt.Sprintf("%s-route", targetName),
-				Http: appmeshv1alpha1.HttpRoute{
-					Match: appmeshv1alpha1.HttpRouteMatch{
+				Http: AppmeshV1beta1.HttpRoute{
+					Match: AppmeshV1beta1.HttpRouteMatch{
 						Prefix: routePrefix,
 					},
-					Action: appmeshv1alpha1.HttpRouteAction{
-						WeightedTargets: []appmeshv1alpha1.WeightedTarget{
+					Action: AppmeshV1beta1.HttpRouteAction{
+						WeightedTargets: []AppmeshV1beta1.WeightedTarget{
 							{
 								VirtualNodeName: canaryVirtualNode,
 								Weight:          0,
@@ -190,11 +190,11 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		},
 	}
 
-	virtualService, err := ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(name, metav1.GetOptions{})
+	virtualService, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(name, metav1.GetOptions{})
 
 	// create virtual service
 	if errors.IsNotFound(err) {
-		virtualService = &appmeshv1alpha1.VirtualService{
+		virtualService = &AppmeshV1beta1.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: canary.Namespace,
@@ -208,7 +208,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 			},
 			Spec: vsSpec,
 		}
-		_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Create(virtualService)
+		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Create(virtualService)
 		if err != nil {
 			return fmt.Errorf("VirtualService %s create error %v", name, err)
 		}
@@ -223,12 +223,12 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 
 	// update virtual service but keep the original target weights
 	if virtualService != nil {
-		if diff := cmp.Diff(vsSpec, virtualService.Spec, cmpopts.IgnoreTypes(appmeshv1alpha1.WeightedTarget{})); diff != "" {
+		if diff := cmp.Diff(vsSpec, virtualService.Spec, cmpopts.IgnoreTypes(AppmeshV1beta1.WeightedTarget{})); diff != "" {
 			vsClone := virtualService.DeepCopy()
 			vsClone.Spec = vsSpec
 			vsClone.Spec.Routes[0].Http.Action = virtualService.Spec.Routes[0].Http.Action
 
-			_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Update(vsClone)
+			_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Update(vsClone)
 			if err != nil {
 				return fmt.Errorf("VirtualService %s update error %v", name, err)
 			}
@@ -248,7 +248,7 @@ func (ar *AppMeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 ) {
 	targetName := canary.Spec.TargetRef.Name
 	vsName := fmt.Sprintf("%s.%s", targetName, canary.Namespace)
-	vs, err := ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
+	vs, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			err = fmt.Errorf("VirtualService %s not found", vsName)
@@ -289,7 +289,7 @@ func (ar *AppMeshRouter) SetRoutes(
 ) error {
 	targetName := canary.Spec.TargetRef.Name
 	vsName := fmt.Sprintf("%s.%s", targetName, canary.Namespace)
-	vs, err := ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
+	vs, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("VirtualService %s not found", vsName)
@@ -298,8 +298,8 @@ func (ar *AppMeshRouter) SetRoutes(
 	}
 
 	vsClone := vs.DeepCopy()
-	vsClone.Spec.Routes[0].Http.Action = appmeshv1alpha1.HttpRouteAction{
-		WeightedTargets: []appmeshv1alpha1.WeightedTarget{
+	vsClone.Spec.Routes[0].Http.Action = AppmeshV1beta1.HttpRouteAction{
+		WeightedTargets: []AppmeshV1beta1.WeightedTarget{
 			{
 				VirtualNodeName: fmt.Sprintf("%s-canary", targetName),
 				Weight:          int64(canaryWeight),
@@ -311,7 +311,7 @@ func (ar *AppMeshRouter) SetRoutes(
 		},
 	}
 
-	_, err = ar.appmeshClient.AppmeshV1alpha1().VirtualServices(canary.Namespace).Update(vsClone)
+	_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Update(vsClone)
 	if err != nil {
 		return fmt.Errorf("VirtualService %s update error %v", vsName, err)
 	}

@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import (
 	api "k8s.io/api/core/v1"
@@ -10,6 +10,7 @@ import (
 // https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md
 
 // +genclient
+// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Mesh is a specification for a Mesh resource
@@ -19,22 +20,19 @@ type Mesh struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// +optional
-	Spec *MeshSpec `json:"spec,omitempty"`
+	Spec MeshSpec `json:"spec,omitempty"`
 	// +optional
-	Status *MeshStatus `json:"status,omitempty"`
+	Status MeshStatus `json:"status,omitempty"`
 }
 
 type MeshServiceDiscoveryType string
 
 const (
-	CloudMapHttp MeshServiceDiscoveryType = "CloudMapHttp"
+	Dns MeshServiceDiscoveryType = "Dns"
 )
 
 // MeshSpec is the spec for a Mesh resource
 type MeshSpec struct {
-	// CloudMapNamespaceName can be specified if it should be different than the mesh name.
-	// +optional
-	CloudMapNamespaceName *string `json:"cloudMapNamespaceName,omitempty"`
 	// +optional
 	ServiceDiscoveryType *MeshServiceDiscoveryType `json:"serviceDiscoveryType,omitempty"`
 }
@@ -43,20 +41,15 @@ type MeshSpec struct {
 type MeshStatus struct {
 	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
 	// +optional
-	MeshArn *string `json:"meshArn,omitempty"`
-	// NamespaceArn is the CloudMap NameSpace object's Amazon Resource Name
-	// +optional
-	CloudMapNamespaceArn *string `json:"cloudMapNamespaceArn,omitempty"`
-	// +optional
-	CloudMapRoleArn *string         `json:"cloudMapRoleArn,omitempty"`
-	Conditions      []MeshCondition `json:"meshCondition"`
+	MeshArn    *string         `json:"meshArn,omitempty"`
+	Conditions []MeshCondition `json:"meshCondition"`
 }
 
 type MeshConditionType string
 
 const (
 	// MeshActive is Active when the Appmesh Mesh has been created or found via the API
-	MeshActive MeshConditionType = "Active"
+	MeshActive MeshConditionType = "MeshActive"
 )
 
 type MeshCondition struct {
@@ -95,9 +88,9 @@ type VirtualService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// +optional
-	Spec *VirtualServiceSpec `json:"spec,omitempty"`
+	Spec VirtualServiceSpec `json:"spec,omitempty"`
 	// +optional
-	Status *VirtualServiceStatus `json:"status,omitempty"`
+	Status VirtualServiceStatus `json:"status,omitempty"`
 }
 
 // VirtualServiceSpec is the spec for a VirtualService resource
@@ -154,7 +147,10 @@ type VirtualServiceConditionType string
 
 const (
 	// VirtualServiceActive is Active when the Appmesh Service has been created or found via the API
-	VirtualServiceActive VirtualServiceConditionType = "Active"
+	VirtualServiceActive                VirtualServiceConditionType = "VirtualServiceActive"
+	VirtualRouterActive                 VirtualServiceConditionType = "VirtualRouterActive"
+	RoutesActive                        VirtualServiceConditionType = "RoutesActive"
+	VirtualServiceMeshMarkedForDeletion VirtualServiceConditionType = "MeshMarkedForDeletion"
 )
 
 type VirtualServiceCondition struct {
@@ -193,9 +189,9 @@ type VirtualNode struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// +optional
-	Spec *VirtualNodeSpec `json:"spec,omitempty"`
+	Spec VirtualNodeSpec `json:"spec,omitempty"`
 	// +optional
-	Status *VirtualNodeStatus `json:"status,omitempty"`
+	Status VirtualNodeStatus `json:"status,omitempty"`
 }
 
 // VirtualNodeSpec is the spec for a VirtualNode resource
@@ -259,7 +255,8 @@ type VirtualNodeConditionType string
 
 const (
 	// VirtualNodeActive is Active when the Appmesh Node has been created or found via the API
-	VirtualNodeActive VirtualNodeConditionType = "Active"
+	VirtualNodeActive                VirtualNodeConditionType = "VirtualNodeActive"
+	VirtualNodeMeshMarkedForDeletion VirtualNodeConditionType = "MeshMarkedForDeletion"
 )
 
 type VirtualNodeCondition struct {

@@ -21,7 +21,7 @@ spec:
     # container port
     port: 9898
     # App Mesh reference
-    meshName: global.appmesh-system
+    meshName: global
   # define the canary analysis timing and KPIs
   canaryAnalysis:
     # schedule interval (default 60s)

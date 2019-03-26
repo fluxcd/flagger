@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestAppmeshRouter_Sync(t *testing.T) {
+func TestAppmeshRouter_Reconcile(t *testing.T) {
 	mocks := setupfakeClients()
 	router := &AppMeshRouter{
 		logger:        mocks.logger,
@@ -22,7 +22,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 
 	// check virtual service
 	vsName := fmt.Sprintf("%s.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
-	vs, err := router.appmeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	vs, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -39,7 +39,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 
 	// check virtual node
 	vnName := mocks.appmeshCanary.Spec.TargetRef.Name
-	vn, err := router.appmeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnName, metav1.GetOptions{})
+	vn, err := router.appmeshClient.AppmeshV1beta1().VirtualNodes("default").Get(vnName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -73,7 +73,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 
 	// verify
 	vnCanaryName := fmt.Sprintf("%s-canary", mocks.appmeshCanary.Spec.TargetRef.Name)
-	vnCanary, err := router.appmeshClient.AppmeshV1alpha1().VirtualNodes("default").Get(vnCanaryName, metav1.GetOptions{})
+	vnCanary, err := router.appmeshClient.AppmeshV1beta1().VirtualNodes("default").Get(vnCanaryName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -86,7 +86,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	vsClone := vs.DeepCopy()
 	vsClone.Spec.Routes[0].Http.Action.WeightedTargets[0].Weight = 50
 	vsClone.Spec.Routes[0].Http.Action.WeightedTargets[1].Weight = 50
-	vs, err = mocks.meshClient.AppmeshV1alpha1().VirtualServices("default").Update(vsClone)
+	vs, err = mocks.meshClient.AppmeshV1beta1().VirtualServices("default").Update(vsClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -96,7 +96,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	vs, err = router.appmeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	vs, err = router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -109,7 +109,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	// test URI update
 	vsClone = vs.DeepCopy()
 	vsClone.Spec.Routes[0].Http.Match.Prefix = "api"
-	vs, err = mocks.meshClient.AppmeshV1alpha1().VirtualServices("default").Update(vsClone)
+	vs, err = mocks.meshClient.AppmeshV1beta1().VirtualServices("default").Update(vsClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -119,7 +119,7 @@ func TestAppmeshRouter_Sync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	vs, err = router.appmeshClient.AppmeshV1alpha1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	vs, err = router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}

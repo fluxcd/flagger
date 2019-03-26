@@ -23,5 +23,5 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-ge
 
 ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/weaveworks/flagger/pkg/client github.com/weaveworks/flagger/pkg/apis \
-  "appmesh:v1alpha1 istio:v1alpha3 flagger:v1alpha3" \
+  "appmesh:v1beta1 istio:v1alpha3 flagger:v1alpha3" \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
