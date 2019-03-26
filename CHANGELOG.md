@@ -13,6 +13,7 @@ Adds support for AWS App Mesh EKS
 #### Fixes
 
 - Copy pod labels from canary to primary [#105](https://github.com/weaveworks/flagger/pull/105)
+- Fix canary status Prometheus metric [#121](https://github.com/weaveworks/flagger/pull/121)
 
 ## 0.9.0 (2019-03-11)
 
