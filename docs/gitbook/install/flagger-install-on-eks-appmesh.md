@@ -16,6 +16,7 @@ The App Mesh integration with EKS is made out of the following components:
 
 Prerequisites:
 
+* jq
 * homebrew
 * openssl
 * kubectl
