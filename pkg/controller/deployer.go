@@ -323,7 +323,7 @@ func (c *CanaryDeployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	return nil
 }
 
-// Sync creates the primary deployment and hpa
+// Reconcile creates the primary deployment and hpa
 // and scales to zero the canary deployment
 func (c *CanaryDeployer) Sync(cd *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)

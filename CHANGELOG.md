@@ -2,14 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased 
+## 0.10.0 (2019-03-26) 
 
-Adds support for AWS App Mesh EKS
+Adds support for AWS App Mesh
 
 #### Features
 
 - AWS App Mesh integration [#107](https://github.com/weaveworks/flagger/pull/107)
 
+#### Improvements 
+
+- Reconcile Kubernetes ClusterIP services [#122](https://github.com/weaveworks/flagger/pull/122) 
+ 
 #### Fixes
 
 - Copy pod labels from canary to primary [#105](https://github.com/weaveworks/flagger/pull/105)

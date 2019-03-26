@@ -13,6 +13,6 @@ spec:
     - port: {{ .Values.service.port }}
       targetPort: http
       protocol: TCP
-      name: 8080
+      name: http
   selector:
     app: {{ include "loadtester.name" . }}

@@ -23,7 +23,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 
 * Install
     * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
-    * [Flagger install on GKE](https://docs.flagger.app/install/flagger-install-on-google-cloud)
+    * [Flagger install on GKE Istio](https://docs.flagger.app/install/flagger-install-on-google-cloud)
     * [Flagger install on EKS App Mesh](https://docs.flagger.app/install/flagger-install-on-eks-appmesh)
 * How it works
     * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
@@ -35,36 +35,18 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
 * Usage
-    * [Canary promotions and rollbacks](https://docs.flagger.app/usage/progressive-delivery)
-    * [A/B testing](https://docs.flagger.app/usage/ab-testing)
+    * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
+    * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
+    * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
     * [Monitoring](https://docs.flagger.app/usage/monitoring)
     * [Alerting](https://docs.flagger.app/usage/alerting)
 * Tutorials
     * [Canary deployments with Helm charts and Weave Flux](https://docs.flagger.app/tutorials/canary-helm-gitops)
 
-### Install 
-
-Before installing Flagger make sure you have Istio setup up with Prometheus enabled. 
-If you are new to Istio you can follow my [Istio service mesh walk-through](https://github.com/stefanprodan/istio-gke).
-
-Deploy Flagger in the `istio-system` namespace using Helm:
-
-```bash
-# add the Helm repository
-helm repo add flagger https://flagger.app
-
-# install or upgrade
-helm upgrade -i flagger flagger/flagger \
---namespace=istio-system \
---set metricsServer=http://prometheus.istio-system:9090 
-```
-
-Flagger is compatible with Kubernetes >1.11.0 and Istio >1.0.0.
-
 ### Canary CRD
 
 Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services and Istio virtual services).
+then creates a series of objects (Kubernetes deployments, ClusterIP services and Istio or App Mesh virtual services).
 These objects expose the application on the mesh and drive the canary analysis and promotion.
 
 Flagger keeps track of ConfigMaps and Secrets referenced by a Kubernetes Deployment and triggers a canary analysis if any of those objects change. 
@@ -169,7 +151,7 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
-* Integrate with other service mesh technologies like Linkerd v2 or Consul Mesh
+* Integrate with other service mesh technologies like Linkerd v2, Super Gloo or Consul Mesh
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
 ### Contributing

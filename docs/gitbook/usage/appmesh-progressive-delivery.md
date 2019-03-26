@@ -38,7 +38,7 @@ Deploy the load testing service to generate traffic during the canary analysis:
 helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test \
 --set meshName=global.appmesh-system \
---set backends[0]=podinfo.test
+--set "backends[0]=podinfo.test"
 ```
 
 Create a canary custom resource:
@@ -211,7 +211,8 @@ Events:
 
 **Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
 
-During the analysis the canary’s progress can be monitored with Grafana:
+During the analysis the canary’s progress can be monitored with Grafana. The App Mesh dashboard URL is 
+http://localhost:3000/d/flagger-appmesh/appmesh-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo
 
 ![App Mesh Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-grafana-appmesh.png)
 
@@ -228,7 +229,7 @@ prod        backend   Failed        0        2019-03-14T17:05:07Z
 
 If you’ve enabled the Slack notifications, you should receive the following messages:
 
-![flagger-slack](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
 
 ### Automated rollback
 
@@ -282,4 +283,4 @@ Events:
 If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, 
 or if the analysis reached the maximum number of failed checks:
 
-![flagger-slack-errors](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)

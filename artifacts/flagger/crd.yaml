@@ -73,6 +73,10 @@ spec:
               properties:
                 port:
                   type: number
+                portName:
+                  type: string
+                meshName:
+                  type: string
                 timeout:
                   type: string
             skipAnalysis:

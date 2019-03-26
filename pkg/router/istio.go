@@ -23,8 +23,8 @@ type IstioRouter struct {
 	logger        *zap.SugaredLogger
 }
 
-// Sync creates or updates the Istio virtual service
-func (ir *IstioRouter) Sync(canary *flaggerv1.Canary) error {
+// Reconcile creates or updates the Istio virtual service
+func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 	targetName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 

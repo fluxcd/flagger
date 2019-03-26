@@ -8,6 +8,8 @@ This is particularly useful for frontend applications that require session affin
 
 ![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
 
+### Bootstrap
+
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
@@ -121,6 +123,8 @@ service/abtest-primary
 virtualservice.networking.istio.io/abtest
 ```
 
+### Automated canary promotion
+
 Trigger a canary deployment by updating the container image:
 
 ```bash
@@ -169,6 +173,8 @@ test        abtest    Progressing   100      2019-03-16T14:05:07Z
 prod        frontend  Succeeded     0        2019-03-15T16:15:07Z
 prod        backend   Failed        0        2019-03-14T17:05:07Z
 ```
+
+### Automated rollback
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test Flagger's rollback.
 
