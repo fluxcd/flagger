@@ -58,6 +58,8 @@ Parameter | Description | Default
 `service.port` | ClusterIP port | `80`
 `cmd.timeout` | Command execution timeout | `1h`
 `logLevel` | Log level can be debug, info, warning, error or panic | `info`
+`meshName` | AWS App Mesh name | `none`
+`backends` | AWS App Mesh virtual services | `none`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

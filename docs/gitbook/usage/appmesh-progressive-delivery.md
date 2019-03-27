@@ -11,7 +11,7 @@ then creates a series of objects (Kubernetes deployments, ClusterIP services, Ap
 These objects expose the application on the mesh and drive the canary analysis and promotion.
 The only App Mesh object you need to create by yourself is the mesh resource.
 
-Create a mesh called `global` in the `appmesh-system` namespace:
+Create a mesh called `global`:
 
 ```bash
 export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master

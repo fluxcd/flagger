@@ -111,7 +111,7 @@ The installer does the following:
 * registers the App Mesh mutating webhook
 * deploys the App Mesh webhook in `appmesh-system` namespace
 * deploys the App Mesh CRDs
-* deploys the App Mesh controller `appmesh-system` namespace
+* deploys the App Mesh controller in `appmesh-system` namespace
 * creates a mesh called `global`
 
 Verify that the global mesh is active:
