@@ -16,7 +16,8 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 
 * Install
     * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
-    * [Flagger install on GKE](https://docs.flagger.app/install/flagger-install-on-google-cloud)
+    * [Flagger install on GKE Istio](https://docs.flagger.app/install/flagger-install-on-google-cloud)
+    * [Flagger install on EKS App Mesh](https://docs.flagger.app/install/flagger-install-on-eks-appmesh)
 * How it works
     * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
     * [Routing](https://docs.flagger.app/how-it-works#istio-routing)
@@ -27,8 +28,9 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
 * Usage
-    * [Canary promotions and rollbacks](https://docs.flagger.app/usage/progressive-delivery)
-    * [A/B testing](https://docs.flagger.app/usage/ab-testing)
+    * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
+    * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
+    * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
     * [Monitoring](https://docs.flagger.app/usage/monitoring)
     * [Alerting](https://docs.flagger.app/usage/alerting)
 
