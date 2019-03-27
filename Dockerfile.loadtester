@@ -1,4 +1,4 @@
-FROM golang:1.11 AS hey-builder
+FROM golang:1.12 AS hey-builder
 
 RUN mkdir -p /go/src/github.com/rakyll/hey/
 
