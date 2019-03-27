@@ -2,13 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
-## 0.10.0 (2019-03-26) 
+## 0.10.0 (2019-03-27) 
 
-Adds support for AWS App Mesh
+Adds support for App Mesh
 
 #### Features
 
-- AWS App Mesh integration [#107](https://github.com/weaveworks/flagger/pull/107)
+- AWS App Mesh integration
+    [#107](https://github.com/weaveworks/flagger/pull/107)
+    [#123](https://github.com/weaveworks/flagger/pull/123)
 
 #### Improvements 
 
@@ -16,7 +18,7 @@ Adds support for AWS App Mesh
  
 #### Fixes
 
-- Copy pod labels from canary to primary [#105](https://github.com/weaveworks/flagger/pull/105)
+- Preserve pod labels on canary promotion [#105](https://github.com/weaveworks/flagger/pull/105)
 - Fix canary status Prometheus metric [#121](https://github.com/weaveworks/flagger/pull/121)
 
 ## 0.9.0 (2019-03-11)
