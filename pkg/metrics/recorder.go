@@ -1,4 +1,4 @@
-package controller
+package metrics
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 
 // CanaryRecorder records the canary analysis as Prometheus metrics
 type CanaryRecorder struct {
+	info     *prometheus.GaugeVec
 	duration *prometheus.HistogramVec
 	total    *prometheus.GaugeVec
 	status   *prometheus.GaugeVec
@@ -17,34 +18,41 @@ type CanaryRecorder struct {
 }
 
 // NewCanaryRecorder creates a new recorder and registers the Prometheus metrics
-func NewCanaryRecorder(register bool) CanaryRecorder {
+func NewCanaryRecorder(controller string, register bool) CanaryRecorder {
+	info := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Subsystem: controller,
+		Name:      "info",
+		Help:      "Flagger version and mesh provider information",
+	}, []string{"version", "mesh_provider"})
+
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Subsystem: controllerAgentName,
+		Subsystem: controller,
 		Name:      "canary_duration_seconds",
 		Help:      "Seconds spent performing canary analysis.",
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"name", "namespace"})
 
 	total := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Subsystem: controllerAgentName,
+		Subsystem: controller,
 		Name:      "canary_total",
 		Help:      "Total number of canary object",
 	}, []string{"namespace"})
 
 	// 0 - running, 1 - successful, 2 - failed
 	status := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Subsystem: controllerAgentName,
+		Subsystem: controller,
 		Name:      "canary_status",
 		Help:      "Last canary analysis result",
 	}, []string{"name", "namespace"})
 
 	weight := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Subsystem: controllerAgentName,
+		Subsystem: controller,
 		Name:      "canary_weight",
 		Help:      "The virtual service destination weight current value",
 	}, []string{"workload", "namespace"})
 
 	if register {
+		prometheus.MustRegister(info)
 		prometheus.MustRegister(duration)
 		prometheus.MustRegister(total)
 		prometheus.MustRegister(status)
@@ -52,11 +60,17 @@ func NewCanaryRecorder(register bool) CanaryRecorder {
 	}
 
 	return CanaryRecorder{
+		info:     info,
 		duration: duration,
 		total:    total,
 		status:   status,
 		weight:   weight,
 	}
+}
+
+// SetInfo sets the version and mesh provider labels
+func (cr *CanaryRecorder) SetInfo(version string, meshProvider string) {
+	cr.info.WithLabelValues(version, meshProvider).Set(1)
 }
 
 // SetDuration sets the time spent in seconds performing canary analysis

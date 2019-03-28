@@ -135,6 +135,7 @@ func main() {
 		logger,
 		slack,
 		meshProvider,
+		version.VERSION,
 	)
 
 	flaggerInformerFactory.Start(stopCh)

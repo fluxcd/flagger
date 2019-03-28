@@ -46,6 +46,9 @@ Flagger exposes Prometheus metrics that can be used to determine the canary anal
 the destination weight values:
 
 ```bash
+# Flagger version and mesh provider gauge
+flagger_info{version="0.10.0", mesh_provider="istio"} 1
+
 # Canaries total gauge
 flagger_canary_total{namespace="test"} 1
 

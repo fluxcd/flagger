@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/weaveworks/flagger/pkg/metrics"
 	"sync"
 	"time"
 
@@ -42,7 +43,7 @@ type Controller struct {
 	jobs          map[string]CanaryJob
 	deployer      CanaryDeployer
 	observer      CanaryObserver
-	recorder      CanaryRecorder
+	recorder      metrics.CanaryRecorder
 	notifier      *notifier.Slack
 	meshProvider  string
 }
@@ -57,7 +58,7 @@ func NewController(
 	logger *zap.SugaredLogger,
 	notifier *notifier.Slack,
 	meshProvider string,
-
+	version string,
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
 	flaggerscheme.AddToScheme(scheme.Scheme)
@@ -84,7 +85,8 @@ func NewController(
 		metricsServer: metricServer,
 	}
 
-	recorder := NewCanaryRecorder(true)
+	recorder := metrics.NewCanaryRecorder(controllerAgentName, true)
+	recorder.SetInfo(version, meshProvider)
 
 	ctrl := &Controller{
 		kubeClient:    kubeClient,

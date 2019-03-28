@@ -118,6 +118,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	if !shouldAdvance {
+		c.recorder.SetStatus(cd, cd.Status.Phase)
 		return
 	}
 
