@@ -8,6 +8,7 @@ import (
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/router"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -94,7 +95,7 @@ func SetupMocks(abtest bool) Mocks {
 		flaggerWindow: time.Second,
 		deployer:      deployer,
 		observer:      observer,
-		recorder:      NewCanaryRecorder(false),
+		recorder:      metrics.NewCanaryRecorder(controllerAgentName, false),
 	}
 	ctrl.flaggerSynced = alwaysReady
 
