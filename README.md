@@ -9,8 +9,6 @@ It automates the promotion of canary deployments by using
 Istio or App Mesh traffic shifting and Prometheus metrics to analyse the application's behaviour during a controlled rollout. 
 The canary analysis can be extended with webhooks for running integration tests, load tests or any other custom validation.
 
-![Flagger](diagrams/flagger-overview.png)
-
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance 
 indicators like HTTP requests success rate, requests average duration and pods health. Based on the KPIs analysis 
 a canary is promoted or aborted and the analysis result is published to Slack.
