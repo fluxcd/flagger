@@ -74,6 +74,7 @@ func SetupMocks(abtest bool) Mocks {
 			flaggerClient: flaggerClient,
 		},
 	}
+	observer := metrics.NewObserver("fake")
 
 	// init controller
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
@@ -91,7 +92,7 @@ func SetupMocks(abtest bool) Mocks {
 		canaries:      new(sync.Map),
 		flaggerWindow: time.Second,
 		deployer:      deployer,
-		observer:      metrics.NewObserver("fake"),
+		observer:      observer,
 		recorder:      metrics.NewRecorder(controllerAgentName, false),
 	}
 	ctrl.flaggerSynced = alwaysReady
