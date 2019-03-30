@@ -501,7 +501,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
 				}
 				return false
 			}
@@ -519,7 +519,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
 				}
 				return false
 			}
@@ -533,7 +533,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 		if metric.Name == "istio_request_duration_seconds_bucket" {
 			val, err := c.observer.GetDeploymentHistogram(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
 			if err != nil {
-				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
 				return false
 			}
 			t := time.Duration(metric.Threshold) * time.Millisecond
@@ -551,7 +551,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.metricsServer, err)
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
 				}
 				return false
 			}

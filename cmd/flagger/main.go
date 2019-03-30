@@ -7,6 +7,7 @@ import (
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
 	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/notifier"
 	"github.com/weaveworks/flagger/pkg/server"
 	"github.com/weaveworks/flagger/pkg/signals"
@@ -105,7 +106,7 @@ func main() {
 		logger.Infof("Watching namespace %s", namespace)
 	}
 
-	ok, err := controller.CheckMetricsServer(metricsServer)
+	ok, err := metrics.CheckMetricsServer(metricsServer)
 	if ok {
 		logger.Infof("Connected to metrics server %s", metricsServer)
 	} else {

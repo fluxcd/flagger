@@ -1,4 +1,4 @@
-package controller
+package metrics
 
 import (
 	"context"
@@ -27,6 +27,16 @@ type vectorQueryResponse struct {
 			Value []interface{} `json:"value"`
 		}
 	}
+}
+
+func NewObserver(metricsServer string) CanaryObserver {
+	return CanaryObserver{
+		metricsServer: metricsServer,
+	}
+}
+
+func (c *CanaryObserver) GetMetricsServer() string {
+	return c.metricsServer
 }
 
 func (c *CanaryObserver) queryMetric(query string) (*vectorQueryResponse, error) {
