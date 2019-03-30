@@ -42,8 +42,8 @@ type Controller struct {
 	canaries      *sync.Map
 	jobs          map[string]CanaryJob
 	deployer      CanaryDeployer
-	observer      metrics.CanaryObserver
-	recorder      metrics.CanaryRecorder
+	observer      metrics.Observer
+	recorder      metrics.Recorder
 	notifier      *notifier.Slack
 	meshProvider  string
 }
@@ -81,7 +81,7 @@ func NewController(
 		},
 	}
 
-	recorder := metrics.NewCanaryRecorder(controllerAgentName, true)
+	recorder := metrics.NewRecorder(controllerAgentName, true)
 	recorder.SetInfo(version, meshProvider)
 
 	ctrl := &Controller{

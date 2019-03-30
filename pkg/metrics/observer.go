@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// CanaryObserver is used to query the Istio Prometheus db
-type CanaryObserver struct {
+// Observer is used to query Prometheus
+type Observer struct {
 	metricsServer string
 }
 
@@ -29,17 +29,17 @@ type vectorQueryResponse struct {
 	}
 }
 
-func NewObserver(metricsServer string) CanaryObserver {
-	return CanaryObserver{
+func NewObserver(metricsServer string) Observer {
+	return Observer{
 		metricsServer: metricsServer,
 	}
 }
 
-func (c *CanaryObserver) GetMetricsServer() string {
+func (c *Observer) GetMetricsServer() string {
 	return c.metricsServer
 }
 
-func (c *CanaryObserver) queryMetric(query string) (*vectorQueryResponse, error) {
+func (c *Observer) queryMetric(query string) (*vectorQueryResponse, error) {
 	promURL, err := url.Parse(c.metricsServer)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (c *CanaryObserver) queryMetric(query string) (*vectorQueryResponse, error)
 }
 
 // GetScalar runs the promql query and returns the first value found
-func (c *CanaryObserver) GetScalar(query string) (float64, error) {
+func (c *Observer) GetScalar(query string) (float64, error) {
 	if c.metricsServer == "fake" {
 		return 100, nil
 	}
@@ -116,7 +116,7 @@ func (c *CanaryObserver) GetScalar(query string) (float64, error) {
 	return *value, nil
 }
 
-func (c *CanaryObserver) GetEnvoySuccessRate(name string, namespace string, metric string, interval string) (float64, error) {
+func (c *Observer) GetEnvoySuccessRate(name string, namespace string, metric string, interval string) (float64, error) {
 	if c.metricsServer == "fake" {
 		return 100, nil
 	}
@@ -154,7 +154,7 @@ func (c *CanaryObserver) GetEnvoySuccessRate(name string, namespace string, metr
 }
 
 // GetDeploymentCounter returns the requests success rate using istio_requests_total metric
-func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
+func (c *Observer) GetDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
 	if c.metricsServer == "fake" {
 		return 100, nil
 	}
@@ -192,7 +192,7 @@ func (c *CanaryObserver) GetDeploymentCounter(name string, namespace string, met
 }
 
 // GetDeploymentHistogram returns the 99P requests delay using istio_request_duration_seconds_bucket metrics
-func (c *CanaryObserver) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
+func (c *Observer) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
 	if c.metricsServer == "fake" {
 		return 1, nil
 	}

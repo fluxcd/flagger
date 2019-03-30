@@ -14,7 +14,7 @@ func TestCanaryObserver_GetDeploymentCounter(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	observer := CanaryObserver{
+	observer := Observer{
 		metricsServer: ts.URL,
 	}
 
@@ -36,7 +36,7 @@ func TestCanaryObserver_GetDeploymentHistogram(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	observer := CanaryObserver{
+	observer := Observer{
 		metricsServer: ts.URL,
 	}
 
