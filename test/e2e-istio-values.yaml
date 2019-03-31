@@ -12,10 +12,6 @@ gateways:
   istio-ingressgateway:
     autoscaleMax: 1
 
-# citadel configuration
-security:
-  enabled: true
-
 # sidecar-injector webhook configuration
 sidecarInjectorWebhook:
   enabled: true
@@ -55,8 +51,8 @@ global:
     resources:
       requests:
         cpu: 100m
-        memory: 128Mi
+        memory: 64Mi
       limits:
         cpu: 2000m
-        memory: 128Mi
+        memory: 256Mi
   useMCP: false
