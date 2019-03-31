@@ -513,7 +513,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 		}
 
 		if metric.Name == "istio_requests_total" {
-			val, err := c.observer.GetDeploymentCounter(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+			val, err := c.observer.GetIstioSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
@@ -531,7 +531,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 		}
 
 		if metric.Name == "istio_request_duration_seconds_bucket" {
-			val, err := c.observer.GetDeploymentHistogram(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+			val, err := c.observer.GetIstioRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
 			if err != nil {
 				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
 				return false

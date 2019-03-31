@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -29,12 +32,14 @@ type vectorQueryResponse struct {
 	}
 }
 
+// NewObserver creates a new observer
 func NewObserver(metricsServer string) Observer {
 	return Observer{
 		metricsServer: metricsServer,
 	}
 }
 
+// GetMetricsServer returns the Prometheus URL
 func (c *Observer) GetMetricsServer() string {
 	return c.metricsServer
 }
@@ -116,115 +121,6 @@ func (c *Observer) GetScalar(query string) (float64, error) {
 	return *value, nil
 }
 
-func (c *Observer) GetEnvoySuccessRate(name string, namespace string, metric string, interval string) (float64, error) {
-	if c.metricsServer == "fake" {
-		return 100, nil
-	}
-
-	var rate *float64
-	querySt := url.QueryEscape(`sum(rate(` +
-		metric + `{kubernetes_namespace="` +
-		namespace + `",kubernetes_pod_name=~"` +
-		name + `-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",envoy_response_code!~"5.*"}[` +
-		interval + `])) / sum(rate(` +
-		metric + `{kubernetes_namespace="` +
-		namespace + `",kubernetes_pod_name=~"` +
-		name + `-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"}[` +
-		interval + `])) * 100 `)
-	result, err := c.queryMetric(querySt)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, v := range result.Data.Result {
-		metricValue := v.Value[1]
-		switch metricValue.(type) {
-		case string:
-			f, err := strconv.ParseFloat(metricValue.(string), 64)
-			if err != nil {
-				return 0, err
-			}
-			rate = &f
-		}
-	}
-	if rate == nil {
-		return 0, fmt.Errorf("no values found for metric %s", metric)
-	}
-	return *rate, nil
-}
-
-// GetDeploymentCounter returns the requests success rate using istio_requests_total metric
-func (c *Observer) GetDeploymentCounter(name string, namespace string, metric string, interval string) (float64, error) {
-	if c.metricsServer == "fake" {
-		return 100, nil
-	}
-
-	var rate *float64
-	querySt := url.QueryEscape(`sum(rate(` +
-		metric + `{reporter="destination",destination_workload_namespace=~"` +
-		namespace + `",destination_workload=~"` +
-		name + `",response_code!~"5.*"}[` +
-		interval + `])) / sum(rate(` +
-		metric + `{reporter="destination",destination_workload_namespace=~"` +
-		namespace + `",destination_workload=~"` +
-		name + `"}[` +
-		interval + `])) * 100 `)
-	result, err := c.queryMetric(querySt)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, v := range result.Data.Result {
-		metricValue := v.Value[1]
-		switch metricValue.(type) {
-		case string:
-			f, err := strconv.ParseFloat(metricValue.(string), 64)
-			if err != nil {
-				return 0, err
-			}
-			rate = &f
-		}
-	}
-	if rate == nil {
-		return 0, fmt.Errorf("no values found for metric %s", metric)
-	}
-	return *rate, nil
-}
-
-// GetDeploymentHistogram returns the 99P requests delay using istio_request_duration_seconds_bucket metrics
-func (c *Observer) GetDeploymentHistogram(name string, namespace string, metric string, interval string) (time.Duration, error) {
-	if c.metricsServer == "fake" {
-		return 1, nil
-	}
-	var rate *float64
-	querySt := url.QueryEscape(`histogram_quantile(0.99, sum(rate(` +
-		metric + `{reporter="destination",destination_workload=~"` +
-		name + `", destination_workload_namespace=~"` +
-		namespace + `"}[` +
-		interval + `])) by (le))`)
-	result, err := c.queryMetric(querySt)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, v := range result.Data.Result {
-		metricValue := v.Value[1]
-		switch metricValue.(type) {
-		case string:
-			f, err := strconv.ParseFloat(metricValue.(string), 64)
-			if err != nil {
-				return 0, err
-			}
-			rate = &f
-		}
-	}
-	if rate == nil {
-		return 0, fmt.Errorf("no values found for metric %s", metric)
-	}
-	ms := time.Duration(int64(*rate*1000)) * time.Millisecond
-	return ms, nil
-}
-
 // CheckMetricsServer call Prometheus status endpoint and returns an error if
 // the API is unreachable
 func CheckMetricsServer(address string) (bool, error) {
@@ -264,4 +160,25 @@ func CheckMetricsServer(address string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func render(meta interface{}, tmpl string) (string, error) {
+	t, err := template.New("tmpl").Parse(tmpl)
+	if err != nil {
+		return "", err
+	}
+	var data bytes.Buffer
+	b := bufio.NewWriter(&data)
+
+	if err := t.Execute(b, meta); err != nil {
+		return "", err
+	}
+	err = b.Flush()
+	if err != nil {
+		return "", err
+	}
+
+	res := strings.ReplaceAll(data.String(), "\n", "")
+
+	return res, nil
 }
