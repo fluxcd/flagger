@@ -14,6 +14,11 @@ kubectl label namespace test istio-injection=enabled
 
 echo '>>> Installing the load tester'
 kubectl -n test apply -f ${REPO_ROOT}/artifacts/loadtester/
+
+sleep 30
+
+kubectl -n test describe deployment/flagger-loadtester
+
 kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Initialising canary'
