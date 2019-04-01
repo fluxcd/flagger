@@ -8,7 +8,7 @@ pilot:
   sidecar: true
   resources:
     requests:
-      cpu: 100m
+      cpu: 10m
       memory: 128Mi
 
 gateways:
@@ -36,7 +36,7 @@ mixer:
     autoscaleEnabled: false
   resources:
     requests:
-      cpu: 100m
+      cpu: 10m
       memory: 128Mi
 
 # addon prometheus configuration
@@ -54,9 +54,9 @@ global:
     # Resources for the sidecar.
     resources:
       requests:
-        cpu: 100m
+        cpu: 10m
         memory: 64Mi
       limits:
-        cpu: 2000m
+        cpu: 1000m
         memory: 256Mi
   useMCP: false
