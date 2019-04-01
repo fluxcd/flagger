@@ -25,13 +25,6 @@ kubectl -n istio-system wait --for=condition=complete job/istio-init-crd-10
 kubectl -n istio-system wait --for=condition=complete job/istio-init-crd-11
 
 echo '>>> Installing Istio control plane'
-helm upgrade -i istio istio.io/istio --namespace istio-system -f ${REPO_ROOT}/test/e2e-istio-values.yaml
-
-kubectl -n istio-system rollout status deployment/prometheus
+helm upgrade -i istio istio.io/istio --wait --namespace istio-system -f ${REPO_ROOT}/test/e2e-istio-values.yaml
 
 kubectl -n istio-system get all
-
-kubectl -n istio-system describe deployment/istio-pilot
-kubectl -n istio-system describe deployment/istio-telemetry
-kubectl -n istio-system describe deployment/istio-citadel
-kubectl -n istio-system describe deployment/prometheus
