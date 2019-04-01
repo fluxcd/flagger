@@ -6,6 +6,10 @@
 pilot:
   enabled: true
   sidecar: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 gateways:
   enabled: false

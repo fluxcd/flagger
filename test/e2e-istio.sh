@@ -2,7 +2,7 @@
 
 set -o errexit
 
-ISTIO_VER="1.1.0-rc.0"
+ISTIO_VER="1.1.1"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
