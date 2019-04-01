@@ -151,12 +151,12 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Features
 
-| Feature                                  | Istio   | App Mesh |
-| ---------------------------------------- | ------- | -------- |
-| Canary deployments with weighted traffic | :check: | :check:  |
-| A/B testing                              | :check: |          |
-| Request duration metrics                 | :check: |          |
-| Ingress support                          | :check: |          |
+| Feature                                  | Istio                    | App Mesh                 |
+| ---------------------------------------- | ------------------------ | ------------------------ |
+| Canary deployments with weighted traffic | :white-heavy-check-mark: | :white-heavy-check-mark: |
+| A/B testing                              | :white-heavy-check-mark: |                          |
+| Request duration metrics                 | :white-heavy-check-mark: |                          |
+| Ingress support                          | :white-heavy-check-mark: |                          |
 
 ### Roadmap
 
