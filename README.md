@@ -149,6 +149,17 @@ spec:
 
 For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/how-it-works).
 
+### Features
+
+* A/B testing
+* Canary deployments
+* Integrated monitoring and alerts
+* Zero downtime deployments
+* Supported technologies
+  * [Helm](https://helm.sh/)
+  * [Istio](https://istio.io/)
+  * [App Mesh](https://aws.amazon.com/app-mesh/)
+
 ### Roadmap
 
 * Integrate with other service mesh technologies like Linkerd v2, Super Gloo or Consul Mesh
