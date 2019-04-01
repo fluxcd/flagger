@@ -151,14 +151,12 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Features
 
-* A/B testing
-* Canary deployments
-* Integrated monitoring and alerts
-* Zero downtime deployments
-* Supported technologies
-  * [Helm](https://helm.sh/)
-  * [Istio](https://istio.io/)
-  * [App Mesh](https://aws.amazon.com/app-mesh/)
+| Feature                                  | Istio   | App Mesh |
+| ---------------------------------------- | ------- | -------- |
+| Canary deployments with weighted traffic | :check: | :check:  |
+| A/B testing                              | :check: |          |
+| Request duration metrics                 | :check: |          |
+| Ingress support                          | :check: |          |
 
 ### Roadmap
 
