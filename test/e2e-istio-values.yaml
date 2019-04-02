@@ -6,15 +6,15 @@
 pilot:
   enabled: true
   sidecar: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
 
 gateways:
   enabled: false
   istio-ingressgateway:
     autoscaleMax: 1
-
-# citadel configuration
-security:
-  enabled: true
 
 # sidecar-injector webhook configuration
 sidecarInjectorWebhook:
@@ -36,7 +36,7 @@ mixer:
     autoscaleEnabled: false
   resources:
     requests:
-      cpu: 100m
+      cpu: 10m
       memory: 128Mi
 
 # addon prometheus configuration
@@ -54,9 +54,9 @@ global:
     # Resources for the sidecar.
     resources:
       requests:
-        cpu: 100m
-        memory: 128Mi
+        cpu: 10m
+        memory: 64Mi
       limits:
-        cpu: 2000m
-        memory: 128Mi
+        cpu: 1000m
+        memory: 256Mi
   useMCP: false

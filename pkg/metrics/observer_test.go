@@ -1,4 +1,4 @@
-package controller
+package metrics
 
 import (
 	"net/http"
@@ -7,18 +7,16 @@ import (
 	"time"
 )
 
-func TestCanaryObserver_GetDeploymentCounter(t *testing.T) {
+func TestCanaryObserver_GetEnvoySuccessRate(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.458,"100"]}]}}`
 		w.Write([]byte(json))
 	}))
 	defer ts.Close()
 
-	observer := CanaryObserver{
-		metricsServer: ts.URL,
-	}
+	observer := NewObserver(ts.URL)
 
-	val, err := observer.GetDeploymentCounter("podinfo", "default", "istio_requests_total", "1m")
+	val, err := observer.GetEnvoySuccessRate("podinfo", "default", "envoy_cluster_upstream_rq", "1m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -29,18 +27,36 @@ func TestCanaryObserver_GetDeploymentCounter(t *testing.T) {
 
 }
 
-func TestCanaryObserver_GetDeploymentHistogram(t *testing.T) {
+func TestCanaryObserver_GetIstioSuccessRate(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.458,"100"]}]}}`
+		w.Write([]byte(json))
+	}))
+	defer ts.Close()
+
+	observer := NewObserver(ts.URL)
+
+	val, err := observer.GetIstioSuccessRate("podinfo", "default", "istio_requests_total", "1m")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if val != 100 {
+		t.Errorf("Got %v wanted %v", val, 100)
+	}
+
+}
+
+func TestCanaryObserver_GetIstioRequestDuration(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.596,"0.2"]}]}}`
 		w.Write([]byte(json))
 	}))
 	defer ts.Close()
 
-	observer := CanaryObserver{
-		metricsServer: ts.URL,
-	}
+	observer := NewObserver(ts.URL)
 
-	val, err := observer.GetDeploymentHistogram("podinfo", "default", "istio_request_duration_seconds_bucket", "1m")
+	val, err := observer.GetIstioRequestDuration("podinfo", "default", "istio_request_duration_seconds_bucket", "1m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}

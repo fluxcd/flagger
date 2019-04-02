@@ -35,7 +35,7 @@ type Mocks struct {
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
 	deployer      CanaryDeployer
-	observer      CanaryObserver
+	observer      metrics.Observer
 	ctrl          *Controller
 	logger        *zap.SugaredLogger
 	router        router.Interface
@@ -74,9 +74,7 @@ func SetupMocks(abtest bool) Mocks {
 			flaggerClient: flaggerClient,
 		},
 	}
-	observer := CanaryObserver{
-		metricsServer: "fake",
-	}
+	observer := metrics.NewObserver("fake")
 
 	// init controller
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
@@ -95,7 +93,7 @@ func SetupMocks(abtest bool) Mocks {
 		flaggerWindow: time.Second,
 		deployer:      deployer,
 		observer:      observer,
-		recorder:      metrics.NewCanaryRecorder(controllerAgentName, false),
+		recorder:      metrics.NewRecorder(controllerAgentName, false),
 	}
 	ctrl.flaggerSynced = alwaysReady
 

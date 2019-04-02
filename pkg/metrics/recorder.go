@@ -8,8 +8,8 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
-// CanaryRecorder records the canary analysis as Prometheus metrics
-type CanaryRecorder struct {
+// Recorder records the canary analysis as Prometheus metrics
+type Recorder struct {
 	info     *prometheus.GaugeVec
 	duration *prometheus.HistogramVec
 	total    *prometheus.GaugeVec
@@ -17,8 +17,8 @@ type CanaryRecorder struct {
 	weight   *prometheus.GaugeVec
 }
 
-// NewCanaryRecorder creates a new recorder and registers the Prometheus metrics
-func NewCanaryRecorder(controller string, register bool) CanaryRecorder {
+// NewRecorder creates a new recorder and registers the Prometheus metrics
+func NewRecorder(controller string, register bool) Recorder {
 	info := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
 		Name:      "info",
@@ -59,7 +59,7 @@ func NewCanaryRecorder(controller string, register bool) CanaryRecorder {
 		prometheus.MustRegister(weight)
 	}
 
-	return CanaryRecorder{
+	return Recorder{
 		info:     info,
 		duration: duration,
 		total:    total,
@@ -69,22 +69,22 @@ func NewCanaryRecorder(controller string, register bool) CanaryRecorder {
 }
 
 // SetInfo sets the version and mesh provider labels
-func (cr *CanaryRecorder) SetInfo(version string, meshProvider string) {
+func (cr *Recorder) SetInfo(version string, meshProvider string) {
 	cr.info.WithLabelValues(version, meshProvider).Set(1)
 }
 
 // SetDuration sets the time spent in seconds performing canary analysis
-func (cr *CanaryRecorder) SetDuration(cd *flaggerv1.Canary, duration time.Duration) {
+func (cr *Recorder) SetDuration(cd *flaggerv1.Canary, duration time.Duration) {
 	cr.duration.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Observe(duration.Seconds())
 }
 
 // SetTotal sets the total number of canaries per namespace
-func (cr *CanaryRecorder) SetTotal(namespace string, total int) {
+func (cr *Recorder) SetTotal(namespace string, total int) {
 	cr.total.WithLabelValues(namespace).Set(float64(total))
 }
 
 // SetStatus sets the last known canary analysis status
-func (cr *CanaryRecorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) {
+func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) {
 	status := 1
 	switch phase {
 	case flaggerv1.CanaryProgressing:
@@ -98,7 +98,7 @@ func (cr *CanaryRecorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.Canary
 }
 
 // SetWeight sets the weight values for primary and canary destinations
-func (cr *CanaryRecorder) SetWeight(cd *flaggerv1.Canary, primary int, canary int) {
+func (cr *Recorder) SetWeight(cd *flaggerv1.Canary, primary int, canary int) {
 	cr.weight.WithLabelValues(fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name), cd.Namespace).Set(float64(primary))
 	cr.weight.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(canary))
 }

@@ -2,7 +2,7 @@
 
 set -o errexit
 
-ISTIO_VER="1.1.0-rc.0"
+ISTIO_VER="1.1.1"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
@@ -26,3 +26,5 @@ kubectl -n istio-system wait --for=condition=complete job/istio-init-crd-11
 
 echo '>>> Installing Istio control plane'
 helm upgrade -i istio istio.io/istio --wait --namespace istio-system -f ${REPO_ROOT}/test/e2e-istio-values.yaml
+
+kubectl -n istio-system get all
