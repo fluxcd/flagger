@@ -154,13 +154,13 @@ For more details on how the canary analysis and promotion works please [read the
 | Feature                                  | Istio              | App Mesh           |
 | ---------------------------------------- | ------------------ | ------------------ |
 | Canary deployments (weighted traffic) | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies filters)| :heavy_check_mark: | |
+| A/B testing (headers and cookies filters)| :heavy_check_mark: | :heavy_minus_sign: |
 | Load testing | :heavy_check_mark: | :heavy_check_mark: |
-| Webhooks | :heavy_check_mark: | :heavy_check_mark: |
+| Webhooks (custom acceptance tests)| :heavy_check_mark: | :heavy_check_mark: |
 | Request success rate (builtin metric check) | :heavy_check_mark: | :heavy_check_mark: |
-| Request duration (builtin metric check) | :heavy_check_mark: | |
+| Request duration (builtin metric check) | :heavy_check_mark: | :heavy_minus_sign: |
 | Custom Prometheus metrics checks | :heavy_check_mark: | :heavy_check_mark: |
-| Ingress gateway | :heavy_check_mark: | |
+| Ingress gateway | :heavy_check_mark: | :heavy_minus_sign: |
 
 ### Roadmap
 
