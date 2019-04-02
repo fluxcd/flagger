@@ -149,6 +149,15 @@ spec:
 
 For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/how-it-works).
 
+### Features
+
+| Feature                                  | Istio              | App Mesh           |
+| ---------------------------------------- | ------------------ | ------------------ |
+| Canary deployments with weighted traffic | :white-check-mark: | :white-check-mark: |
+| A/B testing                              | :white-check-mark: |                    |
+| Request duration metrics                 | :white-check-mark: |                    |
+| Ingress support                          | :white-check-mark: |                    |
+
 ### Roadmap
 
 * Integrate with other service mesh technologies like Linkerd v2, Super Gloo or Consul Mesh
