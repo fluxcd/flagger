@@ -2,7 +2,6 @@
 
 * [Introduction](README.md)
 * [How it works](how-it-works.md)
-* [Frequently asked questions](faq.md)
 
 ## Install
 
