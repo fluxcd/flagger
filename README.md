@@ -42,7 +42,6 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Alerting](https://docs.flagger.app/usage/alerting)
 * Tutorials
   * [Canary deployments with Helm charts and Weave Flux](https://docs.flagger.app/tutorials/canary-helm-gitops)
-* [Frequently asked questions](https://docs.flagger.app/faq)
 
 ## Canary CRD
 
