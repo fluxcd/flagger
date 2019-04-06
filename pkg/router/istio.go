@@ -50,7 +50,9 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 			break
 		}
 	}
-	if !hasMeshGateway {
+
+	// set default mesh gateway if no gateway is specified
+	if !hasMeshGateway && len(canary.Spec.Service.Gateways) == 0 {
 		gateways = append(gateways, "mesh")
 	}
 
