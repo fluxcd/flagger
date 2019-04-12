@@ -27,6 +27,25 @@ func TestCanaryObserver_GetEnvoySuccessRate(t *testing.T) {
 
 }
 
+func TestCanaryObserver_GetEnvoyRequestDuration(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.596,"0.2"]}]}}`
+		w.Write([]byte(json))
+	}))
+	defer ts.Close()
+
+	observer := NewObserver(ts.URL)
+
+	val, err := observer.GetEnvoyRequestDuration("podinfo", "default", "envoy_cluster_upstream_rq_time_bucket", "1m")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if val != 200*time.Millisecond {
+		t.Errorf("Got %v wanted %v", val, 200*time.Millisecond)
+	}
+}
+
 func TestCanaryObserver_GetIstioSuccessRate(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.458,"100"]}]}}`
