@@ -45,10 +45,10 @@ spec:
     maxWeight: 50
     stepWeight: 10
     metrics:
-    - name: istio_requests_total
+    - name: request-success-rate
       threshold: 99
       interval: 1m
-    - name: istio_request_duration_seconds_bucket
+    - name: request-duration
       threshold: 500
       interval: 30s
     - name: "404s percentage"
