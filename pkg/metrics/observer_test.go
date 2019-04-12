@@ -29,7 +29,7 @@ func TestCanaryObserver_GetEnvoySuccessRate(t *testing.T) {
 
 func TestCanaryObserver_GetEnvoyRequestDuration(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.596,"0.2"]}]}}`
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.596,"200"]}]}}`
 		w.Write([]byte(json))
 	}))
 	defer ts.Close()

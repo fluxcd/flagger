@@ -114,6 +114,6 @@ func (c *Observer) GetEnvoyRequestDuration(name string, namespace string, metric
 	if rate == nil {
 		return 0, fmt.Errorf("no values found for metric %s", metric)
 	}
-	ms := time.Duration(int64(*rate*1000)) * time.Millisecond
+	ms := time.Duration(int64(*rate)) * time.Millisecond
 	return ms, nil
 }
