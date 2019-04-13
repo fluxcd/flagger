@@ -122,10 +122,37 @@ spec:
                       properties:
                         name:
                           type: string
+                        type:
+                          type: string
+                          enum:
+                            - ""
+                            - pre-rollout
+                            - rollout
+                            - post-rollout
                         url:
                           type: string
                           format: url
                         timeout:
                           type: string
                           pattern: "^[0-9]+(m|s)"
+        status:
+          properties:
+            phase:
+              type: string
+              enum:
+                - ""
+                - Initialized
+                - Progressing
+                - Succeeded
+                - Failed
+            canaryWeight:
+              type: number
+            failedChecks:
+              type: number
+            iterations:
+              type: number
+            lastAppliedSpec:
+              type: string
+            lastTransitionTime:
+              type: string
 {{- end }}
