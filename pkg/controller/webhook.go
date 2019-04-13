@@ -15,10 +15,11 @@ import (
 
 // CallWebhook does a HTTP POST to an external service and
 // returns an error if the response status code is non-2xx
-func CallWebhook(name string, namespace string, w flaggerv1.CanaryWebhook) error {
+func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w flaggerv1.CanaryWebhook) error {
 	payload := flaggerv1.CanaryWebhookPayload{
 		Name:      name,
 		Namespace: namespace,
+		Phase:     phase,
 	}
 
 	if w.Metadata != nil {

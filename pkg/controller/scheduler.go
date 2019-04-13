@@ -240,6 +240,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 
 		c.recorder.SetStatus(cd, flaggerv1.CanaryFailed)
+		c.runPostRolloutHooks(cd, flaggerv1.CanaryFailed)
 		return
 	}
 
@@ -247,6 +248,15 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	// skip check if no traffic is routed to canary
 	if canaryWeight == 0 {
 		c.recordEventInfof(cd, "Starting canary analysis for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+
+		// run pre-rollout web hooks
+		if ok := c.runPreRolloutHooks(cd); !ok {
+			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			return
+		}
 	} else {
 		if ok := c.analyseCanary(cd); !ok {
 			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
@@ -314,6 +324,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				return
 			}
 			c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
+			c.runPostRolloutHooks(cd, flaggerv1.CanarySucceeded)
 			c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 				false, false)
 			return
@@ -380,6 +391,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 		c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
+		c.runPostRolloutHooks(cd, flaggerv1.CanarySucceeded)
 		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 			false, false)
 	}
@@ -477,14 +489,47 @@ func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 	return false
 }
 
+func (c *Controller) runPreRolloutHooks(canary *flaggerv1.Canary) bool {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
+		if webhook.Type == flaggerv1.PreRolloutHook {
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryProgressing, webhook)
+			if err != nil {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement pre-rollout check %s failed %v",
+					canary.Name, canary.Namespace, webhook.Name, err)
+				return false
+			} else {
+				c.recordEventInfof(canary, "Pre-rollout check %s passed", webhook.Name)
+			}
+		}
+	}
+	return true
+}
+
+func (c *Controller) runPostRolloutHooks(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) bool {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
+		if webhook.Type == flaggerv1.PostRolloutHook {
+			err := CallWebhook(canary.Name, canary.Namespace, phase, webhook)
+			if err != nil {
+				c.recordEventWarningf(canary, "Post-rollout hook %s failed %v", webhook.Name, err)
+				return false
+			} else {
+				c.recordEventInfof(canary, "Post-rollout check %s passed", webhook.Name)
+			}
+		}
+	}
+	return true
+}
+
 func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
-		err := CallWebhook(r.Name, r.Namespace, webhook)
-		if err != nil {
-			c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
-				r.Name, r.Namespace, webhook.Name, err)
-			return false
+		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
+			err := CallWebhook(r.Name, r.Namespace, flaggerv1.CanaryProgressing, webhook)
+			if err != nil {
+				c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
+					r.Name, r.Namespace, webhook.Name, err)
+				return false
+			}
 		}
 	}
 
