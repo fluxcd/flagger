@@ -2,7 +2,7 @@
 
 [Flagger](https://github.com/weaveworks/flagger) takes a Kubernetes deployment and optionally 
 a horizontal pod autoscaler \(HPA\) and creates a series of objects 
-\(Kubernetes deployments, ClusterIP services and Istio virtual services\) to drive the canary analysis and promotion. 
+\(Kubernetes deployments, ClusterIP services and Istio or App Mesh virtual services\) to drive the canary analysis and promotion. 
 
 ![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
 
@@ -268,16 +268,22 @@ Gated canary promotion stages:
 * check primary and canary deployments status
     * halt advancement if a rolling update is underway
     * halt advancement if pods are unhealthy
+* call pre-rollout webhooks are check results
+    * halt advancement if any hook returned a non HTTP 2xx result
+    * increment the failed checks counter
 * increase canary traffic weight percentage from 0% to 5% (step weight)
-* call webhooks and check results
+* call rollout webhooks and check results
 * check canary HTTP request success rate and latency
     * halt advancement if any metric is under the specified threshold
     * increment the failed checks counter
 * check if the number of failed checks reached the threshold
     * route all traffic to primary
     * scale to zero the canary deployment and mark it as failed
+    * call post-rollout webhooks
+    * post the analysis result to Slack
     * wait for the canary deployment to be updated and start over
 * increase canary traffic weight by 5% (step weight) till it reaches 50% (max weight) 
+    * halt advancement if any webhook call fails
     * halt advancement while canary request success rate is under the threshold
     * halt advancement while canary request duration P99 is over the threshold
     * halt advancement if the primary or canary deployment becomes unhealthy 
@@ -290,6 +296,8 @@ Gated canary promotion stages:
 * route all traffic to primary
 * scale to zero the canary deployment
 * mark rollout as finished
+* call post-rollout webhooks
+* post the analysis result to Slack
 * wait for the canary deployment to be updated and start over
 
 ### Canary Analysis
@@ -524,39 +532,55 @@ rate reaches the 5% threshold, then the canary fails.
 When specifying a query, Flagger will run the promql query and convert the result to float64. 
 Then it compares the query result value with the metric threshold value.
 
-
 ### Webhooks
 
-The canary analysis can be extended with webhooks. 
-Flagger will call each webhook URL and determine from the response status code (HTTP 2xx) if the canary is failing or not.
+The canary analysis can be extended with webhooks. Flagger will call each webhook URL and
+determine from the response status code (HTTP 2xx) if the canary is failing or not.
+
+There are three types of hooks:
+* Pre-rollout hooks are executed before routing traffic to canary. 
+The canary advancement is paused if a pre-rollout hook fails and if the number of failures reach the 
+threshold the canary will be rollback.
+* Rollout hooks are executed during the analysis on each iteration before the metric checks. 
+If a rollout hook call fails the canary advancement is paused and eventfully rolled back.
+* Post-rollout hooks are executed after the canary has been promoted or rolled back. 
+If a post rollout hook fails the error is logged.
 
 Spec:
 
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: integration-test
-        url: http://int-runner.test:8080/
-        timeout: 30s
-        metadata:
-          test: "all"
-          token: "16688eb5e9f289f1991c"
-      - name: db-test
+      - name: "smoke test"
+        type: pre-rollout
         url: http://migration-check.db/query
         timeout: 30s
         metadata:
           key1: "val1"
           key2: "val2"
+      - name: "load test"
+        type: rollout
+        url: http://flagger-loadtester.test/
+        timeout: 15s
+        metadata:
+          cmd: "hey -z 1m -q 5 -c 2 http://podinfo-canary.test:9898/"
+      - name: "notify"
+        type: post-rollout
+        url: http://telegram.bot:8080/
+        timeout: 5s
+        metadata:
+          some: "message"
 ```
 
-> **Note** that the sum of all webhooks timeouts should be lower than the control loop interval. 
+> **Note** that the sum of all rollout webhooks timeouts should be lower than the analysis interval. 
 
 Webhook payload (HTTP POST):
 
 ```json
 {
     "name": "podinfo",
-    "namespace": "test", 
+    "namespace": "test",
+    "phase": "Progressing", 
     "metadata": {
         "test":  "all",
         "token":  "16688eb5e9f289f1991c"
