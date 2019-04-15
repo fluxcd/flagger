@@ -90,7 +90,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	// create primary deployment and hpa if needed
-	if err := c.deployer.Sync(cd); err != nil {
+	if err := c.deployer.Initialize(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -111,7 +111,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	shouldAdvance, err := c.deployer.ShouldAdvance(cd)
+	shouldAdvance, err := c.shouldAdvance(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -441,6 +441,28 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	return true
 }
 
+func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
+	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryProgressing {
+		return true, nil
+	}
+
+	newDep, err := c.deployer.HasDeploymentChanged(cd)
+	if err != nil {
+		return false, err
+	}
+	if newDep {
+		return newDep, nil
+	}
+
+	newCfg, err := c.deployer.ConfigTracker.HasConfigChanged(cd)
+	if err != nil {
+		return false, err
+	}
+
+	return newCfg, nil
+
+}
+
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
 	c.recorder.SetStatus(cd, cd.Status.Phase)
 	if cd.Status.Phase == flaggerv1.CanaryProgressing {
@@ -479,10 +501,10 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 
 func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 	if cd.Status.Phase == flaggerv1.CanaryProgressing {
-		if diff, _ := c.deployer.IsNewSpec(cd); diff {
+		if diff, _ := c.deployer.HasDeploymentChanged(cd); diff {
 			return true
 		}
-		if diff, _ := c.deployer.configTracker.HasConfigChanged(cd); diff {
+		if diff, _ := c.deployer.ConfigTracker.HasConfigChanged(cd); diff {
 			return true
 		}
 	}
