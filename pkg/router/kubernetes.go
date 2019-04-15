@@ -19,6 +19,7 @@ type KubernetesRouter struct {
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
+	label         string
 }
 
 // Reconcile creates or updates the primary and canary services
@@ -64,7 +65,7 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 
 	svcSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeClusterIP,
-		Selector: map[string]string{"app": target},
+		Selector: map[string]string{c.label: target},
 		Ports: []corev1.ServicePort{
 			{
 				Name:     portName,

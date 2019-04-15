@@ -60,6 +60,7 @@ func NewController(
 	notifier *notifier.Slack,
 	meshProvider string,
 	version string,
+	labels []string,
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
 	flaggerscheme.AddToScheme(scheme.Scheme)
@@ -75,6 +76,7 @@ func NewController(
 		Logger:        logger,
 		KubeClient:    kubeClient,
 		FlaggerClient: flaggerClient,
+		Labels:        labels,
 		ConfigTracker: canary.ConfigTracker{
 			Logger:        logger,
 			KubeClient:    kubeClient,

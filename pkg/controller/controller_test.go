@@ -69,6 +69,7 @@ func SetupMocks(abtest bool) Mocks {
 		Logger:        logger,
 		KubeClient:    kubeClient,
 		FlaggerClient: flaggerClient,
+		Labels:        []string{"app", "name"},
 		ConfigTracker: canary.ConfigTracker{
 			Logger:        logger,
 			KubeClient:    kubeClient,

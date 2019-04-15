@@ -27,29 +27,31 @@ type Deployer struct {
 	FlaggerClient clientset.Interface
 	Logger        *zap.SugaredLogger
 	ConfigTracker ConfigTracker
+	Labels        []string
 }
 
-// Initialize creates the primary deployment and hpa
-// and scales to zero the canary deployment
-func (c *Deployer) Initialize(cd *flaggerv1.Canary) error {
+// Initialize creates the primary deployment, hpa,
+// scales to zero the canary deployment and returns the pod selector label
+func (c *Deployer) Initialize(cd *flaggerv1.Canary) (string, error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	if err := c.createPrimaryDeployment(cd); err != nil {
-		return fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
+	label, err := c.createPrimaryDeployment(cd)
+	if err != nil {
+		return "", fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
 	}
 
 	if cd.Status.Phase == "" {
 		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
-			return err
+			return "", err
 		}
 	}
 
 	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 		if err := c.createPrimaryHpa(cd); err != nil {
-			return fmt.Errorf("creating hpa %s.%s failed: %v", primaryName, cd.Namespace, err)
+			return "", fmt.Errorf("creating hpa %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}
 	}
-	return nil
+	return label, nil
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary
@@ -63,6 +65,12 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
 		}
 		return fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
+	}
+
+	label, err := c.getSelectorLabel(canary)
+	if err != nil {
+		return fmt.Errorf("invalid label selector! Deployment %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
+			targetName, cd.Namespace, targetName)
 	}
 
 	primary, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
@@ -98,7 +106,7 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 	}
 	primaryCopy.Spec.Template.Annotations = annotations
 
-	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName)
+	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName, label)
 
 	_, err = c.KubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
@@ -164,20 +172,21 @@ func (c *Deployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	return nil
 }
 
-func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
+func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	canaryDep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found, retrying", targetName, cd.Namespace)
+			return "", fmt.Errorf("deployment %s.%s not found, retrying", targetName, cd.Namespace)
 		}
-		return err
+		return "", err
 	}
 
-	if appSel, ok := canaryDep.Spec.Selector.MatchLabels["app"]; !ok || appSel != canaryDep.Name {
-		return fmt.Errorf("invalid label selector! Deployment %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
+	label, err := c.getSelectorLabel(canaryDep)
+	if err != nil {
+		return "", fmt.Errorf("invalid label selector! Deployment %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
 			targetName, cd.Namespace, targetName)
 	}
 
@@ -186,14 +195,14 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 		// create primary secrets and config maps
 		configRefs, err := c.ConfigTracker.GetTargetConfigs(cd)
 		if err != nil {
-			return err
+			return "", err
 		}
 		if err := c.ConfigTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
-			return err
+			return "", err
 		}
 		annotations, err := c.makeAnnotations(canaryDep.Spec.Template.Annotations)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		replicas := int32(1)
@@ -223,12 +232,12 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 				Strategy:                canaryDep.Spec.Strategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						"app": primaryName,
+						label: primaryName,
 					},
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Labels:      makePrimaryLabels(canaryDep.Spec.Template.Labels, primaryName),
+						Labels:      makePrimaryLabels(canaryDep.Spec.Template.Labels, primaryName, label),
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
@@ -239,13 +248,13 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) error {
 
 		_, err = c.KubeClient.AppsV1().Deployments(cd.Namespace).Create(primaryDep)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
-	return nil
+	return label, nil
 }
 
 func (c *Deployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
@@ -320,15 +329,25 @@ func (c *Deployer) makeAnnotations(annotations map[string]string) (map[string]st
 	return res, nil
 }
 
-func makePrimaryLabels(labels map[string]string, primaryName string) map[string]string {
-	idKey := "app"
+// getSelectorLabel returns the selector match label
+func (c *Deployer) getSelectorLabel(deployment *appsv1.Deployment) (string, error) {
+	for _, l := range c.Labels {
+		if _, ok := deployment.Spec.Selector.MatchLabels[l]; ok {
+			return l, nil
+		}
+	}
+
+	return "", fmt.Errorf("selector not found")
+}
+
+func makePrimaryLabels(labels map[string]string, primaryName string, label string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range labels {
-		if k != idKey {
+		if k != label {
 			res[k] = v
 		}
 	}
-	res[idKey] = primaryName
+	res[label] = primaryName
 
 	return res
 }

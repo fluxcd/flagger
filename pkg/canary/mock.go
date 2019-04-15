@@ -46,6 +46,7 @@ func SetupMocks() Mocks {
 		FlaggerClient: flaggerClient,
 		KubeClient:    kubeClient,
 		Logger:        logger,
+		Labels:        []string{"app", "name"},
 		ConfigTracker: ConfigTracker{
 			Logger:        logger,
 			KubeClient:    kubeClient,
@@ -222,13 +223,13 @@ func newTestDeployment() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": "podinfo",
+					"name": "podinfo",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "podinfo",
+						"name": "podinfo",
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -341,13 +342,13 @@ func newTestDeploymentV2() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": "podinfo",
+					"name": "podinfo",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "podinfo",
+						"name": "podinfo",
 					},
 				},
 				Spec: corev1.PodSpec{
