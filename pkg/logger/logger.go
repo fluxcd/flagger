@@ -1,9 +1,6 @@
-package logging
+package logger
 
 import (
-	"fmt"
-	"os"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -63,13 +60,4 @@ func NewLoggerWithEncoding(logLevel, zapEncoding string) (*zap.SugaredLogger, er
 		return nil, err
 	}
 	return logger.Sugar(), nil
-}
-
-// Console writes to stdout if the console env var exists
-func Console(a ...interface{}) (n int, err error) {
-	if os.Getenv("console") != "" {
-		return fmt.Fprintln(os.Stdout, a...)
-	}
-
-	return 0, nil
 }

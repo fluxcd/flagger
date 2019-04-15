@@ -6,7 +6,7 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
-	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logger"
 	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/notifier"
 	"github.com/weaveworks/flagger/pkg/server"
@@ -58,7 +58,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	logger, err := logging.NewLoggerWithEncoding(logLevel, zapEncoding)
+	logger, err := logger.NewLoggerWithEncoding(logLevel, zapEncoding)
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
