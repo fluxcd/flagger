@@ -5,7 +5,7 @@ The e2e testing infrastructure is powered by CircleCI and [Kubernetes Kind](http
 CircleCI e2e workflow:
 
 * install latest stable kubectl [e2e-kind.sh](e2e-kind.sh)
-* build Kubernetes Kind from master [e2e-kind.sh](e2e-kind.sh)
+* install Kubernetes Kind [e2e-kind.sh](e2e-kind.sh)
 * create local Kubernetes cluster with kind [e2e-kind.sh](e2e-kind.sh)
 * install latest stable Helm CLI [e2e-istio.sh](e2e-istio.sh)
 * deploy Tiller on the local cluster [e2e-istio.sh](e2e-istio.sh)
@@ -18,7 +18,7 @@ CircleCI e2e workflow:
 * deploy the load tester in the test namespace [e2e-tests.sh](e2e-tests.sh)
 * deploy a demo workload (podinfo) in the test namespace [e2e-tests.sh](e2e-tests.sh)
 * test the canary initialization [e2e-tests.sh](e2e-tests.sh)
-* test the canary analysis and promotion [e2e-tests.sh](e2e-tests.sh)
-
+* test the canary analysis and promotion using weighted traffic and the load testing webhook [e2e-tests.sh](e2e-tests.sh)
+* test the A/B testing analysis and promotion using cookies filters and pre/post rollout webhooks [e2e-tests.sh](e2e-tests.sh)
 
 
