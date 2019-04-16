@@ -42,7 +42,7 @@ spec:
   canaryAnalysis:
     interval: 15s
     threshold: 15
-    maxWeight: 50
+    maxWeight: 30
     stepWeight: 10
     metrics:
     - name: request-success-rate
@@ -142,7 +142,7 @@ spec:
   canaryAnalysis:
     interval: 10s
     threshold: 5
-    iterations: 10
+    iterations: 5
     match:
       - headers:
           cookie:
