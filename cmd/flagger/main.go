@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"log"
+	"time"
+
 	_ "github.com/istio/glog"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
@@ -9,6 +12,7 @@ import (
 	"github.com/weaveworks/flagger/pkg/logging"
 	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/notifier"
+	"github.com/weaveworks/flagger/pkg/router"
 	"github.com/weaveworks/flagger/pkg/server"
 	"github.com/weaveworks/flagger/pkg/signals"
 	"github.com/weaveworks/flagger/pkg/version"
@@ -17,8 +21,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"log"
-	"time"
 )
 
 var (
@@ -126,6 +128,8 @@ func main() {
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
+	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, logger, meshClient)
+
 	c := controller.NewController(
 		kubeClient,
 		meshClient,
@@ -135,6 +139,7 @@ func main() {
 		metricsServer,
 		logger,
 		slack,
+		routerFactory,
 		meshProvider,
 		version.VERSION,
 	)
