@@ -20,10 +20,9 @@ import (
 
 // SuperglooRouter is managing Istio virtual services
 type SuperglooRouter struct {
-	rrClient      supergloov1.RoutingRuleClient
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
-	targetMesh    solokitcore.ResourceRef
+	rrClient   supergloov1.RoutingRuleClient
+	logger     *zap.SugaredLogger
+	targetMesh solokitcore.ResourceRef
 }
 
 func NewSuperglooRouter(ctx context.Context, flaggerClient clientset.Interface, logger *zap.SugaredLogger, cfg *rest.Config) (*SuperglooRouter, error) {
@@ -46,11 +45,19 @@ func NewSuperglooRouter(ctx context.Context, flaggerClient clientset.Interface, 
 		Namespace: "supergloo-system",
 		Name:      "yuval",
 	}
-	return &SuperglooRouter{rrClient: routingRuleClient, logger: logger, flaggerClient: flaggerClient, targetMesh: targetMesh}, nil
+	return NewSuperglooRouterWithClient(ctx, routingRuleClient, targetMesh, logger), nil
+}
+
+func NewSuperglooRouterWithClient(ctx context.Context, routingRuleClient supergloov1.RoutingRuleClient, targetMesh solokitcore.ResourceRef, logger *zap.SugaredLogger) *SuperglooRouter {
+	return &SuperglooRouter{rrClient: routingRuleClient, logger: logger, targetMesh: targetMesh}
 }
 
 // Reconcile creates or updates the Istio virtual service
 func (ir *SuperglooRouter) Reconcile(canary *flaggerv1.Canary) error {
+	// TODO: add header rules
+	// TODO: add retry rules
+	// TODO: add CORS rules
+	// TODO: maybe more? rewrite \ timeout?
 	return ir.SetRoutes(canary, 100, 0)
 }
 
@@ -167,6 +174,11 @@ func (ir *SuperglooRouter) SetRoutes(
 		}
 	} else {
 		rule.Metadata.ResourceVersion = oldRr.Metadata.ResourceVersion
+		// if the old and the new one are equal, no need to do anything.
+		oldRr.Status = solokitcore.Status{}
+		if oldRr.Equal(rule) {
+			return nil
+		}
 	}
 
 	_, err := ir.rrClient.Write(rule, solokitclients.WriteOpts{OverwriteExisting: true})
