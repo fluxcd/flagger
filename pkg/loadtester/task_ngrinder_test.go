@@ -3,7 +3,7 @@ package loadtester
 import (
 	"context"
 	"fmt"
-	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logger"
 	"gopkg.in/h2non/gock.v1"
 	"testing"
 	"time"
@@ -12,7 +12,7 @@ import (
 func TestTaskNGrinder(t *testing.T) {
 	server := "http://ngrinder:8080"
 	cloneId := "960"
-	logger, _ := logging.NewLoggerWithEncoding("debug", "console")
+	logger, _ := logger.NewLoggerWithEncoding("debug", "console")
 	canary := "podinfo.default"
 	taskFactory, ok := GetTaskFactory(TaskTypeNGrinder)
 	if !ok {

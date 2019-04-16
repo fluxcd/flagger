@@ -96,6 +96,9 @@ spec:
         app: podinfo
 ```
 
+Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If you use a different 
+convention you can specify your label with the `-selector-labels` flag.
+
 The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Service and 
 the Istio Virtual Service. The container port from the target deployment should match the `service.port` value.
 

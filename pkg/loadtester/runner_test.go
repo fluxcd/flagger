@@ -1,14 +1,14 @@
 package loadtester
 
 import (
-	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logger"
 	"testing"
 	"time"
 )
 
 func TestTaskRunner_Start(t *testing.T) {
 	stop := make(chan struct{})
-	logger, _ := logging.NewLogger("debug")
+	logger, _ := logger.NewLogger("debug")
 	tr := NewTaskRunner(logger, time.Hour)
 
 	go tr.Start(10*time.Millisecond, stop)

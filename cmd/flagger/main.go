@@ -6,7 +6,7 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
-	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logger"
 	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/notifier"
 	"github.com/weaveworks/flagger/pkg/server"
@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -36,6 +37,7 @@ var (
 	zapEncoding         string
 	namespace           string
 	meshProvider        string
+	selectorLabels      string
 )
 
 func init() {
@@ -53,12 +55,13 @@ func init() {
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object")
 	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio or appmesh")
+	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors")
 }
 
 func main() {
 	flag.Parse()
 
-	logger, err := logging.NewLoggerWithEncoding(logLevel, zapEncoding)
+	logger, err := logger.NewLoggerWithEncoding(logLevel, zapEncoding)
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
@@ -101,6 +104,11 @@ func main() {
 		logger.Fatalf("Error calling Kubernetes API: %v", err)
 	}
 
+	labels := strings.Split(selectorLabels, ",")
+	if len(labels) < 1 {
+		logger.Fatalf("At least one selector label is required")
+	}
+
 	logger.Infof("Connected to Kubernetes API %s", ver)
 	if namespace != "" {
 		logger.Infof("Watching namespace %s", namespace)
@@ -137,6 +145,7 @@ func main() {
 		slack,
 		meshProvider,
 		version.VERSION,
+		labels,
 	)
 
 	flaggerInformerFactory.Start(stopCh)

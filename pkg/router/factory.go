@@ -26,11 +26,12 @@ func NewFactory(kubeClient kubernetes.Interface,
 }
 
 // KubernetesRouter returns a ClusterIP service router
-func (factory *Factory) KubernetesRouter() *KubernetesRouter {
+func (factory *Factory) KubernetesRouter(label string) *KubernetesRouter {
 	return &KubernetesRouter{
 		logger:        factory.logger,
 		flaggerClient: factory.flaggerClient,
 		kubeClient:    factory.kubeClient,
+		label:         label,
 	}
 }
 

@@ -1,16 +1,10 @@
-package controller
+package canary
 
 import (
 	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	istiov1alpha1 "github.com/weaveworks/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
-	"github.com/weaveworks/flagger/pkg/canary"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
-	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/logger"
-	"github.com/weaveworks/flagger/pkg/metrics"
-	"github.com/weaveworks/flagger/pkg/router"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v1"
@@ -19,36 +13,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/workqueue"
-	"sync"
-	"time"
-)
-
-var (
-	alwaysReady        = func() bool { return true }
-	noResyncPeriodFunc = func() time.Duration { return 0 }
 )
 
 type Mocks struct {
 	canary        *v1alpha3.Canary
 	kubeClient    kubernetes.Interface
-	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
-	deployer      canary.Deployer
-	observer      metrics.Observer
-	ctrl          *Controller
+	deployer      Deployer
 	logger        *zap.SugaredLogger
-	router        router.Interface
 }
 
-func SetupMocks(abtest bool) Mocks {
+func SetupMocks() Mocks {
 	// init canary
-	c := newTestCanary()
-	if abtest {
-		c = newTestCanaryAB()
-	}
-	flaggerClient := fakeFlagger.NewSimpleClientset(c)
+	canary := newTestCanary()
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
 	// init kube clientset and register mock objects
 	kubeClient := fake.NewSimpleClientset(
@@ -64,55 +42,24 @@ func SetupMocks(abtest bool) Mocks {
 
 	logger, _ := logger.NewLogger("debug")
 
-	// init controller helpers
-	deployer := canary.Deployer{
-		Logger:        logger,
-		KubeClient:    kubeClient,
+	deployer := Deployer{
 		FlaggerClient: flaggerClient,
+		KubeClient:    kubeClient,
+		Logger:        logger,
 		Labels:        []string{"app", "name"},
-		ConfigTracker: canary.ConfigTracker{
+		ConfigTracker: ConfigTracker{
 			Logger:        logger,
 			KubeClient:    kubeClient,
 			FlaggerClient: flaggerClient,
 		},
 	}
-	observer := metrics.NewObserver("fake")
-
-	// init controller
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   flaggerClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		observer:      observer,
-		recorder:      metrics.NewRecorder(controllerAgentName, false),
-	}
-	ctrl.flaggerSynced = alwaysReady
-
-	// init router
-	rf := router.NewFactory(kubeClient, flaggerClient, logger, flaggerClient)
-	meshRouter := rf.MeshRouter("istio")
 
 	return Mocks{
-		canary:        c,
-		observer:      observer,
+		canary:        canary,
 		deployer:      deployer,
 		logger:        logger,
 		flaggerClient: flaggerClient,
-		meshClient:    flaggerClient,
 		kubeClient:    kubeClient,
-		ctrl:          ctrl,
-		router:        meshRouter,
 	}
 }
 
@@ -266,55 +213,6 @@ func newTestCanary() *v1alpha3.Canary {
 	return cd
 }
 
-func newTestCanaryAB() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "podinfo",
-		},
-		Spec: v1alpha3.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
-				Name:       "podinfo",
-				APIVersion: "apps/v1",
-				Kind:       "Deployment",
-			},
-			AutoscalerRef: &hpav1.CrossVersionObjectReference{
-				Name:       "podinfo",
-				APIVersion: "autoscaling/v2beta1",
-				Kind:       "HorizontalPodAutoscaler",
-			}, Service: v1alpha3.CanaryService{
-				Port: 9898,
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
-				Threshold:  10,
-				Iterations: 10,
-				Match: []istiov1alpha3.HTTPMatchRequest{
-					{
-						Headers: map[string]istiov1alpha1.StringMatch{
-							"x-user-type": {
-								Exact: "test",
-							},
-						},
-					},
-				},
-				Metrics: []v1alpha3.CanaryMetric{
-					{
-						Name:      "istio_requests_total",
-						Threshold: 99,
-						Interval:  "1m",
-					},
-					{
-						Name:      "istio_request_duration_seconds_bucket",
-						Threshold: 500,
-						Interval:  "1m",
-					},
-				},
-			},
-		},
-	}
-	return cd
-}
-
 func newTestDeployment() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
@@ -325,13 +223,13 @@ func newTestDeployment() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": "podinfo",
+					"name": "podinfo",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "podinfo",
+						"name": "podinfo",
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -444,13 +342,13 @@ func newTestDeploymentV2() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": "podinfo",
+					"name": "podinfo",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "podinfo",
+						"name": "podinfo",
 					},
 				},
 				Spec: corev1.PodSpec{

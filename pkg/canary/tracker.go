@@ -1,4 +1,4 @@
-package controller
+package canary
 
 import (
 	"crypto/sha256"
@@ -16,9 +16,9 @@ import (
 
 // ConfigTracker is managing the operations for Kubernetes ConfigMaps and Secrets
 type ConfigTracker struct {
-	kubeClient    kubernetes.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
+	KubeClient    kubernetes.Interface
+	FlaggerClient clientset.Interface
+	Logger        *zap.SugaredLogger
 }
 
 type ConfigRefType string
@@ -50,7 +50,7 @@ func checksum(data interface{}) string {
 // getRefFromConfigMap transforms a Kubernetes ConfigMap into a ConfigRef
 // and computes the checksum of the ConfigMap data
 func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*ConfigRef, error) {
-	config, err := ct.kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	config, err := ct.KubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*Co
 // getRefFromConfigMap transforms a Kubernetes Secret into a ConfigRef
 // and computes the checksum of the Secret data
 func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*ConfigRef, error) {
-	secret, err := ct.kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	secret, err := ct.KubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 		secret.Type != corev1.SecretTypeBasicAuth &&
 		secret.Type != corev1.SecretTypeSSHAuth &&
 		secret.Type != corev1.SecretTypeTLS {
-		ct.logger.Debugf("ignoring secret %s.%s type not supported %v", name, namespace, secret.Type)
+		ct.Logger.Debugf("ignoring secret %s.%s type not supported %v", name, namespace, secret.Type)
 		return nil, nil
 	}
 
@@ -91,7 +91,7 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]ConfigRef, error) {
 	res := make(map[string]ConfigRef)
 	targetName := cd.Spec.TargetRef.Name
-	targetDep, err := ct.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	targetDep, err := ct.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return res, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
@@ -104,7 +104,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		if cmv := volume.ConfigMap; cmv != nil {
 			config, err := ct.getRefFromConfigMap(cmv.Name, cd.Namespace)
 			if err != nil {
-				ct.logger.Errorf("configMap %s.%s query error %v", cmv.Name, cd.Namespace, err)
+				ct.Logger.Errorf("configMap %s.%s query error %v", cmv.Name, cd.Namespace, err)
 				continue
 			}
 			if config != nil {
@@ -115,7 +115,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		if sv := volume.Secret; sv != nil {
 			secret, err := ct.getRefFromSecret(sv.SecretName, cd.Namespace)
 			if err != nil {
-				ct.logger.Errorf("secret %s.%s query error %v", sv.SecretName, cd.Namespace, err)
+				ct.Logger.Errorf("secret %s.%s query error %v", sv.SecretName, cd.Namespace, err)
 				continue
 			}
 			if secret != nil {
@@ -133,7 +133,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 					name := env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name
 					config, err := ct.getRefFromConfigMap(name, cd.Namespace)
 					if err != nil {
-						ct.logger.Errorf("configMap %s.%s query error %v", name, cd.Namespace, err)
+						ct.Logger.Errorf("configMap %s.%s query error %v", name, cd.Namespace, err)
 						continue
 					}
 					if config != nil {
@@ -143,7 +143,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 					name := env.ValueFrom.SecretKeyRef.LocalObjectReference.Name
 					secret, err := ct.getRefFromSecret(name, cd.Namespace)
 					if err != nil {
-						ct.logger.Errorf("secret %s.%s query error %v", name, cd.Namespace, err)
+						ct.Logger.Errorf("secret %s.%s query error %v", name, cd.Namespace, err)
 						continue
 					}
 					if secret != nil {
@@ -159,7 +159,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 				name := envFrom.ConfigMapRef.LocalObjectReference.Name
 				config, err := ct.getRefFromConfigMap(name, cd.Namespace)
 				if err != nil {
-					ct.logger.Errorf("configMap %s.%s query error %v", name, cd.Namespace, err)
+					ct.Logger.Errorf("configMap %s.%s query error %v", name, cd.Namespace, err)
 					continue
 				}
 				if config != nil {
@@ -169,7 +169,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 				name := envFrom.SecretRef.LocalObjectReference.Name
 				secret, err := ct.getRefFromSecret(name, cd.Namespace)
 				if err != nil {
-					ct.logger.Errorf("secret %s.%s query error %v", name, cd.Namespace, err)
+					ct.Logger.Errorf("secret %s.%s query error %v", name, cd.Namespace, err)
 					continue
 				}
 				if secret != nil {
@@ -221,7 +221,7 @@ func (ct *ConfigTracker) HasConfigChanged(cd *flaggerv1.Canary) (bool, error) {
 
 	for _, cfg := range configs {
 		if trackedConfigs[cfg.GetName()] != cfg.Checksum {
-			ct.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			ct.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
 				Infof("%s %s has changed", cfg.Type, cfg.Name)
 			return true, nil
 		}
@@ -236,7 +236,7 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 	for _, ref := range refs {
 		switch ref.Type {
 		case ConfigRefMap:
-			config, err := ct.kubeClient.CoreV1().ConfigMaps(cd.Namespace).Get(ref.Name, metav1.GetOptions{})
+			config, err := ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Get(ref.Name, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -258,10 +258,10 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 			}
 
 			// update or insert primary ConfigMap
-			_, err = ct.kubeClient.CoreV1().ConfigMaps(cd.Namespace).Update(primaryConfigMap)
+			_, err = ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Update(primaryConfigMap)
 			if err != nil {
 				if errors.IsNotFound(err) {
-					_, err = ct.kubeClient.CoreV1().ConfigMaps(cd.Namespace).Create(primaryConfigMap)
+					_, err = ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Create(primaryConfigMap)
 					if err != nil {
 						return err
 					}
@@ -270,10 +270,10 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 				}
 			}
 
-			ct.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			ct.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
 				Infof("ConfigMap %s synced", primaryConfigMap.GetName())
 		case ConfigRefSecret:
-			secret, err := ct.kubeClient.CoreV1().Secrets(cd.Namespace).Get(ref.Name, metav1.GetOptions{})
+			secret, err := ct.KubeClient.CoreV1().Secrets(cd.Namespace).Get(ref.Name, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -296,10 +296,10 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 			}
 
 			// update or insert primary Secret
-			_, err = ct.kubeClient.CoreV1().Secrets(cd.Namespace).Update(primarySecret)
+			_, err = ct.KubeClient.CoreV1().Secrets(cd.Namespace).Update(primarySecret)
 			if err != nil {
 				if errors.IsNotFound(err) {
-					_, err = ct.kubeClient.CoreV1().Secrets(cd.Namespace).Create(primarySecret)
+					_, err = ct.KubeClient.CoreV1().Secrets(cd.Namespace).Create(primarySecret)
 					if err != nil {
 						return err
 					}
@@ -308,7 +308,7 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 				}
 			}
 
-			ct.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			ct.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
 				Infof("Secret %s synced", primarySecret.GetName())
 		}
 	}
