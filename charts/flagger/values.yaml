@@ -1,8 +1,8 @@
 # Default values for flagger.
 
 image:
-  repository: quay.io/weaveworks/flagger
-  tag: 0.10.0
+  repository: weaveworks/flagger
+  tag: 0.11.0
   pullPolicy: IfNotPresent
 
 metricsServer: "http://prometheus:9090"
