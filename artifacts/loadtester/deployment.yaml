@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: loadtester
-          image: quay.io/stefanprodan/flagger-loadtester:0.2.0
+          image: weaveworks/flagger-loadtester:0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
