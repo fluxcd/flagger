@@ -19,7 +19,7 @@ func TestCallWebhook(t *testing.T) {
 		Metadata: &map[string]string{"key1": "val1"},
 	}
 
-	err := CallWebhook("podinfo", "default", hook)
+	err := CallWebhook("podinfo", "default", flaggerv1.CanaryProgressing, hook)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -35,7 +35,7 @@ func TestCallWebhook_StatusCode(t *testing.T) {
 		URL:  ts.URL,
 	}
 
-	err := CallWebhook("podinfo", "default", hook)
+	err := CallWebhook("podinfo", "default", flaggerv1.CanaryProgressing, hook)
 	if err == nil {
 		t.Errorf("Got no error wanted %v", http.StatusInternalServerError)
 	}

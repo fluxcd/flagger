@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.11.0 (2019-04-17) 
+
+Adds pre/post rollout [webhooks](https://docs.flagger.app/how-it-works#webhooks)
+
+#### Features
+
+- Add `pre-rollout` and `post-rollout` webhook types [#147](https://github.com/weaveworks/flagger/pull/147)
+
+#### Improvements 
+
+- Unify App Mesh and Istio builtin metric checks [#146](https://github.com/weaveworks/flagger/pull/146) 
+- Make the pod selector label configurable [#148](https://github.com/weaveworks/flagger/pull/148)
+
+#### Breaking changes
+
+- Set default `mesh` Istio gateway only if no gateway is specified [#141](https://github.com/weaveworks/flagger/pull/141)
+
 ## 0.10.0 (2019-03-27) 
 
 Adds support for App Mesh

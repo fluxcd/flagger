@@ -24,6 +24,7 @@ type TaskBase struct {
 func (task *TaskBase) Canary() string {
 	return task.canary
 }
+
 func hash(str string) string {
 	fnvHash := fnv.New32()
 	fnvBytes := fnvHash.Sum([]byte(str))

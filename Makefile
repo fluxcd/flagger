@@ -88,5 +88,5 @@ reset-test:
 	kubectl apply -f ./artifacts/canaries
 
 loadtester-push:
-	docker build -t quay.io/weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
-	docker push quay.io/weaveworks/flagger-loadtester:$(LT_VERSION)
+	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
+	docker push weaveworks/flagger-loadtester:$(LT_VERSION)

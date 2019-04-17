@@ -148,11 +148,24 @@ type CanaryMetric struct {
 	Query string `json:"query,omitempty"`
 }
 
+// HookType can be pre, post or during rollout
+type HookType string
+
+const (
+	// RolloutHook execute webhook during the canary analysis
+	RolloutHook HookType = "rollout"
+	// PreRolloutHook execute webhook before routing traffic to canary
+	PreRolloutHook HookType = "pre-rollout"
+	// PreRolloutHook execute webhook after the canary analysis
+	PostRolloutHook HookType = "post-rollout"
+)
+
 // CanaryWebhook holds the reference to external checks used for canary analysis
 type CanaryWebhook struct {
-	Name    string `json:"name"`
-	URL     string `json:"url"`
-	Timeout string `json:"timeout"`
+	Type    HookType `json:"type"`
+	Name    string   `json:"name"`
+	URL     string   `json:"url"`
+	Timeout string   `json:"timeout"`
 	// +optional
 	Metadata *map[string]string `json:"metadata,omitempty"`
 }
@@ -161,6 +174,7 @@ type CanaryWebhook struct {
 type CanaryWebhookPayload struct {
 	Name      string            `json:"name"`
 	Namespace string            `json:"namespace"`
+	Phase     CanaryPhase       `json:"phase"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
 }
 

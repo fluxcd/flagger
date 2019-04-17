@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/weaveworks/flagger/pkg/loadtester"
-	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logger"
 	"github.com/weaveworks/flagger/pkg/signals"
 	"go.uber.org/zap"
 	"log"
@@ -30,7 +30,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	logger, err := logging.NewLoggerWithEncoding(logLevel, zapEncoding)
+	logger, err := logger.NewLoggerWithEncoding(logLevel, zapEncoding)
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}

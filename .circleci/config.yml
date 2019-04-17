@@ -17,6 +17,6 @@ workflows:
           filters:
             branches:
               ignore:
-                - gh-pages
+                - /gh-pages.*/
                 - /docs-.*/
                 - /release-.*/

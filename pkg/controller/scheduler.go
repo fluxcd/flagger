@@ -91,7 +91,8 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	// create primary deployment and hpa if needed
-	if err := c.deployer.Sync(cd); err != nil {
+	label, err := c.deployer.Initialize(cd)
+	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -100,7 +101,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	meshRouter := c.routerFactory.MeshRouter(c.meshProvider)
 
 	// create or update ClusterIP services
-	if err := c.routerFactory.KubernetesRouter().Reconcile(cd); err != nil {
+	if err := c.routerFactory.KubernetesRouter(label).Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -111,7 +112,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	shouldAdvance, err := c.deployer.ShouldAdvance(cd)
+	shouldAdvance, err := c.shouldAdvance(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -240,6 +241,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 
 		c.recorder.SetStatus(cd, flaggerv1.CanaryFailed)
+		c.runPostRolloutHooks(cd, flaggerv1.CanaryFailed)
 		return
 	}
 
@@ -247,6 +249,15 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	// skip check if no traffic is routed to canary
 	if canaryWeight == 0 {
 		c.recordEventInfof(cd, "Starting canary analysis for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+
+		// run pre-rollout web hooks
+		if ok := c.runPreRolloutHooks(cd); !ok {
+			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			return
+		}
 	} else {
 		if ok := c.analyseCanary(cd); !ok {
 			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
@@ -314,6 +325,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				return
 			}
 			c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
+			c.runPostRolloutHooks(cd, flaggerv1.CanarySucceeded)
 			c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 				false, false)
 			return
@@ -380,6 +392,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 		c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
+		c.runPostRolloutHooks(cd, flaggerv1.CanarySucceeded)
 		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 			false, false)
 	}
@@ -429,6 +442,28 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	return true
 }
 
+func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
+	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryProgressing {
+		return true, nil
+	}
+
+	newDep, err := c.deployer.HasDeploymentChanged(cd)
+	if err != nil {
+		return false, err
+	}
+	if newDep {
+		return newDep, nil
+	}
+
+	newCfg, err := c.deployer.ConfigTracker.HasConfigChanged(cd)
+	if err != nil {
+		return false, err
+	}
+
+	return newCfg, nil
+
+}
+
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
 	c.recorder.SetStatus(cd, cd.Status.Phase)
 	if cd.Status.Phase == flaggerv1.CanaryProgressing {
@@ -467,24 +502,57 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 
 func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 	if cd.Status.Phase == flaggerv1.CanaryProgressing {
-		if diff, _ := c.deployer.IsNewSpec(cd); diff {
+		if diff, _ := c.deployer.HasDeploymentChanged(cd); diff {
 			return true
 		}
-		if diff, _ := c.deployer.configTracker.HasConfigChanged(cd); diff {
+		if diff, _ := c.deployer.ConfigTracker.HasConfigChanged(cd); diff {
 			return true
 		}
 	}
 	return false
 }
 
+func (c *Controller) runPreRolloutHooks(canary *flaggerv1.Canary) bool {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
+		if webhook.Type == flaggerv1.PreRolloutHook {
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryProgressing, webhook)
+			if err != nil {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement pre-rollout check %s failed %v",
+					canary.Name, canary.Namespace, webhook.Name, err)
+				return false
+			} else {
+				c.recordEventInfof(canary, "Pre-rollout check %s passed", webhook.Name)
+			}
+		}
+	}
+	return true
+}
+
+func (c *Controller) runPostRolloutHooks(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) bool {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
+		if webhook.Type == flaggerv1.PostRolloutHook {
+			err := CallWebhook(canary.Name, canary.Namespace, phase, webhook)
+			if err != nil {
+				c.recordEventWarningf(canary, "Post-rollout hook %s failed %v", webhook.Name, err)
+				return false
+			} else {
+				c.recordEventInfof(canary, "Post-rollout check %s passed", webhook.Name)
+			}
+		}
+	}
+	return true
+}
+
 func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
-		err := CallWebhook(r.Name, r.Namespace, webhook)
-		if err != nil {
-			c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
-				r.Name, r.Namespace, webhook.Name, err)
-			return false
+		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
+			err := CallWebhook(r.Name, r.Namespace, flaggerv1.CanaryProgressing, webhook)
+			if err != nil {
+				c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
+					r.Name, r.Namespace, webhook.Name, err)
+				return false
+			}
 		}
 	}
 
@@ -494,56 +562,77 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 			metric.Interval = r.GetMetricInterval()
 		}
 
-		if metric.Name == "envoy_cluster_upstream_rq" {
-			val, err := c.observer.GetEnvoySuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
-			if err != nil {
-				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
-				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
+		// App Mesh checks
+		if c.meshProvider == "appmesh" {
+			if metric.Name == "request-success-rate" || metric.Name == "envoy_cluster_upstream_rq" {
+				val, err := c.observer.GetEnvoySuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+				if err != nil {
+					if strings.Contains(err.Error(), "no values found") {
+						c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+							metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					} else {
+						c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
+					}
+					return false
 				}
-				return false
-			}
-			if float64(metric.Threshold) > val {
-				c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
-					r.Name, r.Namespace, val, metric.Threshold)
-				return false
-			}
-		}
-
-		if metric.Name == "istio_requests_total" {
-			val, err := c.observer.GetIstioSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
-			if err != nil {
-				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
-				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
+				if float64(metric.Threshold) > val {
+					c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
+						r.Name, r.Namespace, val, metric.Threshold)
+					return false
 				}
-				return false
 			}
-			if float64(metric.Threshold) > val {
-				c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
-					r.Name, r.Namespace, val, metric.Threshold)
-				return false
+
+			if metric.Name == "request-duration" || metric.Name == "envoy_cluster_upstream_rq_time_bucket" {
+				val, err := c.observer.GetEnvoyRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+				if err != nil {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
+					return false
+				}
+				t := time.Duration(metric.Threshold) * time.Millisecond
+				if val > t {
+					c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
+						r.Name, r.Namespace, val, t)
+					return false
+				}
 			}
 		}
 
-		if metric.Name == "istio_request_duration_seconds_bucket" {
-			val, err := c.observer.GetIstioRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
-			if err != nil {
-				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
-				return false
+		// Istio checks
+		if c.meshProvider == "istio" {
+			if metric.Name == "request-success-rate" || metric.Name == "istio_requests_total" {
+				val, err := c.observer.GetIstioSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+				if err != nil {
+					if strings.Contains(err.Error(), "no values found") {
+						c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+							metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					} else {
+						c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
+					}
+					return false
+				}
+				if float64(metric.Threshold) > val {
+					c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
+						r.Name, r.Namespace, val, metric.Threshold)
+					return false
+				}
 			}
-			t := time.Duration(metric.Threshold) * time.Millisecond
-			if val > t {
-				c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
-					r.Name, r.Namespace, val, t)
-				return false
+
+			if metric.Name == "request-duration" || metric.Name == "istio_request_duration_seconds_bucket" {
+				val, err := c.observer.GetIstioRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
+				if err != nil {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
+					return false
+				}
+				t := time.Duration(metric.Threshold) * time.Millisecond
+				if val > t {
+					c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
+						r.Name, r.Namespace, val, t)
+					return false
+				}
 			}
 		}
 
+		// custom checks
 		if metric.Query != "" {
 			val, err := c.observer.GetScalar(metric.Query)
 			if err != nil {

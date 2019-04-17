@@ -44,6 +44,27 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			if !ok {
 				typ = TaskTypeShell
 			}
+
+			// run bats command (blocking task)
+			if typ == TaskTypeBats {
+				bats := BatsTask{
+					command:      payload.Metadata["cmd"],
+					logCmdOutput: taskRunner.logCmdOutput,
+				}
+
+				ctx, cancel := context.WithTimeout(context.Background(), taskRunner.timeout)
+				defer cancel()
+
+				ok, err := bats.Run(ctx)
+				if !ok {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+				}
+
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			taskFactory, ok := GetTaskFactory(typ)
 			if !ok {
 				w.WriteHeader(http.StatusBadRequest)

@@ -42,13 +42,13 @@ spec:
   canaryAnalysis:
     interval: 15s
     threshold: 15
-    maxWeight: 50
+    maxWeight: 30
     stepWeight: 10
     metrics:
-    - name: istio_requests_total
+    - name: request-success-rate
       threshold: 99
       interval: 1m
-    - name: istio_request_duration_seconds_bucket
+    - name: request-duration
       threshold: 500
       interval: 30s
     - name: "404s percentage"
@@ -83,7 +83,6 @@ spec:
           type: cmd
           cmd: "hey -z 10m -q 10 -c 2 http://podinfo.test:9898/"
           logCmdOutput: "true"
-
 EOF
 
 echo '>>> Waiting for primary to be ready'
@@ -125,6 +124,77 @@ until ${ok}; do
 done
 
 echo '✔ Canary promotion test passed'
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  progressDeadlineSeconds: 60
+  service:
+    port: 9898
+  canaryAnalysis:
+    interval: 10s
+    threshold: 5
+    iterations: 5
+    match:
+      - headers:
+          cookie:
+            regex: "^(.*?;)?(type=insider)(;.*)?$"
+    metrics:
+    - name: request-success-rate
+      threshold: 99
+      interval: 1m
+    - name: request-duration
+      threshold: 500
+      interval: 30s
+    webhooks:
+      - name: pre
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 10m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo-canary.test:9898/"
+          logCmdOutput: "true"
+      - name: post
+        type: post-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 15s
+        metadata:
+          type: cmd
+          cmd: "curl -s http://podinfo.test:9898/"
+          logCmdOutput: "true"
+EOF
+
+echo '>>> Triggering A/B testing'
+kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.2
+
+echo '>>> Waiting for A/B testing promotion'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test describe deployment/podinfo-primary | grep '1.4.2' && ok=true || ok=false
+    sleep 10
+    kubectl -n istio-system logs deployment/flagger --tail 1
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n test describe deployment/podinfo
+        kubectl -n test describe deployment/podinfo-primary
+        kubectl -n istio-system logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
+echo '✔ A/B testing promotion test passed'
 
 kubectl -n istio-system logs deployment/flagger
 

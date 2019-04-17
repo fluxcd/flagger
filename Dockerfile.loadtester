@@ -1,20 +1,4 @@
-FROM golang:1.12 AS hey-builder
-
-RUN mkdir -p /go/src/github.com/rakyll/hey/
-
-WORKDIR /go/src/github.com/rakyll/hey
-
-ADD https://github.com/rakyll/hey/archive/v0.1.1.tar.gz .
-
-RUN tar xzf v0.1.1.tar.gz --strip 1
-
-RUN go get ./...
-
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-  go install -ldflags '-w -extldflags "-static"' \
-  /go/src/github.com/rakyll/hey
-
-FROM golang:1.11 AS builder
+FROM golang:1.12 AS builder
 
 RUN mkdir -p /go/src/github.com/weaveworks/flagger/
 
@@ -26,15 +10,17 @@ RUN go test -race ./pkg/loadtester/
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o loadtester ./cmd/loadtester/*
 
-FROM alpine:3.9
+FROM bats/bats:v1.1.0
 
 RUN addgroup -S app \
     && adduser -S -g app app \
-    && apk --no-cache add ca-certificates curl
+    && apk --no-cache add ca-certificates curl jq
 
 WORKDIR /home/app
 
-COPY --from=hey-builder /go/bin/hey /usr/local/bin/hey
+RUN curl -sSLo hey "https://storage.googleapis.com/jblabs/dist/hey_linux_v0.1.2" && \
+chmod +x hey && mv hey /usr/local/bin/hey
+
 COPY --from=builder /go/src/github.com/weaveworks/flagger/loadtester .
 
 RUN chown -R app:app ./

@@ -6,7 +6,7 @@ import (
 	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
-	"github.com/weaveworks/flagger/pkg/logging"
+	"github.com/weaveworks/flagger/pkg/logger"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v1"
@@ -35,7 +35,7 @@ func setupfakeClients() fakeClients {
 	kubeClient := fake.NewSimpleClientset(newMockDeployment(), newMockABTestDeployment())
 
 	meshClient := fakeFlagger.NewSimpleClientset()
-	logger, _ := logging.NewLogger("debug")
+	logger, _ := logger.NewLogger("debug")
 
 	return fakeClients{
 		canary:        canary,
