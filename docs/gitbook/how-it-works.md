@@ -56,14 +56,14 @@ spec:
     # canary increment step
     # percentage (0-100)
     stepWeight: 5
-    # Istio Prometheus checks
+    # Prometheus checks
     metrics:
-    - name: istio_requests_total
+    - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       threshold: 99
       interval: 1m
-    - name: istio_request_duration_seconds_bucket
+    - name: request-duration
       # maximum req duration P99
       # milliseconds
       threshold: 500
@@ -398,14 +398,14 @@ Spec:
 ```yaml
   canaryAnalysis:
     metrics:
-    - name: istio_requests_total
+    - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       threshold: 99
       interval: 1m
 ```
 
-Query:
+Istio query:
 
 ```javascript
 sum(
@@ -430,6 +430,29 @@ sum(
 )
 ```
 
+App Mesh query:
+
+```javascript
+sum(
+    rate(
+        envoy_cluster_upstream_rq{
+          kubernetes_namespace="$namespace",
+          kubernetes_pod_name=~"$workload",
+          response_code!~"5.*"
+        }[$interval]
+    )
+) 
+/ 
+sum(
+    rate(
+        envoy_cluster_upstream_rq{
+          kubernetes_namespace="$namespace",
+          kubernetes_pod_name=~"$workload"
+        }[$interval]
+    )
+)
+```
+
 **HTTP requests milliseconds duration P99**
 
 Spec:
@@ -437,14 +460,14 @@ Spec:
 ```yaml
   canaryAnalysis:
     metrics:
-    - name: istio_request_duration_seconds_bucket
+    - name: request-duration
       # maximum req duration P99
       # milliseconds
       threshold: 500
       interval: 1m
 ```
 
-Query:
+Istio query:
 
 ```javascript
 histogram_quantile(0.99, 
@@ -454,6 +477,21 @@ histogram_quantile(0.99,
         reporter="destination",
         destination_workload=~"$workload",
         destination_workload_namespace=~"$namespace"
+      }[$interval]
+    )
+  ) by (le)
+)
+```
+
+App Mesh query:
+
+```javascript
+histogram_quantile(0.99, 
+  sum(
+    irate(
+      envoy_cluster_upstream_rq_time_bucket{
+        kubernetes_pod_name=~"$workload",
+        kubernetes_namespace=~"$namespace"
       }[$interval]
     )
   ) by (le)
