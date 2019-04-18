@@ -243,11 +243,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2e6e20169542dbe9c8c177555b9dfec8ada0931cb6e136ffdcc4fe23dcae45de"
+  digest = "1:755d83f10748295646cf74cd19611ebffad37807e49632feb8e3f47d43210c3d"
   name = "github.com/stefanprodan/klog"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "24e46756647dfe5806bc0cb0b67ca51e9883d247"
+  revision = "9cbb78b20423182f9e5b2a214dd255f5e117d2d1"
 
 [[projects]]
   digest = "1:22f696cee54865fb8e9ff91df7b633f6b8f22037a8015253c6b6a71ca82219c7"
@@ -670,11 +670,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2e6e20169542dbe9c8c177555b9dfec8ada0931cb6e136ffdcc4fe23dcae45de"
+  digest = "1:755d83f10748295646cf74cd19611ebffad37807e49632feb8e3f47d43210c3d"
   name = "k8s.io/klog"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "24e46756647dfe5806bc0cb0b67ca51e9883d247"
+  revision = "9cbb78b20423182f9e5b2a214dd255f5e117d2d1"
   source = "github.com/stefanprodan/klog"
 
 [[projects]]

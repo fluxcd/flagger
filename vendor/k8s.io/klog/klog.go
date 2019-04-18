@@ -21,6 +21,7 @@
 package klog
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -277,3 +278,5 @@ func Exitf(format string, args ...interface{}) {
 	skipLogger().Errorf(format, args...)
 	os.Exit(1)
 }
+
+func InitFlags(flagset *flag.FlagSet) {}
