@@ -43,12 +43,12 @@ spec:
           cookie:
             regex: "^(.*?;)?(type=insider)(;.*)?$"
     metrics:
-    - name: istio_requests_total
+    - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       threshold: 99
       interval: 1m
-    - name: istio_request_duration_seconds_bucket
+    - name: request-duration
       # maximum req duration P99
       # milliseconds
       threshold: 500

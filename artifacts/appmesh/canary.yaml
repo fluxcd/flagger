@@ -36,7 +36,7 @@ spec:
     stepWeight: 5
     # App Mesh Prometheus checks
     metrics:
-    - name: envoy_cluster_upstream_rq
+    - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       threshold: 99
