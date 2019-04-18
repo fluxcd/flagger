@@ -32,10 +32,10 @@ spec:
     maxWeight: {{ .Values.canary.analysis.maxWeight }}
     stepWeight: {{ .Values.canary.analysis.stepWeight }}
     metrics:
-    - name: istio_requests_total
+    - name: request-success-rate
       threshold: {{ .Values.canary.thresholds.successRate }}
       interval: 1m
-    - name: istio_request_duration_seconds_bucket
+    - name: request-duration
       threshold: {{ .Values.canary.thresholds.latency }}
       interval: 1m
     {{- if .Values.canary.loadtest.enabled }}
