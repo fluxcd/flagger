@@ -131,7 +131,7 @@ func (c *FakeCanaries) DeleteCollection(options *v1.DeleteOptions, listOptions v
 // Patch applies the patch and returns the patched canary.
 func (c *FakeCanaries) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha3.Canary, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(canariesResource, c.ns, name, data, subresources...), &v1alpha3.Canary{})
+		Invokes(testing.NewPatchSubresourceAction(canariesResource, c.ns, name, pt, data, subresources...), &v1alpha3.Canary{})
 
 	if obj == nil {
 		return nil, err

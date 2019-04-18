@@ -4,6 +4,7 @@ VERSION_MINOR:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 
 PATCH:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | awk -F. '{print $$NF}')
 SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/logging pkg/version
 LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' | tr -d '"' | head -n1)
+TS=$(shell date +%Y-%m-%d_%H-%M-%S)
 
 run:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info \
@@ -21,8 +22,8 @@ build:
 	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
 
 push:
-	docker tag weaveworks/flagger:$(TAG) quay.io/weaveworks/flagger:$(VERSION)
-	docker push quay.io/weaveworks/flagger:$(VERSION)
+	docker tag weaveworks/flagger:$(TAG) weaveworks/flagger:$(VERSION)
+	docker push weaveworks/flagger:$(VERSION)
 
 fmt:
 	gofmt -l -s -w $(SOURCE_DIRS)

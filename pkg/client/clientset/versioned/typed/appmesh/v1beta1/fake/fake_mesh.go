@@ -123,7 +123,7 @@ func (c *FakeMeshes) DeleteCollection(options *v1.DeleteOptions, listOptions v1.
 // Patch applies the patch and returns the patched mesh.
 func (c *FakeMeshes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.Mesh, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(meshesResource, name, data, subresources...), &v1beta1.Mesh{})
+		Invokes(testing.NewRootPatchSubresourceAction(meshesResource, name, pt, data, subresources...), &v1beta1.Mesh{})
 	if obj == nil {
 		return nil, err
 	}

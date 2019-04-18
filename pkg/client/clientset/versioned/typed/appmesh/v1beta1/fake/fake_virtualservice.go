@@ -131,7 +131,7 @@ func (c *FakeVirtualServices) DeleteCollection(options *v1.DeleteOptions, listOp
 // Patch applies the patch and returns the patched virtualService.
 func (c *FakeVirtualServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(virtualservicesResource, c.ns, name, data, subresources...), &v1beta1.VirtualService{})
+		Invokes(testing.NewPatchSubresourceAction(virtualservicesResource, c.ns, name, pt, data, subresources...), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err

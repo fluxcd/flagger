@@ -1004,7 +1004,25 @@ func GetsockoptString(fd, level, opt int) (string, error) {
 	return string(buf[:vallen-1]), nil
 }
 
+func GetsockoptTpacketStats(fd, level, opt int) (*TpacketStats, error) {
+	var value TpacketStats
+	vallen := _Socklen(SizeofTpacketStats)
+	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
+	return &value, err
+}
+
+func GetsockoptTpacketStatsV3(fd, level, opt int) (*TpacketStatsV3, error) {
+	var value TpacketStatsV3
+	vallen := _Socklen(SizeofTpacketStatsV3)
+	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
+	return &value, err
+}
+
 func SetsockoptIPMreqn(fd, level, opt int, mreq *IPMreqn) (err error) {
+	return setsockopt(fd, level, opt, unsafe.Pointer(mreq), unsafe.Sizeof(*mreq))
+}
+
+func SetsockoptPacketMreq(fd, level, opt int, mreq *PacketMreq) error {
 	return setsockopt(fd, level, opt, unsafe.Pointer(mreq), unsafe.Sizeof(*mreq))
 }
 
@@ -1020,6 +1038,14 @@ func SetsockoptCanRawFilter(fd, level, opt int, filter []CanFilter) error {
 		p = unsafe.Pointer(&filter[0])
 	}
 	return setsockopt(fd, level, opt, p, uintptr(len(filter)*SizeofCanFilter))
+}
+
+func SetsockoptTpacketReq(fd, level, opt int, tp *TpacketReq) error {
+	return setsockopt(fd, level, opt, unsafe.Pointer(tp), unsafe.Sizeof(*tp))
+}
+
+func SetsockoptTpacketReq3(fd, level, opt int, tp *TpacketReq3) error {
+	return setsockopt(fd, level, opt, unsafe.Pointer(tp), unsafe.Sizeof(*tp))
 }
 
 // Keyctl Commands (http://man7.org/linux/man-pages/man2/keyctl.2.html)
