@@ -2,7 +2,11 @@ package main
 
 import (
 	"flag"
-	_ "github.com/istio/glog"
+	"log"
+	"strings"
+	"time"
+
+	_ "github.com/stefanprodan/klog"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
@@ -17,9 +21,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"log"
-	"strings"
-	"time"
 )
 
 var (
