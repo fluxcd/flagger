@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.11.1 (2019-04-18) 
+
+Move Flagger and the load tester container images to Docker Hub
+
+#### Features
+
+- Add Bash Automated Testing System support to Flagger tester for running acceptance tests as pre-rollout hooks 
+
 ## 0.11.0 (2019-04-17) 
 
 Adds pre/post rollout [webhooks](https://docs.flagger.app/how-it-works#webhooks)

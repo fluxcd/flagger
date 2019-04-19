@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/istio/glog"
+	_ "github.com/stefanprodan/klog"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
