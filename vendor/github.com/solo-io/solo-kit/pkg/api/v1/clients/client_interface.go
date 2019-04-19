@@ -62,9 +62,16 @@ func (o ReadOpts) WithDefaults() ReadOpts {
 	return o
 }
 
+type StorageWriteOpts interface {
+	StorageWriteOptsTag()
+}
+
 type WriteOpts struct {
 	Ctx               context.Context
 	OverwriteExisting bool
+
+	// Implementation dependant write opts
+	StorageWriteOpts StorageWriteOpts
 }
 
 func (o WriteOpts) WithDefaults() WriteOpts {

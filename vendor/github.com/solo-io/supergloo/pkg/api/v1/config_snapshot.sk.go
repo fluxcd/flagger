@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	core_kubernetes_io "github.com/solo-io/supergloo/pkg/api/external/kubernetes/core/v1"
 
 	"github.com/solo-io/solo-kit/pkg/utils/hashutils"
 	"go.uber.org/zap"
@@ -20,7 +19,7 @@ type ConfigSnapshot struct {
 	Securityrules SecurityrulesByNamespace
 	Tlssecrets    TlssecretsByNamespace
 	Upstreams     gloo_solo_io.UpstreamsByNamespace
-	Pods          core_kubernetes_io.PodsByNamespace
+	Pods          PodsByNamespace
 }
 
 func (s ConfigSnapshot) Clone() ConfigSnapshot {

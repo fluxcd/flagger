@@ -25,7 +25,7 @@ import (
 
 var (
 	MLists   = stats.Int64("kube/lists", "The number of lists", "1")
-	MWatches = stats.Int64("kube/lists", "The number of watches", "1")
+	MWatches = stats.Int64("kube/watches", "The number of watches", "1")
 
 	KeyKind, _          = tag.NewKey("kind")
 	KeyNamespaceKind, _ = tag.NewKey("ns")

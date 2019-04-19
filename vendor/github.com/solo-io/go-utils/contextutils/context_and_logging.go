@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type loggerKey struct{}
@@ -31,8 +32,14 @@ type loggerKey struct{}
 // that code that doesn't set the logger correctly can be caught at runtime.
 var fallbackLogger *zap.SugaredLogger
 
+func buildLogger() (*zap.Logger, error) {
+	config := zap.NewProductionConfig()
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	return config.Build()
+}
+
 func init() {
-	if logger, err := zap.NewProduction(); err != nil {
+	if logger, err := buildLogger(); err != nil {
 
 		// We failed to create a fallback logger. Our fallback
 		// unfortunately falls back to noop.

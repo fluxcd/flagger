@@ -11,6 +11,7 @@ import (
 
 	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
+	"github.com/solo-io/solo-kit/pkg/api/v1/eventloop"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/errutils"
 )
@@ -31,16 +32,12 @@ func (s RegistrationSyncers) Sync(ctx context.Context, snapshot *RegistrationSna
 	return multiErr.ErrorOrNil()
 }
 
-type RegistrationEventLoop interface {
-	Run(namespaces []string, opts clients.WatchOpts) (<-chan error, error)
-}
-
 type registrationEventLoop struct {
 	emitter RegistrationEmitter
 	syncer  RegistrationSyncer
 }
 
-func NewRegistrationEventLoop(emitter RegistrationEmitter, syncer RegistrationSyncer) RegistrationEventLoop {
+func NewRegistrationEventLoop(emitter RegistrationEmitter, syncer RegistrationSyncer) eventloop.EventLoop {
 	return &registrationEventLoop{
 		emitter: emitter,
 		syncer:  syncer,

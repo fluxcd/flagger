@@ -17,14 +17,16 @@ type KubeCoreCache interface {
 	PodLister() kubelisters.PodLister
 	ConfigMapLister() kubelisters.ConfigMapLister
 	SecretLister() kubelisters.SecretLister
+	NamespaceLister() kubelisters.NamespaceLister
 	Subscribe() <-chan struct{}
 	Unsubscribe(<-chan struct{})
 }
 
-type KubeCoreCaches struct {
+type kubeCoreCaches struct {
 	podLister       kubelisters.PodLister
 	configMapLister kubelisters.ConfigMapLister
 	secretLister    kubelisters.SecretLister
+	namespaceLister kubelisters.NamespaceLister
 
 	cacheUpdatedWatchers      []chan struct{}
 	cacheUpdatedWatchersMutex sync.Mutex
@@ -32,23 +34,29 @@ type KubeCoreCaches struct {
 
 // This context should live as long as the cache is desired. i.e. if the cache is shared
 // across clients, it should get a context that has a longer lifetime than the clients themselves
-func NewKubeCoreCache(ctx context.Context, client kubernetes.Interface) (*KubeCoreCaches, error) {
+func NewKubeCoreCache(ctx context.Context, client kubernetes.Interface) (*kubeCoreCaches, error) {
 	resyncDuration := 12 * time.Hour
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(client, resyncDuration)
 
 	pods := kubeInformerFactory.Core().V1().Pods()
 	configMaps := kubeInformerFactory.Core().V1().ConfigMaps()
 	secrets := kubeInformerFactory.Core().V1().Secrets()
+	namespaces := kubeInformerFactory.Core().V1().Namespaces()
 
-	k := &KubeCoreCaches{
+	k := &kubeCoreCaches{
 		podLister:       pods.Lister(),
 		configMapLister: configMaps.Lister(),
 		secretLister:    secrets.Lister(),
+		namespaceLister: namespaces.Lister(),
 	}
 
 	kubeController := controller.NewController("kube-plugin-controller",
 		controller.NewLockingSyncHandler(k.updatedOccured),
-		pods.Informer(), configMaps.Informer(), secrets.Informer())
+		pods.Informer(),
+		configMaps.Informer(),
+		secrets.Informer(),
+		namespaces.Informer(),
+	)
 
 	stop := ctx.Done()
 	err := kubeController.Run(2, stop)
@@ -59,19 +67,24 @@ func NewKubeCoreCache(ctx context.Context, client kubernetes.Interface) (*KubeCo
 	return k, nil
 }
 
-func (k *KubeCoreCaches) PodLister() kubelisters.PodLister {
+func (k *kubeCoreCaches) PodLister() kubelisters.PodLister {
 	return k.podLister
 }
 
-func (k *KubeCoreCaches) ConfigMapLister() kubelisters.ConfigMapLister {
+func (k *kubeCoreCaches) ConfigMapLister() kubelisters.ConfigMapLister {
 	return k.configMapLister
 }
 
-func (k *KubeCoreCaches) SecretLister() kubelisters.SecretLister {
+func (k *kubeCoreCaches) SecretLister() kubelisters.SecretLister {
 	return k.secretLister
 }
 
-func (k *KubeCoreCaches) Subscribe() <-chan struct{} {
+func (k *kubeCoreCaches) NamespaceLister() kubelisters.NamespaceLister {
+	return k.namespaceLister
+}
+
+
+func (k *kubeCoreCaches) Subscribe() <-chan struct{} {
 	k.cacheUpdatedWatchersMutex.Lock()
 	defer k.cacheUpdatedWatchersMutex.Unlock()
 	c := make(chan struct{}, 10)
@@ -79,7 +92,7 @@ func (k *KubeCoreCaches) Subscribe() <-chan struct{} {
 	return c
 }
 
-func (k *KubeCoreCaches) Unsubscribe(c <-chan struct{}) {
+func (k *kubeCoreCaches) Unsubscribe(c <-chan struct{}) {
 	k.cacheUpdatedWatchersMutex.Lock()
 	defer k.cacheUpdatedWatchersMutex.Unlock()
 	for i, cacheUpdated := range k.cacheUpdatedWatchers {
@@ -90,7 +103,7 @@ func (k *KubeCoreCaches) Unsubscribe(c <-chan struct{}) {
 	}
 }
 
-func (k *KubeCoreCaches) updatedOccured() {
+func (k *kubeCoreCaches) updatedOccured() {
 	k.cacheUpdatedWatchersMutex.Lock()
 	defer k.cacheUpdatedWatchersMutex.Unlock()
 	for _, cacheUpdated := range k.cacheUpdatedWatchers {

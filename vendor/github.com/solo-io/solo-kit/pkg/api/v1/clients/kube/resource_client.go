@@ -86,6 +86,17 @@ func init() {
 	view.Register(CreateCountView, UpdateCountView, DeleteCountView, InFlightSumView, EventsCountView)
 }
 
+// Kuberenetes specific write options.
+// Allows modifing a resource just before it is written.
+// This allows to make kubernetes specific changes, like adding an owner reference.
+type KubeWriteOpts struct {
+	PreWriteCallback func(r *v1.Resource)
+}
+
+func (*KubeWriteOpts) StorageWriteOptsTag() {}
+
+var _ clients.StorageWriteOpts = new(KubeWriteOpts)
+
 // lazy start in list & watch
 // register informers in register
 type ResourceClient struct {
@@ -189,6 +200,12 @@ func (rc *ResourceClient) Write(resource resources.Resource, opts clients.WriteO
 	ctx := opts.Ctx
 	if ctxWithTags, err := tag.New(ctx, tag.Insert(KeyKind, rc.resourceName), tag.Insert(KeyOpKind, "write")); err == nil {
 		ctx = ctxWithTags
+	}
+
+	if opts.StorageWriteOpts != nil {
+		if kubeOpts, ok := opts.StorageWriteOpts.(*KubeWriteOpts); ok {
+			kubeOpts.PreWriteCallback(resourceCrd)
+		}
 	}
 
 	if rc.exist(ctx, meta.Namespace, meta.Name) {

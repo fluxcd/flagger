@@ -10,6 +10,22 @@
   version = "v0.37.4"
 
 [[projects]]
+  branch = "master"
+  digest = "1:f12358576cd79bba0ae626530d23cde63416744f486c8bc817802c6907eaadd7"
+  name = "github.com/armon/go-metrics"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "f0300d1749da6fa982027e449ec0c7a145510c3c"
+
+[[projects]]
+  digest = "1:13d5750ba049ce46bf931792803f1d5584b04026df9badea5931e33c22aa34ee"
+  name = "github.com/avast/retry-go"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "08d411bf8302219fe47ca04dbdf9de892010c5e5"
+  version = "v2.2.0"
+
+[[projects]]
   digest = "1:707ebe952a8b3d00b343c01536c79c73771d100f63ec6babeaed5c79e2b8a8dd"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
@@ -32,6 +48,14 @@
   pruneopts = "NUT"
   revision = "72bf35d0ff611848c1dc9df0f976c81192392fa5"
   version = "v4.1.0"
+
+[[projects]]
+  digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
+  name = "github.com/ghodss/yaml"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:895d2773c9e78e595dd5f946a25383d579d3094a9d8d9306dba27359f190f275"
@@ -70,6 +94,14 @@
   pruneopts = "NUT"
   revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
   version = "v1.3.1"
+
+[[projects]]
+  digest = "1:7f114b78210bf5b75f307fc97cff293633c835bab1e0ea8a744a44b39c042dfe"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "2a8bb927dd31d8daada140a5d09578521ce5c36a"
+  version = "v0.0.1"
 
 [[projects]]
   digest = "1:05f95ffdfcf651bdb0f05b40b69e7f5663047f8da75c72d58728acb59b5cc107"
@@ -274,6 +306,17 @@
   version = "v3.0.1"
 
 [[projects]]
+  digest = "1:493282a1185f77368678d3886b7e999e37e920d22f69669545f1ee5ae10743a2"
+  name = "github.com/linkerd/linkerd2"
+  packages = [
+    "controller/gen/apis/serviceprofile",
+    "controller/gen/apis/serviceprofile/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "5e47cb150a33150e5aeddc6672d8a64701a970de"
+  version = "stable-2.2.1"
+
+[[projects]]
   digest = "1:0dbba7d4d4f3eeb01acd81af338ff4a3c4b0bb814d87368ea536e616f383240d"
   name = "github.com/lyft/protoc-gen-validate"
   packages = ["validate"]
@@ -436,7 +479,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:5c71f77bf587abcb1a1f5fd731ab2cdb70f21b4c1d92d08941f9c9df3b7d9ac4"
+  digest = "1:cad7db5ed31bef1f9e4429ad0927b40dbf31535167ec4c768fd5985565111ea5"
   name = "github.com/solo-io/gloo"
   packages = [
     "projects/gloo/pkg/api/v1",
@@ -455,11 +498,11 @@
     "projects/gloo/pkg/api/v1/plugins/transformation",
   ]
   pruneopts = "NUT"
-  revision = "f2fdf602bd6c96b0ebbc0d75bc8ac48c66f83db9"
-  version = "v0.13.14"
+  revision = "f767e64f7ee60139ff79e2abb547cd149067da04"
+  version = "v0.13.17"
 
 [[projects]]
-  digest = "1:70a5a06704daa38aed3bacbc96b56c7c0203a0b5163f86596375cda70166ee52"
+  digest = "1:4a5b267a6929e4c3980066d745f87993c118f7797373a43537fdc69b3ee2d37e"
   name = "github.com/solo-io/go-utils"
   packages = [
     "contextutils",
@@ -467,11 +510,11 @@
     "kubeutils",
   ]
   pruneopts = "NUT"
-  revision = "81b1a649eac8eb3f1243948896bbac1976591ca9"
-  version = "v0.7.3"
+  revision = "a27432d89f419897df796a17456410e49a9727c3"
+  version = "v0.7.11"
 
 [[projects]]
-  digest = "1:87f25683c12f095ca49a3a30f66d75671c03b869502a404861a0258c64ecf540"
+  digest = "1:1cc9a8be450b7d9e77f100c7662133bf7bc8f0832f4eed3542599d3f35d28c46"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "pkg/api/v1/clients",
@@ -490,6 +533,7 @@
     "pkg/api/v1/clients/kubesecret",
     "pkg/api/v1/clients/memory",
     "pkg/api/v1/clients/vault",
+    "pkg/api/v1/eventloop",
     "pkg/api/v1/reconcile",
     "pkg/api/v1/resources",
     "pkg/api/v1/resources/core",
@@ -503,20 +547,22 @@
     "pkg/utils/stringutils",
   ]
   pruneopts = "NUT"
-  revision = "256a8a1dab5aa9700f49b74df06627bff196703d"
-  version = "v0.5.3"
+  revision = "ab46647c2845a4830d09db3690b3ace1b06845cd"
+  version = "v0.6.3"
 
 [[projects]]
-  digest = "1:e76e4edcca47cb62c576ba5f605d102c554bcef35b1d3038383919b83ed9b1d7"
+  digest = "1:ba6f00e510774b2f1099d2f39a2ae36796ddbe406b02703b3395f26deb8d0f2c"
   name = "github.com/solo-io/supergloo"
   packages = [
+    "api/custom/kubepod",
+    "api/custom/linkerd",
+    "pkg/api/external/istio/authorization/v1alpha1",
     "pkg/api/external/istio/networking/v1alpha3",
-    "pkg/api/external/kubernetes/core/v1",
     "pkg/api/v1",
   ]
   pruneopts = "NUT"
-  revision = "4569380e1f892716fec6df6a6ab5ae84fdbc786b"
-  version = "v0.3.8"
+  revision = "cb84ba5d7bd1099c5e52c09fc9229d1ee0fed9f9"
+  version = "v0.3.11"
 
 [[projects]]
   digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
@@ -533,6 +579,28 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "9cbb78b20423182f9e5b2a214dd255f5e117d2d1"
+
+[[projects]]
+  digest = "1:1349e632a9915b7075f74c13474bfcae2594750c390d3c0b236e48bf6bce3fa2"
+  name = "go.opencensus.io"
+  packages = [
+    ".",
+    "internal",
+    "internal/tagencoding",
+    "metric/metricdata",
+    "metric/metricproducer",
+    "resource",
+    "stats",
+    "stats/internal",
+    "stats/view",
+    "tag",
+    "trace",
+    "trace/internal",
+    "trace/tracestate",
+  ]
+  pruneopts = "NUT"
+  revision = "75c0cca22312e51bfd4fafdbe9197ae399e18b38"
+  version = "v0.20.2"
 
 [[projects]]
   digest = "1:22f696cee54865fb8e9ff91df7b633f6b8f22037a8015253c6b6a71ca82219c7"
@@ -749,6 +817,20 @@
   version = "kubernetes-1.13.1"
 
 [[projects]]
+  digest = "1:501a73762f1b2c4530206ffb657b39d8b58a9b40280d30e4509ae1232767962c"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset",
+    "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1",
+  ]
+  pruneopts = "NUT"
+  revision = "0fe22c71c47604641d9aa352c785b7912c200562"
+  version = "kubernetes-1.13.1"
+
+[[projects]]
   digest = "1:5ac33dce66ac11d4f41c157be7f13ba30c968c74d25a3a3a0a1eddf44b6b2176"
   name = "k8s.io/apimachinery"
   packages = [
@@ -801,7 +883,7 @@
   version = "kubernetes-1.13.1"
 
 [[projects]]
-  digest = "1:9c1efd696862715ce928775ffa3e5c9fb41c1213f52cc47a6c22a516d15aa3ce"
+  digest = "1:ef9bda0e29102ac26750517500a2cb0bd7be69ba21ad267ab89a0b35d035328b"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1052,14 +1134,6 @@
   revision = "fd68e9863619f6ec2fdd8625fe1f02e7c877e480"
   version = "v1.1.0"
 
-[[projects]]
-  digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
-  name = "sigs.k8s.io/yaml"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "fd68e9863619f6ec2fdd8625fe1f02e7c877e480"
-  version = "v1.1.0"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -1068,6 +1142,14 @@
     "github.com/google/go-cmp/cmp/cmpopts",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
+    "github.com/solo-io/gloo/projects/gloo/pkg/api/v1",
+    "github.com/solo-io/solo-kit/pkg/api/v1/clients",
+    "github.com/solo-io/solo-kit/pkg/api/v1/clients/factory",
+    "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube",
+    "github.com/solo-io/solo-kit/pkg/api/v1/clients/memory",
+    "github.com/solo-io/solo-kit/pkg/api/v1/resources/core",
+    "github.com/solo-io/solo-kit/pkg/errors",
+    "github.com/solo-io/supergloo/pkg/api/v1",
     "github.com/stefanprodan/klog",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",

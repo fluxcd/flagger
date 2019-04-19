@@ -5,35 +5,48 @@ package v1
 import (
 	"sort"
 
-	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/crd"
+	github_com_solo_io_supergloo_api_custom_kubepod "github.com/solo-io/supergloo/api/custom/kubepod"
+
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/hashutils"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func NewPod(namespace, name string) *Pod {
 	pod := &Pod{}
-	pod.SetMetadata(core.Metadata{
+	pod.Pod.SetMetadata(core.Metadata{
 		Name:      name,
 		Namespace: namespace,
 	})
 	return pod
 }
 
-func (r *Pod) SetMetadata(meta core.Metadata) {
-	r.Metadata = meta
+// require custom resource to implement Clone() as well as resources.Resource interface
+
+type CloneablePod interface {
+	resources.Resource
+	Clone() *github_com_solo_io_supergloo_api_custom_kubepod.Pod
+}
+
+var _ CloneablePod = &github_com_solo_io_supergloo_api_custom_kubepod.Pod{}
+
+type Pod struct {
+	github_com_solo_io_supergloo_api_custom_kubepod.Pod
+}
+
+func (r *Pod) Clone() resources.Resource {
+	return &Pod{Pod: *r.Pod.Clone()}
 }
 
 func (r *Pod) Hash() uint64 {
-	metaCopy := r.GetMetadata()
-	metaCopy.ResourceVersion = ""
-	return hashutils.HashAll(
-		metaCopy,
-		r.Spec,
-	)
+	clone := r.Pod.Clone()
+
+	resources.UpdateMetadata(clone, func(meta *core.Metadata) {
+		meta.ResourceVersion = ""
+	})
+
+	return hashutils.HashAll(clone)
 }
 
 type PodList []*Pod
@@ -129,25 +142,3 @@ func (byNamespace PodsByNamespace) Clone() PodsByNamespace {
 	}
 	return cloned
 }
-
-var _ resources.Resource = &Pod{}
-
-// Kubernetes Adapter for Pod
-
-func (o *Pod) GetObjectKind() schema.ObjectKind {
-	t := PodCrd.TypeMeta()
-	return &t
-}
-
-func (o *Pod) DeepCopyObject() runtime.Object {
-	return resources.Clone(o).(*Pod)
-}
-
-var PodCrd = crd.NewCrd("core.kubernetes.io",
-	"pods",
-	"core.kubernetes.io",
-	"v1",
-	"Pod",
-	"pod",
-	false,
-	&Pod{})

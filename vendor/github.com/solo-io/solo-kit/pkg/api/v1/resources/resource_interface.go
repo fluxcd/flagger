@@ -360,7 +360,7 @@ func Validate(resource Resource) error {
 }
 
 func ValidateName(name string) error {
-	errs := validation.IsDNS1035Label(name)
+	errs := validation.IsDNS1123Subdomain(name)
 	if len(name) < 1 {
 		errs = append(errs, "name cannot be empty. Given: "+name)
 	}

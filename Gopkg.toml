@@ -64,3 +64,11 @@ required = [
   name = "k8s.io/code-generator"
   unused-packages = false
   non-go = false
+
+[[constraint]]
+  name = "github.com/solo-io/supergloo"
+  version = "v0.3.11"
+
+[[constraint]]
+  name = "github.com/solo-io/solo-kit"
+  version = "v0.6.3"
