@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"strings"
 
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
@@ -42,18 +43,18 @@ func (factory *Factory) KubernetesRouter(label string) *KubernetesRouter {
 
 // MeshRouter returns a service mesh router (Istio or AppMesh)
 func (factory *Factory) MeshRouter(provider string) Interface {
-	switch provider {
-	case "appmesh":
+	switch {
+	case provider == "appmesh":
 		return &AppMeshRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			appmeshClient: factory.meshClient,
 		}
-	case "supergloo":
-		supergloo, err := NewSuperglooRouter(context.TODO(), factory.flaggerClient, factory.logger, factory.kubeConfig)
+	case strings.HasPrefix(provider, "supergloo"):
+		supergloo, err := NewSuperglooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
 		if err != nil {
-			panic("TODO")
+			panic("failed creating supergloo client")
 		}
 		return supergloo
 	default:
