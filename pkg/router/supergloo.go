@@ -15,6 +15,8 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
 
@@ -26,7 +28,7 @@ type SuperglooRouter struct {
 }
 
 func NewSuperglooRouter(ctx context.Context, flaggerClient clientset.Interface, logger *zap.SugaredLogger, cfg *rest.Config) (*SuperglooRouter, error) {
-
+	// TODO if cfg is nil use memory client instead?
 	sharedCache := kube.NewKubeCache(ctx)
 	routingRuleClient, err := supergloov1.NewRoutingRuleClient(&factory.KubeResourceClientFactory{
 		Crd:             supergloov1.RoutingRuleCrd,
@@ -53,23 +55,84 @@ func NewSuperglooRouterWithClient(ctx context.Context, routingRuleClient supergl
 }
 
 // Reconcile creates or updates the Istio virtual service
-func (ir *SuperglooRouter) Reconcile(canary *flaggerv1.Canary) error {
+func (sr *SuperglooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	// TODO: add header rules
 	// TODO: add retry rules
 	// TODO: add CORS rules
 	// TODO: maybe more? rewrite \ timeout?
-	return ir.SetRoutes(canary, 100, 0)
+	// set the rules for the headers, retries, and cors.
+	targetName := canary.Spec.TargetRef.Name
+
+	if err := sr.setRetries(canary); err != nil {
+		return err
+	}
+
+	return sr.SetRoutes(canary, 100, 0)
+
+}
+
+func (sr *SuperglooRouter) setRetries(canary *flaggerv1.Canary) error {
+	rule := &supergloov1.RoutingRule{
+		Metadata: solokitcore.Metadata{
+			Name:      canary.Spec.TargetRef.Name + "-retries",
+			Namespace: canary.Namespace,
+		},
+		TargetMesh: &sr.targetMesh,
+		DestinationSelector: &supergloov1.PodSelector{
+			SelectorType: &supergloov1.PodSelector_UpstreamSelector_{
+				UpstreamSelector: &supergloov1.PodSelector_UpstreamSelector{
+					Upstreams: []solokitcore.ResourceRef{{
+						Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s", targetName), canary.Spec.Service.Port),
+						Namespace: "supergloo-system",
+					}},
+				},
+			},
+		},
+		Spec: &supergloov1.RoutingRuleSpec{
+			RuleType: &supergloov1.RoutingRuleSpec_Retries{
+				Retries: canary.Spec.Service.Retries,
+			},
+		},
+	}
+
+	return sr.writeRuleForCanary(canary, rule)
+}
+
+func (sr *SuperglooRouter) setCors(canary *flaggerv1.Canary) error {
+	rule := &supergloov1.RoutingRule{
+		Metadata: solokitcore.Metadata{
+			Name:      canary.Spec.TargetRef.Name + "-cors",
+			Namespace: canary.Namespace,
+		},
+		TargetMesh: &sr.targetMesh,
+		DestinationSelector: &supergloov1.PodSelector{
+			SelectorType: &supergloov1.PodSelector_UpstreamSelector_{
+				UpstreamSelector: &supergloov1.PodSelector_UpstreamSelector{
+					Upstreams: []solokitcore.ResourceRef{{
+						Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s", targetName), canary.Spec.Service.Port),
+						Namespace: "supergloo-system",
+					}},
+				},
+			},
+		},
+		Spec: &supergloov1.RoutingRuleSpec{
+			RuleType: &supergloov1.RoutingRuleSpec_CorsPolicy{
+				CorsPolicy: canary.Spec.Service.CorsPolicy,
+			},
+		},
+	}
+	return sr.writeRuleForCanary(canary, rule)
 }
 
 // GetRoutes returns the destinations weight for primary and canary
-func (ir *SuperglooRouter) GetRoutes(canary *flaggerv1.Canary) (
+func (sr *SuperglooRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
 	err error,
 ) {
 	targetName := canary.Spec.TargetRef.Name
 	var rr *supergloov1.RoutingRule
-	rr, err = ir.rrClient.Read(canary.Namespace, targetName, solokitclients.ReadOpts{})
+	rr, err = sr.rrClient.Read(canary.Namespace, targetName, solokitclients.ReadOpts{})
 	if err != nil {
 		return
 	}
@@ -101,7 +164,7 @@ func upstreamName(serviceNamespace, serviceName string, port int32) string {
 }
 
 // SetRoutes updates the destinations weight for primary and canary
-func (ir *SuperglooRouter) SetRoutes(
+func (sr *SuperglooRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
@@ -145,7 +208,7 @@ func (ir *SuperglooRouter) SetRoutes(
 			Name:      targetName,
 			Namespace: canary.Namespace,
 		},
-		TargetMesh: &ir.targetMesh,
+		TargetMesh: &sr.targetMesh,
 		DestinationSelector: &supergloov1.PodSelector{
 			SelectorType: &supergloov1.PodSelector_UpstreamSelector_{
 				UpstreamSelector: &supergloov1.PodSelector_UpstreamSelector{
@@ -167,7 +230,13 @@ func (ir *SuperglooRouter) SetRoutes(
 		},
 	}
 
-	if oldRr, err := ir.rrClient.Read(rule.Metadata.Namespace, rule.Metadata.Name, solokitclients.ReadOpts{}); err != nil {
+	return sr.writeRuleForCanary(canary, rule)
+}
+
+func (sr *SuperglooRouter) writeRuleForCanary(canary *flaggerv1.Canary, rule *supergloov1.RoutingRule) error {
+	targetName := canary.Spec.TargetRef.Name
+
+	if oldRr, err := sr.rrClient.Read(rule.Metadata.Namespace, rule.Metadata.Name, solokitclients.ReadOpts{}); err != nil {
 		// ignore not exist errors..
 		if !solokiterror.IsNotExist(err) {
 			return fmt.Errorf("RoutingRule %s.%s read failed: %v", targetName, canary.Namespace, err)
@@ -181,9 +250,21 @@ func (ir *SuperglooRouter) SetRoutes(
 		}
 	}
 
-	_, err := ir.rrClient.Write(rule, solokitclients.WriteOpts{OverwriteExisting: true})
+	kubeWriteOpts := &kube.KubeWriteOpts{
+		PreWriteCallback: func(r *crdv1.Resource) {
+			r.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
+		},
+	}
+	writeOpts := solokitclients.WriteOpts{OverwriteExisting: true, StorageWriteOpts: kubeWriteOpts}
+	_, err := sr.rrClient.Write(rule, writeOpts)
 	if err != nil {
 		return fmt.Errorf("RoutingRule %s.%s update failed: %v", targetName, canary.Namespace, err)
 	}
-	return nil
+
 }
