@@ -57,11 +57,11 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
             runAsUser: 10001
-          volumeMounts:
-            - name: tests
-              mountPath: /bats
-              readOnly: true
-      volumes:
-        - name: tests
-          configMap:
-            name: flagger-loadtester-bats
+#          volumeMounts:
+#            - name: tests
+#              mountPath: /bats
+#              readOnly: true
+#      volumes:
+#        - name: tests
+#          configMap:
+#            name: flagger-loadtester-bats
