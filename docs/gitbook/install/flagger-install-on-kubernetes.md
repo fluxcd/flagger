@@ -52,7 +52,8 @@ If you don't have Tiller you can use the helm template command and apply the gen
 
 ```bash
 # generate
-helm template flagger/flagger \
+helm fetch --untar --untardir . flagger/flagger &&
+helm template flagger \
 --name flagger \
 --namespace=istio-system \
 --set metricsServer=http://prometheus.istio-system:9090 \
@@ -98,12 +99,10 @@ Or use helm template command and apply the generated yaml with kubectl:
 
 ```bash
 # generate
-helm template flagger/grafana \
+helm fetch --untar --untardir . flagger/grafana &&
+helm template grafana \
 --name flagger-grafana \
 --namespace=istio-system \
---set url=http://prometheus.istio-system:9090 \
---set user=admin \
---set password=change-me \
 > $HOME/flagger-grafana.yaml
 
 # apply
@@ -132,10 +131,14 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 Deploy with kubectl:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
+helm fetch --untar --untardir . flagger/loadtester &&
+helm template loadtester \
+--name flagger-loadtester \
+--namespace=test
+> $HOME/flagger-loadtester.yaml
 
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+# apply
+kubectl apply -f $HOME/flagger-loadtester.yaml
 ```
 
 > **Note** that the load tester should be deployed in a namespace with Istio sidecar injection enabled.
