@@ -25,10 +25,9 @@ func TestSuperglooRouter_Sync(t *testing.T) {
 	if err := routingRuleClient.Register(); err != nil {
 		t.Fatal(err.Error())
 	}
-	// TODO(yuval-k): un hard code this
 	targetMesh := solokitcore.ResourceRef{
 		Namespace: "supergloo-system",
-		Name:      "yuval",
+		Name:      "mesh",
 	}
 	router := NewSuperglooRouterWithClient(context.TODO(), routingRuleClient, targetMesh, mocks.logger)
 	err = router.Reconcile(mocks.canary)
@@ -61,10 +60,9 @@ func TestSuperglooRouter_SetRoutes(t *testing.T) {
 	if err := routingRuleClient.Register(); err != nil {
 		t.Fatal(err.Error())
 	}
-	// TODO(yuval-k): un hard code this
 	targetMesh := solokitcore.ResourceRef{
 		Namespace: "supergloo-system",
-		Name:      "yuval",
+		Name:      "mesh",
 	}
 	router := NewSuperglooRouterWithClient(context.TODO(), routingRuleClient, targetMesh, mocks.logger)
 
@@ -126,10 +124,9 @@ func TestSuperglooRouter_GetRoutes(t *testing.T) {
 	if err := routingRuleClient.Register(); err != nil {
 		t.Fatal(err.Error())
 	}
-	// TODO(yuval-k): un hard code this
 	targetMesh := solokitcore.ResourceRef{
 		Namespace: "supergloo-system",
-		Name:      "yuval",
+		Name:      "mesh",
 	}
 	router := NewSuperglooRouterWithClient(context.TODO(), routingRuleClient, targetMesh, mocks.logger)
 	err = router.Reconcile(mocks.canary)
