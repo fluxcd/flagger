@@ -9,11 +9,27 @@ jobs:
       - run: test/e2e-build.sh
       - run: test/e2e-tests.sh
 
+  e2e-supergloo-testing:
+    machine: true
+    steps:
+      - checkout
+      - run: test/e2e-kind.sh
+      - run: test/e2e-supergloo.sh
+      - run: test/e2e-build.sh supergloo:supergloo-system.test
+      - run: test/e2e-tests.sh
+
 workflows:
   version: 2
   build-and-test:
     jobs:
       - e2e-testing:
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
+      - e2e-supergloo-testing:
           filters:
             branches:
               ignore:

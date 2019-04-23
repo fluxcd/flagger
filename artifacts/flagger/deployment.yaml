@@ -31,6 +31,7 @@ spec:
         - ./flagger
         - -log-level=info
         - -control-loop-interval=10s
+        - -mesh-provider=$(MESH_PROVIDER)
         - -metrics-server=http://prometheus.istio-system.svc.cluster.local:9090
         livenessProbe:
           exec:
