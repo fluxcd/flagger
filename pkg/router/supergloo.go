@@ -74,12 +74,22 @@ func (sr *SuperglooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if err := sr.setRetries(canary); err != nil {
 		return err
 	}
+	if err := sr.setHeaders(canary); err != nil {
+		return err
+	}
 	if err := sr.setCors(canary); err != nil {
 		return err
 	}
 
-	return sr.SetRoutes(canary, 100, 0)
-
+	// do we have routes already?
+	if _, _, err := sr.GetRoutes(canary); err == nil {
+		// we have routes, no need to do anything else
+		return nil
+	} else if solokiterror.IsNotExist(err) {
+		return sr.SetRoutes(canary, 100, 0)
+	} else {
+		return err
+	}
 }
 
 func (sr *SuperglooRouter) setRetries(canary *flaggerv1.Canary) error {
@@ -97,6 +107,52 @@ func (sr *SuperglooRouter) setRetries(canary *flaggerv1.Canary) error {
 	})
 
 	return sr.writeRuleForCanary(canary, rule)
+}
+func (sr *SuperglooRouter) setHeaders(canary *flaggerv1.Canary) error {
+	if canary.Spec.Service.Headers == nil {
+		return nil
+	}
+	headerManipulation, err := convertHeaders(canary.Spec.Service.Headers)
+	if err != nil {
+		return err
+	}
+	if headerManipulation == nil {
+		return nil
+	}
+	rule := sr.createRule(canary, "headers", &supergloov1.RoutingRuleSpec{
+		RuleType: &supergloov1.RoutingRuleSpec_HeaderManipulation{
+			HeaderManipulation: headerManipulation,
+		},
+	})
+
+	return sr.writeRuleForCanary(canary, rule)
+}
+
+func convertHeaders(headers *istiov1alpha3.Headers) (*supergloov1.HeaderManipulation, error) {
+	var headersMaipulation *supergloov1.HeaderManipulation
+
+	if headers.Request != nil {
+		headersMaipulation = &supergloov1.HeaderManipulation{}
+
+		headersMaipulation.RemoveRequestHeaders = headers.Request.Remove
+		headersMaipulation.AppendRequestHeaders = make(map[string]string)
+		for k, v := range headers.Request.Add {
+			headersMaipulation.AppendRequestHeaders[k] = v
+		}
+	}
+	if headers.Response != nil {
+		if headersMaipulation == nil {
+			headersMaipulation = &supergloov1.HeaderManipulation{}
+		}
+
+		headersMaipulation.RemoveResponseHeaders = headers.Response.Remove
+		headersMaipulation.AppendResponseHeaders = make(map[string]string)
+		for k, v := range headers.Response.Add {
+			headersMaipulation.AppendResponseHeaders[k] = v
+		}
+	}
+
+	return headersMaipulation, nil
 }
 
 func convertRetries(retries *istiov1alpha3.HTTPRetry) (*supergloov1.RetryPolicy, error) {

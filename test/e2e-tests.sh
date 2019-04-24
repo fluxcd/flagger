@@ -125,6 +125,10 @@ done
 
 echo '✔ Canary promotion test passed'
 
+if [ "$1" = "canary" ]; then
+  exit 0
+fi
+
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3
 kind: Canary

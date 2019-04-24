@@ -16,7 +16,7 @@ jobs:
       - run: test/e2e-kind.sh
       - run: test/e2e-supergloo.sh
       - run: test/e2e-build.sh supergloo:supergloo-system.test
-      - run: test/e2e-tests.sh
+      - run: test/e2e-tests.sh canary
 
 workflows:
   version: 2
