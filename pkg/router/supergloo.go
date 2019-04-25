@@ -52,14 +52,14 @@ func NewSuperglooRouter(ctx context.Context, provider string, flaggerClient clie
 
 	// remove the supergloo: prefix
 	provider = strings.TrimPrefix(provider, "supergloo:")
-	// split namespace.name :
+	// split name.namespace:
 	parts := strings.Split(provider, ".")
 	if len(parts) != 2 {
 		return nil, fmt.Errorf("invalid format for supergloo provider")
 	}
 	targetMesh := solokitcore.ResourceRef{
-		Namespace: parts[0],
-		Name:      parts[1],
+		Namespace: parts[1],
+		Name:      parts[0],
 	}
 	return NewSuperglooRouterWithClient(ctx, routingRuleClient, targetMesh, logger), nil
 }
