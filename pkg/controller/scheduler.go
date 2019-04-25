@@ -2,12 +2,13 @@ package controller
 
 import (
 	"fmt"
-	"github.com/weaveworks/flagger/pkg/router"
 	"strings"
 	"time"
 
+	"github.com/weaveworks/flagger/pkg/router"
+
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // scheduleCanaries synchronises the canary map with the jobs map,
@@ -97,11 +98,10 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// init routers
-	routerFactory := router.NewFactory(c.kubeClient, c.flaggerClient, c.logger, c.istioClient)
-	meshRouter := routerFactory.MeshRouter(c.meshProvider)
+	meshRouter := c.routerFactory.MeshRouter(c.meshProvider)
 
 	// create or update ClusterIP services
-	if err := routerFactory.KubernetesRouter(label).Reconcile(cd); err != nil {
+	if err := c.routerFactory.KubernetesRouter(label).Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}

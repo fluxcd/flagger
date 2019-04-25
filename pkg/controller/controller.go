@@ -2,10 +2,12 @@ package controller
 
 import (
 	"fmt"
-	"github.com/weaveworks/flagger/pkg/canary"
-	"github.com/weaveworks/flagger/pkg/metrics"
 	"sync"
 	"time"
+
+	"github.com/weaveworks/flagger/pkg/canary"
+	"github.com/weaveworks/flagger/pkg/metrics"
+	"github.com/weaveworks/flagger/pkg/router"
 
 	"github.com/google/go-cmp/cmp"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
@@ -46,6 +48,7 @@ type Controller struct {
 	observer      metrics.Observer
 	recorder      metrics.Recorder
 	notifier      *notifier.Slack
+	routerFactory *router.Factory
 	meshProvider  string
 }
 
@@ -58,6 +61,7 @@ func NewController(
 	metricServer string,
 	logger *zap.SugaredLogger,
 	notifier *notifier.Slack,
+	routerFactory *router.Factory,
 	meshProvider string,
 	version string,
 	labels []string,
@@ -103,6 +107,7 @@ func NewController(
 		observer:      metrics.NewObserver(metricServer),
 		recorder:      recorder,
 		notifier:      notifier,
+		routerFactory: routerFactory,
 		meshProvider:  meshProvider,
 	}
 

@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"sync"
+	"time"
+
 	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	istiov1alpha1 "github.com/weaveworks/flagger/pkg/apis/istio/common/v1alpha1"
 	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
@@ -21,8 +24,6 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-	"sync"
-	"time"
 )
 
 var (
@@ -82,6 +83,9 @@ func SetupMocks(abtest bool) Mocks {
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
 	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
 
+	// init router
+	rf := router.NewFactory(nil, kubeClient, flaggerClient, logger, flaggerClient)
+
 	ctrl := &Controller{
 		kubeClient:    kubeClient,
 		istioClient:   flaggerClient,
@@ -96,11 +100,10 @@ func SetupMocks(abtest bool) Mocks {
 		deployer:      deployer,
 		observer:      observer,
 		recorder:      metrics.NewRecorder(controllerAgentName, false),
+		routerFactory: rf,
 	}
 	ctrl.flaggerSynced = alwaysReady
 
-	// init router
-	rf := router.NewFactory(kubeClient, flaggerClient, logger, flaggerClient)
 	meshRouter := rf.MeshRouter("istio")
 
 	return Mocks{
