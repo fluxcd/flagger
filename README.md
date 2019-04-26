@@ -25,6 +25,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
   * [Flagger install on GKE Istio](https://docs.flagger.app/install/flagger-install-on-google-cloud)
   * [Flagger install on EKS App Mesh](https://docs.flagger.app/install/flagger-install-on-eks-appmesh)
+  * [Flagger install with SuperGloo](https://docs.flagger.app/install/flagger-install-with-supergloo)
 * How it works
   * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
   * [Routing](https://docs.flagger.app/how-it-works#istio-routing)
@@ -152,20 +153,20 @@ For more details on how the canary analysis and promotion works please [read the
 
 ## Features
 
-| Feature                                      | Istio              | App Mesh           |
-| -------------------------------------------- | ------------------ | ------------------ |
-| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: |
-| Load testing                                 | :heavy_check_mark: | :heavy_check_mark: |
-| Webhooks (custom acceptance tests)           | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (Envoy metric)    | :heavy_check_mark: | :heavy_check_mark: |
-| Request duration check (Envoy metric)        | :heavy_check_mark: | :heavy_minus_sign: |
-| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: |
-| Ingress gateway (CORS, retries and timeouts) | :heavy_check_mark: | :heavy_minus_sign: |
+| Feature                                      | Istio              | App Mesh           | SuperGloo          |
+| -------------------------------------------- | ------------------ | ------------------ |------------------  |
+| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Load testing                                 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Webhooks (custom acceptance tests)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (Envoy metric)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request duration check (Envoy metric)        | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
+| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Ingress gateway (CORS, retries and timeouts) | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
 
 ## Roadmap
 
-* Integrate with other service mesh technologies like Linkerd v2, Super Gloo or Consul Mesh
+* Integrate with other service mesh technologies like Linkerd v2
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
 ## Contributing
