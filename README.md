@@ -26,6 +26,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
     * [Flagger install on GKE Istio](https://docs.flagger.app/install/flagger-install-on-google-cloud)
     * [Flagger install on EKS App Mesh](https://docs.flagger.app/install/flagger-install-on-eks-appmesh)
+    * [Flagger install with SuperGloo](https://docs.flagger.app/install/flagger-install-with-supergloo)
 * How it works
     * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
     * [Routing](https://docs.flagger.app/how-it-works#istio-routing)
