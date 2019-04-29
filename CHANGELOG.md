@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.12.0 (2019-04-29) 
+
+Adds support for [SuperGloo](https://docs.flagger.app/install/flagger-install-with-supergloo)
+
+#### Features
+
+- Supergloo support for canary deployment (weighted traffic) [#151](https://github.com/weaveworks/flagger/pull/151)
+
 ## 0.11.1 (2019-04-18) 
 
 Move Flagger and the load tester container images to Docker Hub
