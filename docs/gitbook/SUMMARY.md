@@ -8,6 +8,7 @@
 * [Flagger Install on Kubernetes](install/flagger-install-on-kubernetes.md)
 * [Flagger Install on GKE Istio](install/flagger-install-on-google-cloud.md)
 * [Flagger Install on EKS App Mesh](install/flagger-install-on-eks-appmesh.md)
+* [Flagger Install with SuperGloo](install/flagger-install-with-supergloo.md)
 
 ## Usage
 
