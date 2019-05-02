@@ -32,7 +32,7 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 	hosts := canary.Spec.Service.Hosts
 	var hasServiceHost bool
 	for _, h := range hosts {
-		if h == targetName {
+		if h == targetName || h == "*" {
 			hasServiceHost = true
 			break
 		}
