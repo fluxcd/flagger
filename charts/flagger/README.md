@@ -45,7 +45,7 @@ The following tables lists the configurable parameters of the Flagger chart and 
 
 Parameter | Description | Default
 --- | --- | ---
-`image.repository` | image repository | `quay.io/stefanprodan/flagger`
+`image.repository` | image repository | `quay.io/weaveworks/flagger`
 `image.tag` | image tag | `<VERSION>`
 `image.pullPolicy` | image pull policy | `IfNotPresent`
 `metricsServer` | Prometheus URL | `http://prometheus.istio-system:9090`
