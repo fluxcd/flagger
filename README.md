@@ -78,7 +78,7 @@ spec:
   service:
     # service port
     port: 80
-    # container port
+    # container por ( optional , if not defined it will use the service port )
     targetPort : 9090
     # Istio gateways (optional)
     gateways:
