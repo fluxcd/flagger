@@ -75,6 +75,8 @@ spec:
               properties:
                 port:
                   type: number
+                targetPort:
+                  type: number
                 portName:
                   type: string
                 meshName:

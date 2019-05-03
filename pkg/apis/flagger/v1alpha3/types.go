@@ -112,6 +112,7 @@ type CanaryStatus struct {
 // and Istio Virtual Service
 type CanaryService struct {
 	Port       int32                            `json:"port"`
+	Targetport       int32                      `json:"targetPort"`
 	PortName   string                           `json:"portName,omitempty"`
 	Match      []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
 	Rewrite    *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
