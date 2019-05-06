@@ -2,24 +2,39 @@
 
 This guide walks you through setting up Flagger on a Kubernetes cluster using [SuperGloo](https://github.com/solo-io/supergloo).
 
-SuperGloo by [Solo.io](https://solo.io) is an opinionated abstraction layer that will simplify the installation, management, and operation of your service mesh. 
-It supports running multiple ingress with multiple mesh (Istio, App Mesh, Consul Connect and Linkerd 2) in the same cluster. 
+SuperGloo by [Solo.io](https://solo.io) is an opinionated abstraction layer that simplifies the installation, management, and operation of your service mesh.
+It supports running multiple ingresses with multiple meshes (Istio, App Mesh, Consul Connect and Linkerd 2) in the same cluster.
 
 ### Prerequisites
 
 Flagger requires a Kubernetes cluster **v1.11** or newer with the following admission controllers enabled:
 
 * MutatingAdmissionWebhook
-* ValidatingAdmissionWebhook 
+* ValidatingAdmissionWebhook
 
 ### Install Istio with SuperGloo
 
-Download SuperGloo CLI and add it to your path:
+#### Install SuperGloo command line interface helper
+
+SuperGloo includes a command line helper (CLI) that makes operation of SuperGloo easier.
+The CLI is not required for SuperGloo to function correctly.
+
+If you use [Homebrew](https://brew.sh) package manager run the following
+commands to install the SuperGloo CLI.
+
+```bash
+brew tap solo-io/tap
+brew solo-io/tap/supergloo
+```
+
+Or you can download SuperGloo CLI and add it to your path:
 
 ```bash
 curl -sL https://run.solo.io/supergloo/install | sh
 export PATH=$HOME/.supergloo/bin:$PATH
 ```
+
+#### Install SuperGloo controller
 
 Deploy the SuperGloo controller in the `supergloo-system` namespace:
 
@@ -27,12 +42,21 @@ Deploy the SuperGloo controller in the `supergloo-system` namespace:
 supergloo init
 ```
 
+This is equivalent to installing SuperGloo using its Helm chart
+
+```bash
+helm repo add supergloo http://storage.googleapis.com/supergloo-helm
+helm upgrade --install supergloo supergloo/supergloo --namespace supergloo-system
+```
+
+#### Install Istio using SuperGloo
+
 Create the `istio-system` namespace and install Istio with traffic management, telemetry and Prometheus enabled:
 
 ```bash
 ISTIO_VER="1.0.6"
 
-kubectl create ns istio-system
+kubectl create namespace istio-system
 
 supergloo install istio --name istio \
 --namespace=supergloo-system \
@@ -40,8 +64,33 @@ supergloo install istio --name istio \
 --installation-namespace=istio-system \
 --mtls=false \
 --prometheus=true \
---version ${ISTIO_VER}
+--version=${ISTIO_VER}
 ```
+
+This creates a Kubernetes Custom Resource (CRD) like the following.
+
+```yaml
+apiVersion: supergloo.solo.io/v1
+kind: Install
+metadata:
+  name: istio
+  namespace: supergloo-system
+spec:
+  installationNamespace: istio-system
+  mesh:
+    installedMesh:
+      name: istio
+      namespace: supergloo-system
+    istioMesh:
+      enableAutoInject: true
+      enableMtls: false
+      installGrafana: false
+      installJaeger: false
+      installPrometheus: true
+      istioVersion: 1.0.6
+```
+
+#### Allow Flagger to manipulate SuperGloo
 
 Create a cluster role binding so that Flagger can manipulate SuperGloo custom resources:
 
@@ -54,8 +103,8 @@ kubectl create clusterrolebinding flagger-supergloo \
 Wait for the Istio control plane to become available:
 
 ```bash
-kubectl -n istio-system rollout status deployment/istio-sidecar-injector
-kubectl -n istio-system rollout status deployment/prometheus
+kubectl --namespace istio-system rollout status deployment/istio-sidecar-injector
+kubectl --namespace istio-system rollout status deployment/prometheus
 ```
 
 ### Install Flagger
@@ -106,9 +155,9 @@ You can access Grafana using port forwarding:
 kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 ```
 
-###  Install Load Tester
+### Install Load Tester
 
-Flagger comes with an optional load testing service that generates traffic 
+Flagger comes with an optional load testing service that generates traffic
 during canary analysis when configured as a webhook.
 
 Deploy the load test runner with Helm:
