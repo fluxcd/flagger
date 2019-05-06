@@ -41,9 +41,14 @@ func (factory *Factory) KubernetesRouter(label string) *KubernetesRouter {
 	}
 }
 
-// MeshRouter returns a service mesh router (Istio or AppMesh)
+// MeshRouter returns a service mesh router
 func (factory *Factory) MeshRouter(provider string) Interface {
 	switch {
+	case provider == "nginx":
+		return &IngressRouter{
+			logger:     factory.logger,
+			kubeClient: factory.kubeClient,
+		}
 	case provider == "appmesh":
 		return &AppMeshRouter{
 			logger:        factory.logger,
