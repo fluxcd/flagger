@@ -1,0 +1,54 @@
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  # deployment reference
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  # ingress reference
+  ingressRef:
+    apiVersion: extensions/v1beta1
+    kind: Ingress
+    name: podinfo
+  # the maximum time in seconds for the canary deployment
+  # to make progress before it is rollback (default 600s)
+  progressDeadlineSeconds: 60
+  service:
+    # container port
+    port: 9898
+  canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 10s
+    # max number of failed metric checks before rollback
+    threshold: 10
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 5
+    # NGINX Prometheus checks
+    metrics:
+    - name: request-success-rate
+      # minimum req success rate (non 5xx responses)
+      # percentage (0-100)
+      threshold: 99
+      interval: 1m
+    - name: request-duration
+      # maximum avg req duration
+      # milliseconds
+      threshold: 500
+      interval: 1m
+    # external checks (optional)
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 1m -q 10 -c 2 http://app.example.com/"
+          logCmdOutput: "true"
