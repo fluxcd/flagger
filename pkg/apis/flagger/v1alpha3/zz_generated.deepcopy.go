@@ -205,6 +205,11 @@ func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 		*out = new(v1.CrossVersionObjectReference)
 		**out = **in
 	}
+	if in.IngressRef != nil {
+		in, out := &in.IngressRef, &out.IngressRef
+		*out = new(v1.CrossVersionObjectReference)
+		**out = **in
+	}
 	in.Service.DeepCopyInto(&out.Service)
 	in.CanaryAnalysis.DeepCopyInto(&out.CanaryAnalysis)
 	if in.ProgressDeadlineSeconds != nil {
