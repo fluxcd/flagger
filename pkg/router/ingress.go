@@ -167,15 +167,17 @@ func (i *IngressRouter) SetRoutes(
 			}
 		}
 
-		if canaryWeight > 0 {
-			iClone.Annotations = i.makeHeaderAnnotations(iClone.Annotations, header, headerValue, cookie)
-		} else {
-			iClone.Annotations = i.makeAnnotations(iClone.Annotations)
-		}
-
+		iClone.Annotations = i.makeHeaderAnnotations(iClone.Annotations, header, headerValue, cookie)
 	} else {
 		// canary
 		iClone.Annotations["nginx.ingress.kubernetes.io/canary-weight"] = fmt.Sprintf("%v", canaryWeight)
+	}
+
+	// toggle canary
+	if canaryWeight > 0 {
+		iClone.Annotations["nginx.ingress.kubernetes.io/canary"] = "true"
+	} else {
+		iClone.Annotations = i.makeAnnotations(iClone.Annotations)
 	}
 
 	_, err = i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Update(iClone)
@@ -189,12 +191,13 @@ func (i *IngressRouter) SetRoutes(
 func (i *IngressRouter) makeAnnotations(annotations map[string]string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range annotations {
-		if !strings.Contains(v, "nginx.ingress.kubernetes.io/canary") {
+		if !strings.Contains(k, "nginx.ingress.kubernetes.io/canary") &&
+			!strings.Contains(k, "kubectl.kubernetes.io/last-applied-configuration") {
 			res[k] = v
 		}
 	}
 
-	res["nginx.ingress.kubernetes.io/canary"] = "true"
+	res["nginx.ingress.kubernetes.io/canary"] = "false"
 	res["nginx.ingress.kubernetes.io/canary-weight"] = "0"
 
 	return res
