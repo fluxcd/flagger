@@ -112,6 +112,16 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 		return 0, 0, err
 	}
 
+	// A/B testing
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+		for k := range canaryIngress.Annotations {
+			if k == "nginx.ingress.kubernetes.io/canary-by-cookie" || k == "nginx.ingress.kubernetes.io/canary-by-header" {
+				return 0, 100, nil
+			}
+		}
+	}
+
+	// Canary
 	for k, v := range canaryIngress.Annotations {
 		if k == "nginx.ingress.kubernetes.io/canary-weight" {
 			val, err := strconv.Atoi(v)
@@ -140,7 +150,33 @@ func (i *IngressRouter) SetRoutes(
 	}
 
 	iClone := canaryIngress.DeepCopy()
-	iClone.Annotations["nginx.ingress.kubernetes.io/canary-weight"] = fmt.Sprintf("%v", canaryWeight)
+
+	// A/B testing
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+		cookie := ""
+		header := ""
+		headerValue := ""
+		for _, m := range canary.Spec.CanaryAnalysis.Match {
+			for k, v := range m.Headers {
+				if k == "cookie" {
+					cookie = v.Exact
+				} else {
+					header = k
+					headerValue = v.Exact
+				}
+			}
+		}
+
+		if canaryWeight > 0 {
+			iClone.Annotations = i.makeHeaderAnnotations(iClone.Annotations, header, headerValue, cookie)
+		} else {
+			iClone.Annotations = i.makeAnnotations(iClone.Annotations)
+		}
+
+	} else {
+		// canary
+		iClone.Annotations["nginx.ingress.kubernetes.io/canary-weight"] = fmt.Sprintf("%v", canaryWeight)
+	}
 
 	_, err = i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Update(iClone)
 	if err != nil {
@@ -160,6 +196,33 @@ func (i *IngressRouter) makeAnnotations(annotations map[string]string) map[strin
 
 	res["nginx.ingress.kubernetes.io/canary"] = "true"
 	res["nginx.ingress.kubernetes.io/canary-weight"] = "0"
+
+	return res
+}
+
+func (i *IngressRouter) makeHeaderAnnotations(annotations map[string]string,
+	header string, headerValue string, cookie string) map[string]string {
+	res := make(map[string]string)
+	for k, v := range annotations {
+		if !strings.Contains(v, "nginx.ingress.kubernetes.io/canary") {
+			res[k] = v
+		}
+	}
+
+	res["nginx.ingress.kubernetes.io/canary"] = "true"
+	res["nginx.ingress.kubernetes.io/canary-weight"] = "0"
+
+	if cookie != "" {
+		res["nginx.ingress.kubernetes.io/canary-by-cookie"] = cookie
+	}
+
+	if header != "" {
+		res["nginx.ingress.kubernetes.io/canary-by-header"] = header
+	}
+
+	if headerValue != "" {
+		res["nginx.ingress.kubernetes.io/canary-by-header-value"] = headerValue
+	}
 
 	return res
 }
