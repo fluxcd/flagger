@@ -125,19 +125,6 @@ Status:
     Type:                  MeshActive
 ```
 
-### Install Prometheus
-
-In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, 
-you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
-
-Deploy Prometheus in the `appmesh-system` namespace:
-
-```bash
-REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/eks/appmesh-prometheus.yaml
-```
-
 ### Install Flagger and Grafana
 
 Add Flagger Helm repository:
@@ -146,16 +133,17 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
-Deploy Flagger in the _**appmesh-system**_ namespace:
+Deploy Flagger and Prometheus in the _**appmesh-system**_ namespace:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=appmesh-system \
 --set meshProvider=appmesh \
---set metricsServer=http://prometheus.appmesh-system:9090
+--set prometheus.install=true
 ```
 
-You can install Flagger in any namespace as long as it can talk to the Istio Prometheus service on port 9090.
+In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, 
+you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
 
 You can enable **Slack** notifications with:
 
