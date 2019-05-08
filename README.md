@@ -40,6 +40,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
     * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
     * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
+    * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
     * [Monitoring](https://docs.flagger.app/usage/monitoring)
     * [Alerting](https://docs.flagger.app/usage/alerting)
 
