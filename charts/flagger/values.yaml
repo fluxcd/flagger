@@ -7,7 +7,7 @@ image:
 
 metricsServer: "http://prometheus:9090"
 
-# accepted values are istio or appmesh (defaults to istio)
+# accepted values are istio, appmesh, nginx or supergloo:mesh.namespace (defaults to istio)
 meshProvider: ""
 
 # single namespace restriction
@@ -49,3 +49,7 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+prometheus:
+  # to be used with AppMesh or nginx ingress
+  install: false
