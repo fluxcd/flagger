@@ -15,6 +15,7 @@
 * [Istio Canary Deployments](usage/progressive-delivery.md)
 * [Istio A/B Testing](usage/ab-testing.md)
 * [App Mesh Canary Deployments](usage/appmesh-progressive-delivery.md)
+* [NGINX Canary Deployments](usage/nginx-progressive-delivery.md)
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)
 
