@@ -38,7 +38,11 @@ spec:
           {{- if .Values.meshProvider }}
           - -mesh-provider={{ .Values.meshProvider }}
           {{- end }}
+          {{- if .Values.prometheus.install }}
+          - -metrics-server=http://{{ template "flagger.fullname" . }}-prometheus:9090
+          {{- else }}
           - -metrics-server={{ .Values.metricsServer }}
+          {{- end }}
           {{- if .Values.namespace }}
           - -namespace={{ .Values.namespace }}
           {{- end }}

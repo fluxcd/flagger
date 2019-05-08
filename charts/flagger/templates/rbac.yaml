@@ -28,6 +28,12 @@ rules:
       - horizontalpodautoscalers
     verbs: ["*"]
   - apiGroups:
+      - "extensions"
+    resources:
+      - ingresses
+      - ingresses/status
+    verbs: ["*"]
+  - apiGroups:
       - flagger.app
     resources:
       - canaries
