@@ -99,7 +99,9 @@ func (c *Observer) GetScalar(query string) (float64, error) {
 	query = strings.Replace(query, " ", "", -1)
 
 	var value *float64
-	result, err := c.queryMetric(query)
+
+	querySt := url.QueryEscape(query)
+	result, err := c.queryMetric(querySt)
 	if err != nil {
 		return 0, err
 	}
