@@ -14,7 +14,9 @@ Install NGINX with Helm:
 helm upgrade -i nginx-ingress stable/nginx-ingress \
 --namespace ingress-nginx \
 --set controller.stats.enabled=true \
---set controller.metrics.enabled=true
+--set controller.metrics.enabled=true \
+--set controller.podAnnotations."prometheus\.io/scrape"=true \
+--set controller.podAnnotations."prometheus\.io/port"=10254 
 ```
 
 Install Flagger and the Prometheus add-on in the same namespace as NGINX:
@@ -275,6 +277,70 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
+
+### Custom metrics
+
+The canary analysis can be extended with Prometheus queries.
+
+The demo app is instrumented with Prometheus so you can create a custom check that will use the HTTP request duration 
+histogram to validate the canary. 
+
+Edit the canary analysis and add the following metric:
+
+```yaml
+  canaryAnalysis:
+    metrics:
+    - name: "latency"
+      threshold: 0.5
+      interval: 1m
+      query: |
+        histogram_quantile(0.99,
+          sum(
+            rate(
+              http_request_duration_seconds_bucket{
+                kubernetes_namespace="test",
+                kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+              }[1m]
+            )
+          ) by (le)
+        )
+```
+
+The threshold is set to 500ms so if the average request duration in the last minute 
+goes over half a second then the analysis will fail and the canary will not be promoted.
+
+Trigger a canary deployment by updating the container image:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=quay.io/stefanprodan/podinfo:1.4.3
+```
+
+Generate high response latency:
+
+```bash
+watch curl http://app.exmaple.com/delay/2
+```
+
+Watch Flagger logs:
+
+```
+kubectl -n nginx-ingress logs deployment/flagger -f | jq .msg
+
+Starting canary deployment for podinfo.test
+Advance podinfo.test canary weight 5
+Advance podinfo.test canary weight 10
+Advance podinfo.test canary weight 15
+Halt podinfo.test advancement latency 1.20 > 0.5
+Halt podinfo.test advancement latency 1.45 > 0.5
+Halt podinfo.test advancement latency 1.60 > 0.5
+Halt podinfo.test advancement latency 1.69 > 0.5
+Halt podinfo.test advancement latency 1.70 > 0.5
+Rolling back podinfo.test failed checks threshold reached 5
+Canary failed! Scaling down podinfo.test
+```
+
+If you have Slack configured, Flagger will send a notification with the reason why the canary failed.
 
 ### A/B Testing 
 

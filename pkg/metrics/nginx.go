@@ -9,13 +9,13 @@ import (
 
 const nginxSuccessRateQuery = `
 sum(rate(
-nginx_ingress_controller_requests{kubernetes_namespace="{{ .Namespace }}",
+nginx_ingress_controller_requests{namespace="{{ .Namespace }}",
 ingress="{{ .Name }}",
 status!~"5.*"}
 [{{ .Interval }}])) 
 / 
 sum(rate(
-nginx_ingress_controller_requests{kubernetes_namespace="{{ .Namespace }}",
+nginx_ingress_controller_requests{namespace="{{ .Namespace }}",
 ingress="{{ .Name }}"}
 [{{ .Interval }}])) 
 * 100
@@ -68,10 +68,10 @@ func (c *Observer) GetNginxSuccessRate(name string, namespace string, metric str
 
 const nginxRequestDurationQuery = `
 sum(rate(
-nginx_ingress_controller_ingress_upstream_latency_seconds_sum{kubernetes_namespace="{{ .Namespace }}",
+nginx_ingress_controller_ingress_upstream_latency_seconds_sum{namespace="{{ .Namespace }}",
 ingress="{{ .Name }}"}[{{ .Interval }}])) 
 /
-sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_count{kubernetes_namespace="{{ .Namespace }}",
+sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_count{namespace="{{ .Namespace }}",
 ingress="{{ .Name }}"}[{{ .Interval }}])) * 1000
 `
 
