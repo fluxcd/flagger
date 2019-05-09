@@ -43,11 +43,20 @@ spec:
       # percentage (0-100)
       threshold: 99
       interval: 1m
-    - name: request-duration
-      # maximum avg req duration
-      # milliseconds
-      threshold: 500
+    - name: "latency"
+      threshold: 0.5
       interval: 1m
+      query: |
+        histogram_quantile(0.99,
+          sum(
+            rate(
+              http_request_duration_seconds_bucket{
+                kubernetes_namespace="test",
+                kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+              }[1m]
+            )
+          ) by (le)
+        )
     # external checks (optional)
     webhooks:
       - name: load-test
