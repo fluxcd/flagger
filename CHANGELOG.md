@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.13.1 (2019-04-09) 
+
+Fixes for custom metrics checks and NGINX Prometheus queries 
+
+#### Fixes
+
+- Fix promql queries for custom checks and NGINX [#174](https://github.com/weaveworks/flagger/pull/174)
+
+
 ## 0.13.0 (2019-04-08) 
 
 Adds support for [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery) ingress controller
