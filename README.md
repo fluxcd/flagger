@@ -6,7 +6,7 @@ perhaps due to the complexity of management and the fear of failed deployments i
 
 Flagger is an open source Kubernetes operator that aims to untangle this complexity.
 It automates the promotion of canary deployments by using 
-Istio or App Mesh traffic shifting and Prometheus metrics to analyse the application's behaviour during a controlled rollout. 
+Istio, App Mesh or NGNIX traffic shifting and Prometheus metrics to analyse the application's behaviour during a controlled rollout. 
 The canary analysis can be extended with webhooks for running integration tests, load tests or any other custom validation.
 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance 
