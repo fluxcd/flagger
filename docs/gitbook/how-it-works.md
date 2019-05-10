@@ -689,7 +689,7 @@ webhooks:
 
 When the canary analysis starts, Flagger will call the webhooks and the load tester will run the `hey` commands 
 in the background, if they are not already running. This will ensure that during the 
-analysis, the `podinfo.test` virtual service will receive a steady steam of GET and POST requests.
+analysis, the `podinfo.test` virtual service will receive a steady stream of GET and POST requests.
 
 If your workload is exposed outside the mesh with the Istio Gateway and TLS you can point `hey` to the 
 public URL and use HTTP2.

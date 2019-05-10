@@ -22,7 +22,7 @@ spec:
       serviceAccountName: flagger
       containers:
       - name: flagger
-        image: weaveworks/flagger:0.11.1
+        image: weaveworks/flagger:0.13.1
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -31,6 +31,7 @@ spec:
         - ./flagger
         - -log-level=info
         - -control-loop-interval=10s
+        - -mesh-provider=$(MESH_PROVIDER)
         - -metrics-server=http://prometheus.istio-system.svc.cluster.local:9090
         livenessProbe:
           exec:

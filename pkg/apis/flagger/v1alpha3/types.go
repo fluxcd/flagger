@@ -52,6 +52,10 @@ type CanarySpec struct {
 	// +optional
 	AutoscalerRef *hpav1.CrossVersionObjectReference `json:"autoscalerRef,omitempty"`
 
+	// reference to NGINX ingress resource
+	// +optional
+	IngressRef *hpav1.CrossVersionObjectReference `json:"ingressRef,omitempty"`
+
 	// virtual service spec
 	Service CanaryService `json:"service"`
 

@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: quay.io/weaveworks/flagger-loadtester
+  repository: weaveworks/flagger-loadtester
   tag: 0.3.0
   pullPolicy: IfNotPresent
 

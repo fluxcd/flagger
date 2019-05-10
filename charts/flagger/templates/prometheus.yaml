@@ -1,0 +1,292 @@
+{{- if .Values.prometheus.install }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: {{ template "flagger.fullname" . }}-prometheus
+  labels:
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - services
+      - endpoints
+      - pods
+      - nodes/proxy
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["get"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "flagger.fullname" . }}-prometheus
+  labels:
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "flagger.fullname" . }}-prometheus
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "flagger.serviceAccountName" . }}-prometheus
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ template "flagger.serviceAccountName" . }}-prometheus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "flagger.fullname" . }}-prometheus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  prometheus.yml: |-
+    global:
+      scrape_interval: 5s
+    scrape_configs:
+
+    # Scrape config for AppMesh Envoy sidecar
+    - job_name: 'appmesh-envoy'
+      metrics_path: /stats/prometheus
+      kubernetes_sd_configs:
+      - role: pod
+
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_container_name]
+        action: keep
+        regex: '^envoy$'
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: ${1}:9901
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+
+      # Exclude high cardinality metrics
+      metric_relabel_configs:
+      - source_labels: [ cluster_name ]
+        regex: '(outbound|inbound|prometheus_stats).*'
+        action: drop
+      - source_labels: [ tcp_prefix ]
+        regex: '(outbound|inbound|prometheus_stats).*'
+        action: drop
+      - source_labels: [ listener_address ]
+        regex: '(.+)'
+        action: drop
+      - source_labels: [ http_conn_manager_listener_prefix ]
+        regex: '(.+)'
+        action: drop
+      - source_labels: [ http_conn_manager_prefix ]
+        regex: '(.+)'
+        action: drop
+      - source_labels: [ __name__ ]
+        regex: 'envoy_tls.*'
+        action: drop
+      - source_labels: [ __name__ ]
+        regex: 'envoy_tcp_downstream.*'
+        action: drop
+      - source_labels: [ __name__ ]
+        regex: 'envoy_http_(stats|admin).*'
+        action: drop
+      - source_labels: [ __name__ ]
+        regex: 'envoy_cluster_(lb|retry|bind|internal|max|original).*'
+        action: drop
+
+    # Scrape config for API servers
+    - job_name: 'kubernetes-apiservers'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - default
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: kubernetes;https
+
+    # Scrape config for nodes
+    - job_name: 'kubernetes-nodes'
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      kubernetes_sd_configs:
+      - role: node
+      relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
+
+    # scrape config for cAdvisor
+    - job_name: 'kubernetes-cadvisor'
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      kubernetes_sd_configs:
+      - role: node
+      relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
+    # scrape config for pods
+    - job_name: kubernetes-pods
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - action: keep
+        regex: true
+        source_labels:
+        - __meta_kubernetes_pod_annotation_prometheus_io_scrape
+      - source_labels: [ __address__ ]
+        regex: '.*9901.*'
+        action: drop
+      - action: replace
+        regex: (.+)
+        source_labels:
+        - __meta_kubernetes_pod_annotation_prometheus_io_path
+        target_label: __metrics_path__
+      - action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        source_labels:
+        - __address__
+        - __meta_kubernetes_pod_annotation_prometheus_io_port
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - action: replace
+        source_labels:
+        - __meta_kubernetes_namespace
+        target_label: kubernetes_namespace
+      - action: replace
+        source_labels:
+        - __meta_kubernetes_pod_name
+        target_label: kubernetes_pod_name
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "flagger.fullname" . }}-prometheus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "flagger.name" . }}-prometheus
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ template "flagger.name" . }}-prometheus
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        appmesh.k8s.aws/sidecarInjectorWebhook: disabled
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: {{ template "flagger.serviceAccountName" . }}-prometheus
+      containers:
+        - name: prometheus
+          image: "docker.io/prom/prometheus:v2.7.1"
+          imagePullPolicy: IfNotPresent
+          args:
+            - '--storage.tsdb.retention=6h'
+            - '--config.file=/etc/prometheus/prometheus.yml'
+          ports:
+            - containerPort: 9090
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/prometheus
+            - name: data-volume
+              mountPath: /prometheus/data
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ template "flagger.fullname" . }}-prometheus
+        - name: data-volume
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "flagger.fullname" . }}-prometheus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ template "flagger.chart" . }}
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ template "flagger.name" . }}-prometheus
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9090
+{{- end }}

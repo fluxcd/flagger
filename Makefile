@@ -18,6 +18,12 @@ run-appmesh:
 	-slack-url=https://hooks.slack.com/services/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 \
 	-slack-channel="devops-alerts"
 
+run-nginx:
+	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=nginx -namespace=nginx \
+	-metrics-server=http://prometheus-weave.istio.weavedx.com \
+	-slack-url=https://hooks.slack.com/services/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 \
+	-slack-channel="devops-alerts"
+
 build:
 	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
 

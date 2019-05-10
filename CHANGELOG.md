@@ -2,6 +2,36 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.13.1 (2019-04-09) 
+
+Fixes for custom metrics checks and NGINX Prometheus queries 
+
+#### Fixes
+
+- Fix promql queries for custom checks and NGINX [#174](https://github.com/weaveworks/flagger/pull/174)
+
+
+## 0.13.0 (2019-04-08) 
+
+Adds support for [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery) ingress controller
+
+#### Features
+
+- Add support for nginx ingress controller (weighted traffic and A/B testing) [#170](https://github.com/weaveworks/flagger/pull/170)
+- Add Prometheus add-on to Flagger Helm chart for App Mesh and NGINX [79b3370](https://github.com/weaveworks/flagger/pull/170/commits/79b337089294a92961bc8446fd185b38c50a32df)
+
+#### Fixes
+
+- Fix duplicate hosts Istio error when using wildcards [#162](https://github.com/weaveworks/flagger/pull/162)
+
+## 0.12.0 (2019-04-29) 
+
+Adds support for [SuperGloo](https://docs.flagger.app/install/flagger-install-with-supergloo)
+
+#### Features
+
+- Supergloo support for canary deployment (weighted traffic) [#151](https://github.com/weaveworks/flagger/pull/151)
+
 ## 0.11.1 (2019-04-18) 
 
 Move Flagger and the load tester container images to Docker Hub

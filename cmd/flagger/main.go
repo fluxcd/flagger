@@ -99,7 +99,7 @@ func main() {
 
 	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
 
-	logger.Infof("Starting flagger version %s revision %s", version.VERSION, version.REVISION)
+	logger.Infof("Starting flagger version %s revision %s mesh provider %s", version.VERSION, version.REVISION, meshProvider)
 
 	ver, err := kubeClient.Discovery().ServerVersion()
 	if err != nil {
