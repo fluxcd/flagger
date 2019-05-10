@@ -17,6 +17,7 @@ kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Initialising canary'
 kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
+kubectl apply -f ${REPO_ROOT}/test/e2e-ingress.yaml
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3
