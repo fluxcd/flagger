@@ -51,6 +51,7 @@ spec:
             envoy_response_code!~"5.*"}[1m])) 
         / 
         sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace="gloo-system", gloo="gateway-proxy"}[1m]))
+        * 100
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
