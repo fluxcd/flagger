@@ -11,7 +11,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -20,6 +22,7 @@ type fakeClients struct {
 	canary        *v1alpha3.Canary
 	abtest        *v1alpha3.Canary
 	appmeshCanary *v1alpha3.Canary
+	ingressCanary *v1alpha3.Canary
 	kubeClient    kubernetes.Interface
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
@@ -30,9 +33,10 @@ func setupfakeClients() fakeClients {
 	canary := newMockCanary()
 	abtest := newMockABTest()
 	appmeshCanary := newMockCanaryAppMesh()
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary, abtest, appmeshCanary)
+	ingressCanary := newMockCanaryIngress()
+	flaggerClient := fakeFlagger.NewSimpleClientset(canary, abtest, appmeshCanary, ingressCanary)
 
-	kubeClient := fake.NewSimpleClientset(newMockDeployment(), newMockABTestDeployment())
+	kubeClient := fake.NewSimpleClientset(newMockDeployment(), newMockABTestDeployment(), newMockIngress())
 
 	meshClient := fakeFlagger.NewSimpleClientset()
 	logger, _ := logger.NewLogger("debug")
@@ -41,6 +45,7 @@ func setupfakeClients() fakeClients {
 		canary:        canary,
 		abtest:        abtest,
 		appmeshCanary: appmeshCanary,
+		ingressCanary: ingressCanary,
 		kubeClient:    kubeClient,
 		meshClient:    meshClient,
 		flaggerClient: flaggerClient,
@@ -265,4 +270,74 @@ func newMockABTestDeployment() *appsv1.Deployment {
 	}
 
 	return d
+}
+
+func newMockCanaryIngress() *v1alpha3.Canary {
+	cd := &v1alpha3.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "nginx",
+		},
+		Spec: v1alpha3.CanarySpec{
+			TargetRef: hpav1.CrossVersionObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			IngressRef: &hpav1.CrossVersionObjectReference{
+				Name:       "podinfo",
+				APIVersion: "extensions/v1beta1",
+				Kind:       "Ingress",
+			},
+			Service: v1alpha3.CanaryService{
+				Port: 9898,
+			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []v1alpha3.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newMockIngress() *v1beta1.Ingress {
+	return &v1beta1.Ingress{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class": "nginx",
+			},
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: "app.example.com",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Path: "/",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "podinfo",
+										ServicePort: intstr.FromInt(9898),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
