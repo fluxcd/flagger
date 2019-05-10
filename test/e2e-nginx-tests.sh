@@ -29,6 +29,10 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
+  ingressRef:
+    apiVersion: extensions/v1beta1
+    kind: Ingress
+    name: podinfo
   progressDeadlineSeconds: 60
   service:
     port: 9898
@@ -119,6 +123,10 @@ spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
+    name: podinfo
+  ingressRef:
+    apiVersion: extensions/v1beta1
+    kind: Ingress
     name: podinfo
   progressDeadlineSeconds: 60
   service:
