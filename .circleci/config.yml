@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  e2e-testing:
+  e2e-istio-testing:
     machine: true
     steps:
       - checkout
@@ -18,11 +18,20 @@ jobs:
       - run: test/e2e-build.sh supergloo:test.supergloo-system
       - run: test/e2e-tests.sh canary
 
+  e2e-nginx-testing:
+    machine: true
+    steps:
+      - checkout
+      - run: test/e2e-kind.sh
+      - run: test/e2e-nginx.sh
+      - run: test/e2e-nginx-build.sh
+      - run: test/e2e-nginx-tests.sh
+
 workflows:
   version: 2
   build-and-test:
     jobs:
-      - e2e-testing:
+      - e2e-istio-testing:
           filters:
             branches:
               ignore:
@@ -30,6 +39,13 @@ workflows:
                 - /docs-.*/
                 - /release-.*/
       - e2e-supergloo-testing:
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
+      - e2e-nginx-testing:
           filters:
             branches:
               ignore:
