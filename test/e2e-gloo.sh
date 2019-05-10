@@ -6,7 +6,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo ">>> Installing Helm"
-# curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
 
 echo '>>> Installing Tiller'
 kubectl --namespace kube-system create sa tiller
