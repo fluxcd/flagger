@@ -67,7 +67,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test
 ```
 
-Create an ingress definition (replace `app.exmaple.com` with your own domain):
+Create an ingress definition (replace `app.example.com` with your own domain):
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -81,7 +81,7 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-    - host: app.exmaple.com
+    - host: app.example.com
       http:
         paths:
           - backend:
@@ -95,7 +95,7 @@ Save the above resource as podinfo-ingress.yaml and then apply it:
 kubectl apply -f ./podinfo-ingress.yaml
 ```
 
-Create a canary custom resource (replace `app.exmaple.com` with your own domain):
+Create a canary custom resource (replace `app.example.com` with your own domain):
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -249,7 +249,7 @@ podinfod=quay.io/stefanprodan/podinfo:1.4.2
 Generate HTTP 500 errors:
 
 ```bash
-watch curl http://app.exmaple.com/status/500
+watch curl http://app.example.com/status/500
 ```
 
 When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
@@ -381,7 +381,7 @@ Edit the canary analysis, remove the max/step weight and add the match condition
 ```
 
 The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or 
-those that call the service using the `X-Canary: always` header.
+those that call the service using the `X-Canary: insider` header.
 
 Trigger a canary deployment by updating the container image:
 
