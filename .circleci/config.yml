@@ -61,3 +61,10 @@ workflows:
                 - /gh-pages.*/
                 - /docs-.*/
                 - /release-.*/
+      - e2e-gloo-testing:
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
