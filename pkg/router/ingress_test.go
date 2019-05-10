@@ -79,12 +79,34 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 		t.Errorf("Canary annotation missing")
 	}
 
-	// test initialisation
+	// test rollout
 	if inCanary.Annotations[canaryAn] != "true" {
 		t.Errorf("Got canary annotation %v wanted true", inCanary.Annotations[canaryAn])
 	}
 
 	if inCanary.Annotations[canaryWeightAn] != "50" {
 		t.Errorf("Got canary weight annotation %v wanted 50", inCanary.Annotations[canaryWeightAn])
+	}
+
+	p = 100
+	c = 0
+
+	err = router.SetRoutes(mocks.ingressCanary, p, c)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	inCanary, err = router.kubeClient.ExtensionsV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// test promotion
+	if inCanary.Annotations[canaryAn] != "false" {
+		t.Errorf("Got canary annotation %v wanted false", inCanary.Annotations[canaryAn])
+	}
+
+	if inCanary.Annotations[canaryWeightAn] != "0" {
+		t.Errorf("Got canary weight annotation %v wanted 0", inCanary.Annotations[canaryWeightAn])
 	}
 }
