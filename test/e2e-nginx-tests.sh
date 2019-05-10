@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # This script runs e2e tests for Canary initialization, analysis and promotion
-# Prerequisites: Kubernetes Kind, Helm and Istio
+# Prerequisites: Kubernetes Kind, Helm and NGINX ingress controller
 
 set -o errexit
 
