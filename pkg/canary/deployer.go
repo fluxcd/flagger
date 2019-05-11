@@ -214,7 +214,6 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, error)
 		primaryDep = &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      primaryName,
-				Labels:    canaryDep.Labels,
 				Namespace: cd.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
