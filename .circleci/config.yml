@@ -47,6 +47,13 @@ workflows:
                 - /gh-pages.*/
                 - /docs-.*/
                 - /release-.*/
+      - e2e-smi-istio-testing:
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
       - e2e-supergloo-testing:
           filters:
             branches:
