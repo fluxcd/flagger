@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.13.2 (2019-04-11) 
+
+Fixes for Jenkins X deployments (prevent the jx GC from removing the primary instance)
+
+#### Fixes
+
+- Do not copy labels from canary to primary deployment [#178](https://github.com/weaveworks/flagger/pull/178)
+
+#### Improvements 
+
+- Add NGINX ingress controller e2e and unit tests [#176](https://github.com/weaveworks/flagger/pull/176) 
+
 ## 0.13.1 (2019-04-09) 
 
 Fixes for custom metrics checks and NGINX Prometheus queries 
@@ -9,7 +21,6 @@ Fixes for custom metrics checks and NGINX Prometheus queries
 #### Fixes
 
 - Fix promql queries for custom checks and NGINX [#174](https://github.com/weaveworks/flagger/pull/174)
-
 
 ## 0.13.0 (2019-04-08) 
 
