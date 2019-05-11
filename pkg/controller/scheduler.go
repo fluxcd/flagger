@@ -598,7 +598,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 		}
 
 		// Istio checks
-		if c.meshProvider == "istio" {
+		if strings.Contains(c.meshProvider, "istio") {
 			if metric.Name == "request-success-rate" || metric.Name == "istio_requests_total" {
 				val, err := c.observer.GetIstioSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
 				if err != nil {
