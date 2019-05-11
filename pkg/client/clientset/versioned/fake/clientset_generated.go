@@ -26,6 +26,8 @@ import (
 	fakeflaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3/fake"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	fakenetworkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
+	splitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
+	fakesplitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -103,4 +105,14 @@ func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3In
 // Networking retrieves the NetworkingV1alpha3Client
 func (c *Clientset) Networking() networkingv1alpha3.NetworkingV1alpha3Interface {
 	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
+}
+
+// SplitV1alpha1 retrieves the SplitV1alpha1Client
+func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
+	return &fakesplitv1alpha1.FakeSplitV1alpha1{Fake: &c.Fake}
+}
+
+// Split retrieves the SplitV1alpha1Client
+func (c *Clientset) Split() splitv1alpha1.SplitV1alpha1Interface {
+	return &fakesplitv1alpha1.FakeSplitV1alpha1{Fake: &c.Fake}
 }

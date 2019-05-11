@@ -28,6 +28,7 @@ import (
 	flagger "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger"
 	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/weaveworks/flagger/pkg/client/informers/externalversions/istio"
+	smi "github.com/weaveworks/flagger/pkg/client/informers/externalversions/smi"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -177,6 +178,7 @@ type SharedInformerFactory interface {
 	Appmesh() appmesh.Interface
 	Flagger() flagger.Interface
 	Networking() istio.Interface
+	Split() smi.Interface
 }
 
 func (f *sharedInformerFactory) Appmesh() appmesh.Interface {
@@ -189,4 +191,8 @@ func (f *sharedInformerFactory) Flagger() flagger.Interface {
 
 func (f *sharedInformerFactory) Networking() istio.Interface {
 	return istio.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Split() smi.Interface {
+	return smi.New(f, f.namespace, f.tweakListOptions)
 }
