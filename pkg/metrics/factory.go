@@ -31,6 +31,10 @@ func (factory Factory) Observer() Interface {
 		return &NginxObserver{
 			client: factory.Client,
 		}
+	case factory.MeshProvider == "smi:linkerd":
+		return &LinkerdObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,
