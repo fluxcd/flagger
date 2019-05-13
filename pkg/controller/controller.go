@@ -33,23 +33,23 @@ const controllerAgentName = "flagger"
 
 // Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
-	kubeClient    kubernetes.Interface
-	istioClient   clientset.Interface
-	flaggerClient clientset.Interface
-	flaggerLister flaggerlisters.CanaryLister
-	flaggerSynced cache.InformerSynced
-	flaggerWindow time.Duration
-	workqueue     workqueue.RateLimitingInterface
-	eventRecorder record.EventRecorder
-	logger        *zap.SugaredLogger
-	canaries      *sync.Map
-	jobs          map[string]CanaryJob
-	deployer      canary.Deployer
-	observer      metrics.Observer
-	recorder      metrics.Recorder
-	notifier      *notifier.Slack
-	routerFactory *router.Factory
-	meshProvider  string
+	kubeClient      kubernetes.Interface
+	istioClient     clientset.Interface
+	flaggerClient   clientset.Interface
+	flaggerLister   flaggerlisters.CanaryLister
+	flaggerSynced   cache.InformerSynced
+	flaggerWindow   time.Duration
+	workqueue       workqueue.RateLimitingInterface
+	eventRecorder   record.EventRecorder
+	logger          *zap.SugaredLogger
+	canaries        *sync.Map
+	jobs            map[string]CanaryJob
+	deployer        canary.Deployer
+	recorder        metrics.Recorder
+	notifier        *notifier.Slack
+	routerFactory   *router.Factory
+	observerFactory *metrics.Factory
+	meshProvider    string
 }
 
 func NewController(
@@ -62,6 +62,7 @@ func NewController(
 	logger *zap.SugaredLogger,
 	notifier *notifier.Slack,
 	routerFactory *router.Factory,
+	observerFactory *metrics.Factory,
 	meshProvider string,
 	version string,
 	labels []string,
@@ -92,23 +93,23 @@ func NewController(
 	recorder.SetInfo(version, meshProvider)
 
 	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   istioClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: eventRecorder,
-		logger:        logger,
-		canaries:      new(sync.Map),
-		jobs:          map[string]CanaryJob{},
-		flaggerWindow: flaggerWindow,
-		deployer:      deployer,
-		observer:      metrics.NewObserver(metricServer),
-		recorder:      recorder,
-		notifier:      notifier,
-		routerFactory: routerFactory,
-		meshProvider:  meshProvider,
+		kubeClient:      kubeClient,
+		istioClient:     istioClient,
+		flaggerClient:   flaggerClient,
+		flaggerLister:   flaggerInformer.Lister(),
+		flaggerSynced:   flaggerInformer.Informer().HasSynced,
+		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder:   eventRecorder,
+		logger:          logger,
+		canaries:        new(sync.Map),
+		jobs:            map[string]CanaryJob{},
+		flaggerWindow:   flaggerWindow,
+		deployer:        deployer,
+		observerFactory: observerFactory,
+		recorder:        recorder,
+		notifier:        notifier,
+		routerFactory:   routerFactory,
+		meshProvider:    meshProvider,
 	}
 
 	flaggerInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
