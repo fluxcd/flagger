@@ -556,126 +556,56 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 		}
 	}
 
+	// create observer based on the mesh provider
+	observer := c.observerFactory.Observer()
+
 	// run metrics checks
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
 		if metric.Interval == "" {
 			metric.Interval = r.GetMetricInterval()
 		}
 
-		// App Mesh checks
-		if c.meshProvider == "appmesh" {
-			if metric.Name == "request-success-rate" || metric.Name == "envoy_cluster_upstream_rq" {
-				val, err := c.observer.GetEnvoySuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
-				if err != nil {
-					if strings.Contains(err.Error(), "no values found") {
-						c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-							metric.Name, r.Spec.TargetRef.Name, r.Namespace)
-					} else {
-						c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
-					}
-					return false
-				}
-				if float64(metric.Threshold) > val {
-					c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
-						r.Name, r.Namespace, val, metric.Threshold)
-					return false
-				}
-			}
-
-			if metric.Name == "request-duration" || metric.Name == "envoy_cluster_upstream_rq_time_bucket" {
-				val, err := c.observer.GetEnvoyRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
-				if err != nil {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
-					return false
-				}
-				t := time.Duration(metric.Threshold) * time.Millisecond
-				if val > t {
-					c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
-						r.Name, r.Namespace, val, t)
-					return false
-				}
-			}
-		}
-
-		// Istio checks
-		if strings.Contains(c.meshProvider, "istio") {
-			if metric.Name == "request-success-rate" || metric.Name == "istio_requests_total" {
-				val, err := c.observer.GetIstioSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
-				if err != nil {
-					if strings.Contains(err.Error(), "no values found") {
-						c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-							metric.Name, r.Spec.TargetRef.Name, r.Namespace)
-					} else {
-						c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
-					}
-					return false
-				}
-				if float64(metric.Threshold) > val {
-					c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
-						r.Name, r.Namespace, val, metric.Threshold)
-					return false
-				}
-			}
-
-			if metric.Name == "request-duration" || metric.Name == "istio_request_duration_seconds_bucket" {
-				val, err := c.observer.GetIstioRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Name, metric.Interval)
-				if err != nil {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
-					return false
-				}
-				t := time.Duration(metric.Threshold) * time.Millisecond
-				if val > t {
-					c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
-						r.Name, r.Namespace, val, t)
-					return false
-				}
-			}
-		}
-
-		// NGINX checks
-		if c.meshProvider == "nginx" {
-			if metric.Name == "request-success-rate" {
-				val, err := c.observer.GetNginxSuccessRate(r.Spec.IngressRef.Name, r.Namespace, metric.Name, metric.Interval)
-				if err != nil {
-					if strings.Contains(err.Error(), "no values found") {
-						c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-							metric.Name, r.Spec.TargetRef.Name, r.Namespace)
-					} else {
-						c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
-					}
-					return false
-				}
-				if float64(metric.Threshold) > val {
-					c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
-						r.Name, r.Namespace, val, metric.Threshold)
-					return false
-				}
-			}
-
-			if metric.Name == "request-duration" {
-				val, err := c.observer.GetNginxRequestDuration(r.Spec.IngressRef.Name, r.Namespace, metric.Name, metric.Interval)
-				if err != nil {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
-					return false
-				}
-				t := time.Duration(metric.Threshold) * time.Millisecond
-				if val > t {
-					c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
-						r.Name, r.Namespace, val, t)
-					return false
-				}
-			}
-		}
-
-		// custom checks
-		if metric.Query != "" {
-			val, err := c.observer.GetScalar(metric.Query)
+		if metric.Name == "request-success-rate" {
+			val, err := observer.GetRequestSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Interval)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observer.GetMetricsServer(), err)
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
+				}
+				return false
+			}
+			if float64(metric.Threshold) > val {
+				c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
+					r.Name, r.Namespace, val, metric.Threshold)
+				return false
+			}
+		}
+
+		if metric.Name == "request-duration" {
+			val, err := observer.GetRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Interval)
+			if err != nil {
+				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
+				return false
+			}
+			t := time.Duration(metric.Threshold) * time.Millisecond
+			if val > t {
+				c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
+					r.Name, r.Namespace, val, t)
+				return false
+			}
+		}
+
+		// custom checks
+		if metric.Query != "" {
+			val, err := c.observerFactory.Client.RunQuery(metric.Query)
+			if err != nil {
+				if strings.Contains(err.Error(), "no values found") {
+					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+				} else {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
 				}
 				return false
 			}
