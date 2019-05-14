@@ -1,0 +1,131 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: trafficsplits.split.smi-spec.io
+spec:
+  additionalPrinterColumns:
+    - JSONPath: .spec.service
+      description: The service
+      name: Service
+      type: string
+  group: split.smi-spec.io
+  names:
+    kind: TrafficSplit
+    listKind: TrafficSplitList
+    plural: trafficsplits
+    singular: trafficsplit
+  scope: Namespaced
+  subresources:
+    status: {}
+  version: v1alpha1
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: smi-adapter-istio
+  namespace: istio-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: smi-adapter-istio
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      - configmaps
+      - secrets
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs:
+      - '*'
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - get
+      - create
+  - apiGroups:
+      - apps
+    resourceNames:
+      - smi-adapter-istio
+    resources:
+      - deployments/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - split.smi-spec.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - networking.istio.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: smi-adapter-istio
+subjects:
+  - kind: ServiceAccount
+    name: smi-adapter-istio
+    namespace: istio-system
+roleRef:
+  kind: ClusterRole
+  name: smi-adapter-istio
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smi-adapter-istio
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: smi-adapter-istio
+  template:
+    metadata:
+      labels:
+        name: smi-adapter-istio
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: smi-adapter-istio
+      containers:
+        - name: smi-adapter-istio
+          image: docker.io/stefanprodan/smi-adapter-istio:0.0.2-beta.1
+          command:
+          - smi-adapter-istio
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              value: ""
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "smi-adapter-istio"

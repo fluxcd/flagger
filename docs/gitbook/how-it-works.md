@@ -38,7 +38,6 @@ spec:
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
-    - mesh
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com

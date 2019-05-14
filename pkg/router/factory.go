@@ -56,6 +56,15 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			kubeClient:    factory.kubeClient,
 			appmeshClient: factory.meshClient,
 		}
+	case strings.HasPrefix(provider, "smi:"):
+		mesh := strings.TrimPrefix(provider, "smi:")
+		return &SmiRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    mesh,
+		}
 	case strings.HasPrefix(provider, "supergloo"):
 		supergloo, err := NewSuperglooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
 		if err != nil {
