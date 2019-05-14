@@ -62,7 +62,15 @@ func NewGlooRouterWithClient(ctx context.Context, routingRuleClient gloov1.Upstr
 
 // Reconcile creates or updates the Istio virtual service
 func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
-	return gr.SetRoutes(canary, 100, 0)
+	// do we have routes already?
+	if _, _, err := gr.GetRoutes(canary); err == nil {
+		// we have routes, no need to do anything else
+		return nil
+	} else if solokiterror.IsNotExist(err) {
+		return gr.SetRoutes(canary, 100, 0)
+	} else {
+		return err
+	}
 }
 
 // GetRoutes returns the destinations weight for primary and canary
@@ -104,34 +112,30 @@ func (gr *GlooRouter) SetRoutes(
 ) error {
 	targetName := canary.Spec.TargetRef.Name
 
-	destinations := []*gloov1.WeightedDestination{}
-	if primaryWeight != 0 {
-		destinations = append(destinations, &gloov1.WeightedDestination{
-			Destination: &gloov1.Destination{
-				Upstream: solokitcore.ResourceRef{
-					Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s-primary", targetName), canary.Spec.Service.Port),
-					Namespace: gr.upstreamDiscoveryNs,
-				},
-			},
-			Weight: uint32(primaryWeight),
-		})
-	}
-
-	if canaryWeight != 0 {
-		destinations = append(destinations, &gloov1.WeightedDestination{
-			Destination: &gloov1.Destination{
-				Upstream: solokitcore.ResourceRef{
-					Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s-canary", targetName), canary.Spec.Service.Port),
-					Namespace: gr.upstreamDiscoveryNs,
-				},
-			},
-			Weight: uint32(canaryWeight),
-		})
-	}
-
-	if len(destinations) == 0 {
+	if primaryWeight == 0 && canaryWeight == 0 {
 		return fmt.Errorf("RoutingRule %s.%s update failed: no valid weights", targetName, canary.Namespace)
 	}
+
+	destinations := []*gloov1.WeightedDestination{}
+	destinations = append(destinations, &gloov1.WeightedDestination{
+		Destination: &gloov1.Destination{
+			Upstream: solokitcore.ResourceRef{
+				Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s-primary", targetName), canary.Spec.Service.Port),
+				Namespace: gr.upstreamDiscoveryNs,
+			},
+		},
+		Weight: uint32(primaryWeight),
+	})
+
+	destinations = append(destinations, &gloov1.WeightedDestination{
+		Destination: &gloov1.Destination{
+			Upstream: solokitcore.ResourceRef{
+				Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s-canary", targetName), canary.Spec.Service.Port),
+				Namespace: gr.upstreamDiscoveryNs,
+			},
+		},
+		Weight: uint32(canaryWeight),
+	})
 
 	upstreamGroup := &gloov1.UpstreamGroup{
 		Metadata: solokitcore.Metadata{

@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"strings"
 	"time"
 )
 
@@ -29,6 +30,10 @@ func (factory Factory) Observer() Interface {
 		}
 	case factory.MeshProvider == "nginx":
 		return &NginxObserver{
+			client: factory.Client,
+		}
+	case strings.HasPrefix(factory.MeshProvider, "gloo"):
+		return &GlooObserver{
 			client: factory.Client,
 		}
 	case factory.MeshProvider == "smi:linkerd":

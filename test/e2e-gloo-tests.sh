@@ -12,7 +12,7 @@ echo '>>> Creating test namespace'
 kubectl create namespace test
 
 echo ">>> Downloading Gloo CLI"
-curl -SsL https://github.com/solo-io/gloo/releases/download/v0.13.25/glooctl-linux-amd64 > glooctl
+curl -SsL https://github.com/solo-io/gloo/releases/download/v0.13.27/glooctl-linux-amd64 > glooctl
 chmod +x glooctl
 
 echo '>>> Installing load tester'
@@ -43,15 +43,9 @@ spec:
     maxWeight: 30
     stepWeight: 10
     metrics:
-    - name: envoy-success-rate
+    - name: request-success-rate
       threshold: 99
       interval: 1m
-      query: |
-        sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace="gloo-system", gloo="gateway-proxy", 
-            envoy_response_code!~"5.*"}[1m])) 
-        / 
-        sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace="gloo-system", gloo="gateway-proxy"}[1m]))
-        * 100
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
