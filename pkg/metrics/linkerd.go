@@ -10,8 +10,9 @@ var linkerdQueries = map[string]string{
 		rate(
 			response_total{
 				namespace="{{ .Namespace }}",
-				dst_deployment=~"{{ .Name }}",
-				classification="failure"
+				deployment=~"{{ .Name }}",
+				classification="failure",
+				direction="inbound"
 			}[{{ .Interval }}]
 		)
 	) 
@@ -20,7 +21,8 @@ var linkerdQueries = map[string]string{
 		rate(
 			response_total{
 				namespace="{{ .Namespace }}",
-				dst_deployment=~"{{ .Name }}"
+				deployment=~"{{ .Name }}",
+				direction="inbound"
 			}[{{ .Interval }}]
 		)
 	) 
@@ -32,7 +34,8 @@ var linkerdQueries = map[string]string{
 			rate(
 				response_latency_ms_bucket{
 					namespace="{{ .Namespace }}",
-					dst_deployment=~"{{ .Name }}"
+					deployment=~"{{ .Name }}",
+					direction="inbound"
 				}[{{ .Interval }}]
 			)
 		) by (le)
