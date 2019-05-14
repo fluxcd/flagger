@@ -82,7 +82,6 @@ spec:
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
-    - mesh
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
@@ -93,17 +92,12 @@ spec:
     # HTTP rewrite (optional)
     rewrite:
       uri: /
-    # Envoy timeout and retry policy (optional)
-    headers:
-      request:
-        add:
-          x-envoy-upstream-rq-timeout-ms: "15000"
-          x-envoy-max-retries: "10"
-          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
     # cross-origin resource sharing policy (optional)
     corsPolicy:
       allowOrigin:
         - example.com
+    # request timeout (optional)
+    timeout: 5s
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   # define the canary analysis timing and KPIs
