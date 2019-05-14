@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
-	expected := `sum(rate(nginx_ingress_controller_requests{namespace="nginx",ingress="podinfo",status!~"5.*"}[1m]))/sum(rate(nginx_ingress_controller_requests{namespace="nginx",ingress="podinfo"}[1m]))*100`
+func TestLinkerdObserver_GetRequestSuccessRate(t *testing.T) {
+	expected := `sum(rate(response_total{namespace="default",dst_deployment=~"podinfo",classification="failure"}[1m]))/sum(rate(response_total{namespace="default",dst_deployment=~"podinfo"}[1m]))*100`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
@@ -26,11 +26,11 @@ func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	observer := &NginxObserver{
+	observer := &LinkerdObserver{
 		client: client,
 	}
 
-	val, err := observer.GetRequestSuccessRate("podinfo", "nginx", "1m")
+	val, err := observer.GetRequestSuccessRate("podinfo", "default", "1m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -40,8 +40,8 @@ func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
 	}
 }
 
-func TestNginxObserver_GetRequestDuration(t *testing.T) {
-	expected := `sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_sum{namespace="nginx",ingress="podinfo"}[1m]))/sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_count{namespace="nginx",ingress="podinfo"}[1m]))*1000`
+func TestLinkerdObserver_GetRequestDuration(t *testing.T) {
+	expected := `histogram_quantile(0.99,sum(rate(response_latency_ms_bucket{namespace="default",dst_deployment=~"podinfo"}[1m]))by(le))`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
@@ -59,11 +59,11 @@ func TestNginxObserver_GetRequestDuration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	observer := &NginxObserver{
+	observer := &LinkerdObserver{
 		client: client,
 	}
 
-	val, err := observer.GetRequestDuration("podinfo", "nginx", "1m")
+	val, err := observer.GetRequestDuration("podinfo", "default", "1m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}

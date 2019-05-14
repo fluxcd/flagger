@@ -37,7 +37,6 @@ type Mocks struct {
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
 	deployer      canary.Deployer
-	observer      metrics.Observer
 	ctrl          *Controller
 	logger        *zap.SugaredLogger
 	router        router.Interface
@@ -77,7 +76,6 @@ func SetupMocks(abtest bool) Mocks {
 			FlaggerClient: flaggerClient,
 		},
 	}
-	observer := metrics.NewObserver("fake")
 
 	// init controller
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
@@ -86,21 +84,24 @@ func SetupMocks(abtest bool) Mocks {
 	// init router
 	rf := router.NewFactory(nil, kubeClient, flaggerClient, logger, flaggerClient)
 
+	// init observer
+	observerFactory, _ := metrics.NewFactory("fake", "istio", 5*time.Second)
+
 	ctrl := &Controller{
-		kubeClient:    kubeClient,
-		istioClient:   flaggerClient,
-		flaggerClient: flaggerClient,
-		flaggerLister: flaggerInformer.Lister(),
-		flaggerSynced: flaggerInformer.Informer().HasSynced,
-		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder: &record.FakeRecorder{},
-		logger:        logger,
-		canaries:      new(sync.Map),
-		flaggerWindow: time.Second,
-		deployer:      deployer,
-		observer:      observer,
-		recorder:      metrics.NewRecorder(controllerAgentName, false),
-		routerFactory: rf,
+		kubeClient:      kubeClient,
+		istioClient:     flaggerClient,
+		flaggerClient:   flaggerClient,
+		flaggerLister:   flaggerInformer.Lister(),
+		flaggerSynced:   flaggerInformer.Informer().HasSynced,
+		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder:   &record.FakeRecorder{},
+		logger:          logger,
+		canaries:        new(sync.Map),
+		flaggerWindow:   time.Second,
+		deployer:        deployer,
+		observerFactory: observerFactory,
+		recorder:        metrics.NewRecorder(controllerAgentName, false),
+		routerFactory:   rf,
 	}
 	ctrl.flaggerSynced = alwaysReady
 
@@ -108,7 +109,6 @@ func SetupMocks(abtest bool) Mocks {
 
 	return Mocks{
 		canary:        c,
-		observer:      observer,
 		deployer:      deployer,
 		logger:        logger,
 		flaggerClient: flaggerClient,
