@@ -9,6 +9,15 @@ jobs:
       - run: test/e2e-build.sh
       - run: test/e2e-tests.sh
 
+  e2e-smi-istio-testing:
+    machine: true
+    steps:
+      - checkout
+      - run: test/e2e-kind.sh
+      - run: test/e2e-istio.sh
+      - run: test/e2e-smi-istio-build.sh
+      - run: test/e2e-tests.sh canary
+
   e2e-supergloo-testing:
     machine: true
     steps:
@@ -41,6 +50,13 @@ workflows:
   build-and-test:
     jobs:
       - e2e-istio-testing:
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
+      - e2e-smi-istio-testing:
           filters:
             branches:
               ignore:

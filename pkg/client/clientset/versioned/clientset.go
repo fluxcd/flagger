@@ -22,6 +22,7 @@ import (
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	splitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -38,6 +39,9 @@ type Interface interface {
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
 	// Deprecated: please explicitly pick a version if possible.
 	Networking() networkingv1alpha3.NetworkingV1alpha3Interface
+	SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface
+	// Deprecated: please explicitly pick a version if possible.
+	Split() splitv1alpha1.SplitV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -47,6 +51,7 @@ type Clientset struct {
 	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
 	flaggerV1alpha3    *flaggerv1alpha3.FlaggerV1alpha3Client
 	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
+	splitV1alpha1      *splitv1alpha1.SplitV1alpha1Client
 }
 
 // AppmeshV1beta1 retrieves the AppmeshV1beta1Client
@@ -82,6 +87,17 @@ func (c *Clientset) Networking() networkingv1alpha3.NetworkingV1alpha3Interface 
 	return c.networkingV1alpha3
 }
 
+// SplitV1alpha1 retrieves the SplitV1alpha1Client
+func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
+	return c.splitV1alpha1
+}
+
+// Deprecated: Split retrieves the default version of SplitClient.
+// Please explicitly pick a version.
+func (c *Clientset) Split() splitv1alpha1.SplitV1alpha1Interface {
+	return c.splitV1alpha1
+}
+
 // Discovery retrieves the DiscoveryClient
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	if c == nil {
@@ -110,6 +126,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.splitV1alpha1, err = splitv1alpha1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 
 	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(&configShallowCopy)
 	if err != nil {
@@ -125,6 +145,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.appmeshV1beta1 = appmeshv1beta1.NewForConfigOrDie(c)
 	cs.flaggerV1alpha3 = flaggerv1alpha3.NewForConfigOrDie(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.NewForConfigOrDie(c)
+	cs.splitV1alpha1 = splitv1alpha1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -136,6 +157,7 @@ func New(c rest.Interface) *Clientset {
 	cs.appmeshV1beta1 = appmeshv1beta1.New(c)
 	cs.flaggerV1alpha3 = flaggerv1alpha3.New(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
+	cs.splitV1alpha1 = splitv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

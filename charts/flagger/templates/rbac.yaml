@@ -55,6 +55,11 @@ rules:
       - virtualservices
       - virtualservices/status
     verbs: ["*"]
+  - apiGroups:
+      - split.smi-spec.io
+    resources:
+      - trafficsplits
+    verbs: ["*"]
   - nonResourceURLs:
       - /version
     verbs:

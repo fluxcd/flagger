@@ -1,51 +1,74 @@
 package metrics
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 )
 
-func Test_NginxSuccessRateQueryRender(t *testing.T) {
-	meta := struct {
-		Name      string
-		Namespace string
-		Interval  string
-	}{
-		"podinfo",
-		"nginx",
-		"1m",
-	}
+func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
+	expected := `sum(rate(nginx_ingress_controller_requests{namespace="nginx",ingress="podinfo",status!~"5.*"}[1m]))/sum(rate(nginx_ingress_controller_requests{namespace="nginx",ingress="podinfo"}[1m]))*100`
 
-	query, err := render(meta, nginxSuccessRateQuery)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		promql := r.URL.Query()["query"][0]
+		if promql != expected {
+			t.Errorf("\nGot %s \nWanted %s", promql, expected)
+		}
+
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"100"]}]}}`
+		w.Write([]byte(json))
+	}))
+	defer ts.Close()
+
+	client, err := NewPrometheusClient(ts.URL, time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := `sum(rate(nginx_ingress_controller_requests{namespace="nginx",ingress="podinfo",status!~"5.*"}[1m])) / sum(rate(nginx_ingress_controller_requests{namespace="nginx",ingress="podinfo"}[1m])) * 100`
+	observer := &NginxObserver{
+		client: client,
+	}
 
-	if query != expected {
-		t.Errorf("\nGot %s \nWanted %s", query, expected)
+	val, err := observer.GetRequestSuccessRate("podinfo", "nginx", "1m")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if val != 100 {
+		t.Errorf("Got %v wanted %v", val, 100)
 	}
 }
 
-func Test_NginxRequestDurationQueryRender(t *testing.T) {
-	meta := struct {
-		Name      string
-		Namespace string
-		Interval  string
-	}{
-		"podinfo",
-		"nginx",
-		"1m",
-	}
+func TestNginxObserver_GetRequestDuration(t *testing.T) {
+	expected := `sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_sum{namespace="nginx",ingress="podinfo"}[1m]))/sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_count{namespace="nginx",ingress="podinfo"}[1m]))*1000`
 
-	query, err := render(meta, nginxRequestDurationQuery)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		promql := r.URL.Query()["query"][0]
+		if promql != expected {
+			t.Errorf("\nGot %s \nWanted %s", promql, expected)
+		}
+
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"100"]}]}}`
+		w.Write([]byte(json))
+	}))
+	defer ts.Close()
+
+	client, err := NewPrometheusClient(ts.URL, time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := `sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_sum{namespace="nginx",ingress="podinfo"}[1m])) /sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_count{namespace="nginx",ingress="podinfo"}[1m])) * 1000`
+	observer := &NginxObserver{
+		client: client,
+	}
 
-	if query != expected {
-		t.Errorf("\nGot %s \nWanted %s", query, expected)
+	val, err := observer.GetRequestDuration("podinfo", "nginx", "1m")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if val != 100*time.Millisecond {
+		t.Errorf("Got %v wanted %v", val, 100*time.Millisecond)
 	}
 }
