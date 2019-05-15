@@ -49,7 +49,7 @@ func TestIstioObserver_GetRequestDuration(t *testing.T) {
 			t.Errorf("\nGot %s \nWanted %s", promql, expected)
 		}
 
-		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"100"]}]}}`
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"0.100"]}]}}`
 		w.Write([]byte(json))
 	}))
 	defer ts.Close()

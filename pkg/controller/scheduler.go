@@ -581,12 +581,19 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					r.Name, r.Namespace, val, metric.Threshold)
 				return false
 			}
+
+			//c.recordEventInfof(r, "Check %s passed %.2f%% > %v%%", metric.Name, val, metric.Threshold)
 		}
 
 		if metric.Name == "request-duration" {
 			val, err := observer.GetRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Interval)
 			if err != nil {
-				c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
+				if strings.Contains(err.Error(), "no values found") {
+					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
+						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+				} else {
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
+				}
 				return false
 			}
 			t := time.Duration(metric.Threshold) * time.Millisecond
@@ -595,6 +602,8 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					r.Name, r.Namespace, val, t)
 				return false
 			}
+
+			//c.recordEventInfof(r, "Check %s passed %v < %v", metric.Name, val, metric.Threshold)
 		}
 
 		// custom checks
