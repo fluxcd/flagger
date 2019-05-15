@@ -95,7 +95,7 @@ Deploy Flagger in the _**istio-system**_ namespace:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
---set image.tag=master-fd44f1f \
+--set image.tag=master-12d84b2 \
 --set meshProvider=smi:istio
 ```
 
