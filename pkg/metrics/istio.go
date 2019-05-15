@@ -71,6 +71,6 @@ func (ob *IstioObserver) GetRequestDuration(name string, namespace string, inter
 		return 0, err
 	}
 
-	ms := time.Duration(int64(value)) * time.Millisecond
+	ms := time.Duration(int64(value*1000)) * time.Millisecond
 	return ms, nil
 }
