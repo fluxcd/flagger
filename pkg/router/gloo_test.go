@@ -35,8 +35,15 @@ func TestGlooRouter_Sync(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	dests := ug.GetDestinations()
-	if len(dests) != 1 {
-		t.Errorf("Got RoutingRule Destinations %v wanted %v", len(dests), 1)
+	if len(dests) != 2 {
+		t.Errorf("Got Destinations %v wanted %v", len(dests), 2)
+	}
+
+	if dests[0].Weight != 100 {
+		t.Errorf("Primary weight should is %v wanted 100", dests[0].Weight)
+	}
+	if dests[1].Weight != 0 {
+		t.Errorf("Canary weight should is %v wanted 0", dests[0].Weight)
 	}
 
 }
