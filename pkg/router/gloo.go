@@ -181,5 +181,6 @@ func (gr *GlooRouter) writeUpstreamGroupRuleForCanary(canary *flaggerv1.Canary, 
 	if err != nil {
 		return fmt.Errorf("UpstreamGroup %s.%s update failed: %v", targetName, canary.Namespace, err)
 	}
+	gr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Infof("UpstreamGroup %s updated", ug.Metadata.Name)
 	return nil
 }

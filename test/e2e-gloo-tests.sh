@@ -12,7 +12,7 @@ echo '>>> Creating test namespace'
 kubectl create namespace test
 
 echo ">>> Downloading Gloo CLI"
-curl -SsL https://github.com/solo-io/gloo/releases/download/v0.13.27/glooctl-linux-amd64 > glooctl
+curl -SsL https://github.com/solo-io/gloo/releases/download/v0.13.29/glooctl-linux-amd64 > glooctl
 chmod +x glooctl
 
 echo '>>> Installing load tester'

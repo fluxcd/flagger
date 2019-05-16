@@ -11,7 +11,7 @@ var glooQueries = map[string]string{
 	sum(
 		rate(
 			envoy_cluster_upstream_rq{
-				envoy_cluster_name=~"{{ .Namespace }}-{{ .Name }}-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
+				envoy_cluster_name=~"{{ .Namespace }}-{{ .Name }}-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
 				envoy_response_code!~"5.*"
 			}[{{ .Interval }}]
 		)
@@ -20,7 +20,7 @@ var glooQueries = map[string]string{
 	sum(
 		rate(
 			envoy_cluster_upstream_rq{
-				envoy_cluster_name=~"{{ .Namespace }}-{{ .Name }}-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
+				envoy_cluster_name=~"{{ .Namespace }}-{{ .Name }}-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
 			}[{{ .Interval }}]
 		)
 	) 
@@ -31,7 +31,7 @@ var glooQueries = map[string]string{
 		sum(
 			rate(
 				envoy_cluster_upstream_rq_time_bucket{
-					envoy_cluster_name=~"{{ .Namespace }}-{{ .Name }}-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
+					envoy_cluster_name=~"{{ .Namespace }}-{{ .Name }}-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
 				}[{{ .Interval }}]
 			)
 		) by (le)

@@ -15,7 +15,7 @@ helm init --service-account tiller --upgrade --wait
 helm repo add gloo https://storage.googleapis.com/solo-public-helm
 
 echo '>>> Installing Gloo'
-helm upgrade -i gloo gloo/gloo --version 0.13.27 \
+helm upgrade -i gloo gloo/gloo --version 0.13.29 \
 --wait \
 --namespace gloo-system \
 --set gatewayProxies.gateway-proxy.service.type=NodePort
