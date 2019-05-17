@@ -71,6 +71,12 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			panic("failed creating supergloo client")
 		}
 		return supergloo
+	case strings.HasPrefix(provider, "gloo"):
+		gloo, err := NewGlooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
+		if err != nil {
+			panic("failed creating gloo client")
+		}
+		return gloo
 	default:
 		return &IstioRouter{
 			logger:        factory.logger,

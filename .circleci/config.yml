@@ -27,6 +27,15 @@ jobs:
       - run: test/e2e-build.sh supergloo:test.supergloo-system
       - run: test/e2e-tests.sh canary
 
+  e2e-gloo-testing:
+    machine: true
+    steps:
+      - checkout
+      - run: test/e2e-kind.sh
+      - run: test/e2e-gloo.sh
+      - run: test/e2e-gloo-build.sh
+      - run: test/e2e-gloo-tests.sh
+
   e2e-nginx-testing:
     machine: true
     steps:
@@ -62,6 +71,13 @@ workflows:
                 - /docs-.*/
                 - /release-.*/
       - e2e-nginx-testing:
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
+      - e2e-gloo-testing:
           filters:
             branches:
               ignore:
