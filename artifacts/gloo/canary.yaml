@@ -33,4 +33,4 @@ spec:
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 1m -q 10 -c 2 http://gloo.exmaple.com/"
+          cmd: "hey -z 1m -q 10 -c 2 http://gloo.example.com/"
