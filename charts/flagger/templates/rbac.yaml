@@ -60,6 +60,21 @@ rules:
     resources:
       - trafficsplits
     verbs: ["*"]
+  - apiGroups:
+      - gloo.solo.io
+    resources:
+      - settings
+      - upstreams
+      - upstreamgroups
+      - proxies
+      - virtualservices
+    verbs: ["*"]
+  - apiGroups:
+      - gateway.solo.io
+    resources:
+      - virtualservices
+      - gateways
+    verbs: ["*"]
   - nonResourceURLs:
       - /version
     verbs:

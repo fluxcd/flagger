@@ -152,8 +152,10 @@ func (gr *GlooRouter) writeUpstreamGroupRuleForCanary(canary *flaggerv1.Canary, 
 	targetName := canary.Spec.TargetRef.Name
 
 	if oldUg, err := gr.ugClient.Read(ug.Metadata.Namespace, ug.Metadata.Name, solokitclients.ReadOpts{}); err != nil {
-		// ignore not exist errors..
-		if !solokiterror.IsNotExist(err) {
+		if solokiterror.IsNotExist(err) {
+			gr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("UpstreamGroup %s created", ug.Metadata.Name)
+		} else {
 			return fmt.Errorf("RoutingRule %s.%s read failed: %v", targetName, canary.Namespace, err)
 		}
 	} else {
@@ -181,6 +183,5 @@ func (gr *GlooRouter) writeUpstreamGroupRuleForCanary(canary *flaggerv1.Canary, 
 	if err != nil {
 		return fmt.Errorf("UpstreamGroup %s.%s update failed: %v", targetName, canary.Namespace, err)
 	}
-	gr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Infof("UpstreamGroup %s updated", ug.Metadata.Name)
 	return nil
 }
