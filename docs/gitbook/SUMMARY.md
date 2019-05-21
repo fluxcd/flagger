@@ -16,10 +16,12 @@
 * [Istio A/B Testing](usage/ab-testing.md)
 * [App Mesh Canary Deployments](usage/appmesh-progressive-delivery.md)
 * [NGINX Canary Deployments](usage/nginx-progressive-delivery.md)
+* [Gloo Canary Deployments](usage/gloo-progressive-delivery.md)
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)
 
 ## Tutorials
 
+* [SMI Istio Canary Deployments](tutorials/flagger-smi-istio.md)
 * [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
