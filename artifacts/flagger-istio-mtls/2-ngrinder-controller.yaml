@@ -1,0 +1,78 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ngrinder-controller
+  namespace: flagger
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ngrinder-controller
+    spec:
+      containers:
+        - name: ngrinder-controller
+          image: ngrinder/controller:3.4
+---
+# Source: loadtester/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ngrinder-controller
+  namespace: flagger
+  labels:
+    app: ngrinder-controller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http-web-ui
+    - port: 12000
+      targetPort: 12000
+      protocol: TCP
+      name: tcp-agent-12000
+    - port: 12001
+      targetPort: 12001
+      protocol: TCP
+      name: tcp-agent-12001
+    - port: 12002
+      targetPort: 12002
+      protocol: TCP
+      name: tcp-agent-12002
+    - port: 12003
+      targetPort: 12003
+      protocol: TCP
+      name: tcp-agent-12003
+    - port: 12004
+      targetPort: 12004
+      protocol: TCP
+      name: tcp-agent-12004
+    - port: 12005
+      targetPort: 12005
+      protocol: TCP
+      name: tcp-agent-12005
+    - port: 12006
+      targetPort: 12006
+      protocol: TCP
+      name: tcp-agent-12006
+    - port: 12007
+      targetPort: 12007
+      protocol: TCP
+      name: tcp-agent-12007
+    - port: 12008
+      targetPort: 12008
+      protocol: TCP
+      name: tcp-agent-12008
+    - port: 12009
+      targetPort: 12009
+      protocol: TCP
+      name: tcp-agent-12009
+    - port: 16001
+      targetPort: 16001
+      protocol: TCP
+      name: tcp-agent-16001
+  selector:
+    app: ngrinder-controller

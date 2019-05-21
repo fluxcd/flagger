@@ -1,0 +1,25 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ngrinder-agent
+  namespace: flagger
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ngrinder-agent
+    spec:
+      containers:
+        - name: ngrinder-agent
+          image: ngrinder/agent:3.4
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+          args:
+            - "ngrinder-controller.flagger.svc.cluster.local:80"

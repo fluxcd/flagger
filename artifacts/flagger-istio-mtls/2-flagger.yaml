@@ -1,0 +1,360 @@
+---
+# Source: flagger/templates/account.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flagger
+  namespace: flagger
+  labels:
+    helm.sh/chart: flagger-0.13.2
+    app.kubernetes.io/name: flagger
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: flagger
+
+---
+# Source: flagger/templates/crd.yaml
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: canaries.flagger.app
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  group: flagger.app
+  version: v1alpha3
+  versions:
+    - name: v1alpha3
+      served: true
+      storage: true
+    - name: v1alpha2
+      served: true
+      storage: false
+    - name: v1alpha1
+      served: true
+      storage: false
+  names:
+    plural: canaries
+    singular: canary
+    kind: Canary
+    categories:
+      - all
+  scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: Status
+      type: string
+      JSONPath: .status.phase
+    - name: Weight
+      type: string
+      JSONPath: .status.canaryWeight
+    - name: LastTransitionTime
+      type: string
+      JSONPath: .status.lastTransitionTime
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          required:
+            - targetRef
+            - service
+            - canaryAnalysis
+          properties:
+            progressDeadlineSeconds:
+              type: number
+            targetRef:
+              type: object
+              required: ['apiVersion', 'kind', 'name']
+              properties:
+                apiVersion:
+                  type: string
+                kind:
+                  type: string
+                name:
+                  type: string
+            autoscalerRef:
+              anyOf:
+                - type: string
+                - type: object
+              required: ['apiVersion', 'kind', 'name']
+              properties:
+                apiVersion:
+                  type: string
+                kind:
+                  type: string
+                name:
+                  type: string
+            ingressRef:
+              anyOf:
+                - type: string
+                - type: object
+              required: ['apiVersion', 'kind', 'name']
+              properties:
+                apiVersion:
+                  type: string
+                kind:
+                  type: string
+                name:
+                  type: string
+            service:
+              type: object
+              required: ['port']
+              properties:
+                port:
+                  type: number
+                portName:
+                  type: string
+                meshName:
+                  type: string
+                timeout:
+                  type: string
+            skipAnalysis:
+              type: boolean
+            canaryAnalysis:
+              properties:
+                interval:
+                  type: string
+                  pattern: "^[0-9]+(m|s)"
+                iterations:
+                  type: number
+                threshold:
+                  type: number
+                maxWeight:
+                  type: number
+                stepWeight:
+                  type: number
+                metrics:
+                  type: array
+                  properties:
+                    items:
+                      type: object
+                      required: ['name', 'threshold']
+                      properties:
+                        name:
+                          type: string
+                        interval:
+                          type: string
+                          pattern: "^[0-9]+(m|s)"
+                        threshold:
+                          type: number
+                        query:
+                          type: string
+                webhooks:
+                  type: array
+                  properties:
+                    items:
+                      type: object
+                      required: ['name', 'url', 'timeout']
+                      properties:
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                            - ""
+                            - pre-rollout
+                            - rollout
+                            - post-rollout
+                        url:
+                          type: string
+                          format: url
+                        timeout:
+                          type: string
+                          pattern: "^[0-9]+(m|s)"
+        status:
+          properties:
+            phase:
+              type: string
+              enum:
+                - ""
+                - Initialized
+                - Progressing
+                - Succeeded
+                - Failed
+            canaryWeight:
+              type: number
+            failedChecks:
+              type: number
+            iterations:
+              type: number
+            lastAppliedSpec:
+              type: string
+            lastTransitionTime:
+              type: string
+
+---
+# Source: flagger/templates/rbac.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: flagger
+  labels:
+    helm.sh/chart: flagger-0.13.2
+    app.kubernetes.io/name: flagger
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: flagger
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+      - configmaps
+      - secrets
+      - services
+    verbs: ["*"]
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs: ["*"]
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["*"]
+  - apiGroups:
+      - "extensions"
+    resources:
+      - ingresses
+      - ingresses/status
+    verbs: ["*"]
+  - apiGroups:
+      - flagger.app
+    resources:
+      - canaries
+      - canaries/status
+    verbs: ["*"]
+  - apiGroups:
+      - networking.istio.io
+    resources:
+      - virtualservices
+      - virtualservices/status
+    verbs: ["*"]
+  - apiGroups:
+      - appmesh.k8s.aws
+    resources:
+      - meshes
+      - meshes/status
+      - virtualnodes
+      - virtualnodes/status
+      - virtualservices
+      - virtualservices/status
+    verbs: ["*"]
+  - apiGroups:
+      - split.smi-spec.io
+    resources:
+      - trafficsplits
+    verbs: ["*"]
+  - nonResourceURLs:
+      - /version
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: flagger
+  labels:
+    helm.sh/chart: flagger-0.13.2
+    app.kubernetes.io/name: flagger
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: flagger
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flagger
+subjects:
+- name: flagger
+  namespace: flagger
+  kind: ServiceAccount
+
+---
+# Source: flagger/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger
+  namespace: flagger
+  labels:
+    helm.sh/chart: flagger-0.13.2
+    app.kubernetes.io/name: flagger
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: flagger
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flagger
+      app.kubernetes.io/instance: flagger
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app.kubernetes.io/name: flagger
+        app.kubernetes.io/instance: flagger
+    spec:
+      serviceAccountName: flagger
+      containers:
+        - name: flagger
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsUser: 10001
+          image: "weaveworks/flagger:0.13.2"
+          imagePullPolicy: IfNotPresent
+          ports:
+          - name: http
+            containerPort: 8080
+          command:
+          - ./flagger
+          - -log-level=info
+          - -metrics-server=http://prometheus.istio-system:9090
+          livenessProbe:
+            exec:
+              command:
+              - wget
+              - --quiet
+              - --tries=1
+              - --timeout=4
+              - --spider
+              - http://localhost:8080/healthz
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+              - wget
+              - --quiet
+              - --tries=1
+              - --timeout=4
+              - --spider
+              - http://localhost:8080/healthz
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+---
+# Source: loadtester/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: flagger
+  namespace: flagger
+  labels:
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http-flagger
+  selector:
+    app.kubernetes.io/name: flagger

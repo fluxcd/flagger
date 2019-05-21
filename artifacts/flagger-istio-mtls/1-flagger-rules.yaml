@@ -1,0 +1,22 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: flagger-namespace
+  namespace: flagger
+spec:
+  host: "*.flagger.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: authentication.istio.io/v1alpha1
+kind: Policy
+metadata:
+  name: loadtester-mtls-disabled
+  namespace: flagger
+spec:
+  targets:
+  - name: flagger-load-tester
+    ports:
+    - number: 80

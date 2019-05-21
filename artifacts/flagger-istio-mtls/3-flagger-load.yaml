@@ -1,0 +1,82 @@
+---
+# Source: loadtester/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: flagger-load-tester
+  namespace: flagger
+  labels:
+    app.kubernetes.io/name: loadtester
+    helm.sh/chart: loadtester-0.4.0
+    app.kubernetes.io/instance: flagger
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http-load-tester
+  selector:
+    app: loadtester
+
+---
+# Source: loadtester/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger-load-tester
+  namespace: flagger
+  labels:
+    app.kubernetes.io/name: loadtester
+    helm.sh/chart: loadtester-0.4.0
+    app.kubernetes.io/instance: flagger
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loadtester
+  template:
+    metadata:
+      labels:
+        app: loadtester
+      annotations:
+        appmesh.k8s.aws/ports: "444"
+    spec:
+      containers:
+        - name: loadtester
+          image: "weaveworks/flagger-loadtester:0.3.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          command:
+            - ./loadtester
+            - -port=8080
+            - -log-level=info
+            - -timeout=1h
+          livenessProbe:
+            exec:
+              command:
+                - wget
+                - --quiet
+                - --tries=1
+                - --timeout=4
+                - --spider
+                - http://localhost:8080/healthz
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - wget
+                - --quiet
+                - --tries=1
+                - --timeout=4
+                - --spider
+                - http://localhost:8080/healthz
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
