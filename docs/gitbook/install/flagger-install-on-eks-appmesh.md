@@ -163,7 +163,7 @@ Deploy Grafana in the _**appmesh-system**_ namespace:
 ```bash
 helm upgrade -i flagger-grafana flagger/grafana \
 --namespace=appmesh-system \
---set url=http://prometheus.appmesh-system:9090
+--set url=http://flagger-prometheus.appmesh-system:9090
 ```
 
 You can access Grafana using port forwarding:

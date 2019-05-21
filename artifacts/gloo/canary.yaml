@@ -1,0 +1,36 @@
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  progressDeadlineSeconds: 60
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  service:
+    port: 9898
+  canaryAnalysis:
+    interval: 10s
+    threshold: 10
+    maxWeight: 50
+    stepWeight: 5
+    metrics:
+    - name: request-success-rate
+      threshold: 99
+      interval: 1m
+    - name: request-duration
+      threshold: 500
+      interval: 30s
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 1m -q 10 -c 2 http://gloo.example.com/"

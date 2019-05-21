@@ -1,0 +1,17 @@
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  virtualHost:
+    domains:
+      - '*'
+    name: podinfo.default
+    routes:
+      - matcher:
+          prefix: /
+        routeAction:
+          upstreamGroup:
+            name: podinfo
+            namespace: gloo
