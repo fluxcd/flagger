@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.14.0 (2019-05-21) 
+
+Adds support for Service Mesh Interface and [Gloo](https://docs.flagger.app/usage/gloo-progressive-delivery) ingress controller
+
+#### Features
+
+- Add support for SMI (Istio weighted traffic) [#180](https://github.com/weaveworks/flagger/pull/180)
+- Add support for Gloo ingress controller (weighted traffic) [#179](https://github.com/weaveworks/flagger/pull/179)
+
 ## 0.13.2 (2019-04-11) 
 
 Fixes for Jenkins X deployments (prevent the jx GC from removing the primary instance)
