@@ -360,7 +360,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryWeight)
 
 		// promote canary
-		if canaryWeight == maxWeight {
+		if canaryWeight >= maxWeight {
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
 			if err := c.deployer.Promote(cd); err != nil {
