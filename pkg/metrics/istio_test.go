@@ -8,7 +8,7 @@ import (
 )
 
 func TestIstioObserver_GetRequestSuccessRate(t *testing.T) {
-	expected := `sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="default",destination_workload=~"podinfo",response_code!~"5.*"}[1m]))/sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="default",destination_workload=~"podinfo"}[1m]))*100`
+	expected := `sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="default",destination_workload=~"podinfo.*",response_code!~"5.*"}[1m]))/sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="default",destination_workload=~"podinfo.*"}[1m]))*100`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
@@ -41,7 +41,7 @@ func TestIstioObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestIstioObserver_GetRequestDuration(t *testing.T) {
-	expected := `histogram_quantile(0.99,sum(rate(istio_request_duration_seconds_bucket{reporter="destination",destination_workload_namespace="default",destination_workload=~"podinfo"}[1m]))by(le))`
+	expected := `histogram_quantile(0.99,sum(rate(istio_request_duration_seconds_bucket{reporter="destination",destination_workload_namespace="default",destination_workload=~"podinfo.*"}[1m]))by(le))`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]

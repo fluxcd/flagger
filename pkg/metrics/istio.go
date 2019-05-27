@@ -11,7 +11,7 @@ var istioQueries = map[string]string{
 			istio_requests_total{
 				reporter="destination",
 				destination_workload_namespace="{{ .Namespace }}",
-				destination_workload=~"{{ .Name }}",
+				destination_workload=~"{{ .Name }}.*",
 				response_code!~"5.*"
 			}[{{ .Interval }}]
 		)
@@ -22,7 +22,7 @@ var istioQueries = map[string]string{
 			istio_requests_total{
 				reporter="destination",
 				destination_workload_namespace="{{ .Namespace }}",
-				destination_workload=~"{{ .Name }}"
+				destination_workload=~"{{ .Name }}.*"
 			}[{{ .Interval }}]
 		)
 	) 
@@ -35,7 +35,7 @@ var istioQueries = map[string]string{
 				istio_request_duration_seconds_bucket{
 					reporter="destination",
 					destination_workload_namespace="{{ .Namespace }}",
-					destination_workload=~"{{ .Name }}"
+					destination_workload=~"{{ .Name }}.*"
 				}[{{ .Interval }}]
 			)
 		) by (le)
