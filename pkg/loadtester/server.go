@@ -46,10 +46,12 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			}
 
 			// run bats command (blocking task)
-			if typ == TaskTypeBats {
-				bats := BatsTask{
+			if typ == TaskTypeBash {
+				logger.With("canary", payload.Name).Infof("bats command %s", payload.Metadata["cmd"])
+
+				bats := BashTask{
 					command:      payload.Metadata["cmd"],
-					logCmdOutput: taskRunner.logCmdOutput,
+					logCmdOutput: true,
 					TaskBase: TaskBase{
 						canary: fmt.Sprintf("%s.%s", payload.Name, payload.Namespace),
 						logger: logger,
@@ -63,6 +65,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 				if !ok {
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte(err.Error()))
+					return
 				}
 
 				w.WriteHeader(http.StatusOK)
@@ -73,7 +76,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			if typ == TaskTypeHelm {
 				helm := HelmTask{
 					command:      payload.Metadata["cmd"],
-					logCmdOutput: taskRunner.logCmdOutput,
+					logCmdOutput: true,
 					TaskBase: TaskBase{
 						canary: fmt.Sprintf("%s.%s", payload.Name, payload.Namespace),
 						logger: logger,
@@ -87,6 +90,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 				if !ok {
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte(err.Error()))
+					return
 				}
 
 				w.WriteHeader(http.StatusOK)

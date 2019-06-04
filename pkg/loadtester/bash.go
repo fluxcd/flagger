@@ -6,19 +6,19 @@ import (
 	"os/exec"
 )
 
-const TaskTypeBats = "bats"
+const TaskTypeBash = "bash"
 
-type BatsTask struct {
+type BashTask struct {
 	TaskBase
 	command      string
 	logCmdOutput bool
 }
 
-func (task *BatsTask) Hash() string {
+func (task *BashTask) Hash() string {
 	return hash(task.canary + task.command)
 }
 
-func (task *BatsTask) Run(ctx context.Context) (bool, error) {
+func (task *BashTask) Run(ctx context.Context) (bool, error) {
 	cmd := exec.CommandContext(ctx, "bash", "-c", task.command)
 	out, err := cmd.CombinedOutput()
 
@@ -34,6 +34,6 @@ func (task *BatsTask) Run(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func (task *BatsTask) String() string {
+func (task *BashTask) String() string {
 	return task.command
 }
