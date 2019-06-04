@@ -18,7 +18,7 @@ spec:
       serviceAccountName: tiller
       containers:
         - name: helmtester
-          image: weaveworks/flagger-loadtester:0.4.0-beta.2
+          image: weaveworks/flagger-loadtester:0.4.0-beta.5
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
