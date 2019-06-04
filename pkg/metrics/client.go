@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"text/template"
@@ -84,6 +85,7 @@ func (p *PrometheusClient) RunQuery(query string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
+	u.Path = path.Join(p.url.Path, u.Path)
 
 	u = p.url.ResolveReference(u)
 
@@ -150,6 +152,7 @@ func (p *PrometheusClient) IsOnline() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	u.Path = path.Join(p.url.Path, u.Path)
 
 	u = p.url.ResolveReference(u)
 
