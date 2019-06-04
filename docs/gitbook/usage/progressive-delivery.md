@@ -85,7 +85,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
