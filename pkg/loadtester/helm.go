@@ -19,7 +19,7 @@ func (task *HelmTask) Hash() string {
 }
 
 func (task *HelmTask) Run(ctx context.Context) (bool, error) {
-	cmd := exec.CommandContext(ctx, "bash", "-c", task.command)
+	cmd := exec.CommandContext(ctx, "bash", "-c", "helm "+task.command)
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -29,7 +29,7 @@ func (task *HelmTask) Run(ctx context.Context) (bool, error) {
 		if task.logCmdOutput {
 			fmt.Printf("%s\n", out)
 		}
-		task.logger.With("canary", task.canary).Infof("command finished %s", task.command)
+		task.logger.With("canary", task.canary).Infof("command finished %v", cmd.Args)
 	}
 	return true, nil
 }
