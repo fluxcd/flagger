@@ -591,7 +591,7 @@ Spec:
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: "helm tests"
+      - name: "smoke test"
         type: pre-rollout
         url: http://flagger-helmtester.kube-system/
         timeout: 3m
@@ -640,7 +640,7 @@ On a non-2xx response Flagger will include the response body (if any) in the fai
 For workloads that are not receiving constant traffic Flagger can be configured with a webhook, 
 that when called, will start a load test for the target workload.
 If the target workload doesn't receive any traffic during the canary analysis, 
-Flagger metric checks will fail with "no values found for metric istio_requests_total".
+Flagger metric checks will fail with "no values found for metric request-success-rate".
 
 Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) 
 that generates traffic during analysis when configured as a webhook.
@@ -677,18 +677,18 @@ webhooks:
     timeout: 5s
     metadata:
       type: cmd
-      cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
+      cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
   - name: load-test-post
     url: http://flagger-loadtester.test/
     timeout: 5s
     metadata:
       type: cmd
-      cmd: "hey -z 1m -q 10 -c 2 -m POST -d '{test: 2}' http://podinfo.test:9898/echo"
+      cmd: "hey -z 1m -q 10 -c 2 -m POST -d '{test: 2}' http://podinfo-canary.test:9898/echo"
 ```
 
 When the canary analysis starts, Flagger will call the webhooks and the load tester will run the `hey` commands 
 in the background, if they are not already running. This will ensure that during the 
-analysis, the `podinfo.test` virtual service will receive a steady stream of GET and POST requests.
+analysis, the `podinfo-canary.test` service will receive a steady stream of GET and POST requests.
 
 If your workload is exposed outside the mesh with the Istio Gateway and TLS you can point `hey` to the 
 public URL and use HTTP2.
@@ -707,7 +707,7 @@ The load tester can run arbitrary commands as long as the binary is present in t
 For example if you you want to replace `hey` with another CLI, you can create your own Docker image:
 
 ```dockerfile
-FROM quay.io/stefanprodan/flagger-loadtester:<VER>
+FROM weaveworks/flagger-loadtester:<VER>
 
 RUN curl -Lo /usr/local/bin/my-cli https://github.com/user/repo/releases/download/ver/my-cli \
     && chmod +x /usr/local/bin/my-cli
@@ -741,3 +741,52 @@ webhooks:
 When the canary analysis starts, the load tester will initiate a [clone_and_start request](https://github.com/naver/ngrinder/wiki/REST-API-PerfTest)
 to the nGrinder server and start a new performance test. the load tester will periodically poll the nGrinder server
 for the status of the test, and prevent duplicate requests from being sent in subsequent analysis loops.
+
+### Integration Testing
+
+Flagger comes with a testing service that can run Helm tests or Bats tests when configured as a webhook.
+
+Deploy the Helm test runner in the `kube-system` namespace using the `tiller` service account:
+
+```bash
+helm repo add flagger https://flagger.app
+
+helm upgrade -i flagger-helmtester flagger/loadtester \
+--namespace=kube-system \
+--set serviceAccountName=tiller
+```
+
+When deployed the Helm tester API will be available at `http://flagger-helmtester.kube-system/`. 
+
+Now you can add pre-rollout webhooks to the canary analysis spec:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "smoke test"
+        type: pre-rollout
+        url: http://flagger-helmtester.kube-system/
+        timeout: 3m
+        metadata:
+          type: "helm"
+          cmd: "test {{ .Release.Name }} --cleanup"
+```
+
+When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
+If the helm test fails, Flagger will retry until the analysis threshold is reached and the canary is rolled back.
+
+As an alternative to Helm you can use the [Bash Automated Testing System](https://github.com/bats-core/bats-core) to run your tests. 
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "acceptance tests"
+        type: pre-rollout
+        url: http://flagger-batstester.default/
+        timeout: 5m
+        metadata:
+          type: "bash"
+          cmd: "bats /tests/acceptance.bats"
+```
+
+Note that you should create a ConfigMap with your Bats tests and mount it inside the tester container.

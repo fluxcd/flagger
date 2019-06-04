@@ -267,7 +267,8 @@ Create a git repository with the following content:
     └── test
         ├── backend.yaml
         ├── frontend.yaml
-        └── loadtester.yaml
+        ├── loadtester.yaml
+        └── helmtester.yaml
 ``` 
 
 You can find the git source [here](https://github.com/stefanprodan/flagger/tree/master/artifacts/cluster).
@@ -366,5 +367,6 @@ A canary deployment can fail due to any of the following reasons:
 * the Istio telemetry service is unable to collect traffic metrics
 * the metrics server (Prometheus) can't be reached
 
-If you want to find out more about managing Helm releases with Flux here is an in-depth guide 
-[github.com/stefanprodan/gitops-helm](https://github.com/stefanprodan/gitops-helm).
+If you want to find out more about managing Helm releases with Flux here are two in-depth guides: 
+[gitops-helm](https://github.com/stefanprodan/gitops-helm) and
+[gitops-istio](https://github.com/stefanprodan/gitops-istio).
