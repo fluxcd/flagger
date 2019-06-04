@@ -591,13 +591,13 @@ Spec:
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: "smoke test"
+      - name: "helm tests"
         type: pre-rollout
-        url: http://migration-check.db/query
-        timeout: 30s
+        url: http://flagger-helmtester.kube-system/
+        timeout: 3m
         metadata:
-          key1: "val1"
-          key2: "val2"
+          type: "helm"
+          cmd: "test podinfo --cleanup"
       - name: "load test"
         type: rollout
         url: http://flagger-loadtester.test/

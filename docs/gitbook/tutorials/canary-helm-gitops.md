@@ -18,7 +18,11 @@ and the canary configuration file.
 │   ├── canary.yaml
 │   ├── configmap.yaml
 │   ├── deployment.yaml
-│   └── hpa.yaml
+│   ├── hpa.yaml
+│   ├── service.yaml
+│   └── tests
+│       ├── test-config.yaml
+│       └── test-pod.yaml
 └── values.yaml
 ```
 
@@ -47,7 +51,7 @@ helm upgrade -i frontend flagger/podinfo \
 --namespace test \
 --set nameOverride=frontend \
 --set backend=http://backend.test:9898/echo \
---set canary.enabled=true \
+--set canary.loadtest.enabled=true \
 --set canary.istioIngress.enabled=true \
 --set canary.istioIngress.gateway=public-gateway.istio-system.svc.cluster.local \
 --set canary.istioIngress.host=frontend.istio.example.com
@@ -87,7 +91,7 @@ Now let's install the `backend` release without exposing it outside the mesh:
 helm upgrade -i backend flagger/podinfo \
 --namespace test \
 --set nameOverride=backend \
---set canary.enabled=true \
+--set canary.loadtest.enabled=true \
 --set canary.istioIngress.enabled=false
 ```
 
@@ -118,17 +122,26 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test
 ```
 
-Enable the load tester and deploy a new `frontend` version:
+Install Flagger's helm test runner in the `kube-system` using `tiller` service account:
+
+```bash
+helm upgrade -i flagger-helmtester flagger/loadtester \
+--namespace=kube-system \
+--set serviceAccountName=tiller
+```
+
+Enable the load and helm tester and deploy a new `frontend` version:
 
 ```bash
 helm upgrade -i frontend flagger/podinfo/ \
 --namespace test \
 --reuse-values \
 --set canary.loadtest.enabled=true \
+--set canary.helmtest.enabled=true \
 --set image.tag=1.4.1
 ```
 
-Flagger detects that the deployment revision changed and starts the canary analysis along with the load test:
+Flagger detects that the deployment revision changed and starts the canary analysis:
 
 ```
 kubectl -n istio-system logs deployment/flagger -f | jq .msg
@@ -136,6 +149,7 @@ kubectl -n istio-system logs deployment/flagger -f | jq .msg
 New revision detected! Scaling up frontend.test
 Halt advancement frontend.test waiting for rollout to finish: 0 of 2 updated replicas are available
 Starting canary analysis for frontend.test
+Pre-rollout check helm test passed
 Advance frontend.test canary weight 5
 Advance frontend.test canary weight 10
 Advance frontend.test canary weight 15
@@ -163,7 +177,7 @@ Now trigger a canary deployment for the `backend` app, but this time you'll chan
 helm upgrade -i backend flagger/podinfo/ \
 --namespace test \
 --reuse-values \
---set canary.loadtest.enabled=true \
+--set canary.helmtest.enabled=true \
 --set httpServer.timeout=25s
 ```
 
@@ -288,6 +302,8 @@ spec:
           host: frontend.istio.example.com
         loadtest:
           enabled: true
+        helmtest:
+          enabled: true
 ```
 
 In the `chart` section I've defined the release source by specifying the Helm repository (hosted on GitHub Pages), chart name and version.
@@ -333,6 +349,7 @@ A CI/CD pipeline for the `frontend` release could look like this:
 * Flux applies the updated Helm release on the cluster
 * Flux Helm Operator picks up the change and calls Tiller to upgrade the release
 * Flagger detects a revision change and scales up the `frontend` deployment
+* Flagger runs the helm test before routing traffic to the canary service
 * Flagger starts the load test and runs the canary analysis 
 * Based on the analysis result the canary deployment is promoted to production or rolled back
 * Flagger sends a Slack notification with the canary result
@@ -343,7 +360,7 @@ A canary deployment can fail due to any of the following reasons:
 
 * the container image can't be downloaded 
 * the deployment replica set is stuck for more then ten minutes (eg. due to a container crash loop)
-* the webooks (acceptance tests, load tests, etc) are returning a non 2xx response
+* the webooks (acceptance tests, helm tests, load tests, etc) are returning a non 2xx response
 * the HTTP success rate (non 5xx responses) metric drops under the threshold
 * the HTTP average duration metric goes over the threshold
 * the Istio telemetry service is unable to collect traffic metrics
