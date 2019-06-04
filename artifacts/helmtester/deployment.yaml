@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flagger-helmtester
+  namespace: kube-system
   labels:
     app: flagger-helmtester
 spec:
@@ -18,7 +19,7 @@ spec:
       serviceAccountName: tiller
       containers:
         - name: helmtester
-          image: weaveworks/flagger-loadtester:0.4.0-beta.5
+          image: weaveworks/flagger-loadtester:0.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
