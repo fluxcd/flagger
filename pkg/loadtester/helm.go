@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 const TaskTypeHelm = "helm"
@@ -22,7 +23,7 @@ func (task *HelmTask) Run(ctx context.Context) (bool, error) {
 	helmCmd := fmt.Sprintf("helm %s", task.command)
 	task.logger.With("canary", task.canary).Infof("running command %v", helmCmd)
 
-	cmd := exec.CommandContext(ctx, "bash", "-c", helmCmd)
+	cmd := exec.CommandContext(ctx, "helm", strings.Fields(task.command)...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		task.logger.With("canary", task.canary).Errorf("command failed %s %v %s", task.command, err, out)
