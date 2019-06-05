@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.14.1 (2019-06-05) 
+
+Adds support for running [acceptance/integration tests](https://docs.flagger.app/how-it-works#integration-testing) with Helm test or Bash Bats using pre-rollout hooks
+
+#### Features
+
+- Implement Helm and Bash pre-rollout hooks [#196](https://github.com/weaveworks/flagger/pull/196)
+
+#### Fixes
+
+- Fix promoting canary when max weight is not a multiple of step [#190](https://github.com/weaveworks/flagger/pull/190)
+- Add ability to set Prometheus url with custom path without trailing '/' [#197](https://github.com/weaveworks/flagger/pull/197)
+
 ## 0.14.0 (2019-05-21) 
 
 Adds support for Service Mesh Interface and [Gloo](https://docs.flagger.app/usage/gloo-progressive-delivery) ingress controller
