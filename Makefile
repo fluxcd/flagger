@@ -7,7 +7,7 @@ LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' 
 TS=$(shell date +%Y-%m-%d_%H-%M-%S)
 
 run:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info \
+	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=istio -namespace=test \
 	-metrics-server=https://prometheus.istio.weavedx.com \
 	-slack-url=https://hooks.slack.com/services/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 \
 	-slack-channel="devops-alerts"
@@ -105,6 +105,11 @@ reset-test:
 	kubectl delete -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/canaries
+
+loadtester-run:
+	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
+	docker rm -f tester || true
+	docker run -dp 8888:9090 --name tester weaveworks/flagger-loadtester:$(LT_VERSION)
 
 loadtester-push:
 	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
