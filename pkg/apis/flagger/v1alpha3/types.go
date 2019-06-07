@@ -115,17 +115,18 @@ type CanaryStatus struct {
 // CanaryService is used to create ClusterIP services
 // and Istio Virtual Service
 type CanaryService struct {
-	Port       int32                            `json:"port"`
-	PortName   string                           `json:"portName,omitempty"`
-	Match      []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
-	Rewrite    *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
-	Timeout    string                           `json:"timeout,omitempty"`
-	Retries    *istiov1alpha3.HTTPRetry         `json:"retries,omitempty"`
-	Headers    *istiov1alpha3.Headers           `json:"headers,omitempty"`
-	CorsPolicy *istiov1alpha3.CorsPolicy        `json:"corsPolicy,omitempty"`
-	//Istio
-	Gateways []string `json:"gateways,omitempty"`
-	Hosts    []string `json:"hosts,omitempty"`
+	Port     int32  `json:"port"`
+	PortName string `json:"portName,omitempty"`
+	Timeout  string `json:"timeout,omitempty"`
+	// Istio
+	Gateways      []string                         `json:"gateways,omitempty"`
+	Hosts         []string                         `json:"hosts,omitempty"`
+	TrafficPolicy *istiov1alpha3.TrafficPolicy     `json:"trafficPolicy,omitempty"`
+	Match         []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+	Rewrite       *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
+	Retries       *istiov1alpha3.HTTPRetry         `json:"retries,omitempty"`
+	Headers       *istiov1alpha3.Headers           `json:"headers,omitempty"`
+	CorsPolicy    *istiov1alpha3.CorsPolicy        `json:"corsPolicy,omitempty"`
 	// App Mesh
 	MeshName string   `json:"meshName,omitempty"`
 	Backends []string `json:"backends,omitempty"`

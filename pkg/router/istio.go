@@ -48,7 +48,8 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name string) error {
 	newSpec := istiov1alpha3.DestinationRuleSpec{
-		Host: name,
+		Host:          name,
+		TrafficPolicy: canary.Spec.Service.TrafficPolicy,
 	}
 
 	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(name, metav1.GetOptions{})

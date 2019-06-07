@@ -27,6 +27,10 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - app.istio.weavedx.com
+    # Istio traffic policy (optional)
+    trafficPolicy:
+      loadBalancer:
+        simple: LEAST_CONN
     # HTTP match conditions (optional)
     match:
       - uri:
@@ -34,13 +38,8 @@ spec:
     # HTTP rewrite (optional)
     rewrite:
       uri: /
-    # Envoy timeout and retry policy (optional)
-    headers:
-      request:
-        add:
-          x-envoy-upstream-rq-timeout-ms: "15000"
-          x-envoy-max-retries: "10"
-          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+    # HTTP timeout (optional)
+    timeout: 30s
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   canaryAnalysis:
@@ -54,7 +53,7 @@ spec:
     # canary increment step
     # percentage (0-100)
     stepWeight: 5
-    # Istio Prometheus checks
+    # Prometheus checks
     metrics:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
