@@ -7,24 +7,17 @@ metadata:
     app: podinfo
 spec:
   gateways:
-  - public-gateway.istio-system.svc.cluster.local
   - mesh
+  - public-gateway.istio-system.svc.cluster.local
   hosts:
-  - podinfo.istio.weavedx.com
   - podinfo
+  - app.istio.weavedx.com
   http:
   - route:
     - destination:
         host: podinfo-primary
-        port:
-          number: 9898
-      weight: 100
+      weight: 50
     - destination:
-        host: podinfo
-        port:
-          number: 9898
-      weight: 0
-    timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
+        host: podinfo-canary
+      weight: 50
+    timeout: 5s
