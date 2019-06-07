@@ -103,9 +103,9 @@ the Istio Virtual Service. The container port from the target deployment should 
 
 ### Istio routing
 
-Flagger creates an Istio Virtual Service based on the Canary service spec. The service configuration lets you expose 
-an app inside or outside the mesh.
-You can also define HTTP match conditions, URI rewrite rules, CORS policies, timeout and retries.
+Flagger creates an Istio Virtual Service and Destination Rules based on the Canary service spec. 
+The service configuration lets you expose an app inside or outside the mesh.
+You can also define traffic policies, HTTP match conditions, URI rewrite rules, CORS policies, timeout and retries.
 
 The following spec exposes the `frontend` workload inside the mesh on `frontend.test.svc.cluster.local:9898` 
 and outside the mesh on `frontend.example.com`. You'll have to specify an Istio ingress gateway for external hosts.
@@ -129,6 +129,10 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - frontend.example.com
+    # Istio traffic policy (optional)
+    trafficPolicy:
+      loadBalancer:
+        simple: LEAST_CONN
     # HTTP match conditions (optional)
     match:
       - uri:
@@ -198,18 +202,40 @@ spec:
     route:
     - destination:
         host: podinfo-primary
-        port:
-          number: 9898
       weight: 100
     - destination:
         host: podinfo-canary
-        port:
-          number: 9898
       weight: 0
 ```
 
-Flagger keeps in sync the virtual service with the canary service spec. Any direct modification to the virtual 
-service spec will be overwritten.
+For each destination in the virtual service a rule is generated:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: frontend-primary
+  namespace: test
+spec:
+  host: frontend-primary
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: frontend-canary
+  namespace: test
+spec:
+  host: frontend-canary
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+```
+
+Flagger keeps in sync the virtual service and destination rules with the canary service spec.
+Any direct modification to the virtual service spec will be overwritten.
 
 To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9898`,
 the service spec can contain only the container port:
