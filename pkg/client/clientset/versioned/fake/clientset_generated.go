@@ -47,7 +47,7 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 		}
 	}
 
-	cs := &Clientset{}
+	cs := &Clientset{tracker: o}
 	cs.discovery = &fakediscovery.FakeDiscovery{Fake: &cs.Fake}
 	cs.AddReactor("*", "*", testing.ObjectReaction(o))
 	cs.AddWatchReactor("*", func(action testing.Action) (handled bool, ret watch.Interface, err error) {
@@ -69,10 +69,15 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 type Clientset struct {
 	testing.Fake
 	discovery *fakediscovery.FakeDiscovery
+	tracker   testing.ObjectTracker
 }
 
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	return c.discovery
+}
+
+func (c *Clientset) Tracker() testing.ObjectTracker {
+	return c.tracker
 }
 
 var _ clientset.Interface = &Clientset{}
@@ -82,18 +87,8 @@ func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
 	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
 }
 
-// Appmesh retrieves the AppmeshV1beta1Client
-func (c *Clientset) Appmesh() appmeshv1beta1.AppmeshV1beta1Interface {
-	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
-}
-
 // FlaggerV1alpha3 retrieves the FlaggerV1alpha3Client
 func (c *Clientset) FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface {
-	return &fakeflaggerv1alpha3.FakeFlaggerV1alpha3{Fake: &c.Fake}
-}
-
-// Flagger retrieves the FlaggerV1alpha3Client
-func (c *Clientset) Flagger() flaggerv1alpha3.FlaggerV1alpha3Interface {
 	return &fakeflaggerv1alpha3.FakeFlaggerV1alpha3{Fake: &c.Fake}
 }
 
@@ -102,17 +97,7 @@ func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3In
 	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
 }
 
-// Networking retrieves the NetworkingV1alpha3Client
-func (c *Clientset) Networking() networkingv1alpha3.NetworkingV1alpha3Interface {
-	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
-}
-
 // SplitV1alpha1 retrieves the SplitV1alpha1Client
 func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
-	return &fakesplitv1alpha1.FakeSplitV1alpha1{Fake: &c.Fake}
-}
-
-// Split retrieves the SplitV1alpha1Client
-func (c *Clientset) Split() splitv1alpha1.SplitV1alpha1Interface {
 	return &fakesplitv1alpha1.FakeSplitV1alpha1{Fake: &c.Fake}
 }

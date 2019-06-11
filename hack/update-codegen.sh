@@ -18,10 +18,15 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SCRIPT_ROOT=$(dirname ${BASH_SOURCE})/..
-CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
+export GO111MODULE=on
+go mod download
 
-${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
+SCRIPT_ROOT=$(dirname ${BASH_SOURCE})/..
+CODEGEN_PKG=${CODEGEN_PKG:-$(echo `go env GOPATH`'/pkg/mod/k8s.io/code-generator@v0.0.0-20190511023357-639c964206c2')}
+
+chmod +x ${CODEGEN_PKG}/generate-groups.sh
+
+${CODEGEN_PKG}/generate-groups.sh all \
   github.com/weaveworks/flagger/pkg/client github.com/weaveworks/flagger/pkg/apis \
   "appmesh:v1beta1 istio:v1alpha3 flagger:v1alpha3 smi:v1alpha1" \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
