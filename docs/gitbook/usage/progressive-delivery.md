@@ -108,6 +108,8 @@ horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
 service/podinfo-canary
 service/podinfo-primary
+destinationrule.networking.istio.io/podinfo-canary
+destinationrule.networking.istio.io/podinfo-primary
 virtualservice.networking.istio.io/podinfo
 ```
 
