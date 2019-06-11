@@ -18,9 +18,6 @@ func cmsgAlignOf(salen int) int {
 	salign := SizeofPtr
 
 	switch runtime.GOOS {
-	case "aix":
-		// There is no alignment on AIX.
-		salign = 1
 	case "darwin", "dragonfly", "solaris":
 		// NOTE: It seems like 64-bit Darwin, DragonFly BSD and
 		// Solaris kernels still require 32-bit aligned access to
@@ -28,8 +25,8 @@ func cmsgAlignOf(salen int) int {
 		if SizeofPtr == 8 {
 			salign = 4
 		}
-	case "netbsd", "openbsd":
-		// NetBSD and OpenBSD armv7 require 64-bit alignment.
+	case "openbsd":
+		// OpenBSD armv7 requires 64-bit alignment.
 		if runtime.GOARCH == "arm" {
 			salign = 8
 		}
