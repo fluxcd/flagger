@@ -160,7 +160,7 @@ func (in *DestinationRule) DeepCopyObject() runtime.Object {
 func (in *DestinationRuleList) DeepCopyInto(out *DestinationRuleList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]DestinationRule, len(*in))
@@ -848,7 +848,7 @@ func (in *VirtualService) DeepCopyObject() runtime.Object {
 func (in *VirtualServiceList) DeepCopyInto(out *VirtualServiceList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]VirtualService, len(*in))

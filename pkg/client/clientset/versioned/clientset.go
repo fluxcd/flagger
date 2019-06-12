@@ -31,17 +31,9 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Appmesh() appmeshv1beta1.AppmeshV1beta1Interface
 	FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Flagger() flaggerv1alpha3.FlaggerV1alpha3Interface
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Networking() networkingv1alpha3.NetworkingV1alpha3Interface
 	SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Split() splitv1alpha1.SplitV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -59,20 +51,8 @@ func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
 	return c.appmeshV1beta1
 }
 
-// Deprecated: Appmesh retrieves the default version of AppmeshClient.
-// Please explicitly pick a version.
-func (c *Clientset) Appmesh() appmeshv1beta1.AppmeshV1beta1Interface {
-	return c.appmeshV1beta1
-}
-
 // FlaggerV1alpha3 retrieves the FlaggerV1alpha3Client
 func (c *Clientset) FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface {
-	return c.flaggerV1alpha3
-}
-
-// Deprecated: Flagger retrieves the default version of FlaggerClient.
-// Please explicitly pick a version.
-func (c *Clientset) Flagger() flaggerv1alpha3.FlaggerV1alpha3Interface {
 	return c.flaggerV1alpha3
 }
 
@@ -81,20 +61,8 @@ func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3In
 	return c.networkingV1alpha3
 }
 
-// Deprecated: Networking retrieves the default version of NetworkingClient.
-// Please explicitly pick a version.
-func (c *Clientset) Networking() networkingv1alpha3.NetworkingV1alpha3Interface {
-	return c.networkingV1alpha3
-}
-
 // SplitV1alpha1 retrieves the SplitV1alpha1Client
 func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
-	return c.splitV1alpha1
-}
-
-// Deprecated: Split retrieves the default version of SplitClient.
-// Please explicitly pick a version.
-func (c *Clientset) Split() splitv1alpha1.SplitV1alpha1Interface {
 	return c.splitV1alpha1
 }
 

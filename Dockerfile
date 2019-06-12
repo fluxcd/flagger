@@ -6,8 +6,10 @@ WORKDIR /go/src/github.com/weaveworks/flagger
 
 COPY . .
 
+#RUN GO111MODULE=on go mod download
+
 RUN GIT_COMMIT=$(git rev-list -1 HEAD) && \
-    CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w \
+     GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags "-s -w \
     -X github.com/weaveworks/flagger/pkg/version.REVISION=${GIT_COMMIT}" \
     -a -installsuffix cgo -o flagger ./cmd/flagger/*
 

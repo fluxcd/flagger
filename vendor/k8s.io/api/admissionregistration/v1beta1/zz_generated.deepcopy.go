@@ -62,7 +62,7 @@ func (in *MutatingWebhookConfiguration) DeepCopyObject() runtime.Object {
 func (in *MutatingWebhookConfigurationList) DeepCopyInto(out *MutatingWebhookConfigurationList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]MutatingWebhookConfiguration, len(*in))
@@ -109,6 +109,11 @@ func (in *Rule) DeepCopyInto(out *Rule) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Scope != nil {
+		in, out := &in.Scope, &out.Scope
+		*out = new(ScopeType)
+		**out = **in
+	}
 	return
 }
 
@@ -150,6 +155,11 @@ func (in *ServiceReference) DeepCopyInto(out *ServiceReference) {
 	if in.Path != nil {
 		in, out := &in.Path, &out.Path
 		*out = new(string)
+		**out = **in
+	}
+	if in.Port != nil {
+		in, out := &in.Port, &out.Port
+		*out = new(int32)
 		**out = **in
 	}
 	return
@@ -202,7 +212,7 @@ func (in *ValidatingWebhookConfiguration) DeepCopyObject() runtime.Object {
 func (in *ValidatingWebhookConfigurationList) DeepCopyInto(out *ValidatingWebhookConfigurationList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]ValidatingWebhookConfiguration, len(*in))
@@ -247,6 +257,11 @@ func (in *Webhook) DeepCopyInto(out *Webhook) {
 		*out = new(FailurePolicyType)
 		**out = **in
 	}
+	if in.MatchPolicy != nil {
+		in, out := &in.MatchPolicy, &out.MatchPolicy
+		*out = new(MatchPolicyType)
+		**out = **in
+	}
 	if in.NamespaceSelector != nil {
 		in, out := &in.NamespaceSelector, &out.NamespaceSelector
 		*out = new(v1.LabelSelector)
@@ -256,6 +271,16 @@ func (in *Webhook) DeepCopyInto(out *Webhook) {
 		in, out := &in.SideEffects, &out.SideEffects
 		*out = new(SideEffectClass)
 		**out = **in
+	}
+	if in.TimeoutSeconds != nil {
+		in, out := &in.TimeoutSeconds, &out.TimeoutSeconds
+		*out = new(int32)
+		**out = **in
+	}
+	if in.AdmissionReviewVersions != nil {
+		in, out := &in.AdmissionReviewVersions, &out.AdmissionReviewVersions
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 	return
 }
