@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.15.0 (2019-06-12) 
+
+Adds support for customising the Istio [traffic policy](https://docs.flagger.app/how-it-works#istio-routing) in the canary service spec
+
+#### Features
+
+- Generate Istio destination rules and allow traffic policy customisation [#200](https://github.com/weaveworks/flagger/pull/200)
+
+#### Improvements 
+
+-  Update Kubernetes packages to 1.14 and use go modules instead of dep [#202](https://github.com/weaveworks/flagger/pull/202) 
+
 ## 0.14.1 (2019-06-05) 
 
 Adds support for running [acceptance/integration tests](https://docs.flagger.app/how-it-works#integration-testing) with Helm test or Bash Bats using pre-rollout hooks
