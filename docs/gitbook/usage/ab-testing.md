@@ -120,6 +120,8 @@ horizontalpodautoscaler.autoscaling/abtest-primary
 service/abtest
 service/abtest-canary
 service/abtest-primary
+destinationrule.networking.istio.io/abtest-canary
+destinationrule.networking.istio.io/abtest-primary
 virtualservice.networking.istio.io/abtest
 ```
 

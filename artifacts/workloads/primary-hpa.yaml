@@ -9,7 +9,7 @@ spec:
     kind: Deployment
     name: podinfo-primary
   minReplicas: 2
-  maxReplicas: 4
+  maxReplicas: 2
   metrics:
   - type: Resource
     resource:

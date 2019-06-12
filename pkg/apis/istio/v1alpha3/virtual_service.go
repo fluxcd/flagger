@@ -280,7 +280,7 @@ type Destination struct {
 	// Specifies the port on the host that is being addressed. If a service
 	// exposes only a single port it is not required to explicitly select the
 	// port.
-	Port PortSelector `json:"port,omitempty"`
+	Port *PortSelector `json:"port,omitempty"`
 }
 
 // Describes match conditions and actions for routing HTTP/1.1, HTTP2, and

@@ -27,12 +27,17 @@ import (
 
 type NetworkingV1alpha3Interface interface {
 	RESTClient() rest.Interface
+	DestinationRulesGetter
 	VirtualServicesGetter
 }
 
 // NetworkingV1alpha3Client is used to interact with features provided by the networking.istio.io group.
 type NetworkingV1alpha3Client struct {
 	restClient rest.Interface
+}
+
+func (c *NetworkingV1alpha3Client) DestinationRules(namespace string) DestinationRuleInterface {
+	return newDestinationRules(c, namespace)
 }
 
 func (c *NetworkingV1alpha3Client) VirtualServices(namespace string) VirtualServiceInterface {

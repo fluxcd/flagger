@@ -44,6 +44,8 @@ rules:
     resources:
       - virtualservices
       - virtualservices/status
+      - destinationrules
+      - destinationrules/status
     verbs: ["*"]
   - apiGroups:
       - appmesh.k8s.aws

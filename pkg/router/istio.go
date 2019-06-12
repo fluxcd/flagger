@@ -23,8 +23,83 @@ type IstioRouter struct {
 	logger        *zap.SugaredLogger
 }
 
-// Reconcile creates or updates the Istio virtual service
+// Reconcile creates or updates the Istio virtual service and destination rules
 func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
+	canaryName := fmt.Sprintf("%s-canary", canary.Spec.TargetRef.Name)
+	primaryName := fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name)
+
+	err := ir.reconcileDestinationRule(canary, canaryName)
+	if err != nil {
+		return err
+	}
+
+	err = ir.reconcileDestinationRule(canary, primaryName)
+	if err != nil {
+		return err
+	}
+
+	err = ir.reconcileVirtualService(canary)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name string) error {
+	newSpec := istiov1alpha3.DestinationRuleSpec{
+		Host:          name,
+		TrafficPolicy: canary.Spec.Service.TrafficPolicy,
+	}
+
+	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(name, metav1.GetOptions{})
+	// insert
+	if errors.IsNotFound(err) {
+		destinationRule = &istiov1alpha3.DestinationRule{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: canary.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+						Group:   flaggerv1.SchemeGroupVersion.Group,
+						Version: flaggerv1.SchemeGroupVersion.Version,
+						Kind:    flaggerv1.CanaryKind,
+					}),
+				},
+			},
+			Spec: newSpec,
+		}
+		_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Create(destinationRule)
+		if err != nil {
+			return fmt.Errorf("DestinationRule %s.%s create error %v", name, canary.Namespace, err)
+		}
+		ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Infof("DestinationRule %s.%s created", destinationRule.GetName(), canary.Namespace)
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("DestinationRule %s.%s query error %v", name, canary.Namespace, err)
+	}
+
+	// update
+	if destinationRule != nil {
+		if diff := cmp.Diff(newSpec, destinationRule.Spec); diff != "" {
+			clone := destinationRule.DeepCopy()
+			clone.Spec = newSpec
+			_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Update(clone)
+			if err != nil {
+				return fmt.Errorf("DestinationRule %s.%s update error %v", name, canary.Namespace, err)
+			}
+			ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("DestinationRule %s.%s updated", destinationRule.GetName(), canary.Namespace)
+		}
+	}
+
+	return nil
+}
+
+func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	targetName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
@@ -61,18 +136,12 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 		{
 			Destination: istiov1alpha3.Destination{
 				Host: primaryName,
-				Port: istiov1alpha3.PortSelector{
-					Number: uint32(canary.Spec.Service.Port),
-				},
 			},
 			Weight: 100,
 		},
 		{
 			Destination: istiov1alpha3.Destination{
 				Host: fmt.Sprintf("%s-canary", targetName),
-				Port: istiov1alpha3.PortSelector{
-					Number: uint32(canary.Spec.Service.Port),
-				},
 			},
 			Weight: 0,
 		},
@@ -117,9 +186,6 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 					{
 						Destination: istiov1alpha3.Destination{
 							Host: primaryName,
-							Port: istiov1alpha3.PortSelector{
-								Number: uint32(canary.Spec.Service.Port),
-							},
 						},
 						Weight: 100,
 					},
@@ -160,12 +226,10 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	// update service but keep the original destination weights
 	if virtualService != nil {
-		if diff := cmp.Diff(newSpec, virtualService.Spec, cmpopts.IgnoreTypes(istiov1alpha3.DestinationWeight{})); diff != "" {
+		if diff := cmp.Diff(newSpec, virtualService.Spec, cmpopts.IgnoreFields(istiov1alpha3.DestinationWeight{}, "Weight")); diff != "" {
 			vtClone := virtualService.DeepCopy()
 			vtClone.Spec = newSpec
-			if len(virtualService.Spec.Http) > 0 {
-				vtClone.Spec.Http[0].Route = virtualService.Spec.Http[0].Route
-			}
+
 			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vtClone)
 			if err != nil {
 				return fmt.Errorf("VirtualService %s.%s update error %v", targetName, canary.Namespace, err)
@@ -254,18 +318,12 @@ func (ir *IstioRouter) SetRoutes(
 				{
 					Destination: istiov1alpha3.Destination{
 						Host: fmt.Sprintf("%s-primary", targetName),
-						Port: istiov1alpha3.PortSelector{
-							Number: uint32(canary.Spec.Service.Port),
-						},
 					},
 					Weight: primaryWeight,
 				},
 				{
 					Destination: istiov1alpha3.Destination{
 						Host: fmt.Sprintf("%s-canary", targetName),
-						Port: istiov1alpha3.PortSelector{
-							Number: uint32(canary.Spec.Service.Port),
-						},
 					},
 					Weight: canaryWeight,
 				},
@@ -289,18 +347,12 @@ func (ir *IstioRouter) SetRoutes(
 					{
 						Destination: istiov1alpha3.Destination{
 							Host: fmt.Sprintf("%s-primary", targetName),
-							Port: istiov1alpha3.PortSelector{
-								Number: uint32(canary.Spec.Service.Port),
-							},
 						},
 						Weight: primaryWeight,
 					},
 					{
 						Destination: istiov1alpha3.Destination{
 							Host: fmt.Sprintf("%s-canary", targetName),
-							Port: istiov1alpha3.PortSelector{
-								Number: uint32(canary.Spec.Service.Port),
-							},
 						},
 						Weight: canaryWeight,
 					},
@@ -317,9 +369,6 @@ func (ir *IstioRouter) SetRoutes(
 					{
 						Destination: istiov1alpha3.Destination{
 							Host: fmt.Sprintf("%s-primary", targetName),
-							Port: istiov1alpha3.PortSelector{
-								Number: uint32(canary.Spec.Service.Port),
-							},
 						},
 						Weight: primaryWeight,
 					},
