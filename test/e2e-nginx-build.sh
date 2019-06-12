@@ -8,12 +8,11 @@ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 echo '>>> Building Flagger'
 cd ${REPO_ROOT} && docker build -t test/flagger:latest . -f Dockerfile
 
-echo '>>> Installing Flagger'
+echo '>>> Loading Flagger image'
 kind load docker-image test/flagger:latest
 
 echo '>>> Installing Flagger'
 helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
---wait \
 --namespace ingress-nginx \
 --set prometheus.install=true \
 --set meshProvider=nginx

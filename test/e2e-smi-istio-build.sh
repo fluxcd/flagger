@@ -12,7 +12,6 @@ kind load docker-image test/flagger:latest
 
 echo '>>> Installing Flagger'
 helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
---wait \
 --namespace istio-system \
 --set meshProvider=smi:istio
 
