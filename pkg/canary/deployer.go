@@ -31,27 +31,27 @@ type Deployer struct {
 }
 
 // Initialize creates the primary deployment, hpa,
-// scales to zero the canary deployment and returns the pod selector label
-func (c *Deployer) Initialize(cd *flaggerv1.Canary) (string, error) {
+// scales to zero the canary deployment and returns the pod selector label and container ports
+func (c *Deployer) Initialize(cd *flaggerv1.Canary) (label string, ports *map[string]int32, err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	label, err := c.createPrimaryDeployment(cd)
+	label, ports, err = c.createPrimaryDeployment(cd)
 	if err != nil {
-		return "", fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
+		return "", ports, fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
 	}
 
 	if cd.Status.Phase == "" {
 		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
-			return "", err
+			return "", ports, err
 		}
 	}
 
 	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 		if err := c.createPrimaryHpa(cd); err != nil {
-			return "", fmt.Errorf("creating hpa %s.%s failed: %v", primaryName, cd.Namespace, err)
+			return "", ports, fmt.Errorf("creating hpa %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}
 	}
-	return label, nil
+	return label, ports, nil
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary
@@ -172,22 +172,31 @@ func (c *Deployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	return nil
 }
 
-func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, error) {
+func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, *map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	canaryDep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return "", fmt.Errorf("deployment %s.%s not found, retrying", targetName, cd.Namespace)
+			return "", nil, fmt.Errorf("deployment %s.%s not found, retrying", targetName, cd.Namespace)
 		}
-		return "", err
+		return "", nil, err
 	}
 
 	label, err := c.getSelectorLabel(canaryDep)
 	if err != nil {
-		return "", fmt.Errorf("invalid label selector! Deployment %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
+		return "", nil, fmt.Errorf("invalid label selector! Deployment %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
 			targetName, cd.Namespace, targetName)
+	}
+
+	var ports *map[string]int32
+	if cd.Spec.Service.PortDiscovery {
+		p, err := c.getPorts(canaryDep, cd.Spec.Service.Port)
+		if err != nil {
+			return "", nil, fmt.Errorf("port discovery failed with error: %v", err)
+		}
+		ports = &p
 	}
 
 	primaryDep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
@@ -195,14 +204,14 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, error)
 		// create primary secrets and config maps
 		configRefs, err := c.ConfigTracker.GetTargetConfigs(cd)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		if err := c.ConfigTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
-			return "", err
+			return "", nil, err
 		}
 		annotations, err := c.makeAnnotations(canaryDep.Spec.Template.Annotations)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 
 		replicas := int32(1)
@@ -247,13 +256,13 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, error)
 
 		_, err = c.KubeClient.AppsV1().Deployments(cd.Namespace).Create(primaryDep)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 
 		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
-	return label, nil
+	return label, ports, nil
 }
 
 func (c *Deployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
@@ -337,6 +346,37 @@ func (c *Deployer) getSelectorLabel(deployment *appsv1.Deployment) (string, erro
 	}
 
 	return "", fmt.Errorf("selector not found")
+}
+
+var sidecars = map[string]bool{
+	"istio-proxy": true,
+	"envoy":       true,
+}
+
+// getPorts returns a list of all container ports
+func (c *Deployer) getPorts(deployment *appsv1.Deployment, canaryPort int32) (map[string]int32, error) {
+	ports := make(map[string]int32)
+
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		// exclude service mesh proxies based on container name
+		if _, ok := sidecars[container.Name]; ok {
+			continue
+		}
+		for i, p := range container.Ports {
+			// exclude canary.service.port
+			if p.ContainerPort == canaryPort {
+				continue
+			}
+			name := fmt.Sprintf("tcp-%v", i)
+			if p.Name != "" {
+				name = p.Name
+			}
+
+			ports[name] = p.ContainerPort
+		}
+	}
+
+	return ports, nil
 }
 
 func makePrimaryLabels(labels map[string]string, primaryName string, label string) map[string]string {

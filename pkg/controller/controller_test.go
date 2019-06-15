@@ -354,6 +354,14 @@ func newTestDeployment() *appsv1.Deployment {
 									ContainerPort: 9898,
 									Protocol:      corev1.ProtocolTCP,
 								},
+								{
+									Name:          "http-metrics",
+									ContainerPort: 8080,
+									Protocol:      corev1.ProtocolTCP,
+								},
+								{
+									ContainerPort: 8888,
+								},
 							},
 							Env: []corev1.EnvVar{
 								{
