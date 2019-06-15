@@ -115,9 +115,10 @@ type CanaryStatus struct {
 // CanaryService is used to create ClusterIP services
 // and Istio Virtual Service
 type CanaryService struct {
-	Port     int32  `json:"port"`
-	PortName string `json:"portName,omitempty"`
-	Timeout  string `json:"timeout,omitempty"`
+	Port          int32  `json:"port"`
+	PortName      string `json:"portName,omitempty"`
+	PortDiscovery bool   `json:"portDiscovery"`
+	Timeout       string `json:"timeout,omitempty"`
 	// Istio
 	Gateways      []string                         `json:"gateways,omitempty"`
 	Hosts         []string                         `json:"hosts,omitempty"`
