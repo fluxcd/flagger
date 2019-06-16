@@ -103,3 +103,52 @@ spec:
 
 The `podinfo-canary.test:9898` address is available only during the 
 canary analysis and can be used for conformance testing or load testing.
+
+### Multiple ports
+
+My application listens on multiple ports, how can I expose them inside the cluster?
+
+If port discovery is enabled, Flagger scans the deployment spec and extracts the containers 
+ports excluding the port specified in the canary service and Envoy sidecar ports. 
+`These ports will be used when generating the ClusterIP services.
+
+For a deployment that exposes two ports:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9899"
+    spec:
+      containers:
+      - name: app
+        ports:
+        - containerPort: 8080
+        - containerPort: 9090
+```
+
+You can enable port discovery so that Prometheus will be able to reach port `9090` over mTLS:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+spec:
+  service:
+    # container port used for canary analysis
+    port: 8080
+    # port name can be http or grpc (default http)
+    portName: http
+    # add all the other container ports
+    # to the ClusterIP services (default false)
+    portDiscovery: true
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
+```
+
+Both port `8080` and `9090` will be added to the ClusterIP services but the virtual service
+will point to the port specified in `spec.service.port`.
