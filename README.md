@@ -35,6 +35,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Custom metrics](https://docs.flagger.app/how-it-works#custom-metrics)
   * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
   * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
+  * [FAQ](https://docs.flagger.app/faq)
 * Usage
   * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
   * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)

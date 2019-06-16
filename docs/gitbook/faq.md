@@ -1,21 +1,53 @@
 # Frequently asked questions
 
-**Can Flagger be part of my integration tests?**
-> Yes, Flagger supports webhooks to do integration testing.
+### A/B Testing
 
-**What if I only want to target beta testers?**
-> That's a feature in Flagger, not in App Mesh. It's on the App Mesh roadmap.
+When should I use A/B testing instead of progressive traffic shifting?
 
-**When do I use A/B testing when Canary?**
-> One advantage of using A/B testing is that each version remains separated and routes aren't mixed.
->
-> Using a Canary deployment can lead to behaviour like this one observed by a
-> user:
->
-> [..] during a canary deployment of our nodejs app, the version that is being served <50% traffic reports mime type mismatch errors in the browser (js as "text/html")
-> When the deployment Passes/ Fails (doesn't really matter) the version that stays alive works as expected. If anyone has any tips or direction I would greatly appreciate it. Even if its as simple as I'm looking in the wrong place. Thanks in advance!
->
-> The issue was that we were not maintaining session affinity while serving files for our frontend. Which resulted in any redirects or refreshes occasionally returning a mismatched app.*.js file (generated from vue)
->
-> Read up on [A/B testing](https://docs.flagger.app/usage/ab-testing).
+For frontend applications that require session affinity you should use HTTP headers or cookies match conditions
+to ensure a set of users will stay on the same version for the whole duration of the canary analysis.
+A/B testing is supported by Istio and NGINX only.
+
+Istio example:
+
+```yaml
+  canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 1m
+    # total number of iterations
+    iterations: 10
+    # max number of failed iterations before rollback
+    threshold: 2
+    # canary match condition
+    match:
+      - headers:
+          x-canary:
+            regex: ".*insider.*"
+      - headers:
+          cookie:
+            regex: "^(.*?;)?(canary=always)(;.*)?$"
+```
+
+NGINX example:
+
+```yaml
+  canaryAnalysis:
+    interval: 1m
+    threshold: 10
+    iterations: 2
+    match:
+      - headers:
+          x-canary:
+            exact: "insider"
+      - headers:
+          cookie:
+            exact: "canary"
+```
+
+The above configurations will route users with the x-canary header or canary cookie to the canary instance during analysis:
+
+```bash
+curl -H 'X-Canary: insider' http://app.example.com
+curl -b 'canary=always' http://app.example.com
+```
 
