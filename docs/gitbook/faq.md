@@ -180,3 +180,31 @@ spec:
       tls:
         mode: DISABLE
 ```
+
+If Flagger is outside of the mesh, how can it start the load test?
+
+In order for Flagger to be able to call the load tester service from outside the mesh, you need to disable mTLS on port 80:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: flagger-namespace
+  namespace: flagger
+spec:
+  host: "*.flagger.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: authentication.istio.io/v1alpha1
+kind: Policy
+metadata:
+  name: loadtester-mtls-disabled
+  namespace: flagger
+spec:
+  targets:
+  - name: flagger-loadtester
+    ports:
+    - number: 80
+```
