@@ -152,3 +152,31 @@ spec:
 
 Both port `8080` and `9090` will be added to the ClusterIP services but the virtual service
 will point to the port specified in `spec.service.port`.
+
+### Istio Mutual TLS
+
+How can I enable mTLS for a canary?
+
+When deploying Istio with global mTLS enabled, you have to set the TLS mode to `ISTIO_MUTUAL`:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+spec:
+  service:
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
+```
+
+If you run Istio in permissive mode you can disable TLS:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+spec:
+  service:
+    trafficPolicy:
+      tls:
+        mode: DISABLE
+```
