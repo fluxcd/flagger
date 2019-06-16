@@ -44,6 +44,8 @@ NGINX example:
             exact: "canary"
 ```
 
+Note that the NGINX ingress controller supports only exact matching for a single header and the cookie value is set to `always`.
+
 The above configurations will route users with the x-canary header or canary cookie to the canary instance during analysis:
 
 ```bash
