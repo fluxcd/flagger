@@ -155,6 +155,63 @@ spec:
 Both port `8080` and `9090` will be added to the ClusterIP services but the virtual service
 will point to the port specified in `spec.service.port`.
 
+### Label selectors
+
+What labels selectors are supported by Flagger?
+
+The target deployment must have a single label selector in the format `app: <DEPLOYMENT-NAME>`:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+```
+
+Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If you use a different 
+convention you can specify your label with the `-selector-labels` flag.
+
+Is pod affinity and anti affinity supported?
+
+For pod affinity to work you need to use a different label than the `app`, `name` or `app.kubernetes.io/name`.
+
+Anti affinity example:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+      affinity: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+        affinity: podinfo
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  affinity: podinfo
+              topologyKey: kubernetes.io/hostname
+```
+
 ### Istio Mutual TLS
 
 How can I enable mTLS for a canary?
