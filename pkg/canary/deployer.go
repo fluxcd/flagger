@@ -367,7 +367,7 @@ func (c *Deployer) getPorts(deployment *appsv1.Deployment, canaryPort int32) (ma
 			if p.ContainerPort == canaryPort {
 				continue
 			}
-			name := fmt.Sprintf("tcp-%v", i)
+			name := fmt.Sprintf("tcp-%s-%v", container.Name, i)
 			if p.Name != "" {
 				name = p.Name
 			}

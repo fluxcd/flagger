@@ -361,7 +361,7 @@ func TestScheduler_PortDiscovery(t *testing.T) {
 		case
 			"http 9898",
 			"http-metrics 8080",
-			"tcp-2 8888":
+			"tcp-podinfo-2 8888":
 			return true
 		}
 		return false
