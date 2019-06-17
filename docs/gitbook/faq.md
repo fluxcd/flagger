@@ -212,6 +212,55 @@ spec:
               topologyKey: kubernetes.io/hostname
 ```
 
+### Istio Ingress Gateway
+
+How can I expose multiple canaries on the same external domain?
+
+Assuming you have two apps, one that servers the main website and one that serves the REST API.
+For each app you can define a canary object as:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: website
+spec:
+  service:
+    port: 8080
+    gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    hosts:
+    - my-site.com
+    match:
+      - uri:
+          prefix: /
+    rewrite:
+      uri: /
+---
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: webapi
+spec:
+  service:
+    port: 8080
+    gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    hosts:
+    - my-site.com
+    match:
+      - uri:
+          prefix: /api
+    rewrite:
+      uri: /
+```
+
+Based on the above configuration, Flagger will create two virtual services bounded to the same ingress gateway and external host.
+Istio Pilot will [merge](https://istio.io/help/ops/traffic-management/deploy-guidelines/#multiple-virtual-services-and-destination-rules-for-the-same-host)
+the two services and the website rule will be moved to the end of the list in the merged configuration. 
+
+Note that host merging only works if the canaries are bounded to a ingress gateway other than the `mesh` gateway.
+
 ### Istio Mutual TLS
 
 How can I enable mTLS for a canary?
