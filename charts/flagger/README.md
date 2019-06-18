@@ -1,7 +1,7 @@
 # Flagger
 
 [Flagger](https://github.com/weaveworks/flagger) is a Kubernetes operator that automates the promotion of 
-canary deployments using Istio routing for traffic shifting and Prometheus metrics for canary analysis. 
+canary deployments using Istio, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
 like HTTP requests success rate, requests average duration and pods health.
 Based on the KPIs analysis a canary is promoted or aborted and the analysis result is published to Slack.
@@ -9,7 +9,6 @@ Based on the KPIs analysis a canary is promoted or aborted and the analysis resu
 ## Prerequisites
 
 * Kubernetes >= 1.11
-* Istio >= 1.0
 * Prometheus >= 2.6
 
 ## Installing the Chart
@@ -48,7 +47,8 @@ Parameter | Description | Default
 `image.repository` | image repository | `weaveworks/flagger`
 `image.tag` | image tag | `<VERSION>`
 `image.pullPolicy` | image pull policy | `IfNotPresent`
-`metricsServer` | Prometheus URL | `http://prometheus.istio-system:9090`
+`prometheus.install` | if `true`, installs Prometheus configured to scrape all pods in the custer including the App Mesh sidecar | `false`
+`metricsServer` | Prometheus URL, used when `prometheus.install` is `false` | `http://prometheus.istio-system:9090`
 `slack.url` | Slack incoming webhook | None
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`
