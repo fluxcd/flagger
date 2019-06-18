@@ -79,9 +79,12 @@ spec:
 
 Based on the canary spec service, Flagger generates the following Kubernetes ClusterIP service:
 
-* `<name>.<namespaces>.vc.cluster.local` with selector `app=<name>-primary`
-* `<name>-primary.<namespaces>.vc.cluster.local` with selector `app=<name>-primary`
-* `<name>-canary.<namespaces>.vc.cluster.local` with selector `app=<name>`
+* `<targetRef.name>.<namespace>.svc.cluster.local`  
+    selector `app=<name>-primary`
+* `<targetRef.name>-primary.<namespace>.svc.cluster.local`  
+    selector `app=<name>-primary`
+* `<targetRef.name>-canary.<namespace>.svc.cluster.local`  
+    selector `app=<name>`
 
 This ensures that traffic coming from a namespace outside the mesh to `podinfo.test:9898`
 will be routed to the latest stable release of your app. 
@@ -96,6 +99,34 @@ spec:
   type: ClusterIP
   selector:
     app: podinfo-primary
+  ports:
+  - name: http
+    port: 9898
+    protocol: TCP
+    targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo-primary
+spec:
+  type: ClusterIP
+  selector:
+    app: podinfo-primary
+  ports:
+  - name: http
+    port: 9898
+    protocol: TCP
+    targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo-canary
+spec:
+  type: ClusterIP
+  selector:
+    app: podinfo
   ports:
   - name: http
     port: 9898
