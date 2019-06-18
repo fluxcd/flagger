@@ -128,10 +128,13 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 	}
 
 	if svc != nil {
-		if diff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports); diff != "" {
+		portsDiff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports)
+		selectorsDiff := cmp.Diff(svcSpec.Selector, svc.Spec.Selector)
+
+		if portsDiff != "" || selectorsDiff != "" {
 			svcClone := svc.DeepCopy()
-			svcClone.Spec = svcSpec
-			svcClone.Spec.ClusterIP = svc.Spec.ClusterIP
+			svcClone.Spec.Ports = svcSpec.Ports
+			svcClone.Spec.Selector = svcSpec.Selector
 			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(svcClone)
 			if err != nil {
 				return fmt.Errorf("service %s update error %v", name, err)
