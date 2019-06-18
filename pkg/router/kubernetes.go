@@ -20,6 +20,7 @@ type KubernetesRouter struct {
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 	label         string
+	ports         *map[string]int32
 }
 
 // Reconcile creates or updates the primary and canary services
@@ -79,6 +80,22 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 		},
 	}
 
+	if c.ports != nil {
+		for n, p := range *c.ports {
+			cp := corev1.ServicePort{
+				Name:     n,
+				Protocol: corev1.ProtocolTCP,
+				Port:     p,
+				TargetPort: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: p,
+				},
+			}
+
+			svcSpec.Ports = append(svcSpec.Ports, cp)
+		}
+	}
+
 	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		svc = &corev1.Service{
@@ -114,6 +131,7 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 		if diff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports); diff != "" {
 			svcClone := svc.DeepCopy()
 			svcClone.Spec = svcSpec
+			svcClone.Spec.ClusterIP = svc.Spec.ClusterIP
 			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(svcClone)
 			if err != nil {
 				return fmt.Errorf("service %s update error %v", name, err)

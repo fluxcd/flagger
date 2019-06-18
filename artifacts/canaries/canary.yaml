@@ -20,17 +20,25 @@ spec:
   service:
     # container port
     port: 9898
+    # port name can be http or grpc (default http)
+    portName: http
+    # add all the other container ports
+    # when generating ClusterIP services (default false)
+    portDiscovery: false
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
+      # remove the mesh gateway if the public host is
+      # shared across multiple virtual services
     - mesh
     # Istio virtual service host names (optional)
     hosts:
     - app.istio.weavedx.com
     # Istio traffic policy (optional)
     trafficPolicy:
-      loadBalancer:
-        simple: LEAST_CONN
+      tls:
+        # use ISTIO_MUTUAL when mTLS is enabled
+        mode: DISABLE
     # HTTP match conditions (optional)
     match:
       - uri:
@@ -68,7 +76,7 @@ spec:
     # external checks (optional)
     webhooks:
       - name: load-test
-        url: http://flagger-loadtester.test/
+        url: http://tester.istio.weavedx.com/
         timeout: 5s
         metadata:
           type: cmd

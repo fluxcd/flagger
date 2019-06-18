@@ -102,6 +102,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	targetName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
+	canaryName := fmt.Sprintf("%s-canary", targetName)
 
 	// set hosts and add the ClusterIP service host if it doesn't exists
 	hosts := canary.Spec.Service.Hosts
@@ -133,18 +134,8 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 
 	// create destinations with primary weight 100% and canary weight 0%
 	canaryRoute := []istiov1alpha3.DestinationWeight{
-		{
-			Destination: istiov1alpha3.Destination{
-				Host: primaryName,
-			},
-			Weight: 100,
-		},
-		{
-			Destination: istiov1alpha3.Destination{
-				Host: fmt.Sprintf("%s-canary", targetName),
-			},
-			Weight: 0,
-		},
+		makeDestination(canary, primaryName, 100),
+		makeDestination(canary, canaryName, 0),
 	}
 
 	newSpec := istiov1alpha3.VirtualServiceSpec{
@@ -183,12 +174,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
 				Route: []istiov1alpha3.DestinationWeight{
-					{
-						Destination: istiov1alpha3.Destination{
-							Host: primaryName,
-						},
-						Weight: 100,
-					},
+					makeDestination(canary, primaryName, 100),
 				},
 			},
 		}
@@ -294,6 +280,9 @@ func (ir *IstioRouter) SetRoutes(
 	canaryWeight int,
 ) error {
 	targetName := canary.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+	canaryName := fmt.Sprintf("%s-canary", targetName)
+
 	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -315,18 +304,8 @@ func (ir *IstioRouter) SetRoutes(
 			CorsPolicy:    canary.Spec.Service.CorsPolicy,
 			AppendHeaders: addHeaders(canary),
 			Route: []istiov1alpha3.DestinationWeight{
-				{
-					Destination: istiov1alpha3.Destination{
-						Host: fmt.Sprintf("%s-primary", targetName),
-					},
-					Weight: primaryWeight,
-				},
-				{
-					Destination: istiov1alpha3.Destination{
-						Host: fmt.Sprintf("%s-canary", targetName),
-					},
-					Weight: canaryWeight,
-				},
+				makeDestination(canary, primaryName, primaryWeight),
+				makeDestination(canary, canaryName, canaryWeight),
 			},
 		},
 	}
@@ -344,18 +323,8 @@ func (ir *IstioRouter) SetRoutes(
 				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
 				Route: []istiov1alpha3.DestinationWeight{
-					{
-						Destination: istiov1alpha3.Destination{
-							Host: fmt.Sprintf("%s-primary", targetName),
-						},
-						Weight: primaryWeight,
-					},
-					{
-						Destination: istiov1alpha3.Destination{
-							Host: fmt.Sprintf("%s-canary", targetName),
-						},
-						Weight: canaryWeight,
-					},
+					makeDestination(canary, primaryName, primaryWeight),
+					makeDestination(canary, canaryName, canaryWeight),
 				},
 			},
 			{
@@ -366,12 +335,7 @@ func (ir *IstioRouter) SetRoutes(
 				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
 				Route: []istiov1alpha3.DestinationWeight{
-					{
-						Destination: istiov1alpha3.Destination{
-							Host: fmt.Sprintf("%s-primary", targetName),
-						},
-						Weight: primaryWeight,
-					},
+					makeDestination(canary, primaryName, primaryWeight),
 				},
 			},
 		}
@@ -408,4 +372,23 @@ func mergeMatchConditions(canary, defaults []istiov1alpha3.HTTPMatchRequest) []i
 	}
 
 	return canary
+}
+
+// makeDestination returns a an destination weight for the specified host
+func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1alpha3.DestinationWeight {
+	dest := istiov1alpha3.DestinationWeight{
+		Destination: istiov1alpha3.Destination{
+			Host: host,
+		},
+		Weight: weight,
+	}
+
+	// if port discovery is enabled then we need to explicitly set the destination port
+	if canary.Spec.Service.PortDiscovery {
+		dest.Destination.Port = &istiov1alpha3.PortSelector{
+			Number: uint32(canary.Spec.Service.Port),
+		}
+	}
+
+	return dest
 }

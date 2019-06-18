@@ -91,7 +91,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	// create primary deployment and hpa if needed
-	label, err := c.deployer.Initialize(cd)
+	label, ports, err := c.deployer.Initialize(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -101,7 +101,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	meshRouter := c.routerFactory.MeshRouter(c.meshProvider)
 
 	// create or update ClusterIP services
-	if err := c.routerFactory.KubernetesRouter(label).Reconcile(cd); err != nil {
+	if err := c.routerFactory.KubernetesRouter(label, ports).Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}

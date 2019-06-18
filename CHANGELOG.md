@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## vNext (TBA) 
+
+Adds support for multiple ports services
+
+#### Features
+
+- Implement port discovery [#207](https://github.com/weaveworks/flagger/pull/207)
+
+#### Improvements 
+
+- Add [FAQ page](https://docs.flagger.app/faq) to docs website
+- Use Istio v1.1.9 in [e2e testing]()
+
+
 ## 0.15.0 (2019-06-12) 
 
 Adds support for customising the Istio [traffic policy](https://docs.flagger.app/how-it-works#istio-routing) in the canary service spec

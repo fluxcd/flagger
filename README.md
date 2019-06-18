@@ -35,12 +35,13 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Custom metrics](https://docs.flagger.app/how-it-works#custom-metrics)
   * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
   * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
+  * [FAQ](https://docs.flagger.app/faq)
 * Usage
   * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
   * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
   * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
   * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
-  * [Gloo Canary Deployments](https://docs.flagger.app/usage/gloo-progressive-delivery)
+  * [Gloo ingress controller canary deployments](https://docs.flagger.app/usage/gloo-progressive-delivery)
   * [Monitoring](https://docs.flagger.app/usage/monitoring)
   * [Alerting](https://docs.flagger.app/usage/alerting)
 * Tutorials
@@ -149,27 +150,15 @@ For more details on how the canary analysis and promotion works please [read the
 
 ## Features
 
-| Service Mesh Feature                         | Istio              | App Mesh           | SuperGloo          |
-| -------------------------------------------- | ------------------ | ------------------ |------------------  |
-| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Load testing                                 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Webhooks (acceptance testing)                | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
-| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Ingress gateway (CORS, retries and timeouts) | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
-
-| Ingress Controller Feature                   | NGINX              | Gloo               |
-| -------------------------------------------- | ------------------ | ------------------ |
-| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: |
-| Load testing                                 | :heavy_check_mark: | :heavy_check_mark: |
-| Webhooks (acceptance testing)                | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)       | :heavy_minus_sign: | :heavy_check_mark: |
-| Request duration check (L7 metric)           | :heavy_minus_sign: | :heavy_check_mark: |
-| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: |
-
+| Feature                                      | Istio              | App Mesh           | NGINX              | Gloo               |
+| -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |
+| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: |
+| Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: |
+| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
 
 ## Roadmap
 

@@ -333,10 +333,17 @@ The GKE Istio add-on does not include a Prometheus instance that scrapes the Ist
 Because Flagger uses the Istio HTTP metrics to run the canary analysis you have to deploy the following 
 Prometheus configuration that's similar to the one that comes with the official Istio Helm chart.
 
-```bash
-REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
+Find the GKE Istio version with:
 
-kubectl apply -f ${REPO}/artifacts/gke/istio-prometheus.yaml
+```bash
+kubectl -n istio-system get deploy istio-pilot -oyaml | grep image:
+```
+
+Install Prometheus in istio-system namespace (replace `1.0.6-gke.3` with your version):
+
+```bash
+kubectl -n istio-system apply -f \
+https://storage.googleapis.com/gke-release/istio/release/1.0.6-gke.3/patches/install-prometheus.yaml
 ```
 
 ### Install Flagger and Grafana

@@ -90,6 +90,8 @@ spec:
                   type: number
                 portName:
                   type: string
+                portDiscovery:
+                  type: boolean
                 meshName:
                   type: string
                 timeout:
