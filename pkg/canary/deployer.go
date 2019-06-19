@@ -40,6 +40,11 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary) (label string, ports *map[st
 	}
 
 	if cd.Status.Phase == "" {
+		_, readyErr := c.IsPrimaryReady(cd)
+		if readyErr != nil {
+			return "", ports, readyErr
+		}
+
 		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
 			return "", ports, err
