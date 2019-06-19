@@ -24,6 +24,10 @@ func NewFactory(metricsServer string, meshProvider string, timeout time.Duration
 
 func (factory Factory) Observer() Interface {
 	switch {
+	case factory.MeshProvider == "none":
+		return &HttpObserver{
+			client: factory.Client,
+		}
 	case factory.MeshProvider == "appmesh":
 		return &EnvoyObserver{
 			client: factory.Client,
