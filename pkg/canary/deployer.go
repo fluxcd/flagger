@@ -32,7 +32,7 @@ type Deployer struct {
 
 // Initialize creates the primary deployment, hpa,
 // scales to zero the canary deployment and returns the pod selector label and container ports
-func (c *Deployer) Initialize(cd *flaggerv1.Canary) (label string, ports *map[string]int32, err error) {
+func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports *map[string]int32, err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	label, ports, err = c.createPrimaryDeployment(cd)
 	if err != nil {
@@ -40,6 +40,13 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary) (label string, ports *map[st
 	}
 
 	if cd.Status.Phase == "" {
+		if !skipLivenessChecks {
+			_, readyErr := c.IsPrimaryReady(cd)
+			if readyErr != nil {
+				return "", ports, readyErr
+			}
+		}
+
 		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
 			return "", ports, err

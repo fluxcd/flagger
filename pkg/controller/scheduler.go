@@ -91,7 +91,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	// create primary deployment and hpa if needed
-	label, ports, err := c.deployer.Initialize(cd)
+	// skip primary check for Istio since the deployment will become ready after the ClusterIP are created
+	skipPrimaryCheck := false
+	if skipLivenessChecks || strings.Contains(c.meshProvider, "istio") {
+		skipPrimaryCheck = true
+	}
+	label, ports, err := c.deployer.Initialize(cd, skipPrimaryCheck)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -269,7 +274,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// canary fix routing: A/B testing
-	if len(cd.Spec.CanaryAnalysis.Match) > 0 {
+	if len(cd.Spec.CanaryAnalysis.Match) > 0 || cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// route traffic to canary and increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
 			if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
@@ -614,7 +619,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
+					c.recordEventErrorf(r, "Metrics server %s query failed for %s: %v", c.observerFactory.Client.GetMetricsServer(), metric.Name, err)
 				}
 				return false
 			}

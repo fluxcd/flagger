@@ -183,5 +183,5 @@ func (p *PrometheusClient) IsOnline() (bool, error) {
 }
 
 func (p *PrometheusClient) GetMetricsServer() string {
-	return p.url.RawQuery
+	return p.url.String()
 }
