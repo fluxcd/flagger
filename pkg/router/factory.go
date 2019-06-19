@@ -45,6 +45,8 @@ func (factory *Factory) KubernetesRouter(label string, ports *map[string]int32) 
 // MeshRouter returns a service mesh router
 func (factory *Factory) MeshRouter(provider string) Interface {
 	switch {
+	case provider == "none":
+		return &NopRouter{}
 	case provider == "nginx":
 		return &IngressRouter{
 			logger:     factory.logger,
