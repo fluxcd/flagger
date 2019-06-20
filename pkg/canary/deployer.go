@@ -54,8 +54,8 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (la
 	}
 
 	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
-		if err := c.createPrimaryHpa(cd); err != nil {
-			return "", ports, fmt.Errorf("creating hpa %s.%s failed: %v", primaryName, cd.Namespace, err)
+		if err := c.reconcilePrimaryHpa(cd); err != nil {
+			return "", ports, fmt.Errorf("creating HorizontalPodAutoscaler %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}
 	}
 	return label, ports, nil
@@ -119,6 +119,13 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 	if err != nil {
 		return fmt.Errorf("updating deployment %s.%s template spec failed: %v",
 			primaryCopy.GetName(), primaryCopy.Namespace, err)
+	}
+
+	// update HPA
+	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
+		if err := c.reconcilePrimaryHpa(cd); err != nil {
+			return fmt.Errorf("updating HorizontalPodAutoscaler %s.%s failed: %v", primaryName, cd.Namespace, err)
+		}
 	}
 
 	return nil
@@ -272,7 +279,7 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, *map[s
 	return label, ports, nil
 }
 
-func (c *Deployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
+func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	hpa, err := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
@@ -282,9 +289,22 @@ func (c *Deployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 		}
 		return err
 	}
+
+	hpaSpec := hpav1.HorizontalPodAutoscalerSpec{
+		ScaleTargetRef: hpav1.CrossVersionObjectReference{
+			Name:       primaryName,
+			Kind:       hpa.Spec.ScaleTargetRef.Kind,
+			APIVersion: hpa.Spec.ScaleTargetRef.APIVersion,
+		},
+		MinReplicas: hpa.Spec.MinReplicas,
+		MaxReplicas: hpa.Spec.MaxReplicas,
+		Metrics:     hpa.Spec.Metrics,
+	}
+
 	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
 	primaryHpa, err := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(primaryHpaName, metav1.GetOptions{})
 
+	// create HPA
 	if errors.IsNotFound(err) {
 		primaryHpa = &hpav1.HorizontalPodAutoscaler{
 			ObjectMeta: metav1.ObjectMeta{
@@ -299,16 +319,7 @@ func (c *Deployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 					}),
 				},
 			},
-			Spec: hpav1.HorizontalPodAutoscalerSpec{
-				ScaleTargetRef: hpav1.CrossVersionObjectReference{
-					Name:       primaryName,
-					Kind:       hpa.Spec.ScaleTargetRef.Kind,
-					APIVersion: hpa.Spec.ScaleTargetRef.APIVersion,
-				},
-				MinReplicas: hpa.Spec.MinReplicas,
-				MaxReplicas: hpa.Spec.MaxReplicas,
-				Metrics:     hpa.Spec.Metrics,
-			},
+			Spec: hpaSpec,
 		}
 
 		_, err = c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Create(primaryHpa)
@@ -316,6 +327,25 @@ func (c *Deployer) createPrimaryHpa(cd *flaggerv1.Canary) error {
 			return err
 		}
 		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// update HPA
+	if primaryHpa != nil {
+		hpaClone := primaryHpa.DeepCopy()
+		hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
+		hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
+		hpaClone.Spec.Metrics = hpaSpec.Metrics
+
+		_, upErr := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(hpaClone)
+		if upErr != nil {
+			return upErr
+		}
+		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s updated", primaryHpa.GetName(), cd.Namespace)
 	}
 
 	return nil
