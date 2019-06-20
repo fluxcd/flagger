@@ -76,7 +76,7 @@ spec:
     # external checks (optional)
     webhooks:
       - name: load-test
-        url: http://tester.istio.weavedx.com/
+        url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
