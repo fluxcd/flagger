@@ -46,6 +46,8 @@ spec:
             - service
             - canaryAnalysis
           properties:
+            provider:
+              type: string
             progressDeadlineSeconds:
               type: number
             targetRef:
