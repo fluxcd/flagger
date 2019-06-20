@@ -8,33 +8,27 @@ TS=$(shell date +%Y-%m-%d_%H-%M-%S)
 
 run:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=istio -namespace=test \
-	-metrics-server=https://prometheus.istio.weavedx.com \
-	-slack-url=https://hooks.slack.com/services/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 \
-	-slack-channel="devops-alerts"
+	-metrics-server=https://prometheus.istio.weavedx.com
 
 run-appmesh:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=appmesh \
-	-metrics-server=http://acfc235624ca911e9a94c02c4171f346-1585187926.us-west-2.elb.amazonaws.com:9090 \
-	-slack-url=https://hooks.slack.com/services/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 \
-	-slack-channel="devops-alerts"
+	-metrics-server=http://acfc235624ca911e9a94c02c4171f346-1585187926.us-west-2.elb.amazonaws.com:9090
 
 run-nginx:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=nginx -namespace=nginx \
-	-metrics-server=http://prometheus-weave.istio.weavedx.com \
-	-slack-url=https://hooks.slack.com/services/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 \
-	-slack-channel="devops-alerts"
+	-metrics-server=http://prometheus-weave.istio.weavedx.com
 
 run-smi:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=smi:istio -namespace=smi \
-	-metrics-server=https://prometheus.istio.weavedx.com \
-	-slack-url=https://hooks.slack.com/services/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 \
-	-slack-channel="devops-alerts"
+	-metrics-server=https://prometheus.istio.weavedx.com
 
 run-gloo:
 	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=gloo -namespace=gloo \
-	-metrics-server=https://prometheus.istio.weavedx.com \
-	-slack-url=https://hooks.slack.com/services/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 \
-	-slack-channel="devops-alerts"
+	-metrics-server=https://prometheus.istio.weavedx.com
+
+run-nop:
+	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=none -namespace=bg \
+	-metrics-server=https://prometheus.istio.weavedx.com
 
 build:
 	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
