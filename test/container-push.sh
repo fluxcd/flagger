@@ -2,11 +2,6 @@
 
 set -o errexit
 
-cp /tmp/workspace/flagger .
-chmod +x flagger
-
-docker build -t weaveworks/flagger:latest . -f ./test/Dockerfile.ci
-
 BRANCH_COMMIT=${CIRCLE_BRANCH}-$(echo ${CIRCLE_SHA1} | head -c7)
 
 if [[ -z "$DOCKER_PASS" ]]; then

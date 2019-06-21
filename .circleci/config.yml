@@ -36,9 +36,9 @@ jobs:
       - attach_workspace:
           at: /tmp/bin
       - run: |
-          cp /tmp/bin/flagger .
-          chmod +x flagger
-      - run: test/container-build.sh
+          cp /tmp/bin/flagger . && chmod +x flagger
+          docker build -t weaveworks/flagger:latest . -f ./test/Dockerfile.ci
+      - run: test/container-push.sh
 
   e2e-istio-testing:
     machine: true
