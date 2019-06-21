@@ -116,52 +116,23 @@ workflows:
       - build-binary:
           filters:
             branches:
-              ignore: gh-pages
+              ignore:
+                - gh-pages
       - e2e-istio-testing:
           requires:
             - build-binary
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
       - e2e-smi-istio-testing:
           requires:
             - build-binary
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
       - e2e-supergloo-testing:
           requires:
             - build-binary
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
       - e2e-gloo-testing:
           requires:
             - build-binary
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
       - e2e-nginx-testing:
           requires:
             - build-binary
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
       - push-container:
           requires:
             - build-binary
@@ -170,12 +141,6 @@ workflows:
             - e2e-supergloo-testing
             - e2e-gloo-testing
             - e2e-nginx-testing
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
       - push-binary:
           requires:
             - push-container
