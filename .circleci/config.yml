@@ -11,7 +11,10 @@ jobs:
           keys:
             - go-mod-{{ checksum "go.sum" }}
       - run: |
+          make test-fmt
+          make test-codegen
           go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
+          bash <(curl -s https://codecov.io/bash)
       - run: |
           CGO_ENABLED=0 GOOS=linux go build \
               -ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=${CIRCLE_SHA1}" \
