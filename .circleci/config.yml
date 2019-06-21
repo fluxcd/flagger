@@ -9,7 +9,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - go-mod-{{ checksum "go.sum" }}
+            - go-mod-v1-{{ checksum "go.sum" }}
       - run: |
           make test-fmt
           make test-codegen
@@ -21,7 +21,7 @@ jobs:
               -a -installsuffix cgo -o bin/flagger ./cmd/flagger/*
           ./bin/flagger -version
       - save_cache:
-          key: go-mod-{{ checksum "go.sum" }}
+          key: go-mod-v1-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod/"
       - persist_to_workspace:
