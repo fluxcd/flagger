@@ -22,9 +22,6 @@ do
   sleep 2
 done
 
-# add rbac rules
-kubectl create clusterrolebinding flagger-supergloo --clusterrole=mesh-discovery --serviceaccount=istio-system:flagger
-
 kubectl -n istio-system rollout status deployment/istio-pilot
 kubectl -n istio-system rollout status deployment/istio-policy
 kubectl -n istio-system rollout status deployment/istio-sidecar-injector
@@ -32,3 +29,17 @@ kubectl -n istio-system rollout status deployment/istio-telemetry
 kubectl -n istio-system rollout status deployment/prometheus
 
 kubectl -n istio-system get all
+
+echo '>>> Load Flagger image in Kind'
+kind load docker-image test/flagger:latest
+
+echo '>>> Installing Flagger'
+helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
+--namespace istio-system \
+--set meshProvider=supergloo:test.supergloo-system
+
+kubectl -n istio-system set image deployment/flagger flagger=test/flagger:latest
+kubectl -n istio-system rollout status deployment/flagger
+
+echo '>>> Adding Flagger Supergloo RBAC'
+kubectl create clusterrolebinding flagger-supergloo --clusterrole=mesh-discovery --serviceaccount=istio-system:flagger

@@ -38,9 +38,7 @@ jobs:
           docker_layer_caching: true
       - attach_workspace:
           at: /tmp/bin
-      - run: |
-          cp /tmp/bin/flagger . && chmod +x flagger
-          docker build -t weaveworks/flagger:latest . -f ./test/Dockerfile.ci
+      - run: test/container-build.sh
       - run: test/container-push.sh
 
   e2e-istio-testing:
@@ -49,39 +47,36 @@ jobs:
       - checkout
       - attach_workspace:
           at: /tmp/bin
-      - run: |
-          cp /tmp/bin/flagger . && chmod +x flagger
-          docker build -t test/flagger:latest . -f ./test/Dockerfile.ci
+      - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-istio.sh
-      - run: test/e2e-istio-build.sh
       - run: test/e2e-tests.sh
 
   e2e-smi-istio-testing:
     machine: true
     steps:
       - checkout
+      - run: test/container-build.sh
       - run: test/e2e-kind.sh
-      - run: test/e2e-istio.sh
-      - run: test/e2e-smi-istio-build.sh
+      - run: test/e2e-smi-istio.sh
       - run: test/e2e-tests.sh canary
 
   e2e-supergloo-testing:
     machine: true
     steps:
       - checkout
+      - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-supergloo.sh
-      - run: test/e2e-build.sh supergloo:test.supergloo-system
       - run: test/e2e-tests.sh canary
 
   e2e-gloo-testing:
     machine: true
     steps:
       - checkout
+      - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-gloo.sh
-      - run: test/e2e-gloo-build.sh
       - run: test/e2e-gloo-tests.sh
 
   e2e-nginx-testing:
@@ -110,10 +105,30 @@ workflows:
                 - /gh-pages.*/
                 - /docs-.*/
                 - /release-.*/
+      - e2e-smi-istio-testing:
+          requires:
+            - build-binary
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
+      - e2e-supergloo-testing:
+          requires:
+            - build-binary
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
       - push-container:
           requires:
             - build-binary
             - e2e-istio-testing
+            - e2e-smi-istio-testing
+            - e2e-supergloo-testing
           filters:
             branches:
               ignore:
