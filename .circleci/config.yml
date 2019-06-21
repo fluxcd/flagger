@@ -12,7 +12,9 @@ jobs:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run: |
           go mod download
+          sudo chmod +x $(echo `go env GOPATH`'/pkg/mod/k8s.io/code-generator@v0.0.0-20190531131525-17d711082421')
           ls $(echo `go env GOPATH`'/pkg/mod/k8s.io/')
+
       - run: |
           make test-fmt
           make test-codegen
