@@ -94,10 +94,10 @@ workflows:
   version: 2
   build-and-test:
     jobs:
-      - build-binary
-        filters:
-          branches:
-            ignore: gh-pages
+      - build-binary:
+          filters:
+            branches:
+              ignore: gh-pages
       - e2e-istio-testing:
           requires:
             - build-binary
