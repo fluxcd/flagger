@@ -1,15 +1,3 @@
-FROM golang:1.12 AS builder
-
-RUN mkdir -p /go/src/github.com/weaveworks/flagger/
-
-WORKDIR /go/src/github.com/weaveworks/flagger
-
-COPY . .
-
-RUN go test -race ./pkg/loadtester/
-
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o loadtester ./cmd/loadtester/*
-
 FROM bats/bats:v1.1.0
 
 RUN addgroup -S app \
@@ -25,7 +13,7 @@ RUN curl -sSL "https://get.helm.sh/helm-v2.12.3-linux-amd64.tar.gz" | tar xvz &&
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helm && \
 rm -rf linux-amd64
 
-COPY --from=builder /go/src/github.com/weaveworks/flagger/loadtester .
+COPY ./bin/loadtester .
 
 RUN chown -R app:app ./
 
