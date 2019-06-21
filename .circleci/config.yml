@@ -19,7 +19,9 @@ jobs:
           key: go-mod-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod/"
-      - run: "mkdir workspace"
+      - run: |
+          mkdir workspace
+          cp flagger workspace/flagger
       - persist_to_workspace:
           root: workspace
           paths:
