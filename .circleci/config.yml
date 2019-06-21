@@ -89,8 +89,9 @@ workflows:
   build-and-test:
     jobs:
       - buid-binary
-      - build-container
-          requires: build-binary
+      - build-container:
+          requires:
+            - build-binary
           filters:
             branches:
               ignore:
