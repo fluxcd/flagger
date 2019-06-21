@@ -52,7 +52,7 @@ jobs:
       - restore_cache:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
-      - run: curl -sL http://git.io/goreleaser | bash
+      - run: test/goreleaser.sh --skip-validate --skip-publish
 
   e2e-istio-testing:
     machine: true

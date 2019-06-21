@@ -12,5 +12,9 @@ archive:
   name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
   files:
   - none*
+changelog:
+  filters:
+    exclude:
+      - '^CircleCI'
 snapshot:
   name_template: SNAPSHOT-{{.Commit}}
