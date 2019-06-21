@@ -52,7 +52,7 @@ jobs:
       - restore_cache:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
-      - run: test/goreleaser.sh --skip-validate --skip-publish
+      - run: test/goreleaser.sh
 
   e2e-istio-testing:
     machine: true
@@ -111,21 +111,12 @@ jobs:
 
 workflows:
   version: 2
-  build-and-test:
+  test-build-push:
     jobs:
       - build-binary:
           filters:
             branches:
               ignore: gh-pages
-      - push-binary:
-          requires:
-            - build-binary
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
       - e2e-istio-testing:
           requires:
             - build-binary
@@ -185,3 +176,11 @@ workflows:
                 - /gh-pages.*/
                 - /docs-.*/
                 - /release-.*/
+      - push-binary:
+          requires:
+            - push-container
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+(\.[0-9]+)*(-.*)*/

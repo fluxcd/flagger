@@ -16,5 +16,3 @@ changelog:
   filters:
     exclude:
       - '^CircleCI'
-snapshot:
-  name_template: SNAPSHOT-{{.Commit}}
