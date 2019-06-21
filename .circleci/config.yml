@@ -30,7 +30,6 @@ jobs:
   build-container:
     docker:
       - image: circleci/golang:1.12
-    working_directory: /build
     steps:
       - checkout
       - setup_remote_docker:
