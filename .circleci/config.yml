@@ -1,5 +1,44 @@
 version: 2.1
 jobs:
+
+  build-binary:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: /build
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-{{ checksum "go.sum" }}
+      - run: |
+          CGO_ENABLED=0 GOOS=linux go build \
+              -ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=${CIRCLE_SHA1}" \
+              -a -installsuffix cgo -o flagger ./cmd/flagger/*
+          ./flagger -version
+      - save_cache:
+          key: go-mod-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod/"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - flagger
+
+  build-container:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: /build
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cp /tmp/workspace/flagger .
+          chmod +x flagger
+          docker build -t weaveworks/flagger:${CIRCLE_SHA1} . -f ./test/Dockerfile.ci
+
   e2e-istio-testing:
     machine: true
     steps:
@@ -49,38 +88,43 @@ workflows:
   version: 2
   build-and-test:
     jobs:
-      - e2e-istio-testing:
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
-      - e2e-smi-istio-testing:
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
-      - e2e-supergloo-testing:
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
-      - e2e-nginx-testing:
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
-      - e2e-gloo-testing:
-          filters:
-            branches:
-              ignore:
-                - /gh-pages.*/
-                - /docs-.*/
-                - /release-.*/
+      - buid-binary
+      - build-container
+          requires:
+            - build-binary
+
+#      - e2e-istio-testing:
+#          filters:
+#            branches:
+#              ignore:
+#                - /gh-pages.*/
+#                - /docs-.*/
+#                - /release-.*/
+#      - e2e-smi-istio-testing:
+#          filters:
+#            branches:
+#              ignore:
+#                - /gh-pages.*/
+#                - /docs-.*/
+#                - /release-.*/
+#      - e2e-supergloo-testing:
+#          filters:
+#            branches:
+#              ignore:
+#                - /gh-pages.*/
+#                - /docs-.*/
+#                - /release-.*/
+#      - e2e-nginx-testing:
+#          filters:
+#            branches:
+#              ignore:
+#                - /gh-pages.*/
+#                - /docs-.*/
+#                - /release-.*/
+#      - e2e-gloo-testing:
+#          filters:
+#            branches:
+#              ignore:
+#                - /gh-pages.*/
+#                - /docs-.*/
+#                - /release-.*/
