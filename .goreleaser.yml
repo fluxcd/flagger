@@ -12,3 +12,5 @@ archive:
   name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
   files:
   - none*
+snapshot:
+  name_template: SNAPSHOT-{{.Commit}}
