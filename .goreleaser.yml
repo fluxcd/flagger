@@ -8,10 +8,10 @@ builds:
       - amd64
     env:
       - CGO_ENABLED=0
-archive:
-  name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  files:
-  - none*
+archives:
+  - name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+    - none*
 changelog:
   filters:
     exclude:
