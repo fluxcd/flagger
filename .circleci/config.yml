@@ -9,12 +9,9 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
+            - go-mod-v2-{{ checksum "go.sum" }}
       - run: |
           go mod download
-          sudo chmod +x $(echo `go env GOPATH`'/pkg/mod/k8s.io/code-generator@v0.0.0-20190531131525-17d711082421')
-          ls $(echo `go env GOPATH`'/pkg/mod/k8s.io/')
-
       - run: |
           make test-fmt
           make test-codegen
@@ -26,7 +23,7 @@ jobs:
               -a -installsuffix cgo -o bin/flagger ./cmd/flagger/*
           ./bin/flagger -version
       - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
+          key: go-mod-v2-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod/"
       - persist_to_workspace:

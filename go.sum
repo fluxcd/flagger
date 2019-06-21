@@ -506,6 +506,7 @@ k8s.io/apiserver v0.0.0-20190111033246-d50e9ac5404f+incompatible/go.mod h1:6bqaT
 k8s.io/cli-runtime v0.0.0-20190111035321-c7263d800665+incompatible/go.mod h1:qWnH3/b8sp/l7EvlDh7ulDU3UWA4P4N1NFbEEP791tM=
 k8s.io/client-go v0.0.0-20190531132438-d58e65e5f4b1 h1:P6ePeisThSJsRbzJ4ZetEGkE5dOrMZQzVkdBoB5GFcA=
 k8s.io/client-go v0.0.0-20190531132438-d58e65e5f4b1/go.mod h1:oBWDlQWEpK7nPTuJljTF4w6W/zjopIHAPOJu70zfOHE=
+k8s.io/code-generator v0.0.0-20190511023357-639c964206c2/go.mod h1:YMQ7Lt97nW/I6nHACDccgS/sPAyrHQNans96RwPaSb8=
 k8s.io/code-generator v0.0.0-20190531131525-17d711082421 h1:IW0pZa8zLYATwgv/PIitx8AqxWmKczi6owoI5yD0/5A=
 k8s.io/code-generator v0.0.0-20190531131525-17d711082421/go.mod h1:dCm/84oAC9Wg9UBdX7tHMtJWiyQnfNjyF8k6Pf/FrWU=
 k8s.io/gengo v0.0.0-20190116091435-f8a0810f38af/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
