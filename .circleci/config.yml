@@ -11,17 +11,16 @@ jobs:
           keys:
             - go-mod-{{ checksum "go.sum" }}
       - run: |
+          go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
+      - run: |
           CGO_ENABLED=0 GOOS=linux go build \
               -ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=${CIRCLE_SHA1}" \
-              -a -installsuffix cgo -o flagger ./cmd/flagger/*
-          ./flagger -version
+              -a -installsuffix cgo -o bin/flagger ./cmd/flagger/*
+          ./bin/flagger -version
       - save_cache:
           key: go-mod-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod/"
-      - run: |
-          mkdir bin
-          cp flagger workspace/flagger
       - persist_to_workspace:
           root: bin
           paths:
