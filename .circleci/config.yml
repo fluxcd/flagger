@@ -56,6 +56,8 @@ jobs:
     machine: true
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/bin
       - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-smi-istio.sh
@@ -65,6 +67,8 @@ jobs:
     machine: true
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/bin
       - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-supergloo.sh
@@ -74,6 +78,8 @@ jobs:
     machine: true
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/bin
       - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-gloo.sh
@@ -83,9 +89,11 @@ jobs:
     machine: true
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-nginx.sh
-      - run: test/e2e-nginx-build.sh
       - run: test/e2e-nginx-tests.sh
 
 workflows:
@@ -123,51 +131,35 @@ workflows:
                 - /gh-pages.*/
                 - /docs-.*/
                 - /release-.*/
-      - push-container:
+      - e2e-gloo-testing:
           requires:
             - build-binary
-            - e2e-istio-testing
-            - e2e-smi-istio-testing
-            - e2e-supergloo-testing
           filters:
             branches:
               ignore:
                 - /gh-pages.*/
                 - /docs-.*/
                 - /release-.*/
-
-#      - e2e-istio-testing:
-#          filters:
-#            branches:
-#              ignore:
-#                - /gh-pages.*/
-#                - /docs-.*/
-#                - /release-.*/
-#      - e2e-smi-istio-testing:
-#          filters:
-#            branches:
-#              ignore:
-#                - /gh-pages.*/
-#                - /docs-.*/
-#                - /release-.*/
-#      - e2e-supergloo-testing:
-#          filters:
-#            branches:
-#              ignore:
-#                - /gh-pages.*/
-#                - /docs-.*/
-#                - /release-.*/
-#      - e2e-nginx-testing:
-#          filters:
-#            branches:
-#              ignore:
-#                - /gh-pages.*/
-#                - /docs-.*/
-#                - /release-.*/
-#      - e2e-gloo-testing:
-#          filters:
-#            branches:
-#              ignore:
-#                - /gh-pages.*/
-#                - /docs-.*/
-#                - /release-.*/
+      - e2e-nginx-testing:
+          requires:
+            - build-binary
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
+      - push-container:
+          requires:
+            - build-binary
+            - e2e-istio-testing
+            - e2e-smi-istio-testing
+            - e2e-supergloo-testing
+            - e2e-gloo-testing
+            - e2e-nginx-testing
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/

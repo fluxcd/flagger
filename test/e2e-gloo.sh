@@ -23,3 +23,17 @@ helm upgrade -i gloo gloo/gloo --version 0.13.29 \
 kubectl -n gloo-system rollout status deployment/gloo
 kubectl -n gloo-system rollout status deployment/gateway-proxy
 kubectl -n gloo-system get all
+
+echo '>>> Installing Flagger'
+kind load docker-image test/flagger:latest
+
+echo '>>> Installing Flagger'
+helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
+--namespace gloo-system \
+--set prometheus.install=true \
+--set meshProvider=gloo
+
+kubectl -n gloo-system set image deployment/flagger flagger=test/flagger:latest
+
+kubectl -n gloo-system rollout status deployment/flagger
+kubectl -n gloo-system rollout status deployment/flagger-prometheus

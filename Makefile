@@ -2,7 +2,7 @@ TAG?=latest
 VERSION?=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"')
 VERSION_MINOR:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | rev | cut -d'.' -f2- | rev)
 PATCH:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | awk -F. '{print $$NF}')
-SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/logging pkg/version
+SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/canary pkg/metrics pkg/router pkg/notifier
 LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' | tr -d '"' | head -n1)
 TS=$(shell date +%Y-%m-%d_%H-%M-%S)
 

@@ -26,4 +26,17 @@ helm upgrade -i nginx-ingress stable/nginx-ingress \
 kubectl -n ingress-nginx rollout status deployment/nginx-ingress-controller
 kubectl -n ingress-nginx get all
 
+echo '>>> Loading Flagger image'
+kind load docker-image test/flagger:latest
+
+echo '>>> Installing Flagger'
+helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
+--namespace ingress-nginx \
+--set prometheus.install=true \
+--set meshProvider=nginx
+
+kubectl -n ingress-nginx set image deployment/flagger flagger=test/flagger:latest
+
+kubectl -n ingress-nginx rollout status deployment/flagger
+kubectl -n ingress-nginx rollout status deployment/flagger-prometheus
 
