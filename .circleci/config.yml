@@ -41,6 +41,19 @@ jobs:
       - run: test/container-build.sh
       - run: test/container-push.sh
 
+  push-binary:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: ~/build
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run: curl -sL http://git.io/goreleaser | bash
+
   e2e-istio-testing:
     machine: true
     steps:
@@ -104,6 +117,15 @@ workflows:
           filters:
             branches:
               ignore: gh-pages
+      - push-binary:
+          requires:
+            - build-binary
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
       - e2e-istio-testing:
           requires:
             - build-binary
