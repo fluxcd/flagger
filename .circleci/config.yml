@@ -26,7 +26,7 @@ jobs:
           paths:
             - flagger
 
-  build-container:
+  push-container:
     docker:
       - image: circleci/golang:1.12
     steps:
@@ -44,6 +44,11 @@ jobs:
     machine: true
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: |
+          cp /tmp/bin/flagger . && chmod +x flagger
+          docker build -t test/flagger:latest . -f ./test/Dockerfile.ci
       - run: test/e2e-kind.sh
       - run: test/e2e-istio.sh
       - run: test/e2e-istio-build.sh
@@ -90,9 +95,22 @@ workflows:
   build-and-test:
     jobs:
       - build-binary
-      - build-container:
+        filters:
+          branches:
+            ignore: gh-pages
+      - e2e-istio-testing:
           requires:
             - build-binary
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
+      - push-container:
+          requires:
+            - build-binary
+            - e2e-istio-testing
           filters:
             branches:
               ignore:
