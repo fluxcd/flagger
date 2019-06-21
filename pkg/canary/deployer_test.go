@@ -135,6 +135,18 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
+	hpa, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	hpaClone := hpa.DeepCopy()
+	hpaClone.Spec.MaxReplicas = 2
+
+	_, err = mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Update(hpaClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
 	err = mocks.deployer.Promote(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -158,6 +170,15 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 
 	if configPrimary.Data["color"] != config2.Data["color"] {
 		t.Errorf("Got primary ConfigMap color %s wanted %s", configPrimary.Data["color"], config2.Data["color"])
+	}
+
+	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get("podinfo-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if hpaPrimary.Spec.MaxReplicas != 2 {
+		t.Errorf("Got primary HPA MaxReplicas %v wanted %v", hpaPrimary.Spec.MaxReplicas, 2)
 	}
 }
 
