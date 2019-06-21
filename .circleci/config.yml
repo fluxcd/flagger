@@ -11,6 +11,9 @@ jobs:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run: |
+          go mod download
+          ls $(echo `go env GOPATH`'/pkg/mod/k8s.io/')
+      - run: |
           make test-fmt
           make test-codegen
           go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
