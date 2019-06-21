@@ -4,7 +4,7 @@ jobs:
   build-binary:
     docker:
       - image: circleci/golang:1.12
-    working_directory: /build
+    working_directory: ~/build
     steps:
       - checkout
       - restore_cache:
