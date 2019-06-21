@@ -90,8 +90,13 @@ workflows:
     jobs:
       - buid-binary
       - build-container
-          requires:
-            - build-binary
+          requires: build-binary
+          filters:
+            branches:
+              ignore:
+                - /gh-pages.*/
+                - /docs-.*/
+                - /release-.*/
 
 #      - e2e-istio-testing:
 #          filters:
