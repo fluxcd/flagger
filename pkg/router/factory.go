@@ -47,6 +47,8 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 	switch {
 	case provider == "none":
 		return &NopRouter{}
+	case provider == "kubernetes":
+		return &NopRouter{}
 	case provider == "nginx":
 		return &IngressRouter{
 			logger:     factory.logger,

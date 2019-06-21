@@ -90,10 +90,16 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
+	// override the global provider if one is specified in the canary spec
+	provider := c.meshProvider
+	if cd.Spec.Provider != "" {
+		provider = cd.Spec.Provider
+	}
+
 	// create primary deployment and hpa if needed
 	// skip primary check for Istio since the deployment will become ready after the ClusterIP are created
 	skipPrimaryCheck := false
-	if skipLivenessChecks || strings.Contains(c.meshProvider, "istio") {
+	if skipLivenessChecks || strings.Contains(provider, "istio") {
 		skipPrimaryCheck = true
 	}
 	label, ports, err := c.deployer.Initialize(cd, skipPrimaryCheck)
@@ -103,7 +109,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// init routers
-	meshRouter := c.routerFactory.MeshRouter(c.meshProvider)
+	meshRouter := c.routerFactory.MeshRouter(provider)
 
 	// create or update ClusterIP services
 	if err := c.routerFactory.KubernetesRouter(label, ports).Reconcile(cd); err != nil {

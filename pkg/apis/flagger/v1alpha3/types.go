@@ -45,6 +45,10 @@ type Canary struct {
 
 // CanarySpec is the spec for a Canary resource
 type CanarySpec struct {
+	// if specified overwrites the -mesh-provider flag for this particular canary
+	// +optional
+	Provider string `json:"provider,omitempty"`
+
 	// reference to target resource
 	TargetRef hpav1.CrossVersionObjectReference `json:"targetRef"`
 
