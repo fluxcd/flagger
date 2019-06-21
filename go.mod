@@ -13,7 +13,6 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/btree v1.0.0 // indirect
 	github.com/google/go-cmp v0.3.0
-	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/hashicorp/consul v1.4.4 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.5.3 // indirect
@@ -23,7 +22,6 @@ require (
 	github.com/hashicorp/serf v0.8.3 // indirect
 	github.com/hashicorp/vault v1.1.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible // indirect
 	github.com/linkerd/linkerd2 v0.0.0-20190221030352-5e47cb150a33 // indirect
 	github.com/lyft/protoc-gen-validate v0.0.14 // indirect
@@ -46,22 +44,26 @@ require (
 	golang.org/x/crypto v0.0.0-20190418161225-b43e412143f9 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.14
-	k8s.io/api v0.0.0-20190531132109-d3f5f50bdd94
+	k8s.io/api v0.0.0-20190620073856-dcce3486da33
 	k8s.io/apiextensions-apiserver v0.0.0-20190315093550-53c4693659ed // indirect
-	k8s.io/apimachinery v0.0.0-20190531131812-859a0ba5e71a
+	k8s.io/apimachinery v0.0.0-20190620073744-d16981aedf33
 	k8s.io/client-go v11.0.0+incompatible
-	k8s.io/code-generator v0.0.0-20190511023357-639c964206c2
+	k8s.io/code-generator v0.0.0-20190620073620-d55040311883
 	k8s.io/kube-openapi v0.0.0-20190418160015-6b3d3b2d5666 // indirect
 )
 
 replace (
+	github.com/google/uuid => github.com/google/uuid v1.0.0
+	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20181025213731-e84da0312774
+	golang.org/x/net => golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
 	golang.org/x/sync => golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190209173611-3b5209105503
 	golang.org/x/tools => golang.org/x/tools v0.0.0-20190313210603-aa82965741a9
-	k8s.io/api => k8s.io/api v0.0.0-20190531132109-d3f5f50bdd94
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190531131812-859a0ba5e71a
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20190531132438-d58e65e5f4b1
-	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190511023357-639c964206c2
+	k8s.io/api => k8s.io/api v0.0.0-20190620073856-dcce3486da33
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190620073744-d16981aedf33
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20190620074045-585a16d2e773
+	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190620073620-d55040311883
+	k8s.io/component-base => k8s.io/component-base v0.0.0-20190620074451-e5083e713460
 )
 
 replace k8s.io/klog => github.com/stefanprodan/klog v0.0.0-20190418165334-9cbb78b20423

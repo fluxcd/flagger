@@ -9,27 +9,38 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - go-mod-v2-{{ checksum "go.sum" }}
-      - run: |
-          go mod download
-      - run: |
-          make test-fmt
-          make test-codegen
-          go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
-          bash <(curl -s https://codecov.io/bash)
-      - run: |
-          CGO_ENABLED=0 GOOS=linux go build \
-              -ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=${CIRCLE_SHA1}" \
-              -a -installsuffix cgo -o bin/flagger ./cmd/flagger/*
-          ./bin/flagger -version
+            - go-mod-v3-{{ checksum "go.sum" }}
+      - run:
+          name: Run go fmt
+          command: make test-fmt
+      - run:
+          name: Build Flagger
+          command: |
+            CGO_ENABLED=0 GOOS=linux go build \
+                -ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=${CIRCLE_SHA1}" \
+                -a -installsuffix cgo -o bin/flagger ./cmd/flagger/*.go
+      - run:
+          name: Build Flagger load tester
+          command: |
+            CGO_ENABLED=0 GOOS=linux go build \
+                -a -installsuffix cgo -o bin/loadtester ./cmd/loadtester/*.go
+      - run:
+          name: Run unit tests
+          command: |
+            go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
+            bash <(curl -s https://codecov.io/bash)
+      - run:
+          name: Verify code gen
+          command: make test-codegen
       - save_cache:
-          key: go-mod-v2-{{ checksum "go.sum" }}
+          key: go-mod-v3-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod/"
       - persist_to_workspace:
           root: bin
           paths:
             - flagger
+            - loadtester
 
   push-container:
     docker:
@@ -42,6 +53,7 @@ jobs:
           at: /tmp/bin
       - run: test/container-build.sh
       - run: test/container-push.sh
+      - run: make loadtester-push
 
   push-binary:
     docker:
@@ -53,7 +65,7 @@ jobs:
           docker_layer_caching: true
       - restore_cache:
           keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
+            - go-mod-v3-{{ checksum "go.sum" }}
       - run: test/goreleaser.sh
 
   e2e-istio-testing:
@@ -113,7 +125,7 @@ jobs:
 
 workflows:
   version: 2
-  test-build-push:
+  build-test-push:
     jobs:
       - build-binary:
           filters:

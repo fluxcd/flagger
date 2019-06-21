@@ -101,13 +101,14 @@ reset-test:
 	kubectl apply -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/canaries
 
-loadtester-run:
-	GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
+loadtester-run: loadtester-build
 	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 	docker rm -f tester || true
 	docker run -dp 8888:9090 --name tester weaveworks/flagger-loadtester:$(LT_VERSION)
 
-loadtester-push:
+loadtester-build:
 	GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
+
+loadtester-push:
 	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 	docker push weaveworks/flagger-loadtester:$(LT_VERSION)
