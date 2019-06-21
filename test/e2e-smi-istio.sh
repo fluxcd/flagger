@@ -6,14 +6,6 @@ ISTIO_VER="1.1.9"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
-echo ">>> Installing Helm"
-curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
-
-echo '>>> Installing Tiller'
-kubectl --namespace kube-system create sa tiller
-kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-helm init --service-account tiller --upgrade --wait
-
 echo ">>> Installing Istio ${ISTIO_VER}"
 helm repo add istio.io https://storage.googleapis.com/istio-release/releases/${ISTIO_VER}/charts
 
