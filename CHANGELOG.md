@@ -4,17 +4,22 @@ All notable changes to this project are documented in this file.
 
 ## vNext (TBA) 
 
-Adds support for multiple ports services
+Adds support for running blue/green deployments without a service mesh or ingress controller
 
 #### Features
 
-- Implement port discovery [#207](https://github.com/weaveworks/flagger/pull/207)
+- Allow blue/green deployments without a service mesh provider [#211](https://github.com/weaveworks/flagger/pull/211)
+- Add the service mesh provider to the canary spec [#217](https://github.com/weaveworks/flagger/pull/217)
+- Allow multi-port services and implement port discovery [#207](https://github.com/weaveworks/flagger/pull/207)
 
 #### Improvements 
 
 - Add [FAQ page](https://docs.flagger.app/faq) to docs website
-- Use Istio v1.1.9 in [e2e testing]()
+- Switch to go modules in CI [#218](https://github.com/weaveworks/flagger/pull/218)
 
+#### Fixes
+
+- Update the primary HPA on canary promotion [#216](https://github.com/weaveworks/flagger/pull/216)
 
 ## 0.15.0 (2019-06-12) 
 
