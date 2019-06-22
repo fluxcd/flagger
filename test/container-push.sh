@@ -17,5 +17,7 @@ if [[ -z "$CIRCLE_TAG" ]]; then
 else
     echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin;
     docker tag test/flagger:latest weaveworks/flagger:${CIRCLE_TAG};
+    docker tag test/flagger-loadtester:latest weaveworks/flagger-loadtester:${CIRCLE_TAG};
     docker push weaveworks/flagger:${CIRCLE_TAG};
+    docker push weaveworks/flagger-loadtester:${CIRCLE_TAG};
 fi
