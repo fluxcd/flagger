@@ -22,7 +22,7 @@ sidecarInjectorWebhook:
 
 # galley configuration
 galley:
-  enabled: false
+  enabled: true
 
 # mixer configuration
 mixer:
@@ -59,4 +59,4 @@ global:
       limits:
         cpu: 1000m
         memory: 256Mi
-  useMCP: false
+  useMCP: true
