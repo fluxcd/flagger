@@ -96,7 +96,7 @@ jobs:
       - attach_workspace:
           at: /tmp/bin
       - run: test/container-build.sh
-      - run: test/e2e-kind.sh
+      - run: test/e2e-kind.sh 0.2.1
       - run: test/e2e-supergloo.sh
       - run: test/e2e-tests.sh canary
 
@@ -107,7 +107,7 @@ jobs:
       - attach_workspace:
           at: /tmp/bin
       - run: test/container-build.sh
-      - run: test/e2e-kind.sh
+      - run: test/e2e-kind.sh 0.2.1
       - run: test/e2e-gloo.sh
       - run: test/e2e-gloo-tests.sh
 

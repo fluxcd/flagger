@@ -125,7 +125,7 @@ done
 
 echo '✔ Canary promotion test passed'
 
-if [ "$1" = "canary" ]; then
+if [[ "$1" = "canary" ]]; then
   exit 0
 fi
 

@@ -41,21 +41,15 @@ spec:
         - name: PODINFO_UI_COLOR
           value: blue
         livenessProbe:
-          exec:
-            command:
-            - podcli
-            - check
-            - http
-            - localhost:9898/healthz
+          httpGet:
+            port: 9898
+            path: /healthz
           initialDelaySeconds: 5
           timeoutSeconds: 5
         readinessProbe:
-          exec:
-            command:
-            - podcli
-            - check
-            - http
-            - localhost:9898/readyz
+          httpGet:
+            port: 9898
+            path: /readyz
           initialDelaySeconds: 5
           timeoutSeconds: 5
         resources:
