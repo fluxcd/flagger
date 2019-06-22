@@ -3,7 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-KIND_VERSION=0.2.1
+KIND_VERSION=v0.3.0
 
 echo ">>> Installing kubectl"
 curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
