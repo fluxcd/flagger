@@ -5,16 +5,11 @@
 
 set -o errexit
 
-GLOO_VER="0.14.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo '>>> Creating test namespace'
 kubectl create namespace test
-
-echo ">>> Downloading Gloo CLI"
-curl -SsL https://github.com/solo-io/gloo/releases/download/v${GLOO_VER}/glooctl-linux-amd64 > ${REPO_ROOT}/bin/glooctl
-chmod +x ${REPO_ROOT}/bin/glooctl
 
 echo '>>> Installing load tester'
 kubectl -n test apply -f ${REPO_ROOT}/artifacts/loadtester/
@@ -22,7 +17,26 @@ kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Initialising canary'
 kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
-${REPO_ROOT}/bin/glooctl add route --path-prefix / --upstream-group-name podinfo --upstream-group-namespace test
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: podinfo
+  namespace: gloo-system
+spec:
+  virtualHost:
+    domains:
+      - '*'
+    name: podinfo
+    routes:
+      - matcher:
+          prefix: /
+        routeAction:
+          upstreamGroup:
+            name: podinfo
+            namespace: test
+EOF
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3
@@ -90,6 +104,7 @@ until ${ok}; do
         kubectl -n test describe deployment/podinfo
         kubectl -n test describe deployment/podinfo-primary
         kubectl -n gloo-system logs deployment/flagger
+        kubectl -n gloo-system get virtualservice podinfo -oyaml
         echo "No more retries left"
         exit 1
     fi
