@@ -1,6 +1,6 @@
 # flagger
 
-[![build](https://travis-ci.org/weaveworks/flagger.svg?branch=master)](https://travis-ci.org/weaveworks/flagger)
+[![build](https://img.shields.io/circleci/build/github/weaveworks/flagger/master.svg)](https://circleci.com/gh/weaveworks/flagger)
 [![report](https://goreportcard.com/badge/github.com/weaveworks/flagger)](https://goreportcard.com/report/github.com/weaveworks/flagger)
 [![codecov](https://codecov.io/gh/weaveworks/flagger/branch/master/graph/badge.svg)](https://codecov.io/gh/weaveworks/flagger)
 [![license](https://img.shields.io/github/license/weaveworks/flagger.svg)](https://github.com/weaveworks/flagger/blob/master/LICENSE)
