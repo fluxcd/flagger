@@ -18,11 +18,6 @@ kubectl create ns istio-system
 ./supergloo-cli install istio --name test --namespace supergloo-system --auto-inject=true --installation-namespace istio-system --mtls=false --prometheus=true --version ${ISTIO_VER}
 
 echo '>>> Waiting for Istio to be ready'
-until kubectl -n supergloo-system get mesh test
-do
-  sleep 2
-done
-
 retries=50
 count=0
 ok=false
