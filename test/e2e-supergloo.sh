@@ -2,7 +2,7 @@
 
 set -o errexit
 
-ISTIO_VER="1.1.3"
+ISTIO_VER="1.0.6"
 SUPERGLOO_VER="v0.3.23"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
