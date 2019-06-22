@@ -5,6 +5,7 @@
 
 set -o errexit
 
+GLOO_VER="0.14.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
@@ -12,8 +13,8 @@ echo '>>> Creating test namespace'
 kubectl create namespace test
 
 echo ">>> Downloading Gloo CLI"
-curl -SsL https://github.com/solo-io/gloo/releases/download/v0.13.29/glooctl-linux-amd64 > glooctl
-chmod +x glooctl
+curl -SsL https://github.com/solo-io/gloo/releases/download/v${GLOO_VER}/glooctl-linux-amd64 > ${REPO_ROOT}/bin/glooctl
+chmod +x ${REPO_ROOT}/bin/glooctl
 
 echo '>>> Installing load tester'
 kubectl -n test apply -f ${REPO_ROOT}/artifacts/loadtester/
@@ -21,7 +22,7 @@ kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Initialising canary'
 kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
-./glooctl add route --path-prefix / --upstream-group-name podinfo --upstream-group-namespace test
+${REPO_ROOT}/bin/glooctl add route --path-prefix / --upstream-group-name podinfo --upstream-group-namespace test
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3

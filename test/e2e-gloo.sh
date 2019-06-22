@@ -2,12 +2,13 @@
 
 set -o errexit
 
+GLOO_VER="0.14.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo '>>> Installing Gloo'
 helm repo add gloo https://storage.googleapis.com/solo-public-helm
-helm upgrade -i gloo gloo/gloo --version 0.13.29 \
+helm upgrade -i gloo gloo/gloo --version ${GLOO_VER} \
 --wait \
 --namespace gloo-system \
 --set gatewayProxies.gateway-proxy.service.type=NodePort
