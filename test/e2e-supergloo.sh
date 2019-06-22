@@ -2,12 +2,13 @@
 
 set -o errexit
 
-ISTIO_VER="1.0.6"
+ISTIO_VER="1.1.6"
+SUPERGLOO_VER="v0.3.23"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo ">>> Downloading Supergloo CLI"
-curl -SsL https://github.com/solo-io/supergloo/releases/download/v0.3.13/supergloo-cli-linux-amd64 > supergloo-cli
+curl -SsL https://github.com/solo-io/supergloo/releases/download/${SUPERGLOO_VER}/supergloo-cli-linux-amd64 > supergloo-cli
 chmod +x supergloo-cli
 
 echo ">>> Installing Supergloo"
