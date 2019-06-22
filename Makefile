@@ -2,35 +2,36 @@ TAG?=latest
 VERSION?=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"')
 VERSION_MINOR:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | rev | cut -d'.' -f2- | rev)
 PATCH:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"' | awk -F. '{print $$NF}')
-SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/logging pkg/version
+SOURCE_DIRS = cmd pkg/apis pkg/controller pkg/server pkg/canary pkg/metrics pkg/router pkg/notifier
 LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' | tr -d '"' | head -n1)
 TS=$(shell date +%Y-%m-%d_%H-%M-%S)
 
 run:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=istio -namespace=test \
+	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=istio -namespace=test \
 	-metrics-server=https://prometheus.istio.weavedx.com
 
 run-appmesh:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=appmesh \
+	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=appmesh \
 	-metrics-server=http://acfc235624ca911e9a94c02c4171f346-1585187926.us-west-2.elb.amazonaws.com:9090
 
 run-nginx:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=nginx -namespace=nginx \
+	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=nginx -namespace=nginx \
 	-metrics-server=http://prometheus-weave.istio.weavedx.com
 
 run-smi:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=smi:istio -namespace=smi \
+	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=smi:istio -namespace=smi \
 	-metrics-server=https://prometheus.istio.weavedx.com
 
 run-gloo:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=gloo -namespace=gloo \
+	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=gloo -namespace=gloo \
 	-metrics-server=https://prometheus.istio.weavedx.com
 
 run-nop:
-	go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=none -namespace=bg \
+	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=none -namespace=bg \
 	-metrics-server=https://prometheus.istio.weavedx.com
 
 build:
+	GIT_COMMIT=$$(git rev-list -1 HEAD) && GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build  -ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=$${GIT_COMMIT}" -a -installsuffix cgo -o ./bin/flagger ./cmd/flagger/*
 	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
 
 push:
@@ -100,10 +101,13 @@ reset-test:
 	kubectl apply -f ./artifacts/namespaces
 	kubectl apply -f ./artifacts/canaries
 
-loadtester-run:
+loadtester-run: loadtester-build
 	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 	docker rm -f tester || true
 	docker run -dp 8888:9090 --name tester weaveworks/flagger-loadtester:$(LT_VERSION)
+
+loadtester-build:
+	GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
 
 loadtester-push:
 	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester

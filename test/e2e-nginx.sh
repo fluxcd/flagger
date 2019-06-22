@@ -5,14 +5,6 @@ set -o errexit
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
-echo ">>> Installing Helm"
-curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
-
-echo '>>> Installing Tiller'
-kubectl --namespace kube-system create sa tiller
-kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-helm init --service-account tiller --upgrade --wait
-
 echo '>>> Installing NGINX Ingress'
 helm upgrade -i nginx-ingress stable/nginx-ingress \
 --wait \
@@ -26,4 +18,17 @@ helm upgrade -i nginx-ingress stable/nginx-ingress \
 kubectl -n ingress-nginx rollout status deployment/nginx-ingress-controller
 kubectl -n ingress-nginx get all
 
+echo '>>> Loading Flagger image'
+kind load docker-image test/flagger:latest
+
+echo '>>> Installing Flagger'
+helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
+--namespace ingress-nginx \
+--set prometheus.install=true \
+--set meshProvider=nginx
+
+kubectl -n ingress-nginx set image deployment/flagger flagger=test/flagger:latest
+
+kubectl -n ingress-nginx rollout status deployment/flagger
+kubectl -n ingress-nginx rollout status deployment/flagger-prometheus
 

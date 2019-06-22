@@ -13,5 +13,7 @@
 .DS_Store
 
 bin/
+_tmp/
+
 artifacts/gcloud/
 .idea

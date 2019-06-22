@@ -19,7 +19,10 @@ kubectl -n istio-system wait --for=condition=complete job/istio-init-crd-11
 echo '>>> Installing Istio control plane'
 helm upgrade -i istio istio.io/istio --wait --namespace istio-system -f ${REPO_ROOT}/test/e2e-istio-values.yaml
 
-kubectl -n istio-system get all
+echo '>>> Installing the SMI Istio adapter'
+kubectl apply -f ${REPO_ROOT}/artifacts/smi/istio-adapter.yaml
+
+kubectl -n istio-system rollout status deployment/smi-adapter-istio
 
 echo '>>> Load Flagger image in Kind'
 kind load docker-image test/flagger:latest
@@ -27,7 +30,8 @@ kind load docker-image test/flagger:latest
 echo '>>> Installing Flagger'
 helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
 --namespace istio-system \
---set meshProvider=istio
+--set meshProvider=smi:istio
 
 kubectl -n istio-system set image deployment/flagger flagger=test/flagger:latest
+
 kubectl -n istio-system rollout status deployment/flagger

@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -21,6 +23,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+	_ "k8s.io/code-generator/cmd/client-gen/generators"
 )
 
 var (
@@ -39,6 +42,7 @@ var (
 	namespace           string
 	meshProvider        string
 	selectorLabels      string
+	ver                 bool
 )
 
 func init() {
@@ -57,10 +61,16 @@ func init() {
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object.")
 	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, appmesh, supergloo, nginx or smi.")
 	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors.")
+	flag.BoolVar(&ver, "version", false, "Print version")
 }
 
 func main() {
 	flag.Parse()
+
+	if ver {
+		fmt.Println("Flagger version", version.VERSION, "revision ", version.REVISION)
+		os.Exit(0)
+	}
 
 	logger, err := logger.NewLoggerWithEncoding(logLevel, zapEncoding)
 	if err != nil {
