@@ -3,7 +3,7 @@
 set -o errexit
 
 ISTIO_VER="1.0.6"
-SUPERGLOO_VER="v0.3.23"
+SUPERGLOO_VER="v0.3.13"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
@@ -16,6 +16,25 @@ echo ">>> Installing Supergloo"
 echo ">>> Installing Istio ${ISTIO_VER}"
 kubectl create ns istio-system
 ./supergloo-cli install istio --name test --namespace supergloo-system --auto-inject=true --installation-namespace istio-system --mtls=false --prometheus=true --version ${ISTIO_VER}
+
+echo '>>> Waiting for Istio to be ready'
+until kubectl -n supergloo-system get mesh test
+do
+  sleep 2
+done
+
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n supergloo-system get mesh test && ok=true || ok=false
+    sleep 10
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        echo "No more retries left"
+        exit 1
+    fi
+done
 
 kubectl -n istio-system rollout status deployment/istio-pilot
 kubectl -n istio-system rollout status deployment/istio-policy
