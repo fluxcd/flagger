@@ -2,7 +2,7 @@
 
 image:
   repository: weaveworks/flagger
-  tag: 0.15.0
+  tag: 0.16.0
   pullPolicy: IfNotPresent
 
 metricsServer: "http://prometheus:9090"
