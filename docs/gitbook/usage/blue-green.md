@@ -98,6 +98,7 @@ spec:
   service:
     # container port
     port: 9898
+    portDiscovery: true
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 30s
