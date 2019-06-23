@@ -42,6 +42,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
   * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
   * [Gloo ingress controller canary deployments](https://docs.flagger.app/usage/gloo-progressive-delivery)
+  * [Blue/Green deployments](https://docs.flagger.app/usage/blue-green)
   * [Monitoring](https://docs.flagger.app/usage/monitoring)
   * [Alerting](https://docs.flagger.app/usage/alerting)
 * Tutorials
