@@ -8,14 +8,17 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo ">>> Downloading Supergloo CLI"
-curl -SsL https://github.com/solo-io/supergloo/releases/download/${SUPERGLOO_VER}/supergloo-cli-linux-amd64 > supergloo-cli
-chmod +x supergloo-cli
+curl -SsL https://github.com/solo-io/supergloo/releases/download/${SUPERGLOO_VER}/supergloo-cli-linux-amd64 > ${REPO_ROOT}/bin/supergloo-cli
+chmod +x ${REPO_ROOT}/bin/supergloo-cli
 
 echo ">>> Installing Supergloo"
-./supergloo-cli init
+${REPO_ROOT}/bin/supergloo-cli init
+
 echo ">>> Installing Istio ${ISTIO_VER}"
 kubectl create ns istio-system
-./supergloo-cli install istio --name test --namespace supergloo-system --auto-inject=true --installation-namespace istio-system --mtls=false --prometheus=true --version ${ISTIO_VER}
+${REPO_ROOT}/bin/supergloo-cli install istio --name test --version ${ISTIO_VER} \
+    --namespace supergloo-system --installation-namespace istio-system \
+    --auto-inject=true --mtls=false --prometheus=true
 
 echo '>>> Waiting for Istio to be ready'
 retries=50
