@@ -1,8 +1,19 @@
 # Frequently asked questions
 
-### A/B Testing
+### Deployment Strategies
 
-When should I use A/B testing instead of progressive traffic shifting?
+**Which deployment strategies are supported by Flagger?**
+
+Flagger can run automated application analysis, promotion and rollback for the following deployment strategies:
+* Canary (progressive traffic shifting)
+* A/B Testing (HTTP headers and cookies traffic routing)
+* Blue/Green (traffic switch)
+
+For canary deployments you'll need a Layer 7 traffic management solution like a service mesh (Istio, App Mesh) or an ingress controller (NGINX, Gloo).
+For A/B testing you'll need a Layer 7 traffic management solution that's capable of routing requests based on HTTP headers and cookies (Istio, NGINX).
+For Blue/Green deployments no service mesh or ingress controller is required.
+
+**When should I use A/B testing instead of progressive traffic shifting?**
 
 For frontend applications that require session affinity you should use HTTP headers or cookies match conditions
 to ensure a set of users will stay on the same version for the whole duration of the canary analysis.
@@ -53,9 +64,45 @@ curl -H 'X-Canary: insider' http://app.example.com
 curl -b 'canary=always' http://app.example.com
 ```
 
+**Can I use Flagger to manage applications that live outside of a service mesh?**
+
+For applications that are not deployed on a service mesh, Flagger can orchestrate Blue/Green style deployments 
+with Kubernetes L4 networking. 
+
+Blue/Green example:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+spec:
+  provider: kubernetes
+  canaryAnalysis:
+    interval: 30s
+    threshold: 2
+    iterations: 10       
+    metrics:
+      - name: request-success-rate
+        threshold: 99
+        interval: 1m
+      - name: request-duration
+        threshold: 500
+        interval: 30s
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/" 
+```
+
+The above configuration will run an analysis for five minutes. 
+Flagger starts the load test for the canary service (green version) and checks the Prometheus metrics every 30 seconds.
+If the analysis result is positive, Flagger will promote the canary (green version) to primary (blue version).
+
 ### Kubernetes services
 
-How is an application exposed inside the cluster?
+**How is an application exposed inside the cluster?**
 
 Assuming the app name is podinfo you can define a canary like:
 
@@ -139,7 +186,7 @@ canary analysis and can be used for conformance testing or load testing.
 
 ### Multiple ports
 
-My application listens on multiple ports, how can I expose them inside the cluster?
+**My application listens on multiple ports, how can I expose them inside the cluster?**
 
 If port discovery is enabled, Flagger scans the deployment spec and extracts the containers 
 ports excluding the port specified in the canary service and Envoy sidecar ports. 
@@ -188,7 +235,7 @@ will point to the port specified in `spec.service.port`.
 
 ### Label selectors
 
-What labels selectors are supported by Flagger?
+**What labels selectors are supported by Flagger?**
 
 The target deployment must have a single label selector in the format `app: <DEPLOYMENT-NAME>`:
 
@@ -210,7 +257,7 @@ spec:
 Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If you use a different 
 convention you can specify your label with the `-selector-labels` flag.
 
-Is pod affinity and anti affinity supported?
+**Is pod affinity and anti affinity supported?**
 
 For pod affinity to work you need to use a different label than the `app`, `name` or `app.kubernetes.io/name`.
 
@@ -245,7 +292,7 @@ spec:
 
 ### Istio Ingress Gateway
 
-How can I expose multiple canaries on the same external domain?
+**How can I expose multiple canaries on the same external domain?**
 
 Assuming you have two apps, one that servers the main website and one that serves the REST API.
 For each app you can define a canary object as:
@@ -294,7 +341,7 @@ Note that host merging only works if the canaries are bounded to a ingress gatew
 
 ### Istio Mutual TLS
 
-How can I enable mTLS for a canary?
+**How can I enable mTLS for a canary?**
 
 When deploying Istio with global mTLS enabled, you have to set the TLS mode to `ISTIO_MUTUAL`:
 
@@ -320,7 +367,7 @@ spec:
         mode: DISABLE
 ```
 
-If Flagger is outside of the mesh, how can it start the load test?
+**If Flagger is outside of the mesh, how can it start the load test?**
 
 In order for Flagger to be able to call the load tester service from outside the mesh, you need to disable mTLS on port 80:
 

@@ -2,9 +2,9 @@
 
 All notable changes to this project are documented in this file.
 
-## vNext (TBA) 
+## 0.16.0 (2019-06-23) 
 
-Adds support for running blue/green deployments without a service mesh or ingress controller
+Adds support for running [Blue/Green deployments](https://docs.flagger.app/usage/blue-green) without a service mesh or ingress controller
 
 #### Features
 
@@ -16,6 +16,7 @@ Adds support for running blue/green deployments without a service mesh or ingres
 
 - Add [FAQ page](https://docs.flagger.app/faq) to docs website
 - Switch to go modules in CI [#218](https://github.com/weaveworks/flagger/pull/218)
+- Update e2e testing to Kubernetes Kind 0.3.0 and Istio 1.2.0
 
 #### Fixes
 

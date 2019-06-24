@@ -17,6 +17,10 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  # service mesh provider (optional)
+  # can be: kubernetes, istio, appmesh, smi, nginx, gloo, supergloo
+  # use the kubernetes provider for Blue/Green style deployments
+  provider: istio
   # deployment reference
   targetRef:
     apiVersion: apps/v1
