@@ -154,6 +154,23 @@ workflows:
             - e2e-supergloo-testing
             - e2e-gloo-testing
             - e2e-nginx-testing
+
+  release:
+    jobs:
+      - build-binary:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              ignore: /^chart.*/
+      - push-container:
+          requires:
+            - build-binary
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              ignore: /^chart.*/
       - push-binary:
           requires:
             - push-container
@@ -161,4 +178,4 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /[0-9]+(\.[0-9]+)*(-.*)*/
+              ignore: /^chart.*/
