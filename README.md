@@ -37,12 +37,14 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
     * [Integration testing](https://docs.flagger.app/how-it-works#integration-testing)
+    * [FAQ](https://docs.flagger.app/faq)
 * Usage
     * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
     * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
     * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
     * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
     * [Gloo Canary Deployments](https://docs.flagger.app/usage/gloo-progressive-delivery.md)
+    * [Blue/Green deployments](https://docs.flagger.app/usage/blue-green)
     * [Monitoring](https://docs.flagger.app/usage/monitoring)
     * [Alerting](https://docs.flagger.app/usage/alerting)
 
