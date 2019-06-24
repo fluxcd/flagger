@@ -54,7 +54,7 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (la
 	}
 
 	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
-		if err := c.reconcilePrimaryHpa(cd); err != nil {
+		if err := c.reconcilePrimaryHpa(cd, true); err != nil {
 			return "", ports, fmt.Errorf("creating HorizontalPodAutoscaler %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}
 	}
@@ -123,7 +123,7 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 
 	// update HPA
 	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
-		if err := c.reconcilePrimaryHpa(cd); err != nil {
+		if err := c.reconcilePrimaryHpa(cd, false); err != nil {
 			return fmt.Errorf("updating HorizontalPodAutoscaler %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}
 	}
@@ -279,7 +279,7 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, *map[s
 	return label, ports, nil
 }
 
-func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary) error {
+func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	hpa, err := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
@@ -335,17 +335,20 @@ func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary) error {
 	}
 
 	// update HPA
-	if primaryHpa != nil {
-		hpaClone := primaryHpa.DeepCopy()
-		hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
-		hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
-		hpaClone.Spec.Metrics = hpaSpec.Metrics
+	if !init && primaryHpa != nil {
+		diff := cmp.Diff(hpaSpec.Metrics, primaryHpa.Spec.Metrics)
+		if diff != "" || hpaSpec.MinReplicas != primaryHpa.Spec.MinReplicas || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
+			hpaClone := primaryHpa.DeepCopy()
+			hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
+			hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
+			hpaClone.Spec.Metrics = hpaSpec.Metrics
 
-		_, upErr := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(hpaClone)
-		if upErr != nil {
-			return upErr
+			_, upErr := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(hpaClone)
+			if upErr != nil {
+				return upErr
+			}
+			c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s updated", primaryHpa.GetName(), cd.Namespace)
 		}
-		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s updated", primaryHpa.GetName(), cd.Namespace)
 	}
 
 	return nil
