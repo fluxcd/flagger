@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	semver "github.com/Masterminds/semver"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
@@ -113,6 +114,26 @@ func main() {
 	ver, err := kubeClient.Discovery().ServerVersion()
 	if err != nil {
 		logger.Fatalf("Error calling Kubernetes API: %v", err)
+	}
+
+	k8sVersionConstraint := "^1.11.0"
+
+	// We append -alpha.1 to the end of our version constraint so that prebuilds of later versions
+	// are considered valid for our purposes, as well as some managed solutions like EKS where they provide
+	// a version like `v1.12.6-eks-d69f1b`. It doesn't matter what the prelease value is here, just that it
+	// exists in our constraint.
+	semverConstraint, err := semver.NewConstraint(k8sVersionConstraint + "-alpha.1")
+	if err != nil {
+		logger.Fatalf("Error parsing kubernetes version constraint: %v", err)
+	}
+
+	k8sSemver, err := semver.NewVersion(ver.GitVersion)
+	if err != nil {
+		logger.Fatalf("Error parsing kubernetes version as a semantic version: %v", err)
+	}
+
+	if !semverConstraint.Check(k8sSemver) {
+		logger.Fatalf("Unsupported version of kubernetes detected.  Expected %s, got %v", k8sVersionConstraint, ver)
 	}
 
 	labels := strings.Split(selectorLabels, ",")
