@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.37.4 // indirect
+	github.com/Masterminds/semver v1.4.2
 	github.com/beorn7/perks v1.0.0 // indirect
 	github.com/bxcodec/faker v2.0.1+incompatible // indirect
 	github.com/envoyproxy/go-control-plane v0.8.0 // indirect
