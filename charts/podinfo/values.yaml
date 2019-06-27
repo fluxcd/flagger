@@ -17,6 +17,8 @@ hpa:
 
 canary:
   enabled: true
+  # Istio traffic policy tls can be DISABLE or ISTIO_MUTUAL
+  istioTLS: DISABLE
   istioIngress:
     enabled: false
     # Istio ingress gateway name

@@ -26,6 +26,9 @@ spec:
     hosts:
     - {{ .Values.canary.istioIngress.host }}
     {{- end }}
+    trafficPolicy:
+      tls:
+        mode: {{ .Values.canary.istioTLS }}
   canaryAnalysis:
     interval: {{ .Values.canary.analysis.interval }}
     threshold: {{ .Values.canary.analysis.threshold }}
