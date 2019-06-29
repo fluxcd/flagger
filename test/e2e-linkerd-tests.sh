@@ -81,7 +81,7 @@ ok=false
 until ${ok}; do
     kubectl -n test describe deployment/podinfo-primary | grep '1.4.1' && ok=true || ok=false
     sleep 10
-    kubectl -n istio-system logs deployment/flagger --tail 1
+    kubectl -n linkerd logs deployment/flagger --tail 1
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
         kubectl -n linkerd logs deployment/flagger
