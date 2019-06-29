@@ -8,7 +8,7 @@ import (
 )
 
 func TestLinkerdObserver_GetRequestSuccessRate(t *testing.T) {
-	expected := `sum(rate(response_total{namespace="default",deployment=~"podinfo",classification="failure",direction="inbound"}[1m]))/sum(rate(response_total{namespace="default",deployment=~"podinfo",direction="inbound"}[1m]))*100`
+	expected := `sum(rate(response_total{namespace="default",deployment=~"podinfo",classification!="failure",direction="inbound"}[1m]))/sum(rate(response_total{namespace="default",deployment=~"podinfo",direction="inbound"}[1m]))*100`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
