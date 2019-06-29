@@ -35,7 +35,7 @@ spec:
   canaryAnalysis:
     interval: 15s
     threshold: 15
-    maxWeight: 30
+    maxWeight: 50
     stepWeight: 10
     metrics:
     - name: request-success-rate
