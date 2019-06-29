@@ -22,14 +22,12 @@ sidecarInjectorWebhook:
 
 # galley configuration
 galley:
-  enabled: true
+  enabled: false
 
 # mixer configuration
 mixer:
   policy:
     enabled: false
-    replicaCount: 1
-    autoscaleEnabled: false
   telemetry:
     enabled: true
     replicaCount: 1
@@ -59,4 +57,4 @@ global:
       limits:
         cpu: 1000m
         memory: 256Mi
-  useMCP: true
+  useMCP: false
