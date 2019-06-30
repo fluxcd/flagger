@@ -44,6 +44,10 @@ func (factory Factory) Observer() Interface {
 		return &LinkerdObserver{
 			client: factory.Client,
 		}
+	case factory.MeshProvider == "linkerd":
+		return &LinkerdObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,
