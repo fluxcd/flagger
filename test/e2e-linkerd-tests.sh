@@ -91,3 +91,59 @@ until ${ok}; do
 done
 
 echo '✔ Canary promotion test passed'
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  progressDeadlineSeconds: 60
+  service:
+    port: 9898
+  canaryAnalysis:
+    interval: 15s
+    threshold: 3
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+    - name: request-success-rate
+      threshold: 99
+      interval: 1m
+    - name: request-duration
+      threshold: 500
+      interval: 30s
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 10m -q 10 -c 2 http://podinfo.test:9898/status/500"
+EOF
+
+echo '>>> Triggering canary deployment'
+kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.2
+
+echo '>>> Waiting for canary rollback'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test get canary/podinfo | grep 'Failed' && ok=true || ok=false
+    sleep 10
+    kubectl -n linkerd logs deployment/flagger --tail 1
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n linkerd logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
+echo '✔ Canary rollback test passed'
