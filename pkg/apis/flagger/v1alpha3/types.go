@@ -208,6 +208,10 @@ func (c *Canary) GetAnalysisInterval() time.Duration {
 		return AnalysisInterval
 	}
 
+	if interval < 10*time.Second {
+		return time.Second * 10
+	}
+
 	return interval
 }
 

@@ -22,25 +22,29 @@ func NewFactory(metricsServer string, meshProvider string, timeout time.Duration
 	}, nil
 }
 
-func (factory Factory) Observer() Interface {
+func (factory Factory) Observer(provider string) Interface {
 	switch {
-	case factory.MeshProvider == "none":
+	case provider == "none":
 		return &HttpObserver{
 			client: factory.Client,
 		}
-	case factory.MeshProvider == "appmesh":
+	case provider == "appmesh":
 		return &EnvoyObserver{
 			client: factory.Client,
 		}
-	case factory.MeshProvider == "nginx":
+	case provider == "nginx":
 		return &NginxObserver{
 			client: factory.Client,
 		}
-	case strings.HasPrefix(factory.MeshProvider, "gloo"):
+	case strings.HasPrefix(provider, "gloo"):
 		return &GlooObserver{
 			client: factory.Client,
 		}
-	case factory.MeshProvider == "smi:linkerd":
+	case provider == "smi:linkerd":
+		return &LinkerdObserver{
+			client: factory.Client,
+		}
+	case provider == "linkerd":
 		return &LinkerdObserver{
 			client: factory.Client,
 		}

@@ -70,6 +70,14 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			smiClient:     factory.meshClient,
 			targetMesh:    mesh,
 		}
+	case provider == "linkerd":
+		return &SmiRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    "linkerd",
+		}
 	case strings.HasPrefix(provider, "supergloo"):
 		supergloo, err := NewSuperglooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
 		if err != nil {

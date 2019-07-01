@@ -122,6 +122,17 @@ jobs:
       - run: test/e2e-nginx.sh
       - run: test/e2e-nginx-tests.sh
 
+  e2e-linkerd-testing:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: test/container-build.sh
+      - run: test/e2e-kind.sh
+      - run: test/e2e-linkerd.sh
+      - run: test/e2e-linkerd-tests.sh
+
 workflows:
   version: 2
   build-test-push:
@@ -146,6 +157,9 @@ workflows:
       - e2e-nginx-testing:
           requires:
             - build-binary
+      - e2e-linkerd-testing:
+          requires:
+            - build-binary
       - push-container:
           requires:
             - build-binary
@@ -154,6 +168,7 @@ workflows:
             - e2e-supergloo-testing
             - e2e-gloo-testing
             - e2e-nginx-testing
+            - e2e-linkerd-testing
 
   release:
     jobs:

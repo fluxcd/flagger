@@ -11,7 +11,7 @@ var linkerdQueries = map[string]string{
 			response_total{
 				namespace="{{ .Namespace }}",
 				deployment=~"{{ .Name }}",
-				classification="failure",
+				classification!="failure",
 				direction="inbound"
 			}[{{ .Interval }}]
 		)

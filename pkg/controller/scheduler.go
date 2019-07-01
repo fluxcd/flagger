@@ -567,8 +567,19 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 		}
 	}
 
+	// override the global provider if one is specified in the canary spec
+	metricsProvider := c.meshProvider
+	if r.Spec.Provider != "" {
+		metricsProvider = r.Spec.Provider
+
+		// set the metrics provider to Linkerd Prometheus when using NGINX as Linkerd Ingress
+		if r.Spec.Provider == "nginx" && strings.Contains(c.meshProvider, "linkerd") {
+			metricsProvider = "linkerd"
+		}
+	}
+
 	// create observer based on the mesh provider
-	observer := c.observerFactory.Observer()
+	observer := c.observerFactory.Observer(metricsProvider)
 
 	// run metrics checks
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
