@@ -339,3 +339,148 @@ Canary failed! Scaling down podinfo.test
 ```
 
 If you have Slack configured, Flagger will send a notification with the reason why the canary failed.
+
+### Linkerd Ingress
+
+There are two ingress controllers that are compatible with both Flagger and Linkerd: NGINX and Gloo.
+
+Install NGINX:
+
+```bash
+helm upgrade -i nginx-ingress stable/nginx-ingress \
+--namespace ingress-nginx
+```
+
+Create an ingress definition for podinfo that rewrites the incoming header to the internal service name (required by Linkerd):
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: podinfo
+  namespace: test
+  labels:
+    app: podinfo
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header l5d-dst-override $service_name.$namespace.svc.cluster.local:9898;
+      proxy_hide_header l5d-remote-ip;
+      proxy_hide_header l5d-server-id;
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - backend:
+              serviceName: podinfo
+              servicePort: 9898
+```
+
+When using an ingress controller, the Linkerd traffic split does not apply to incoming traffic since NGINX in running outside of 
+the mesh. In order to run a canary analysis for a frontend app, Flagger creates a shadow ingress and sets the NGINX specific annotations.
+
+### A/B Testing 
+
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
+In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
+This is particularly useful for frontend applications that require session affinity.
+
+![Flagger Linkerd Ingress](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-nginx-linkerd.png)
+
+Edit podinfo canary analysis, set the provider to `nginx`, add the ingress reference, remove the max/step weight and add the match conditions and iterations:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  # ingress reference
+  provider: nginx
+  ingressRef:
+    apiVersion: extensions/v1beta1
+    kind: Ingress
+    name: podinfo
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  service:
+    # container port
+    port: 9898
+  canaryAnalysis:
+    interval: 1m
+    threshold: 10
+    iterations: 10
+    match:
+      # curl -H 'X-Canary: always' http://app.example.com
+      - headers:
+          x-canary:
+            exact: "always"
+      # curl -b 'canary=always' http://app.example.com
+      - headers:
+          cookie:
+            exact: "canary"
+    # Linkerd Prometheus checks
+    metrics:
+    - name: request-success-rate
+      threshold: 99
+      interval: 1m
+    - name: request-duration
+      threshold: 500
+      interval: 30s
+    webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
+      - name: load-test
+        type: rollout
+        url: http://flagger-loadtester.test/
+        metadata:
+          cmd: "hey -z 2m -q 10 -c 2 -H 'Cookie: canary=always' http://app.example.com"
+```
+
+The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or 
+those that call the service using the `X-Canary: always` header. 
+
+**Note** that the load test now targets the external address and uses the canary cookie. 
+
+Trigger a canary deployment by updating the container image:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=quay.io/stefanprodan/podinfo:1.5.0
+```
+
+Flagger detects that the deployment revision changed and starts the A/B testing:
+
+```text
+kubectl -n test describe canary/podinfo
+
+Events:
+ Starting canary deployment for podinfo.test
+ Pre-rollout check acceptance-test passed
+ Advance podinfo.test canary iteration 1/10
+ Advance podinfo.test canary iteration 2/10
+ Advance podinfo.test canary iteration 3/10
+ Advance podinfo.test canary iteration 4/10
+ Advance podinfo.test canary iteration 5/10
+ Advance podinfo.test canary iteration 6/10
+ Advance podinfo.test canary iteration 7/10
+ Advance podinfo.test canary iteration 8/10
+ Advance podinfo.test canary iteration 9/10
+ Advance podinfo.test canary iteration 10/10
+ Copying podinfo.test template spec to podinfo-primary.test
+ Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
+ Promotion completed! Scaling down podinfo.test
+```
