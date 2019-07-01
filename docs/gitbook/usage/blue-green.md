@@ -184,6 +184,7 @@ Events:
 
 New revision detected podinfo.test
 Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
+Pre-rollout check acceptance-test passed
 Advance podinfo.test canary iteration 1/10
 Advance podinfo.test canary iteration 2/10
 Advance podinfo.test canary iteration 3/10
