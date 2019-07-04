@@ -1,0 +1,15 @@
+namespace: flagger-system
+commonLabels:
+  app: flagger-prometheus
+resources:
+  - account.yaml
+  - rbac.yaml
+  - service.yaml
+  - deployment.yaml
+configMapGenerator:
+  - name: flagger-prometheus
+    files:
+      - prometheus.yml
+images:
+  - name: prom/prometheus
+    newTag: v2.10.0
