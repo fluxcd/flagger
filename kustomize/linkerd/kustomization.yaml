@@ -1,0 +1,5 @@
+namespace: linkerd
+bases:
+  - ../base/flagger/
+patchesStrategicMerge:
+  - patch.yaml
