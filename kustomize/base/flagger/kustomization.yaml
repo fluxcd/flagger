@@ -1,0 +1,11 @@
+namespace: flagger-system
+commonLabels:
+  app: flagger
+resources:
+  - account.yaml
+  - rbac.yaml
+  - crd.yaml
+  - deployment.yaml
+images:
+  - name: weaveworks/flagger
+    newTag: 0.16.0

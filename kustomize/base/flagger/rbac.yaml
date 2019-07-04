@@ -1,0 +1,90 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: flagger
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+      - configmaps
+      - secrets
+      - services
+    verbs: ["*"]
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs: ["*"]
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["*"]
+  - apiGroups:
+      - "extensions"
+    resources:
+      - ingresses
+      - ingresses/status
+    verbs: ["*"]
+  - apiGroups:
+      - flagger.app
+    resources:
+      - canaries
+      - canaries/status
+    verbs: ["*"]
+  - apiGroups:
+      - networking.istio.io
+    resources:
+      - virtualservices
+      - virtualservices/status
+      - destinationrules
+      - destinationrules/status
+    verbs: ["*"]
+  - apiGroups:
+      - appmesh.k8s.aws
+    resources:
+      - meshes
+      - meshes/status
+      - virtualnodes
+      - virtualnodes/status
+      - virtualservices
+      - virtualservices/status
+    verbs: ["*"]
+  - apiGroups:
+      - split.smi-spec.io
+    resources:
+      - trafficsplits
+    verbs: ["*"]
+  - apiGroups:
+      - gloo.solo.io
+    resources:
+      - settings
+      - upstreams
+      - upstreamgroups
+      - proxies
+      - virtualservices
+    verbs: ["*"]
+  - apiGroups:
+      - gateway.solo.io
+    resources:
+      - virtualservices
+      - gateways
+    verbs: ["*"]
+  - nonResourceURLs:
+      - /version
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: flagger
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flagger
+subjects:
+- kind: ServiceAccount
+  name: flagger
+  namespace: flagger-system
