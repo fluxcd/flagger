@@ -1,5 +1,7 @@
 # Flagger Kustomize installer
 
+As an alternative to Helm, Flagger can be installed with Kustomize.
+
 ## Service mesh specific installers
 
 Install Flagger for Istio:
