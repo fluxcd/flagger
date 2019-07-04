@@ -1,6 +1,6 @@
 # Flagger install on Kubernetes
 
-This guide walks you through setting up Flagger on a Kubernetes cluster.
+This guide walks you through setting up Flagger on a Kubernetes cluster with Helm or Kustomize.
 
 ### Prerequisites
 
@@ -9,18 +9,7 @@ Flagger requires a Kubernetes cluster **v1.11** or newer with the following admi
 * MutatingAdmissionWebhook
 * ValidatingAdmissionWebhook 
 
-Flagger depends on [Istio](https://istio.io/docs/setup/kubernetes/quick-start/) **v1.0.3** or newer 
-with traffic management, telemetry and Prometheus enabled. 
-
-A minimal Istio installation should contain the following services:
-
-* istio-pilot
-* istio-ingressgateway
-* istio-sidecar-injector
-* istio-telemetry
-* prometheus
-
-### Install Flagger
+### Install Flagger with Helm
 
 Add Flagger Helm repository:
 
@@ -28,15 +17,25 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
-Deploy Flagger in the _**istio-system**_ namespace:
+Deploy Flagger for Istio:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
---set metricsServer=http://prometheus.istio-system:9090
+--set meshProvider=istio \
+--set metricsServer=http://prometheus:9090
 ```
 
-You can install Flagger in any namespace as long as it can talk to the Istio Prometheus service on port 9090.
+Deploy Flagger for Linkerd:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=linkerd \
+--set meshProvider=linkerd \
+--set metricsServer=http://linkerd-prometheus:9090
+```
+
+You can install Flagger in any namespace as long as it can talk to the Prometheus service on port 9090.
 
 Enable **Slack** notifications:
 
@@ -81,7 +80,7 @@ If you want to remove all the objects created by Flagger you have delete the Can
 kubectl delete crd canaries.flagger.app
 ```
 
-### Install Grafana
+### Install Grafana with Helm
 
 Flagger comes with a Grafana dashboard made for monitoring the canary analysis.
 
@@ -115,31 +114,91 @@ You can access Grafana using port forwarding:
 kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 ```
 
-###  Install Load Tester
+### Install Flagger with Kustomize
 
-Flagger comes with an optional load testing service that generates traffic 
-during canary analysis when configured as a webhook.
+As an alternative to Helm, Flagger can be installed with Kustomize.
 
-Deploy the load test runner with Helm:
+**Service mesh specific installers**
 
-```bash
-helm upgrade -i flagger-loadtester flagger/loadtester \
---namespace=test \
---set cmd.timeout=1h
-```
-
-Deploy with kubectl:
+Install Flagger for Istio:
 
 ```bash
-helm fetch --untar --untardir . flagger/loadtester &&
-helm template loadtester \
---name flagger-loadtester \
---namespace=test
-> $HOME/flagger-loadtester.yaml
-
-# apply
-kubectl apply -f $HOME/flagger-loadtester.yaml
+kubectl apply -k github.com/weaveworks/flagger/kustomize/istio
 ```
 
-> **Note** that the load tester should be deployed in a namespace with Istio sidecar injection enabled.
+This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to `http://prometheus.istio-system:9090`.
 
+Install Flagger for Linkerd:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger/kustomize/linkerd
+```
+
+This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to `http://linkerd-prometheus.linkerd:9090`.
+
+**Generic installer**
+
+Install Flagger and Prometheus:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger/kustomize/kubernetes
+```
+
+This deploys Flagger and Prometheus in the `flagger-system` namespace,
+sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` and the mesh provider to `kubernetes`.
+
+To target a specific provider you need to specify it in the canary custom resource:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: app
+  namespace: test
+spec:
+  # can be: kubernetes, istio, appmesh, linkerd, smi, nginx, gloo, supergloo
+  # use the kubernetes provider for Blue/Green style deployments
+  provider: nginx
+```
+
+**Customized installer**
+
+Create a kustomization file using flagger as base:
+
+```bash
+cat > kustomization.yaml <<EOF
+namespace: istio-system
+bases:
+  - github.com/weaveworks/flagger/kustomize/base/flagger
+patchesStrategicMerge:
+  - patch.yaml
+EOF
+```
+
+Create a patch and enable Slack notifications by setting the slack channel and hook URL:
+
+```bash
+cat > patch.yaml <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger
+spec:
+  template:
+    spec:
+      containers:
+        - name: flagger
+          args:
+            - -mesh-provider=istio
+            - -metrics-server=http://prometheus.istio-system:9090
+            - -slack-user=flagger
+            - -slack-channel=alerts
+            - -slack-url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+EOF
+```
+
+Install Flagger with Slack:
+
+```bash
+kubectl apply -k .
+```
