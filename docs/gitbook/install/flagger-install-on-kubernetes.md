@@ -147,6 +147,9 @@ kubectl apply -k github.com/weaveworks/flagger/kustomize/kubernetes
 This deploys Flagger and Prometheus in the `flagger-system` namespace,
 sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` and the mesh provider to `kubernetes`.
 
+The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that
+have the `prometheus.io/scrape: "true"` annotation.
+
 To target a specific provider you need to specify it in the canary custom resource:
 
 ```yaml
