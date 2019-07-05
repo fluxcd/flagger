@@ -47,7 +47,7 @@ rules:
       - {{ template "flagger.fullname" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   name: {{ template "flagger.fullname" . }}-psp
   labels:
