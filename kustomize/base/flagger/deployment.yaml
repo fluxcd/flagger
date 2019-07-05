@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger
+  namespace: flagger-system
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: flagger
+  template:
+    metadata:
+      labels:
+        app: flagger
+      annotations:
+        prometheus.io/scrape: "true"
+    spec:
+      serviceAccountName: flagger
+      containers:
+      - name: flagger
+        image: weaveworks/flagger:0.16.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+        livenessProbe:
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=2
+            - --spider
+            - http://localhost:8080/healthz
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=2
+            - --spider
+            - http://localhost:8080/healthz
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsUser: 10001

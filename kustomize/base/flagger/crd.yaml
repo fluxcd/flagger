@@ -1,0 +1,172 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: canaries.flagger.app
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  group: flagger.app
+  version: v1alpha3
+  versions:
+    - name: v1alpha3
+      served: true
+      storage: true
+    - name: v1alpha2
+      served: true
+      storage: false
+    - name: v1alpha1
+      served: true
+      storage: false
+  names:
+    plural: canaries
+    singular: canary
+    kind: Canary
+    categories:
+      - all
+  scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: Status
+      type: string
+      JSONPath: .status.phase
+    - name: Weight
+      type: string
+      JSONPath: .status.canaryWeight
+    - name: LastTransitionTime
+      type: string
+      JSONPath: .status.lastTransitionTime
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          required:
+            - targetRef
+            - service
+            - canaryAnalysis
+          properties:
+            provider:
+              type: string
+            progressDeadlineSeconds:
+              type: number
+            targetRef:
+              type: object
+              required: ['apiVersion', 'kind', 'name']
+              properties:
+                apiVersion:
+                  type: string
+                kind:
+                  type: string
+                name:
+                  type: string
+            autoscalerRef:
+              anyOf:
+                - type: string
+                - type: object
+              required: ['apiVersion', 'kind', 'name']
+              properties:
+                apiVersion:
+                  type: string
+                kind:
+                  type: string
+                name:
+                  type: string
+            ingressRef:
+              anyOf:
+                - type: string
+                - type: object
+              required: ['apiVersion', 'kind', 'name']
+              properties:
+                apiVersion:
+                  type: string
+                kind:
+                  type: string
+                name:
+                  type: string
+            service:
+              type: object
+              required: ['port']
+              properties:
+                port:
+                  type: number
+                portName:
+                  type: string
+                portDiscovery:
+                  type: boolean
+                meshName:
+                  type: string
+                timeout:
+                  type: string
+            skipAnalysis:
+              type: boolean
+            canaryAnalysis:
+              properties:
+                interval:
+                  type: string
+                  pattern: "^[0-9]+(m|s)"
+                iterations:
+                  type: number
+                threshold:
+                  type: number
+                maxWeight:
+                  type: number
+                stepWeight:
+                  type: number
+                metrics:
+                  type: array
+                  properties:
+                    items:
+                      type: object
+                      required: ['name', 'threshold']
+                      properties:
+                        name:
+                          type: string
+                        interval:
+                          type: string
+                          pattern: "^[0-9]+(m|s)"
+                        threshold:
+                          type: number
+                        query:
+                          type: string
+                webhooks:
+                  type: array
+                  properties:
+                    items:
+                      type: object
+                      required: ['name', 'url', 'timeout']
+                      properties:
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                            - ""
+                            - pre-rollout
+                            - rollout
+                            - post-rollout
+                        url:
+                          type: string
+                          format: url
+                        timeout:
+                          type: string
+                          pattern: "^[0-9]+(m|s)"
+        status:
+          properties:
+            phase:
+              type: string
+              enum:
+                - ""
+                - Initialized
+                - Progressing
+                - Succeeded
+                - Failed
+            canaryWeight:
+              type: number
+            failedChecks:
+              type: number
+            iterations:
+              type: number
+            lastAppliedSpec:
+              type: string
+            lastTransitionTime:
+              type: string

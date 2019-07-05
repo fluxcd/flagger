@@ -71,7 +71,8 @@ version-set:
 	sed -i '' "s/tag: $$current/tag: $$next/g" charts/flagger/values.yaml && \
 	sed -i '' "s/appVersion: $$current/appVersion: $$next/g" charts/flagger/Chart.yaml && \
 	sed -i '' "s/version: $$current/version: $$next/g" charts/flagger/Chart.yaml && \
-	echo "Version $$next set in code, deployment and charts"
+	sed -i '' "s/newTag: $$current/newTag: $$next/g" kustomize/base/flagger/kustomization.yaml && \
+	echo "Version $$next set in code, deployment, chart and kustomize"
 
 version-up:
 	@next="$(VERSION_MINOR).$$(($(PATCH) + 1))" && \

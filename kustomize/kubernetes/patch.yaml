@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger
+spec:
+  template:
+    spec:
+      containers:
+        - name: flagger
+          args:
+            - -mesh-provider=kubernetes
+            - -metrics-server=http://flagger-prometheus:9090
+            - -slack-user=flagger
+            - -slack-channel=
+            - -slack-url=
