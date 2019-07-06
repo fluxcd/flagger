@@ -67,7 +67,7 @@ func NewSlack(hookURL string, username string, channel string) (*Slack, error) {
 }
 
 // Post Slack message
-func (s *Slack) Post(workload string, namespace string, message string, fields []SlackField, warn bool) error {
+func (s *Slack) Post(workload string, namespace string, message string, fields []Field, warn bool) error {
 	payload := SlackPayload{
 		Channel:  s.Channel,
 		Username: s.Username,
@@ -78,12 +78,17 @@ func (s *Slack) Post(workload string, namespace string, message string, fields [
 		color = "danger"
 	}
 
+	sfields := make([]SlackField, len(fields))
+	for _, f := range fields {
+		sfields = append(sfields, SlackField{f.Name, f.Value, false})
+	}
+
 	a := SlackAttachment{
 		Color:      color,
 		AuthorName: fmt.Sprintf("%s.%s", workload, namespace),
 		Text:       message,
 		MrkdwnIn:   []string{"text"},
-		Fields:     fields,
+		Fields:     sfields,
 	}
 
 	payload.Attachments = []SlackAttachment{a}

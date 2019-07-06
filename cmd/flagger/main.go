@@ -34,6 +34,7 @@ var (
 	controlLoopInterval time.Duration
 	logLevel            string
 	port                string
+	msteamsURL          string
 	slackURL            string
 	slackUser           string
 	slackChannel        string
@@ -53,6 +54,7 @@ func init() {
 	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "Kubernetes API sync interval.")
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
+	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
@@ -158,13 +160,25 @@ func main() {
 		logger.Errorf("Metrics server %s unreachable %v", metricsServer, err)
 	}
 
-	var slack *notifier.Slack
+	var notifierClient notifier.Interface
 	if slackURL != "" {
-		slack, err = notifier.NewSlack(slackURL, slackUser, slackChannel)
+		f := notifier.NewFactory(slackURL, slackUser, slackChannel)
+		var err error
+		notifierClient, err = f.Notifier()
 		if err != nil {
 			logger.Errorf("Notifier %v", err)
 		} else {
-			logger.Infof("Slack notifications enabled for channel %s", slack.Channel)
+			logger.Infof("Slack notifications enabled for channel %s", slackChannel)
+		}
+	}
+	if msteamsURL != "" {
+		f := notifier.NewFactory(slackURL, slackUser, slackChannel)
+		var err error
+		notifierClient, err = f.Notifier()
+		if err != nil {
+			logger.Errorf("Notifier %v", err)
+		} else {
+			logger.Infof("Slack notifications enabled for channel %s", slackChannel)
 		}
 	}
 
@@ -179,9 +193,8 @@ func main() {
 		flaggerClient,
 		canaryInformer,
 		controlLoopInterval,
-		metricsServer,
 		logger,
-		slack,
+		notifierClient,
 		routerFactory,
 		observerFactory,
 		meshProvider,

@@ -46,7 +46,7 @@ type Controller struct {
 	jobs            map[string]CanaryJob
 	deployer        canary.Deployer
 	recorder        metrics.Recorder
-	notifier        *notifier.Slack
+	notifier        notifier.Interface
 	routerFactory   *router.Factory
 	observerFactory *metrics.Factory
 	meshProvider    string
@@ -58,9 +58,8 @@ func NewController(
 	flaggerClient clientset.Interface,
 	flaggerInformer flaggerinformers.CanaryInformer,
 	flaggerWindow time.Duration,
-	metricServer string,
 	logger *zap.SugaredLogger,
-	notifier *notifier.Slack,
+	notifier notifier.Interface,
 	routerFactory *router.Factory,
 	observerFactory *metrics.Factory,
 	meshProvider string,
@@ -271,26 +270,26 @@ func (c *Controller) sendNotification(cd *flaggerv1.Canary, message string, meta
 		return
 	}
 
-	var fields []notifier.SlackField
+	var fields []notifier.Field
 
 	if metadata {
 		fields = append(fields,
-			notifier.SlackField{
-				Title: "Target",
+			notifier.Field{
+				Name:  "Target",
 				Value: fmt.Sprintf("%s/%s.%s", cd.Spec.TargetRef.Kind, cd.Spec.TargetRef.Name, cd.Namespace),
 			},
-			notifier.SlackField{
-				Title: "Traffic routing",
+			notifier.Field{
+				Name: "Traffic routing",
 				Value: fmt.Sprintf("Weight step: %v max: %v",
 					cd.Spec.CanaryAnalysis.StepWeight,
 					cd.Spec.CanaryAnalysis.MaxWeight),
 			},
-			notifier.SlackField{
-				Title: "Failed checks threshold",
+			notifier.Field{
+				Name:  "Failed checks threshold",
 				Value: fmt.Sprintf("%v", cd.Spec.CanaryAnalysis.Threshold),
 			},
-			notifier.SlackField{
-				Title: "Progress deadline",
+			notifier.Field{
+				Name:  "Progress deadline",
 				Value: fmt.Sprintf("%vs", cd.GetProgressDeadlineSeconds()),
 			},
 		)
