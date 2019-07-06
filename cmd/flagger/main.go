@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -8,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	semver "github.com/Masterminds/semver"
+	"github.com/Masterminds/semver"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
@@ -20,31 +21,37 @@ import (
 	"github.com/weaveworks/flagger/pkg/signals"
 	"github.com/weaveworks/flagger/pkg/version"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	"k8s.io/client-go/transport"
 	_ "k8s.io/code-generator/cmd/client-gen/generators"
 )
 
 var (
-	masterURL           string
-	kubeconfig          string
-	metricsServer       string
-	controlLoopInterval time.Duration
-	logLevel            string
-	port                string
-	msteamsURL          string
-	slackURL            string
-	slackUser           string
-	slackChannel        string
-	threadiness         int
-	zapReplaceGlobals   bool
-	zapEncoding         string
-	namespace           string
-	meshProvider        string
-	selectorLabels      string
-	ver                 bool
+	masterURL               string
+	kubeconfig              string
+	metricsServer           string
+	controlLoopInterval     time.Duration
+	logLevel                string
+	port                    string
+	msteamsURL              string
+	slackURL                string
+	slackUser               string
+	slackChannel            string
+	threadiness             int
+	zapReplaceGlobals       bool
+	zapEncoding             string
+	namespace               string
+	meshProvider            string
+	selectorLabels          string
+	enableLeaderElection    bool
+	leaderElectionNamespace string
+	ver                     bool
 )
 
 func init() {
@@ -62,8 +69,10 @@ func init() {
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object.")
-	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, appmesh, supergloo, nginx or smi.")
+	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, supergloo, nginx or smi.")
 	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election.")
+	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "kube-system", "Namespace used to create the leader election config map.")
 	flag.BoolVar(&ver, "version", false, "Print version")
 }
 
@@ -194,14 +203,77 @@ func main() {
 		}
 	}
 
-	// start controller
-	go func(ctrl *controller.Controller) {
-		if err := ctrl.Run(threadiness, stopCh); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cfg.Wrap(transport.ContextCanceller(ctx, fmt.Errorf("the leader is shutting down")))
+
+	go func() {
+		<-stopCh
+		cancel()
+	}()
+
+	runController := func() {
+		if err := c.Run(threadiness, stopCh); err != nil {
 			logger.Fatalf("Error running controller: %v", err)
 		}
-	}(c)
+	}
 
-	<-stopCh
+	if enableLeaderElection {
+		ns := leaderElectionNamespace
+		if namespace != "" {
+			ns = namespace
+		}
+		startLeaderElection(ctx, runController, ns, kubeClient, logger)
+	} else {
+		runController()
+	}
+}
+
+func startLeaderElection(ctx context.Context, run func(), ns string, kubeClient kubernetes.Interface, logger *zap.SugaredLogger) {
+	configMapName := "flagger-leader-election"
+	id, err := os.Hostname()
+	if err != nil {
+		logger.Fatalf("Error running controller: %v", err)
+	}
+	id = id + "_" + string(uuid.NewUUID())
+
+	lock, err := resourcelock.New(
+		resourcelock.ConfigMapsResourceLock,
+		ns,
+		configMapName,
+		kubeClient.CoreV1(),
+		kubeClient.CoordinationV1(),
+		resourcelock.ResourceLockConfig{
+			Identity: id,
+		},
+	)
+	if err != nil {
+		logger.Fatalf("Error running controller: %v", err)
+	}
+
+	logger.Infof("Starting leader election id: %s configmap: %s namespace: %s", id, configMapName, ns)
+	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
+		Lock:            lock,
+		ReleaseOnCancel: true,
+		LeaseDuration:   60 * time.Second,
+		RenewDeadline:   15 * time.Second,
+		RetryPeriod:     5 * time.Second,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(ctx context.Context) {
+				logger.Info("Acting as elected leader")
+				run()
+			},
+			OnStoppedLeading: func() {
+				logger.Infof("Leader election lost")
+			},
+			OnNewLeader: func(identity string) {
+				if identity != id {
+					logger.Infof("Another instance has been elected as leader: %v", identity)
+				}
+			},
+		},
+	})
 }
 
 func initNotifier(logger *zap.SugaredLogger) (client notifier.Interface) {
