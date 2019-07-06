@@ -47,6 +47,14 @@ helm upgrade -i flagger flagger/flagger \
 --set slack.user=flagger
 ```
 
+Enable **Microsoft Teams** notifications:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=istio-system \
+--set msteams.url=https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK
+```
+
 If you don't have Tiller you can use the helm template command and apply the generated yaml with kubectl:
 
 ```bash

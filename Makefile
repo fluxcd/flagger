@@ -8,6 +8,7 @@ TS=$(shell date +%Y-%m-%d_%H-%M-%S)
 
 run:
 	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=istio -namespace=test \
+	-msteams-url=https://outlook.office.com/webhook/3ec1691c-c86d-41f7-af77-fb198f1e449c@512d0320-35b0-485e-8f12-39f8e36a7325/IncomingWebhook/f89b33444d3b4b17bb0c9f677bceb361/4a76478d-c25c-4200-9153-dcb9af901b75 \
 	-metrics-server=https://prometheus.istio.weavedx.com
 
 run-appmesh:
