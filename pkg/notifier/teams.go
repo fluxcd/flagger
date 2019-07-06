@@ -1,11 +1,7 @@
 package notifier
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 )
 
@@ -72,22 +68,9 @@ func (s *MSTeams) Post(workload string, namespace string, message string, fields
 		payload.ThemeColor = "FF0000"
 	}
 
-	data, err := json.Marshal(payload)
+	err := postMessage(s.URL, payload)
 	if err != nil {
-		return fmt.Errorf("marshalling slack payload failed %v", err)
-	}
-
-	b := bytes.NewBuffer(data)
-
-	if res, err := http.Post(s.URL, "application/json", b); err != nil {
-		return fmt.Errorf("sending data to MS Teams failed %v", err)
-	} else {
-		defer res.Body.Close()
-		statusCode := res.StatusCode
-		if statusCode != 200 {
-			body, _ := ioutil.ReadAll(res.Body)
-			return fmt.Errorf("sending data to MS Teams failed %v", string(body))
-		}
+		return err
 	}
 
 	return nil

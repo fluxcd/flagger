@@ -161,22 +161,7 @@ func main() {
 	}
 
 	// setup Slack or MS Teams notifications
-	notifierURL := slackURL
-	if msteamsURL != "" {
-		notifierURL = msteamsURL
-	}
-	notifierFactory := notifier.NewFactory(notifierURL, slackUser, slackChannel)
-
-	var notifierClient notifier.Interface
-	if notifierURL != "" {
-		var err error
-		notifierClient, err = notifierFactory.Notifier()
-		if err != nil {
-			logger.Errorf("Notifier %v", err)
-		} else {
-			logger.Infof("Notifications enabled for %s", notifierURL[0:30])
-		}
-	}
+	notifierClient := initNotifier(logger)
 
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
@@ -217,4 +202,25 @@ func main() {
 	}(c)
 
 	<-stopCh
+}
+
+func initNotifier(logger *zap.SugaredLogger) (client notifier.Interface) {
+	provider := "slack"
+	notifierURL := slackURL
+	if msteamsURL != "" {
+		provider = "msteams"
+		notifierURL = msteamsURL
+	}
+	notifierFactory := notifier.NewFactory(notifierURL, slackUser, slackChannel)
+
+	if notifierURL != "" {
+		var err error
+		client, err = notifierFactory.Notifier(provider)
+		if err != nil {
+			logger.Errorf("Notifier %v", err)
+		} else {
+			logger.Infof("Notifications enabled for %s", notifierURL[0:30])
+		}
+	}
+	return
 }

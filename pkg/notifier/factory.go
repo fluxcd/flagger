@@ -1,9 +1,5 @@
 package notifier
 
-import (
-	"strings"
-)
-
 type Factory struct {
 	URL      string
 	Username string
@@ -18,11 +14,11 @@ func NewFactory(URL string, username string, channel string) *Factory {
 	}
 }
 
-func (f Factory) Notifier() (Interface, error) {
+func (f Factory) Notifier(provider string) (Interface, error) {
 	switch {
-	case strings.Contains(f.URL, "slack.com"):
+	case provider == "slack":
 		return NewSlack(f.URL, f.Username, f.Channel)
-	case strings.Contains(f.URL, "office.com"):
+	case provider == "msteams":
 		return NewMSTeams(f.URL)
 	}
 
