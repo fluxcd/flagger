@@ -53,6 +53,7 @@ Parameter | Description | Default
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`
 `rbac.create` | if `true`, create and use RBAC resources | `true`
+`rbac.pspEnabled` | If `true`, create and use a restricted pod security policy | `false`
 `crd.create` | if `true`, create Flagger's CRDs | `true`
 `resources.requests/cpu` | pod CPU request | `10m`
 `resources.requests/memory` | pod memory request | `32Mi`
