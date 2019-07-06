@@ -19,6 +19,10 @@ slack:
   # incoming webhook https://api.slack.com/incoming-webhooks
   url:
 
+msteams:
+  # MS Teams incoming webhook URL
+  url:
+
 serviceAccount:
   # serviceAccount.create: Whether to create a service account or not
   create: true

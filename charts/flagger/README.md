@@ -19,13 +19,24 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
-To install the chart with the release name `flagger`:
+To install the chart with the release name `flagger` for Istio:
 
 ```console
-$ helm install --name flagger --namespace istio-system flagger/flagger
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=istio-system \
+    --set meshProvider=istio \
+    --set metricsServer=http://prometheus:9090
 ```
 
-The command deploys Flagger on the Kubernetes cluster in the istio-system namespace.
+To install the chart with the release name `flagger` for Linkerd:
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=linkerd \
+    --set meshProvider=linkerd \
+    --set metricsServer=http://linkerd-prometheus:9090
+```
+
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
 ## Uninstalling the Chart
@@ -52,6 +63,7 @@ Parameter | Description | Default
 `slack.url` | Slack incoming webhook | None
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`
+`msteams.url` | Microsoft Teams incoming webhook | None
 `rbac.create` | if `true`, create and use RBAC resources | `true`
 `rbac.pspEnabled` | If `true`, create and use a restricted pod security policy | `false`
 `crd.create` | if `true`, create Flagger's CRDs | `true`

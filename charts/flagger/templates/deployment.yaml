@@ -51,6 +51,9 @@ spec:
           - -slack-user={{ .Values.slack.user }}
           - -slack-channel={{ .Values.slack.channel }}
           {{- end }}
+          {{- if .Values.msteams.url }}
+          - -msteams-url={{ .Values.msteams.url }}
+          {{- end }}
           livenessProbe:
             exec:
               command:
