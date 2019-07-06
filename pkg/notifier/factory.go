@@ -22,6 +22,8 @@ func (f Factory) Notifier() (Interface, error) {
 	switch {
 	case strings.Contains(f.URL, "slack.com"):
 		return NewSlack(f.URL, f.Username, f.Channel)
+	case strings.Contains(f.URL, "office.com"):
+		return NewMSTeams(f.URL)
 	}
 
 	return nil, nil

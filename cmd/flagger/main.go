@@ -54,10 +54,10 @@ func init() {
 	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "Kubernetes API sync interval.")
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
-	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
+	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
@@ -160,25 +160,21 @@ func main() {
 		logger.Errorf("Metrics server %s unreachable %v", metricsServer, err)
 	}
 
-	var notifierClient notifier.Interface
-	if slackURL != "" {
-		f := notifier.NewFactory(slackURL, slackUser, slackChannel)
-		var err error
-		notifierClient, err = f.Notifier()
-		if err != nil {
-			logger.Errorf("Notifier %v", err)
-		} else {
-			logger.Infof("Slack notifications enabled for channel %s", slackChannel)
-		}
-	}
+	// setup Slack or MS Teams notifications
+	notifierURL := slackURL
 	if msteamsURL != "" {
-		f := notifier.NewFactory(slackURL, slackUser, slackChannel)
+		notifierURL = msteamsURL
+	}
+	notifierFactory := notifier.NewFactory(notifierURL, slackUser, slackChannel)
+
+	var notifierClient notifier.Interface
+	if notifierURL != "" {
 		var err error
-		notifierClient, err = f.Notifier()
+		notifierClient, err = notifierFactory.Notifier()
 		if err != nil {
 			logger.Errorf("Notifier %v", err)
 		} else {
-			logger.Infof("Slack notifications enabled for channel %s", slackChannel)
+			logger.Infof("Notifications enabled for %s", notifierURL[0:30])
 		}
 	}
 
