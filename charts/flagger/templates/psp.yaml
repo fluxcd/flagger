@@ -16,7 +16,7 @@ spec:
   hostNetwork: false
   hostPID: false
   readOnlyRootFilesystem: false
-  allowPrivilegeEscalation: true
+  allowPrivilegeEscalation: false
   allowedCapabilities:
     - '*'
   fsGroup:
