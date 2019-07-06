@@ -279,12 +279,6 @@ func (c *Controller) sendNotification(cd *flaggerv1.Canary, message string, meta
 				Value: fmt.Sprintf("%s/%s.%s", cd.Spec.TargetRef.Kind, cd.Spec.TargetRef.Name, cd.Namespace),
 			},
 			notifier.Field{
-				Name: "Traffic routing",
-				Value: fmt.Sprintf("Weight step: %v max: %v",
-					cd.Spec.CanaryAnalysis.StepWeight,
-					cd.Spec.CanaryAnalysis.MaxWeight),
-			},
-			notifier.Field{
 				Name:  "Failed checks threshold",
 				Value: fmt.Sprintf("%v", cd.Spec.CanaryAnalysis.Threshold),
 			},
@@ -293,6 +287,25 @@ func (c *Controller) sendNotification(cd *flaggerv1.Canary, message string, meta
 				Value: fmt.Sprintf("%vs", cd.GetProgressDeadlineSeconds()),
 			},
 		)
+
+		if cd.Spec.CanaryAnalysis.StepWeight > 0 {
+			fields = append(fields, notifier.Field{
+				Name: "Traffic routing",
+				Value: fmt.Sprintf("Weight step: %v max: %v",
+					cd.Spec.CanaryAnalysis.StepWeight,
+					cd.Spec.CanaryAnalysis.MaxWeight),
+			})
+		} else if len(cd.Spec.CanaryAnalysis.Match) > 0 {
+			fields = append(fields, notifier.Field{
+				Name:  "Traffic routing",
+				Value: "A/B Testing",
+			})
+		} else if cd.Spec.CanaryAnalysis.Iterations > 0 {
+			fields = append(fields, notifier.Field{
+				Name:  "Traffic routing",
+				Value: "Blue/Green",
+			})
+		}
 	}
 	err := c.notifier.Post(cd.Name, cd.Namespace, message, fields, warn)
 	if err != nil {
