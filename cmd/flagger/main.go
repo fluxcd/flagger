@@ -34,6 +34,7 @@ var (
 	controlLoopInterval time.Duration
 	logLevel            string
 	port                string
+	msteamsURL          string
 	slackURL            string
 	slackUser           string
 	slackChannel        string
@@ -56,6 +57,7 @@ func init() {
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
+	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
@@ -158,15 +160,8 @@ func main() {
 		logger.Errorf("Metrics server %s unreachable %v", metricsServer, err)
 	}
 
-	var slack *notifier.Slack
-	if slackURL != "" {
-		slack, err = notifier.NewSlack(slackURL, slackUser, slackChannel)
-		if err != nil {
-			logger.Errorf("Notifier %v", err)
-		} else {
-			logger.Infof("Slack notifications enabled for channel %s", slack.Channel)
-		}
-	}
+	// setup Slack or MS Teams notifications
+	notifierClient := initNotifier(logger)
 
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
@@ -179,9 +174,8 @@ func main() {
 		flaggerClient,
 		canaryInformer,
 		controlLoopInterval,
-		metricsServer,
 		logger,
-		slack,
+		notifierClient,
 		routerFactory,
 		observerFactory,
 		meshProvider,
@@ -208,4 +202,25 @@ func main() {
 	}(c)
 
 	<-stopCh
+}
+
+func initNotifier(logger *zap.SugaredLogger) (client notifier.Interface) {
+	provider := "slack"
+	notifierURL := slackURL
+	if msteamsURL != "" {
+		provider = "msteams"
+		notifierURL = msteamsURL
+	}
+	notifierFactory := notifier.NewFactory(notifierURL, slackUser, slackChannel)
+
+	if notifierURL != "" {
+		var err error
+		client, err = notifierFactory.Notifier(provider)
+		if err != nil {
+			logger.Errorf("Notifier %v", err)
+		} else {
+			logger.Infof("Notifications enabled for %s", notifierURL[0:30])
+		}
+	}
+	return
 }

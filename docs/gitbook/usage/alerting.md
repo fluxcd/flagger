@@ -6,7 +6,6 @@ Flagger can be configured to send Slack notifications:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
---namespace=istio-system \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
 --set slack.channel=general \
 --set slack.user=flagger
@@ -21,6 +20,23 @@ A canary deployment will be rolled back if the progress deadline exceeded or if 
 maximum number of failed checks:
 
 ![Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+
+### Microsoft Teams
+
+Flagger can be configured to send notifications to Microsoft Teams:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--set msteams.url=https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK
+```
+
+Flagger will post a message card to MS Teams when a new revision has been detected and if the canary analysis failed or succeeded:
+
+![MS Teams Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-ms-teams-notifications.png)
+
+And you'll get a notification on rollback:
+
+![MS Teams Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-ms-teams-failed.png)
 
 ### Prometheus Alert Manager
 

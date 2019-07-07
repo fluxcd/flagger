@@ -1,12 +1,8 @@
 package notifier
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 )
 
@@ -67,7 +63,7 @@ func NewSlack(hookURL string, username string, channel string) (*Slack, error) {
 }
 
 // Post Slack message
-func (s *Slack) Post(workload string, namespace string, message string, fields []SlackField, warn bool) error {
+func (s *Slack) Post(workload string, namespace string, message string, fields []Field, warn bool) error {
 	payload := SlackPayload{
 		Channel:  s.Channel,
 		Username: s.Username,
@@ -78,32 +74,24 @@ func (s *Slack) Post(workload string, namespace string, message string, fields [
 		color = "danger"
 	}
 
+	sfields := make([]SlackField, len(fields))
+	for _, f := range fields {
+		sfields = append(sfields, SlackField{f.Name, f.Value, false})
+	}
+
 	a := SlackAttachment{
 		Color:      color,
 		AuthorName: fmt.Sprintf("%s.%s", workload, namespace),
 		Text:       message,
 		MrkdwnIn:   []string{"text"},
-		Fields:     fields,
+		Fields:     sfields,
 	}
 
 	payload.Attachments = []SlackAttachment{a}
 
-	data, err := json.Marshal(payload)
+	err := postMessage(s.URL, payload)
 	if err != nil {
-		return fmt.Errorf("marshalling slack payload failed %v", err)
-	}
-
-	b := bytes.NewBuffer(data)
-
-	if res, err := http.Post(s.URL, "application/json", b); err != nil {
-		return fmt.Errorf("sending data to slack failed %v", err)
-	} else {
-		defer res.Body.Close()
-		statusCode := res.StatusCode
-		if statusCode != 200 {
-			body, _ := ioutil.ReadAll(res.Body)
-			return fmt.Errorf("sending data to slack failed %v", string(body))
-		}
+		return err
 	}
 
 	return nil
