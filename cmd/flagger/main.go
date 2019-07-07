@@ -203,22 +203,27 @@ func main() {
 		}
 	}
 
+	// leader election context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// prevents new requests when leadership is lost
 	cfg.Wrap(transport.ContextCanceller(ctx, fmt.Errorf("the leader is shutting down")))
 
+	// cancel leader election context on shutdown signals
 	go func() {
 		<-stopCh
 		cancel()
 	}()
 
+	// wrap controller run
 	runController := func() {
 		if err := c.Run(threadiness, stopCh); err != nil {
 			logger.Fatalf("Error running controller: %v", err)
 		}
 	}
 
+	// run controller when this instance wins the leader election
 	if enableLeaderElection {
 		ns := leaderElectionNamespace
 		if namespace != "" {
@@ -265,7 +270,8 @@ func startLeaderElection(ctx context.Context, run func(), ns string, kubeClient 
 				run()
 			},
 			OnStoppedLeading: func() {
-				logger.Infof("Leader election lost")
+				logger.Infof("Leadership lost")
+				os.Exit(1)
 			},
 			OnNewLeader: func(identity string) {
 				if identity != id {

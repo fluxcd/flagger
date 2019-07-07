@@ -8,7 +8,14 @@ TS=$(shell date +%Y-%m-%d_%H-%M-%S)
 
 run:
 	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=istio -namespace=test \
-	-metrics-server=https://prometheus.istio.weavedx.com
+	-metrics-server=https://prometheus.istio.weavedx.com \
+	-enable-leader-election=true
+
+run2:
+	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=istio -namespace=test \
+	-metrics-server=https://prometheus.istio.weavedx.com \
+	-enable-leader-election=true \
+	-port=9092
 
 run-appmesh:
 	GO111MODULE=on go run cmd/flagger/* -kubeconfig=$$HOME/.kube/config -log-level=info -mesh-provider=appmesh \
