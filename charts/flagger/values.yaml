@@ -23,6 +23,10 @@ msteams:
   # MS Teams incoming webhook URL
   url:
 
+leaderElection:
+  enabled: false
+  replicaCount: 1
+
 serviceAccount:
   # serviceAccount.create: Whether to create a service account or not
   create: true
@@ -53,8 +57,6 @@ resources:
 nodeSelector: {}
 
 tolerations: []
-
-affinity: {}
 
 prometheus:
   # to be used with AppMesh or nginx ingress
