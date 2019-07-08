@@ -6,11 +6,13 @@
 
 Flagger can run automated application analysis, promotion and rollback for the following deployment strategies:
 * Canary (progressive traffic shifting)
+    * Istio, Linkerd, App Mesh, NGINX, Gloo
 * A/B Testing (HTTP headers and cookies traffic routing)
+    * Istio, NGINX
 * Blue/Green (traffic switch)
+    * Kubernetes CNI
 
-For canary deployments you'll need a Layer 7 traffic management solution like a service mesh (Istio, App Mesh) or an ingress controller (NGINX, Gloo).
-For A/B testing you'll need a Layer 7 traffic management solution that's capable of routing requests based on HTTP headers and cookies (Istio, NGINX).
+For Canary deployments and A/B testing you'll need a Layer 7 traffic management solution like a service mesh or an ingress controller.
 For Blue/Green deployments no service mesh or ingress controller is required.
 
 **When should I use A/B testing instead of progressive traffic shifting?**

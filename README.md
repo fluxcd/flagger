@@ -7,13 +7,13 @@
 [![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
-using Istio, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis.
+using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis.
 The canary analysis can be extended with webhooks for running acceptance tests,
 load tests or any other custom validation.
 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance
 indicators like HTTP requests success rate, requests average duration and pods health.
-Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
+Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
 
 ![flagger-overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-overview.png)
 
@@ -39,6 +39,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 * Usage
   * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
   * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
+  * [Linkerd canary deployments](https://docs.flagger.app/usage/linkerd-progressive-delivery)
   * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
   * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
   * [Gloo ingress controller canary deployments](https://docs.flagger.app/usage/gloo-progressive-delivery)
@@ -155,19 +156,19 @@ For more details on how the canary analysis and promotion works please [read the
 
 ## Features
 
-| Feature                                      | Istio              | App Mesh           | NGINX              | Gloo               |
-| -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |
-| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: |
-| Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: |
-| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Feature                                      | Istio              | Linkerd            | App Mesh           | NGINX              | Gloo               |
+| -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |------------------  |
+| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: |
+| Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
 
 ## Roadmap
 
-* Integrate with other service mesh technologies like Linkerd v2
+* Integrate with other ingress controllers like Contour, HAProxy, ALB
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
 ## Contributing
