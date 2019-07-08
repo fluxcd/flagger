@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.leaderElection.replicaCount }}
   strategy:
     type: Recreate
   selector:
@@ -22,6 +22,16 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "flagger.serviceAccountName" . }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: {{ template "flagger.name" . }}
+                    app.kubernetes.io/instance: {{ .Release.Name }}
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: flagger
           securityContext:
@@ -54,6 +64,10 @@ spec:
           {{- if .Values.msteams.url }}
           - -msteams-url={{ .Values.msteams.url }}
           {{- end }}
+          {{- if .Values.leaderElection.enabled }}
+          - -enable-leader-election=true
+          - -leader-election-namespace={{ .Release.Namespace }}
+          {{- end }}
           livenessProbe:
             exec:
               command:
@@ -78,10 +92,6 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
 {{ toYaml . | indent 8 }}
     {{- end }}
     {{- with .Values.tolerations }}

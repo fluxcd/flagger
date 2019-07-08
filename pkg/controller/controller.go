@@ -216,15 +216,6 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	c.canaries.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
-
-	//if cd.Spec.TargetRef.Kind == "Deployment" {
-	//	err = c.bootstrapDeployment(cd)
-	//	if err != nil {
-	//		c.logger.Warnf("%s.%s bootstrap error %v", cd.Name, cd.Namespace, err)
-	//		return err
-	//	}
-	//}
-
 	c.logger.Infof("Synced %s", key)
 
 	return nil

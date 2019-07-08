@@ -22,6 +22,8 @@ kind load docker-image test/flagger:latest
 echo '>>> Installing Flagger'
 helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
 --namespace linkerd \
+--set leaderElection.enabled=true \
+--set leaderElection.replicaCount=2 \
 --set metricsServer=http://linkerd-prometheus:9090 \
 --set meshProvider=smi:linkerd
 
