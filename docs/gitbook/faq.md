@@ -377,10 +377,10 @@ In order for Flagger to be able to call the load tester service from outside the
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: flagger-namespace
-  namespace: flagger
+  name: flagger-loadtester
+  namespace: test
 spec:
-  host: "*.flagger.svc.cluster.local"
+  host: "flagger-loadtester.test.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: DISABLE
@@ -388,8 +388,8 @@ spec:
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy
 metadata:
-  name: loadtester-mtls-disabled
-  namespace: flagger
+  name: flagger-loadtester
+  namespace: test
 spec:
   targets:
   - name: flagger-loadtester
