@@ -47,7 +47,7 @@ func TestScheduler_Rollback(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update failed checks to max
-	err := mocks.deployer.SyncStatus(mocks.canary, v1alpha3.CanaryStatus{Phase: v1alpha3.CanaryProgressing, FailedChecks: 11})
+	err := mocks.deployer.SyncStatus(mocks.canary, v1alpha3.CanaryStatus{Phase: v1alpha3.CanaryPhaseProgressing, FailedChecks: 11})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -60,8 +60,8 @@ func TestScheduler_Rollback(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryFailed {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryFailed)
+	if c.Status.Phase != v1alpha3.CanaryPhaseFailed {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseFailed)
 	}
 }
 
@@ -101,8 +101,8 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 		t.Errorf("Got skip analysis %v wanted %v", c.Spec.SkipAnalysis, true)
 	}
 
-	if c.Status.Phase != v1alpha3.CanarySucceeded {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanarySucceeded)
+	if c.Status.Phase != v1alpha3.CanaryPhaseSucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseSucceeded)
 	}
 }
 
@@ -255,8 +255,8 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanarySucceeded {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanarySucceeded)
+	if c.Status.Phase != v1alpha3.CanaryPhaseSucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseSucceeded)
 	}
 }
 
@@ -326,8 +326,8 @@ func TestScheduler_ABTesting(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanarySucceeded {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanarySucceeded)
+	if c.Status.Phase != v1alpha3.CanaryPhaseSucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseSucceeded)
 	}
 }
 

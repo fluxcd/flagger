@@ -85,37 +85,6 @@ type CanaryList struct {
 	Items []Canary `json:"items"`
 }
 
-// CanaryPhase is a label for the condition of a canary at the current time
-type CanaryPhase string
-
-const (
-	// CanaryInitialized means the primary deployment, hpa and ClusterIP services
-	// have been created along with the Istio virtual service
-	CanaryInitialized CanaryPhase = "Initialized"
-	// CanaryProgressing means the canary analysis is underway
-	CanaryProgressing CanaryPhase = "Progressing"
-	// CanarySucceeded means the canary analysis has been successful
-	// and the canary deployment has been promoted
-	CanarySucceeded CanaryPhase = "Succeeded"
-	// CanaryFailed means the canary analysis failed
-	// and the canary deployment has been scaled to zero
-	CanaryFailed CanaryPhase = "Failed"
-)
-
-// CanaryStatus is used for state persistence (read-only)
-type CanaryStatus struct {
-	Phase        CanaryPhase `json:"phase"`
-	FailedChecks int         `json:"failedChecks"`
-	CanaryWeight int         `json:"canaryWeight"`
-	Iterations   int         `json:"iterations"`
-	// +optional
-	TrackedConfigs *map[string]string `json:"trackedConfigs,omitempty"`
-	// +optional
-	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`
-	// +optional
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
-}
-
 // CanaryService is used to create ClusterIP services
 // and Istio Virtual Service
 type CanaryService struct {

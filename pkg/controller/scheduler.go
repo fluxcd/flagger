@@ -178,7 +178,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 		// reset status
 		status := flaggerv1.CanaryStatus{
-			Phase:        flaggerv1.CanaryProgressing,
+			Phase:        flaggerv1.CanaryPhaseProgressing,
 			CanaryWeight: 0,
 			FailedChecks: 0,
 			Iterations:   0,
@@ -210,7 +210,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check if the number of failed checks reached the threshold
-	if cd.Status.Phase == flaggerv1.CanaryProgressing &&
+	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing &&
 		(!retriable || cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold) {
 
 		if cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold {
@@ -246,13 +246,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 
 		// mark canary as failed
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryFailed, CanaryWeight: 0}); err != nil {
+		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return
 		}
 
-		c.recorder.SetStatus(cd, flaggerv1.CanaryFailed)
-		c.runPostRolloutHooks(cd, flaggerv1.CanaryFailed)
+		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseFailed)
+		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseFailed)
 		return
 	}
 
@@ -331,12 +331,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			}
 
 			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanarySucceeded); err != nil {
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-			c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
-			c.runPostRolloutHooks(cd, flaggerv1.CanarySucceeded)
+			c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+			c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
 			c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 				false, false)
 			return
@@ -398,12 +398,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 
 		// update status phase
-		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanarySucceeded); err != nil {
+		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
-		c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
-		c.runPostRolloutHooks(cd, flaggerv1.CanarySucceeded)
+		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
 			false, false)
 	}
@@ -438,13 +438,13 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	}
 
 	// update status phase
-	if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanarySucceeded); err != nil {
+	if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return false
 	}
 
 	// notify
-	c.recorder.SetStatus(cd, flaggerv1.CanarySucceeded)
+	c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
 	c.recordEventInfof(cd, "Promotion completed! Canary analysis was skipped for %s.%s",
 		cd.Spec.TargetRef.Name, cd.Namespace)
 	c.sendNotification(cd, "Canary analysis was skipped, promotion finished.",
@@ -454,7 +454,7 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 }
 
 func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
-	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryProgressing {
+	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
 		return true, nil
 	}
 
@@ -477,16 +477,16 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
 	c.recorder.SetStatus(cd, cd.Status.Phase)
-	if cd.Status.Phase == flaggerv1.CanaryProgressing {
+	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
 		return true
 	}
 
 	if cd.Status.Phase == "" {
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryInitialized}); err != nil {
+		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
-		c.recorder.SetStatus(cd, flaggerv1.CanaryInitialized)
+		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseInitialized)
 		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
 		c.sendNotification(cd, "New deployment detected, initialization completed.",
 			true, false)
@@ -501,18 +501,18 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 			c.recordEventErrorf(cd, "%v", err)
 			return false
 		}
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryProgressing}); err != nil {
+		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
-		c.recorder.SetStatus(cd, flaggerv1.CanaryProgressing)
+		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseProgressing)
 		return false
 	}
 	return false
 }
 
 func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
-	if cd.Status.Phase == flaggerv1.CanaryProgressing {
+	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
 		if diff, _ := c.deployer.HasDeploymentChanged(cd); diff {
 			return true
 		}
@@ -526,7 +526,7 @@ func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 func (c *Controller) runPreRolloutHooks(canary *flaggerv1.Canary) bool {
 	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
 		if webhook.Type == flaggerv1.PreRolloutHook {
-			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryProgressing, webhook)
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
 				c.recordEventWarningf(canary, "Halt %s.%s advancement pre-rollout check %s failed %v",
 					canary.Name, canary.Namespace, webhook.Name, err)
@@ -558,7 +558,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
-			err := CallWebhook(r.Name, r.Namespace, flaggerv1.CanaryProgressing, webhook)
+			err := CallWebhook(r.Name, r.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
 				c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
 					r.Name, r.Namespace, webhook.Name, err)

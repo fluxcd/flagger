@@ -229,7 +229,7 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = mocks.deployer.SetStatusPhase(mocks.canary, v1alpha3.CanaryProgressing)
+	err = mocks.deployer.SetStatusPhase(mocks.canary, v1alpha3.CanaryPhaseProgressing)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -239,8 +239,8 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if res.Status.Phase != v1alpha3.CanaryProgressing {
-		t.Errorf("Got %v wanted %v", res.Status.Phase, v1alpha3.CanaryProgressing)
+	if res.Status.Phase != v1alpha3.CanaryPhaseProgressing {
+		t.Errorf("Got %v wanted %v", res.Status.Phase, v1alpha3.CanaryPhaseProgressing)
 	}
 }
 
@@ -252,7 +252,7 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 	}
 
 	status := v1alpha3.CanaryStatus{
-		Phase:        v1alpha3.CanaryProgressing,
+		Phase:        v1alpha3.CanaryPhaseProgressing,
 		FailedChecks: 2,
 	}
 	err = mocks.deployer.SyncStatus(mocks.canary, status)

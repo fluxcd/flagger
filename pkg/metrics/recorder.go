@@ -87,9 +87,9 @@ func (cr *Recorder) SetTotal(namespace string, total int) {
 func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) {
 	status := 1
 	switch phase {
-	case flaggerv1.CanaryProgressing:
+	case flaggerv1.CanaryPhaseProgressing:
 		status = 0
-	case flaggerv1.CanaryFailed:
+	case flaggerv1.CanaryPhaseFailed:
 		status = 2
 	default:
 		status = 1
