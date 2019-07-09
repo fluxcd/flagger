@@ -38,6 +38,8 @@ type CanaryCondition struct {
 type CanaryPhase string
 
 const (
+	// CanaryPhaseInitializing means the canary initializing is underway
+	CanaryPhaseInitializing CanaryPhase = "Initializing"
 	// CanaryPhaseInitialized means the primary deployment, hpa and ClusterIP services
 	// have been created along with the service mesh or ingress objects
 	CanaryPhaseInitialized CanaryPhase = "Initialized"

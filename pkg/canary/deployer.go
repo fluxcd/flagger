@@ -37,7 +37,7 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (la
 		return "", ports, fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
 	}
 
-	if cd.Status.Phase == "" {
+	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !skipLivenessChecks {
 			_, readyErr := c.IsPrimaryReady(cd)
 			if readyErr != nil {
@@ -328,7 +328,8 @@ func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	// update HPA
 	if !init && primaryHpa != nil {
 		diff := cmp.Diff(hpaSpec.Metrics, primaryHpa.Spec.Metrics)
-		if diff != "" || hpaSpec.MinReplicas != primaryHpa.Spec.MinReplicas || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
+		if diff != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
+			fmt.Println(diff, hpaSpec.MinReplicas, primaryHpa.Spec.MinReplicas, hpaSpec.MaxReplicas, primaryHpa.Spec.MaxReplicas)
 			hpaClone := primaryHpa.DeepCopy()
 			hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
 			hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
@@ -424,4 +425,12 @@ func makePrimaryLabels(labels map[string]string, primaryName string, label strin
 
 func int32p(i int32) *int32 {
 	return &i
+}
+
+func int32Default(i *int32) int32 {
+	if i == nil {
+		return 1
+	}
+
+	return *i
 }

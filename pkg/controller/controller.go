@@ -5,20 +5,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/weaveworks/flagger/pkg/canary"
-	"github.com/weaveworks/flagger/pkg/metrics"
-	"github.com/weaveworks/flagger/pkg/router"
-
-	"github.com/google/go-cmp/cmp"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	"github.com/weaveworks/flagger/pkg/canary"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	flaggerscheme "github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
 	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
 	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1alpha3"
+	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/notifier"
+	"github.com/weaveworks/flagger/pkg/router"
+
+	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -211,8 +212,22 @@ func (c *Controller) syncHandler(key string) error {
 	}
 	cd, err := c.flaggerLister.Canaries(namespace).Get(name)
 	if errors.IsNotFound(err) {
-		utilruntime.HandleError(fmt.Errorf("'%s' in work queue no longer exists", key))
+		utilruntime.HandleError(fmt.Errorf("%s in work queue no longer exists", key))
 		return nil
+	}
+
+	// set status condition for new canaries
+	if cd.Status.Conditions == nil {
+		if ok, conditions := c.deployer.MakeStatusConditions(cd.Status, flaggerv1.CanaryPhaseInitializing); ok {
+			cdCopy := cd.DeepCopy()
+			cdCopy.Status.Conditions = conditions
+			cdCopy.Status.LastTransitionTime = metav1.Now()
+			cdCopy.Status.Phase = flaggerv1.CanaryPhaseInitializing
+			_, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+			if err != nil {
+				return fmt.Errorf("%s status condition update error: %v", key, err)
+			}
+		}
 	}
 
 	c.canaries.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)

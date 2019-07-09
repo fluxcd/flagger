@@ -454,7 +454,7 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 }
 
 func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
-	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
+	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing || cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
 		return true, nil
 	}
 
@@ -481,7 +481,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 		return true
 	}
 
-	if cd.Status.Phase == "" {
+	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false

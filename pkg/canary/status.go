@@ -39,7 +39,7 @@ func (c *Deployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatu
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 	cdCopy.Status.TrackedConfigs = configs
 
-	if ok, conditions := c.makeStatusConditions(cd.Status, status.Phase); ok {
+	if ok, conditions := c.MakeStatusConditions(cd.Status, status.Phase); ok {
 		cdCopy.Status.Conditions = conditions
 	}
 
@@ -100,7 +100,7 @@ func (c *Deployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPh
 		cdCopy.Status.Iterations = 0
 	}
 
-	if ok, conditions := c.makeStatusConditions(cdCopy.Status, phase); ok {
+	if ok, conditions := c.MakeStatusConditions(cdCopy.Status, phase); ok {
 		cdCopy.Status.Conditions = conditions
 	}
 
@@ -123,19 +123,22 @@ func (c *Deployer) getStatusCondition(status flaggerv1.CanaryStatus, conditionTy
 }
 
 // MakeStatusCondition updates the canary status conditions based on canary phase
-func (c *Deployer) makeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
+func (c *Deployer) MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
 	phase flaggerv1.CanaryPhase) (bool, []flaggerv1.CanaryCondition) {
 	currentCondition := c.getStatusCondition(canaryStatus, flaggerv1.PromotedType)
 
 	message := "New deployment detected, starting initialization."
 	status := corev1.ConditionUnknown
 	switch phase {
+	case flaggerv1.CanaryPhaseInitializing:
+		status = corev1.ConditionUnknown
+		message = "New deployment detected, starting initialization."
+	case flaggerv1.CanaryPhaseInitialized:
+		status = corev1.ConditionTrue
+		message = "Deployment initialization completed."
 	case flaggerv1.CanaryPhaseProgressing:
 		status = corev1.ConditionUnknown
 		message = "New revision detected, starting canary analysis."
-	case flaggerv1.CanaryPhaseInitialized:
-		status = corev1.ConditionTrue
-		message = "New deployment detected, initialization completed."
 	case flaggerv1.CanaryPhaseSucceeded:
 		status = corev1.ConditionTrue
 		message = "Canary analysis completed successfully, promotion finished."
