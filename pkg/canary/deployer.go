@@ -2,20 +2,18 @@ package canary
 
 import (
 	"crypto/rand"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/mitchellh/hashstructure"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
-	"io"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v2beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
@@ -146,19 +144,12 @@ func (c *Deployer) HasDeploymentChanged(cd *flaggerv1.Canary) (bool, error) {
 		return true, nil
 	}
 
-	newSpec := &canary.Spec.Template.Spec
-	oldSpecJson, err := base64.StdEncoding.DecodeString(cd.Status.LastAppliedSpec)
+	newHash, err := hashstructure.Hash(canary.Spec.Template, nil)
 	if err != nil {
-		return false, fmt.Errorf("%s.%s decode error %v", cd.Name, cd.Namespace, err)
-	}
-	oldSpec := &corev1.PodSpec{}
-	err = json.Unmarshal(oldSpecJson, oldSpec)
-	if err != nil {
-		return false, fmt.Errorf("%s.%s unmarshal error %v", cd.Name, cd.Namespace, err)
+		return false, fmt.Errorf("hash error %v", err)
 	}
 
-	if diff := cmp.Diff(*newSpec, *oldSpec, cmpopts.IgnoreUnexported(resource.Quantity{})); diff != "" {
-		//fmt.Println(diff)
+	if cd.Status.LastAppliedSpec != fmt.Sprintf("%d", newHash) {
 		return true, nil
 	}
 

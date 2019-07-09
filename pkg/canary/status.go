@@ -1,10 +1,9 @@
 package canary
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 
+	"github.com/mitchellh/hashstructure"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,14 +19,14 @@ func (c *Deployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatu
 		return fmt.Errorf("deployment %s.%s query error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
-	specJson, err := json.Marshal(dep.Spec.Template.Spec)
-	if err != nil {
-		return fmt.Errorf("deployment %s.%s marshal error %v", cd.Spec.TargetRef.Name, cd.Namespace, err)
-	}
-
 	configs, err := c.ConfigTracker.GetConfigRefs(cd)
 	if err != nil {
 		return fmt.Errorf("configs query error %v", err)
+	}
+
+	hash, err := hashstructure.Hash(dep.Spec.Template, nil)
+	if err != nil {
+		return fmt.Errorf("hash error %v", err)
 	}
 
 	cdCopy := cd.DeepCopy()
@@ -35,7 +34,7 @@ func (c *Deployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatu
 	cdCopy.Status.CanaryWeight = status.CanaryWeight
 	cdCopy.Status.FailedChecks = status.FailedChecks
 	cdCopy.Status.Iterations = status.Iterations
-	cdCopy.Status.LastAppliedSpec = base64.StdEncoding.EncodeToString(specJson)
+	cdCopy.Status.LastAppliedSpec = fmt.Sprintf("%d", hash)
 	cdCopy.Status.LastTransitionTime = metav1.Now()
 	cdCopy.Status.TrackedConfigs = configs
 
