@@ -2,7 +2,7 @@
 
 [Flagger](https://github.com/weaveworks/flagger) takes a Kubernetes deployment and optionally 
 a horizontal pod autoscaler \(HPA\) and creates a series of objects 
-\(Kubernetes deployments, ClusterIP services and Istio or App Mesh virtual services\) to drive the canary analysis and promotion. 
+\(Kubernetes deployments, ClusterIP services, virtual service, traffic split or ingress\) to drive the canary analysis and promotion. 
 
 ![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
 
@@ -18,7 +18,7 @@ metadata:
   namespace: test
 spec:
   # service mesh provider (optional)
-  # can be: kubernetes, istio, appmesh, smi, nginx, gloo, supergloo
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo, supergloo
   # use the kubernetes provider for Blue/Green style deployments
   provider: istio
   # deployment reference

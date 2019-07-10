@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.17.0 (2019-07-08) 
+
+Adds support for Linkerd (SMI Traffic Split API), MS Teams notifications and HA mode with leader election
+
+#### Features
+
+- Add Linkerd support [#230](https://github.com/weaveworks/flagger/pull/230)
+- Implement MS Teams notifications [#235](https://github.com/weaveworks/flagger/pull/235)
+- Implement leader election [#236](https://github.com/weaveworks/flagger/pull/236)
+
+#### Improvements 
+
+- Add [Kustomize](https://docs.flagger.app/install/flagger-install-on-kubernetes#install-flagger-with-kustomize) installer [#232](https://github.com/weaveworks/flagger/pull/232)
+- Add Pod Security Policy to Helm chart [#234](https://github.com/weaveworks/flagger/pull/234)
+
 ## 0.16.0 (2019-06-23) 
 
 Adds support for running [Blue/Green deployments](https://docs.flagger.app/usage/blue-green) without a service mesh or ingress controller
