@@ -4,9 +4,10 @@ set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
+NGINX_VERSION=1.8.2
 
 echo '>>> Installing NGINX Ingress'
-helm upgrade -i nginx-ingress stable/nginx-ingress \
+helm upgrade -i nginx-ingress stable/nginx-ingress --version=${NGINX_VERSION} \
 --wait \
 --namespace ingress-nginx \
 --set controller.stats.enabled=true \
