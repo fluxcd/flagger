@@ -225,6 +225,7 @@ func (c *Controller) syncHandler(key string) error {
 			cdCopy.Status.Phase = flaggerv1.CanaryPhaseInitializing
 			_, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 			if err != nil {
+				c.logger.Errorf("%s status condition update error: %v", key, err)
 				return fmt.Errorf("%s status condition update error: %v", key, err)
 			}
 		}
