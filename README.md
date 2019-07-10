@@ -6,12 +6,18 @@ perhaps due to the complexity of management and the fear of failed deployments i
 
 Flagger is an open source Kubernetes operator that aims to untangle this complexity.
 It automates the promotion of canary deployments by using 
-Istio, App Mesh or NGNIX traffic shifting and Prometheus metrics to analyse the application's behaviour during a controlled rollout. 
+Istio, Linkerd, App Mesh, Gloo or NGNIX traffic shifting and Prometheus metrics to analyse the application's behaviour during a controlled rollout. 
 The canary analysis can be extended with webhooks for running integration tests, load tests or any other custom validation.
 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance 
 indicators like HTTP requests success rate, requests average duration and pods health. Based on the KPIs analysis 
-a canary is promoted or aborted and the analysis result is published to Slack.
+a canary is promoted or aborted and the analysis result is published to Slack or MS Teams.
+
+Flagger can automate the application analysis for the following deployment strategies:
+
+* Canary (progressive traffic shifting)
+* A/B Testing (HTTP headers and cookies traffic routing)
+* Blue/Green (traffic switch)
 
 With Flagger you don't have to worry about keeping code and configuration changes in sync. Flagger keeps track of 
 ConfigMaps and Secrets referenced by a Kubernetes Deployment and triggers a canary analysis if any of those objects change. 
@@ -41,6 +47,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 * Usage
     * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
     * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
+    * [Linkerd canary deployments](https://docs.flagger.app/usage/linkerd-progressive-delivery)
     * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
     * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
     * [Gloo Canary Deployments](https://docs.flagger.app/usage/gloo-progressive-delivery.md)
@@ -49,5 +56,4 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Alerting](https://docs.flagger.app/usage/alerting)
 
 This project is sponsored by [Weaveworks](https://www.weave.works/)
-
 
