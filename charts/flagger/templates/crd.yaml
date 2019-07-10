@@ -103,17 +103,23 @@ spec:
             canaryAnalysis:
               properties:
                 interval:
+                  description: Canary schedule interval
                   type: string
                   pattern: "^[0-9]+(m|s)"
                 iterations:
+                  description: Number of checks to run for A/B Testing and Blue/Green
                   type: number
                 threshold:
+                  description: Max number of failed checks before rollback
                   type: number
                 maxWeight:
+                  description: Max traffic percentage routed to canary
                   type: number
                 stepWeight:
+                  description: Canary incremental traffic percentage step
                   type: number
                 metrics:
+                  description: Prometheus query list for this canary
                   type: array
                   properties:
                     items:
@@ -121,15 +127,20 @@ spec:
                       required: ['name', 'threshold']
                       properties:
                         name:
+                          description: Name of the Prometheus metric
                           type: string
                         interval:
+                          description: Interval of the promql query
                           type: string
                           pattern: "^[0-9]+(m|s)"
                         threshold:
+                          description: Max scalar value accepted for this metric
                           type: number
                         query:
+                          description: Prometheus query
                           type: string
                 webhooks:
+                  description: Webhook list for this canary
                   type: array
                   properties:
                     items:
@@ -137,8 +148,10 @@ spec:
                       required: ['name', 'url', 'timeout']
                       properties:
                         name:
+                          description: Name of the webhook
                           type: string
                         type:
+                          description: Type of the webhook pre, post or during rollout
                           type: string
                           enum:
                             - ""
@@ -146,29 +159,67 @@ spec:
                             - rollout
                             - post-rollout
                         url:
+                          description: URL address of this webhook
                           type: string
                           format: url
                         timeout:
+                          description: Request timeout for this webhook
                           type: string
                           pattern: "^[0-9]+(m|s)"
         status:
           properties:
             phase:
+              description: Analysis phase of this canary
               type: string
               enum:
                 - ""
+                - Initializing
                 - Initialized
                 - Progressing
                 - Succeeded
                 - Failed
             canaryWeight:
+              description: Traffic weight percentage routed to canary
               type: number
             failedChecks:
+              description: Failed check count of the current canary analysis
               type: number
             iterations:
+              description: Iteration count of the current canary analysis
               type: number
             lastAppliedSpec:
+              description: LastAppliedSpec of this canary
               type: string
             lastTransitionTime:
+              description: LastTransitionTime of this canary
+              format: date-time
               type: string
+            conditions:
+              description: Status conditions of this canary
+              type: array
+              properties:
+                items:
+                  type: object
+                  required: ['type', 'status', 'reason']
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime of this condition
+                      format: date-time
+                      type: string
+                    lastUpdateTime:
+                      description: LastUpdateTime of this condition
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message associated with this condition
+                      type: string
+                    reason:
+                      description: Reason for the current status of this condition
+                      type: string
+                    status:
+                      description: Status of this condition
+                      type: string
+                    type:
+                      description: Type of this condition
+                      type: string
 {{- end }}
