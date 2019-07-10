@@ -49,3 +49,5 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Alerting](https://docs.flagger.app/usage/alerting)
 
 This project is sponsored by [Weaveworks](https://www.weave.works/)
+
+
