@@ -64,6 +64,8 @@ type CanaryStatus struct {
 	// +optional
 	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`
 	// +optional
+	LastPromotedSpec string `json:"lastPromotedSpec,omitempty"`
+	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 	// +optional
 	Conditions []CanaryCondition `json:"conditions,omitempty"`

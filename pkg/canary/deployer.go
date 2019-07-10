@@ -113,10 +113,19 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 
 	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName, label)
 
+	// apply update
 	_, err = c.KubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
 		return fmt.Errorf("updating deployment %s.%s template spec failed: %v",
 			primaryCopy.GetName(), primaryCopy.Namespace, err)
+	}
+
+	// update primary spec hash
+	cdClone := cd.DeepCopy()
+	cdClone.Status.LastPromotedSpec = cd.Status.LastAppliedSpec
+	_, err = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdClone)
+	if err != nil {
+		return fmt.Errorf("updating canary status LastAppliedSpec failed: %v", err)
 	}
 
 	// update HPA
@@ -147,6 +156,11 @@ func (c *Deployer) HasDeploymentChanged(cd *flaggerv1.Canary) (bool, error) {
 	newHash, err := hashstructure.Hash(canary.Spec.Template, nil)
 	if err != nil {
 		return false, fmt.Errorf("hash error %v", err)
+	}
+
+	// do not trigger a canary deployment on manual rollback
+	if cd.Status.LastPromotedSpec == fmt.Sprintf("%d", newHash) {
+		return false, nil
 	}
 
 	if cd.Status.LastAppliedSpec != fmt.Sprintf("%d", newHash) {
