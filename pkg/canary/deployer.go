@@ -120,14 +120,6 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 			primaryCopy.GetName(), primaryCopy.Namespace, err)
 	}
 
-	// update primary spec hash
-	cdClone := cd.DeepCopy()
-	cdClone.Status.LastPromotedSpec = cd.Status.LastAppliedSpec
-	_, err = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdClone)
-	if err != nil {
-		return fmt.Errorf("updating canary status LastAppliedSpec failed: %v", err)
-	}
-
 	// update HPA
 	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 		if err := c.reconcilePrimaryHpa(cd, false); err != nil {
