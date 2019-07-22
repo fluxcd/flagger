@@ -2,20 +2,18 @@ package canary
 
 import (
 	"crypto/rand"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/mitchellh/hashstructure"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
-	"io"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v2beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
@@ -39,7 +37,7 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (la
 		return "", ports, fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
 	}
 
-	if cd.Status.Phase == "" {
+	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !skipLivenessChecks {
 			_, readyErr := c.IsPrimaryReady(cd)
 			if readyErr != nil {
@@ -115,6 +113,7 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 
 	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName, label)
 
+	// apply update
 	_, err = c.KubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
 		return fmt.Errorf("updating deployment %s.%s template spec failed: %v",
@@ -146,19 +145,17 @@ func (c *Deployer) HasDeploymentChanged(cd *flaggerv1.Canary) (bool, error) {
 		return true, nil
 	}
 
-	newSpec := &canary.Spec.Template.Spec
-	oldSpecJson, err := base64.StdEncoding.DecodeString(cd.Status.LastAppliedSpec)
+	newHash, err := hashstructure.Hash(canary.Spec.Template, nil)
 	if err != nil {
-		return false, fmt.Errorf("%s.%s decode error %v", cd.Name, cd.Namespace, err)
-	}
-	oldSpec := &corev1.PodSpec{}
-	err = json.Unmarshal(oldSpecJson, oldSpec)
-	if err != nil {
-		return false, fmt.Errorf("%s.%s unmarshal error %v", cd.Name, cd.Namespace, err)
+		return false, fmt.Errorf("hash error %v", err)
 	}
 
-	if diff := cmp.Diff(*newSpec, *oldSpec, cmpopts.IgnoreUnexported(resource.Quantity{})); diff != "" {
-		//fmt.Println(diff)
+	// do not trigger a canary deployment on manual rollback
+	if cd.Status.LastPromotedSpec == fmt.Sprintf("%d", newHash) {
+		return false, nil
+	}
+
+	if cd.Status.LastAppliedSpec != fmt.Sprintf("%d", newHash) {
 		return true, nil
 	}
 
@@ -337,7 +334,8 @@ func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	// update HPA
 	if !init && primaryHpa != nil {
 		diff := cmp.Diff(hpaSpec.Metrics, primaryHpa.Spec.Metrics)
-		if diff != "" || hpaSpec.MinReplicas != primaryHpa.Spec.MinReplicas || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
+		if diff != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
+			fmt.Println(diff, hpaSpec.MinReplicas, primaryHpa.Spec.MinReplicas, hpaSpec.MaxReplicas, primaryHpa.Spec.MaxReplicas)
 			hpaClone := primaryHpa.DeepCopy()
 			hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
 			hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
@@ -433,4 +431,12 @@ func makePrimaryLabels(labels map[string]string, primaryName string, label strin
 
 func int32p(i int32) *int32 {
 	return &i
+}
+
+func int32Default(i *int32) int32 {
+	if i == nil {
+		return 1
+	}
+
+	return *i
 }
