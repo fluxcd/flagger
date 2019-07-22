@@ -677,7 +677,7 @@ that generates traffic during analysis when configured as a webhook.
 
 ![Flagger Load Testing Webhook](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-load-testing.png)
 
-First you need to deploy the load test runner in a namespace with Istio sidecar injection enabled:
+First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 
 ```bash
 export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
@@ -720,7 +720,7 @@ When the canary analysis starts, Flagger will call the webhooks and the load tes
 in the background, if they are not already running. This will ensure that during the 
 analysis, the `podinfo-canary.test` service will receive a steady stream of GET and POST requests.
 
-If your workload is exposed outside the mesh with the Istio Gateway and TLS you can point `hey` to the 
+If your workload is exposed outside the mesh you can point `hey` to the 
 public URL and use HTTP2.
 
 ```yaml
@@ -731,6 +731,18 @@ webhooks:
     metadata:
       type: cmd
       cmd: "hey -z 1m -q 10 -c 2 -h2 https://podinfo.example.com/"
+```
+
+For gRPC services you can use [bojand/ghz](https://github.com/bojand/ghz) which is a similar tool to Hey but for gPRC:
+
+```yaml
+webhooks:
+  - name: grpc-load-test
+    url: http://flagger-loadtester.test/
+    timeout: 5s
+    metadata:
+      type: cmd
+      cmd: "ghz -z 1m -q 10 -c 2 --insecure podinfo.test:9898"
 ```
 
 The load tester can run arbitrary commands as long as the binary is present in the container image.
