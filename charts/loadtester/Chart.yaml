@@ -1,10 +1,10 @@
 apiVersion: v1
 name: loadtester
-version: 0.4.1
-appVersion: 0.4.0
+version: 0.5.0
+appVersion: 0.5.0
 kubeVersion: ">=1.11.0-0"
 engine: gotpl
-description: Flagger's load testing services based on rakyll/hey that generates traffic during canary analysis when configured as a webhook.
+description: Flagger's load testing services based on rakyll/hey and bojand/ghz that generates traffic during canary analysis when configured as a webhook.
 home: https://docs.flagger.app
 icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
 sources:
