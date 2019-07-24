@@ -105,6 +105,53 @@ convention you can specify your label with the `-selector-labels` flag.
 The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Service and 
 the Istio Virtual Service. The container port from the target deployment should match the `service.port` value.
 
+### Canary status
+
+Get the current status of canary deployments cluster wide: 
+
+```bash
+kubectl get canaries --all-namespaces
+
+NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
+test        podinfo   Progressing   15       2019-06-30T14:05:07Z
+prod        frontend  Succeeded     0        2019-06-30T16:15:07Z
+prod        backend   Failed        0        2019-06-30T17:05:07Z
+```
+
+The status condition reflects the last know state of the canary analysis:
+
+```bash
+kubectl -n test get canary/podinfo -oyaml | awk '/status/,0'
+```
+
+A successful rollout status:
+
+```yaml
+status:
+  canaryWeight: 0
+  failedChecks: 0
+  iterations: 0
+  lastAppliedSpec: "14788816656920327485"
+  lastPromotedSpec: "14788816656920327485"
+  conditions:
+  - lastTransitionTime: "2019-07-10T08:23:18Z"
+    lastUpdateTime: "2019-07-10T08:23:18Z"
+    message: Canary analysis completed successfully, promotion finished.
+    reason: Succeeded
+    status: "True"
+    type: Promoted
+```
+
+The `Promoted` status condition can have one of the following reasons: Initialized, Waiting, Progressing, Succeeded or Failed.
+A failed canary will have the promoted status set to `false`,
+the reason to `failed` and the last applied spec will be different to the last promoted one.
+
+Wait for a successful rollout:
+
+```bash
+kubectl wait canary/podinfo --for=condition=promoted
+```
+
 ### Istio routing
 
 Flagger creates an Istio Virtual Service and Destination Rules based on the Canary service spec. 
