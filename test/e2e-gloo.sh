@@ -2,7 +2,7 @@
 
 set -o errexit
 
-GLOO_VER="0.14.2"
+GLOO_VER="0.17.6"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
