@@ -47,5 +47,7 @@ func main() {
 	go taskRunner.Start(100*time.Millisecond, stopCh)
 
 	logger.Infof("Starting load tester v%s API on port %s", VERSION, port)
-	loadtester.ListenAndServe(port, time.Minute, logger, taskRunner, stopCh)
+
+	gateStorage := loadtester.NewGateStorage("in-memory")
+	loadtester.ListenAndServe(port, time.Minute, logger, taskRunner, gateStorage, stopCh)
 }
