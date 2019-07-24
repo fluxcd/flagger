@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: loadtester
-          image: weaveworks/flagger-loadtester:0.5.0
+          image: weaveworks/flagger-loadtester:0.6.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
