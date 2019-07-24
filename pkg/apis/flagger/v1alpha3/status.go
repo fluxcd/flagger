@@ -43,6 +43,8 @@ const (
 	// CanaryPhaseInitialized means the primary deployment, hpa and ClusterIP services
 	// have been created along with the service mesh or ingress objects
 	CanaryPhaseInitialized CanaryPhase = "Initialized"
+	// CanaryPhaseWaiting means the canary rollout is paused (waiting for confirmation to proceed)
+	CanaryPhaseWaiting CanaryPhase = "Waiting"
 	// CanaryPhaseProgressing means the canary analysis is underway
 	CanaryPhaseProgressing CanaryPhase = "Progressing"
 	// CanaryPhaseSucceeded means the canary analysis has been successful
