@@ -134,9 +134,8 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	isApproved := c.runConfirmRolloutHooks(cd)
-
-	if !isApproved {
+	// check gates
+	if isApproved := c.runConfirmRolloutHooks(cd); !isApproved {
 		return
 	}
 
@@ -552,6 +551,7 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary) bool {
 						return false
 					}
 					c.recordEventInfof(canary, "Confirm-rollout check %s passed", webhook.Name)
+					return false
 				}
 			}
 		}

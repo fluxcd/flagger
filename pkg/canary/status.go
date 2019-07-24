@@ -156,7 +156,7 @@ func (c *Deployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPh
 		cdCopy.Status.Phase = phase
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		if phase != flaggerv1.CanaryPhaseProgressing {
+		if phase != flaggerv1.CanaryPhaseProgressing && phase != flaggerv1.CanaryPhaseWaiting {
 			cdCopy.Status.CanaryWeight = 0
 			cdCopy.Status.Iterations = 0
 		}
