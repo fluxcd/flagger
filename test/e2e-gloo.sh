@@ -9,9 +9,7 @@ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 echo '>>> Installing Gloo'
 helm repo add gloo https://storage.googleapis.com/solo-public-helm
 helm upgrade -i gloo gloo/gloo --version ${GLOO_VER} \
---wait \
---namespace gloo-system \
---set gatewayProxies.gateway-proxy.service.type=NodePort
+--namespace gloo-system
 
 kubectl -n gloo-system rollout status deployment/gloo
 kubectl -n gloo-system rollout status deployment/gateway-proxy
