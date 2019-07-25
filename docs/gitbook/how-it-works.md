@@ -884,3 +884,55 @@ As an alternative to Helm you can use the [Bash Automated Testing System](https:
 ```
 
 Note that you should create a ConfigMap with your Bats tests and mount it inside the tester container.
+
+### Manual Gating
+
+For manual approval of a canary deployment you can use the `confirm-rollout` webhook. 
+The confirmation hooks are executed before the pre-rollout hooks. 
+Flagger will halt the canary traffic shifting and analysis until the confirm webhook returns HTTP status 200.
+
+Manual gating with Flagger's tester:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "gate"
+        type: confirm-rollout
+        url: http://flagger-loadtester.test/gate/halt
+```
+
+The `/gate/halt` returns HTTP 403 thus blocking the rollout.
+
+Change the URL to `/gate/approve` to start the canary analysis:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "start gate"
+        type: confirm-rollout
+        url: http://flagger-loadtester.test/gate/approve
+```
+
+Manual gating can be driven with Flagger's tester API. Set the confirmation URL to `/gate/check`:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "ask confirmation"
+        type: confirm-rollout
+        url: http://flagger-loadtester.test/gate/check
+```
+
+By default the gate is closed, you can start or resume the canary rollout with:
+
+```bash
+kubectl -n test exec -it flagger-loadtester-xxxx-xxxx sh
+
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/gate/open 
+```
+
+You can pause the rollout at any time with:
+
+```bash
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/gate/close 
+```
