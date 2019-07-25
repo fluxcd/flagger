@@ -14,13 +14,101 @@ import (
 )
 
 // ListenAndServe starts a web server and waits for SIGTERM
-func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogger, taskRunner *TaskRunner, stopCh <-chan struct{}) {
+func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogger, taskRunner *TaskRunner, gate *GateStorage, stopCh <-chan struct{}) {
 	mux := http.DefaultServeMux
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+	mux.HandleFunc("/gate/approve", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+	mux.HandleFunc("/gate/halt", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("Forbidden"))
+	})
+	mux.HandleFunc("/gate/check", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error("reading the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		canary := &flaggerv1.CanaryWebhookPayload{}
+		err = json.Unmarshal(body, canary)
+		if err != nil {
+			logger.Error("decoding the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		approved := gate.isOpen(canaryName)
+		if approved {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Approved"))
+		} else {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
+		}
+
+		logger.Infof("%s gate check: approved %v", canaryName, approved)
+	})
+
+	mux.HandleFunc("/gate/open", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error("reading the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		canary := &flaggerv1.CanaryWebhookPayload{}
+		err = json.Unmarshal(body, canary)
+		if err != nil {
+			logger.Error("decoding the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		gate.open(canaryName)
+
+		w.WriteHeader(http.StatusAccepted)
+
+		logger.Infof("%s gate opened", canaryName)
+	})
+
+	mux.HandleFunc("/gate/close", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error("reading the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		canary := &flaggerv1.CanaryWebhookPayload{}
+		err = json.Unmarshal(body, canary)
+		if err != nil {
+			logger.Error("decoding the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		gate.close(canaryName)
+
+		w.WriteHeader(http.StatusAccepted)
+
+		logger.Infof("%s gate closed", canaryName)
+	})
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {

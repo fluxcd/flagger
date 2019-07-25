@@ -236,7 +236,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.1
+podinfod=quay.io/stefanprodan/podinfo:1.7.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:

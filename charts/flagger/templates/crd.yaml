@@ -175,6 +175,7 @@ spec:
                 - ""
                 - Initializing
                 - Initialized
+                - Waiting
                 - Progressing
                 - Succeeded
                 - Failed

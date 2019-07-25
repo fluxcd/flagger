@@ -1,7 +1,7 @@
 # Default values for podinfo.
 image:
   repository: quay.io/stefanprodan/podinfo
-  tag: 1.4.0
+  tag: 1.7.0
   pullPolicy: IfNotPresent
 
 service:

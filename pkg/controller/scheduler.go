@@ -134,6 +134,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
+	// check gates
+	if isApproved := c.runConfirmRolloutHooks(cd); !isApproved {
+		return
+	}
+
 	// set max weight default value to 100%
 	maxWeight := 100
 	if cd.Spec.CanaryAnalysis.MaxWeight > 0 {
@@ -454,7 +459,10 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 }
 
 func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
-	if cd.Status.LastAppliedSpec == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing || cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
+	if cd.Status.LastAppliedSpec == "" ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseInitializing ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting {
 		return true, nil
 	}
 
@@ -521,6 +529,35 @@ func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
 		}
 	}
 	return false
+}
+
+func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary) bool {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
+		if webhook.Type == flaggerv1.ConfirmRolloutHook {
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			if err != nil {
+				if canary.Status.Phase != flaggerv1.CanaryPhaseWaiting {
+					if err := c.deployer.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaiting); err != nil {
+						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+					}
+					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for approval %s",
+						canary.Name, canary.Namespace, webhook.Name)
+					c.sendNotification(canary, "Canary is waiting for approval.", false, false)
+				}
+				return false
+			} else {
+				if canary.Status.Phase == flaggerv1.CanaryPhaseWaiting {
+					if err := c.deployer.SetStatusPhase(canary, flaggerv1.CanaryPhaseProgressing); err != nil {
+						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+						return false
+					}
+					c.recordEventInfof(canary, "Confirm-rollout check %s passed", webhook.Name)
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 func (c *Controller) runPreRolloutHooks(canary *flaggerv1.Canary) bool {
