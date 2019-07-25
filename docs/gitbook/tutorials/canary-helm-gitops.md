@@ -344,7 +344,7 @@ launch the `frontend` and `backend` apps.
 A CI/CD pipeline for the `frontend` release could look like this:
 
 * cut a release from the master branch of the podinfo code repo with the git tag `1.4.1`
-* CI builds the image and pushes the `podinfo:1.4.1` image to the container registry
+* CI builds the image and pushes the `podinfo:1.7.1` image to the container registry
 * Flux scans the registry and updates the Helm release `image.tag` to `1.4.1`
 * Flux commits and push the change to the cluster repo
 * Flux applies the updated Helm release on the cluster

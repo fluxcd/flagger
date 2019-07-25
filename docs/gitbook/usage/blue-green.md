@@ -59,8 +59,8 @@ Create a deployment and a horizontal pod autoscaler:
 ```bash
 export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
 
-kubectl apply -f ${REPO}/artifacts/canary/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/canary/hpa.yaml
+kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
+kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
 ```
 
 Deploy the load testing service to generate traffic during the analysis:
@@ -172,7 +172,7 @@ Trigger a deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.1
+podinfod=quay.io/stefanprodan/podinfo:1.7.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -297,7 +297,7 @@ Trigger a deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.3
+podinfod=quay.io/stefanprodan/podinfo:1.7.3
 ```
 
 Generate 404s:

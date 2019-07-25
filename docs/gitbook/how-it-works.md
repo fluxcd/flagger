@@ -902,6 +902,7 @@ Manual gating with Flagger's tester:
 ```
 
 The `/gate/halt` returns HTTP 403 thus blocking the rollout. 
+
 If you have notifications enabled, Flagger will post a message to Slack or MS Teams if a canary rollout is waiting for approval.
 
 Change the URL to `/gate/approve` to start the canary analysis:
@@ -936,4 +937,13 @@ You can pause the rollout at any time with:
 
 ```bash
 curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/gate/close 
+```
+
+If a canary analysis is paused the status will change to waiting:
+
+```bash
+kubectl get canary/podinfo
+
+NAME      STATUS        WEIGHT
+podinfo   Waiting       0
 ```
