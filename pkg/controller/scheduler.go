@@ -537,11 +537,12 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary) bool {
 			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
 				if canary.Status.Phase != flaggerv1.CanaryPhaseWaiting {
-					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for approval %s",
-						canary.Name, canary.Namespace, webhook.Name)
 					if err := c.deployer.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaiting); err != nil {
 						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 					}
+					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for approval %s",
+						canary.Name, canary.Namespace, webhook.Name)
+					c.sendNotification(canary, "Canary is waiting for approval.", false, false)
 				}
 				return false
 			} else {
