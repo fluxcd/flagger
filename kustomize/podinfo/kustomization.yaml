@@ -1,0 +1,5 @@
+namespace: test
+resources:
+  - hpa.yaml
+  - deployment.yaml
+
