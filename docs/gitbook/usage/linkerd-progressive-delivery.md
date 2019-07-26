@@ -11,24 +11,13 @@ Flagger requires a Kubernetes cluster **v1.11** or newer and Linkerd **2.4** or 
 Install Flagger in the linkerd namespace:
 
 ```bash
-helm repo add flagger https://flagger.app
-
-helm upgrade -i flagger flagger/flagger \
---namespace linkerd \
---set metricsServer=http://linkerd-prometheus:9090 \
---set meshProvider=linkerd
+kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd
 ```
 
-Optionally you can enable Slack notifications:
+Note that you'll need kubectl 1.14 or newer to run the above command.
 
-```bash
-helm upgrade -i flagger flagger/flagger \
---reuse-values \
---namespace linkerd \
---set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
---set slack.channel=general \
---set slack.user=flagger
-```
+To enable Slack or MS Teams notifications,
+see Flagger's [install docs](https://docs.flagger.app/install/flagger-install-on-kubernetes) for Kustomize or Helm options.
 
 ### Bootstrap
 
@@ -46,17 +35,13 @@ kubectl annotate namespace test linkerd.io/inject=enabled
 Install the load testing service to generate traffic during the canary analysis:
 
 ```bash
-helm upgrade -i flagger-loadtester flagger/loadtester \
---namespace=test
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Create a canary custom resource for the podinfo deployment:
@@ -223,7 +208,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.2
+podinfod=quay.io/stefanprodan/podinfo:1.7.2
 ```
 
 Exec into the load tester pod with:
@@ -312,7 +297,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.3
+podinfod=quay.io/stefanprodan/podinfo:1.7.3
 ```
 
 Generate 404s:
@@ -459,7 +444,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.5.0
+podinfod=quay.io/stefanprodan/podinfo:1.7.4
 ```
 
 Flagger detects that the deployment revision changed and starts the A/B testing:
