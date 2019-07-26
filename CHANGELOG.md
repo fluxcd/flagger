@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.18.0 (2019-07-26) 
+
+Adds support for [manual gating](https://docs.flagger.app/how-it-works#manual-gating)
+
+#### Features
+
+- Implement confirm rollout gate, hook and API [#251](https://github.com/weaveworks/flagger/pull/251)
+
+#### Improvements 
+
+- Refactor canary change detection and status [#240](https://github.com/weaveworks/flagger/pull/240)
+- Add gRPC load testing tool [#248](https://github.com/weaveworks/flagger/pull/248)
+
+#### Breaking changes
+
+- due to the status sub-resource changes in [#240](https://github.com/weaveworks/flagger/pull/240), when upgrading Flagger the canaries status phase will be reset to `Initialized`
+- upgrading Flagger with Helm will fail due to Helm poor support of CRDs, see [workaround](https://github.com/weaveworks/flagger/issues/223)
+
 ## 0.17.0 (2019-07-08) 
 
 Adds support for Linkerd (SMI Traffic Split API), MS Teams notifications and HA mode with leader election
