@@ -11,6 +11,12 @@ Flagger requires a Kubernetes cluster **v1.11** or newer with the following admi
 
 ### Install Flagger with Helm
 
+Install Flagger's Canary CRD:
+
+```yaml
+kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+```
+
 Add Flagger Helm repository:
 
 ```bash
@@ -22,6 +28,7 @@ Deploy Flagger for Istio:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set meshProvider=istio \
 --set metricsServer=http://prometheus:9090
 ```
@@ -31,6 +38,7 @@ Deploy Flagger for Linkerd:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=linkerd \
+--set crd.create=false \
 --set meshProvider=linkerd \
 --set metricsServer=http://linkerd-prometheus:9090
 ```
@@ -42,6 +50,7 @@ Enable **Slack** notifications:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
 --set slack.channel=general \
 --set slack.user=flagger
@@ -52,6 +61,7 @@ Enable **Microsoft Teams** notifications:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set msteams.url=https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK
 ```
 
