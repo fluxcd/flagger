@@ -135,6 +135,7 @@ kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 ### Install Flagger with Kustomize
 
 As an alternative to Helm, Flagger can be installed with Kustomize.
+Note that you'll need kubectl 1.14 or newer that comes with the Kustomize commands.
 
 **Service mesh specific installers**
 
@@ -144,7 +145,7 @@ Install Flagger for Istio:
 kubectl apply -k github.com/weaveworks/flagger/kustomize/istio
 ```
 
-This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to `http://prometheus.istio-system:9090`.
+This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to Istio's Prometheus instance.
 
 Install Flagger for Linkerd:
 
@@ -152,7 +153,7 @@ Install Flagger for Linkerd:
 kubectl apply -k github.com/weaveworks/flagger/kustomize/linkerd
 ```
 
-This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to `http://linkerd-prometheus.linkerd:9090`.
+This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
 
 **Generic installer**
 
@@ -168,7 +169,7 @@ sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` a
 The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that
 have the `prometheus.io/scrape: "true"` annotation.
 
-To target a specific provider you need to specify it in the canary custom resource:
+To target a different provider you can specify it in the canary custom resource:
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -223,3 +224,5 @@ Install Flagger with Slack:
 ```bash
 kubectl apply -k .
 ```
+
+If you want to use MS Teams instead of Slack, replace `-slack-url` with `-msteams-url` and set the webhook address to `https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK`.
