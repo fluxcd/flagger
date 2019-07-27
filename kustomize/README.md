@@ -1,7 +1,6 @@
 # Flagger Kustomize installer
 
 As an alternative to Helm, Flagger can be installed with [Kustomize](https://kustomize.io/).
-Note that you'll need kubectl 1.14 or newer that comes with the Kustomize commands.
 
 ## Service mesh specific installers
 
@@ -11,7 +10,14 @@ Install Flagger for Istio:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
 ```
 
-This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to `http://prometheus.istio-system:9090`.
+This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to Istio's Prometheus instance.
+
+Note that you'll need kubectl 1.14 to run the above the command or you can download the
+[kustomize binary](https://github.com/kubernetes-sigs/kustomize/releases) and run:
+
+```bash
+kustomize build github.com/weaveworks/flagger//kustomize/istio | kubectl apply -f -
+```
 
 Install Flagger for Linkerd:
 
@@ -19,7 +25,13 @@ Install Flagger for Linkerd:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd
 ```
 
-This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to `http://linkerd-prometheus.linkerd:9090`.
+This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
+
+If you want to install a specific Flagger release, add the version number to the URL:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd?ref=0.18.0
+```
 
 ## Generic installer
 
@@ -32,9 +44,6 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/kubernetes
 This deploys Flagger and Prometheus in the `flagger-system` namespace,
 sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` and the mesh provider to `kubernetes`.
 
-The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that
-have the `prometheus.io/scrape: "true"` annotation.
-
 To target a different provider you can specify it in the canary custom resource:
 
 ```yaml
@@ -44,10 +53,14 @@ metadata:
   name: app
   namespace: test
 spec:
-  # can be: kubernetes, appmesh, nginx, gloo
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo
   # use the kubernetes provider for Blue/Green style deployments
   provider: nginx
 ```
+
+You'll need Prometheus when using Flagger with AWS App Mesh, Gloo or NGINX ingress controller.
+The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that
+have the `prometheus.io/scrape: "true"` annotation.
 
 ## Configure Slack notifications
 
