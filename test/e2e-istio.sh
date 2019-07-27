@@ -26,9 +26,7 @@ echo '>>> Load Flagger image in Kind'
 kind load docker-image test/flagger:latest
 
 echo '>>> Installing Flagger'
-helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
---namespace istio-system \
---set meshProvider=istio
+kubectl apply -k ${REPO_ROOT}/kustomize/istio
 
 kubectl -n istio-system set image deployment/flagger flagger=test/flagger:latest
 kubectl -n istio-system rollout status deployment/flagger
