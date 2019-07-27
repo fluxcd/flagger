@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flagger
-  namespace: flagger-system
 spec:
   replicas: 1
   strategy:
