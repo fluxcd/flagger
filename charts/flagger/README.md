@@ -30,6 +30,7 @@ To install the chart with the release name `flagger` for Istio:
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=istio-system \
+    --set crd.create=false \
     --set meshProvider=istio \
     --set metricsServer=http://prometheus:9090
 ```
@@ -39,6 +40,7 @@ To install the chart with the release name `flagger` for Linkerd:
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=linkerd \
+    --set crd.create=false \
     --set meshProvider=linkerd \
     --set metricsServer=http://linkerd-prometheus:9090
 ```
@@ -88,6 +90,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 $ helm upgrade -i flagger flagger/flagger \
   --namespace istio-system \
+  --set crd.create=false \
   --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
   --set slack.channel=general
 ```

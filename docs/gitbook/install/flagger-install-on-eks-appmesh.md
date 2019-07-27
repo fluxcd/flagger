@@ -133,11 +133,18 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
+Install Flagger's Canary CRD:
+
+```yaml
+kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+```
+
 Deploy Flagger and Prometheus in the _**appmesh-system**_ namespace:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=appmesh-system \
+--set crd.create=false \
 --set meshProvider=appmesh \
 --set prometheus.install=true
 ```
@@ -150,6 +157,7 @@ You can enable **Slack** notifications with:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=appmesh-system \
+--set crd.create=false \
 --set meshProvider=appmesh \
 --set metricsServer=http://prometheus.appmesh:9090 \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \

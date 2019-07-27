@@ -11,16 +11,16 @@ Flagger requires a Kubernetes cluster **v1.11** or newer with the following admi
 
 ### Install Flagger with Helm
 
-Install Flagger's Canary CRD:
-
-```yaml
-kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
-```
-
 Add Flagger Helm repository:
 
 ```bash
 helm repo add flagger https://flagger.app
+```
+
+Install Flagger's Canary CRD:
+
+```yaml
+kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
 ```
 
 Deploy Flagger for Istio:

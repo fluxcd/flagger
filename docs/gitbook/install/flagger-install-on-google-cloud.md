@@ -354,11 +354,18 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
+Install Flagger's Canary CRD:
+
+```yaml
+kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+```
+
 Deploy Flagger in the `istio-system` namespace with Slack notifications enabled:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set metricsServer=http://prometheus.istio-system:9090 \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
 --set slack.channel=general \
