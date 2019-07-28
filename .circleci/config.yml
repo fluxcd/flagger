@@ -148,9 +148,9 @@ workflows:
       - e2e-smi-istio-testing:
           requires:
             - build-binary
-      - e2e-supergloo-testing:
-          requires:
-            - build-binary
+#      - e2e-supergloo-testing:
+#          requires:
+#            - build-binary
       - e2e-gloo-testing:
           requires:
             - build-binary
@@ -165,7 +165,7 @@ workflows:
             - build-binary
             - e2e-istio-testing
             - e2e-smi-istio-testing
-            - e2e-supergloo-testing
+            #- e2e-supergloo-testing
             - e2e-gloo-testing
             - e2e-nginx-testing
             - e2e-linkerd-testing
