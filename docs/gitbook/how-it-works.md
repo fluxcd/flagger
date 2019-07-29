@@ -142,7 +142,8 @@ status:
     type: Promoted
 ```
 
-The `Promoted` status condition can have one of the following reasons: Initialized, Waiting, Progressing, Succeeded or Failed.
+The `Promoted` status condition can have one of the following reasons:
+Initialized, Waiting, Progressing, Finalising, Succeeded or Failed.
 A failed canary will have the promoted status set to `false`,
 the reason to `failed` and the last applied spec will be different to the last promoted one.
 

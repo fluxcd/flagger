@@ -2,9 +2,9 @@
 
 All notable changes to this project are documented in this file.
 
-## 0.18.0 (2019-07-26) 
+## 0.18.0 (2019-07-29) 
 
-Adds support for [manual gating](https://docs.flagger.app/how-it-works#manual-gating)
+Adds support for [manual gating](https://docs.flagger.app/how-it-works#manual-gating) and pausing/resuming an ongoing analysis
 
 #### Features
 
@@ -13,6 +13,7 @@ Adds support for [manual gating](https://docs.flagger.app/how-it-works#manual-ga
 #### Improvements 
 
 - Refactor canary change detection and status [#240](https://github.com/weaveworks/flagger/pull/240)
+- Implement finalising state [#257](https://github.com/weaveworks/flagger/pull/257)
 - Add gRPC load testing tool [#248](https://github.com/weaveworks/flagger/pull/248)
 
 #### Breaking changes
