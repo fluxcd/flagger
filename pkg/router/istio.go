@@ -150,6 +150,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
 				Route:         canaryRoute,
+				Mirror: 	   makeMirroredDestination(canary, canaryName),
 			},
 		},
 	}
@@ -165,6 +166,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
 				Route:         canaryRoute,
+				Mirror: 	   makeMirroredDestination(canary, canaryName),
 			},
 			{
 				Match:         canary.Spec.Service.Match,
@@ -307,6 +309,7 @@ func (ir *IstioRouter) SetRoutes(
 				makeDestination(canary, primaryName, primaryWeight),
 				makeDestination(canary, canaryName, canaryWeight),
 			},
+			Mirror: 	   makeMirroredDestination(canary, canaryName),
 		},
 	}
 
@@ -326,6 +329,7 @@ func (ir *IstioRouter) SetRoutes(
 					makeDestination(canary, primaryName, primaryWeight),
 					makeDestination(canary, canaryName, canaryWeight),
 				},
+				Mirror: 	   makeMirroredDestination(canary, canaryName),
 			},
 			{
 				Match:         canary.Spec.Service.Match,
@@ -386,6 +390,21 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 	// if port discovery is enabled then we need to explicitly set the destination port
 	if canary.Spec.Service.PortDiscovery {
 		dest.Destination.Port = &istiov1alpha3.PortSelector{
+			Number: uint32(canary.Spec.Service.Port),
+		}
+	}
+
+	return dest
+}
+
+func makeMirroredDestination(canary *flaggerv1.Canary, host string) *istiov1alpha3.Destination {
+	dest := &istiov1alpha3.Destination {
+		Host: host,
+	}
+
+	// if port discovery is enabled then we need to explicitly set the destination port
+	if canary.Spec.Service.PortDiscovery {
+		dest.Port = &istiov1alpha3.PortSelector{
 			Number: uint32(canary.Spec.Service.Port),
 		}
 	}

@@ -43,7 +43,7 @@ run-linkerd:
 
 build:
 	GIT_COMMIT=$$(git rev-list -1 HEAD) && GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build  -ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=$${GIT_COMMIT}" -a -installsuffix cgo -o ./bin/flagger ./cmd/flagger/*
-	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
+	docker build -t skycmoon/flagger:$(TAG) . -f Dockerfile
 
 push:
 	docker tag weaveworks/flagger:$(TAG) weaveworks/flagger:$(VERSION)

@@ -1,9 +1,9 @@
 # Default values for flagger.
 
 image:
-  repository: weaveworks/flagger
-  tag: 0.17.0
-  pullPolicy: IfNotPresent
+  repository: skycmoon/flagger
+  tag: 0.17.1
+  pullPolicy: Always
 
 metricsServer: "http://prometheus:9090"
 
