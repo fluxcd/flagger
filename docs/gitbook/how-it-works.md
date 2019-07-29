@@ -910,7 +910,7 @@ Change the URL to `/gate/approve` to start the canary analysis:
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: "start gate"
+      - name: "gate"
         type: confirm-rollout
         url: http://flagger-loadtester.test/gate/approve
 ```
@@ -920,7 +920,7 @@ Manual gating can be driven with Flagger's tester API. Set the confirmation URL 
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: "ask confirmation"
+      - name: "ask for confirmation"
         type: confirm-rollout
         url: http://flagger-loadtester.test/gate/check
 ```
