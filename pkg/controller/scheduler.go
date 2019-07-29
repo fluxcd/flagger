@@ -214,6 +214,26 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
+	// scale canary to zero if analysis has succeeded
+	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+		if err := c.deployer.Scale(cd, 0); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+
+		// set status to succeeded
+		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
+		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
+			false, false)
+		return
+	}
+
 	// check if the number of failed checks reached the threshold
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing &&
 		(!retriable || cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold) {
@@ -319,31 +339,23 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 
-		// shutdown canary
+		// route all traffic to primary
 		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
-			// route all traffic to the primary
-			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+			primaryWeight = 100
+			canaryWeight = 0
+			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-			c.recorder.SetWeight(cd, 100, 0)
-			c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-
-			// canary scale to zero
-			if err := c.deployer.Scale(cd, 0); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
+			c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
 
 			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-			c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
-			c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
-			c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
-				false, false)
+
+			c.recordEventInfof(cd, "Routing all traffic to primary")
 			return
 		}
 
@@ -385,32 +397,23 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			}
 		}
 	} else {
-		// route all traffic back to primary
+		// route all traffic to primary
 		primaryWeight = 100
 		canaryWeight = 0
 		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
-
 		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
-		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-
-		// shutdown canary
-		if err := c.deployer.Scale(cd, 0); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
 
 		// update status phase
-		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
+		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
-		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
-		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
-		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
-			false, false)
+
+		c.recordEventInfof(cd, "Routing all traffic to primary")
+		return
 	}
 }
 
@@ -462,7 +465,8 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 	if cd.Status.LastAppliedSpec == "" ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseInitializing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting {
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true, nil
 	}
 
@@ -485,7 +489,8 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
 	c.recorder.SetStatus(cd, cd.Status.Phase)
-	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
+	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true
 	}
 
