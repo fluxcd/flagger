@@ -43,6 +43,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
     * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
     * [Integration testing](https://docs.flagger.app/how-it-works#integration-testing)
+    * [Manual gating](https://docs.flagger.app/how-it-works#manual-gating)
     * [FAQ](https://docs.flagger.app/faq)
 * Usage
     * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
@@ -56,4 +57,3 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
     * [Alerting](https://docs.flagger.app/usage/alerting)
 
 This project is sponsored by [Weaveworks](https://www.weave.works/)
-
