@@ -176,6 +176,7 @@ spec:
                 - Initialized
                 - Waiting
                 - Progressing
+                - Finalising
                 - Succeeded
                 - Failed
             canaryWeight:

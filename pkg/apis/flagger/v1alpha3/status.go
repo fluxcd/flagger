@@ -47,6 +47,8 @@ const (
 	CanaryPhaseWaiting CanaryPhase = "Waiting"
 	// CanaryPhaseProgressing means the canary analysis is underway
 	CanaryPhaseProgressing CanaryPhase = "Progressing"
+	// CanaryPhaseProgressing means the canary analysis is finished and traffic has been routed back to primary
+	CanaryPhaseFinalising CanaryPhase = "Finalising"
 	// CanaryPhaseSucceeded means the canary analysis has been successful
 	// and the canary deployment has been promoted
 	CanaryPhaseSucceeded CanaryPhase = "Succeeded"
