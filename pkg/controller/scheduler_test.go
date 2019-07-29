@@ -250,7 +250,16 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret2.Data["apiKey"])
 	}
 
+	// check finalising status
 	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// scale canary to zero
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -302,8 +311,21 @@ func TestScheduler_ABTesting(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	// promote
+	// advance
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// finalising
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// check finalising status
+	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if c.Status.Phase != v1alpha3.CanaryPhaseFinalising {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseFinalising)
+	}
 
 	// check if the container image tag was updated
 	primaryDep, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -321,7 +343,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check rollout status
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
