@@ -115,11 +115,18 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
+Install Flagger's Canary CRD:
+
+```yaml
+kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+```
+
 Deploy Flagger in the _**istio-system**_ namespace and set the service mesh provider to SuperGloo:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set metricsServer=http://prometheus.istio-system:9090 \
 --set meshProvider=supergloo:istio.supergloo-system
 ```

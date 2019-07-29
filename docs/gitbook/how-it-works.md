@@ -142,7 +142,8 @@ status:
     type: Promoted
 ```
 
-The `Promoted` status condition can have one of the following reasons: Initialized, Waiting, Progressing, Succeeded or Failed.
+The `Promoted` status condition can have one of the following reasons:
+Initialized, Waiting, Progressing, Finalising, Succeeded or Failed.
 A failed canary will have the promoted status set to `false`,
 the reason to `failed` and the last applied spec will be different to the last promoted one.
 
@@ -910,7 +911,7 @@ Change the URL to `/gate/approve` to start the canary analysis:
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: "start gate"
+      - name: "gate"
         type: confirm-rollout
         url: http://flagger-loadtester.test/gate/approve
 ```
@@ -920,7 +921,7 @@ Manual gating can be driven with Flagger's tester API. Set the confirmation URL 
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: "ask confirmation"
+      - name: "ask for confirmation"
         type: confirm-rollout
         url: http://flagger-loadtester.test/gate/check
 ```

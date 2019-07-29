@@ -1,10 +1,10 @@
 # Flagger
 
 [Flagger](https://github.com/weaveworks/flagger) is a Kubernetes operator that automates the promotion of 
-canary deployments using Istio, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
+canary deployments using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
 like HTTP requests success rate, requests average duration and pods health.
-Based on the KPIs analysis a canary is promoted or aborted and the analysis result is published to Slack.
+Based on the KPIs analysis a canary is promoted or aborted and the analysis result is published to Slack or MS Teams.
 
 ## Prerequisites
 
@@ -16,7 +16,13 @@ Based on the KPIs analysis a canary is promoted or aborted and the analysis resu
 Add Flagger Helm repository:
 
 ```console
-helm repo add flagger https://flagger.app
+$ helm repo add flagger https://flagger.app
+```
+
+Install Flagger's custom resource definitions:
+
+```console
+$ kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
 ```
 
 To install the chart with the release name `flagger` for Istio:
@@ -24,6 +30,7 @@ To install the chart with the release name `flagger` for Istio:
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=istio-system \
+    --set crd.create=false \
     --set meshProvider=istio \
     --set metricsServer=http://prometheus:9090
 ```
@@ -33,6 +40,7 @@ To install the chart with the release name `flagger` for Linkerd:
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=linkerd \
+    --set crd.create=false \
     --set meshProvider=linkerd \
     --set metricsServer=http://linkerd-prometheus:9090
 ```
@@ -82,6 +90,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 $ helm upgrade -i flagger flagger/flagger \
   --namespace istio-system \
+  --set crd.create=false \
   --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
   --set slack.channel=general
 ```

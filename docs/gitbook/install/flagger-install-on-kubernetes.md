@@ -17,11 +17,18 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
+Install Flagger's Canary CRD:
+
+```yaml
+kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+```
+
 Deploy Flagger for Istio:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set meshProvider=istio \
 --set metricsServer=http://prometheus:9090
 ```
@@ -31,6 +38,7 @@ Deploy Flagger for Linkerd:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=linkerd \
+--set crd.create=false \
 --set meshProvider=linkerd \
 --set metricsServer=http://linkerd-prometheus:9090
 ```
@@ -42,6 +50,7 @@ Enable **Slack** notifications:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
 --set slack.channel=general \
 --set slack.user=flagger
@@ -52,6 +61,7 @@ Enable **Microsoft Teams** notifications:
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=istio-system \
+--set crd.create=false \
 --set msteams.url=https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK
 ```
 
@@ -131,25 +141,38 @@ As an alternative to Helm, Flagger can be installed with Kustomize.
 Install Flagger for Istio:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger/kustomize/istio
+kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
 ```
 
-This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to `http://prometheus.istio-system:9090`.
+This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to Istio's Prometheus instance.
+
+Note that you'll need kubectl 1.14 to run the above the command or you can download the
+[kustomize binary](https://github.com/kubernetes-sigs/kustomize/releases) and run:
+
+```bash
+kustomize build github.com/weaveworks/flagger//kustomize/istio | kubectl apply -f -
+```
 
 Install Flagger for Linkerd:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger/kustomize/linkerd
+kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd
 ```
 
-This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to `http://linkerd-prometheus.linkerd:9090`.
+This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
+
+If you want to install a specific Flagger release, add the version number to the URL:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd?ref=0.18.0
+```
 
 **Generic installer**
 
 Install Flagger and Prometheus:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger/kustomize/kubernetes
+kubectl apply -k github.com/weaveworks/flagger//kustomize/kubernetes
 ```
 
 This deploys Flagger and Prometheus in the `flagger-system` namespace,
@@ -158,7 +181,7 @@ sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` a
 The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that
 have the `prometheus.io/scrape: "true"` annotation.
 
-To target a specific provider you need to specify it in the canary custom resource:
+To target a different provider you can specify it in the canary custom resource:
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -167,7 +190,7 @@ metadata:
   name: app
   namespace: test
 spec:
-  # can be: kubernetes, istio, appmesh, linkerd, smi, nginx, gloo, supergloo
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo
   # use the kubernetes provider for Blue/Green style deployments
   provider: nginx
 ```
@@ -213,3 +236,5 @@ Install Flagger with Slack:
 ```bash
 kubectl apply -k .
 ```
+
+If you want to use MS Teams instead of Slack, replace `-slack-url` with `-msteams-url` and set the webhook address to `https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK`.
