@@ -63,8 +63,9 @@ test: test-fmt test-codegen
 
 helm-package:
 	cd charts/ && helm package ./*
-	mv charts/*.tgz docs/
-	helm repo index docs --url https://weaveworks.github.io/flagger --merge ./docs/index.yaml
+	mv charts/*.tgz bin/
+	curl -s https://raw.githubusercontent.com/weaveworks/flagger/gh-pages/index.yaml > ./bin/index.yaml
+	helm repo index bin --url https://flagger.app --merge ./bin/index.yaml
 
 helm-up:
 	helm upgrade --install flagger ./charts/flagger --namespace=istio-system --set crd.create=false
