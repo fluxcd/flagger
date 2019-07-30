@@ -614,8 +614,8 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	if r.Spec.Provider != "" {
 		metricsProvider = r.Spec.Provider
 
-		// set the metrics provider to Linkerd Prometheus when using NGINX as Linkerd Ingress
-		if r.Spec.Provider == "nginx" && strings.Contains(c.meshProvider, "linkerd") {
+		// set the metrics server to Linkerd Prometheus when Linkerd is the default mesh provider
+		if strings.Contains(c.meshProvider, "linkerd") {
 			metricsProvider = "linkerd"
 		}
 	}
