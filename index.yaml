@@ -2,8 +2,35 @@ apiVersion: v1
 entries:
   flagger:
   - apiVersion: v1
+    appVersion: 0.18.1
+    created: 2019-07-30T10:53:53.691345268Z
+    description: Flagger is a Kubernetes operator that automates the promotion of
+      canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
+      traffic shifting and Prometheus metrics for canary analysis.
+    digest: 07abf112df2f51f97e0435faecbb1e28bd14a846a54148e5e43d15a94632368f
+    engine: gotpl
+    home: https://docs.flagger.app
+    icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
+    keywords:
+    - canary
+    - istio
+    - appmesh
+    - linkerd
+    - gitops
+    kubeVersion: '>=1.11.0-0'
+    maintainers:
+    - email: stefanprodan@users.noreply.github.com
+      name: stefanprodan
+      url: https://github.com/stefanprodan
+    name: flagger
+    sources:
+    - https://github.com/weaveworks/flagger
+    urls:
+    - https://flagger.app/flagger-0.18.1.tgz
+    version: 0.18.1
+  - apiVersion: v1
     appVersion: 0.18.0
-    created: 2019-07-29T16:33:54.00571+03:00
+    created: 2019-07-30T10:53:53.688043949Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -26,11 +53,11 @@ entries:
     sources:
     - https://github.com/weaveworks/flagger
     urls:
-    - https://weaveworks.github.io/flagger/flagger-0.18.0.tgz
+    - https://flagger.app/flagger-0.18.0.tgz
     version: 0.18.0
   - apiVersion: v1
     appVersion: 0.17.0
-    created: 2019-07-10T06:09:56.971414426Z
+    created: 2019-07-30T10:53:53.68678788Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -56,7 +83,7 @@ entries:
     version: 0.17.0
   - apiVersion: v1
     appVersion: 0.16.0
-    created: 2019-07-10T06:09:56.970603402Z
+    created: 2019-07-30T10:53:53.685702278Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -82,7 +109,7 @@ entries:
     version: 0.16.0
   - apiVersion: v1
     appVersion: 0.15.0
-    created: 2019-07-10T06:09:56.9699742Z
+    created: 2019-07-30T10:53:53.684706991Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -108,7 +135,7 @@ entries:
     version: 0.15.0
   - apiVersion: v1
     appVersion: 0.14.1
-    created: 2019-07-10T06:09:56.969201971Z
+    created: 2019-07-30T10:53:53.683815995Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -134,7 +161,7 @@ entries:
     version: 0.14.1
   - apiVersion: v1
     appVersion: 0.14.0
-    created: 2019-07-10T06:09:56.966094213Z
+    created: 2019-07-30T10:53:53.682939444Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -160,7 +187,7 @@ entries:
     version: 0.14.0
   - apiVersion: v1
     appVersion: 0.13.2
-    created: 2019-07-10T06:09:56.965130243Z
+    created: 2019-07-30T10:53:53.681193279Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -186,7 +213,7 @@ entries:
     version: 0.13.2
   - apiVersion: v1
     appVersion: 0.13.1
-    created: 2019-07-10T06:09:56.96426234Z
+    created: 2019-07-30T10:53:53.680017989Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -212,7 +239,7 @@ entries:
     version: 0.13.1
   - apiVersion: v1
     appVersion: 0.13.0
-    created: 2019-07-10T06:09:56.963143758Z
+    created: 2019-07-30T10:53:53.678821528Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -238,7 +265,7 @@ entries:
     version: 0.13.0
   - apiVersion: v1
     appVersion: 0.12.0
-    created: 2019-07-10T06:09:56.962189942Z
+    created: 2019-07-30T10:53:53.677496384Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -264,7 +291,7 @@ entries:
     version: 0.12.0
   - apiVersion: v1
     appVersion: 0.11.1
-    created: 2019-07-10T06:09:56.961586215Z
+    created: 2019-07-30T10:53:53.677029219Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -290,7 +317,7 @@ entries:
     version: 0.11.1
   - apiVersion: v1
     appVersion: 0.11.0
-    created: 2019-07-10T06:09:56.960678499Z
+    created: 2019-07-30T10:53:53.676447281Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -316,7 +343,7 @@ entries:
     version: 0.11.0
   - apiVersion: v1
     appVersion: 0.10.0
-    created: 2019-07-10T06:09:56.960097634Z
+    created: 2019-07-30T10:53:53.675942956Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -342,7 +369,7 @@ entries:
     version: 0.10.0
   - apiVersion: v1
     appVersion: 0.9.0
-    created: 2019-07-10T06:09:56.976589561Z
+    created: 2019-07-30T10:53:53.697220035Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -367,7 +394,7 @@ entries:
     version: 0.9.0
   - apiVersion: v1
     appVersion: 0.8.0
-    created: 2019-07-10T06:09:56.976021898Z
+    created: 2019-07-30T10:53:53.696743348Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -392,7 +419,7 @@ entries:
     version: 0.8.0
   - apiVersion: v1
     appVersion: 0.7.0
-    created: 2019-07-10T06:09:56.975550609Z
+    created: 2019-07-30T10:53:53.696064464Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -417,7 +444,7 @@ entries:
     version: 0.7.0
   - apiVersion: v1
     appVersion: 0.6.0
-    created: 2019-07-10T06:09:56.975074904Z
+    created: 2019-07-30T10:53:53.695127701Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -442,7 +469,7 @@ entries:
     version: 0.6.0
   - apiVersion: v1
     appVersion: 0.5.1
-    created: 2019-07-10T06:09:56.974509965Z
+    created: 2019-07-30T10:53:53.694537313Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -467,7 +494,7 @@ entries:
     version: 0.5.1
   - apiVersion: v1
     appVersion: 0.5.0
-    created: 2019-07-10T06:09:56.974032652Z
+    created: 2019-07-30T10:53:53.694038473Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -492,7 +519,7 @@ entries:
     version: 0.5.0
   - apiVersion: v1
     appVersion: 0.4.1
-    created: 2019-07-10T06:09:56.97344518Z
+    created: 2019-07-30T10:53:53.693470692Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -517,7 +544,7 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: 0.4.0
-    created: 2019-07-10T06:09:56.972954142Z
+    created: 2019-07-30T10:53:53.692922528Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -542,7 +569,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.0
-    created: 2019-07-10T06:09:56.972495579Z
+    created: 2019-07-30T10:53:53.692442939Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -567,7 +594,7 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: 0.2.0
-    created: 2019-07-10T06:09:56.97193302Z
+    created: 2019-07-30T10:53:53.691822669Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -592,7 +619,7 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: 0.1.2
-    created: 2019-07-10T06:09:56.959190305Z
+    created: 2019-07-30T10:53:53.675466281Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -617,7 +644,7 @@ entries:
     version: 0.1.2
   - apiVersion: v1
     appVersion: 0.1.1
-    created: 2019-07-10T06:09:56.957910227Z
+    created: 2019-07-30T10:53:53.674878396Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -629,7 +656,7 @@ entries:
     version: 0.1.1
   - apiVersion: v1
     appVersion: 0.1.0
-    created: 2019-07-10T06:09:56.957175937Z
+    created: 2019-07-30T10:53:53.674474868Z
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -642,9 +669,9 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 6.2.5
-    created: 2019-07-29T16:33:54.006179+03:00
+    created: 2019-07-30T10:53:53.701484242Z
     description: Grafana dashboards for monitoring Flagger canary deployments
-    digest: 7acf17050fdc03ae378840b37e5a7a5cda9aac035bb41d68586fbfb8c16c3fd2
+    digest: b27ad4f76cf1c47b5359e4a0836efba5955f5cb3d7fa26571fef3c552a696e85
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     maintainers:
@@ -655,11 +682,11 @@ entries:
     sources:
     - https://github.com/weaveworks/flagger
     urls:
-    - https://weaveworks.github.io/flagger/grafana-1.3.0.tgz
+    - https://flagger.app/grafana-1.3.0.tgz
     version: 1.3.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: 2019-07-10T06:09:56.980927181Z
+    created: 2019-07-30T10:53:53.700220441Z
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: c606069b2cba30ea678c7307b8f2b2ac519dd7703c60b7bbe8ebab5c9ace85a2
     home: https://flagger.app
@@ -676,7 +703,7 @@ entries:
     version: 1.2.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: 2019-07-10T06:09:56.979657775Z
+    created: 2019-07-30T10:53:53.699517968Z
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: eda4890ea293bfb3eb7518e43ce18ed43cfaec2fd69271e08f9d3bcf13317b17
     home: https://flagger.app
@@ -693,7 +720,7 @@ entries:
     version: 1.1.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: 2019-07-10T06:09:56.978465336Z
+    created: 2019-07-30T10:53:53.698699297Z
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: a8621dfffcc7ca4c6b9d3f05f61ae3ef79c98f32178f6ceb49a43f0b6e80394f
     home: https://flagger.app
@@ -710,7 +737,7 @@ entries:
     version: 1.0.0
   - apiVersion: v1
     appVersion: 5.4.2
-    created: 2019-07-10T06:09:56.977258886Z
+    created: 2019-07-30T10:53:53.697962677Z
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: 289790edf70df4c430e76bda76ad981586a40868131e88e057f37ace4986fe3a
     home: https://flagger.app
@@ -728,10 +755,10 @@ entries:
   loadtester:
   - apiVersion: v1
     appVersion: 0.6.1
-    created: 2019-07-29T16:33:54.006494+03:00
+    created: 2019-07-30T10:53:53.706383428Z
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
-    digest: 028c8394eae1dd069061891e2201fa8be0cf398ffecc0ec6e38e1bddefb7a50c
+    digest: 36026d427a49d5116012c7f7ba59e2928b0ea4080de2be2663bafb1e6aba9972
     engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
@@ -750,11 +777,11 @@ entries:
     sources:
     - https://github.com/weaveworks/flagger
     urls:
-    - https://weaveworks.github.io/flagger/loadtester-0.6.0.tgz
+    - https://flagger.app/loadtester-0.6.0.tgz
     version: 0.6.0
   - apiVersion: v1
     appVersion: 0.4.0
-    created: 2019-07-10T06:09:56.985689825Z
+    created: 2019-07-30T10:53:53.705590847Z
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: e095da590d5eac6c451a0317229cd14b276d200cb4f9aa4f6148c7f3806243a4
@@ -780,7 +807,7 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: 0.3.0
-    created: 2019-07-10T06:09:56.98502433Z
+    created: 2019-07-30T10:53:53.704753246Z
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: c8610a6711fe76ac5d432899dbe1ab1d3663d6ba11954db556b13256cbff1bad
@@ -806,7 +833,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.0
-    created: 2019-07-10T06:09:56.984285899Z
+    created: 2019-07-30T10:53:53.703988138Z
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: 332815fa9fdbae111a07ef5681fef53d156d3a84a35df7a924b2584e9efbc626
@@ -832,7 +859,7 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: 0.2.0
-    created: 2019-07-10T06:09:56.98374865Z
+    created: 2019-07-30T10:53:53.703096009Z
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: d63c6e7a2d97bd6f2601386f4c0d9b266c01ac33a8a662079cb02fb14565821d
@@ -858,7 +885,7 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: 0.1.0
-    created: 2019-07-10T06:09:56.982946806Z
+    created: 2019-07-30T10:53:53.702403887Z
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: 0399b3841c7db1aefd77f3f31aa4a5a6c020869fff45b31d0f49023b6b267272
@@ -884,9 +911,9 @@ entries:
   podinfo:
   - apiVersion: v1
     appVersion: 1.7.0
-    created: 2019-07-29T16:33:54.006831+03:00
+    created: 2019-07-30T10:53:53.712799384Z
     description: Flagger canary deployment demo chart
-    digest: 05d0b35fa149b24ea2956d88f5940615b81e321ec895db50d7176c5dbafc616e
+    digest: afeacbaacd9ead5e9f356c4a7e26794633286470c00db455cb1fc32bec9b03ea
     engine: gotpl
     home: https://github.com/weaveworks/flagger
     maintainers:
@@ -896,11 +923,11 @@ entries:
     sources:
     - https://github.com/weaveworks/flagger
     urls:
-    - https://weaveworks.github.io/flagger/podinfo-2.3.0.tgz
+    - https://flagger.app/podinfo-2.3.0.tgz
     version: 2.3.0
   - apiVersion: v1
     appVersion: 1.4.0
-    created: 2019-07-10T06:09:56.991156133Z
+    created: 2019-07-30T10:53:53.71233994Z
     description: Flagger canary deployment demo chart
     digest: fc2f4a6f00f9b822ac5108b91fb54abbb4ded6cf998486750da0bbef14288f51
     engine: gotpl
@@ -916,7 +943,7 @@ entries:
     version: 2.2.0
   - apiVersion: v1
     appVersion: 1.4.0
-    created: 2019-07-10T06:09:56.990630837Z
+    created: 2019-07-30T10:53:53.711858041Z
     description: Flagger canary deployment demo chart
     digest: 36a8fee862ce8e831aa715132ba25a632c834e4683e184cd6230c880c226d48b
     engine: gotpl
@@ -932,7 +959,7 @@ entries:
     version: 2.1.0
   - apiVersion: v1
     appVersion: 1.4.0
-    created: 2019-07-10T06:09:56.987117131Z
+    created: 2019-07-30T10:53:53.70806801Z
     description: Flagger canary deployment demo chart
     digest: 2bfbdd205ccd042a1e24f934908b9204b4cf787f7da9dcbd351d2a2a00c6d57e
     engine: gotpl
@@ -948,7 +975,7 @@ entries:
     version: 2.0.1
   - apiVersion: v1
     appVersion: 1.4.0
-    created: 2019-07-10T06:09:56.986412872Z
+    created: 2019-07-30T10:53:53.707278148Z
     description: Flagger canary deployment demo chart
     digest: 56b1ca6a1991c290f2c9c0138a901bcbd664bd46e0e48043961b7cfb2a6ecf76
     engine: gotpl
@@ -962,4 +989,4 @@ entries:
     urls:
     - https://flagger.app/podinfo-2.0.0.tgz
     version: 2.0.0
-generated: 2019-07-29T16:33:54.004774+03:00
+generated: 2019-07-30T10:53:53.673755861Z
