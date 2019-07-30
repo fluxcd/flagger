@@ -28,6 +28,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &HttpObserver{
 			client: factory.Client,
 		}
+	case provider == "kubernetes":
+		return &HttpObserver{
+			client: factory.Client,
+		}
 	case provider == "appmesh":
 		return &EnvoyObserver{
 			client: factory.Client,
