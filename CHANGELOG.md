@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.18.1 (2019-07-30) 
+
+Fixes Blue/Green style deployments for Kubernetes and Linkerd providers
+
+#### Fixes
+
+- Fix Blue/Green metrics provider and add e2e tests [#261](https://github.com/weaveworks/flagger/pull/261)
+
 ## 0.18.0 (2019-07-29) 
 
 Adds support for [manual gating](https://docs.flagger.app/how-it-works#manual-gating) and pausing/resuming an ongoing analysis
