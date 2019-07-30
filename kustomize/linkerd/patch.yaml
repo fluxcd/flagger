@@ -8,6 +8,7 @@ spec:
       containers:
         - name: flagger
           args:
+            - -log-level=info
             - -mesh-provider=linkerd
             - -metrics-server=http://linkerd-prometheus:9090
             - -slack-user=flagger
