@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
@@ -9,7 +10,6 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
@@ -236,7 +236,7 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 ) {
 	targetName := canary.Spec.TargetRef.Name
 	vs := &istiov1alpha3.VirtualService{}
-	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, v1.GetOptions{})
+	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			err = fmt.Errorf("VirtualService %s.%s not found", targetName, canary.Namespace)
@@ -283,7 +283,7 @@ func (ir *IstioRouter) SetRoutes(
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryName := fmt.Sprintf("%s-canary", targetName)
 
-	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, v1.GetOptions{})
+	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("VirtualService %s.%s not found", targetName, canary.Namespace)
@@ -381,13 +381,6 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 			Host: host,
 		},
 		Weight: weight,
-	}
-
-	// if port discovery is enabled then we need to explicitly set the destination port
-	if canary.Spec.Service.PortDiscovery {
-		dest.Destination.Port = &istiov1alpha3.PortSelector{
-			Number: uint32(canary.Spec.Service.Port),
-		}
 	}
 
 	return dest
