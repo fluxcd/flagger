@@ -32,6 +32,10 @@ spec:
                     app.kubernetes.io/name: {{ template "flagger.name" . }}
                     app.kubernetes.io/instance: {{ .Release.Name }}
                 topologyKey: kubernetes.io/hostname
+      {{- if .Values.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecret }}
+      {{- end }}
       containers:
         - name: flagger
           securityContext:
