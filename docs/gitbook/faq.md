@@ -232,8 +232,7 @@ spec:
         mode: ISTIO_MUTUAL
 ```
 
-Both port `8080` and `9090` will be added to the ClusterIP services but the virtual service
-will point to the port specified in `spec.service.port`.
+Both port `8080` and `9090` will be added to the ClusterIP services.
 
 ### Label selectors
 

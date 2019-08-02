@@ -20,6 +20,7 @@ spec:
     metadata:
       annotations:
         prometheus.io/scrape: "true"
+        prometheus.io/port: "9797"
       labels:
         app: podinfo
     spec:
@@ -31,9 +32,13 @@ spec:
         - containerPort: 9898
           name: http
           protocol: TCP
+        - containerPort: 9797
+          name: http-prom
+          protocol: TCP
         command:
         - ./podinfo
         - --port=9898
+        - --port-metrics=9797
         - --level=info
         - --random-delay=false
         - --random-error=false
