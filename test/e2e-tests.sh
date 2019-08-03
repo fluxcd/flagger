@@ -33,6 +33,7 @@ spec:
   progressDeadlineSeconds: 60
   service:
     port: 9898
+    portDiscovery: true
     headers:
       request:
         add:
@@ -142,6 +143,7 @@ spec:
     name: podinfo
   progressDeadlineSeconds: 60
   service:
+    portDiscovery: true
     port: 9898
   canaryAnalysis:
     interval: 10s
