@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.18.2 (2019-08-05) 
+
+Fixes multi-port support for Istio
+
+#### Fixes
+
+- Fix port discovery for multiple port services [#267](https://github.com/weaveworks/flagger/pull/267)
+
+#### Improvements 
+
+- Update e2e testing to Istio v1.2.3, Gloo v0.18.8 and NGINX ingress chart v1.12.1 [#268](https://github.com/weaveworks/flagger/pull/268)
+
 ## 0.18.1 (2019-07-30) 
 
 Fixes Blue/Green style deployments for Kubernetes and Linkerd providers
@@ -26,8 +38,8 @@ Adds support for [manual gating](https://docs.flagger.app/how-it-works#manual-ga
 
 #### Breaking changes
 
-- due to the status sub-resource changes in [#240](https://github.com/weaveworks/flagger/pull/240), when upgrading Flagger the canaries status phase will be reset to `Initialized`
-- upgrading Flagger with Helm will fail due to Helm poor support of CRDs, see [workaround](https://github.com/weaveworks/flagger/issues/223)
+- Due to the status sub-resource changes in [#240](https://github.com/weaveworks/flagger/pull/240), when upgrading Flagger the canaries status phase will be reset to `Initialized`
+- Upgrading Flagger with Helm will fail due to Helm poor support of CRDs, see [workaround](https://github.com/weaveworks/flagger/issues/223)
 
 ## 0.17.0 (2019-07-08) 
 
