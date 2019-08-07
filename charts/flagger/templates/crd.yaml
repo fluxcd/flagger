@@ -47,10 +47,13 @@ spec:
             - canaryAnalysis
           properties:
             provider:
+              description: Traffic managent provider
               type: string
             progressDeadlineSeconds:
+              description: Deployment progress deadline
               type: number
             targetRef:
+              description: Deployment selector
               type: object
               required: ['apiVersion', 'kind', 'name']
               properties:
@@ -61,6 +64,7 @@ spec:
                 name:
                   type: string
             autoscalerRef:
+              description: HPA selector
               anyOf:
                 - type: string
                 - type: object
@@ -73,6 +77,7 @@ spec:
                 name:
                   type: string
             ingressRef:
+              description: NGINX ingress selector
               anyOf:
                 - type: string
                 - type: object
@@ -89,15 +94,60 @@ spec:
               required: ['port']
               properties:
                 port:
+                  description: Container port number
                   type: number
                 portName:
+                  description: Container port name
                   type: string
                 portDiscovery:
+                  description: Enable port dicovery
                   type: boolean
                 meshName:
+                  description: AppMesh mesh name
                   type: string
+                backends:
+                  description: AppMesh backend array
+                  anyOf:
+                    - type: string
+                    - type: object
                 timeout:
+                  description: Istio HTTP or gRPC request timeout
                   type: string
+                trafficPolicy:
+                  description: Istio traffic policy
+                  anyOf:
+                    - type: string
+                    - type: object
+                match:
+                  description: Istio URL match conditions
+                  anyOf:
+                    - type: string
+                    - type: array
+                rewrite:
+                  description: Istio URL rewrite
+                  anyOf:
+                    - type: string
+                    - type: object
+                headers:
+                  description: Istio headers operations
+                  anyOf:
+                    - type: string
+                    - type: object
+                corsPolicy:
+                  description: Istio CORS policy
+                  anyOf:
+                    - type: string
+                    - type: object
+                gateways:
+                  description: Istio gateways list
+                  anyOf:
+                    - type: string
+                    - type: array
+                hosts:
+                  description: Istio hosts list
+                  anyOf:
+                    - type: string
+                    - type: array
             skipAnalysis:
               type: boolean
             canaryAnalysis:
@@ -118,6 +168,11 @@ spec:
                 stepWeight:
                   description: Canary incremental traffic percentage step
                   type: number
+                match:
+                  description: A/B testing match conditions
+                  anyOf:
+                    - type: string
+                    - type: array
                 metrics:
                   description: Prometheus query list for this canary
                   type: array
@@ -155,6 +210,7 @@ spec:
                           type: string
                           enum:
                             - ""
+                            - confirm-rollout
                             - pre-rollout
                             - rollout
                             - post-rollout
@@ -166,6 +222,11 @@ spec:
                           description: Request timeout for this webhook
                           type: string
                           pattern: "^[0-9]+(m|s)"
+                        metadata:
+                          description: Metadata (key-value pairs) for this webhook
+                          anyOf:
+                            - type: string
+                            - type: object
         status:
           properties:
             phase:

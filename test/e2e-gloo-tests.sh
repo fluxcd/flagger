@@ -45,6 +45,7 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  provider: gloo
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
@@ -62,12 +63,22 @@ spec:
       threshold: 99
       interval: 1m
     webhooks:
+      - name: "gate"
+        type: confirm-rollout
+        url: http://flagger-loadtester.test/gate/approve
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 10s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 -host app.example.com http://gateway-proxy.gloo-system"
+          cmd: "hey -z 2m -q 5 -c 2 -host app.example.com http://gateway-proxy-v2.gloo-system"
           logCmdOutput: "true"
 EOF
 
@@ -103,7 +114,9 @@ until ${ok}; do
     if [[ ${count} -eq ${retries} ]]; then
         kubectl -n test describe deployment/podinfo
         kubectl -n test describe deployment/podinfo-primary
+        kubectl -n test logs deployment/flagger-loadtester
         kubectl -n gloo-system logs deployment/flagger
+        kubectl -n gloo-system get all
         kubectl -n gloo-system get virtualservice podinfo -oyaml
         echo "No more retries left"
         exit 1
