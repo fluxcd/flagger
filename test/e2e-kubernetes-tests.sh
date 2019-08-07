@@ -46,6 +46,16 @@ spec:
       threshold: 500
       interval: 30s
     webhooks:
+      - name: "gate"
+        type: confirm-rollout
+        url: http://flagger-loadtester.test/gate/approve
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 10s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
