@@ -102,13 +102,18 @@ type VirtualServiceSpec struct {
 	Routes []Route `json:"routes,omitempty"`
 }
 
+// VirtualRouter is the spec for a VirtualRouter resource
 type VirtualRouter struct {
-	Name string `json:"name"`
+	Name      string     `json:"name"`
+	Listeners []Listener `json:"listeners,omitempty"`
 }
 
 type Route struct {
-	Name string    `json:"name"`
-	Http HttpRoute `json:"http"`
+	Name string `json:"name"`
+	// +optional
+	Http *HttpRoute `json:"http,omitempty"`
+	// +optional
+	Tcp *TcpRoute `json:"tcp,omitempty"`
 }
 
 type HttpRoute struct {
@@ -121,6 +126,14 @@ type HttpRouteMatch struct {
 }
 
 type HttpRouteAction struct {
+	WeightedTargets []WeightedTarget `json:"weightedTargets"`
+}
+
+type TcpRoute struct {
+	Action TcpRouteAction `json:"action"`
+}
+
+type TcpRouteAction struct {
 	WeightedTargets []WeightedTarget `json:"weightedTargets"`
 }
 
@@ -203,6 +216,8 @@ type VirtualNodeSpec struct {
 	ServiceDiscovery *ServiceDiscovery `json:"serviceDiscovery,omitempty"`
 	// +optional
 	Backends []Backend `json:"backends,omitempty"`
+	// +optional
+	Logging *Logging `json:"logging,omitempty"`
 }
 
 type Listener struct {
@@ -235,6 +250,21 @@ type Backend struct {
 
 type VirtualServiceBackend struct {
 	VirtualServiceName string `json:"virtualServiceName"`
+}
+
+// Logging refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Logging.html
+type Logging struct {
+	AccessLog *AccessLog `json:"accessLog"`
+}
+
+// AccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AccessLog.html
+type AccessLog struct {
+	File *FileAccessLog `json:"file"`
+}
+
+// FileAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html
+type FileAccessLog struct {
+	Path string `json:"path"`
 }
 
 // VirtualNodeStatus is the status for a VirtualNode resource

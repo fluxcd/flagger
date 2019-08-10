@@ -169,7 +169,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		Routes: []AppmeshV1beta1.Route{
 			{
 				Name: fmt.Sprintf("%s-route", targetName),
-				Http: AppmeshV1beta1.HttpRoute{
+				Http: &AppmeshV1beta1.HttpRoute{
 					Match: AppmeshV1beta1.HttpRouteMatch{
 						Prefix: routePrefix,
 					},
