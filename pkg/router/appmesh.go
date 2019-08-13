@@ -165,11 +165,19 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		MeshName: canary.Spec.Service.MeshName,
 		VirtualRouter: &AppmeshV1beta1.VirtualRouter{
 			Name: fmt.Sprintf("%s-router", targetName),
+			Listeners: []AppmeshV1beta1.Listener{
+				{
+					PortMapping: AppmeshV1beta1.PortMapping{
+						Port:     int64(canary.Spec.Service.Port),
+						Protocol: "http",
+					},
+				},
+			},
 		},
 		Routes: []AppmeshV1beta1.Route{
 			{
 				Name: fmt.Sprintf("%s-route", targetName),
-				Http: AppmeshV1beta1.HttpRoute{
+				Http: &AppmeshV1beta1.HttpRoute{
 					Match: AppmeshV1beta1.HttpRouteMatch{
 						Prefix: routePrefix,
 					},
