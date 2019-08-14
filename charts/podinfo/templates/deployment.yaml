@@ -24,7 +24,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 30
       containers:
-        - name: {{ .Chart.Name }}
+        - name: podinfo
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:

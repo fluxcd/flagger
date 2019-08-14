@@ -79,8 +79,15 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
-    # generate traffic during analysis
+    # testing (optional)
     webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
@@ -93,6 +100,9 @@ Save the above resource as podinfo-canary.yaml and then apply it:
 ```bash
 kubectl apply -f ./podinfo-canary.yaml
 ```
+
+When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
+The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
 
 After a couple of seconds Flagger will create the canary objects:
 
@@ -119,7 +129,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.1
+podinfod=stefanprodan/podinfo:2.0.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -169,14 +179,17 @@ prod        backend   Failed        0        2019-01-14T17:05:07Z
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
 
-Create a tester pod and exec into it:
+Trigger another canary deployment:
 
 ```bash
-kubectl -n test run tester \
---image=quay.io/stefanprodan/podinfo:1.2.1 \
--- ./podinfo --port=9898
+kubectl -n test set image deployment/podinfo \
+podinfod=stefanprodan/podinfo:2.0.2
+```
 
-kubectl -n test exec -it tester-xx-xx sh
+Exec into the load tester pod with:
+
+```bash
+kubectl -n test exec -it flagger-loadtester-xx-xx sh
 ```
 
 Generate HTTP 500 errors:
@@ -216,4 +229,3 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
-

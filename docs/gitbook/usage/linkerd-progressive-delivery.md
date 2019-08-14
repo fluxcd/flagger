@@ -150,7 +150,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.1
+podinfod=stefanprodan/podinfo:2.0.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -208,7 +208,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.2
+podinfod=stefanprodan/podinfo:2.0.2
 ```
 
 Exec into the load tester pod with:
@@ -297,7 +297,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.3
+podinfod=stefanprodan/podinfo:2.0.3
 ```
 
 Generate 404s:
@@ -444,7 +444,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.4
+podinfod=stefanprodan/podinfo:2.0.4
 ```
 
 Flagger detects that the deployment revision changed and starts the A/B testing:

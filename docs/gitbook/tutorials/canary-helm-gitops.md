@@ -138,7 +138,7 @@ helm upgrade -i frontend flagger/podinfo/ \
 --reuse-values \
 --set canary.loadtest.enabled=true \
 --set canary.helmtest.enabled=true \
---set image.tag=1.7.1
+--set image.tag=2.0.1
 ```
 
 Flagger detects that the deployment revision changed and starts the canary analysis:
@@ -283,17 +283,17 @@ metadata:
   namespace: test
   annotations:
     flux.weave.works/automated: "true"
-    flux.weave.works/tag.chart-image: semver:~1.7
+    flux.weave.works/tag.chart-image: semver:~2.0
 spec:
   releaseName: frontend
   chart:
-    repository: https://stefanprodan.github.io/flagger/
-    name: podinfo
-    version: 2.3.0
+    git: https://github.com/weaveowrks/flagger
+    ref: master
+    path: charts/podinfo
   values:
     image:
-      repository: quay.io/stefanprodan/podinfo
-      tag: 1.7.0
+      repository: stefanprodan/podinfo
+      tag: 2.0.0
       backend: http://backend-podinfo:9898/echo
       canary:
         enabled: true
@@ -311,26 +311,26 @@ In the `chart` section I've defined the release source by specifying the Helm re
 In the `values` section I've overwritten the defaults set in values.yaml.
 
 With the `flux.weave.works` annotations I instruct Flux to automate this release. 
-When an image tag in the sem ver range of `1.7.0 - 1.7.99` is pushed to Quay, 
+When an image tag in the sem ver range of `2.0.0 - 2.0.99` is pushed to Quay, 
 Flux will upgrade the Helm release and from there Flagger will pick up the change and start a canary deployment.
 
 Install [Weave Flux](https://github.com/weaveworks/flux) and its Helm Operator by specifying your Git repo URL:
 
 ```bash
-helm repo add weaveworks https://weaveworks.github.io/flux
+helm repo add fluxcd https://charts.fluxcd.io
 
 helm install --name flux \
 --set helmOperator.create=true \
 --set helmOperator.createCRD=true \
 --set git.url=git@github.com:<USERNAME>/<REPOSITORY> \
---namespace flux \
-weaveworks/flux
+--namespace fluxcd \
+fluxcd/flux
 ```
 
 At startup Flux generates a SSH key and logs the public key. Find the SSH public key with:
 
 ```bash
-kubectl -n flux logs deployment/flux | grep identity.pub | cut -d '"' -f2
+kubectl -n fluxcd logs deployment/flux | grep identity.pub | cut -d '"' -f2
 ```
 
 In order to sync your cluster state with Git you need to copy the public key and create a 
@@ -344,9 +344,9 @@ launch the `frontend` and `backend` apps.
 
 A CI/CD pipeline for the `frontend` release could look like this:
 
-* cut a release from the master branch of the podinfo code repo with the git tag `1.7.1`
-* CI builds the image and pushes the `podinfo:1.7.1` image to the container registry
-* Flux scans the registry and updates the Helm release `image.tag` to `1.7.1`
+* cut a release from the master branch of the podinfo code repo with the git tag `2.0.1`
+* CI builds the image and pushes the `podinfo:2.0.1` image to the container registry
+* Flux scans the registry and updates the Helm release `image.tag` to `2.0.1`
 * Flux commits and push the change to the cluster repo
 * Flux applies the updated Helm release on the cluster
 * Flux Helm Operator picks up the change and calls Tiller to upgrade the release
@@ -356,7 +356,7 @@ A CI/CD pipeline for the `frontend` release could look like this:
 * Based on the analysis result the canary deployment is promoted to production or rolled back
 * Flagger sends a Slack notification with the canary result
 
-If the canary fails, fix the bug, do another patch release eg `1.7.2` and the whole process will run again.
+If the canary fails, fix the bug, do another patch release eg `2.0.2` and the whole process will run again.
 
 A canary deployment can fail due to any of the following reasons:
 
