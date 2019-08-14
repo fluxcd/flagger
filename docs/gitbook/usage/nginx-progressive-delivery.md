@@ -104,6 +104,7 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  provider: nginx
   # deployment reference
   targetRef:
     apiVersion: apps/v1

@@ -103,6 +103,7 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  provider: gloo
   # deployment reference
   targetRef:
     apiVersion: apps/v1
