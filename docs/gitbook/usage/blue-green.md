@@ -172,7 +172,7 @@ Trigger a deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.1
+podinfod=stefanprodan/podinfo:2.0.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -297,7 +297,7 @@ Trigger a deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.3
+podinfod=stefanprodan/podinfo:2.0.3
 ```
 
 Generate 404s:

@@ -104,6 +104,7 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  provider: nginx
   # deployment reference
   targetRef:
     apiVersion: apps/v1
@@ -189,7 +190,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.7.1
+podinfod=stefanprodan/podinfo:2.0.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -243,7 +244,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.2
+podinfod=stefanprodan/podinfo:2.0.2
 ```
 
 Generate HTTP 500 errors:
@@ -313,7 +314,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.4.3
+podinfod=stefanprodan/podinfo:2.0.3
 ```
 
 Generate high response latency:
@@ -387,7 +388,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=quay.io/stefanprodan/podinfo:1.5.0
+podinfod=stefanprodan/podinfo:2.0.4
 ```
 
 Flagger detects that the deployment revision changed and starts the A/B testing:
