@@ -1,7 +1,0 @@
-namespace: test
-resources:
-  - service.yaml
-  - deployment.yaml
-images:
-  - name: weaveworks/flagger-loadtester
-    newTag: 0.6.1

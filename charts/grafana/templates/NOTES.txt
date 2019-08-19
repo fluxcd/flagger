@@ -1,7 +1,0 @@
-1. Run the port forward command:
-
-kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }} 3000:80
-
-2. Navigate to:
-
-http://localhost:3000
