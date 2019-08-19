@@ -41,7 +41,7 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 * **Blue/Green** (traffic switching)
     * [Kubernetes CNI](https://docs.flagger.app/usage/blue-green)
 
-Flagger can be configures to send notifications to a
+Flagger can be configured to send notifications to a
 [Slack](https://docs.flagger.app/usage/alerting#slack) or
 [Microsoft Teams](https://docs.flagger.app/usage/alerting#microsoft-teams) channel.
 It will post messages when a deployment has been initialised,
