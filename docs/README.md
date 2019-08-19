@@ -1,16 +1,5 @@
 ---
 title: Flagger
-meta:
-  - name: "keywords"
-    content: "gitops kubernetes flagger istio linkerd appmesh"
-  - name: "twitter:card"
-    content: "summary_large_image"
-  - name: "twitter:title"
-    content: "Flagger"
-  - name: "twitter:description"
-    content: "Progressive delivery Kubernetes operator (Canary, A/B Testing and Blue/Green deployments)"
-  - name: "twitter:image:src"
-    content: "https://flagger.app/flagger-overview.png"
 home: true
 heroText: Flagger
 tagline: Progressive Delivery Operator for Kubernetes
