@@ -1,0 +1,89 @@
+{
+  "name": "copy-webpack-plugin",
+  "version": "5.0.4",
+  "description": "Copy files && directories with webpack",
+  "license": "MIT",
+  "repository": "webpack-contrib/copy-webpack-plugin",
+  "author": "Len Boyette",
+  "homepage": "https://github.com/webpack-contrib/copy-webpack-plugin",
+  "bugs": "https://github.com/webpack-contrib/copy-webpack-plugin/issues",
+  "main": "dist/cjs.js",
+  "engines": {
+    "node": ">= 6.9.0"
+  },
+  "scripts": {
+    "start": "npm run build -- -w",
+    "prebuild": "npm run clean",
+    "build": "cross-env NODE_ENV=production babel src -d dist --ignore \"src/**/*.test.js\" --copy-files",
+    "clean": "del-cli dist",
+    "commitlint": "commitlint --from=master",
+    "lint:prettier": "prettier \"{**/*,*}.{js,json,md,yml,css}\" --list-different",
+    "lint:js": "eslint --cache src test",
+    "lint": "npm-run-all -l -p \"lint:**\"",
+    "prepare": "npm run build",
+    "release": "standard-version",
+    "security": "npm audit",
+    "test:only": "cross-env NODE_ENV=test jest",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test jest --collectCoverageFrom=\"src/**/*.js\" --coverage",
+    "pretest": "npm run lint",
+    "test": "cross-env NODE_ENV=test npm run test:coverage",
+    "defaults": "webpack-defaults"
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "webpack": "^4.0.0"
+  },
+  "dependencies": {
+    "cacache": "^11.3.3",
+    "find-cache-dir": "^2.1.0",
+    "glob-parent": "^3.1.0",
+    "globby": "^7.1.1",
+    "is-glob": "^4.0.1",
+    "loader-utils": "^1.2.3",
+    "minimatch": "^3.0.4",
+    "normalize-path": "^3.0.0",
+    "p-limit": "^2.2.0",
+    "schema-utils": "^1.0.0",
+    "serialize-javascript": "^1.7.0",
+    "webpack-log": "^2.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "@commitlint/cli": "^8.1.0",
+    "@commitlint/config-conventional": "^8.1.0",
+    "@webpack-contrib/defaults": "^5.0.2",
+    "@webpack-contrib/eslint-config-webpack": "^3.0.0",
+    "babel-jest": "^24.8.0",
+    "commitlint-azure-pipelines-cli": "^1.0.1",
+    "cross-env": "^5.2.0",
+    "del": "^4.1.1",
+    "del-cli": "^1.1.0",
+    "enhanced-resolve": "^4.1.0",
+    "eslint": "^6.0.1",
+    "eslint-config-prettier": "^6.0.0",
+    "eslint-plugin-import": "^2.18.1",
+    "husky": "^3.0.1",
+    "is-gzip": "^2.0.0",
+    "jest": "^24.8.0",
+    "jest-junit": "^6.4.0",
+    "lint-staged": "^9.2.0",
+    "memory-fs": "^0.4.1",
+    "mkdirp": "^0.5.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^1.18.2",
+    "standard-version": "^6.0.1",
+    "webpack": "^4.36.1"
+  },
+  "keywords": [
+    "webpack",
+    "plugin",
+    "transfer",
+    "move",
+    "copy"
+  ]
+}

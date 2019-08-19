@@ -1,0 +1,9 @@
+.icon.outbound {
+    display: none !important;
+}
+.site-name {
+    padding-left: 30px;
+    position: relative;
+    background: url(favicon.png) left 50% no-repeat;
+    background-size: 20px 20px;
+}

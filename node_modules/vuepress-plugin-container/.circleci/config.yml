@@ -1,0 +1,32 @@
+version: 2.1
+
+executors:
+  node:
+    docker:
+      - image: circleci/node:10
+
+commands:
+  install:
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: yarn install
+
+jobs:
+  test:
+    executor: node
+    steps:
+      - install
+      - run:
+          name: Lint Code
+          command: yarn lint
+      - run:
+          name: Test Code
+          command: yarn jest
+
+workflows:
+  version: 2
+  checks:
+    jobs:
+      - test
