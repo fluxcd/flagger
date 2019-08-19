@@ -12,7 +12,6 @@ meta:
   - name: "twitter:image:src"
     content: "https://flagger.app/flagger-overview.png"
 home: true
-#heroImage: /flagger-overview.png
 heroText: Flagger
 tagline: Progressive Delivery Operator for Kubernetes
 actionText: Get Started →
@@ -81,7 +80,6 @@ GitOps tutorials:
 * [Progressive Delivery for Linkerd with Flagger and Flux](https://helm.workshop.flagger.dev)
 
 ## Getting Help
-
 
 If you have any questions about Flagger and progressive delivery:
 
