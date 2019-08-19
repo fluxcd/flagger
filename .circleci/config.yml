@@ -35,6 +35,7 @@ jobs:
               git checkout gh-pages
               rm -rf assets
               rsync -avzh $HOME/site/ .
+              rm -rf node_modules
               git add .
               git commit -m "Publish website"
               git push origin gh-pages
