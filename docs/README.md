@@ -9,9 +9,9 @@ features:
 - title: Safer Releases
   details: Reduce the risk of introducing a new software version in production by gradually shifting traffic to the new version while measuring metrics like HTTP/gRPC request success rate and latency.
 - title: Flexible Traffic Routing
-  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd or AWS App Mesh. If you're not using a service mesh then an ingress controller like NGINX or Gloo can also be used.
+  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like NGINX or Gloo.
 - title:  Extensible Validation
-  details: Besides the builtin metrics checks, the application analysis can be extended with custom Prometheus metrics and webhooks for running acceptance tests, load tests, or any other custom validation. 
+  details: Besides the builtin metrics checks, you can extend your application analysis with custom Prometheus metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
 footer: Apache License 2.0 | Copyright © 2019 Weaveworks
 ---
 
@@ -52,7 +52,7 @@ when a new revision has been detected and if the canary analysis failed or succe
 ![GtiOps with Flagger and FluxCD](/flagger-gitops.png)
 
 You can build fully automated GitOps pipelines for canary deployments with Flagger and
-[FluxCD](https://github.com/fluxcd) (CNCF sandbox project).
+[FluxCD](https://github.com/fluxcd/flux) (CNCF sandbox project).
 
 ::: tip GitOps
 
