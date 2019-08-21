@@ -27,6 +27,20 @@ tolerations: []
 
 affinity: {}
 
+rbac:
+  # rbac.create: `true` if rbac resources should be created
+  create: false
+  # rbac.scope: `cluster` to create cluster-scope rbac resources (ClusterRole/ClusterRoleBinding)
+  # otherwise, namespace-scope rbac resources will be created (Role/RoleBinding)
+  scope:
+  # rbac.rules: array of rules to apply to the role. example:
+  # rules:
+  # - apiGroups: [""]
+  #   resources: ["pods"]
+  #   verbs: ["list", "get"]
+  rules: []
+
+# name of an existing service account to use - if not creating rbac resources
 serviceAccountName: ""
 
 # App Mesh virtual node settings

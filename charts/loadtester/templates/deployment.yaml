@@ -21,6 +21,8 @@ spec:
     spec:
       {{- if .Values.serviceAccountName }}
       serviceAccountName: {{ .Values.serviceAccountName }}
+      {{- else if .Values.rbac.create }}
+      serviceAccountName: {{ include "loadtester.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
