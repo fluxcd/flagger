@@ -108,7 +108,7 @@ spec:
                   description: AppMesh backend array
                   anyOf:
                     - type: string
-                    - type: object
+                    - type: array
                 timeout:
                   description: Istio HTTP or gRPC request timeout
                   type: string
