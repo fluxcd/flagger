@@ -9,8 +9,9 @@ WORKDIR /home/app
 RUN curl -sSLo hey "https://storage.googleapis.com/jblabs/dist/hey_linux_v0.1.2" && \
 chmod +x hey && mv hey /usr/local/bin/hey
 
-RUN curl -sSL "https://get.helm.sh/helm-v2.12.3-linux-amd64.tar.gz" | tar xvz && \
+RUN curl -sSL "https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz" | tar xvz && \
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helm && \
+chmod +x linux-amd64/tiller && mv linux-amd64/tiller /usr/local/bin/tiller && \
 rm -rf linux-amd64
 
 RUN curl -sSL "https://github.com/bojand/ghz/releases/download/v0.39.0/ghz_0.39.0_Linux_x86_64.tar.gz" | tar xz -C /tmp && \
@@ -23,5 +24,8 @@ COPY ./bin/loadtester .
 RUN chown -R app:app ./
 
 USER app
+
+RUN curl -sSL "https://github.com/rimusz/helm-tiller/archive/v0.8.3.tar.gz" | tar xvz && \
+helm init --client-only && helm plugin install helm-tiller-0.8.3 && helm plugin list
 
 ENTRYPOINT ["./loadtester"]
