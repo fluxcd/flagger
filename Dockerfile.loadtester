@@ -17,6 +17,8 @@ rm -rf linux-amd64
 RUN curl -sSL "https://github.com/bojand/ghz/releases/download/v0.39.0/ghz_0.39.0_Linux_x86_64.tar.gz" | tar xz -C /tmp && \
 mv /tmp/ghz /usr/local/bin && chmod +x /usr/local/bin/ghz && rm -rf /tmp/ghz-web
 
+ADD https://raw.githubusercontent.com/grpc/grpc-proto/master/grpc/health/v1/health.proto /tmp/ghz/health.proto
+
 RUN ls /tmp
 
 COPY ./bin/loadtester .

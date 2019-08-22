@@ -798,6 +798,18 @@ webhooks:
       cmd: "ghz -z 1m -q 10 -c 2 --insecure podinfo.test:9898"
 ```
 
+`ghz` uses reflection to identify which gRPC method to call. If you do not wish to enable reflection for your gRPC service you can implement a standardized health check from the [grpc-proto](https://github.com/grpc/grpc-proto) library. To use this [health check schema](https://github.com/grpc/grpc-proto/blob/master/grpc/health/v1/health.proto) without reflection you can pass a parameter to `ghz` like this
+
+```yaml
+webhooks:
+  - name: grpc-load-test-no-reflection
+    url: http://flagger-loadtester.test/
+    timeout: 5s
+    metadata:
+      type: cmd
+      cmd: "ghz --insecure --proto=/tmp/ghz/health.proto --call=grpc.health.v1.Health/Check podinfo.test:9898"
+```
+
 The load tester can run arbitrary commands as long as the binary is present in the container image.
 For example if you you want to replace `hey` with another CLI, you can create your own Docker image:
 
