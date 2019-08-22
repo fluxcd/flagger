@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.18.3 (2019-08-22) 
+
+Adds support for tillerless helm tests and protobuf health checking
+
+#### Features
+
+- loadtester: add support for tillerless helm [#280](https://github.com/weaveworks/flagger/pull/280)
+- loadtester: add support for protobuf health checking [#280](https://github.com/weaveworks/flagger/pull/280)
+
+#### Improvements 
+
+- Set HTTP listeners for AppMesh virtual routers [#272](https://github.com/weaveworks/flagger/pull/272)
+
+#### Fixes
+
+- Add missing fields to CRD validation spec [#271](https://github.com/weaveworks/flagger/pull/271)
+- Fix App Mesh backends validation in CRD [#281](https://github.com/weaveworks/flagger/pull/281)
+
 ## 0.18.2 (2019-08-05) 
 
 Fixes multi-port support for Istio
