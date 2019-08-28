@@ -24,7 +24,7 @@ func (task *BashTask) Run(ctx context.Context) (bool, error) {
 
 	if err != nil {
 		task.logger.With("canary", task.canary).Errorf("command failed %s %v %s", task.command, err, out)
-		return false, fmt.Errorf(" %v %v", err, out)
+		return false, fmt.Errorf(" %v %s", err, out)
 	} else {
 		if task.logCmdOutput {
 			fmt.Printf("%s\n", out)
