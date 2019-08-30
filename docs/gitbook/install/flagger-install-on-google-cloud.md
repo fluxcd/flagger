@@ -339,7 +339,7 @@ Find the GKE Istio version with:
 kubectl -n istio-system get deploy istio-pilot -oyaml | grep image:
 ```
 
-Install Prometheus in istio-system namespace (replace `1.0.6-gke.3` with your version):
+Install Prometheus in istio-system namespace:
 
 ```bash
 kubectl -n istio-system apply -f \
