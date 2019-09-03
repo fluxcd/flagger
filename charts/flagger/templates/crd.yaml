@@ -34,6 +34,22 @@ spec:
     - name: Weight
       type: string
       JSONPath: .status.canaryWeight
+    - name: FailedChecks
+      type: string
+      JSONPath: .status.failedChecks
+      priority: 1
+    - name: Interval
+      type: string
+      JSONPath: .spec.canaryAnalysis.interval
+      priority: 1
+    - name: StepWeight
+      type: string
+      JSONPath: .spec.canaryAnalysis.stepWeight
+      priority: 1
+    - name: MaxWeight
+      type: string
+      JSONPath: .spec.canaryAnalysis.maxWeight
+      priority: 1
     - name: LastTransitionTime
       type: string
       JSONPath: .status.lastTransitionTime

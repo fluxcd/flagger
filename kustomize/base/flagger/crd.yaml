@@ -33,6 +33,22 @@ spec:
     - name: Weight
       type: string
       JSONPath: .status.canaryWeight
+    - name: FailedChecks
+      type: string
+      JSONPath: .status.failedChecks
+      priority: 1
+    - name: Interval
+      type: string
+      JSONPath: .spec.canaryAnalysis.interval
+      priority: 1
+    - name: StepWeight
+      type: string
+      JSONPath: .spec.canaryAnalysis.stepWeight
+      priority: 1
+    - name: MaxWeight
+      type: string
+      JSONPath: .spec.canaryAnalysis.maxWeight
+      priority: 1
     - name: LastTransitionTime
       type: string
       JSONPath: .status.lastTransitionTime
@@ -54,7 +70,7 @@ spec:
             targetRef:
               description: Deployment selector
               type: object
-              required: ['apiVersion', 'kind', 'name']
+              required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
@@ -67,7 +83,7 @@ spec:
               anyOf:
                 - type: string
                 - type: object
-              required: ['apiVersion', 'kind', 'name']
+              required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
@@ -80,7 +96,7 @@ spec:
               anyOf:
                 - type: string
                 - type: object
-              required: ['apiVersion', 'kind', 'name']
+              required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
@@ -90,7 +106,7 @@ spec:
                   type: string
             service:
               type: object
-              required: ['port']
+              required: ["port"]
               properties:
                 port:
                   description: Container port number
@@ -178,7 +194,7 @@ spec:
                   properties:
                     items:
                       type: object
-                      required: ['name', 'threshold']
+                      required: ["name", "threshold"]
                       properties:
                         name:
                           description: Name of the Prometheus metric
@@ -199,7 +215,7 @@ spec:
                   properties:
                     items:
                       type: object
-                      required: ['name', 'url', 'timeout']
+                      required: ["name", "url", "timeout"]
                       properties:
                         name:
                           description: Name of the webhook
@@ -262,7 +278,7 @@ spec:
               properties:
                 items:
                   type: object
-                  required: ['type', 'status', 'reason']
+                  required: ["type", "status", "reason"]
                   properties:
                     lastTransitionTime:
                       description: LastTransitionTime of this condition
