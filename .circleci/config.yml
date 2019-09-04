@@ -132,6 +132,9 @@ jobs:
       - run: test/e2e-kind.sh
       - run: test/e2e-nginx.sh
       - run: test/e2e-nginx-tests.sh
+      - run: test/e2e-nginx-cleanup.sh
+      - run: test/e2e-nginx-custom-annotations.sh
+      - run: test/e2e-nginx-tests.sh
 
   e2e-linkerd-testing:
     machine: true

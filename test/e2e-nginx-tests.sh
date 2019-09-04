@@ -43,9 +43,31 @@ spec:
     maxWeight: 30
     stepWeight: 10
     metrics:
-    - name: request-success-rate
+    - name: "http-request-success-rate"
       threshold: 99
       interval: 1m
+      query: |
+        100 - sum(
+                rate(
+                    http_request_duration_seconds_count{
+                        kubernetes_namespace="test",
+                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+                        path="root",
+                        status!~"5.*"
+                    }[1m]
+                )
+            )
+            /
+            sum(
+                rate(
+                    http_request_duration_seconds_count{
+                        kubernetes_namespace="test",
+                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+                        path="root"
+                    }[1m]
+                )
+            )
+            * 100
     - name: "latency"
       threshold: 0.5
       interval: 1m
@@ -55,7 +77,8 @@ spec:
             rate(
               http_request_duration_seconds_bucket{
                 kubernetes_namespace="test",
-                kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+                kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+                path="root"
               }[1m]
             )
           ) by (le)
@@ -94,7 +117,14 @@ echo '>>> Waiting for canary promotion'
 retries=50
 count=0
 ok=false
+failed=false
 until ${ok}; do
+    kubectl -n test get canary/podinfo | grep 'Failed' && failed=true || failed=false
+    if ${failed}; then
+        kubectl -n ingress-nginx logs deployment/test-flagger
+        echo "Canary failed!"
+        exit 1
+    fi
     kubectl -n test describe deployment/podinfo-primary | grep '1.4.1' && ok=true || ok=false
     sleep 10
     kubectl -n ingress-nginx logs deployment/flagger --tail 1
@@ -144,9 +174,31 @@ spec:
           cookie:
             exact: "canary"
     metrics:
-    - name: request-success-rate
+    - name: "http-request-success-rate"
       threshold: 99
       interval: 1m
+      query: |
+        100 - sum(
+                rate(
+                    http_request_duration_seconds_count{
+                        kubernetes_namespace="test",
+                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+                        path="root",
+                        status!~"5.*"
+                    }[1m]
+                )
+            )
+            /
+            sum(
+                rate(
+                    http_request_duration_seconds_count{
+                        kubernetes_namespace="test",
+                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+                        path="root"
+                    }[1m]
+                )
+            )
+            * 100
     webhooks:
       - name: pre
         type: pre-rollout

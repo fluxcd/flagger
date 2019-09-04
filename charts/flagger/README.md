@@ -74,6 +74,7 @@ Parameter | Description | Default
 `msteams.url` | Microsoft Teams incoming webhook | None
 `leaderElection.enabled` | leader election must be enabled when running more than one replica | `false`
 `leaderElection.replicaCount` | number of replicas | `1`
+`ingressAnnotationsPrefix` | annotations prefix for ingresses | `custom.ingress.kubernetes.io`
 `rbac.create` | if `true`, create and use RBAC resources | `true`
 `rbac.pspEnabled` | If `true`, create and use a restricted pod security policy | `false`
 `crd.create` | if `true`, create Flagger's CRDs | `true`

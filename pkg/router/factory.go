@@ -11,23 +11,26 @@ import (
 )
 
 type Factory struct {
-	kubeConfig    *restclient.Config
-	kubeClient    kubernetes.Interface
-	meshClient    clientset.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
+	kubeConfig               *restclient.Config
+	kubeClient               kubernetes.Interface
+	meshClient               clientset.Interface
+	flaggerClient            clientset.Interface
+	ingressAnnotationsPrefix string
+	logger                   *zap.SugaredLogger
 }
 
 func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
+	ingressAnnotationsPrefix string,
 	logger *zap.SugaredLogger,
 	meshClient clientset.Interface) *Factory {
 	return &Factory{
-		kubeConfig:    kubeConfig,
-		meshClient:    meshClient,
-		kubeClient:    kubeClient,
-		flaggerClient: flaggerClient,
-		logger:        logger,
+		kubeConfig:               kubeConfig,
+		meshClient:               meshClient,
+		kubeClient:               kubeClient,
+		flaggerClient:            flaggerClient,
+		ingressAnnotationsPrefix: ingressAnnotationsPrefix,
+		logger:                   logger,
 	}
 }
 
@@ -51,8 +54,9 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 		return &NopRouter{}
 	case provider == "nginx":
 		return &IngressRouter{
-			logger:     factory.logger,
-			kubeClient: factory.kubeClient,
+			logger:            factory.logger,
+			kubeClient:        factory.kubeClient,
+			annotationsPrefix: factory.ingressAnnotationsPrefix,
 		}
 	case provider == "appmesh":
 		return &AppMeshRouter{
