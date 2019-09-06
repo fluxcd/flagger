@@ -2,15 +2,17 @@ package router
 
 import (
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIngressRouter_Reconcile(t *testing.T) {
 	mocks := setupfakeClients()
 	router := &IngressRouter{
-		logger:     mocks.logger,
-		kubeClient: mocks.kubeClient,
+		logger:            mocks.logger,
+		kubeClient:        mocks.kubeClient,
+		annotationsPrefix: "custom.ingress.kubernetes.io",
 	}
 
 	err := router.Reconcile(mocks.ingressCanary)
@@ -18,8 +20,8 @@ func TestIngressRouter_Reconcile(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	canaryAn := "nginx.ingress.kubernetes.io/canary"
-	canaryWeightAn := "nginx.ingress.kubernetes.io/canary-weight"
+	canaryAn := "custom.ingress.kubernetes.io/canary"
+	canaryWeightAn := "custom.ingress.kubernetes.io/canary-weight"
 
 	canaryName := fmt.Sprintf("%s-canary", mocks.ingressCanary.Spec.IngressRef.Name)
 	inCanary, err := router.kubeClient.ExtensionsV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
@@ -44,8 +46,9 @@ func TestIngressRouter_Reconcile(t *testing.T) {
 func TestIngressRouter_GetSetRoutes(t *testing.T) {
 	mocks := setupfakeClients()
 	router := &IngressRouter{
-		logger:     mocks.logger,
-		kubeClient: mocks.kubeClient,
+		logger:            mocks.logger,
+		kubeClient:        mocks.kubeClient,
+		annotationsPrefix: "prefix1.nginx.ingress.kubernetes.io",
 	}
 
 	err := router.Reconcile(mocks.ingressCanary)
@@ -66,8 +69,8 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	canaryAn := "nginx.ingress.kubernetes.io/canary"
-	canaryWeightAn := "nginx.ingress.kubernetes.io/canary-weight"
+	canaryAn := "prefix1.nginx.ingress.kubernetes.io/canary"
+	canaryWeightAn := "prefix1.nginx.ingress.kubernetes.io/canary-weight"
 
 	canaryName := fmt.Sprintf("%s-canary", mocks.ingressCanary.Spec.IngressRef.Name)
 	inCanary, err := router.kubeClient.ExtensionsV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})

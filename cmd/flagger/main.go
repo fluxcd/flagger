@@ -33,25 +33,26 @@ import (
 )
 
 var (
-	masterURL               string
-	kubeconfig              string
-	metricsServer           string
-	controlLoopInterval     time.Duration
-	logLevel                string
-	port                    string
-	msteamsURL              string
-	slackURL                string
-	slackUser               string
-	slackChannel            string
-	threadiness             int
-	zapReplaceGlobals       bool
-	zapEncoding             string
-	namespace               string
-	meshProvider            string
-	selectorLabels          string
-	enableLeaderElection    bool
-	leaderElectionNamespace string
-	ver                     bool
+	masterURL                string
+	kubeconfig               string
+	metricsServer            string
+	controlLoopInterval      time.Duration
+	logLevel                 string
+	port                     string
+	msteamsURL               string
+	slackURL                 string
+	slackUser                string
+	slackChannel             string
+	threadiness              int
+	zapReplaceGlobals        bool
+	zapEncoding              string
+	namespace                string
+	meshProvider             string
+	selectorLabels           string
+	ingressAnnotationsPrefix string
+	enableLeaderElection     bool
+	leaderElectionNamespace  string
+	ver                      bool
 )
 
 func init() {
@@ -71,6 +72,7 @@ func init() {
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object.")
 	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, supergloo, nginx or smi.")
 	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors.")
+	flag.StringVar(&ingressAnnotationsPrefix, "ingress-annotations-prefix", "nginx.ingress.kubernetes.io", "Annotations prefix for ingresses.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election.")
 	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "kube-system", "Namespace used to create the leader election config map.")
 	flag.BoolVar(&ver, "version", false, "Print version")
@@ -175,7 +177,7 @@ func main() {
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
-	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, logger, meshClient)
+	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient)
 
 	c := controller.NewController(
 		kubeClient,

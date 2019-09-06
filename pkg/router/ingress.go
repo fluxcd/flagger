@@ -2,6 +2,9 @@ package router
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/google/go-cmp/cmp"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	"go.uber.org/zap"
@@ -10,13 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
-	"strconv"
-	"strings"
 )
 
 type IngressRouter struct {
-	kubeClient kubernetes.Interface
-	logger     *zap.SugaredLogger
+	kubeClient        kubernetes.Interface
+	annotationsPrefix string
+	logger            *zap.SugaredLogger
 }
 
 func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
@@ -115,7 +117,7 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	// A/B testing
 	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
 		for k := range canaryIngress.Annotations {
-			if k == "nginx.ingress.kubernetes.io/canary-by-cookie" || k == "nginx.ingress.kubernetes.io/canary-by-header" {
+			if k == i.GetAnnotationWithPrefix("canary-by-cookie") || k == i.GetAnnotationWithPrefix("canary-by-header") {
 				return 0, 100, nil
 			}
 		}
@@ -123,7 +125,7 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 
 	// Canary
 	for k, v := range canaryIngress.Annotations {
-		if k == "nginx.ingress.kubernetes.io/canary-weight" {
+		if k == i.GetAnnotationWithPrefix("canary-weight") {
 			val, err := strconv.Atoi(v)
 			if err != nil {
 				return 0, 0, err
@@ -170,12 +172,12 @@ func (i *IngressRouter) SetRoutes(
 		iClone.Annotations = i.makeHeaderAnnotations(iClone.Annotations, header, headerValue, cookie)
 	} else {
 		// canary
-		iClone.Annotations["nginx.ingress.kubernetes.io/canary-weight"] = fmt.Sprintf("%v", canaryWeight)
+		iClone.Annotations[i.GetAnnotationWithPrefix("canary-weight")] = fmt.Sprintf("%v", canaryWeight)
 	}
 
 	// toggle canary
 	if canaryWeight > 0 {
-		iClone.Annotations["nginx.ingress.kubernetes.io/canary"] = "true"
+		iClone.Annotations[i.GetAnnotationWithPrefix("canary")] = "true"
 	} else {
 		iClone.Annotations = i.makeAnnotations(iClone.Annotations)
 	}
@@ -191,14 +193,14 @@ func (i *IngressRouter) SetRoutes(
 func (i *IngressRouter) makeAnnotations(annotations map[string]string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range annotations {
-		if !strings.Contains(k, "nginx.ingress.kubernetes.io/canary") &&
+		if !strings.Contains(k, i.GetAnnotationWithPrefix("canary")) &&
 			!strings.Contains(k, "kubectl.kubernetes.io/last-applied-configuration") {
 			res[k] = v
 		}
 	}
 
-	res["nginx.ingress.kubernetes.io/canary"] = "false"
-	res["nginx.ingress.kubernetes.io/canary-weight"] = "0"
+	res[i.GetAnnotationWithPrefix("canary")] = "false"
+	res[i.GetAnnotationWithPrefix("canary-weight")] = "0"
 
 	return res
 }
@@ -207,25 +209,29 @@ func (i *IngressRouter) makeHeaderAnnotations(annotations map[string]string,
 	header string, headerValue string, cookie string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range annotations {
-		if !strings.Contains(v, "nginx.ingress.kubernetes.io/canary") {
+		if !strings.Contains(v, i.GetAnnotationWithPrefix("canary")) {
 			res[k] = v
 		}
 	}
 
-	res["nginx.ingress.kubernetes.io/canary"] = "true"
-	res["nginx.ingress.kubernetes.io/canary-weight"] = "0"
+	res[i.GetAnnotationWithPrefix("canary")] = "true"
+	res[i.GetAnnotationWithPrefix("canary-weight")] = "0"
 
 	if cookie != "" {
-		res["nginx.ingress.kubernetes.io/canary-by-cookie"] = cookie
+		res[i.GetAnnotationWithPrefix("canary-by-cookie")] = cookie
 	}
 
 	if header != "" {
-		res["nginx.ingress.kubernetes.io/canary-by-header"] = header
+		res[i.GetAnnotationWithPrefix("canary-by-header")] = header
 	}
 
 	if headerValue != "" {
-		res["nginx.ingress.kubernetes.io/canary-by-header-value"] = headerValue
+		res[i.GetAnnotationWithPrefix("canary-by-header-value")] = headerValue
 	}
 
 	return res
+}
+
+func (i *IngressRouter) GetAnnotationWithPrefix(suffix string) string {
+	return fmt.Sprintf("%v/%v", i.annotationsPrefix, suffix)
 }

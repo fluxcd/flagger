@@ -82,7 +82,7 @@ func SetupMocks(abtest bool) Mocks {
 	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
 
 	// init router
-	rf := router.NewFactory(nil, kubeClient, flaggerClient, logger, flaggerClient)
+	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", logger, flaggerClient)
 
 	// init observer
 	observerFactory, _ := metrics.NewFactory("fake", "istio", 5*time.Second)

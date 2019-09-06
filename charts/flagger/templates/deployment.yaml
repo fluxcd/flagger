@@ -72,6 +72,9 @@ spec:
           - -enable-leader-election=true
           - -leader-election-namespace={{ .Release.Namespace }}
           {{- end }}
+          {{- if .Values.ingressAnnotationsPrefix }}
+          - -ingress-annotations-prefix={{ .Values.ingressAnnotationsPrefix }}
+          {{- end }}
           livenessProbe:
             exec:
               command:
