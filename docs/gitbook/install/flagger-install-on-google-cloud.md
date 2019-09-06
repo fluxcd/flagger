@@ -186,7 +186,7 @@ Install cert-manager's CRDs:
 ```bash
 CERT_REPO=https://raw.githubusercontent.com/jetstack/cert-manager
 
-kubectl apply -f ${CERT_REPO}/release-0.7/deploy/manifests/00-crds.yaml
+kubectl apply -f ${CERT_REPO}/release-0.10/deploy/manifests/00-crds.yaml
 ```
 
 Create the cert-manager namespace and disable resource validation:
@@ -204,7 +204,7 @@ helm repo add jetstack https://charts.jetstack.io && \
 helm repo update && \
 helm upgrade -i cert-manager \
 --namespace cert-manager \
---version v0.7.0 \
+--version v0.10.0 \
 jetstack/cert-manager
 ```
 
