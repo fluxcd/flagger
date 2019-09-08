@@ -185,6 +185,31 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 				return
 			}
 
+			// run helmv3 command (blocking task)
+			if typ == TaskTypeHelmv3 {
+				helm := HelmTaskv3{
+					command:      payload.Metadata["cmd"],
+					logCmdOutput: true,
+					TaskBase: TaskBase{
+						canary: fmt.Sprintf("%s.%s", payload.Name, payload.Namespace),
+						logger: logger,
+					},
+				}
+
+				ctx, cancel := context.WithTimeout(context.Background(), taskRunner.timeout)
+				defer cancel()
+
+				ok, err := helm.Run(ctx)
+				if !ok {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return
+				}
+
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			taskFactory, ok := GetTaskFactory(typ)
 			if !ok {
 				w.WriteHeader(http.StatusBadRequest)
