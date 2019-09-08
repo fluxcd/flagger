@@ -7,23 +7,23 @@ import (
 	"strings"
 )
 
-const TaskTypeHelm = "helm"
+const TaskTypeHelmv3 = "helmv3"
 
-type HelmTask struct {
+type HelmTaskv3 struct {
 	TaskBase
 	command      string
 	logCmdOutput bool
 }
 
-func (task *HelmTask) Hash() string {
+func (task *HelmTaskv3) Hash() string {
 	return hash(task.canary + task.command)
 }
 
-func (task *HelmTask) Run(ctx context.Context) (bool, error) {
-	helmCmd := fmt.Sprintf("%s %s", TaskTypeHelm, task.command)
+func (task *HelmTaskv3) Run(ctx context.Context) (bool, error) {
+	helmCmd := fmt.Sprintf("%s %s", TaskTypeHelmv3, task.command)
 	task.logger.With("canary", task.canary).Infof("running command %v", helmCmd)
 
-	cmd := exec.CommandContext(ctx, TaskTypeHelm, strings.Fields(task.command)...)
+	cmd := exec.CommandContext(ctx, TaskTypeHelmv3, strings.Fields(task.command)...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		task.logger.With("canary", task.canary).Errorf("command failed %s %v %s", task.command, err, out)
@@ -37,6 +37,6 @@ func (task *HelmTask) Run(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func (task *HelmTask) String() string {
+func (task *HelmTaskv3) String() string {
 	return task.command
 }

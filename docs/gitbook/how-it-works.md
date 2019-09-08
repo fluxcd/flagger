@@ -882,6 +882,20 @@ Now you can add pre-rollout webhooks to the canary analysis spec:
 When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
 If the helm test fails, Flagger will retry until the analysis threshold is reached and the canary is rolled back.
 
+If you are using Helm v3, you'll have to create a dedicated service account and add the release namespace to the test command:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "smoke test"
+        type: pre-rollout
+        url: http://flagger-helmtester.kube-system/
+        timeout: 3m
+        metadata:
+          type: "helmv3"
+          cmd: "test run {{ .Release.Name }} --cleanup -n {{ .Release.Namespace }}"
+```
+
 As an alternative to Helm you can use the [Bash Automated Testing System](https://github.com/bats-core/bats-core) to run your tests. 
 
 ```yaml
