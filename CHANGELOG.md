@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.18.4 (2019-09-08) 
+
+Adds support for NGINX custom annotations and Helm v3 acceptance testing
+
+#### Features
+
+- Add annotations prefix for NGINX ingresses [#293](https://github.com/weaveworks/flagger/pull/293)
+- Add wide columns in CRD [#289](https://github.com/weaveworks/flagger/pull/289)
+- loadtester: implement Helm v3 test command [#296](https://github.com/weaveworks/flagger/pull/296)
+- loadtester: add gPRC health check to load tester image [#295](https://github.com/weaveworks/flagger/pull/295)
+
+#### Fixes
+
+- loadtester: fix tests error logging [#286](https://github.com/weaveworks/flagger/pull/286)
+
 ## 0.18.3 (2019-08-22) 
 
 Adds support for tillerless helm tests and protobuf health checking
