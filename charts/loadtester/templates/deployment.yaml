@@ -18,6 +18,9 @@ spec:
         app: {{ include "loadtester.name" . }}
       annotations:
         appmesh.k8s.aws/ports: "444"
+        {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+        {{- end }}
     spec:
       {{- if .Values.serviceAccountName }}
       serviceAccountName: {{ .Values.serviceAccountName }}

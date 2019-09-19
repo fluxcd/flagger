@@ -6,6 +6,8 @@ image:
   pullPolicy: IfNotPresent
   pullSecret:
 
+podAnnotations: {}
+
 metricsServer: "http://prometheus:9090"
 
 # accepted values are istio, appmesh, nginx or supergloo:mesh.namespace (defaults to istio)

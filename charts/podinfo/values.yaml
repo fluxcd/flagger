@@ -4,6 +4,8 @@ image:
   tag: 2.0.0
   pullPolicy: IfNotPresent
 
+podAnnotations: {}
+
 service:
   type: ClusterIP
   port: 9898

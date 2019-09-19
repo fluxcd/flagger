@@ -20,6 +20,10 @@ spec:
       labels:
         app.kubernetes.io/name: {{ template "flagger.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ template "flagger.serviceAccountName" . }}
       affinity:
