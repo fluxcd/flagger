@@ -21,6 +21,9 @@ spec:
         app: {{ template "podinfo.fullname" . }}
       annotations:
         prometheus.io/scrape: 'true'
+        {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: 30
       containers:

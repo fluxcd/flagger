@@ -9,6 +9,8 @@ image:
   tag: 6.2.5
   pullPolicy: IfNotPresent
 
+podAnnotations: {}
+
 service:
   type: ClusterIP
   port: 80

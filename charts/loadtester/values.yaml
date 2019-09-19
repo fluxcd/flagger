@@ -5,6 +5,8 @@ image:
   tag: 0.8.0
   pullPolicy: IfNotPresent
 
+podAnnotations: {}
+
 logLevel: info
 cmd:
   timeout: 1h
