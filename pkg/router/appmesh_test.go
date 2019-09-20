@@ -144,12 +144,12 @@ func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = router.SetRoutes(mocks.appmeshCanary, 60, 40)
+	err = router.SetRoutes(mocks.appmeshCanary, 60, 40, false)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	p, c, err := router.GetRoutes(mocks.appmeshCanary)
+	p, c, m, err := router.GetRoutes(mocks.appmeshCanary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -160,5 +160,9 @@ func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
 
 	if c != 40 {
 		t.Errorf("Got canary weight %v wanted %v", c, 40)
+	}
+
+	if m != false {
+		t.Errorf("Got mirror %v wanted %v", m, false)
 	}
 }

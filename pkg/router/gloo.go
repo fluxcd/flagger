@@ -63,11 +63,11 @@ func NewGlooRouterWithClient(ctx context.Context, routingRuleClient gloov1.Upstr
 // Reconcile creates or updates the Istio virtual service
 func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	// do we have routes already?
-	if _, _, err := gr.GetRoutes(canary); err == nil {
+	if _, _, _, err := gr.GetRoutes(canary); err == nil {
 		// we have routes, no need to do anything else
 		return nil
 	} else if solokiterror.IsNotExist(err) {
-		return gr.SetRoutes(canary, 100, 0)
+		return gr.SetRoutes(canary, 100, 0, false)
 	} else {
 		return err
 	}
@@ -77,6 +77,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 func (gr *GlooRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 	err error,
 ) {
 	targetName := canary.Spec.TargetRef.Name
@@ -101,6 +102,8 @@ func (gr *GlooRouter) GetRoutes(canary *flaggerv1.Canary) (
 			targetName, canary.Namespace, targetName, targetName)
 	}
 
+	mirrored = false
+
 	return
 }
 
@@ -109,6 +112,7 @@ func (gr *GlooRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 ) error {
 	targetName := canary.Spec.TargetRef.Name
 

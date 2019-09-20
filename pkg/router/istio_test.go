@@ -119,15 +119,16 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	p, c, err := router.GetRoutes(mocks.canary)
+	p, c, m, err := router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	p = 50
-	c = 50
+	p = 60
+	c = 40
+	m = false
 
-	err = router.SetRoutes(mocks.canary, p, c)
+	err = router.SetRoutes(mocks.canary, p, c, m)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -137,16 +138,20 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
+	pHost := fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name)
+	cHost := fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name)
 	pRoute := istiov1alpha3.DestinationWeight{}
 	cRoute := istiov1alpha3.DestinationWeight{}
+	var mirror *istiov1alpha3.Destination
 
 	for _, http := range vs.Spec.Http {
 		for _, route := range http.Route {
-			if route.Destination.Host == fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name) {
+			if route.Destination.Host == pHost {
 				pRoute = route
 			}
-			if route.Destination.Host == fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name) {
+			if route.Destination.Host == cHost {
 				cRoute = route
+				mirror = http.Mirror
 			}
 		}
 	}
@@ -157,6 +162,51 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 
 	if cRoute.Weight != c {
 		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
+	}
+
+	if mirror != nil {
+		t.Errorf("Got mirror %v wanted nil", mirror)
+	}
+
+	mirror = nil
+	p = 100
+	c = 0
+	m = true
+
+	err = router.SetRoutes(mocks.canary, p, c, m)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	for _, http := range vs.Spec.Http {
+		for _, route := range http.Route {
+			if route.Destination.Host == pHost {
+				pRoute = route
+			}
+			if route.Destination.Host == cHost {
+				cRoute = route
+				mirror = http.Mirror
+			}
+		}
+	}
+
+	if pRoute.Weight != p {
+		t.Errorf("Got primary weight %v wanted %v", pRoute.Weight, p)
+	}
+
+	if cRoute.Weight != c {
+		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
+	}
+
+	if mirror == nil {
+		t.Errorf("Got mirror nil wanted a mirror")
+	} else if mirror.Host != cHost {
+		t.Errorf("Got mirror host \"%v\" wanted \"%v\"", mirror.Host, cHost)
 	}
 }
 
@@ -174,7 +224,7 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	p, c, err := router.GetRoutes(mocks.canary)
+	p, c, m, err := router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -185,6 +235,74 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 
 	if c != 0 {
 		t.Errorf("Got canary weight %v wanted %v", c, 0)
+	}
+
+	if m != false {
+		t.Errorf("Got mirror %v wanted %v", m, false)
+	}
+
+	mocks.canary = newMockMirror()
+
+	err = router.Reconcile(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	p, c, m, err = router.GetRoutes(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if p != 100 {
+		t.Errorf("Got primary weight %v wanted %v", p, 100)
+	}
+
+	if c != 0 {
+		t.Errorf("Got canary weight %v wanted %v", c, 0)
+	}
+
+	// A Canary resource with mirror on does not automatically create mirroring
+	// in the virtual server (mirroring is activated as a temporary stage).
+	if m != false {
+		t.Errorf("Got mirror %v wanted %v", m, false)
+	}
+
+	// Adjust vs to activate mirroring.
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	cHost := fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name)
+	for i, http := range vs.Spec.Http {
+		for _, route := range http.Route {
+			if route.Destination.Host == cHost {
+				vs.Spec.Http[i].Mirror = &istiov1alpha3.Destination{
+					Host: cHost,
+				}
+			}
+		}
+	}
+	_, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices(mocks.canary.Namespace).Update(vs)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	p, c, m, err = router.GetRoutes(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if p != 100 {
+		t.Errorf("Got primary weight %v wanted %v", p, 100)
+	}
+
+	if c != 0 {
+		t.Errorf("Got canary weight %v wanted %v", c, 0)
+	}
+
+	if m != true {
+		t.Errorf("Got mirror %v wanted %v", m, true)
 	}
 }
 
@@ -276,8 +394,9 @@ func TestIstioRouter_ABTest(t *testing.T) {
 
 	p := 0
 	c := 100
+	m := false
 
-	err = router.SetRoutes(mocks.abtest, p, c)
+	err = router.SetRoutes(mocks.abtest, p, c, m)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -287,16 +406,20 @@ func TestIstioRouter_ABTest(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
+	pHost := fmt.Sprintf("%s-primary", mocks.abtest.Spec.TargetRef.Name)
+	cHost := fmt.Sprintf("%s-canary", mocks.abtest.Spec.TargetRef.Name)
 	pRoute := istiov1alpha3.DestinationWeight{}
 	cRoute := istiov1alpha3.DestinationWeight{}
+	var mirror *istiov1alpha3.Destination
 
 	for _, http := range vs.Spec.Http {
 		for _, route := range http.Route {
-			if route.Destination.Host == fmt.Sprintf("%s-primary", mocks.abtest.Spec.TargetRef.Name) {
+			if route.Destination.Host == pHost {
 				pRoute = route
 			}
-			if route.Destination.Host == fmt.Sprintf("%s-canary", mocks.abtest.Spec.TargetRef.Name) {
+			if route.Destination.Host == cHost {
 				cRoute = route
+				mirror = http.Mirror
 			}
 		}
 	}
@@ -307,5 +430,9 @@ func TestIstioRouter_ABTest(t *testing.T) {
 
 	if cRoute.Weight != c {
 		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
+	}
+
+	if mirror != nil {
+		t.Errorf("Got mirror %v wanted nil", mirror)
 	}
 }

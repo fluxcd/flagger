@@ -155,7 +155,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check if virtual service exists
 	// and if it contains weighted destination routes to the primary and canary services
-	primaryWeight, canaryWeight, err := meshRouter.GetRoutes(cd)
+	primaryWeight, canaryWeight, mirrored, err := meshRouter.GetRoutes(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -176,7 +176,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		// route all traffic back to primary
 		primaryWeight = 100
 		canaryWeight = 0
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -218,7 +218,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
 		if provider != "kubernetes" {
 			c.recordEventInfof(cd, "Routing all traffic to primary")
-			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+			if err := meshRouter.SetRoutes(cd, 100, 0, false); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -275,7 +275,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		// route all traffic back to primary
 		primaryWeight = 100
 		canaryWeight = 0
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -328,7 +328,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if len(cd.Spec.CanaryAnalysis.Match) > 0 && cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// route traffic to canary and increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
-			if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
+			if err := meshRouter.SetRoutes(cd, 0, 100, false); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -390,7 +390,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
 			if provider != "kubernetes" {
 				c.recordEventInfof(cd, "Routing all traffic to canary")
-				if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
+				if err := meshRouter.SetRoutes(cd, 0, 100, false); err != nil {
 					c.recordEventWarningf(cd, "%v", err)
 					return
 				}
@@ -489,7 +489,7 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	// route all traffic to primary
 	primaryWeight = 100
 	canaryWeight = 0
-	if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+	if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return false
 	}

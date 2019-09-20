@@ -106,19 +106,20 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 	err error,
 ) {
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
 	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, false, err
 	}
 
 	// A/B testing
 	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
 		for k := range canaryIngress.Annotations {
 			if k == i.GetAnnotationWithPrefix("canary-by-cookie") || k == i.GetAnnotationWithPrefix("canary-by-header") {
-				return 0, 100, nil
+				return 0, 100, false, nil
 			}
 		}
 	}
@@ -128,7 +129,7 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 		if k == i.GetAnnotationWithPrefix("canary-weight") {
 			val, err := strconv.Atoi(v)
 			if err != nil {
-				return 0, 0, err
+				return 0, 0, false, err
 			}
 
 			canaryWeight = val
@@ -137,6 +138,7 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	}
 
 	primaryWeight = 100 - canaryWeight
+	mirrored = false
 	return
 }
 
@@ -144,6 +146,7 @@ func (i *IngressRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 ) error {
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
 	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})

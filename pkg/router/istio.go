@@ -101,8 +101,6 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 
 func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	targetName := canary.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", targetName)
-	canaryName := fmt.Sprintf("%s-canary", targetName)
 
 	// set hosts and add the ClusterIP service host if it doesn't exists
 	hosts := canary.Spec.Service.Hosts
@@ -133,6 +131,8 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	}
 
 	// create destinations with primary weight 100% and canary weight 0%
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+	canaryName := fmt.Sprintf("%s-canary", targetName)
 	canaryRoute := []istiov1alpha3.DestinationWeight{
 		makeDestination(canary, primaryName, 100),
 		makeDestination(canary, canaryName, 0),
@@ -210,9 +210,14 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("VirtualService %s.%s query error %v", targetName, canary.Namespace, err)
 	}
 
-	// update service but keep the original destination weights
+	// update service but keep the original destination weights and mirror
 	if virtualService != nil {
-		if diff := cmp.Diff(newSpec, virtualService.Spec, cmpopts.IgnoreFields(istiov1alpha3.DestinationWeight{}, "Weight")); diff != "" {
+		if diff := cmp.Diff(
+			newSpec,
+			virtualService.Spec,
+			cmpopts.IgnoreFields(istiov1alpha3.DestinationWeight{}, "Weight"),
+			cmpopts.IgnoreFields(istiov1alpha3.HTTPRoute{}, "Mirror"),
+		); diff != "" {
 			vtClone := virtualService.DeepCopy()
 			vtClone.Spec = newSpec
 
@@ -232,6 +237,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 	err error,
 ) {
 	targetName := canary.Spec.TargetRef.Name
@@ -264,6 +270,9 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 			canaryWeight = route.Weight
 		}
 	}
+	if httpRoute.Mirror != nil && httpRoute.Mirror.Host != "" {
+		mirrored = true
+	}
 
 	if primaryWeight == 0 && canaryWeight == 0 {
 		err = fmt.Errorf("VirtualService %s.%s does not contain routes for %s-primary and %s-canary",
@@ -278,6 +287,7 @@ func (ir *IstioRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 ) error {
 	targetName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
@@ -308,6 +318,12 @@ func (ir *IstioRouter) SetRoutes(
 				makeDestination(canary, canaryName, canaryWeight),
 			},
 		},
+	}
+
+	if mirrored {
+		vsCopy.Spec.Http[0].Mirror = &istiov1alpha3.Destination{
+			Host: canaryName,
+		}
 	}
 
 	// fix routing (A/B testing)
