@@ -8,7 +8,7 @@ import (
 )
 
 func TestScheduler_Init(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -18,7 +18,7 @@ func TestScheduler_Init(t *testing.T) {
 }
 
 func TestScheduler_NewRevision(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update
@@ -42,7 +42,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 }
 
 func TestScheduler_Rollback(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -66,7 +66,7 @@ func TestScheduler_Rollback(t *testing.T) {
 }
 
 func TestScheduler_SkipAnalysis(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -107,7 +107,7 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 }
 
 func TestScheduler_NewRevisionReset(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -169,7 +169,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 }
 
 func TestScheduler_Promotion(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
@@ -320,7 +320,7 @@ func TestScheduler_Promotion(t *testing.T) {
 }
 
 func TestScheduler_ABTesting(t *testing.T) {
-	mocks := SetupMocks(true)
+	mocks := SetupMocks(newTestCanaryAB())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -408,7 +408,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 }
 
 func TestScheduler_PortDiscovery(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 
 	// enable port discovery
 	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
