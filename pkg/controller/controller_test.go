@@ -267,6 +267,12 @@ func newTestCanary() *v1alpha3.Canary {
 	return cd
 }
 
+func newTestCanaryMirror() *v1alpha3.Canary {
+	cd := newTestCanary()
+	cd.Spec.CanaryAnalysis.Mirror = true
+	return cd
+}
+
 func newTestCanaryAB() *v1alpha3.Canary {
 	cd := &v1alpha3.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},

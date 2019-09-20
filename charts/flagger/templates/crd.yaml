@@ -42,6 +42,10 @@ spec:
       type: string
       JSONPath: .spec.canaryAnalysis.interval
       priority: 1
+    - name: Mirror
+      type: boolean
+      JSONPath: .spec.canaryAnalysis.mirror
+      priority: 1
     - name: StepWeight
       type: string
       JSONPath: .spec.canaryAnalysis.stepWeight
@@ -184,6 +188,9 @@ spec:
                 stepWeight:
                   description: Canary incremental traffic percentage step
                   type: number
+                mirror:
+                  description: Mirror traffic to canary before shifting
+                  type: boolean
                 match:
                   description: A/B testing match conditions
                   anyOf:

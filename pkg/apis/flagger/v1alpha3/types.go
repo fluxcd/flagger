@@ -111,6 +111,7 @@ type CanaryAnalysis struct {
 	Interval   string                           `json:"interval"`
 	Threshold  int                              `json:"threshold"`
 	MaxWeight  int                              `json:"maxWeight"`
+	Mirror     bool                             `json:"mirror,omitempty"`
 	StepWeight int                              `json:"stepWeight"`
 	Metrics    []CanaryMetric                   `json:"metrics"`
 	Webhooks   []CanaryWebhook                  `json:"webhooks,omitempty"`
