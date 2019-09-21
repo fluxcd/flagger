@@ -67,7 +67,7 @@ to accelerate and simplify application deployments and operations tasks to Kuber
 GitOps tutorials:
 * [Progressive Delivery for Istio with Flagger and Flux](https://github.com/stefanprodan/gitops-istio)
 * [Canaries with Helm charts and GitOps](https://docs.flagger.app/tutorials/canary-helm-gitops)
-* Progressive Delivery for Linkerd with Flagger and Flux (TBA)
+* [Progressive Delivery for Linkerd with Flagger, FluxCD and Helm v3](https://helm.workshop.flagger.dev)
 
 ## Getting Help
 
