@@ -377,12 +377,14 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 		// route all traffic to canary - max iterations reached
 		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
-			c.recordEventInfof(cd, "Routing all traffic to canary")
-			if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
+			if provider != "kubernetes" {
+				c.recordEventInfof(cd, "Routing all traffic to canary")
+				if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
+					c.recordEventWarningf(cd, "%v", err)
+					return
+				}
+				c.recorder.SetWeight(cd, 0, 100)
 			}
-			c.recorder.SetWeight(cd, 0, 100)
 
 			// increment iterations
 			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
@@ -411,11 +413,14 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 		// route all traffic to primary
 		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
-			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
+			if provider != "kubernetes" {
+				c.recordEventInfof(cd, "Routing all traffic to primary")
+				if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+					c.recordEventWarningf(cd, "%v", err)
+					return
+				}
+				c.recorder.SetWeight(cd, 100, 0)
 			}
-			c.recorder.SetWeight(cd, 100, 0)
 
 			// update status phase
 			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
@@ -423,7 +428,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				return
 			}
 
-			c.recordEventInfof(cd, "Routing all traffic to primary")
 			return
 		}
 
