@@ -124,6 +124,21 @@ until ${ok}; do
     fi
 done
 
+echo '>>> Waiting for canary finalization'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test get canary/podinfo | grep 'Succeeded' && ok=true || ok=false
+    sleep 5
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n istio-system logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
 echo '✔ Canary promotion test passed'
 
 if [[ "$1" = "canary" ]]; then
@@ -180,6 +195,21 @@ until ${ok}; do
     if [[ ${count} -eq ${retries} ]]; then
         kubectl -n test describe deployment/podinfo
         kubectl -n test describe deployment/podinfo-primary
+        kubectl -n istio-system logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
+echo '>>> Waiting for B/G finalization'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test get canary/podinfo | grep 'Succeeded' && ok=true || ok=false
+    sleep 5
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
         kubectl -n istio-system logs deployment/flagger
         echo "No more retries left"
         exit 1
