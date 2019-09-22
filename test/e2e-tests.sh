@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script runs e2e tests for Canary initialization, analysis and promotion
+# This script runs e2e tests for Canary, B/G and A/B initialization, analysis and promotion
 # Prerequisites: Kubernetes Kind, Helm and Istio
 
 set -o errexit
@@ -124,11 +124,99 @@ until ${ok}; do
     fi
 done
 
+echo '>>> Waiting for canary finalization'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test get canary/podinfo | grep 'Succeeded' && ok=true || ok=false
+    sleep 5
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n istio-system logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
 echo '✔ Canary promotion test passed'
 
 if [[ "$1" = "canary" ]]; then
   exit 0
 fi
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  progressDeadlineSeconds: 60
+  service:
+    portDiscovery: true
+    port: 9898
+  canaryAnalysis:
+    interval: 10s
+    threshold: 5
+    iterations: 5
+    metrics:
+    - name: request-success-rate
+      threshold: 99
+      interval: 1m
+    - name: request-duration
+      threshold: 500
+      interval: 30s
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 5m -q 10 -c 2 http://podinfo.test:9898/"
+EOF
+
+echo '>>> Triggering B/G deployment'
+kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.2
+
+echo '>>> Waiting for B/G promotion'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test describe deployment/podinfo-primary | grep '1.4.2' && ok=true || ok=false
+    sleep 10
+    kubectl -n istio-system logs deployment/flagger --tail 1
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n test describe deployment/podinfo
+        kubectl -n test describe deployment/podinfo-primary
+        kubectl -n istio-system logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
+echo '>>> Waiting for B/G finalization'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test get canary/podinfo | grep 'Succeeded' && ok=true || ok=false
+    sleep 5
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n istio-system logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
+echo '✔ B/G promotion test passed'
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3
@@ -180,14 +268,14 @@ spec:
 EOF
 
 echo '>>> Triggering A/B testing'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.2
+kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.3
 
 echo '>>> Waiting for A/B testing promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '1.4.2' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '1.4.3' && ok=true || ok=false
     sleep 10
     kubectl -n istio-system logs deployment/flagger --tail 1
     count=$(($count + 1))

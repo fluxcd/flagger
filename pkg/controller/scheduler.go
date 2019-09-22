@@ -283,7 +283,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check if the canary success rate is above the threshold
 	// skip check if no traffic is routed to canary
-	if canaryWeight == 0 {
+	if canaryWeight == 0 && cd.Status.Iterations == 0 {
 		c.recordEventInfof(cd, "Starting canary analysis for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// run pre-rollout web hooks
@@ -305,7 +305,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// canary fix routing: A/B testing
-	if len(cd.Spec.CanaryAnalysis.Match) > 0 || cd.Spec.CanaryAnalysis.Iterations > 0 {
+	if len(cd.Spec.CanaryAnalysis.Match) > 0 && cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// route traffic to canary and increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
 			if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
@@ -356,6 +356,78 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			}
 
 			c.recordEventInfof(cd, "Routing all traffic to primary")
+			return
+		}
+
+		return
+	}
+
+	// canary fix routing: B/G
+	if cd.Spec.CanaryAnalysis.Iterations > 0 {
+		// increment iterations
+		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
+			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			c.recordEventInfof(cd, "Advance %s.%s canary iteration %v/%v",
+				cd.Name, cd.Namespace, cd.Status.Iterations+1, cd.Spec.CanaryAnalysis.Iterations)
+			return
+		}
+
+		// route all traffic to canary - max iterations reached
+		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
+			if provider != "kubernetes" {
+				c.recordEventInfof(cd, "Routing all traffic to canary")
+				if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
+					c.recordEventWarningf(cd, "%v", err)
+					return
+				}
+				c.recorder.SetWeight(cd, 0, 100)
+			}
+
+			// increment iterations
+			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			return
+		}
+
+		// promote canary - max iterations reached
+		if cd.Spec.CanaryAnalysis.Iterations+1 == cd.Status.Iterations {
+			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
+				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
+			if err := c.deployer.Promote(cd); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+
+			// increment iterations
+			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			return
+		}
+
+		// route all traffic to primary
+		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
+			if provider != "kubernetes" {
+				c.recordEventInfof(cd, "Routing all traffic to primary")
+				if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+					c.recordEventWarningf(cd, "%v", err)
+					return
+				}
+				c.recorder.SetWeight(cd, 100, 0)
+			}
+
+			// update status phase
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+
 			return
 		}
 
