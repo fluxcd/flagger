@@ -257,6 +257,9 @@ spec:
           type: cmd
           cmd: "hey -z 10m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo-canary.test:9898/"
           logCmdOutput: "true"
+      - name: promote-gate
+        type: confirm-promotion
+        url: http://flagger-loadtester.test/gate/approve
       - name: post
         type: post-rollout
         url: http://flagger-loadtester.test/
