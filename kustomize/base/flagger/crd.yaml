@@ -215,7 +215,7 @@ spec:
                   properties:
                     items:
                       type: object
-                      required: ["name", "url", "timeout"]
+                      required: ["name", "url"]
                       properties:
                         name:
                           description: Name of the webhook
@@ -228,6 +228,7 @@ spec:
                             - confirm-rollout
                             - pre-rollout
                             - rollout
+                            - confirm-promotion
                             - post-rollout
                         url:
                           description: URL address of this webhook
