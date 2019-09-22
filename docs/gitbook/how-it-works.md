@@ -663,6 +663,9 @@ The canary advancement is paused if a pre-rollout hook fails and if the number o
 threshold the canary will be rollback.
 * Rollout hooks are executed during the analysis on each iteration before the metric checks. 
 If a rollout hook call fails the canary advancement is paused and eventfully rolled back.
+* Confirm-promotion hooks are executed before the promotion step.
+The canary promotion is paused until the hooks return HTTP 200.
+While the promotion is paused, Flagger will continue to run the metrics checks and rollout hooks.
 * Post-rollout hooks are executed after the canary has been promoted or rolled back. 
 If a post rollout hook fails the error is logged.
 
@@ -687,6 +690,9 @@ Spec:
         timeout: 15s
         metadata:
           cmd: "hey -z 1m -q 5 -c 2 http://podinfo-canary.test:9898/"
+      - name: "promotion gate"
+        type: confirm-promotion
+        url: http://flagger-loadtester.test/gate/approve
       - name: "notify"
         type: post-rollout
         url: http://telegram.bot:8080/
@@ -914,8 +920,8 @@ Note that you should create a ConfigMap with your Bats tests and mount it inside
 
 ### Manual Gating
 
-For manual approval of a canary deployment you can use the `confirm-rollout` webhook. 
-The confirmation hooks are executed before the pre-rollout hooks. 
+For manual approval of a canary deployment you can use the `confirm-rollout` and `confirm-promotion` webhooks. 
+The confirmation rollout hooks are executed before the pre-rollout hooks. 
 Flagger will halt the canary traffic shifting and analysis until the confirm webhook returns HTTP status 200.
 
 Manual gating with Flagger's tester:
@@ -974,3 +980,16 @@ kubectl get canary/podinfo
 NAME      STATUS        WEIGHT
 podinfo   Waiting       0
 ```
+
+The `confirm-promotion` hook type can be used to manually approve the canary promotion.
+While the promotion is paused, Flagger will continue to run the metrics checks and load tests.
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "promotion gate"
+        type: confirm-promotion
+        url: http://flagger-loadtester.test/gate/halt
+```
+
+If you have notifications enabled, Flagger will post a message to Slack or MS Teams if a canary promotion is waiting for approval.
