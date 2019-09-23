@@ -323,6 +323,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 
+		// check promotion gate
+		if promote := c.runConfirmPromotionHooks(cd); !promote {
+			return
+		}
+
 		// promote canary - max iterations reached
 		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
@@ -372,6 +377,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			}
 			c.recordEventInfof(cd, "Advance %s.%s canary iteration %v/%v",
 				cd.Name, cd.Namespace, cd.Status.Iterations+1, cd.Spec.CanaryAnalysis.Iterations)
+			return
+		}
+
+		// check promotion gate
+		if promote := c.runConfirmPromotionHooks(cd); !promote {
 			return
 		}
 
@@ -443,6 +453,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
 		if primaryWeight > 100 {
 			primaryWeight = 100
+		}
+
+		// check promotion gate
+		if canaryWeight >= maxWeight {
+			if promote := c.runConfirmPromotionHooks(cd); !promote {
+				return
+			}
 		}
 
 		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
@@ -631,6 +648,23 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary) bool {
 					c.recordEventInfof(canary, "Confirm-rollout check %s passed", webhook.Name)
 					return false
 				}
+			}
+		}
+	}
+	return true
+}
+
+func (c *Controller) runConfirmPromotionHooks(canary *flaggerv1.Canary) bool {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
+		if webhook.Type == flaggerv1.ConfirmPromotionHook {
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			if err != nil {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for promotion approval %s",
+					canary.Name, canary.Namespace, webhook.Name)
+				c.sendNotification(canary, "Canary promotion is waiting for approval.", false, false)
+				return false
+			} else {
+				c.recordEventInfof(canary, "Confirm-promotion check %s passed", webhook.Name)
 			}
 		}
 	}

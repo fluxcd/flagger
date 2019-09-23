@@ -139,6 +139,8 @@ const (
 	PostRolloutHook HookType = "post-rollout"
 	// ConfirmRolloutHook halt canary analysis until webhook returns HTTP 200
 	ConfirmRolloutHook HookType = "confirm-rollout"
+	// ConfirmPromotionHook halt canary promotion until webhook returns HTTP 200
+	ConfirmPromotionHook HookType = "confirm-promotion"
 )
 
 // CanaryWebhook holds the reference to external checks used for canary analysis
