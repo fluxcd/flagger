@@ -214,7 +214,27 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	// scale canary to zero if analysis has succeeded
+	// route all traffic to primary if analysis has succeeded
+	if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
+		if provider != "kubernetes" {
+			c.recordEventInfof(cd, "Routing all traffic to primary")
+			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			c.recorder.SetWeight(cd, 100, 0)
+		}
+
+		// update status phase
+		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+
+		return
+	}
+
+	// scale canary to zero if promotion has finished
 	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		if err := c.deployer.Scale(cd, 0); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
@@ -336,29 +356,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-			// increment iterations
-			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			return
-		}
-
-		// route all traffic to primary
-		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
-			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			c.recorder.SetWeight(cd, 100, 0)
 
 			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-
-			c.recordEventInfof(cd, "Routing all traffic to primary")
 			return
 		}
 
@@ -403,7 +406,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 
 		// promote canary - max iterations reached
-		if cd.Spec.CanaryAnalysis.Iterations+1 == cd.Status.Iterations {
+		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
 			if err := c.deployer.Promote(cd); err != nil {
@@ -411,31 +414,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				return
 			}
 
-			// increment iterations
-			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			return
-		}
-
-		// route all traffic to primary
-		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
-			if provider != "kubernetes" {
-				c.recordEventInfof(cd, "Routing all traffic to primary")
-				if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
-					c.recordEventWarningf(cd, "%v", err)
-					return
-				}
-				c.recorder.SetWeight(cd, 100, 0)
-			}
-
 			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-
 			return
 		}
 
@@ -444,24 +427,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// strategy: Canary progressive traffic increase
 	if cd.Spec.CanaryAnalysis.StepWeight > 0 {
-		// finalise canary rollout - route all traffic to primary
-		if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
-			c.recordEventInfof(cd, "Routing all traffic to primary")
-			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			c.recorder.SetWeight(cd, 100, 0)
-
-			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-
-			return
-		}
-
 		// increase traffic weight
 		if canaryWeight < maxWeight {
 			primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
