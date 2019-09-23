@@ -304,7 +304,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 	}
 
-	// canary fix routing: A/B testing
+	// strategy: A/B testing
 	if len(cd.Spec.CanaryAnalysis.Match) > 0 && cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// route traffic to canary and increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
@@ -346,13 +346,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 		// route all traffic to primary
 		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
-			primaryWeight = 100
-			canaryWeight = 0
-			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-			c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
+			c.recorder.SetWeight(cd, 100, 0)
 
 			// update status phase
 			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
@@ -367,7 +365,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	// canary fix routing: B/G
+	// strategy: Blue/Green
 	if cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
@@ -444,66 +442,78 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	// canary incremental traffic weight
-	if canaryWeight < maxWeight {
-		primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
-		if primaryWeight < 0 {
-			primaryWeight = 0
-		}
-		canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
-		if primaryWeight > 100 {
-			primaryWeight = 100
+	// strategy: Canary progressive traffic increase
+	if cd.Spec.CanaryAnalysis.StepWeight > 0 {
+		// finalise canary rollout - route all traffic to primary
+		if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
+			c.recordEventInfof(cd, "Routing all traffic to primary")
+			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+			c.recorder.SetWeight(cd, 100, 0)
+
+			// update status phase
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+
+			return
 		}
 
-		// check promotion gate
+		// increase traffic weight
+		if canaryWeight < maxWeight {
+			primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
+			if primaryWeight < 0 {
+				primaryWeight = 0
+			}
+			canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
+			if primaryWeight > 100 {
+				primaryWeight = 100
+			}
+
+			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+
+			if err := c.deployer.SetStatusWeight(cd, canaryWeight); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+
+			c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
+			c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryWeight)
+			return
+		}
+
+		// promote canary - max weight reached
 		if canaryWeight >= maxWeight {
+			// check promotion gate
 			if promote := c.runConfirmPromotionHooks(cd); !promote {
 				return
 			}
-		}
 
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
-
-		// update weight status
-		if err := c.deployer.SetStatusWeight(cd, canaryWeight); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
-
-		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
-		c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryWeight)
-
-		// promote canary
-		if canaryWeight >= maxWeight {
+			// update primary spec
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
 			if err := c.deployer.Promote(cd); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
-		}
-	} else {
-		// route all traffic to primary
-		primaryWeight = 100
-		canaryWeight = 0
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
-		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
 
-		// update status phase
-		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
+			// update status phase
+			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+
 			return
 		}
 
-		c.recordEventInfof(cd, "Routing all traffic to primary")
-		return
 	}
+
 }
 
 func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.Interface, primaryWeight int, canaryWeight int) bool {
@@ -555,6 +565,7 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 		cd.Status.Phase == flaggerv1.CanaryPhaseInitializing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
+		cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true, nil
 	}
@@ -579,6 +590,7 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
 	c.recorder.SetStatus(cd, cd.Status.Phase)
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true
 	}
