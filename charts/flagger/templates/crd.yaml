@@ -255,6 +255,7 @@ spec:
                 - Initialized
                 - Waiting
                 - Progressing
+                - Promoting
                 - Finalising
                 - Succeeded
                 - Failed
