@@ -434,8 +434,8 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				primaryWeight = 0
 			}
 			canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
-			if primaryWeight > 100 {
-				primaryWeight = 100
+			if canaryWeight > 100 {
+				canaryWeight = 100
 			}
 
 			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
