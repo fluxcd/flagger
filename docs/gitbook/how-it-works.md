@@ -143,7 +143,7 @@ status:
 ```
 
 The `Promoted` status condition can have one of the following reasons:
-Initialized, Waiting, Progressing, Finalising, Succeeded or Failed.
+Initialized, Waiting, Progressing, Promoting, Finalising, Succeeded or Failed.
 A failed canary will have the promoted status set to `false`,
 the reason to `failed` and the last applied spec will be different to the last promoted one.
 
@@ -151,6 +151,26 @@ Wait for a successful rollout:
 
 ```bash
 kubectl wait canary/podinfo --for=condition=promoted
+```
+
+CI example:
+
+```bash
+# update the container image
+kubectl set image deployment/podinfo podinfod=stefanprodan/podinfo:3.0.1
+
+# wait for Flagger to detect the change
+ok=false
+until ${ok}; do
+    kubectl get canary/podinfo | grep 'Progressing' && ok=true || ok=false
+    sleep 5
+done
+
+# wait for the canary analysis to finish
+kubectl wait canary/podinfo --for=condition=promoted --timeout=5m
+
+# check if the deployment was successful 
+kubectl get canary/podinfo | grep Succeeded
 ```
 
 ### Istio routing
@@ -344,12 +364,13 @@ A canary deployment is triggered by changes in any of the following objects:
 Gated canary promotion stages:
 
 * scan for canary deployments
-* check Istio virtual service routes are mapped to primary and canary ClusterIP services
-* check primary and canary deployments status
+* check primary and canary deployment status
     * halt advancement if a rolling update is underway
     * halt advancement if pods are unhealthy
-* call pre-rollout webhooks are check results
-    * halt advancement if any hook returned a non HTTP 2xx result
+* call confirm-rollout webhooks and check results
+    * halt advancement if any hook returns a non HTTP 2xx result
+* call pre-rollout webhooks and check results
+    * halt advancement if any hook returns a non HTTP 2xx result
     * increment the failed checks counter
 * increase canary traffic weight percentage from 0% to 5% (step weight)
 * call rollout webhooks and check results
@@ -366,8 +387,11 @@ Gated canary promotion stages:
     * halt advancement if any webhook call fails
     * halt advancement while canary request success rate is under the threshold
     * halt advancement while canary request duration P99 is over the threshold
+    * halt advancement while any custom metric check fails
     * halt advancement if the primary or canary deployment becomes unhealthy 
     * halt advancement while canary deployment is being scaled up/down by HPA
+* call confirm-promotion webhooks and check results
+    * halt advancement if any hook returns a non HTTP 2xx result
 * promote canary to primary
     * copy ConfigMaps and Secrets from canary to primary
     * copy canary deployment spec template over primary
@@ -377,7 +401,7 @@ Gated canary promotion stages:
 * scale to zero the canary deployment
 * mark rollout as finished
 * call post-rollout webhooks
-* post the analysis result to Slack
+* post the analysis result to Slack or MS Teams
 * wait for the canary deployment to be updated and start over
 
 ### Canary Analysis

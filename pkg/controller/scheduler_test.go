@@ -162,12 +162,23 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 
 func TestScheduler_Promotion(t *testing.T) {
 	mocks := SetupMocks(false)
+
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
+	// check initialized status
+	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if c.Status.Phase != v1alpha3.CanaryPhaseInitialized {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseInitialized)
+	}
+
 	// update
 	dep2 := newTestDeploymentV2()
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -205,7 +216,30 @@ func TestScheduler_Promotion(t *testing.T) {
 	// advance
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
+	// check progressing status
+	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if c.Status.Phase != v1alpha3.CanaryPhaseProgressing {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseProgressing)
+	}
+
 	// promote
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// check promoting status
+	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if c.Status.Phase != v1alpha3.CanaryPhasePromoting {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhasePromoting)
+	}
+
+	// finalise
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	primaryWeight, canaryWeight, err = mocks.router.GetRoutes(mocks.canary)
@@ -251,9 +285,13 @@ func TestScheduler_Promotion(t *testing.T) {
 	}
 
 	// check finalising status
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
+	}
+
+	if c.Status.Phase != v1alpha3.CanaryPhaseFinalising {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseFinalising)
 	}
 
 	// scale canary to zero
