@@ -373,6 +373,15 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
+			// If in "mirror" mode, mirror requests during the entire B/G canary test
+			if provider != "kubernetes" &&
+				cd.Spec.CanaryAnalysis.Mirror == true && mirrored == false {
+				if err := meshRouter.SetRoutes(cd, 100, 0, true); err != nil {
+					c.recordEventWarningf(cd, "%v", err)
+				}
+				c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
+					Infof("Enabling mirroring for Blue/Green")
+			}
 			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
