@@ -211,6 +211,9 @@ func (c *Deployer) MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
 	case flaggerv1.CanaryPhaseProgressing:
 		status = corev1.ConditionUnknown
 		message = "New revision detected, starting canary analysis."
+	case flaggerv1.CanaryPhasePromoting:
+		status = corev1.ConditionUnknown
+		message = "Canary analysis completed, starting primary rolling update."
 	case flaggerv1.CanaryPhaseFinalising:
 		status = corev1.ConditionUnknown
 		message = "Canary analysis completed, routing all traffic to primary."
