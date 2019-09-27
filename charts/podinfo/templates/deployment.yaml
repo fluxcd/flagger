@@ -37,6 +37,9 @@ spec:
             - --random-delay={{ .Values.faults.delay }}
             - --random-error={{ .Values.faults.error }}
             - --config-path=/podinfo/config
+            {{- range .Values.backends }}
+            - --backend-url={{ . }}
+            {{- end }}
           env:
           {{- if .Values.message }}
           - name: PODINFO_UI_MESSAGE
