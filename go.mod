@@ -56,7 +56,6 @@ require (
 )
 
 replace (
-	git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
 	github.com/google/uuid => github.com/google/uuid v1.0.0
 	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20181025213731-e84da0312774
 	golang.org/x/net => golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
