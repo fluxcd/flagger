@@ -1,6 +1,6 @@
 module github.com/weaveworks/flagger
 
-go 1.12
+go 1.13
 
 require (
 	cloud.google.com/go v0.37.4 // indirect
