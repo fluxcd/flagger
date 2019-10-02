@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.18.5 (2019-10-02) 
+
+Adds support for [confirm-promotion](https://docs.flagger.app/how-it-works#webhooks) webhooks and blue/green deployments when using a service mesh
+
+#### Features
+
+- Implement confirm-promotion hook [#307](https://github.com/weaveworks/flagger/pull/307)
+- Implement B/G for service mesh providers [#305](https://github.com/weaveworks/flagger/pull/305)
+
+#### Improvements 
+
+- Canary promotion improvements to avoid dropping in-flight requests [#310](https://github.com/weaveworks/flagger/pull/310)
+- Update end-to-end tests to Kubernetes v1.15.3 and Istio 1.3.0 [#306](https://github.com/weaveworks/flagger/pull/306) 
+
+#### Fixes
+
+- Skip primary check for App Mesh [#315](https://github.com/weaveworks/flagger/pull/315)
+
 ## 0.18.4 (2019-09-08) 
 
 Adds support for NGINX custom annotations and Helm v3 acceptance testing
