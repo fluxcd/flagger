@@ -153,6 +153,14 @@ Note that you'll need kubectl 1.14 to run the above the command or you can downl
 kustomize build github.com/weaveworks/flagger//kustomize/istio | kubectl apply -f -
 ```
 
+Install Flagger for AWS App Mesh:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger//kustomize/appmesh
+```
+
+This deploys Flagger and Prometheus (configured to scrape the App Mesh Envoy sidecars) in the `appmesh-system` namespace.
+
 Install Flagger for Linkerd:
 
 ```bash
