@@ -74,7 +74,7 @@ func (s *Slack) Post(workload string, namespace string, message string, fields [
 		color = "danger"
 	}
 
-	sfields := make([]SlackField, len(fields))
+	sfields := make([]SlackField, 0, len(fields))
 	for _, f := range fields {
 		sfields = append(sfields, SlackField{f.Name, f.Value, false})
 	}

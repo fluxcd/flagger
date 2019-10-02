@@ -9,6 +9,11 @@ import (
 )
 
 func TestSlack_Post(t *testing.T) {
+	fields := []Field{
+		{Name: "name1", Value: "value1"},
+		{Name: "name2", Value: "value2"},
+	}
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -20,6 +25,10 @@ func TestSlack_Post(t *testing.T) {
 		if payload.Attachments[0].AuthorName != "podinfo.test" {
 			t.Fatal("wrong author name")
 		}
+
+		if len(payload.Attachments[0].Fields) != len(fields) {
+			t.Fatal("wrong facts")
+		}
 	}))
 	defer ts.Close()
 
@@ -28,7 +37,7 @@ func TestSlack_Post(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = slack.Post("podinfo", "test", "test", nil, true)
+	err = slack.Post("podinfo", "test", "test", fields, true)
 	if err != nil {
 		t.Fatal(err)
 	}
