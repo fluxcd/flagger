@@ -99,7 +99,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	// create primary deployment and hpa if needed
 	// skip primary check for Istio since the deployment will become ready after the ClusterIP are created
 	skipPrimaryCheck := false
-	if skipLivenessChecks || strings.Contains(provider, "istio") {
+	if skipLivenessChecks || strings.Contains(provider, "istio") || strings.Contains(provider, "appmesh") {
 		skipPrimaryCheck = true
 	}
 	label, ports, err := c.deployer.Initialize(cd, skipPrimaryCheck)
