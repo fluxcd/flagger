@@ -2,7 +2,7 @@
 
 image:
   repository: weaveworks/flagger
-  tag: 0.18.4
+  tag: 0.18.5
   pullPolicy: IfNotPresent
   pullSecret:
 
