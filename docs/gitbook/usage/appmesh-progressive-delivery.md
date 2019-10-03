@@ -92,6 +92,11 @@ spec:
       # percentage (0-100)
       threshold: 99
       interval: 1m
+    - name: request-duration
+      # maximum req duration P99
+      # milliseconds
+      threshold: 500
+      interval: 30s
     # external checks (optional)
     webhooks:
       - name: load-test
@@ -247,13 +252,19 @@ podinfod=stefanprodan/podinfo:2.0.2
 Exec into the load tester pod with:
 
 ```bash
-kubectl -n test exec -it flagger-loadtester-xx-xx sh
+kubectl -n test exec -it flagger-loadtester-xx-xx bash
 ```
 
 Generate HTTP 500 errors:
 
 ```bash
 hey -z 1m -c 5 -q 5 http://podinfo.test:9898/status/500
+```
+
+Generate latency:
+
+```bash
+watch -n 1 curl http://podinfo-canary.test:9898/delay/1
 ```
 
 When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
@@ -264,22 +275,21 @@ kubectl -n test describe canary/podinfo
 
 Status:
   Canary Weight:         0
-  Failed Checks:         10
+  Failed Checks:         5
   Phase:                 Failed
 Events:
-  Type     Reason  Age   From     Message
-  ----     ------  ----  ----     -------
-  Normal   Synced  3m    flagger  Starting canary deployment for podinfo.test
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
-  Normal   Synced  3m    flagger  Halt podinfo.test advancement success rate 69.17% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 61.39% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 55.06% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 47.00% < 99%
-  Normal   Synced  2m    flagger  (combined from similar events): Halt podinfo.test advancement success rate 38.08% < 99%
-  Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
-  Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
+ Starting canary analysis for podinfo.test
+ Pre-rollout check acceptance-test passed
+ Advance podinfo.test canary weight 5
+ Advance podinfo.test canary weight 10
+ Advance podinfo.test canary weight 15
+ Halt podinfo.test advancement success rate 69.17% < 99%
+ Halt podinfo.test advancement success rate 61.39% < 99%
+ Halt podinfo.test advancement success rate 55.06% < 99%
+ Halt podinfo.test advancement request duration 1.20s > 0.5s
+ Halt podinfo.test advancement request duration 1.45s > 0.5s
+ Rolling back podinfo.test failed checks threshold reached 5
+ Canary failed! Scaling down podinfo.test
 ```
 
 If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, 
