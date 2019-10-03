@@ -14,14 +14,6 @@ The App Mesh integration with EKS is made out of the following components:
 * Admission controller - injects the Envoy sidecar and assigns Kubernetes pods to App Mesh virtual nodes
 * Metrics server - Prometheus instance that collects and stores Envoy's metrics
 
-Prerequisites:
-
-* jq
-* homebrew
-* openssl
-* kubectl
-* AWS CLI (default region us-west-2)
-
 ### Create a Kubernetes cluster
 
 In order to create an EKS cluster you can use [eksctl](https://eksctl.io).
@@ -40,6 +32,8 @@ Create an EKS cluster:
 ```bash
 eksctl create cluster --name=appmesh \
 --region=us-west-2 \
+--nodes 3 \
+--node-volume-size=120 \
 --appmesh-access
 ```
 
@@ -98,21 +92,39 @@ kubectl -n kube-system top pods
 
 ### Install the App Mesh components
 
-Run the App Mesh installer:
+Create the `appmesh-system` namespace:
 
-```bash
-curl -fsSL https://git.io/get-app-mesh-eks.sh | bash -
+```sh
+kubectl create ns appmesh-system
 ```
 
-The installer does the following:
+Apply the App Mesh CRDs:
 
-* creates the `appmesh-system` namespace
-* generates a certificate signed by Kubernetes CA
-* registers the App Mesh mutating webhook
-* deploys the App Mesh webhook in `appmesh-system` namespace
-* deploys the App Mesh CRDs
-* deploys the App Mesh controller in `appmesh-system` namespace
-* creates a mesh called `global`
+```sh
+kubectl apply -f https://raw.githubusercontent.com/aws/eks-charts/master/stable/appmesh-controller/crds/crds.yaml
+```
+
+Add the EKS repository to Helm:
+
+```sh
+helm repo add eks https://aws.github.io/eks-charts
+```
+
+Install the App Mesh CRD controller:
+
+```sh
+helm upgrade -i appmesh-controller eks/appmesh-controller \
+--wait --namespace appmesh-system
+```
+
+Install the App Mesh admission controller:
+
+```sh
+helm upgrade -i appmesh-inject eks/appmesh-inject \
+--wait --namespace appmesh-system \
+--set mesh.create=true \
+--set mesh.name=global
+```
 
 Verify that the global mesh is active:
 
@@ -125,7 +137,7 @@ Status:
     Type:                  MeshActive
 ```
 
-### Install Flagger and Grafana
+### Install Flagger, Prometheus and Grafana
 
 Add Flagger Helm repository:
 
@@ -156,10 +168,8 @@ You can enable **Slack** notifications with:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
+--reuse-values \
 --namespace=appmesh-system \
---set crd.create=false \
---set meshProvider=appmesh \
---set metricsServer=http://prometheus.appmesh:9090 \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
 --set slack.channel=general \
 --set slack.user=flagger
