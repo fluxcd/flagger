@@ -134,7 +134,7 @@ The App Mesh specific settings are:
 ```yaml
   service:
     port: 9898
-    meshName: global.appmesh-system
+    meshName: global
     backends:
       - backend1.test
       - backend2.test
