@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.18.6 (2019-10-03) 
+
+Adds support for App Mesh conformance tests and latency metric checks
+
+#### Improvements 
+
+- Add support for acceptance testing when using App Mesh [#322](https://github.com/weaveworks/flagger/pull/322)
+- Add Kustomize installer for App Mesh [#310](https://github.com/weaveworks/flagger/pull/310)
+- Update Linkerd to v2.5.0 and Prometheus to v2.12.0 [#323](https://github.com/weaveworks/flagger/pull/323)
+
+#### Fixes
+
+- Fix slack/teams notification fields mapping [#318](https://github.com/weaveworks/flagger/pull/318)
+
 ## 0.18.5 (2019-10-02) 
 
 Adds support for [confirm-promotion](https://docs.flagger.app/how-it-works#webhooks) webhooks and blue/green deployments when using a service mesh
