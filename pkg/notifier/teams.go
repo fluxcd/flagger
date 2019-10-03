@@ -45,7 +45,7 @@ func NewMSTeams(hookURL string) (*MSTeams, error) {
 
 // Post MS Teams message
 func (s *MSTeams) Post(workload string, namespace string, message string, fields []Field, warn bool) error {
-	facts := make([]MSTeamsField, len(fields))
+	facts := make([]MSTeamsField, 0, len(fields))
 	for _, f := range fields {
 		facts = append(facts, MSTeamsField{f.Name, f.Value})
 	}

@@ -9,6 +9,12 @@ import (
 )
 
 func TestTeams_Post(t *testing.T) {
+
+	fields := []Field{
+		{Name: "name1", Value: "value1"},
+		{Name: "name2", Value: "value2"},
+	}
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -20,6 +26,9 @@ func TestTeams_Post(t *testing.T) {
 		if payload.Sections[0].ActivitySubtitle != "podinfo.test" {
 			t.Fatal("wrong activity subtitle")
 		}
+		if len(payload.Sections[0].Facts) != len(fields) {
+			t.Fatal("wrong facts")
+		}
 	}))
 	defer ts.Close()
 
@@ -28,7 +37,7 @@ func TestTeams_Post(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = teams.Post("podinfo", "test", "test", nil, true)
+	err = teams.Post("podinfo", "test", "test", fields, true)
 	if err != nil {
 		t.Fatal(err)
 	}
