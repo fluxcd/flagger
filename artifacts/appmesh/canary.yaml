@@ -41,8 +41,20 @@ spec:
       # percentage (0-100)
       threshold: 99
       interval: 1m
-    # external checks (optional)
+    - name: request-duration
+      # maximum req duration P99
+      # milliseconds
+      threshold: 500
+      interval: 30s
+    # testing (optional)
     webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary.test:9898/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
