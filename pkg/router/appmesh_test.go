@@ -37,6 +37,23 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 		t.Errorf("Got routes %v wanted %v", targetsCount, 2)
 	}
 
+	// check canary virtual service
+	vsCanaryName := fmt.Sprintf("%s-canary.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
+	vsCanary, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsCanaryName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// check if the canary virtual service routes all traffic to the canary virtual node
+	target := vsCanary.Spec.Routes[0].Http.Action.WeightedTargets[0]
+	canaryVirtualNodeName := fmt.Sprintf("%s-canary", mocks.appmeshCanary.Spec.TargetRef.Name)
+	if target.VirtualNodeName != canaryVirtualNodeName {
+		t.Errorf("Got VirtualNodeName %v wanted %v", target.VirtualNodeName, canaryVirtualNodeName)
+	}
+	if target.Weight != 100 {
+		t.Errorf("Got weight %v wanted %v", target.Weight, 100)
+	}
+
 	// check virtual node
 	vnName := mocks.appmeshCanary.Spec.TargetRef.Name
 	vn, err := router.appmeshClient.AppmeshV1beta1().VirtualNodes("default").Get(vnName, metav1.GetOptions{})
@@ -103,7 +120,7 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 
 	weight := vs.Spec.Routes[0].Http.Action.WeightedTargets[0].Weight
 	if weight != 50 {
-		t.Errorf("Got weight %v wanted %v", weight, 502)
+		t.Errorf("Got weight %v wanted %v", weight, 50)
 	}
 
 	// test URI update

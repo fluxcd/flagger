@@ -56,9 +56,16 @@ func (ar *AppMeshRouter) Reconcile(canary *flaggerv1.Canary) error {
 		return err
 	}
 
-	// sync virtual service e.g. app.namespace
+	// sync main virtual service
 	// DNS app.namespace
-	err = ar.reconcileVirtualService(canary, targetHost)
+	err = ar.reconcileVirtualService(canary, targetHost, 0)
+	if err != nil {
+		return err
+	}
+
+	// sync canary virtual service
+	// DNS app-canary.namespace
+	err = ar.reconcileVirtualService(canary, fmt.Sprintf("%s.%s", canaryName, canary.Namespace), 100)
 	if err != nil {
 		return err
 	}
@@ -148,7 +155,7 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 }
 
 // reconcileVirtualService creates or updates a virtual service
-func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name string) error {
+func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name string, canaryWeight int64) error {
 	targetName := canary.Spec.TargetRef.Name
 	canaryVirtualNode := fmt.Sprintf("%s-canary", targetName)
 	primaryVirtualNode := fmt.Sprintf("%s-primary", targetName)
@@ -185,11 +192,11 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 						WeightedTargets: []AppmeshV1beta1.WeightedTarget{
 							{
 								VirtualNodeName: canaryVirtualNode,
-								Weight:          0,
+								Weight:          canaryWeight,
 							},
 							{
 								VirtualNodeName: primaryVirtualNode,
-								Weight:          100,
+								Weight:          100 - canaryWeight,
 							},
 						},
 					},
