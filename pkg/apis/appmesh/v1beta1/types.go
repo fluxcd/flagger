@@ -302,7 +302,7 @@ type VirtualNodeCondition struct {
 	Reason *string `json:"reason,omitempty"`
 	// A human readable message indicating details about the transition.
 	// +optional
-	Message *string `json:"reason,omitempty"`
+	Message *string `json:"message,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
