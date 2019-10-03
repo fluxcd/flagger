@@ -2,7 +2,7 @@
 
 set -o errexit
 
-LINKERD_VER="stable-2.4.0"
+LINKERD_VER="stable-2.5.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
