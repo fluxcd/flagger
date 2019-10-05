@@ -17,8 +17,7 @@ The App Mesh integration with EKS is made out of the following components:
 ### Create a Kubernetes cluster
 
 In order to create an EKS cluster you can use [eksctl](https://eksctl.io).
-Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon, 
-it’s a Kubernetes-native tool written in Go.
+Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon.
 
 On MacOS you can install eksctl with Homebrew:
 
@@ -137,7 +136,17 @@ Status:
     Type:                  MeshActive
 ```
 
-### Install Flagger, Prometheus and Grafana
+In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, 
+you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
+
+Install the App Mesh Prometheus:
+
+```sh
+helm upgrade -i appmesh-prometheus eks/appmesh-prometheus \
+--wait --namespace appmesh-system
+```
+
+### Install Flagger and Grafana
 
 Add Flagger Helm repository:
 
@@ -151,20 +160,17 @@ Install Flagger's Canary CRD:
 kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
 ```
 
-Deploy Flagger and Prometheus in the _**appmesh-system**_ namespace:
+Deploy Flagger in the _**appmesh-system**_ namespace:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --namespace=appmesh-system \
 --set crd.create=false \
 --set meshProvider=appmesh \
---set prometheus.install=true
+--set metricsServer=appmesh-prometheus:9090
 ```
 
-In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, 
-you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
-
-You can enable **Slack** notifications with:
+You can enable Slack or MS Teams notifications with:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
@@ -181,7 +187,7 @@ Deploy Grafana in the _**appmesh-system**_ namespace:
 ```bash
 helm upgrade -i flagger-grafana flagger/grafana \
 --namespace=appmesh-system \
---set url=http://flagger-prometheus.appmesh-system:9090
+--set url=http://appmesh-prometheus:9090
 ```
 
 You can access Grafana using port forwarding:
