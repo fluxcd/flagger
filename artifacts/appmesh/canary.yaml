@@ -20,6 +20,9 @@ spec:
   service:
     # container port
     port: 9898
+    # container port name (optional)
+    # can be http or grpc
+    portName: http
     # App Mesh reference
     meshName: global
   # define the canary analysis timing and KPIs
