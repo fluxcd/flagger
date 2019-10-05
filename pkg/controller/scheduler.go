@@ -155,7 +155,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check if virtual service exists
 	// and if it contains weighted destination routes to the primary and canary services
-	primaryWeight, canaryWeight, err := meshRouter.GetRoutes(cd)
+	primaryWeight, canaryWeight, mirrored, err := meshRouter.GetRoutes(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -176,7 +176,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		// route all traffic back to primary
 		primaryWeight = 100
 		canaryWeight = 0
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -218,7 +218,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
 		if provider != "kubernetes" {
 			c.recordEventInfof(cd, "Routing all traffic to primary")
-			if err := meshRouter.SetRoutes(cd, 100, 0); err != nil {
+			if err := meshRouter.SetRoutes(cd, 100, 0, false); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -275,7 +275,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		// route all traffic back to primary
 		primaryWeight = 100
 		canaryWeight = 0
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -302,8 +302,9 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check if the canary success rate is above the threshold
-	// skip check if no traffic is routed to canary
-	if canaryWeight == 0 && cd.Status.Iterations == 0 {
+	// skip check if no traffic is routed or mirrored to canary
+	if canaryWeight == 0 && cd.Status.Iterations == 0 &&
+		(cd.Spec.CanaryAnalysis.Mirror == false || mirrored == false) {
 		c.recordEventInfof(cd, "Starting canary analysis for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// run pre-rollout web hooks
@@ -328,7 +329,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if len(cd.Spec.CanaryAnalysis.Match) > 0 && cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// route traffic to canary and increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
-			if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
+			if err := meshRouter.SetRoutes(cd, 0, 100, false); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -372,6 +373,15 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// increment iterations
 		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
+			// If in "mirror" mode, mirror requests during the entire B/G canary test
+			if provider != "kubernetes" &&
+				cd.Spec.CanaryAnalysis.Mirror == true && mirrored == false {
+				if err := meshRouter.SetRoutes(cd, 100, 0, true); err != nil {
+					c.recordEventWarningf(cd, "%v", err)
+				}
+				c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
+					Infof("Enabling mirroring for Blue/Green")
+			}
 			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
@@ -390,7 +400,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
 			if provider != "kubernetes" {
 				c.recordEventInfof(cd, "Routing all traffic to canary")
-				if err := meshRouter.SetRoutes(cd, 0, 100); err != nil {
+				if err := meshRouter.SetRoutes(cd, 0, 100, false); err != nil {
 					c.recordEventWarningf(cd, "%v", err)
 					return
 				}
@@ -429,16 +439,34 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if cd.Spec.CanaryAnalysis.StepWeight > 0 {
 		// increase traffic weight
 		if canaryWeight < maxWeight {
-			primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
-			if primaryWeight < 0 {
-				primaryWeight = 0
-			}
-			canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
-			if canaryWeight > 100 {
-				canaryWeight = 100
+			// If in "mirror" mode, do one step of mirroring before shifting traffic to canary.
+			// When mirroring, all requests go to primary and canary, but only responses from
+			// primary go back to the user.
+			if cd.Spec.CanaryAnalysis.Mirror && canaryWeight == 0 {
+				if mirrored == false {
+					mirrored = true
+					primaryWeight = 100
+					canaryWeight = 0
+				} else {
+					mirrored = false
+					primaryWeight = 100 - cd.Spec.CanaryAnalysis.StepWeight
+					canaryWeight = cd.Spec.CanaryAnalysis.StepWeight
+				}
+				c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
+					Infof("Running mirror step %d/%d/%t", primaryWeight, canaryWeight, mirrored)
+			} else {
+
+				primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
+				if primaryWeight < 0 {
+					primaryWeight = 0
+				}
+				canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
+				if canaryWeight > 100 {
+					canaryWeight = 100
+				}
 			}
 
-			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, mirrored); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -489,7 +517,7 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	// route all traffic to primary
 	primaryWeight = 100
 	canaryWeight = 0
-	if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight); err != nil {
+	if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return false
 	}

@@ -259,6 +259,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 func (ar *AppMeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 	err error,
 ) {
 	targetName := canary.Spec.TargetRef.Name
@@ -293,6 +294,8 @@ func (ar *AppMeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 			vsName, targetName, targetName)
 	}
 
+	mirrored = false
+
 	return
 }
 
@@ -301,6 +304,7 @@ func (ar *AppMeshRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 ) error {
 	targetName := canary.Spec.TargetRef.Name
 	vsName := fmt.Sprintf("%s.%s", targetName, canary.Namespace)

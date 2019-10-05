@@ -137,6 +137,12 @@ func newMockCanary() *v1alpha3.Canary {
 	return cd
 }
 
+func newMockMirror() *v1alpha3.Canary {
+	cd := newMockCanary()
+	cd.Spec.CanaryAnalysis.Mirror = true
+	return cd
+}
+
 func newMockABTest() *v1alpha3.Canary {
 	cd := &v1alpha3.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},

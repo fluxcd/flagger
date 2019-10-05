@@ -56,15 +56,16 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	p, c, err := router.GetRoutes(mocks.ingressCanary)
+	p, c, m, err := router.GetRoutes(mocks.ingressCanary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	p = 50
 	c = 50
+	m = false
 
-	err = router.SetRoutes(mocks.ingressCanary, p, c)
+	err = router.SetRoutes(mocks.ingressCanary, p, c, m)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -93,8 +94,9 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 
 	p = 100
 	c = 0
+	m = false
 
-	err = router.SetRoutes(mocks.ingressCanary, p, c)
+	err = router.SetRoutes(mocks.ingressCanary, p, c, m)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

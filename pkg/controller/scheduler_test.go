@@ -8,7 +8,7 @@ import (
 )
 
 func TestScheduler_Init(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -18,7 +18,7 @@ func TestScheduler_Init(t *testing.T) {
 }
 
 func TestScheduler_NewRevision(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update
@@ -42,7 +42,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 }
 
 func TestScheduler_Rollback(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -66,7 +66,7 @@ func TestScheduler_Rollback(t *testing.T) {
 }
 
 func TestScheduler_SkipAnalysis(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -107,7 +107,7 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 }
 
 func TestScheduler_NewRevisionReset(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -123,7 +123,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 	// advance
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryWeight, canaryWeight, err := mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -136,6 +136,10 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 		t.Errorf("Got canary route %v wanted %v", canaryWeight, 10)
 	}
 
+	if mirrored != false {
+		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
+	}
+
 	// second update
 	dep2.Spec.Template.Spec.ServiceAccountName = "test"
 	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
@@ -146,7 +150,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 	// detect changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryWeight, canaryWeight, err = mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -158,10 +162,14 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 	if canaryWeight != 0 {
 		t.Errorf("Got canary route %v wanted %v", canaryWeight, 0)
 	}
+
+	if mirrored != false {
+		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
+	}
 }
 
 func TestScheduler_Promotion(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
@@ -201,14 +209,14 @@ func TestScheduler_Promotion(t *testing.T) {
 	// detect configs changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryWeight, canaryWeight, err := mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	primaryWeight = 60
 	canaryWeight = 40
-	err = mocks.router.SetRoutes(mocks.canary, primaryWeight, canaryWeight)
+	err = mocks.router.SetRoutes(mocks.canary, primaryWeight, canaryWeight, mirrored)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -242,7 +250,7 @@ func TestScheduler_Promotion(t *testing.T) {
 	// finalise
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	primaryWeight, canaryWeight, err = mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -253,6 +261,10 @@ func TestScheduler_Promotion(t *testing.T) {
 
 	if canaryWeight != 0 {
 		t.Errorf("Got canary route %v wanted %v", canaryWeight, 0)
+	}
+
+	if mirrored != false {
+		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
 	}
 
 	primaryDep, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -307,8 +319,66 @@ func TestScheduler_Promotion(t *testing.T) {
 	}
 }
 
+func TestScheduler_Mirroring(t *testing.T) {
+	mocks := SetupMocks(newTestCanaryMirror())
+	// init
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// update
+	dep2 := newTestDeploymentV2()
+	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect pod spec changes
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// advance
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// check if traffic is mirrored to canary
+	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if primaryWeight != 100 {
+		t.Errorf("Got primary route %v wanted %v", primaryWeight, 100)
+	}
+
+	if canaryWeight != 0 {
+		t.Errorf("Got canary route %v wanted %v", canaryWeight, 0)
+	}
+
+	if mirrored != true {
+		t.Errorf("Got mirrored %v wanted %v", mirrored, true)
+	}
+
+	// advance
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// check if traffic is mirrored to canary
+	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if primaryWeight != 90 {
+		t.Errorf("Got primary route %v wanted %v", primaryWeight, 90)
+	}
+
+	if canaryWeight != 10 {
+		t.Errorf("Got canary route %v wanted %v", canaryWeight, 10)
+	}
+
+	if mirrored != false {
+		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
+	}
+}
+
 func TestScheduler_ABTesting(t *testing.T) {
-	mocks := SetupMocks(true)
+	mocks := SetupMocks(newTestCanaryAB())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -326,7 +396,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check if traffic is routed to canary
-	primaryWeight, canaryWeight, err := mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -337,6 +407,10 @@ func TestScheduler_ABTesting(t *testing.T) {
 
 	if canaryWeight != 100 {
 		t.Errorf("Got canary route %v wanted %v", canaryWeight, 100)
+	}
+
+	if mirrored != false {
+		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
 	}
 
 	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -392,7 +466,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 }
 
 func TestScheduler_PortDiscovery(t *testing.T) {
-	mocks := SetupMocks(false)
+	mocks := SetupMocks(nil)
 
 	// enable port discovery
 	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})

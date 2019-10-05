@@ -42,11 +42,9 @@ type Mocks struct {
 	router        router.Interface
 }
 
-func SetupMocks(abtest bool) Mocks {
-	// init canary
-	c := newTestCanary()
-	if abtest {
-		c = newTestCanaryAB()
+func SetupMocks(c *v1alpha3.Canary) Mocks {
+	if c == nil {
+		c = newTestCanary()
 	}
 	flaggerClient := fakeFlagger.NewSimpleClientset(c)
 
@@ -266,6 +264,12 @@ func newTestCanary() *v1alpha3.Canary {
 			},
 		},
 	}
+	return cd
+}
+
+func newTestCanaryMirror() *v1alpha3.Canary {
+	cd := newTestCanary()
+	cd.Spec.CanaryAnalysis.Mirror = true
 	return cd
 }
 

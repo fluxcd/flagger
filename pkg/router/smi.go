@@ -107,6 +107,7 @@ func (sr *SmiRouter) Reconcile(canary *flaggerv1.Canary) error {
 func (sr *SmiRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 	err error,
 ) {
 	targetName := canary.Spec.TargetRef.Name
@@ -137,6 +138,8 @@ func (sr *SmiRouter) GetRoutes(canary *flaggerv1.Canary) (
 			targetName, canary.Namespace, primaryName, canaryName)
 	}
 
+	mirrored = false
+
 	return
 }
 
@@ -145,6 +148,7 @@ func (sr *SmiRouter) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
+	mirrored bool,
 ) error {
 	targetName := canary.Spec.TargetRef.Name
 	canaryName := fmt.Sprintf("%s-canary", targetName)
