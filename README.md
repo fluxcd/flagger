@@ -70,7 +70,6 @@ metadata:
 spec:
   # service mesh provider (optional)
   # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo, supergloo
-  # use the kubernetes provider for Blue/Green style deployments
   provider: istio
   # deployment reference
   targetRef:
@@ -94,6 +93,10 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - podinfo.example.com
+    # Istio traffic policy (optional)
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
     # HTTP match conditions (optional)
     match:
       - uri:
@@ -144,7 +147,7 @@ spec:
             topic="podinfo"
           }[1m]
         )
-    # external checks (optional)
+    # testing (optional)
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
