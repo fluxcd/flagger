@@ -19,7 +19,6 @@ metadata:
 spec:
   # service mesh provider (optional)
   # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo, supergloo
-  # use the kubernetes provider for Blue/Green style deployments
   provider: istio
   # deployment reference
   targetRef:
@@ -38,13 +37,7 @@ spec:
     # container port
     port: 9898
     # service port name (optional, will default to "http")
-    portName: http-podinfo
-    # Istio gateways (optional)
-    gateways:
-    - public-gateway.istio-system.svc.cluster.local
-    # Istio virtual service host names (optional)
-    hosts:
-    - podinfo.example.com
+    portName: http
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   # define the canary analysis timing and KPIs
@@ -71,15 +64,13 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
-    # external checks (optional)
+    # testing (optional)
     webhooks:
-      - name: integration-tests
-        url: http://podinfo.test:9898/echo
-        timeout: 1m
-        # key-value pairs (optional)
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
         metadata:
-          test: "all"
-          token: "16688eb5e9f289f1991c"
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
 ```
 
 **Note** that the target deployment must have a single label selector in the format `app: <DEPLOYMENT-NAME>`:
@@ -102,8 +93,8 @@ spec:
 Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If you use a different 
 convention you can specify your label with the `-selector-labels` flag.
 
-The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Service and 
-the Istio Virtual Service. The container port from the target deployment should match the `service.port` value.
+The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Services.
+The container port from the target deployment should match the `service.port` value.
 
 ### Canary status
 
@@ -201,10 +192,11 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - frontend.example.com
-    # Istio traffic policy (optional)
+    # Istio traffic policy
     trafficPolicy:
-      loadBalancer:
-        simple: LEAST_CONN
+      tls:
+        # use ISTIO_MUTUAL when mTLS is enabled
+        mode: DISABLE
     # HTTP match conditions (optional)
     match:
       - uri:
@@ -291,8 +283,8 @@ metadata:
 spec:
   host: frontend-primary
   trafficPolicy:
-    loadBalancer:
-      simple: LEAST_CONN
+    tls:
+      mode: DISABLE
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -302,15 +294,15 @@ metadata:
 spec:
   host: frontend-canary
   trafficPolicy:
-    loadBalancer:
-      simple: LEAST_CONN
+    tls:
+      mode: DISABLE
 ```
 
 Flagger keeps in sync the virtual service and destination rules with the canary service spec.
 Any direct modification to the virtual service spec will be overwritten.
 
 To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9898`,
-the service spec can contain only the container port:
+the service spec can contain only the container port and the traffic policy:
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -321,6 +313,9 @@ metadata:
 spec:
   service:
     port: 9898
+    trafficPolicy:
+      tls:
+        mode: DISABLE
 ```
 
 Based on the above spec, Flagger will create several ClusterIP services like:
@@ -531,7 +526,7 @@ sum(
 )
 ```
 
-App Mesh query:
+Envoy query (App Mesh or Gloo):
 
 ```javascript
 sum(
@@ -539,7 +534,7 @@ sum(
         envoy_cluster_upstream_rq{
           kubernetes_namespace="$namespace",
           kubernetes_pod_name=~"$workload",
-          response_code!~"5.*"
+          envoy_response_code!~"5.*"
         }[$interval]
     )
 ) 
@@ -584,7 +579,7 @@ histogram_quantile(0.99,
 )
 ```
 
-App Mesh query:
+Envoy query (App Mesh or Gloo):
 
 ```javascript
 histogram_quantile(0.99, 
