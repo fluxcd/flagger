@@ -7,10 +7,12 @@
 Flagger can run automated application analysis, promotion and rollback for the following deployment strategies:
 * Canary (progressive traffic shifting)
     * Istio, Linkerd, App Mesh, NGINX, Gloo
+* Canary (traffic mirroring)
+    * Istio
 * A/B Testing (HTTP headers and cookies traffic routing)
     * Istio, NGINX
 * Blue/Green (traffic switch)
-    * Kubernetes CNI
+    * Kubernetes CNI, Istio, Linkerd, App Mesh, NGINX, Gloo
 
 For Canary deployments and A/B testing you'll need a Layer 7 traffic management solution like a service mesh or an ingress controller.
 For Blue/Green deployments no service mesh or ingress controller is required.
@@ -123,7 +125,7 @@ idempotent. Before using mirroring on requests that may be writes, you should
 consider what will happen if a write is duplicated and handled by the primary
 and canary.
 
-To use mirroring, set `spec.canaryAnalysis.mirror` to `true`.  Example for
+To use mirroring, set `spec.canaryAnalysis.mirror` to `true`. Example for
 traffic shifting:
 
 ```yaml
@@ -132,17 +134,10 @@ kind: Canary
 spec:
   provider: istio
   canaryAnalysis:
-    interval: 30s
     mirror: true
+    interval: 30s
     stepWeight: 20
     maxWeight: 50
-    metrics:
-    - interval: 29s
-      name: request-success-rate
-      threshold: 99
-    - interval: 29s
-      name: request-duration
-      threshold: 500
 ```
 
 ### Kubernetes services
@@ -333,6 +328,190 @@ spec:
                   affinity: podinfo
               topologyKey: kubernetes.io/hostname
 ```
+
+### Istio routing
+
+**How does Flagger interact with Istio?**
+
+Flagger creates an Istio Virtual Service and Destination Rules based on the Canary service spec. 
+The service configuration lets you expose an app inside or outside the mesh.
+You can also define traffic policies, HTTP match conditions, URI rewrite rules, CORS policies, timeout and retries.
+
+The following spec exposes the `frontend` workload inside the mesh on `frontend.test.svc.cluster.local:9898` 
+and outside the mesh on `frontend.example.com`. You'll have to specify an Istio ingress gateway for external hosts.
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: frontend
+  namespace: test
+spec:
+  service:
+    # container port
+    port: 9898
+    # service port name (optional, will default to "http")
+    portName: http-frontend
+    # Istio gateways (optional)
+    gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    - mesh
+    # Istio virtual service host names (optional)
+    hosts:
+    - frontend.example.com
+    # Istio traffic policy
+    trafficPolicy:
+      tls:
+        # use ISTIO_MUTUAL when mTLS is enabled
+        mode: DISABLE
+    # HTTP match conditions (optional)
+    match:
+      - uri:
+          prefix: /
+    # HTTP rewrite (optional)
+    rewrite:
+      uri: /
+    # Envoy timeout and retry policy (optional)
+    headers:
+      request:
+        add:
+          x-envoy-upstream-rq-timeout-ms: "15000"
+          x-envoy-max-retries: "10"
+          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+    # cross-origin resource sharing policy (optional)
+    corsPolicy:
+      allowOrigin:
+        - example.com
+      allowMethods:
+        - GET
+      allowCredentials: false
+      allowHeaders:
+        - x-some-header
+      maxAge: 24h
+```
+
+For the above spec Flagger will generate the following virtual service:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: frontend
+  namespace: test
+  ownerReferences:
+    - apiVersion: flagger.app/v1alpha3
+      blockOwnerDeletion: true
+      controller: true
+      kind: Canary
+      name: podinfo
+      uid: 3a4a40dd-3875-11e9-8e1d-42010a9c0fd1
+spec:
+  gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    - mesh
+  hosts:
+    - frontend.example.com
+    - frontend
+  http:
+  - appendHeaders:
+      x-envoy-max-retries: "10"
+      x-envoy-retry-on: gateway-error,connect-failure,refused-stream
+      x-envoy-upstream-rq-timeout-ms: "15000"
+    corsPolicy:
+      allowHeaders:
+      - x-some-header
+      allowMethods:
+      - GET
+      allowOrigin:
+      - example.com
+      maxAge: 24h
+    match:
+    - uri:
+        prefix: /
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: podinfo-primary
+      weight: 100
+    - destination:
+        host: podinfo-canary
+      weight: 0
+```
+
+For each destination in the virtual service a rule is generated:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: frontend-primary
+  namespace: test
+spec:
+  host: frontend-primary
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: frontend-canary
+  namespace: test
+spec:
+  host: frontend-canary
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+```
+
+Flagger keeps in sync the virtual service and destination rules with the canary service spec.
+Any direct modification to the virtual service spec will be overwritten.
+
+To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9898`,
+the service spec can contain only the container port and the traffic policy:
+
+```yaml
+apiVersion: flagger.app/v1alpha3
+kind: Canary
+metadata:
+  name: backend
+  namespace: test
+spec:
+  service:
+    port: 9898
+    trafficPolicy:
+      tls:
+        mode: DISABLE
+```
+
+Based on the above spec, Flagger will create several ClusterIP services like:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-primary
+  ownerReferences:
+  - apiVersion: flagger.app/v1alpha3
+    blockOwnerDeletion: true
+    controller: true
+    kind: Canary
+    name: backend
+    uid: 2ca1a9c7-2ef6-11e9-bd01-42010a9c0145
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 9898
+    protocol: TCP
+    targetPort: 9898
+  selector:
+    app: backend-primary
+```
+
+Flagger works for user facing apps exposed outside the cluster via an ingress gateway
+and for backend HTTP APIs that are accessible only from inside the mesh.
 
 ### Istio Ingress Gateway
 

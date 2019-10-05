@@ -87,16 +87,8 @@ spec:
   service:
     # container port
     port: 9898
-    # Istio gateways (optional)
-    gateways:
-    - public-gateway.istio-system.svc.cluster.local
-    # Istio virtual service host names (optional)
-    hosts:
-    - podinfo.example.com
-    # Istio traffic policy (optional)
-    trafficPolicy:
-      tls:
-        mode: ISTIO_MUTUAL
+    # port name can be http or grpc (default http)
+    portName: http
     # HTTP match conditions (optional)
     match:
       - uri:
@@ -104,10 +96,6 @@ spec:
     # HTTP rewrite (optional)
     rewrite:
       uri: /
-    # cross-origin resource sharing policy (optional)
-    corsPolicy:
-      allowOrigin:
-        - example.com
     # request timeout (optional)
     timeout: 5s
   # promote the canary without analysing it (default false)
@@ -160,15 +148,17 @@ For more details on how the canary analysis and promotion works please [read the
 
 ## Features
 
-| Feature                                      | Istio              | Linkerd            | App Mesh           | NGINX              | Gloo               |
-| -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |------------------  |
-| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies filters)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: |
-| Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Feature                                      | Istio              | Linkerd            | App Mesh           | NGINX              | Gloo               | Kubernetes CNI     |
+| -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |------------------  |------------------  |
+| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| A/B testing (headers and cookies routing)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
 
 ## Roadmap
 
