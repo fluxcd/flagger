@@ -325,6 +325,19 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 	}
 
+	// use blue/green strategy for kubernetes provider
+	if provider == "kubernetes" {
+		if len(cd.Spec.CanaryAnalysis.Match) > 0 {
+			c.recordEventWarningf(cd, "A/B testing is not supported when using the kubernetes provider")
+			cd.Spec.CanaryAnalysis.Match = nil
+		}
+		if cd.Spec.CanaryAnalysis.Iterations < 1 {
+			c.recordEventWarningf(cd, "Progressive traffic is not supported when using the kubernetes provider")
+			c.recordEventWarningf(cd, "Setting canaryAnalysis.iterations: 10")
+			cd.Spec.CanaryAnalysis.Iterations = 10
+		}
+	}
+
 	// strategy: A/B testing
 	if len(cd.Spec.CanaryAnalysis.Match) > 0 && cd.Spec.CanaryAnalysis.Iterations > 0 {
 		// route traffic to canary and increment iterations
