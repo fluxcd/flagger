@@ -15,6 +15,7 @@ spec:
         app: flagger
       annotations:
         prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
     spec:
       serviceAccountName: flagger
       containers:
