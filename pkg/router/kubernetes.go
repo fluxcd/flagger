@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
@@ -128,7 +129,10 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 	}
 
 	if svc != nil {
-		portsDiff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports)
+		sortPorts := func(a, b interface{}) bool {
+			return a.(corev1.ServicePort).Port < b.(corev1.ServicePort).Port
+		}
+		portsDiff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports, cmpopts.SortSlices(sortPorts))
 		selectorsDiff := cmp.Diff(svcSpec.Selector, svc.Spec.Selector)
 
 		if portsDiff != "" || selectorsDiff != "" {

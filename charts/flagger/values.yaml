@@ -6,7 +6,9 @@ image:
   pullPolicy: IfNotPresent
   pullSecret:
 
-podAnnotations: {}
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
 
 metricsServer: "http://prometheus:9090"
 
