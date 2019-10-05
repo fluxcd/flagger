@@ -105,9 +105,9 @@ If the analysis result is positive, Flagger will promote the canary (green versi
 **When can I use traffic mirroring?**
 
 Traffic Mirroring is a pre-stage in a Canary (progressive traffic shifting) or
-Blue/Green deployment strategy.  Traffic mirroring will copy each incoming
-request, sending one request to the primary and one to the canary service.  The
-response from the primary is sent back to the user.  The response from the canary
+Blue/Green deployment strategy. Traffic mirroring will copy each incoming
+request, sending one request to the primary and one to the canary service.
+The response from the primary is sent back to the user. The response from the canary
 is discarded.  Metrics are collected on both requests so that the deployment will
 only proceed if the canary metrics are healthy.
 
@@ -115,12 +115,11 @@ Mirroring is supported by Istio only.
 
 In Istio, mirrored requests have `-shadow` appended to the `Host` (HTTP) or
 `Authority` (HTTP/2) header; for example requests to `podinfo.test` that are
-mirrored will be reported in telemetry with a destination host
-`podinfo.test-shadow`.
+mirrored will be reported in telemetry with a destination host `podinfo.test-shadow`.
 
 Mirroring must only be used for requests that are **idempotent** or capable of
-being processed twice (once by the primary and once by the canary).  Reads are
-idempotent.  Before using mirroring on requests that may be writes, you should
+being processed twice (once by the primary and once by the canary). Reads are
+idempotent. Before using mirroring on requests that may be writes, you should
 consider what will happen if a write is duplicated and handled by the primary
 and canary.
 

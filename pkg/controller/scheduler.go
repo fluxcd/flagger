@@ -380,7 +380,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 					c.recordEventWarningf(cd, "%v", err)
 				}
 				c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
-					Infof("Enabling mirroring for Blue/Green")
+					Infof("Start traffic mirroring")
 			}
 			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
@@ -399,7 +399,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		// route all traffic to canary - max iterations reached
 		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
 			if provider != "kubernetes" {
-				c.recordEventInfof(cd, "Routing all traffic to canary")
+				if cd.Spec.CanaryAnalysis.Mirror {
+					c.recordEventInfof(cd, "Stop traffic mirroring and route all traffic to canary")
+				} else {
+					c.recordEventInfof(cd, "Routing all traffic to canary")
+				}
 				if err := meshRouter.SetRoutes(cd, 0, 100, false); err != nil {
 					c.recordEventWarningf(cd, "%v", err)
 					return
