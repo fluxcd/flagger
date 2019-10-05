@@ -4,8 +4,6 @@
 a horizontal pod autoscaler \(HPA\) and creates a series of objects 
 \(Kubernetes deployments, ClusterIP services, virtual service, traffic split or ingress\) to drive the canary analysis and promotion. 
 
-![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
-
 ### Canary Custom Resource
 
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
@@ -19,7 +17,7 @@ metadata:
 spec:
   # service mesh provider (optional)
   # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo, supergloo
-  provider: istio
+  provider: linkerd
   # deployment reference
   targetRef:
     apiVersion: apps/v1
@@ -36,8 +34,11 @@ spec:
   service:
     # container port
     port: 9898
-    # service port name (optional, will default to "http")
+    # port name can be http or grpc (default http)
     portName: http
+    # add all the other container ports
+    # to the ClusterIP services (default false)
+    portDiscovery: false
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   # define the canary analysis timing and KPIs
@@ -163,188 +164,6 @@ kubectl wait canary/podinfo --for=condition=promoted --timeout=5m
 # check if the deployment was successful 
 kubectl get canary/podinfo | grep Succeeded
 ```
-
-### Istio routing
-
-Flagger creates an Istio Virtual Service and Destination Rules based on the Canary service spec. 
-The service configuration lets you expose an app inside or outside the mesh.
-You can also define traffic policies, HTTP match conditions, URI rewrite rules, CORS policies, timeout and retries.
-
-The following spec exposes the `frontend` workload inside the mesh on `frontend.test.svc.cluster.local:9898` 
-and outside the mesh on `frontend.example.com`. You'll have to specify an Istio ingress gateway for external hosts.
-
-```yaml
-apiVersion: flagger.app/v1alpha3
-kind: Canary
-metadata:
-  name: frontend
-  namespace: test
-spec:
-  service:
-    # container port
-    port: 9898
-    # service port name (optional, will default to "http")
-    portName: http-frontend
-    # Istio gateways (optional)
-    gateways:
-    - public-gateway.istio-system.svc.cluster.local
-    - mesh
-    # Istio virtual service host names (optional)
-    hosts:
-    - frontend.example.com
-    # Istio traffic policy
-    trafficPolicy:
-      tls:
-        # use ISTIO_MUTUAL when mTLS is enabled
-        mode: DISABLE
-    # HTTP match conditions (optional)
-    match:
-      - uri:
-          prefix: /
-    # HTTP rewrite (optional)
-    rewrite:
-      uri: /
-    # Envoy timeout and retry policy (optional)
-    headers:
-      request:
-        add:
-          x-envoy-upstream-rq-timeout-ms: "15000"
-          x-envoy-max-retries: "10"
-          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
-    # cross-origin resource sharing policy (optional)
-    corsPolicy:
-      allowOrigin:
-        - example.com
-      allowMethods:
-        - GET
-      allowCredentials: false
-      allowHeaders:
-        - x-some-header
-      maxAge: 24h
-```
-
-For the above spec Flagger will generate the following virtual service:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: frontend
-  namespace: test
-  ownerReferences:
-    - apiVersion: flagger.app/v1alpha3
-      blockOwnerDeletion: true
-      controller: true
-      kind: Canary
-      name: podinfo
-      uid: 3a4a40dd-3875-11e9-8e1d-42010a9c0fd1
-spec:
-  gateways:
-    - public-gateway.istio-system.svc.cluster.local
-    - mesh
-  hosts:
-    - frontend.example.com
-    - frontend
-  http:
-  - appendHeaders:
-      x-envoy-max-retries: "10"
-      x-envoy-retry-on: gateway-error,connect-failure,refused-stream
-      x-envoy-upstream-rq-timeout-ms: "15000"
-    corsPolicy:
-      allowHeaders:
-      - x-some-header
-      allowMethods:
-      - GET
-      allowOrigin:
-      - example.com
-      maxAge: 24h
-    match:
-    - uri:
-        prefix: /
-    rewrite:
-      uri: /
-    route:
-    - destination:
-        host: podinfo-primary
-      weight: 100
-    - destination:
-        host: podinfo-canary
-      weight: 0
-```
-
-For each destination in the virtual service a rule is generated:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: DestinationRule
-metadata:
-  name: frontend-primary
-  namespace: test
-spec:
-  host: frontend-primary
-  trafficPolicy:
-    tls:
-      mode: DISABLE
----
-apiVersion: networking.istio.io/v1alpha3
-kind: DestinationRule
-metadata:
-  name: frontend-canary
-  namespace: test
-spec:
-  host: frontend-canary
-  trafficPolicy:
-    tls:
-      mode: DISABLE
-```
-
-Flagger keeps in sync the virtual service and destination rules with the canary service spec.
-Any direct modification to the virtual service spec will be overwritten.
-
-To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9898`,
-the service spec can contain only the container port and the traffic policy:
-
-```yaml
-apiVersion: flagger.app/v1alpha3
-kind: Canary
-metadata:
-  name: backend
-  namespace: test
-spec:
-  service:
-    port: 9898
-    trafficPolicy:
-      tls:
-        mode: DISABLE
-```
-
-Based on the above spec, Flagger will create several ClusterIP services like:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend-primary
-  ownerReferences:
-  - apiVersion: flagger.app/v1alpha3
-    blockOwnerDeletion: true
-    controller: true
-    kind: Canary
-    name: backend
-    uid: 2ca1a9c7-2ef6-11e9-bd01-42010a9c0145
-spec:
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 9898
-    protocol: TCP
-    targetPort: 9898
-  selector:
-    app: backend-primary
-```
-
-Flagger works for user facing apps exposed outside the cluster via an ingress gateway
-and for backend HTTP APIs that are accessible only from inside the mesh.
 
 ### Canary Stages
 
@@ -482,6 +301,29 @@ interval * threshold
 ```
 
 Make sure that the analysis threshold is lower than the number of iterations.
+
+### Blue/Green deployments
+
+For applications that are not deployed on a service mesh, Flagger can orchestrate blue/green style deployments 
+with Kubernetes L4 networking. When using Istio you have the option to mirror traffic between blue and green.
+
+You can use the blue/green deployment strategy by replacing `stepWeight/maxWeight` with `iterations` in the `canaryAnalysis` spec:
+
+```yaml
+  canaryAnalysis:
+    # schedule interval (default 60s)
+    interval: 1m
+    # total number of iterations
+    iterations: 10
+    # max number of failed iterations before rollback
+    threshold: 2
+    # Traffic shadowing (compatible with Istio only)
+    mirror: true
+```
+
+With the above configuration Flagger will run conformance and load tests on the canary pods for ten minutes. 
+If the metrics analysis succeeds, live traffic will be switched from the old version to the new one when the
+canary is promoted.
 
 ### HTTP Metrics
 

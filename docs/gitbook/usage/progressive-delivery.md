@@ -115,6 +115,8 @@ kubectl apply -f ./podinfo-canary.yaml
 When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
 The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
 
+![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
+
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
@@ -250,10 +252,10 @@ Events:
 
 ![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-traffic-mirroring.png)
 
-For applications that perform read operations, Flagger can be configured to drive a canary release with traffic mirroring.
+For applications that perform read operations, Flagger can be configured to drive canary releases with traffic mirroring.
 Istio traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.
 The response from the primary is sent back to the user and the response from the canary is discarded.
-Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are healthy.
+Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are within the threshold values.
 
 Note that mirroring should be used for requests that are **idempotent** or capable of being processed twice
 (once by the primary and once by the canary).
@@ -324,9 +326,3 @@ The above procedure can be extended with [custom metrics](https://docs.flagger.a
 [webhooks](https://docs.flagger.app/how-it-works#webhooks),
 [manual promotion](https://docs.flagger.app/how-it-works#manual-gating) approval and
 [Slack or MS Teams](https://docs.flagger.app/usage/alerting) notifications.
-
-
-
-
-
-
