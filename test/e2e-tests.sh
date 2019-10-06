@@ -104,7 +104,7 @@ done
 echo '✔ Canary initialization test passed'
 
 echo '>>> Triggering canary deployment'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:3.1.1
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
 
 echo '>>> Waiting for canary promotion'
 retries=50
@@ -197,7 +197,7 @@ spec:
 EOF
 
 echo '>>> Triggering B/G deployment'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:3.1.2
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.2
 
 echo '>>> Waiting for B/G promotion'
 retries=50
@@ -289,7 +289,7 @@ spec:
 EOF
 
 echo '>>> Triggering A/B testing'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:3.1.3
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.3
 
 echo '>>> Waiting for A/B testing promotion'
 retries=50
