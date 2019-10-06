@@ -2,9 +2,12 @@ package controller
 
 import (
 	"fmt"
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
 func TestScheduler_Init(t *testing.T) {
@@ -494,6 +497,96 @@ func TestScheduler_PortDiscovery(t *testing.T) {
 		switch lookup {
 		case
 			"http 9898",
+			"http-metrics 8080",
+			"tcp-podinfo-2 8888":
+			return true
+		}
+		return false
+	}
+
+	for _, port := range canarySvc.Spec.Ports {
+		if !matchPorts(fmt.Sprintf("%s %v", port.Name, port.Port)) {
+			t.Fatalf("Got wrong svc port %v", port.Name)
+		}
+
+	}
+}
+
+func TestScheduler_TargetPortNumber(t *testing.T) {
+	mocks := SetupMocks(nil)
+
+	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	cd.Spec.Service.Port = 80
+	cd.Spec.Service.TargetPort = intstr.FromInt(9898)
+	cd.Spec.Service.PortDiscovery = true
+	_, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cd)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(canarySvc.Spec.Ports) != 3 {
+		t.Fatalf("Got svc port count %v wanted %v", len(canarySvc.Spec.Ports), 3)
+	}
+
+	matchPorts := func(lookup string) bool {
+		switch lookup {
+		case
+			"http 80",
+			"http-metrics 8080",
+			"tcp-podinfo-2 8888":
+			return true
+		}
+		return false
+	}
+
+	for _, port := range canarySvc.Spec.Ports {
+		if !matchPorts(fmt.Sprintf("%s %v", port.Name, port.Port)) {
+			t.Fatalf("Got wrong svc port %v", port.Name)
+		}
+
+	}
+}
+
+func TestScheduler_TargetPortName(t *testing.T) {
+	mocks := SetupMocks(nil)
+
+	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	cd.Spec.Service.Port = 8080
+	cd.Spec.Service.TargetPort = intstr.FromString("http")
+	cd.Spec.Service.PortDiscovery = true
+	_, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cd)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(canarySvc.Spec.Ports) != 3 {
+		t.Fatalf("Got svc port count %v wanted %v", len(canarySvc.Spec.Ports), 3)
+	}
+
+	matchPorts := func(lookup string) bool {
+		switch lookup {
+		case
+			"http 8080",
 			"http-metrics 8080",
 			"tcp-podinfo-2 8888":
 			return true
