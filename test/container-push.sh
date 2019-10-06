@@ -12,9 +12,10 @@ push () {
         docker push weaveworks/flagger:${BRANCH_COMMIT};
     else
         docker tag test/flagger:latest weaveworks/flagger:${CIRCLE_TAG};
-        docker tag test/flagger-loadtester:latest weaveworks/flagger-loadtester:${CIRCLE_TAG};
         docker push weaveworks/flagger:${CIRCLE_TAG};
-        docker push weaveworks/flagger-loadtester:${CIRCLE_TAG};
+        LT_VERSION=$(grep 'VERSION' cmd/loadtester/main.go | awk '{ print $4 }' | tr -d '"' | head -n1);
+        docker tag test/flagger-loadtester:latest weaveworks/flagger-loadtester:${LT_VERSION};
+        docker push weaveworks/flagger-loadtester:${LT_VERSION};
     fi
 }
 
