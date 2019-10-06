@@ -65,18 +65,24 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 		portName = "http"
 	}
 
+	targetPort := intstr.IntOrString{
+		Type:   intstr.Int,
+		IntVal: canary.Spec.Service.Port,
+	}
+
+	if canary.Spec.Service.TargetPort.String() != "0" {
+		targetPort = canary.Spec.Service.TargetPort
+	}
+
 	svcSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeClusterIP,
 		Selector: map[string]string{c.label: target},
 		Ports: []corev1.ServicePort{
 			{
-				Name:     portName,
-				Protocol: corev1.ProtocolTCP,
-				Port:     canary.Spec.Service.Port,
-				TargetPort: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: canary.Spec.Service.Port,
-				},
+				Name:       portName,
+				Protocol:   corev1.ProtocolTCP,
+				Port:       canary.Spec.Service.Port,
+				TargetPort: targetPort,
 			},
 		},
 	}

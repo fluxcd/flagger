@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/hashstructure"
@@ -203,7 +204,7 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, *map[s
 
 	var ports *map[string]int32
 	if cd.Spec.Service.PortDiscovery {
-		p, err := c.getPorts(canaryDep, cd.Spec.Service.Port)
+		p, err := c.getPorts(cd, canaryDep)
 		if err != nil {
 			return "", nil, fmt.Errorf("port discovery failed with error: %v", err)
 		}
@@ -392,7 +393,7 @@ var sidecars = map[string]bool{
 }
 
 // getPorts returns a list of all container ports
-func (c *Deployer) getPorts(deployment *appsv1.Deployment, canaryPort int32) (map[string]int32, error) {
+func (c *Deployer) getPorts(cd *flaggerv1.Canary, deployment *appsv1.Deployment) (map[string]int32, error) {
 	ports := make(map[string]int32)
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
@@ -401,9 +402,22 @@ func (c *Deployer) getPorts(deployment *appsv1.Deployment, canaryPort int32) (ma
 			continue
 		}
 		for i, p := range container.Ports {
-			// exclude canary.service.port
-			if p.ContainerPort == canaryPort {
-				continue
+			// exclude canary.service.port or canary.service.targetPort
+			if cd.Spec.Service.TargetPort.String() == "0" {
+				if p.ContainerPort == cd.Spec.Service.Port {
+					continue
+				}
+			} else {
+				if cd.Spec.Service.TargetPort.Type == intstr.Int {
+					if p.ContainerPort == cd.Spec.Service.TargetPort.IntVal {
+						continue
+					}
+				}
+				if cd.Spec.Service.TargetPort.Type == intstr.String {
+					if p.Name == cd.Spec.Service.TargetPort.StrVal {
+						continue
+					}
+				}
 			}
 			name := fmt.Sprintf("tcp-%s-%v", container.Name, i)
 			if p.Name != "" {
