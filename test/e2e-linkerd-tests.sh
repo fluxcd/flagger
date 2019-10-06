@@ -32,7 +32,7 @@ spec:
   progressDeadlineSeconds: 60
   service:
     port: 80
-    targertPort: http
+    targetPort: http
     portDiscovery: true
   canaryAnalysis:
     interval: 15s
