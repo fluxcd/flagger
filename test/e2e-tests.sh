@@ -181,6 +181,13 @@ spec:
         metadata:
           type: bash
           cmd: "curl -sd 'test' http://podinfo-canary/token | grep token"
+      - name: grpc-acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "grpc_health_probe -connect-timeout=1s -addr=podinfo-canary:9999"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
