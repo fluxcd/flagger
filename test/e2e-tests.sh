@@ -159,7 +159,9 @@ spec:
   progressDeadlineSeconds: 60
   service:
     portDiscovery: true
-    port: 9898
+    port: 80
+    targetPort: 9898
+    portName: http-podinfo
   canaryAnalysis:
     interval: 10s
     threshold: 5
@@ -172,12 +174,19 @@ spec:
       threshold: 500
       interval: 30s
     webhooks:
+      - name: http-acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 5m -q 10 -c 2 http://podinfo.test:9898/"
+          cmd: "hey -z 5m -q 10 -c 2 http://podinfo-canary.test/"
 EOF
 
 echo '>>> Triggering B/G deployment'
@@ -232,7 +241,9 @@ spec:
   progressDeadlineSeconds: 60
   service:
     portDiscovery: true
-    port: 9898
+    port: 80
+    portName: http-podinfo
+    targetPort: http
   canaryAnalysis:
     interval: 10s
     threshold: 5
@@ -255,7 +266,7 @@ spec:
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo-canary.test:9898/"
+          cmd: "hey -z 10m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo-canary.test/"
           logCmdOutput: "true"
       - name: promote-gate
         type: confirm-promotion
@@ -266,7 +277,7 @@ spec:
         timeout: 15s
         metadata:
           type: cmd
-          cmd: "curl -s http://podinfo.test:9898/"
+          cmd: "curl -s http://podinfo.test/"
           logCmdOutput: "true"
 EOF
 
