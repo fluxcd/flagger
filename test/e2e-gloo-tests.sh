@@ -27,7 +27,7 @@ metadata:
 spec:
   virtualHost:
     domains:
-      - '*'
+      - app.example.com
     name: podinfo
     routes:
       - matcher:
@@ -36,6 +36,9 @@ spec:
           upstreamGroup:
             name: podinfo
             namespace: test
+        routePlugins:
+          prefixRewrite:
+            prefixRewrite: "/"
 EOF
 
 cat <<EOF | kubectl apply -f -
@@ -52,7 +55,8 @@ spec:
     name: podinfo
   progressDeadlineSeconds: 60
   service:
-    port: 9898
+    port: 80
+    targetPort: 9898
   canaryAnalysis:
     interval: 15s
     threshold: 15
@@ -72,7 +76,14 @@ spec:
         timeout: 10s
         metadata:
           type: bash
-          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
+          cmd: "curl -sd 'test' http://podinfo-canary/token | grep token"
+      - name: gloo-acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 10s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' -H 'Host: app.example.com' http://gateway-proxy-v2.gloo-system/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
