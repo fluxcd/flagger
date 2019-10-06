@@ -20,6 +20,21 @@ The e2e testing infrastructure is powered by CircleCI and [Kubernetes Kind](http
 * test the canary analysis and promotion using weighted traffic and the load testing webhook [e2e-tests.sh](e2e-tests.sh)
 * test the A/B testing analysis and promotion using cookies filters and pre/post rollout webhooks [e2e-tests.sh](e2e-tests.sh)
 
+### CircleCI e2e Linkerd workflow
+
+* install latest stable kubectl [e2e-kind.sh](e2e-kind.sh)
+* install Kubernetes Kind [e2e-kind.sh](e2e-kind.sh)
+* create local Kubernetes cluster with kind [e2e-kind.sh](e2e-kind.sh)
+* install Linkerd [e2e-linkerd.sh](e2e-linkerd.sh)
+* load Flagger image onto the local cluster [e2e-linkerd.sh](e2e-linkerd.sh)
+* deploy Flagger in the linkerd namespace with Kustomize [e2e-linkerd.sh](e2e-linkerd.sh)
+* create a test namespace with Linkerd injection enabled [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
+* deploy the load tester in the test namespace [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
+* deploy a demo workload (podinfo) in the test namespace [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
+* test the canary initialization with port discovery enabled and service target port [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
+* test the canary analysis and promotion using gPRC acceptance tests and HTTP load tests [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
+* test the canary rollback on HTTP 500 errors [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
+
 ### CircleCI e2e NGINX ingress workflow
 
 * install latest stable kubectl [e2e-kind.sh](e2e-kind.sh)
