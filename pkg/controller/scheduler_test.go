@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
 func TestScheduler_Init(t *testing.T) {
@@ -50,7 +50,7 @@ func TestScheduler_Rollback(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update failed checks to max
-	err := mocks.deployer.SyncStatus(mocks.canary, v1alpha3.CanaryStatus{Phase: v1alpha3.CanaryPhaseProgressing, FailedChecks: 11})
+	err := mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing, FailedChecks: 11})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -63,8 +63,8 @@ func TestScheduler_Rollback(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseFailed {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseFailed)
+	if c.Status.Phase != flaggerv1.CanaryPhaseFailed {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseFailed)
 	}
 }
 
@@ -104,8 +104,8 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 		t.Errorf("Got skip analysis %v wanted %v", c.Spec.SkipAnalysis, true)
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseSucceeded {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseSucceeded)
+	if c.Status.Phase != flaggerv1.CanaryPhaseSucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseSucceeded)
 	}
 }
 
@@ -183,8 +183,8 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseInitialized {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseInitialized)
+	if c.Status.Phase != flaggerv1.CanaryPhaseInitialized {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseInitialized)
 	}
 
 	// update
@@ -233,8 +233,8 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseProgressing {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseProgressing)
+	if c.Status.Phase != flaggerv1.CanaryPhaseProgressing {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseProgressing)
 	}
 
 	// promote
@@ -246,8 +246,8 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhasePromoting {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhasePromoting)
+	if c.Status.Phase != flaggerv1.CanaryPhasePromoting {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhasePromoting)
 	}
 
 	// finalise
@@ -305,8 +305,8 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseFinalising {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseFinalising)
+	if c.Status.Phase != flaggerv1.CanaryPhaseFinalising {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseFinalising)
 	}
 
 	// scale canary to zero
@@ -317,8 +317,8 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseSucceeded {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseSucceeded)
+	if c.Status.Phase != flaggerv1.CanaryPhaseSucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseSucceeded)
 	}
 }
 
@@ -438,8 +438,8 @@ func TestScheduler_ABTesting(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseFinalising {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseFinalising)
+	if c.Status.Phase != flaggerv1.CanaryPhaseFinalising {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseFinalising)
 	}
 
 	// check if the container image tag was updated
@@ -463,8 +463,8 @@ func TestScheduler_ABTesting(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if c.Status.Phase != v1alpha3.CanaryPhaseSucceeded {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, v1alpha3.CanaryPhaseSucceeded)
+	if c.Status.Phase != flaggerv1.CanaryPhaseSucceeded {
+		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseSucceeded)
 	}
 }
 

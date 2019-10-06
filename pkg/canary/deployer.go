@@ -4,12 +4,9 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/hashstructure"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v2beta1"
@@ -17,7 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
 // Deployer is managing the operations for Kubernetes deployment kind

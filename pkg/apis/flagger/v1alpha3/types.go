@@ -17,12 +17,13 @@ limitations under the License.
 package v1alpha3
 
 import (
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"time"
 
-	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 )
 
 const (

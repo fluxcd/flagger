@@ -1,10 +1,11 @@
 package controller
 
 import (
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
 func TestCallWebhook(t *testing.T) {

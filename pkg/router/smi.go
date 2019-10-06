@@ -6,15 +6,16 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	smiv1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	smiv1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
 type SmiRouter struct {

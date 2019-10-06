@@ -4,14 +4,16 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
 // ConfigTracker is managing the operations for Kubernetes ConfigMaps and Secrets

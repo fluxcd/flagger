@@ -4,10 +4,11 @@ import (
 	"context"
 	"strings"
 
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
+
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
 type Factory struct {

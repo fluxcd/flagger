@@ -2,14 +2,15 @@ package canary
 
 import (
 	"fmt"
-	"k8s.io/client-go/util/retry"
 
 	"github.com/mitchellh/hashstructure"
 	ex "github.com/pkg/errors"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
 // SyncStatus encodes the canary pod spec and updates the canary status

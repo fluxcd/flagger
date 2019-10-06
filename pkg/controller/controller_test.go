@@ -4,16 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	istiov1alpha1 "github.com/weaveworks/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
-	"github.com/weaveworks/flagger/pkg/canary"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
-	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
-	"github.com/weaveworks/flagger/pkg/logger"
-	"github.com/weaveworks/flagger/pkg/metrics"
-	"github.com/weaveworks/flagger/pkg/router"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v1"
@@ -24,6 +14,17 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha1 "github.com/weaveworks/flagger/pkg/apis/istio/common/v1alpha1"
+	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	"github.com/weaveworks/flagger/pkg/canary"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
+	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
+	"github.com/weaveworks/flagger/pkg/logger"
+	"github.com/weaveworks/flagger/pkg/metrics"
+	"github.com/weaveworks/flagger/pkg/router"
 )
 
 var (
@@ -32,7 +33,7 @@ var (
 )
 
 type Mocks struct {
-	canary        *v1alpha3.Canary
+	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
@@ -42,7 +43,7 @@ type Mocks struct {
 	router        router.Interface
 }
 
-func SetupMocks(c *v1alpha3.Canary) Mocks {
+func SetupMocks(c *flaggerv1.Canary) Mocks {
 	if c == nil {
 		c = newTestCanary()
 	}
@@ -226,14 +227,14 @@ func NewTestSecretVol() *corev1.Secret {
 	}
 }
 
-func newTestCanary() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+func newTestCanary() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
 		},
-		Spec: v1alpha3.CanarySpec{
+		Spec: flaggerv1.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
@@ -243,13 +244,13 @@ func newTestCanary() *v1alpha3.Canary {
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
-			}, Service: v1alpha3.CanaryService{
+			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
-				Metrics: []v1alpha3.CanaryMetric{
+				Metrics: []flaggerv1.CanaryMetric{
 					{
 						Name:      "istio_requests_total",
 						Threshold: 99,
@@ -267,20 +268,20 @@ func newTestCanary() *v1alpha3.Canary {
 	return cd
 }
 
-func newTestCanaryMirror() *v1alpha3.Canary {
+func newTestCanaryMirror() *flaggerv1.Canary {
 	cd := newTestCanary()
 	cd.Spec.CanaryAnalysis.Mirror = true
 	return cd
 }
 
-func newTestCanaryAB() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+func newTestCanaryAB() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
 		},
-		Spec: v1alpha3.CanarySpec{
+		Spec: flaggerv1.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
@@ -290,9 +291,9 @@ func newTestCanaryAB() *v1alpha3.Canary {
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
-			}, Service: v1alpha3.CanaryService{
+			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 10,
 				Match: []istiov1alpha3.HTTPMatchRequest{
@@ -304,7 +305,7 @@ func newTestCanaryAB() *v1alpha3.Canary {
 						},
 					},
 				},
-				Metrics: []v1alpha3.CanaryMetric{
+				Metrics: []flaggerv1.CanaryMetric{
 					{
 						Name:      "istio_requests_total",
 						Threshold: 99,

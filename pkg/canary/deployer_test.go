@@ -3,8 +3,9 @@ package canary
 import (
 	"testing"
 
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
 func TestCanaryDeployer_Sync(t *testing.T) {
@@ -229,7 +230,7 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = mocks.deployer.SetStatusPhase(mocks.canary, v1alpha3.CanaryPhaseProgressing)
+	err = mocks.deployer.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -239,8 +240,8 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if res.Status.Phase != v1alpha3.CanaryPhaseProgressing {
-		t.Errorf("Got %v wanted %v", res.Status.Phase, v1alpha3.CanaryPhaseProgressing)
+	if res.Status.Phase != flaggerv1.CanaryPhaseProgressing {
+		t.Errorf("Got %v wanted %v", res.Status.Phase, flaggerv1.CanaryPhaseProgressing)
 	}
 }
 
@@ -251,8 +252,8 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	status := v1alpha3.CanaryStatus{
-		Phase:        v1alpha3.CanaryPhaseProgressing,
+	status := flaggerv1.CanaryStatus{
+		Phase:        flaggerv1.CanaryPhaseProgressing,
 		FailedChecks: 2,
 	}
 	err = mocks.deployer.SyncStatus(mocks.canary, status)

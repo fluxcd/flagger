@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/weaveworks/flagger/pkg/router"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/weaveworks/flagger/pkg/router"
 )
 
 // scheduleCanaries synchronises the canary map with the jobs map,
@@ -81,7 +81,7 @@ func (c *Controller) scheduleCanaries() {
 func (c *Controller) advanceCanary(name string, namespace string, skipLivenessChecks bool) {
 	begin := time.Now()
 	// check if the canary exists
-	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, v1.GetOptions{})
+	cd, err := c.flaggerClient.FlaggerV1alpha3().Canaries(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
 			Errorf("Canary %s.%s not found", name, namespace)

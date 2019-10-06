@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"strings"
 
+	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	solokitclients "github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/factory"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
 	crdv1 "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/crd/solo.io/v1"
 	solokitcore "github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	solokiterror "github.com/solo-io/solo-kit/pkg/errors"
-
-	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
 // GlooRouter is managing Istio virtual services
