@@ -32,7 +32,8 @@ spec:
     name: podinfo
   progressDeadlineSeconds: 60
   service:
-    port: 9898
+    port: 80
+    targetPort: 9898
     portDiscovery: true
   canaryAnalysis:
     interval: 15s
@@ -55,13 +56,13 @@ spec:
         timeout: 10s
         metadata:
           type: bash
-          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
+          cmd: "curl -sd 'test' http://podinfo-canary/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 http://podinfo-canary.test:9898/"
+          cmd: "hey -z 10m -q 10 -c 2 http://podinfo-canary.test/"
           logCmdOutput: "true"
 EOF
 
@@ -83,14 +84,14 @@ done
 echo '✔ Canary initialization test passed'
 
 echo '>>> Triggering canary deployment'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.7.0
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
 
 echo '>>> Waiting for canary promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '1.7.0' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
     sleep 10
     kubectl -n flagger-system logs deployment/flagger --tail 1
     count=$(($count + 1))
