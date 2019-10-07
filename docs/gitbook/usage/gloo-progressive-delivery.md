@@ -118,8 +118,10 @@ spec:
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
   service:
-    # container port
+    # ClusterIP port number
     port: 9898
+    # container port number or name (optional)
+    targetPort: 9898
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 10s
@@ -198,7 +200,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.1
+podinfod=stefanprodan/podinfo:3.1.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -252,7 +254,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.2
+podinfod=stefanprodan/podinfo:3.1.2
 ```
 
 Generate HTTP 500 errors:
@@ -335,7 +337,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.3
+podinfod=stefanprodan/podinfo:3.1.3
 ```
 
 Generate 404s:

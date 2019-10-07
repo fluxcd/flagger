@@ -55,8 +55,10 @@ spec:
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
-    # container port
+    # service port number
     port: 9898
+    # container port number or name (optional)
+    targetPort: 9898
     # Istio gateways (optional)
     gateways:
     - public-gateway.istio-system.svc.cluster.local
@@ -142,7 +144,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.1
+podinfod=stefanprodan/podinfo:3.1.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -201,7 +203,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.2
+podinfod=stefanprodan/podinfo:3.1.2
 ```
 
 Exec into the load tester pod with:

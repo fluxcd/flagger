@@ -80,7 +80,6 @@ metadata:
   namespace: test
 spec:
   # service mesh provider can be: kubernetes, istio, appmesh, nginx, gloo
-  # use the kubernetes provider for Blue/Green style deployments
   provider: kubernetes
   # deployment reference
   targetRef:
@@ -96,7 +95,6 @@ spec:
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
-    # container port
     port: 9898
     portDiscovery: true
   canaryAnalysis:
@@ -172,7 +170,7 @@ Trigger a deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.1
+podinfod=stefanprodan/podinfo:3.1.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -297,7 +295,7 @@ Trigger a deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.3
+podinfod=stefanprodan/podinfo:3.1.3
 ```
 
 Generate 404s:

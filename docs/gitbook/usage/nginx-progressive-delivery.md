@@ -86,7 +86,7 @@ spec:
         paths:
           - backend:
               serviceName: podinfo
-              servicePort: 9898
+              servicePort: 80
 ```
 
 Save the above resource as podinfo-ingress.yaml and then apply it:
@@ -124,8 +124,10 @@ spec:
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
   service:
-    # container port
-    port: 9898
+    # ClusterIP port number
+    port: 80
+    # container port number or name
+    targetPort: 9898
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 10s
@@ -144,8 +146,15 @@ spec:
       # percentage (0-100)
       threshold: 99
       interval: 1m
-    # load testing (optional)
+    # testing (optional)
     webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
@@ -190,7 +199,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.1
+podinfod=stefanprodan/podinfo:3.1.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -244,7 +253,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.2
+podinfod=stefanprodan/podinfo:3.1.2
 ```
 
 Generate HTTP 500 errors:
@@ -314,7 +323,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.3
+podinfod=stefanprodan/podinfo:3.1.3
 ```
 
 Generate high response latency:
@@ -388,7 +397,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:2.0.4
+podinfod=stefanprodan/podinfo:3.1.4
 ```
 
 Flagger detects that the deployment revision changed and starts the A/B testing:
@@ -419,4 +428,3 @@ Events:
   Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
-
