@@ -118,6 +118,11 @@ spec:
                 portName:
                   description: Container port name
                   type: string
+                targetPort:
+                  description: Container target port name
+                  anyOf:
+                    - type: string
+                    - type: number
                 portDiscovery:
                   description: Enable port dicovery
                   type: boolean

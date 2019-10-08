@@ -2,10 +2,12 @@ replicaCount: 1
 
 image:
   repository: weaveworks/flagger-loadtester
-  tag: 0.8.0
+  tag: 0.9.0
   pullPolicy: IfNotPresent
 
-podAnnotations: {}
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
 
 logLevel: info
 cmd:

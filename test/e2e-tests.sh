@@ -104,14 +104,14 @@ done
 echo '✔ Canary initialization test passed'
 
 echo '>>> Triggering canary deployment'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.1
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
 
 echo '>>> Waiting for canary promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '1.4.1' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
     sleep 10
     kubectl -n istio-system logs deployment/flagger --tail 1
     count=$(($count + 1))
@@ -159,7 +159,9 @@ spec:
   progressDeadlineSeconds: 60
   service:
     portDiscovery: true
-    port: 9898
+    port: 80
+    targetPort: 9898
+    portName: http-podinfo
   canaryAnalysis:
     interval: 10s
     threshold: 5
@@ -172,23 +174,37 @@ spec:
       threshold: 500
       interval: 30s
     webhooks:
+      - name: http-acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary/token | grep token"
+      - name: grpc-acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "grpc_health_probe -connect-timeout=1s -addr=podinfo-canary:9999"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 5m -q 10 -c 2 http://podinfo.test:9898/"
+          cmd: "hey -z 5m -q 10 -c 2 http://podinfo-canary.test/"
 EOF
 
 echo '>>> Triggering B/G deployment'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.2
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.2
 
 echo '>>> Waiting for B/G promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '1.4.2' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '3.1.2' && ok=true || ok=false
     sleep 10
     kubectl -n istio-system logs deployment/flagger --tail 1
     count=$(($count + 1))
@@ -232,7 +248,9 @@ spec:
   progressDeadlineSeconds: 60
   service:
     portDiscovery: true
-    port: 9898
+    port: 80
+    portName: http-podinfo
+    targetPort: http
   canaryAnalysis:
     interval: 10s
     threshold: 5
@@ -255,7 +273,7 @@ spec:
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo-canary.test:9898/"
+          cmd: "hey -z 10m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo-canary.test/"
           logCmdOutput: "true"
       - name: promote-gate
         type: confirm-promotion
@@ -266,19 +284,19 @@ spec:
         timeout: 15s
         metadata:
           type: cmd
-          cmd: "curl -s http://podinfo.test:9898/"
+          cmd: "curl -s http://podinfo.test/"
           logCmdOutput: "true"
 EOF
 
 echo '>>> Triggering A/B testing'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.3
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.3
 
 echo '>>> Waiting for A/B testing promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '1.4.3' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '3.1.3' && ok=true || ok=false
     sleep 10
     kubectl -n istio-system logs deployment/flagger --tail 1
     count=$(($count + 1))

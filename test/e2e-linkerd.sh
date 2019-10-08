@@ -20,12 +20,7 @@ echo '>>> Load Flagger image in Kind'
 kind load docker-image test/flagger:latest
 
 echo '>>> Installing Flagger'
-helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
---namespace linkerd \
---set leaderElection.enabled=true \
---set leaderElection.replicaCount=2 \
---set metricsServer=http://linkerd-prometheus:9090 \
---set meshProvider=smi:linkerd
+kubectl apply -k ${REPO_ROOT}/kustomize/linkerd
 
 kubectl -n linkerd set image deployment/flagger flagger=test/flagger:latest
 kubectl -n linkerd rollout status deployment/flagger

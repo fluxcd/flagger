@@ -2,10 +2,9 @@ package router
 
 import (
 	"fmt"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,6 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
 // KubernetesRouter is managing ClusterIP services
@@ -65,18 +67,24 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 		portName = "http"
 	}
 
+	targetPort := intstr.IntOrString{
+		Type:   intstr.Int,
+		IntVal: canary.Spec.Service.Port,
+	}
+
+	if canary.Spec.Service.TargetPort.String() != "0" {
+		targetPort = canary.Spec.Service.TargetPort
+	}
+
 	svcSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeClusterIP,
 		Selector: map[string]string{c.label: target},
 		Ports: []corev1.ServicePort{
 			{
-				Name:     portName,
-				Protocol: corev1.ProtocolTCP,
-				Port:     canary.Spec.Service.Port,
-				TargetPort: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: canary.Spec.Service.Port,
-				},
+				Name:       portName,
+				Protocol:   corev1.ProtocolTCP,
+				Port:       canary.Spec.Service.Port,
+				TargetPort: targetPort,
 			},
 		},
 	}

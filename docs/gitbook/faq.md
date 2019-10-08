@@ -158,8 +158,10 @@ spec:
     kind: Deployment
     name: podinfo
   service:
-    # container port (required)
+    # ClusterIP port number (required)
     port: 9898
+    # container port name or number
+    targetPort: http
     # port name can be http or grpc (default http)
     portName: http
 ```

@@ -1,8 +1,9 @@
 package router
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestServiceRouter_Create(t *testing.T) {

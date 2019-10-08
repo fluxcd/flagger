@@ -5,16 +5,6 @@ import (
 	"sync"
 	"time"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	"github.com/weaveworks/flagger/pkg/canary"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	flaggerscheme "github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
-	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
-	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1alpha3"
-	"github.com/weaveworks/flagger/pkg/metrics"
-	"github.com/weaveworks/flagger/pkg/notifier"
-	"github.com/weaveworks/flagger/pkg/router"
-
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -28,6 +18,16 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	"github.com/weaveworks/flagger/pkg/canary"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	flaggerscheme "github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
+	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
+	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1alpha3"
+	"github.com/weaveworks/flagger/pkg/metrics"
+	"github.com/weaveworks/flagger/pkg/notifier"
+	"github.com/weaveworks/flagger/pkg/router"
 )
 
 const controllerAgentName = "flagger"

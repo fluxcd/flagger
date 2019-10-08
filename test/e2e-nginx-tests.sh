@@ -36,7 +36,8 @@ spec:
     name: podinfo
   progressDeadlineSeconds: 60
   service:
-    port: 9898
+    port: 80
+    targetPort: http
   canaryAnalysis:
     interval: 15s
     threshold: 15
@@ -111,7 +112,7 @@ done
 echo '✔ Canary initialization test passed'
 
 echo '>>> Triggering canary deployment'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.1
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
 
 echo '>>> Waiting for canary promotion'
 retries=50
@@ -125,7 +126,7 @@ until ${ok}; do
         echo "Canary failed!"
         exit 1
     fi
-    kubectl -n test describe deployment/podinfo-primary | grep '1.4.1' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
     sleep 10
     kubectl -n ingress-nginx logs deployment/flagger --tail 1
     count=$(($count + 1))
@@ -138,11 +139,22 @@ until ${ok}; do
     fi
 done
 
-echo '✔ Canary promotion test passed'
+echo '>>> Waiting for canary finalization'
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test get canary/podinfo | grep 'Succeeded' && ok=true || ok=false
+    sleep 5
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n ingress-nginx logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
 
-if [ "$1" = "canary" ]; then
-  exit 0
-fi
+echo '✔ Canary promotion test passed'
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3
@@ -161,7 +173,8 @@ spec:
     name: podinfo
   progressDeadlineSeconds: 60
   service:
-    port: 9898
+    port: 80
+    targetPort: 9898
   canaryAnalysis:
     interval: 10s
     threshold: 5
@@ -219,14 +232,14 @@ spec:
 EOF
 
 echo '>>> Triggering A/B testing'
-kubectl -n test set image deployment/podinfo podinfod=quay.io/stefanprodan/podinfo:1.4.2
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.2
 
 echo '>>> Waiting for A/B testing promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '1.4.2' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '3.1.2' && ok=true || ok=false
     sleep 10
     kubectl -n ingress-nginx logs deployment/flagger --tail 1
     count=$(($count + 1))

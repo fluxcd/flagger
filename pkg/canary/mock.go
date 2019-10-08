@@ -1,9 +1,6 @@
 package canary
 
 import (
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 	"github.com/weaveworks/flagger/pkg/logger"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -13,10 +10,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 )
 
 type Mocks struct {
-	canary        *v1alpha3.Canary
+	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	deployer      Deployer
@@ -172,14 +173,14 @@ func NewTestSecretVol() *corev1.Secret {
 	}
 }
 
-func newTestCanary() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+func newTestCanary() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
 		},
-		Spec: v1alpha3.CanarySpec{
+		Spec: flaggerv1.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
@@ -189,13 +190,13 @@ func newTestCanary() *v1alpha3.Canary {
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
-			}, Service: v1alpha3.CanaryService{
+			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
-				Metrics: []v1alpha3.CanaryMetric{
+				Metrics: []flaggerv1.CanaryMetric{
 					{
 						Name:      "istio_requests_total",
 						Threshold: 99,

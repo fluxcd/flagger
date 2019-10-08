@@ -19,9 +19,11 @@ package v1alpha3
 import (
 	"time"
 
-	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 )
 
 const (
@@ -88,10 +90,11 @@ type CanaryList struct {
 // CanaryService is used to create ClusterIP services
 // and Istio Virtual Service
 type CanaryService struct {
-	Port          int32  `json:"port"`
-	PortName      string `json:"portName,omitempty"`
-	PortDiscovery bool   `json:"portDiscovery"`
-	Timeout       string `json:"timeout,omitempty"`
+	Port          int32              `json:"port"`
+	PortName      string             `json:"portName,omitempty"`
+	TargetPort    intstr.IntOrString `json:"targetPort,omitempty"`
+	PortDiscovery bool               `json:"portDiscovery"`
+	Timeout       string             `json:"timeout,omitempty"`
 	// Istio
 	Gateways      []string                         `json:"gateways,omitempty"`
 	Hosts         []string                         `json:"hosts,omitempty"`

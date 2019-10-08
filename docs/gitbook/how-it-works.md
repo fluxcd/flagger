@@ -32,10 +32,12 @@ spec:
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
-    # container port
+    # ClusterIP port number
     port: 9898
-    # port name can be http or grpc (default http)
+    # ClusterIP port name can be http or grpc (default http)
     portName: http
+    # container port number or name (optional)
+    targetPort: 9898
     # add all the other container ports
     # to the ClusterIP services (default false)
     portDiscovery: false
@@ -95,7 +97,7 @@ Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If
 convention you can specify your label with the `-selector-labels` flag.
 
 The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Services.
-The container port from the target deployment should match the `service.port` value.
+The container port from the target deployment should match the `service.port` or `service.targetPort`.
 
 ### Canary status
 

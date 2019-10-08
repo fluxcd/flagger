@@ -1,12 +1,6 @@
 package router
 
 import (
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	istiov1alpha1 "github.com/weaveworks/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
-	"github.com/weaveworks/flagger/pkg/logger"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v1"
@@ -16,13 +10,20 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	istiov1alpha1 "github.com/weaveworks/flagger/pkg/apis/istio/common/v1alpha1"
+	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
+	"github.com/weaveworks/flagger/pkg/logger"
 )
 
 type fakeClients struct {
-	canary        *v1alpha3.Canary
-	abtest        *v1alpha3.Canary
-	appmeshCanary *v1alpha3.Canary
-	ingressCanary *v1alpha3.Canary
+	canary        *flaggerv1.Canary
+	abtest        *flaggerv1.Canary
+	appmeshCanary *flaggerv1.Canary
+	ingressCanary *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
@@ -53,28 +54,28 @@ func setupfakeClients() fakeClients {
 	}
 }
 
-func newMockCanaryAppMesh() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+func newMockCanaryAppMesh() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "appmesh",
 		},
-		Spec: v1alpha3.CanarySpec{
+		Spec: flaggerv1.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			Service: v1alpha3.CanaryService{
+			Service: flaggerv1.CanaryService{
 				Port:     9898,
 				MeshName: "global",
 				Backends: []string{"backend.default"},
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
-				Metrics: []v1alpha3.CanaryMetric{
+				Metrics: []flaggerv1.CanaryMetric{
 					{
 						Name:      "appmesh_requests_total",
 						Threshold: 99,
@@ -87,20 +88,20 @@ func newMockCanaryAppMesh() *v1alpha3.Canary {
 	return cd
 }
 
-func newMockCanary() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+func newMockCanary() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
 		},
-		Spec: v1alpha3.CanarySpec{
+		Spec: flaggerv1.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			Service: v1alpha3.CanaryService{
+			Service: flaggerv1.CanaryService{
 				Port: 9898,
 				Headers: &istiov1alpha3.Headers{
 					Request: &istiov1alpha3.HeaderOperations{
@@ -115,11 +116,11 @@ func newMockCanary() *v1alpha3.Canary {
 						"POST",
 					},
 				},
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
-				Metrics: []v1alpha3.CanaryMetric{
+				Metrics: []flaggerv1.CanaryMetric{
 					{
 						Name:      "istio_requests_total",
 						Threshold: 99,
@@ -137,28 +138,28 @@ func newMockCanary() *v1alpha3.Canary {
 	return cd
 }
 
-func newMockMirror() *v1alpha3.Canary {
+func newMockMirror() *flaggerv1.Canary {
 	cd := newMockCanary()
 	cd.Spec.CanaryAnalysis.Mirror = true
 	return cd
 }
 
-func newMockABTest() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+func newMockABTest() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "abtest",
 		},
-		Spec: v1alpha3.CanarySpec{
+		Spec: flaggerv1.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "abtest",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			Service: v1alpha3.CanaryService{
+			Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 2,
 				Match: []istiov1alpha3.HTTPMatchRequest{
@@ -170,7 +171,7 @@ func newMockABTest() *v1alpha3.Canary {
 						},
 					},
 				},
-				Metrics: []v1alpha3.CanaryMetric{
+				Metrics: []flaggerv1.CanaryMetric{
 					{
 						Name:      "istio_requests_total",
 						Threshold: 99,
@@ -278,14 +279,14 @@ func newMockABTestDeployment() *appsv1.Deployment {
 	return d
 }
 
-func newMockCanaryIngress() *v1alpha3.Canary {
-	cd := &v1alpha3.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha3.SchemeGroupVersion.String()},
+func newMockCanaryIngress() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "nginx",
 		},
-		Spec: v1alpha3.CanarySpec{
+		Spec: flaggerv1.CanarySpec{
 			TargetRef: hpav1.CrossVersionObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
@@ -296,13 +297,13 @@ func newMockCanaryIngress() *v1alpha3.Canary {
 				APIVersion: "extensions/v1beta1",
 				Kind:       "Ingress",
 			},
-			Service: v1alpha3.CanaryService{
+			Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: v1alpha3.CanaryAnalysis{
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
-				Metrics: []v1alpha3.CanaryMetric{
+				Metrics: []flaggerv1.CanaryMetric{
 					{
 						Name:      "request-success-rate",
 						Threshold: 99,
