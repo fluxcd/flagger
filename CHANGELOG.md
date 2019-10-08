@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.19.0 (2019-10-08) 
+
+Adds support for canary and blue/green [traffic mirroring](https://docs.flagger.app/usage/progressive-delivery#traffic-mirroring)
+
+#### Features
+
+- Add traffic mirroring for Istio service mesh [#311](https://github.com/weaveworks/flagger/pull/311)
+- Implement canary service target port [#327](https://github.com/weaveworks/flagger/pull/327)
+
+#### Improvements 
+
+- Allow gPRC protocol for App Mesh [#325](https://github.com/weaveworks/flagger/pull/325)
+- Enforce blue/green when using Kubernetes networking [#326](https://github.com/weaveworks/flagger/pull/326)
+
+#### Fixes
+
+- Fix port discovery diff [#324](https://github.com/weaveworks/flagger/pull/324)
+- Helm chart: Enable Prometheus scraping of Flagger metrics [#2141d88](https://github.com/weaveworks/flagger/commit/2141d88ce1cc6be220dab34171c215a334ecde24)
+
 ## 0.18.6 (2019-10-03) 
 
 Adds support for App Mesh conformance tests and latency metric checks
