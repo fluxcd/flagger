@@ -32,7 +32,7 @@ type Deployer struct {
 
 // Initialize creates the primary deployment, hpa,
 // scales to zero the canary deployment and returns the pod selector label and container ports
-func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports *map[string]int32, err error) {
+func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports map[string]int32, err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	label, ports, err = c.createPrimaryDeployment(cd)
 	if err != nil {
@@ -185,7 +185,7 @@ func (c *Deployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	return nil
 }
 
-func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, *map[string]int32, error) {
+func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
@@ -203,13 +203,13 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, *map[s
 			targetName, cd.Namespace, targetName)
 	}
 
-	var ports *map[string]int32
+	var ports map[string]int32
 	if cd.Spec.Service.PortDiscovery {
 		p, err := c.getPorts(cd, canaryDep)
 		if err != nil {
 			return "", nil, fmt.Errorf("port discovery failed with error: %v", err)
 		}
-		ports = &p
+		ports = p
 	}
 
 	primaryDep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
@@ -237,6 +237,9 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, *map[s
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      primaryName,
 				Namespace: cd.Namespace,
+				Labels: map[string]string{
+					label: primaryName,
+				},
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,

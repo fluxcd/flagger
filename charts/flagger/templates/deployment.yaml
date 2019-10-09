@@ -61,6 +61,9 @@ spec:
           {{- else }}
           - -metrics-server={{ .Values.metricsServer }}
           {{- end }}
+          {{- if .Values.selectorLabels }}
+          - -selector-labels={{ .Values.selectorLabels }}
+          {{- end }}
           {{- if .Values.namespace }}
           - -namespace={{ .Values.namespace }}
           {{- end }}
