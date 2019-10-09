@@ -68,6 +68,7 @@ Parameter | Description | Default
 `image.pullPolicy` | image pull policy | `IfNotPresent`
 `prometheus.install` | if `true`, installs Prometheus configured to scrape all pods in the custer including the App Mesh sidecar | `false`
 `metricsServer` | Prometheus URL, used when `prometheus.install` is `false` | `http://prometheus.istio-system:9090`
+`selectorLabels` | list of labels that Flagger uses to create pod selectors | `app,name,app.kubernetes.io/name`
 `slack.url` | Slack incoming webhook | None
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`

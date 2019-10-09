@@ -12,11 +12,15 @@ podAnnotations:
 
 metricsServer: "http://prometheus:9090"
 
-# accepted values are istio, appmesh, nginx or supergloo:mesh.namespace (defaults to istio)
+# accepted values are kubernetes, istio, linkerd, appmesh, nginx, gloo or supergloo:mesh.namespace (defaults to istio)
 meshProvider: ""
 
 # single namespace restriction
 namespace: ""
+
+# list of pod labels that Flagger uses to create pod selectors
+# defaults to: app,name,app.kubernetes.io/name
+selectorLabels: ""
 
 slack:
   user: flagger
