@@ -287,7 +287,7 @@ func startLeaderElection(ctx context.Context, run func(), ns string, kubeClient 
 func initNotifier(logger *zap.SugaredLogger) (client notifier.Interface) {
 	provider := "slack"
 	notifierURL := fromEnv("SLACK_URL", slackURL)
-	if msteamsURL != "" {
+	if msteamsURL != "" || os.Getenv("MSTEAMS_URL") != "" {
 		provider = "msteams"
 		notifierURL = fromEnv("MSTEAMS_URL", msteamsURL)
 	}
