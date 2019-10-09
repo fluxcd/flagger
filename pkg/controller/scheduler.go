@@ -102,7 +102,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	if skipLivenessChecks || strings.Contains(provider, "istio") || strings.Contains(provider, "appmesh") {
 		skipPrimaryCheck = true
 	}
-	label, ports, err := c.deployer.Initialize(cd, skipPrimaryCheck)
+	labelSelector, ports, err := c.deployer.Initialize(cd, skipPrimaryCheck)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -112,7 +112,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	meshRouter := c.routerFactory.MeshRouter(provider)
 
 	// create or update ClusterIP services
-	if err := c.routerFactory.KubernetesRouter(label, ports).Reconcile(cd); err != nil {
+	if err := c.routerFactory.KubernetesRouter(labelSelector, map[string]string{}, ports).Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -123,6 +123,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
+	// check for deployment spec or configs changes
 	shouldAdvance, err := c.shouldAdvance(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
@@ -153,8 +154,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 	}
 
-	// check if virtual service exists
-	// and if it contains weighted destination routes to the primary and canary services
+	// get the routing settings
 	primaryWeight, canaryWeight, mirrored, err := meshRouter.GetRoutes(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)

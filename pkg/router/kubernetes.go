@@ -22,8 +22,9 @@ type KubernetesRouter struct {
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
-	label         string
-	ports         *map[string]int32
+	labelSelector string
+	annotations   map[string]string
+	ports         map[string]int32
 }
 
 // Reconcile creates or updates the primary and canary services
@@ -78,7 +79,7 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 
 	svcSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeClusterIP,
-		Selector: map[string]string{c.label: target},
+		Selector: map[string]string{c.labelSelector: target},
 		Ports: []corev1.ServicePort{
 			{
 				Name:       portName,
@@ -89,28 +90,28 @@ func (c *KubernetesRouter) reconcileService(canary *flaggerv1.Canary, name strin
 		},
 	}
 
-	if c.ports != nil {
-		for n, p := range *c.ports {
-			cp := corev1.ServicePort{
-				Name:     n,
-				Protocol: corev1.ProtocolTCP,
-				Port:     p,
-				TargetPort: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: p,
-				},
-			}
-
-			svcSpec.Ports = append(svcSpec.Ports, cp)
+	for n, p := range c.ports {
+		cp := corev1.ServicePort{
+			Name:     n,
+			Protocol: corev1.ProtocolTCP,
+			Port:     p,
+			TargetPort: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: p,
+			},
 		}
+
+		svcSpec.Ports = append(svcSpec.Ports, cp)
 	}
 
 	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		svc = &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: canary.Namespace,
+				Name:        name,
+				Namespace:   canary.Namespace,
+				Labels:      map[string]string{c.labelSelector: name},
+				Annotations: c.annotations,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
