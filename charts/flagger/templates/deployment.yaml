@@ -102,6 +102,10 @@ spec:
               - --spider
               - http://localhost:8080/healthz
             timeoutSeconds: 5
+          {{- if .Values.env }}
+          env:
+{{ toYaml .Values.env | indent 12 }}
+          {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}

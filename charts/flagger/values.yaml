@@ -32,6 +32,19 @@ msteams:
   # MS Teams incoming webhook URL
   url:
 
+#env:
+#- name: SLACK_URL
+#  valueFrom:
+#    secretKeyRef:
+#      name: slack
+#      key: url
+#- name: MSTEAMS_URL
+#  valueFrom:
+#    secretKeyRef:
+#      name: msteams
+#      key: url
+env: []
+
 leaderElection:
   enabled: false
   replicaCount: 1
