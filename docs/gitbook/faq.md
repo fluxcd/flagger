@@ -373,13 +373,16 @@ spec:
     # HTTP rewrite (optional)
     rewrite:
       uri: /
-    # Envoy timeout and retry policy (optional)
+    # Istio retry policy (optional)
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+      retryOn: "gateway-error,connect-failure,refused-stream"
+    # Add headers (optional)
     headers:
       request:
         add:
-          x-envoy-upstream-rq-timeout-ms: "15000"
-          x-envoy-max-retries: "10"
-          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+          x-some-header: "value"
     # cross-origin resource sharing policy (optional)
     corsPolicy:
       allowOrigin:
@@ -416,9 +419,7 @@ spec:
     - frontend
   http:
   - appendHeaders:
-      x-envoy-max-retries: "10"
-      x-envoy-retry-on: gateway-error,connect-failure,refused-stream
-      x-envoy-upstream-rq-timeout-ms: "15000"
+      x-some-header: "value"
     corsPolicy:
       allowHeaders:
       - x-some-header
@@ -439,6 +440,10 @@ spec:
     - destination:
         host: podinfo-canary
       weight: 0
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+      retryOn: "gateway-error,connect-failure,refused-stream"
 ```
 
 For each destination in the virtual service a rule is generated:
