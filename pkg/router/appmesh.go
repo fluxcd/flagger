@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -181,7 +182,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		MeshName: canary.Spec.Service.MeshName,
 		VirtualRouter: &appmeshv1.VirtualRouter{
 			Name: routerName,
-			Listeners: []appmeshv1.Listener{
+			Listeners: []appmeshv1.VirtualRouterListener{
 				{
 					PortMapping: appmeshv1.PortMapping{
 						Port:     int64(canary.Spec.Service.Port),
@@ -212,6 +213,33 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 				},
 			},
 		},
+	}
+
+	// add retry policy (default: one retry on gateway error with a 250ms timeout)
+	if canary.Spec.Service.Retries != nil {
+		timeout := int64(250)
+		if d, err := time.ParseDuration(canary.Spec.Service.Retries.PerTryTimeout); err == nil {
+			timeout = d.Milliseconds()
+		}
+
+		attempts := int64(1)
+		if canary.Spec.Service.Retries.Attempts > 0 {
+			attempts = int64(canary.Spec.Service.Retries.Attempts)
+		}
+
+		retryPolicy := &appmeshv1.HttpRetryPolicy{
+			PerRetryTimeoutMillis: int64p(timeout),
+			MaxRetries:            int64p(attempts),
+		}
+
+		events := []string{"gateway-error"}
+		if len(canary.Spec.Service.Retries.RetryOn) > 0 {
+			events = strings.Split(canary.Spec.Service.Retries.RetryOn, ",")
+		}
+		for _, value := range events {
+			retryPolicy.HttpRetryPolicyEvents = append(retryPolicy.HttpRetryPolicyEvents, appmeshv1.HttpRetryPolicyEvent(value))
+		}
+		vsSpec.Routes[0].Http.RetryPolicy = retryPolicy
 	}
 
 	virtualService, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(name, metav1.GetOptions{})
@@ -352,4 +380,8 @@ func getProtocol(canary *flaggerv1.Canary) string {
 		return "grpc"
 	}
 	return "http"
+}
+
+func int64p(i int64) *int64 {
+	return &i
 }
