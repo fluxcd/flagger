@@ -165,6 +165,10 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 	primaryVirtualNode := fmt.Sprintf("%s-primary", targetName)
 	protocol := getProtocol(canary)
 
+	routerName := targetName
+	if canaryWeight > 0 {
+		routerName = fmt.Sprintf("%s-canary", targetName)
+	}
 	// App Mesh supports only URI prefix
 	routePrefix := "/"
 	if len(canary.Spec.Service.Match) > 0 &&
@@ -176,7 +180,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 	vsSpec := appmeshv1.VirtualServiceSpec{
 		MeshName: canary.Spec.Service.MeshName,
 		VirtualRouter: &appmeshv1.VirtualRouter{
-			Name: fmt.Sprintf("%s-router", targetName),
+			Name: routerName,
 			Listeners: []appmeshv1.Listener{
 				{
 					PortMapping: appmeshv1.PortMapping{
@@ -188,7 +192,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		},
 		Routes: []appmeshv1.Route{
 			{
-				Name: fmt.Sprintf("%s-route", targetName),
+				Name: routerName,
 				Http: &appmeshv1.HttpRoute{
 					Match: appmeshv1.HttpRouteMatch{
 						Prefix: routePrefix,
