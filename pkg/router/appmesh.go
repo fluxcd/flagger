@@ -178,26 +178,43 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		routePrefix = canary.Spec.Service.Match[0].Uri.Prefix
 	}
 
-	vsSpec := appmeshv1.VirtualServiceSpec{
-		MeshName: canary.Spec.Service.MeshName,
-		VirtualRouter: &appmeshv1.VirtualRouter{
+	// Canary progressive traffic shift
+	routes := []appmeshv1.Route{
+		{
 			Name: routerName,
-			Listeners: []appmeshv1.VirtualRouterListener{
-				{
-					PortMapping: appmeshv1.PortMapping{
-						Port:     int64(canary.Spec.Service.Port),
-						Protocol: protocol,
+			Http: &appmeshv1.HttpRoute{
+				Match: appmeshv1.HttpRouteMatch{
+					Prefix: routePrefix,
+				},
+				RetryPolicy: makeRetryPolicy(canary),
+				Action: appmeshv1.HttpRouteAction{
+					WeightedTargets: []appmeshv1.WeightedTarget{
+						{
+							VirtualNodeName: canaryVirtualNode,
+							Weight:          canaryWeight,
+						},
+						{
+							VirtualNodeName: primaryVirtualNode,
+							Weight:          100 - canaryWeight,
+						},
 					},
 				},
 			},
 		},
-		Routes: []appmeshv1.Route{
+	}
+
+	// A/B testing - header based routing
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 && canaryWeight == 0 {
+		routes = []appmeshv1.Route{
 			{
-				Name: routerName,
+				Name:     fmt.Sprintf("%s-a", targetName),
+				Priority: int64p(10),
 				Http: &appmeshv1.HttpRoute{
 					Match: appmeshv1.HttpRouteMatch{
-						Prefix: routePrefix,
+						Prefix:  routePrefix,
+						Headers: makeHeaders(canary),
 					},
+					RetryPolicy: makeRetryPolicy(canary),
 					Action: appmeshv1.HttpRouteAction{
 						WeightedTargets: []appmeshv1.WeightedTarget{
 							{
@@ -212,34 +229,41 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 					},
 				},
 			},
-		},
+			{
+				Name:     fmt.Sprintf("%s-b", targetName),
+				Priority: int64p(20),
+				Http: &appmeshv1.HttpRoute{
+					Match: appmeshv1.HttpRouteMatch{
+						Prefix: routePrefix,
+					},
+					RetryPolicy: makeRetryPolicy(canary),
+					Action: appmeshv1.HttpRouteAction{
+						WeightedTargets: []appmeshv1.WeightedTarget{
+							{
+								VirtualNodeName: primaryVirtualNode,
+								Weight:          100,
+							},
+						},
+					},
+				},
+			},
+		}
 	}
 
-	// add retry policy (default: one retry on gateway error with a 250ms timeout)
-	if canary.Spec.Service.Retries != nil {
-		timeout := int64(250)
-		if d, err := time.ParseDuration(canary.Spec.Service.Retries.PerTryTimeout); err == nil {
-			timeout = d.Milliseconds()
-		}
-
-		attempts := int64(1)
-		if canary.Spec.Service.Retries.Attempts > 0 {
-			attempts = int64(canary.Spec.Service.Retries.Attempts)
-		}
-
-		retryPolicy := &appmeshv1.HttpRetryPolicy{
-			PerRetryTimeoutMillis: int64p(timeout),
-			MaxRetries:            int64p(attempts),
-		}
-
-		events := []string{"gateway-error"}
-		if len(canary.Spec.Service.Retries.RetryOn) > 0 {
-			events = strings.Split(canary.Spec.Service.Retries.RetryOn, ",")
-		}
-		for _, value := range events {
-			retryPolicy.HttpRetryPolicyEvents = append(retryPolicy.HttpRetryPolicyEvents, appmeshv1.HttpRetryPolicyEvent(value))
-		}
-		vsSpec.Routes[0].Http.RetryPolicy = retryPolicy
+	vsSpec := appmeshv1.VirtualServiceSpec{
+		MeshName: canary.Spec.Service.MeshName,
+		VirtualRouter: &appmeshv1.VirtualRouter{
+			Name: routerName,
+			Listeners: []appmeshv1.VirtualRouterListener{
+				{
+					PortMapping: appmeshv1.PortMapping{
+						Port:     int64(canary.Spec.Service.Port),
+						Protocol: protocol,
+					},
+				},
+			},
+		},
+		Routes: routes,
 	}
 
 	virtualService, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(name, metav1.GetOptions{})
@@ -375,6 +399,60 @@ func (ar *AppMeshRouter) SetRoutes(
 	return nil
 }
 
+// makeRetryPolicy creates an App Mesh HttpRetryPolicy from the Canary.Service.Retries
+// default: one retry on gateway error with a 250ms timeout
+func makeRetryPolicy(canary *flaggerv1.Canary) *appmeshv1.HttpRetryPolicy {
+	if canary.Spec.Service.Retries != nil {
+		timeout := int64(250)
+		if d, err := time.ParseDuration(canary.Spec.Service.Retries.PerTryTimeout); err == nil {
+			timeout = d.Milliseconds()
+		}
+
+		attempts := int64(1)
+		if canary.Spec.Service.Retries.Attempts > 0 {
+			attempts = int64(canary.Spec.Service.Retries.Attempts)
+		}
+
+		retryPolicy := &appmeshv1.HttpRetryPolicy{
+			PerRetryTimeoutMillis: int64p(timeout),
+			MaxRetries:            int64p(attempts),
+		}
+
+		events := []string{"gateway-error"}
+		if len(canary.Spec.Service.Retries.RetryOn) > 0 {
+			events = strings.Split(canary.Spec.Service.Retries.RetryOn, ",")
+		}
+		for _, value := range events {
+			retryPolicy.HttpRetryPolicyEvents = append(retryPolicy.HttpRetryPolicyEvents, appmeshv1.HttpRetryPolicyEvent(value))
+		}
+		return retryPolicy
+	}
+
+	return nil
+}
+
+// makeRetryPolicy creates an App Mesh HttpRouteHeader from the Canary.CanaryAnalysis.Match
+func makeHeaders(canary *flaggerv1.Canary) []appmeshv1.HttpRouteHeader {
+	headers := []appmeshv1.HttpRouteHeader{}
+
+	for _, m := range canary.Spec.CanaryAnalysis.Match {
+		for key, value := range m.Headers {
+			header := appmeshv1.HttpRouteHeader{
+				Name: key,
+				Match: &appmeshv1.HeaderMatchMethod{
+					Exact:  stringp(value.Exact),
+					Prefix: stringp(value.Prefix),
+					Regex:  stringp(value.Regex),
+					Suffix: stringp(value.Suffix),
+				},
+			}
+			headers = append(headers, header)
+		}
+	}
+
+	return headers
+}
+
 func getProtocol(canary *flaggerv1.Canary) string {
 	if strings.Contains(canary.Spec.Service.PortName, "grpc") {
 		return "grpc"
@@ -384,4 +462,11 @@ func getProtocol(canary *flaggerv1.Canary) string {
 
 func int64p(i int64) *int64 {
 	return &i
+}
+
+func stringp(s string) *string {
+	if s != "" {
+		return &s
+	}
+	return nil
 }
