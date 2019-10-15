@@ -70,6 +70,11 @@ spec:
       tls:
         # use ISTIO_MUTUAL when mTLS is enabled
         mode: DISABLE
+    # Istio retry policy (optional)
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+      retryOn: "gateway-error,connect-failure,refused-stream"
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 1m

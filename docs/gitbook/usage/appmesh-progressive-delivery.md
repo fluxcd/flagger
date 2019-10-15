@@ -75,6 +75,11 @@ spec:
     # App Mesh egress (optional) 
     backends:
       - backend.test
+    # App Mesh retry policy (optional)
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+      retryOn: "gateway-error,client-error,stream-error"
   # define the canary analysis timing and KPIs
   canaryAnalysis:
     # schedule interval (default 60s)
