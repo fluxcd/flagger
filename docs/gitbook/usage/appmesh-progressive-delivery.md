@@ -106,18 +106,18 @@ spec:
       interval: 30s
     # testing (optional)
     webhooks:
-      - name: acceptance-test
-        type: pre-rollout
-        url: http://flagger-loadtester.test/
-        timeout: 30s
-        metadata:
-          type: bash
-          cmd: "curl -sd 'test' http://podinfo-canary.test:9898/token | grep token"
-      - name: load-test
-        url: http://flagger-loadtester.test/
-        timeout: 5s
-        metadata:
-          cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
+    - name: acceptance-test
+      type: pre-rollout
+      url: http://flagger-loadtester.test/
+      timeout: 30s
+      metadata:
+        type: bash
+        cmd: "curl -sd 'test' http://podinfo-canary.test:9898/token | grep token"
+    - name: load-test
+      url: http://flagger-loadtester.test/
+      timeout: 5s
+      metadata:
+        cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
@@ -320,3 +320,74 @@ If you’ve enabled the Slack notifications, you’ll receive a message if the p
 or if the analysis reached the maximum number of failed checks:
 
 ![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+
+### A/B Testing 
+
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
+In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
+This is particularly useful for frontend applications that require session affinity.
+
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
+
+Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
+
+```yaml
+  canaryAnalysis:
+    interval: 1m
+    threshold: 10
+    iterations: 10
+    match:
+    - headers:
+        x-canary:
+          exact: "insider"
+    webhooks:
+    - name: load-test
+      url: http://flagger-loadtester.test/
+      metadata:
+        cmd: "hey -z 1m -q 10 -c 2 -H 'X-Canary: insider' http://podinfo.test:9898/"
+```
+
+The above configuration will run an analysis for ten minutes targeting users that have a `X-Canary: insider` header.
+
+You can also use a HTTP cookie, to target all users with a `canary` cookie set to `insider` the match condition should be:
+
+```yaml
+match:
+- headers:
+    cookie:
+      regex: "^(.*?;)?(canary=insider)(;.*)?$"
+webhooks:
+- name: load-test
+  url: http://flagger-loadtester.test/
+  metadata:
+    cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: canary=insider' http://podinfo.test:9898/"
+```
+
+Trigger a canary deployment by updating the container image:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=stefanprodan/podinfo:3.1.3
+```
+
+Flagger detects that the deployment revision changed and starts the A/B test:
+
+```text
+kubectl -n appmesh-system logs deploy/flagger -f | jq .msg
+
+New revision detected! Starting canary analysis for podinfo.test
+Advance podinfo.test canary iteration 1/10
+Advance podinfo.test canary iteration 2/10
+Advance podinfo.test canary iteration 3/10
+Advance podinfo.test canary iteration 4/10
+Advance podinfo.test canary iteration 5/10
+Advance podinfo.test canary iteration 6/10
+Advance podinfo.test canary iteration 7/10
+Advance podinfo.test canary iteration 8/10
+Advance podinfo.test canary iteration 9/10
+Advance podinfo.test canary iteration 10/10
+Copying podinfo.test template spec to podinfo-primary.test
+Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
+Routing all traffic to primary
+Promotion completed! Scaling down podinfo.test
+```
