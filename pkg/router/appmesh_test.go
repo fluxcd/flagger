@@ -184,3 +184,45 @@ func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
 		t.Errorf("Got mirror %v wanted %v", m, false)
 	}
 }
+
+func TestAppmeshRouter_ABTest(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &AppMeshRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.abtest)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// check virtual service
+	vsName := fmt.Sprintf("%s.%s", mocks.abtest.Spec.TargetRef.Name, mocks.abtest.Namespace)
+	vs, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// check virtual service
+	if len(vs.Spec.Routes) != 2 {
+		t.Errorf("Got routes %v wanted %v", len(vs.Spec.Routes), 2)
+	}
+
+	// check headers
+	if len(vs.Spec.Routes[0].Http.Match.Headers) < 1 {
+		t.Errorf("Got no http match headers")
+	}
+
+	header := vs.Spec.Routes[0].Http.Match.Headers[0].Name
+	if header != "x-user-type" {
+		t.Errorf("Got http match header %v wanted %v", header, "x-user-type")
+	}
+
+	exactMatch := *vs.Spec.Routes[0].Http.Match.Headers[0].Match.Exact
+	if exactMatch != "test" {
+		t.Errorf("Got http match header exact %v wanted %v", exactMatch, "test")
+	}
+}

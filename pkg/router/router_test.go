@@ -77,8 +77,13 @@ func newMockCanaryAppMesh() *flaggerv1.Canary {
 				MaxWeight:  50,
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "appmesh_requests_total",
+						Name:      "request-success-rate",
 						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
 						Interval:  "1m",
 					},
 				},
@@ -122,12 +127,12 @@ func newMockCanary() *flaggerv1.Canary {
 				MaxWeight:  50,
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "istio_requests_total",
+						Name:      "request-success-rate",
 						Threshold: 99,
 						Interval:  "1m",
 					},
 					{
-						Name:      "istio_request_duration_seconds_bucket",
+						Name:      "request-duration",
 						Threshold: 500,
 						Interval:  "1m",
 					},
@@ -158,7 +163,8 @@ func newMockABTest() *flaggerv1.Canary {
 				Kind:       "Deployment",
 			},
 			Service: flaggerv1.CanaryService{
-				Port: 9898,
+				Port:     9898,
+				MeshName: "global",
 			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 2,
@@ -173,12 +179,12 @@ func newMockABTest() *flaggerv1.Canary {
 				},
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "istio_requests_total",
+						Name:      "request-success-rate",
 						Threshold: 99,
 						Interval:  "1m",
 					},
 					{
-						Name:      "istio_request_duration_seconds_bucket",
+						Name:      "request-duration",
 						Threshold: 500,
 						Interval:  "1m",
 					},
