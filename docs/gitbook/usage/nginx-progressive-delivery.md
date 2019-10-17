@@ -159,7 +159,6 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          type: cmd
           cmd: "hey -z 1m -q 10 -c 2 http://app.example.com/"
 ```
 
@@ -382,12 +381,10 @@ Edit the canary analysis, remove the max/step weight and add the match condition
       interval: 1m
     webhooks:
       - name: load-test
-        url: http://localhost:8888/
+        url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          type: cmd
           cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: canary=always' http://app.example.com/"
-          logCmdOutput: "true"
 ```
 
 The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or 

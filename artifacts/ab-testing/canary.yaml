@@ -37,11 +37,11 @@ spec:
     # canary match condition
     match:
       - headers:
-          user-agent:
-            regex: "^(?!.*Chrome)(?=.*\bSafari\b).*$"
-      - headers:
           cookie:
             regex: "^(.*?;)?(type=insider)(;.*)?$"
+      - headers:
+          user-agent:
+            regex: "(?=.*Safari)(?!.*Chrome).*$"
     metrics:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
