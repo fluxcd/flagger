@@ -68,6 +68,9 @@ spec:
             provider:
               description: Traffic managent provider
               type: string
+            metricsServer:
+              description: Prometheus URL
+              type: string
             progressDeadlineSeconds:
               description: Deployment progress deadline
               type: number

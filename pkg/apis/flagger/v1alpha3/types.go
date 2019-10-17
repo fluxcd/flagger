@@ -51,6 +51,10 @@ type CanarySpec struct {
 	// +optional
 	Provider string `json:"provider,omitempty"`
 
+	// if specified overwrites the -metrics-server flag for this particular canary
+	// +optional
+	MetricsServer string `json:"metricsServer,omitempty"`
+
 	// reference to target resource
 	TargetRef hpav1.CrossVersionObjectReference `json:"targetRef"`
 
