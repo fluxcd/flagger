@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/weaveworks/flagger/pkg/metrics"
 	"strings"
 	"time"
 
@@ -749,7 +750,21 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	}
 
 	// create observer based on the mesh provider
-	observer := c.observerFactory.Observer(metricsProvider)
+	observerFactory := c.observerFactory
+	observer := observerFactory.Observer(metricsProvider)
+
+	// override the global metrics server if one is specified in the canary spec
+	metricsServer := c.observerFactory.Client.GetMetricsServer()
+	if r.Spec.MetricsServer != "" {
+		metricsServer = r.Spec.MetricsServer
+		var err error
+		observerFactory, err = metrics.NewFactory(metricsServer, metricsProvider, 5*time.Second)
+		if err != nil {
+			c.recordEventErrorf(r, "Error building Prometheus client for %s %v", r.Spec.MetricsServer, err)
+			return false
+		}
+		observer = observerFactory.Observer(metricsProvider)
+	}
 
 	// run metrics checks
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
@@ -764,7 +779,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", metricsServer, err)
 				}
 				return false
 			}
@@ -784,7 +799,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed: %v", c.observerFactory.Client.GetMetricsServer(), err)
+					c.recordEventErrorf(r, "Metrics server %s query failed: %v", metricsServer, err)
 				}
 				return false
 			}
@@ -800,13 +815,13 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 
 		// custom checks
 		if metric.Query != "" {
-			val, err := c.observerFactory.Client.RunQuery(metric.Query)
+			val, err := observerFactory.Client.RunQuery(metric.Query)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
 					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
 						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Metrics server %s query failed for %s: %v", c.observerFactory.Client.GetMetricsServer(), metric.Name, err)
+					c.recordEventErrorf(r, "Metrics server %s query failed for %s: %v", metricsServer, metric.Name, err)
 				}
 				return false
 			}
