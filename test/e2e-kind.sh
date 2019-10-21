@@ -3,6 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
+HELM_VERSION=v2.14.3
 KIND_VERSION=v0.5.1
 
 if [[ "$1" ]]; then
@@ -26,7 +27,7 @@ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 kubectl get pods --all-namespaces
 
 echo ">>> Installing Helm"
-curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+curl -sSL https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar xz && sudo mv linux-amd64/helm /usr/local/bin/ && rm -rf linux-amd64
 
 echo '>>> Installing Tiller'
 kubectl --namespace kube-system create sa tiller

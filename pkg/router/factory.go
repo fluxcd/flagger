@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"strings"
 
 	"go.uber.org/zap"
@@ -84,18 +83,40 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			smiClient:     factory.meshClient,
 			targetMesh:    "linkerd",
 		}
-	case strings.HasPrefix(provider, "supergloo"):
-		supergloo, err := NewSuperglooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
-		if err != nil {
-			panic("failed creating supergloo client")
-		}
-		return supergloo
 	case strings.HasPrefix(provider, "gloo"):
-		gloo, err := NewGlooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
-		if err != nil {
-			panic("failed creating gloo client")
+		upstreamDiscoveryNs := "gloo-system"
+		if strings.HasPrefix(provider, "gloo:") {
+			upstreamDiscoveryNs = strings.TrimPrefix(provider, "gloo:")
 		}
-		return gloo
+		return &GlooRouter{
+			logger:              factory.logger,
+			flaggerClient:       factory.flaggerClient,
+			kubeClient:          factory.kubeClient,
+			glooClient:          factory.meshClient,
+			upstreamDiscoveryNs: upstreamDiscoveryNs,
+		}
+	case strings.HasPrefix(provider, "supergloo:appmesh"):
+		return &AppMeshRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			appmeshClient: factory.meshClient,
+		}
+	case strings.HasPrefix(provider, "supergloo:istio"):
+		return &IstioRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			istioClient:   factory.meshClient,
+		}
+	case strings.HasPrefix(provider, "supergloo:linkerd"):
+		return &SmiRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    "linkerd",
+		}
 	default:
 		return &IstioRouter{
 			logger:        factory.logger,
