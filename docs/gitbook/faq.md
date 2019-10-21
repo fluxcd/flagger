@@ -10,7 +10,7 @@ Flagger can run automated application analysis, promotion and rollback for the f
 * Canary (traffic mirroring)
     * Istio
 * A/B Testing (HTTP headers and cookies traffic routing)
-    * Istio, NGINX
+    * Istio, App Mesh, NGINX
 * Blue/Green (traffic switch)
     * Kubernetes CNI, Istio, Linkerd, App Mesh, NGINX, Gloo
 
@@ -42,6 +42,21 @@ Istio example:
           cookie:
             regex: "^(.*?;)?(canary=always)(;.*)?$"
 ```
+
+App Mesh example:
+
+```yaml
+  canaryAnalysis:
+    interval: 1m
+    threshold: 10
+    iterations: 2
+    match:
+      - headers:
+          user-agent:
+            regex: ".*Chrome.*"
+```
+
+Note that App Mesh supports a single condition.
 
 NGINX example:
 

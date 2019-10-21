@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.20.0 (2019-10-21) 
+
+Adds support for [A/B Testing](https://docs.flagger.app/usage/progressive-delivery#traffic-mirroring) and retry policies when using App Mesh
+
+#### Features
+
+- Implement App Mesh A/B testing based on HTTP headers match conditions [#340](https://github.com/weaveworks/flagger/pull/340)
+- Implement App Mesh HTTP retry policy [#338](https://github.com/weaveworks/flagger/pull/338)
+- Implement metrics server override [#342](https://github.com/weaveworks/flagger/pull/342)
+
+#### Improvements 
+
+- Add the app/name label to services and primary deployment [#333](https://github.com/weaveworks/flagger/pull/333)
+- Allow setting Slack and Teams URLs with env vars [#334](https://github.com/weaveworks/flagger/pull/334)
+
+#### Fixes
+
+- Generate unique names for App Mesh virtual routers and routes [#336](https://github.com/weaveworks/flagger/pull/336)
+
 ## 0.19.0 (2019-10-08) 
 
 Adds support for canary and blue/green [traffic mirroring](https://docs.flagger.app/usage/progressive-delivery#traffic-mirroring)

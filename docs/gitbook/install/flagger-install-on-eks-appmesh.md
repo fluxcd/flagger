@@ -113,7 +113,7 @@ Install the App Mesh CRD controller:
 
 ```sh
 helm upgrade -i appmesh-controller eks/appmesh-controller \
---wait --namespace appmesh-system
+--wait --namespace appmesh-system --version 0.2.0
 ```
 
 Install the App Mesh admission controller:
