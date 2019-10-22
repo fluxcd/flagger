@@ -16,6 +16,7 @@ Adds support for [A/B Testing](https://docs.flagger.app/usage/progressive-delive
 
 - Add the app/name label to services and primary deployment [#333](https://github.com/weaveworks/flagger/pull/333)
 - Allow setting Slack and Teams URLs with env vars [#334](https://github.com/weaveworks/flagger/pull/334)
+- Refactor Gloo integration [#344](https://github.com/weaveworks/flagger/pull/344)
 
 #### Fixes
 
