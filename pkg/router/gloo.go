@@ -1,21 +1,16 @@
 package router
 
 import (
-	"context"
 	"fmt"
-	"strings"
 
-	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	solokitclients "github.com/solo-io/solo-kit/pkg/api/v1/clients"
-	"github.com/solo-io/solo-kit/pkg/api/v1/clients/factory"
-	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
-	crdv1 "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/crd/solo.io/v1"
-	solokitcore "github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
-	solokiterror "github.com/solo-io/solo-kit/pkg/errors"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/kubernetes"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
@@ -23,54 +18,92 @@ import (
 
 // GlooRouter is managing Istio virtual services
 type GlooRouter struct {
-	ugClient            gloov1.UpstreamGroupClient
+	kubeClient          kubernetes.Interface
+	glooClient          clientset.Interface
+	flaggerClient       clientset.Interface
 	logger              *zap.SugaredLogger
 	upstreamDiscoveryNs string
 }
 
-func NewGlooRouter(ctx context.Context, provider string, flaggerClient clientset.Interface, logger *zap.SugaredLogger, cfg *rest.Config) (*GlooRouter, error) {
-	// TODO if cfg is nil use memory client instead?
-	sharedCache := kube.NewKubeCache(ctx)
-	upstreamGroupClient, err := gloov1.NewUpstreamGroupClient(&factory.KubeResourceClientFactory{
-		Crd:             gloov1.UpstreamGroupCrd,
-		Cfg:             cfg,
-		SharedCache:     sharedCache,
-		SkipCrdCreation: true,
-	})
-	if err != nil {
-		// this should never happen.
-		return nil, fmt.Errorf("creating UpstreamGroup client %v", err)
-	}
-	if err := upstreamGroupClient.Register(); err != nil {
-		return nil, err
-	}
-	upstreamDiscoveryNs := ""
-	if strings.HasPrefix(provider, "gloo:") {
-		upstreamDiscoveryNs = strings.TrimPrefix(provider, "gloo:")
-	}
-
-	return NewGlooRouterWithClient(ctx, upstreamGroupClient, upstreamDiscoveryNs, logger), nil
-}
-
-func NewGlooRouterWithClient(ctx context.Context, routingRuleClient gloov1.UpstreamGroupClient, upstreamDiscoveryNs string, logger *zap.SugaredLogger) *GlooRouter {
-
-	if upstreamDiscoveryNs == "" {
-		upstreamDiscoveryNs = "gloo-system"
-	}
-	return &GlooRouter{ugClient: routingRuleClient, logger: logger, upstreamDiscoveryNs: upstreamDiscoveryNs}
-}
-
 // Reconcile creates or updates the Istio virtual service
 func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
-	// do we have routes already?
-	if _, _, _, err := gr.GetRoutes(canary); err == nil {
-		// we have routes, no need to do anything else
-		return nil
-	} else if solokiterror.IsNotExist(err) {
-		return gr.SetRoutes(canary, 100, 0, false)
-	} else {
-		return err
+	targetName := canary.Spec.TargetRef.Name
+	canaryName := fmt.Sprintf("%s-%s-canary-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
+	primaryName := fmt.Sprintf("%s-%s-primary-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
+
+	newSpec := gloov1.UpstreamGroupSpec{
+		Destinations: []gloov1.WeightedDestination{
+			{
+				Destination: gloov1.Destination{
+					Upstream: gloov1.ResourceRef{
+						Name:      primaryName,
+						Namespace: gr.upstreamDiscoveryNs,
+					},
+				},
+				Weight: 100,
+			},
+			{
+				Destination: gloov1.Destination{
+					Upstream: gloov1.ResourceRef{
+						Name:      canaryName,
+						Namespace: gr.upstreamDiscoveryNs,
+					},
+				},
+				Weight: 0,
+			},
+		},
 	}
+
+	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(targetName, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		upstreamGroup = &gloov1.UpstreamGroup{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      targetName,
+				Namespace: canary.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+						Group:   flaggerv1.SchemeGroupVersion.Group,
+						Version: flaggerv1.SchemeGroupVersion.Version,
+						Kind:    flaggerv1.CanaryKind,
+					}),
+				},
+			},
+			Spec: newSpec,
+		}
+
+		_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Create(upstreamGroup)
+		if err != nil {
+			return fmt.Errorf("UpstreamGroup %s.%s create error %v", targetName, canary.Namespace, err)
+		}
+		gr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Infof("UpstreamGroup %s.%s created", upstreamGroup.GetName(), canary.Namespace)
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("UpstreamGroup %s.%s query error %v", targetName, canary.Namespace, err)
+	}
+
+	// update upstreamGroup but keep the original destination weights
+	if upstreamGroup != nil {
+		if diff := cmp.Diff(
+			newSpec,
+			upstreamGroup.Spec,
+			cmpopts.IgnoreFields(gloov1.WeightedDestination{}, "Weight"),
+		); diff != "" {
+			clone := upstreamGroup.DeepCopy()
+			clone.Spec = newSpec
+
+			_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Update(clone)
+			if err != nil {
+				return fmt.Errorf("UpstreamGroup %s.%s update error %v", targetName, canary.Namespace, err)
+			}
+			gr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("UpstreamGroup %s.%s updated", upstreamGroup.GetName(), canary.Namespace)
+		}
+	}
+
+	return nil
 }
 
 // GetRoutes returns the destinations weight for primary and canary
@@ -81,28 +114,30 @@ func (gr *GlooRouter) GetRoutes(canary *flaggerv1.Canary) (
 	err error,
 ) {
 	targetName := canary.Spec.TargetRef.Name
-	var ug *gloov1.UpstreamGroup
-	ug, err = gr.ugClient.Read(canary.Namespace, targetName, solokitclients.ReadOpts{})
+	primaryName := fmt.Sprintf("%s-%s-primary-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
+
+	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			err = fmt.Errorf("UpstreamGroup %s.%s not found", targetName, canary.Namespace)
+			return
+		}
+		err = fmt.Errorf("UpstreamGroup %s.%s query error %v", targetName, canary.Namespace, err)
 		return
 	}
 
-	dests := ug.GetDestinations()
-	for _, dest := range dests {
-		if dest.GetDestination().GetUpstream().Name == upstreamName(canary.Namespace, fmt.Sprintf("%s-primary", targetName), canary.Spec.Service.Port) {
-			primaryWeight = int(dest.Weight)
-		}
-		if dest.GetDestination().GetUpstream().Name == upstreamName(canary.Namespace, fmt.Sprintf("%s-canary", targetName), canary.Spec.Service.Port) {
-			canaryWeight = int(dest.Weight)
-		}
+	if len(upstreamGroup.Spec.Destinations) < 2 {
+		err = fmt.Errorf("UpstreamGroup %s.%s destinations not found", targetName, canary.Namespace)
+		return
 	}
 
-	if primaryWeight == 0 && canaryWeight == 0 {
-		err = fmt.Errorf("RoutingRule %s.%s does not contain routes for %s-primary and %s-canary",
-			targetName, canary.Namespace, targetName, targetName)
+	for _, dst := range upstreamGroup.Spec.Destinations {
+		if dst.Destination.Upstream.Name == primaryName {
+			primaryWeight = int(dst.Weight)
+			canaryWeight = 100 - primaryWeight
+			return
+		}
 	}
-
-	mirrored = false
 
 	return
 }
@@ -115,77 +150,48 @@ func (gr *GlooRouter) SetRoutes(
 	mirrored bool,
 ) error {
 	targetName := canary.Spec.TargetRef.Name
+	canaryName := fmt.Sprintf("%s-%s-canary-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
+	primaryName := fmt.Sprintf("%s-%s-primary-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
 
 	if primaryWeight == 0 && canaryWeight == 0 {
 		return fmt.Errorf("RoutingRule %s.%s update failed: no valid weights", targetName, canary.Namespace)
 	}
 
-	destinations := []*gloov1.WeightedDestination{}
-	destinations = append(destinations, &gloov1.WeightedDestination{
-		Destination: &gloov1.Destination{
-			Upstream: solokitcore.ResourceRef{
-				Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s-primary", targetName), canary.Spec.Service.Port),
-				Namespace: gr.upstreamDiscoveryNs,
-			},
-		},
-		Weight: uint32(primaryWeight),
-	})
-
-	destinations = append(destinations, &gloov1.WeightedDestination{
-		Destination: &gloov1.Destination{
-			Upstream: solokitcore.ResourceRef{
-				Name:      upstreamName(canary.Namespace, fmt.Sprintf("%s-canary", targetName), canary.Spec.Service.Port),
-				Namespace: gr.upstreamDiscoveryNs,
-			},
-		},
-		Weight: uint32(canaryWeight),
-	})
-
-	upstreamGroup := &gloov1.UpstreamGroup{
-		Metadata: solokitcore.Metadata{
-			Name:      canary.Spec.TargetRef.Name,
-			Namespace: canary.Namespace,
-		},
-		Destinations: destinations,
-	}
-
-	return gr.writeUpstreamGroupRuleForCanary(canary, upstreamGroup)
-}
-
-func (gr *GlooRouter) writeUpstreamGroupRuleForCanary(canary *flaggerv1.Canary, ug *gloov1.UpstreamGroup) error {
-	targetName := canary.Spec.TargetRef.Name
-
-	if oldUg, err := gr.ugClient.Read(ug.Metadata.Namespace, ug.Metadata.Name, solokitclients.ReadOpts{}); err != nil {
-		if solokiterror.IsNotExist(err) {
-			gr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-				Infof("UpstreamGroup %s created", ug.Metadata.Name)
-		} else {
-			return fmt.Errorf("RoutingRule %s.%s read failed: %v", targetName, canary.Namespace, err)
-		}
-	} else {
-		ug.Metadata.ResourceVersion = oldUg.Metadata.ResourceVersion
-		// if the old and the new one are equal, no need to do anything.
-		oldUg.Status = solokitcore.Status{}
-		if oldUg.Equal(ug) {
-			return nil
-		}
-	}
-
-	kubeWriteOpts := &kube.KubeWriteOpts{
-		PreWriteCallback: func(r *crdv1.Resource) {
-			r.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
-				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-					Group:   flaggerv1.SchemeGroupVersion.Group,
-					Version: flaggerv1.SchemeGroupVersion.Version,
-					Kind:    flaggerv1.CanaryKind,
-				}),
-			}
-		},
-	}
-	writeOpts := solokitclients.WriteOpts{OverwriteExisting: true, StorageWriteOpts: kubeWriteOpts}
-	_, err := gr.ugClient.Write(ug, writeOpts)
+	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("UpstreamGroup %s.%s update failed: %v", targetName, canary.Namespace, err)
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("UpstreamGroup %s.%s not found", targetName, canary.Namespace)
+
+		}
+		return fmt.Errorf("UpstreamGroup %s.%s query error %v", targetName, canary.Namespace, err)
+	}
+
+	upstreamGroup.Spec = gloov1.UpstreamGroupSpec{
+		Destinations: []gloov1.WeightedDestination{
+			{
+				Destination: gloov1.Destination{
+					Upstream: gloov1.ResourceRef{
+						Name:      primaryName,
+						Namespace: gr.upstreamDiscoveryNs,
+					},
+				},
+				Weight: uint32(primaryWeight),
+			},
+			{
+				Destination: gloov1.Destination{
+					Upstream: gloov1.ResourceRef{
+						Name:      canaryName,
+						Namespace: gr.upstreamDiscoveryNs,
+					},
+				},
+				Weight: uint32(canaryWeight),
+			},
+		},
+	}
+
+	_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Update(upstreamGroup)
+	if err != nil {
+		return fmt.Errorf("UpstreamGroup %s.%s update error %v", targetName, canary.Namespace, err)
 	}
 	return nil
 }

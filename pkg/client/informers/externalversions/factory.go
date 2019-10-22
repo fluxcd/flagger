@@ -26,6 +26,7 @@ import (
 	versioned "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	appmesh "github.com/weaveworks/flagger/pkg/client/informers/externalversions/appmesh"
 	flagger "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger"
+	gloo "github.com/weaveworks/flagger/pkg/client/informers/externalversions/gloo"
 	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/weaveworks/flagger/pkg/client/informers/externalversions/istio"
 	smi "github.com/weaveworks/flagger/pkg/client/informers/externalversions/smi"
@@ -177,6 +178,7 @@ type SharedInformerFactory interface {
 
 	Appmesh() appmesh.Interface
 	Flagger() flagger.Interface
+	Gloo() gloo.Interface
 	Networking() istio.Interface
 	Split() smi.Interface
 }
@@ -187,6 +189,10 @@ func (f *sharedInformerFactory) Appmesh() appmesh.Interface {
 
 func (f *sharedInformerFactory) Flagger() flagger.Interface {
 	return flagger.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Gloo() gloo.Interface {
+	return gloo.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Networking() istio.Interface {

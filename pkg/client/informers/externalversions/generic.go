@@ -23,6 +23,7 @@ import (
 
 	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
 	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	v1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -66,6 +67,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=flagger.app, Version=v1alpha3
 	case v1alpha3.SchemeGroupVersion.WithResource("canaries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha3().Canaries().Informer()}, nil
+
+		// Group=gloo.solo.io, Version=v1
+	case v1.SchemeGroupVersion.WithResource("upstreamgroups"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gloo().V1().UpstreamGroups().Informer()}, nil
 
 		// Group=networking.istio.io, Version=v1alpha3
 	case istiov1alpha3.SchemeGroupVersion.WithResource("destinationrules"):

@@ -6,53 +6,37 @@ require (
 	cloud.google.com/go v0.37.4 // indirect
 	github.com/Masterminds/semver v1.4.2
 	github.com/beorn7/perks v1.0.0 // indirect
-	github.com/bxcodec/faker v2.0.1+incompatible // indirect
-	github.com/envoyproxy/go-control-plane v0.8.0 // indirect
-	github.com/gogo/googleapis v1.2.0 // indirect
-	github.com/gogo/protobuf v1.2.1
+	github.com/gogo/protobuf v1.2.1 // indirect
+	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/golang/protobuf v1.3.1 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
-	github.com/google/btree v1.0.0 // indirect
 	github.com/google/go-cmp v0.3.0
-	github.com/hashicorp/consul v1.4.4 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
-	github.com/hashicorp/go-retryablehttp v0.5.3 // indirect
-	github.com/hashicorp/go-rootcerts v1.0.0 // indirect
-	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
-	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hashicorp/serf v0.8.3 // indirect
-	github.com/hashicorp/vault v1.1.0 // indirect
+	github.com/googleapis/gnostic v0.2.0 // indirect
+	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/k0kubun/pp v3.0.1+incompatible // indirect
-	github.com/linkerd/linkerd2 v0.0.0-20190221030352-5e47cb150a33 // indirect
-	github.com/lyft/protoc-gen-validate v0.0.14 // indirect
-	github.com/mattn/go-colorable v0.1.1 // indirect
-	github.com/mattn/go-isatty v0.0.7 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
 	github.com/prometheus/common v0.3.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190416084830-8368d24ba045 // indirect
-	github.com/radovskyb/watcher v1.0.6 // indirect
-	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/solo-io/gloo v0.13.17
-	github.com/solo-io/go-utils v0.7.11 // indirect
-	github.com/solo-io/solo-kit v0.6.3
-	github.com/solo-io/supergloo v0.3.11
-	go.opencensus.io v0.20.2 // indirect
+	go.uber.org/atomic v1.3.2 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1
 	golang.org/x/crypto v0.0.0-20190418161225-b43e412143f9 // indirect
+	golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c // indirect
+	golang.org/x/sys v0.0.0-20190508220229-2d0786266e9c // indirect
+	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.14
+	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.0.0-20190620073856-dcce3486da33
-	k8s.io/apiextensions-apiserver v0.0.0-20190315093550-53c4693659ed // indirect
 	k8s.io/apimachinery v0.0.0-20190620073744-d16981aedf33
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/code-generator v0.0.0-20190620073620-d55040311883
 	k8s.io/kube-openapi v0.0.0-20190418160015-6b3d3b2d5666 // indirect
+	k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7 // indirect
 )
 
 replace (

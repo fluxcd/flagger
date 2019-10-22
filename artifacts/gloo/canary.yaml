@@ -4,6 +4,7 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  provider: gloo
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
@@ -28,9 +29,24 @@ spec:
       threshold: 500
       interval: 30s
     webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 10s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
+      - name: gloo-acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 10s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' -H 'Host: app.example.com' http://gateway-proxy-v2.gloo-system/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 1m -q 10 -c 2 http://gloo.example.com/"
+          cmd: "hey -z 2m -q 5 -c 2 -host app.example.com http://gateway-proxy-v2.gloo-system"
+          logCmdOutput: "true"

@@ -1,40 +1,34 @@
 package router
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
-	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	solokitclients "github.com/solo-io/solo-kit/pkg/api/v1/clients"
-	"github.com/solo-io/solo-kit/pkg/api/v1/clients/factory"
-	solokitmemory "github.com/solo-io/solo-kit/pkg/api/v1/clients/memory"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 )
 
 func TestGlooRouter_Sync(t *testing.T) {
 	mocks := setupfakeClients()
+	router := &GlooRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		glooClient:    mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
 
-	upstreamGroupClient, err := gloov1.NewUpstreamGroupClient(&factory.MemoryResourceClientFactory{
-		Cache: solokitmemory.NewInMemoryResourceCache(),
-	})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	if err := upstreamGroupClient.Register(); err != nil {
-		t.Fatal(err.Error())
-	}
-	router := NewGlooRouterWithClient(context.TODO(), upstreamGroupClient, "gloo-system", mocks.logger)
-	err = router.Reconcile(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	// test insert
-	ug, err := upstreamGroupClient.Read("default", "podinfo", solokitclients.ReadOpts{})
+	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	dests := ug.GetDestinations()
+	dests := ug.Spec.Destinations
 	if len(dests) != 2 {
 		t.Errorf("Got Destinations %v wanted %v", len(dests), 2)
 	}
@@ -49,21 +43,15 @@ func TestGlooRouter_Sync(t *testing.T) {
 }
 
 func TestGlooRouter_SetRoutes(t *testing.T) {
-
 	mocks := setupfakeClients()
-
-	upstreamGroupClient, err := gloov1.NewUpstreamGroupClient(&factory.MemoryResourceClientFactory{
-		Cache: solokitmemory.NewInMemoryResourceCache(),
-	})
-	if err != nil {
-		t.Fatal(err.Error())
+	router := &GlooRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		glooClient:    mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
 	}
-	if err := upstreamGroupClient.Register(); err != nil {
-		t.Fatal(err.Error())
-	}
-	router := NewGlooRouterWithClient(context.TODO(), upstreamGroupClient, "gloo-system", mocks.logger)
 
-	err = router.Reconcile(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -82,20 +70,21 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	ug, err := upstreamGroupClient.Read("default", "podinfo", solokitclients.ReadOpts{})
+	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	var pRoute *gloov1.WeightedDestination
-	var cRoute *gloov1.WeightedDestination
-	targetName := mocks.canary.Spec.TargetRef.Name
+	var pRoute gloov1.WeightedDestination
+	var cRoute gloov1.WeightedDestination
+	canaryName := fmt.Sprintf("%s-%s-canary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
+	primaryName := fmt.Sprintf("%s-%s-primary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
 
-	for _, dest := range ug.GetDestinations() {
-		if dest.GetDestination().GetUpstream().Name == upstreamName(mocks.canary.Namespace, fmt.Sprintf("%s-primary", targetName), mocks.canary.Spec.Service.Port) {
+	for _, dest := range ug.Spec.Destinations {
+		if dest.Destination.Upstream.Name == primaryName {
 			pRoute = dest
 		}
-		if dest.GetDestination().GetUpstream().Name == upstreamName(mocks.canary.Namespace, fmt.Sprintf("%s-canary", targetName), mocks.canary.Spec.Service.Port) {
+		if dest.Destination.Upstream.Name == canaryName {
 			cRoute = dest
 		}
 	}
@@ -112,18 +101,14 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 
 func TestGlooRouter_GetRoutes(t *testing.T) {
 	mocks := setupfakeClients()
+	router := &GlooRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		glooClient:    mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
 
-	upstreamGroupClient, err := gloov1.NewUpstreamGroupClient(&factory.MemoryResourceClientFactory{
-		Cache: solokitmemory.NewInMemoryResourceCache(),
-	})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	if err := upstreamGroupClient.Register(); err != nil {
-		t.Fatal(err.Error())
-	}
-	router := NewGlooRouterWithClient(context.TODO(), upstreamGroupClient, "gloo-system", mocks.logger)
-	err = router.Reconcile(mocks.canary)
+	err := router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

@@ -7,11 +7,11 @@ spec:
   virtualHost:
     domains:
       - '*'
-    name: podinfo.default
+    name: podinfo
     routes:
       - matcher:
           prefix: /
         routeAction:
           upstreamGroup:
             name: podinfo
-            namespace: gloo
+            namespace: test
