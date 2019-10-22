@@ -11,6 +11,9 @@ jobs:
           keys:
             - go-mod-v3-{{ checksum "go.sum" }}
       - run:
+          name: Run go mod download
+          command: go mod download
+      - run:
           name: Run go fmt
           command: make test-fmt
       - run:

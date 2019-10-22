@@ -39,7 +39,6 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [FAQ](https://docs.flagger.app/faq)
 * Usage
   * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
-  * [Istio A/B testing](https://docs.flagger.app/usage/ab-testing)
   * [Linkerd canary deployments](https://docs.flagger.app/usage/linkerd-progressive-delivery)
   * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
   * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
@@ -153,7 +152,7 @@ For more details on how the canary analysis and promotion works please [read the
 | Feature                                      | Istio              | Linkerd            | App Mesh           | NGINX              | Gloo               | Kubernetes CNI     |
 | -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |------------------  |------------------  |
 | Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| A/B testing (headers and cookies routing)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
+| A/B testing (headers and cookies routing)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
 | Blue/Green deployments (traffic switch)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | Manual gating (approve/pause/resume)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
