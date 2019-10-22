@@ -327,6 +327,22 @@ With the above configuration Flagger will run conformance and load tests on the 
 If the metrics analysis succeeds, live traffic will be switched from the old version to the new one when the
 canary is promoted.
 
+The blue/green deployment strategy is supported for all service mesh providers.
+
+Blue/Green rollout steps for service mesh:
+* scale up the canary (green)
+* run conformance tests for the canary pods
+* run load tests and metric checks for the canary pods
+* route traffic to canary
+* promote canary spec over primary (blue)
+* wait for primary rollout
+* route traffic to primary
+* scale down canary
+
+After the analysis finishes, the traffic is routed to the canary (green) before triggering the primary (blue)
+rolling update, this ensures a smooth transition to the new version avoiding dropping in-flight requests during
+the Kubernetes deployment rollout.
+
 ### HTTP Metrics
 
 The canary analysis is using the following Prometheus queries:
