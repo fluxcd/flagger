@@ -21,7 +21,7 @@ chmod +x kind
 sudo mv kind /usr/local/bin/kind
 
 echo ">>> Creating kind cluster"
-kind create cluster --wait 5m
+kind create cluster --wait 5m #--image kindest/node:v1.16.2
 
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 kubectl get pods --all-namespaces
