@@ -122,7 +122,7 @@ failed=false
 until ${ok}; do
     kubectl -n test get canary/podinfo | grep 'Failed' && failed=true || failed=false
     if ${failed}; then
-        kubectl -n ingress-nginx logs deployment/test-flagger
+        kubectl -n ingress-nginx logs deployment/flagger
         echo "Canary failed!"
         exit 1
     fi

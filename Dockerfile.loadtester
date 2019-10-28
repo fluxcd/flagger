@@ -14,7 +14,7 @@ chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helm && \
 chmod +x linux-amd64/tiller && mv linux-amd64/tiller /usr/local/bin/tiller && \
 rm -rf linux-amd64
 
-RUN curl -sSL "https://get.helm.sh/helm-v3.0.0-beta.3-linux-amd64.tar.gz" | tar xvz && \
+RUN curl -sSL "https://get.helm.sh/helm-v3.0.0-beta.5-linux-amd64.tar.gz" | tar xvz && \
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helmv3 && \
 rm -rf linux-amd64
 

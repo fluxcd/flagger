@@ -3,7 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-HELM_VERSION=v2.14.3
+HELM_VERSION=v2.15.1
 KIND_VERSION=v0.5.1
 
 if [[ "$1" ]]; then
@@ -21,7 +21,7 @@ chmod +x kind
 sudo mv kind /usr/local/bin/kind
 
 echo ">>> Creating kind cluster"
-kind create cluster --wait 5m
+kind create cluster --wait 5m #--image kindest/node:v1.16.2
 
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 kubectl get pods --all-namespaces
