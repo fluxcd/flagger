@@ -751,7 +751,6 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 
 	// create observer based on the mesh provider
 	observerFactory := c.observerFactory
-	observer := observerFactory.Observer(metricsProvider)
 
 	// override the global metrics server if one is specified in the canary spec
 	metricsServer := c.observerFactory.Client.GetMetricsServer()
@@ -763,8 +762,8 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 			c.recordEventErrorf(r, "Error building Prometheus client for %s %v", r.Spec.MetricsServer, err)
 			return false
 		}
-		observer = observerFactory.Observer(metricsProvider)
 	}
+	observer := observerFactory.Observer(metricsProvider)
 
 	// run metrics checks
 	for _, metric := range r.Spec.CanaryAnalysis.Metrics {

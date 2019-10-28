@@ -36,9 +36,6 @@ spec:
           upstreamGroup:
             name: podinfo
             namespace: test
-        routePlugins:
-          prefixRewrite:
-            prefixRewrite: "/"
 EOF
 
 cat <<EOF | kubectl apply -f -
