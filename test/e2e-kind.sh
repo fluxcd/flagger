@@ -3,7 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-HELM_VERSION=v2.14.3
+HELM_VERSION=v2.15.1
 KIND_VERSION=v0.5.1
 
 if [[ "$1" ]]; then
