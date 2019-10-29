@@ -167,7 +167,7 @@ helm upgrade -i flagger flagger/flagger \
 --namespace=appmesh-system \
 --set crd.create=false \
 --set meshProvider=appmesh \
---set metricsServer=appmesh-prometheus:9090
+--set metricsServer=http://appmesh-prometheus:9090
 ```
 
 You can enable Slack or MS Teams notifications with:
