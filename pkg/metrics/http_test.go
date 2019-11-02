@@ -8,7 +8,7 @@ import (
 )
 
 func TestHttpObserver_GetRequestSuccessRate(t *testing.T) {
-	expected := `sum(rate(http_request_duration_seconds_count{kubernetes_namespace="default",kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",status!~"5.*"}[1m]))/sum(rate(http_request_duration_seconds_count{kubernetes_namespace="default",kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"}[1m]))*100`
+	expected := ` sum( rate( http_request_duration_seconds_count{ kubernetes_namespace="default", kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)", status!~"5.*" }[1m] ) ) / sum( rate( http_request_duration_seconds_count{ kubernetes_namespace="default", kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)" }[1m] ) ) * 100`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
@@ -41,7 +41,7 @@ func TestHttpObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestHttpObserver_GetRequestDuration(t *testing.T) {
-	expected := `histogram_quantile(0.99,sum(rate(http_request_duration_seconds_bucket{kubernetes_namespace="default",kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"}[1m]))by(le))`
+	expected := ` histogram_quantile( 0.99, sum( rate( http_request_duration_seconds_bucket{ kubernetes_namespace="default", kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)" }[1m] ) ) by (le) )`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]

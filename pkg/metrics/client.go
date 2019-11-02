@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
-	"strings"
 	"text/template"
 	"time"
 )
@@ -137,13 +137,10 @@ func (p *PrometheusClient) RunQuery(query string) (float64, error) {
 	return *value, nil
 }
 
-// TrimQuery takes a promql query and removes spaces, tabs and new lines
+// TrimQuery takes a promql query and removes whitespace
 func (p *PrometheusClient) TrimQuery(query string) string {
-	query = strings.Replace(query, "\n", "", -1)
-	query = strings.Replace(query, "\t", "", -1)
-	query = strings.Replace(query, " ", "", -1)
-
-	return query
+	space := regexp.MustCompile(`\s+`)
+	return space.ReplaceAllString(query, " ")
 }
 
 // IsOnline call Prometheus status endpoint and returns an error if the API is unreachable
