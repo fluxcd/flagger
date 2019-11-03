@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var VERSION = "0.10.0"
+var VERSION = "0.11.0"
 var (
 	logLevel          string
 	port              string

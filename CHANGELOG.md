@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.20.1 (2019-11-03) 
+
+Fixes promql execution and updates the load testing tools
+
+#### Improvements 
+
+- Update load tester Helm tools [#8349dd1](https://github.com/weaveworks/flagger/commit/8349dd1cda59a741c7bed9a0f67c0fc0fbff4635)
+- e2e testing: update providers [#346](https://github.com/weaveworks/flagger/pull/346)
+
+#### Fixes
+
+- Fix Prometheus query escape [#353](https://github.com/weaveworks/flagger/pull/353)
+- Updating hey release link [#350](https://github.com/weaveworks/flagger/pull/350)
+
 ## 0.20.0 (2019-10-21) 
 
 Adds support for [A/B Testing](https://docs.flagger.app/usage/progressive-delivery#traffic-mirroring) and retry policies when using App Mesh
