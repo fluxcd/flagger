@@ -23,8 +23,10 @@ spec:
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
   service:
-    # container port
-    port: 9898
+    # ClusterIP port number
+    port: 80
+    # container port number or name
+    targetPort: 9898
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 10s
