@@ -1,14 +1,14 @@
 apiVersion: flagger.app/v1alpha3
 kind: Canary
 metadata:
-  name: abtest
+  name: podinfo
   namespace: test
 spec:
   # deployment reference
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: abtest
+    name: podinfo
   # the maximum time in seconds for the canary deployment
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
@@ -16,7 +16,7 @@ spec:
   autoscalerRef:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
-    name: abtest
+    name: podinfo
   service:
     # container port
     port: 9898
@@ -26,7 +26,12 @@ spec:
     - mesh
     # Istio virtual service host names (optional)
     hosts:
-    - abtest.istio.weavedx.com
+    - app.example.com
+    # Istio traffic policy (optional)
+    trafficPolicy:
+      tls:
+        # use ISTIO_MUTUAL when mTLS is enabled
+        mode: DISABLE
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 10s

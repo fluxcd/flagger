@@ -56,8 +56,7 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/nginx/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/nginx/hpa.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:

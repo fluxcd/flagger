@@ -13,23 +13,20 @@ This is particularly useful for frontend applications that require session affin
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
+kubectl create ns test
+kubectl label namespace test istio-injection=enabled
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/ab-testing/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/ab-testing/hpa.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Create a canary custom resource (replace example.com with your own domain):
@@ -38,14 +35,14 @@ Create a canary custom resource (replace example.com with your own domain):
 apiVersion: flagger.app/v1alpha3
 kind: Canary
 metadata:
-  name: abtest
+  name: podinfo
   namespace: test
 spec:
   # deployment reference
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: abtest
+    name: podinfo
   # the maximum time in seconds for the canary deployment
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
@@ -53,7 +50,7 @@ spec:
   autoscalerRef:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
-    name: abtest
+    name: podinfo
   service:
     # container port
     port: 9898
@@ -63,6 +60,11 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - app.example.com
+    # Istio traffic policy (optional)
+    trafficPolicy:
+      tls:
+        # use ISTIO_MUTUAL when mTLS is enabled
+        mode: DISABLE
   canaryAnalysis:
     # schedule interval (default 60s)
     interval: 1m
@@ -110,19 +112,19 @@ After a couple of seconds Flagger will create the canary objects:
 
 ```bash
 # applied 
-deployment.apps/abtest
-horizontalpodautoscaler.autoscaling/abtest
-canary.flagger.app/abtest
+deployment.apps/podinfo
+horizontalpodautoscaler.autoscaling/podinfo
+canary.flagger.app/podinfo
 
 # generated 
-deployment.apps/abtest-primary
-horizontalpodautoscaler.autoscaling/abtest-primary
-service/abtest
-service/abtest-canary
-service/abtest-primary
-destinationrule.networking.istio.io/abtest-canary
-destinationrule.networking.istio.io/abtest-primary
-virtualservice.networking.istio.io/abtest
+deployment.apps/podinfo-primary
+horizontalpodautoscaler.autoscaling/podinfo-primary
+service/podinfo
+service/podinfo-canary
+service/podinfo-primary
+destinationrule.networking.istio.io/podinfo-canary
+destinationrule.networking.istio.io/podinfo-primary
+virtualservice.networking.istio.io/podinfo
 ```
 
 ### Automated canary promotion
@@ -145,22 +147,22 @@ Status:
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
-  Normal   Synced  3m    flagger  New revision detected abtest.test
-  Normal   Synced  3m    flagger  Scaling up abtest.test
-  Warning  Synced  3m    flagger  Waiting for abtest.test rollout to finish: 0 of 1 updated replicas are available
-  Normal   Synced  3m    flagger  Advance abtest.test canary iteration 1/10
-  Normal   Synced  3m    flagger  Advance abtest.test canary iteration 2/10
-  Normal   Synced  3m    flagger  Advance abtest.test canary iteration 3/10
-  Normal   Synced  2m    flagger  Advance abtest.test canary iteration 4/10
-  Normal   Synced  2m    flagger  Advance abtest.test canary iteration 5/10
-  Normal   Synced  1m    flagger  Advance abtest.test canary iteration 6/10
-  Normal   Synced  1m    flagger  Advance abtest.test canary iteration 7/10
-  Normal   Synced  55s   flagger  Advance abtest.test canary iteration 8/10
-  Normal   Synced  45s   flagger  Advance abtest.test canary iteration 9/10
-  Normal   Synced  35s   flagger  Advance abtest.test canary iteration 10/10
-  Normal   Synced  25s   flagger  Copying abtest.test template spec to abtest-primary.test
+  Normal   Synced  3m    flagger  New revision detected podinfo.test
+  Normal   Synced  3m    flagger  Scaling up podinfo.test
+  Warning  Synced  3m    flagger  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 1/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 2/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 3/10
+  Normal   Synced  2m    flagger  Advance podinfo.test canary iteration 4/10
+  Normal   Synced  2m    flagger  Advance podinfo.test canary iteration 5/10
+  Normal   Synced  1m    flagger  Advance podinfo.test canary iteration 6/10
+  Normal   Synced  1m    flagger  Advance podinfo.test canary iteration 7/10
+  Normal   Synced  55s   flagger  Advance podinfo.test canary iteration 8/10
+  Normal   Synced  45s   flagger  Advance podinfo.test canary iteration 9/10
+  Normal   Synced  35s   flagger  Advance podinfo.test canary iteration 10/10
+  Normal   Synced  25s   flagger  Copying podinfo.test template spec to abtest-primary.test
   Warning  Synced  15s   flagger  Waiting for abtest-primary.test rollout to finish: 1 of 2 updated replicas are available
-  Normal   Synced  5s    flagger  Promotion completed! Scaling down abtest.test
+  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
 **Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
@@ -204,12 +206,12 @@ Status:
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
-  Normal   Synced  3m    flagger  Starting canary deployment for abtest.test
-  Normal   Synced  3m    flagger  Advance abtest.test canary iteration 1/10
-  Normal   Synced  3m    flagger  Advance abtest.test canary iteration 2/10
-  Normal   Synced  3m    flagger  Advance abtest.test canary iteration 3/10
-  Normal   Synced  3m    flagger  Halt abtest.test advancement success rate 69.17% < 99%
-  Normal   Synced  2m    flagger  Halt abtest.test advancement success rate 61.39% < 99%
-  Warning  Synced  2m    flagger  Rolling back abtest.test failed checks threshold reached 2
-  Warning  Synced  1m    flagger  Canary failed! Scaling down abtest.test
+  Normal   Synced  3m    flagger  Starting canary deployment for podinfo.test
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 1/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 2/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 3/10
+  Normal   Synced  3m    flagger  Halt podinfo.test advancement success rate 69.17% < 99%
+  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 61.39% < 99%
+  Warning  Synced  2m    flagger  Rolling back podinfo.test failed checks threshold reached 2
+  Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
