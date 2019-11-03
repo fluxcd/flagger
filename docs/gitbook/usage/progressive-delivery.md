@@ -13,23 +13,20 @@ These objects expose the application inside the mesh and drive the canary analys
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
+kubectl create ns test
+kubectl label namespace test istio-injection=enabled
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Create a canary custom resource (replace example.com with your own domain):

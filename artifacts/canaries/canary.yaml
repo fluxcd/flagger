@@ -37,7 +37,7 @@ spec:
     - mesh
     # Istio virtual service host names (optional)
     hosts:
-    - app.istio.weavedx.com
+    - app.example.com
     # Istio traffic policy (optional)
     trafficPolicy:
       tls:

@@ -94,13 +94,13 @@ kubectl label namespace test istio-injection=enabled
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks//kustomize/podinfo
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks//kustomize/tester
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Create a canary custom resource (replace example.com with your own domain):
