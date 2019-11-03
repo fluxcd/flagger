@@ -9,16 +9,19 @@ WORKDIR /home/app
 RUN curl -sSLo hey "https://storage.googleapis.com/hey-release/hey_linux_amd64" && \
 chmod +x hey && mv hey /usr/local/bin/hey
 
-RUN curl -sSL "https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz" | tar xvz && \
+# verify hey works
+RUN hey -n 1 -c 1 https://flagger.app > /dev/null && echo $? | grep 0
+
+RUN curl -sSL "https://get.helm.sh/helm-v2.15.1-linux-amd64.tar.gz" | tar xvz && \
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helm && \
 chmod +x linux-amd64/tiller && mv linux-amd64/tiller /usr/local/bin/tiller && \
 rm -rf linux-amd64
 
-RUN curl -sSL "https://get.helm.sh/helm-v3.0.0-beta.5-linux-amd64.tar.gz" | tar xvz && \
+RUN curl -sSL "https://get.helm.sh/helm-v3.0.0-rc.2-linux-amd64.tar.gz" | tar xvz && \
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helmv3 && \
 rm -rf linux-amd64
 
-RUN GRPC_HEALTH_PROBE_VERSION=v0.3.0 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.3.1 && \
 wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
 chmod +x /usr/local/bin/grpc_health_probe
 
@@ -35,7 +38,7 @@ RUN chown -R app:app ./
 
 USER app
 
-RUN curl -sSL "https://github.com/rimusz/helm-tiller/archive/v0.8.3.tar.gz" | tar xvz && \
-helm init --client-only && helm plugin install helm-tiller-0.8.3 && helm plugin list
+RUN curl -sSL "https://github.com/rimusz/helm-tiller/archive/v0.9.3.tar.gz" | tar xvz && \
+helm init --client-only && helm plugin install helm-tiller-0.9.3 && helm plugin list
 
 ENTRYPOINT ["./loadtester"]
