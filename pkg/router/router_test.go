@@ -70,7 +70,14 @@ func newMockCanaryAppMesh() *flaggerv1.Canary {
 			Service: flaggerv1.CanaryService{
 				Port:     9898,
 				MeshName: "global",
+				Hosts:    []string{"*"},
 				Backends: []string{"backend.default"},
+				Timeout:  "25",
+				Retries: &istiov1alpha3.HTTPRetry{
+					Attempts:      5,
+					PerTryTimeout: "gateway-error",
+					RetryOn:       "5s",
+				},
 			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
