@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -224,5 +226,47 @@ func TestAppmeshRouter_ABTest(t *testing.T) {
 	exactMatch := *vs.Spec.Routes[0].Http.Match.Headers[0].Match.Exact
 	if exactMatch != "test" {
 		t.Errorf("Got http match header exact %v wanted %v", exactMatch, "test")
+	}
+}
+
+func TestAppmeshRouter_Gateway(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &AppMeshRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.appmeshCanary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// check virtual service
+	vsName := fmt.Sprintf("%s.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
+	vs, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	expose := vs.Annotations["gateway.appmesh.k8s.aws/expose"]
+	if expose != "true" {
+		t.Errorf("Got gateway expose annotation %v wanted %v", expose, "true")
+	}
+
+	domain := vs.Annotations["gateway.appmesh.k8s.aws/domain"]
+	if !strings.Contains(domain, mocks.appmeshCanary.Spec.Service.Hosts[0]) {
+		t.Errorf("Got gateway domain annotation %v wanted %v", domain, mocks.appmeshCanary.Spec.Service.Hosts[0])
+	}
+
+	timeout := vs.Annotations["gateway.appmesh.k8s.aws/timeout"]
+	if timeout != mocks.appmeshCanary.Spec.Service.Timeout {
+		t.Errorf("Got gateway timeout annotation %v wanted %v", timeout, mocks.appmeshCanary.Spec.Service.Timeout)
+	}
+
+	retries := vs.Annotations["gateway.appmesh.k8s.aws/retries"]
+	if retries != strconv.Itoa(mocks.appmeshCanary.Spec.Service.Retries.Attempts) {
+		t.Errorf("Got gateway retries annotation %v wanted %v", retries, strconv.Itoa(mocks.appmeshCanary.Spec.Service.Retries.Attempts))
 	}
 }

@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,7 +81,7 @@ func (ar *AppMeshRouter) Reconcile(canary *flaggerv1.Canary) error {
 // reconcileVirtualNode creates or updates a virtual node
 // the virtual node naming format is name-role-namespace
 func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name string, host string) error {
-	protocol := getProtocol(canary)
+	protocol := ar.getProtocol(canary)
 	vnSpec := appmeshv1.VirtualNodeSpec{
 		MeshName: canary.Spec.Service.MeshName,
 		Listeners: []appmeshv1.Listener{
@@ -164,7 +165,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 	targetName := canary.Spec.TargetRef.Name
 	canaryVirtualNode := fmt.Sprintf("%s-canary", targetName)
 	primaryVirtualNode := fmt.Sprintf("%s-primary", targetName)
-	protocol := getProtocol(canary)
+	protocol := ar.getProtocol(canary)
 
 	routerName := targetName
 	if canaryWeight > 0 {
@@ -212,7 +213,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 				Http: &appmeshv1.HttpRoute{
 					Match: appmeshv1.HttpRouteMatch{
 						Prefix:  routePrefix,
-						Headers: makeHeaders(canary),
+						Headers: ar.makeHeaders(canary),
 					},
 					RetryPolicy: makeRetryPolicy(canary),
 					Action: appmeshv1.HttpRouteAction{
@@ -284,6 +285,15 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 			},
 			Spec: vsSpec,
 		}
+
+		// set App Mesh Gateway annotation on primary virtual service
+		if canaryWeight == 0 {
+			a := ar.gatewayAnnotations(canary)
+			if len(a) > 0 {
+				virtualService.ObjectMeta.Annotations = a
+			}
+		}
+
 		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Create(virtualService)
 		if err != nil {
 			return fmt.Errorf("VirtualService %s create error %v", name, err)
@@ -303,6 +313,14 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 			vsClone := virtualService.DeepCopy()
 			vsClone.Spec = vsSpec
 			vsClone.Spec.Routes[0].Http.Action = virtualService.Spec.Routes[0].Http.Action
+
+			// update App Mesh Gateway annotation on primary virtual service
+			if canaryWeight == 0 {
+				a := ar.gatewayAnnotations(canary)
+				if len(a) > 0 {
+					vsClone.ObjectMeta.Annotations = a
+				}
+			}
 
 			_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Update(vsClone)
 			if err != nil {
@@ -432,7 +450,7 @@ func makeRetryPolicy(canary *flaggerv1.Canary) *appmeshv1.HttpRetryPolicy {
 }
 
 // makeRetryPolicy creates an App Mesh HttpRouteHeader from the Canary.CanaryAnalysis.Match
-func makeHeaders(canary *flaggerv1.Canary) []appmeshv1.HttpRouteHeader {
+func (ar *AppMeshRouter) makeHeaders(canary *flaggerv1.Canary) []appmeshv1.HttpRouteHeader {
 	headers := []appmeshv1.HttpRouteHeader{}
 
 	for _, m := range canary.Spec.CanaryAnalysis.Match {
@@ -453,11 +471,30 @@ func makeHeaders(canary *flaggerv1.Canary) []appmeshv1.HttpRouteHeader {
 	return headers
 }
 
-func getProtocol(canary *flaggerv1.Canary) string {
+func (ar *AppMeshRouter) getProtocol(canary *flaggerv1.Canary) string {
 	if strings.Contains(canary.Spec.Service.PortName, "grpc") {
 		return "grpc"
 	}
 	return "http"
+}
+
+func (ar *AppMeshRouter) gatewayAnnotations(canary *flaggerv1.Canary) map[string]string {
+	a := make(map[string]string)
+	domains := ""
+	for _, value := range canary.Spec.Service.Hosts {
+		domains += value + ","
+	}
+	if domains != "" {
+		a["gateway.appmesh.k8s.aws/expose"] = "true"
+		a["gateway.appmesh.k8s.aws/domain"] = domains
+		if canary.Spec.Service.Timeout != "" {
+			a["gateway.appmesh.k8s.aws/timeout"] = canary.Spec.Service.Timeout
+		}
+		if canary.Spec.Service.Retries != nil && canary.Spec.Service.Retries.Attempts > 0 {
+			a["gateway.appmesh.k8s.aws/retries"] = strconv.Itoa(canary.Spec.Service.Retries.Attempts)
+		}
+	}
+	return a
 }
 
 func int64p(i int64) *int64 {
