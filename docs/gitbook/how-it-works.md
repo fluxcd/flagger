@@ -535,7 +535,7 @@ The canary analysis can be extended with webhooks. Flagger will call each webhoo
 determine from the response status code (HTTP 2xx) if the canary is failing or not.
 
 There are three types of hooks:
-* Confirm-rollout hooks are executed before scaling up the canary deployment and ca be used for manual approval.
+* Confirm-rollout hooks are executed before scaling up the canary deployment and can be used for manual approval.
 The rollout is paused until the hook returns a successful HTTP status code.
 * Pre-rollout hooks are executed before routing traffic to canary. 
 The canary advancement is paused if a pre-rollout hook fails and if the number of failures reach the 
