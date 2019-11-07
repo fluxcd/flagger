@@ -102,12 +102,12 @@ spec:
         timeout: 30s
         metadata:
           type: bash
-          cmd: "curl -sd 'test' http://podinfo-canary:9898/token | grep token"
+          cmd: "curl -sd 'test' http://podinfo-canary.test:9898/token | grep token"
       - name: load-test
         type: rollout
         url: http://flagger-loadtester.test/
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 http://podinfo:9898/"
+          cmd: "hey -z 2m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
