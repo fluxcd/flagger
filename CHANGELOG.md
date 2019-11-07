@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.20.2 (2019-11-07) 
+
+Adds support for exposing canaries outside the cluster using App Mesh Gateway annotations 
+
+#### Improvements 
+
+- Expose canaries on public domains with App Mesh Gateway [#358](https://github.com/weaveworks/flagger/pull/358)
+
+#### Fixes
+
+- Use the specified replicas when scaling up the canary [#363](https://github.com/weaveworks/flagger/pull/363)
+
 ## 0.20.1 (2019-11-03) 
 
 Fixes promql execution and updates the load testing tools
