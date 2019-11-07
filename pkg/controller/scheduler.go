@@ -622,7 +622,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 		c.recordEventInfof(cd, "New revision detected! Scaling up %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		c.sendNotification(cd, "New revision detected, starting canary analysis.",
 			true, false)
-		if err := c.deployer.Scale(cd, 1); err != nil {
+		if err := c.deployer.ScaleUp(cd); err != nil {
 			c.recordEventErrorf(cd, "%v", err)
 			return false
 		}
@@ -817,8 +817,8 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 			val, err := observerFactory.Client.RunQuery(metric.Query)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					c.recordEventWarningf(r, "Halt advancement no values found for custom metric: %s",
+						metric.Name)
 				} else {
 					c.recordEventErrorf(r, "Metrics server %s query failed for %s: %v", metricsServer, metric.Name, err)
 				}
