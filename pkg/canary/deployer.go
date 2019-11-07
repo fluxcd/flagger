@@ -185,6 +185,30 @@ func (c *Deployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	return nil
 }
 
+func (c *Deployer) ScaleUp(cd *flaggerv1.Canary) error {
+	targetName := cd.Spec.TargetRef.Name
+	dep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
+		}
+		return fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
+	}
+
+	replicas := int32p(1)
+	if dep.Spec.Replicas != nil && *dep.Spec.Replicas > 0 {
+		replicas = dep.Spec.Replicas
+	}
+	depCopy := dep.DeepCopy()
+	depCopy.Spec.Replicas = replicas
+
+	_, err = c.KubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
+	if err != nil {
+		return fmt.Errorf("scaling %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
+	}
+	return nil
+}
+
 func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
