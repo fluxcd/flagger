@@ -46,6 +46,16 @@ $ helm upgrade -i flagger flagger/flagger \
     --set metricsServer=http://linkerd-prometheus:9090
 ```
 
+To install the chart with the release name `flagger` for AWS App Mesh:
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=appmesh-system \
+    --set crd.create=false \
+    --set meshProvider=appmesh \
+    --set metricsServer=http://appmesh-prometheus:9090
+```
+
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
 ## Uninstalling the Chart
@@ -92,7 +102,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \
-  --namespace istio-system \
+  --namespace flagger-system \
   --set crd.create=false \
   --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
   --set slack.channel=general
