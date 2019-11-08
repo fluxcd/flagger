@@ -1,7 +1,8 @@
 # Flagger
 
-[Flagger](https://github.com/weaveworks/flagger) is a Kubernetes operator that automates the promotion of 
-canary deployments using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
+[Flagger](https://github.com/weaveworks/flagger) is a Kubernetes operator that automates the promotion of canary
+deployments using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
+
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
 like HTTP requests success rate, requests average duration and pods health.
 Based on the KPIs analysis a canary is promoted or aborted and the analysis result is published to Slack or MS Teams.

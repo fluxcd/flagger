@@ -3,10 +3,12 @@ version: 3.1.0
 appVersion: 3.1.0
 name: podinfo
 engine: gotpl
-description: Flagger canary deployment demo chart
-home: https://flagger.app
-maintainers:
-- email: stefanprodan@users.noreply.github.com
-  name: stefanprodan
+description: Flagger canary deployment demo application
+home: https://docs.flagger.app
+icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
 sources:
-- https://github.com/weaveworks/flagger
+  - https://github.com/stefanprodan/podinfo
+maintainers:
+  - name: stefanprodan
+    url: https://github.com/stefanprodan
+    email: stefanprodan@users.noreply.github.com

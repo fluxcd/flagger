@@ -1,13 +1,12 @@
 # Flagger Grafana
 
-Grafana dashboards for monitoring progressive deployments powered by Istio, Prometheus and Flagger.
+Grafana dashboards for monitoring progressive deployments powered by Flagger and Prometheus.
 
 ![flagger-grafana](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/grafana-canary-analysis.png)
 
 ## Prerequisites
 
 * Kubernetes >= 1.11
-* Istio >= 1.0
 * Prometheus >= 2.6
 
 ## Installing the Chart
@@ -18,14 +17,20 @@ Add Flagger Helm repository:
 helm repo add flagger https://flagger.app
 ```
 
-To install the chart with the release name `flagger-grafana`:
+To install the chart for Istio run:
 
 ```console
 helm upgrade -i flagger-grafana flagger/grafana \
 --namespace=istio-system \
---set url=http://prometheus:9090 \
---set user=admin \
---set password=admin
+--set url=http://prometheus:9090
+```
+
+To install the chart for AWS App Mesh run:
+
+```console
+helm upgrade -i flagger-grafana flagger/grafana \
+--namespace=appmesh-system \
+--set url=http://appmesh-prometheus:9090
 ```
 
 The command deploys Grafana on the Kubernetes cluster in the default namespace.
@@ -56,10 +61,7 @@ Parameter | Description | Default
 `affinity` | node/pod affinities | `node`
 `nodeSelector` | node labels for pod assignment | `{}`
 `service.type` | type of service | `ClusterIP`
-`url` | Prometheus URL, used when Weave Cloud token is empty | `http://prometheus:9090`
-`token` | Weave Cloud token | `none`
-`user` | Grafana admin username | `admin`
-`password` | Grafana admin password | `admin`
+`url` | Prometheus URL | `http://prometheus:9090`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
