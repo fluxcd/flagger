@@ -9,6 +9,7 @@ image:
 podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
+  appmesh.k8s.aws/sidecarInjectorWebhook: disabled
 
 metricsServer: "http://prometheus:9090"
 

@@ -12,7 +12,7 @@ The App Mesh integration with EKS is made out of the following components:
     * `virtualservice.appmesh.k8s.aws` defines the routing rules for a workload inside the mesh
 * CRD controller - keeps the custom resources in sync with the App Mesh control plane
 * Admission controller - injects the Envoy sidecar and assigns Kubernetes pods to App Mesh virtual nodes
-* Metrics server - Prometheus instance that collects and stores Envoy's metrics
+* Telemetry service - Prometheus instance that collects and stores Envoy's metrics
 
 ### Create a Kubernetes cluster
 
@@ -100,7 +100,7 @@ kubectl create ns appmesh-system
 Apply the App Mesh CRDs:
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/aws/eks-charts/master/stable/appmesh-controller/crds/crds.yaml
+kubectl apply -k github.com/aws/eks-charts/stable/appmesh-controller//crds
 ```
 
 Add the EKS repository to Helm:
@@ -113,10 +113,10 @@ Install the App Mesh CRD controller:
 
 ```sh
 helm upgrade -i appmesh-controller eks/appmesh-controller \
---wait --namespace appmesh-system --version 0.2.0
+--wait --namespace appmesh-system
 ```
 
-Install the App Mesh admission controller:
+Install the App Mesh admission controller and create a mesh called `global`:
 
 ```sh
 helm upgrade -i appmesh-inject eks/appmesh-inject \

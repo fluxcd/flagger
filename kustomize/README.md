@@ -25,7 +25,7 @@ Install Flagger for AWS App Mesh:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/appmesh
 ```
 
-This deploys Flagger and Prometheus (configured to scrape the App Mesh Envoy sidecars) in the `appmesh-system` namespace.
+This deploys Flagger in the `appmesh-system` namespace and sets the metrics server URL to App Mesh Prometheus instance.
 
 Install Flagger for Linkerd:
 

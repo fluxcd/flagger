@@ -14,22 +14,33 @@ The only App Mesh object you need to create by yourself is the mesh resource.
 Create a mesh called `global`:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/appmesh/global-mesh.yaml
+cat << EOF | kubectl apply -f -
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: Mesh
+metadata:
+  name: global
+spec:
+  serviceDiscoveryType: dns
+EOF
 ```
 
 Create a test namespace with App Mesh sidecar injection enabled:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+  labels:
+    appmesh.k8s.aws/sidecarInjectorWebhook: enabled
+EOF
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/appmesh/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/appmesh/hpa.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
@@ -72,20 +83,25 @@ spec:
     portName: http
     # App Mesh reference
     meshName: global
+    # App Mesh ingress (optional)
+    hosts:
+      - "*"
+    # App Mesh ingress timeout (optional)
+    timeout: 5s
     # App Mesh egress (optional) 
     backends:
       - backend.test
     # App Mesh retry policy (optional)
     retries:
       attempts: 3
-      perTryTimeout: 1s
+      perTryTimeout: 5s
       retryOn: "gateway-error,client-error,stream-error"
   # define the canary analysis timing and KPIs
   canaryAnalysis:
     # schedule interval (default 60s)
-    interval: 10s
+    interval: 1m
     # max number of failed metric checks before rollback
-    threshold: 10
+    threshold: 5
     # max traffic percentage routed to canary
     # percentage (0-100)
     maxWeight: 50
@@ -166,36 +182,41 @@ The App Mesh specific settings are:
 App Mesh blocks all egress traffic by default. If your application needs to call another service, you have to create an
 App Mesh virtual service for it and add the virtual service name to the backend list.
 
-### Setup App Mesh ingress (optional)
+### Setup App Mesh Gateway (optional)
 
-In order to expose the podinfo app outside the mesh you'll be using an Envoy ingress and an AWS classic load balancer.
-The ingress binds to an internet domain and forwards the calls into the mesh through the App Mesh sidecar.
-If podinfo becomes unavailable due to a HPA downscaling or a node restart,
-the ingress will retry the calls for a short period of time.
+In order to expose the podinfo app outside the mesh you'll be using an Envoy-powered ingress gateway and an AWS network load balancer.
+The gateway binds to an internet domain and forwards the calls into the mesh through the App Mesh sidecar.
+If podinfo becomes unavailable due to a cluster downscaling or a node restart,
+the gateway will retry the calls for a short period of time.
 
-Deploy the ingress and the AWS ELB service:
+Deploy the gateway behind an AWS NLB:
 
 ```bash
-kubectl apply -f ${REPO}/artifacts/appmesh/ingress.yaml
+helm upgrade -i test flagger/appmesh-gateway \
+--namespace flagger-system \
+--set mesh.name=global
 ```
 
-Find the ingress public address:
+Find the gateway public address:
 
 ```bash
-kubectl -n test describe svc/ingress | grep Ingress
-
-LoadBalancer Ingress:     yyy-xx.us-west-2.elb.amazonaws.com
+export URL="http://$(kubectl -n demo get svc/appmesh-gateway -ojson | jq -r ".status.loadBalancer.ingress[].hostname")"
+echo $URL
 ```
 
-Wait for the ELB to become active:
+Wait for the NLB to become active:
 
 ```bash
- watch curl -sS ${INGRESS_URL}
+ watch curl -sS $URL
 ```
 
 Open your browser and navigate to the ingress address to access podinfo UI.
 
 ### Automated canary promotion
+
+A canary deployment is triggered by changes in any of the following objects:
+* Deployment PodSpec (container image, command, ports, env, resources, etc)
+* ConfigMaps and Secrets mounted as volumes or mapped to environment variables
 
 Trigger a canary deployment by updating the container image:
 
@@ -237,11 +258,6 @@ When the canary analysis starts, Flagger will call the pre-rollout webhooks befo
 
 **Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
 
-A canary deployment is triggered by changes in any of the following objects:
-* Deployment PodSpec (container image, command, ports, env, resources, etc)
-* ConfigMaps mounted as volumes or mapped to environment variables
-* Secrets mounted as volumes or mapped to environment variables
-
 During the analysis the canary’s progress can be monitored with Grafana. The App Mesh dashboard URL is 
 http://localhost:3000/d/flagger-appmesh/appmesh-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo
 
@@ -264,7 +280,7 @@ If you’ve enabled the Slack notifications, you should receive the following me
 
 ### Automated rollback
 
-During the canary analysis you can generate HTTP 500 errors to test if Flagger pauses the rollout.
+During the canary analysis you can generate HTTP 500 errors or high latency to test if Flagger pauses the rollout.
 
 Trigger a canary deployment:
 
@@ -295,25 +311,20 @@ When the number of failed checks reaches the canary analysis threshold, the traf
 the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
-kubectl -n test describe canary/podinfo
+kubectl -n appmesh-system logs deploy/flagger -f | jq .msg
 
-Status:
-  Canary Weight:         0
-  Failed Checks:         5
-  Phase:                 Failed
-Events:
- Starting canary analysis for podinfo.test
- Pre-rollout check acceptance-test passed
- Advance podinfo.test canary weight 5
- Advance podinfo.test canary weight 10
- Advance podinfo.test canary weight 15
- Halt podinfo.test advancement success rate 69.17% < 99%
- Halt podinfo.test advancement success rate 61.39% < 99%
- Halt podinfo.test advancement success rate 55.06% < 99%
- Halt podinfo.test advancement request duration 1.20s > 0.5s
- Halt podinfo.test advancement request duration 1.45s > 0.5s
- Rolling back podinfo.test failed checks threshold reached 5
- Canary failed! Scaling down podinfo.test
+New revision detected! Starting canary analysis for podinfo.test
+Pre-rollout check acceptance-test passed
+Advance podinfo.test canary weight 5
+Advance podinfo.test canary weight 10
+Advance podinfo.test canary weight 15
+Halt podinfo.test advancement success rate 69.17% < 99%
+Halt podinfo.test advancement success rate 61.39% < 99%
+Halt podinfo.test advancement success rate 55.06% < 99%
+Halt podinfo.test advancement request duration 1.20s > 0.5s
+Halt podinfo.test advancement request duration 1.45s > 0.5s
+Rolling back podinfo.test failed checks threshold reached 5
+Canary failed! Scaling down podinfo.test
 ```
 
 If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, 
@@ -334,7 +345,7 @@ Edit the canary analysis, remove the max/step weight and add the match condition
 ```yaml
   canaryAnalysis:
     interval: 1m
-    threshold: 10
+    threshold: 5
     iterations: 10
     match:
     - headers:

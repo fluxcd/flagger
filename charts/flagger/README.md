@@ -1,7 +1,8 @@
 # Flagger
 
-[Flagger](https://github.com/weaveworks/flagger) is a Kubernetes operator that automates the promotion of 
-canary deployments using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
+[Flagger](https://github.com/weaveworks/flagger) is a Kubernetes operator that automates the promotion of canary
+deployments using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
+
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
 like HTTP requests success rate, requests average duration and pods health.
 Based on the KPIs analysis a canary is promoted or aborted and the analysis result is published to Slack or MS Teams.
@@ -43,6 +44,16 @@ $ helm upgrade -i flagger flagger/flagger \
     --set crd.create=false \
     --set meshProvider=linkerd \
     --set metricsServer=http://linkerd-prometheus:9090
+```
+
+To install the chart with the release name `flagger` for AWS App Mesh:
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=appmesh-system \
+    --set crd.create=false \
+    --set meshProvider=appmesh \
+    --set metricsServer=http://appmesh-prometheus:9090
 ```
 
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -91,7 +102,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \
-  --namespace istio-system \
+  --namespace flagger-system \
   --set crd.create=false \
   --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
   --set slack.channel=general
