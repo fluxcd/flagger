@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.20.3 (2019-11-11) 
+
+Adds the App Mesh gateway chart to Flagger Helm repository and docs
+
+#### Improvements 
+
+- Add App Mesh gateway chart [#365](https://github.com/weaveworks/flagger/pull/365)
+
 ## 0.20.2 (2019-11-07) 
 
 Adds support for exposing canaries outside the cluster using App Mesh Gateway annotations 
