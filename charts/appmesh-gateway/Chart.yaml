@@ -1,7 +1,7 @@
 apiVersion: v1
 name: appmesh-gateway
 description: Flagger Gateway for AWS App Mesh is an edge L7 load balancer that exposes applications outside the mesh.
-version: 1.0.0
+version: 1.1.0
 appVersion: 1.0.0
 home: https://flagger.app
 icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png

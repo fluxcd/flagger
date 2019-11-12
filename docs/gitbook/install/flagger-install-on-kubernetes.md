@@ -43,6 +43,16 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://linkerd-prometheus:9090
 ```
 
+Deploy Flagger for App Mesh:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=appmesh-system \
+--set crd.create=false \
+--set meshProvider=appmesh \
+--set metricsServer=http://appmesh-prometheus:9090
+```
+
 You can install Flagger in any namespace as long as it can talk to the Prometheus service on port 9090.
 
 Enable **Slack** notifications:
@@ -159,7 +169,7 @@ Install Flagger for AWS App Mesh:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/appmesh
 ```
 
-This deploys Flagger and Prometheus (configured to scrape the App Mesh Envoy sidecars) in the `appmesh-system` namespace.
+This deploys Flagger and sets the metrics server URL to App Mesh's Prometheus instance.
 
 Install Flagger for Linkerd:
 
