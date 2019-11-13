@@ -37,9 +37,11 @@ Flagger can run automated application analysis, testing, promotion and rollback 
       [Gloo](https://docs.flagger.app/usage/gloo-progressive-delivery)
 * **A/B Testing** (HTTP headers and cookies traffic routing)
     * [Istio](https://docs.flagger.app/usage/ab-testing),
+      [App Mesh](hhttps://docs.flagger.app/usage/appmesh-progressive-delivery#a-b-testing),
       [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery#a-b-testing)
 * **Blue/Green** (traffic switching)
-    * [Kubernetes CNI](https://docs.flagger.app/usage/blue-green)
+    * [Kubernetes CNI](https://docs.flagger.app/usage/blue-green),
+      Istio, Linkerd, App Mesh, NGINX, Gloo
 
 Flagger can be configured to send notifications to a
 [Slack](https://docs.flagger.app/usage/alerting#slack) or
@@ -65,8 +67,8 @@ to accelerate and simplify application deployments and operations tasks to Kuber
 :::
 
 GitOps tutorials:
-* [Progressive Delivery for Istio with Flagger and Flux](https://github.com/stefanprodan/gitops-istio)
-* [Canaries with Helm charts and GitOps](https://docs.flagger.app/tutorials/canary-helm-gitops)
+* [Progressive Delivery for Istio with Flagger and FluxCD](https://github.com/stefanprodan/gitops-istio)
+* [Progressive Delivery for AWS App Mesh with Flagger and FluxCD](https://eks.hands-on.flagger.dev)
 * [Progressive Delivery for Linkerd with Flagger, FluxCD and Helm v3](https://helm.workshop.flagger.dev)
 
 ## Getting Help
