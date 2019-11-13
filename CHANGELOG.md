@@ -2,12 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
-## 0.20.3 (2019-11-11) 
+## 0.20.3 (2019-11-13) 
 
-Adds the App Mesh gateway chart to Flagger Helm repository and docs
+Adds wrk to load tester tools and the App Mesh gateway chart to Flagger Helm repository
 
 #### Improvements 
 
+- Add wrk to load tester tools [#368](https://github.com/weaveworks/flagger/pull/368)
 - Add App Mesh gateway chart [#365](https://github.com/weaveworks/flagger/pull/365)
 
 ## 0.20.2 (2019-11-07) 
