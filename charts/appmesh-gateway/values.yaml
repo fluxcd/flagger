@@ -17,7 +17,7 @@ proxy:
 controller:
   image:
     repository: weaveworks/flagger-appmesh-gateway
-    tag: v1.0.0
+    tag: v1.1.0
     pullPolicy: IfNotPresent
 
 nameOverride: ""
