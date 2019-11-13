@@ -27,7 +27,7 @@ You application should expose a HTTP endpoint that Kubernetes can call to determ
 your app transitioned to a broken state from which it can't recover and needs to be restarted.
 
 ```yaml
-readinessProbe:
+livenessProbe:
   exec:
     command:
     - wget
@@ -49,7 +49,7 @@ You application should expose a HTTP endpoint that Kubernetes can call to determ
 your app is ready to receive traffic.
 
 ```yaml
-livenessProbe:
+readinessProbe:
   exec:
     command:
     - wget
