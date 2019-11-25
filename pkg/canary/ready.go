@@ -14,9 +14,9 @@ import (
 // IsPrimaryReady checks the primary deployment status and returns an error if
 // the deployment is in the middle of a rolling update or if the pods are unhealthy
 // it will return a non retriable error if the rolling update is stuck
-func (c *Deployer) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
+func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	primary, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return true, fmt.Errorf("deployment %s.%s not found", primaryName, cd.Namespace)
@@ -39,9 +39,9 @@ func (c *Deployer) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
 // IsCanaryReady checks the primary deployment status and returns an error if
 // the deployment is in the middle of a rolling update or if the pods are unhealthy
 // it will return a non retriable error if the rolling update is stuck
-func (c *Deployer) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
+func (c *DeploymentController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
-	canary, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return true, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
@@ -64,7 +64,7 @@ func (c *Deployer) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
 
 // isDeploymentReady determines if a deployment is ready by checking the status conditions
 // if a deployment has exceeded the progress deadline it returns a non retriable error
-func (c *Deployer) isDeploymentReady(deployment *appsv1.Deployment, deadline int) (bool, error) {
+func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, deadline int) (bool, error) {
 	retriable := true
 	if deployment.Generation <= deployment.Status.ObservedGeneration {
 		progress := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
@@ -99,7 +99,7 @@ func (c *Deployer) isDeploymentReady(deployment *appsv1.Deployment, deadline int
 	return true, nil
 }
 
-func (c *Deployer) getDeploymentCondition(
+func (c *DeploymentController) getDeploymentCondition(
 	status appsv1.DeploymentStatus,
 	conditionType appsv1.DeploymentConditionType,
 ) *appsv1.DeploymentCondition {

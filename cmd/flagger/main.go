@@ -10,16 +10,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
-	"github.com/weaveworks/flagger/pkg/controller"
-	"github.com/weaveworks/flagger/pkg/logger"
-	"github.com/weaveworks/flagger/pkg/metrics"
-	"github.com/weaveworks/flagger/pkg/notifier"
-	"github.com/weaveworks/flagger/pkg/router"
-	"github.com/weaveworks/flagger/pkg/server"
-	"github.com/weaveworks/flagger/pkg/signals"
-	"github.com/weaveworks/flagger/pkg/version"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
@@ -30,6 +20,18 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/transport"
 	_ "k8s.io/code-generator/cmd/client-gen/generators"
+
+	"github.com/weaveworks/flagger/pkg/canary"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
+	"github.com/weaveworks/flagger/pkg/controller"
+	"github.com/weaveworks/flagger/pkg/logger"
+	"github.com/weaveworks/flagger/pkg/metrics"
+	"github.com/weaveworks/flagger/pkg/notifier"
+	"github.com/weaveworks/flagger/pkg/router"
+	"github.com/weaveworks/flagger/pkg/server"
+	"github.com/weaveworks/flagger/pkg/signals"
+	"github.com/weaveworks/flagger/pkg/version"
 )
 
 var (
@@ -178,6 +180,12 @@ func main() {
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
 	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient)
+	configTracker := canary.ConfigTracker{
+		Logger:        logger,
+		KubeClient:    kubeClient,
+		FlaggerClient: flaggerClient,
+	}
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, labels, logger)
 
 	c := controller.NewController(
 		kubeClient,
@@ -187,11 +195,11 @@ func main() {
 		controlLoopInterval,
 		logger,
 		notifierClient,
+		canaryFactory,
 		routerFactory,
 		observerFactory,
 		meshProvider,
 		version.VERSION,
-		labels,
 	)
 
 	flaggerInformerFactory.Start(stopCh)

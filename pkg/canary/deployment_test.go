@@ -107,7 +107,7 @@ func TestCanaryDeployer_IsNewSpec(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	isNew, err := mocks.deployer.HasDeploymentChanged(mocks.canary)
+	isNew, err := mocks.deployer.HasTargetChanged(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

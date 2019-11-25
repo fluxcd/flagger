@@ -2,13 +2,14 @@ package controller
 
 import (
 	"fmt"
-	"github.com/weaveworks/flagger/pkg/metrics"
 	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	"github.com/weaveworks/flagger/pkg/canary"
+	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
@@ -97,13 +98,16 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		provider = cd.Spec.Provider
 	}
 
+	// init controller based on target kind
+	canaryController := c.canaryFactory.Controller(cd.Spec.TargetRef.Kind)
+
 	// create primary deployment and hpa if needed
 	// skip primary check for Istio since the deployment will become ready after the ClusterIP are created
 	skipPrimaryCheck := false
 	if skipLivenessChecks || strings.Contains(provider, "istio") || strings.Contains(provider, "appmesh") {
 		skipPrimaryCheck = true
 	}
-	labelSelector, ports, err := c.deployer.Initialize(cd, skipPrimaryCheck)
+	labelSelector, ports, err := canaryController.Initialize(cd, skipPrimaryCheck)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -125,7 +129,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check for deployment spec or configs changes
-	shouldAdvance, err := c.shouldAdvance(cd)
+	shouldAdvance, err := c.shouldAdvance(cd, canaryController)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -137,7 +141,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check gates
-	if isApproved := c.runConfirmRolloutHooks(cd); !isApproved {
+	if isApproved := c.runConfirmRolloutHooks(cd, canaryController); !isApproved {
 		return
 	}
 
@@ -149,7 +153,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check primary deployment status
 	if !skipLivenessChecks {
-		if _, err := c.deployer.IsPrimaryReady(cd); err != nil {
+		if _, err := canaryController.IsPrimaryReady(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -165,12 +169,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
 
 	// check if canary analysis should start (canary revision has changes) or continue
-	if ok := c.checkCanaryStatus(cd, shouldAdvance); !ok {
+	if ok := c.checkCanaryStatus(cd, canaryController, shouldAdvance); !ok {
 		return
 	}
 
 	// check if canary revision changed during analysis
-	if restart := c.hasCanaryRevisionChanged(cd); restart {
+	if restart := c.hasCanaryRevisionChanged(cd, canaryController); restart {
 		c.recordEventInfof(cd, "New revision detected! Restarting analysis for %s.%s",
 			cd.Spec.TargetRef.Name, cd.Namespace)
 
@@ -189,7 +193,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			FailedChecks: 0,
 			Iterations:   0,
 		}
-		if err := c.deployer.SyncStatus(cd, status); err != nil {
+		if err := canaryController.SyncStatus(cd, status); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -203,7 +207,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	// check canary deployment status
 	var retriable = true
 	if !skipLivenessChecks {
-		retriable, err = c.deployer.IsCanaryReady(cd)
+		retriable, err = canaryController.IsCanaryReady(cd)
 		if err != nil && retriable {
 			c.recordEventWarningf(cd, "%v", err)
 			return
@@ -211,7 +215,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check if analysis should be skipped
-	if skip := c.shouldSkipAnalysis(cd, meshRouter, primaryWeight, canaryWeight); skip {
+	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, primaryWeight, canaryWeight); skip {
 		return
 	}
 
@@ -227,7 +231,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 
 		// update status phase
-		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
+		if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -237,13 +241,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// scale canary to zero if promotion has finished
 	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
-		if err := c.deployer.Scale(cd, 0); err != nil {
+		if err := canaryController.Scale(cd, 0); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
 
 		// set status to succeeded
-		if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
+		if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -286,13 +290,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			cd.Name, cd.Namespace)
 
 		// shutdown canary
-		if err := c.deployer.Scale(cd, 0); err != nil {
+		if err := canaryController.Scale(cd, 0); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
 
 		// mark canary as failed
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
+		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return
 		}
@@ -310,7 +314,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 		// run pre-rollout web hooks
 		if ok := c.runPreRolloutHooks(cd); !ok {
-			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
+			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -318,7 +322,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 	} else {
 		if ok := c.analyseCanary(cd); !ok {
-			if err := c.deployer.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
+			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -349,7 +353,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			}
 			c.recorder.SetWeight(cd, 0, 100)
 
-			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+			if err := canaryController.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -367,13 +371,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
-			if err := c.deployer.Promote(cd); err != nil {
+			if err := canaryController.Promote(cd); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
 
 			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
+			if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -396,7 +400,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
 					Infof("Start traffic mirroring")
 			}
-			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+			if err := canaryController.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -426,7 +430,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			}
 
 			// increment iterations
-			if err := c.deployer.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
+			if err := canaryController.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -437,13 +441,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
-			if err := c.deployer.Promote(cd); err != nil {
+			if err := canaryController.Promote(cd); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
 
 			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
+			if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -489,7 +493,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 				return
 			}
 
-			if err := c.deployer.SetStatusWeight(cd, canaryWeight); err != nil {
+			if err := canaryController.SetStatusWeight(cd, canaryWeight); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -509,13 +513,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			// update primary spec
 			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
 				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
-			if err := c.deployer.Promote(cd); err != nil {
+			if err := canaryController.Promote(cd); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
 
 			// update status phase
-			if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
+			if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
 			}
@@ -527,7 +531,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 }
 
-func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.Interface, primaryWeight int, canaryWeight int) bool {
+func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, primaryWeight int, canaryWeight int) bool {
 	if !cd.Spec.SkipAnalysis {
 		return false
 	}
@@ -544,19 +548,19 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	// copy spec and configs from canary to primary
 	c.recordEventInfof(cd, "Copying %s.%s template spec to %s-primary.%s",
 		cd.Spec.TargetRef.Name, cd.Namespace, cd.Spec.TargetRef.Name, cd.Namespace)
-	if err := c.deployer.Promote(cd); err != nil {
+	if err := canaryController.Promote(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return false
 	}
 
 	// shutdown canary
-	if err := c.deployer.Scale(cd, 0); err != nil {
+	if err := canaryController.Scale(cd, 0); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return false
 	}
 
 	// update status phase
-	if err := c.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
+	if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return false
 	}
@@ -571,7 +575,7 @@ func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, meshRouter router.
 	return true
 }
 
-func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
+func (c *Controller) shouldAdvance(cd *flaggerv1.Canary, canaryController canary.Controller) (bool, error) {
 	if cd.Status.LastAppliedSpec == "" ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseInitializing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
@@ -581,7 +585,7 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 		return true, nil
 	}
 
-	newDep, err := c.deployer.HasDeploymentChanged(cd)
+	newDep, err := canaryController.HasTargetChanged(cd)
 	if err != nil {
 		return false, err
 	}
@@ -589,7 +593,7 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 		return newDep, nil
 	}
 
-	newCfg, err := c.deployer.ConfigTracker.HasConfigChanged(cd)
+	newCfg, err := canaryController.HaveDependenciesChanged(cd)
 	if err != nil {
 		return false, err
 	}
@@ -598,7 +602,7 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary) (bool, error) {
 
 }
 
-func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool) bool {
+func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, canaryController canary.Controller, shouldAdvance bool) bool {
 	c.recorder.SetStatus(cd, cd.Status.Phase)
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
@@ -607,7 +611,7 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
+		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
@@ -622,11 +626,11 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 		c.recordEventInfof(cd, "New revision detected! Scaling up %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		c.sendNotification(cd, "New revision detected, starting canary analysis.",
 			true, false)
-		if err := c.deployer.ScaleUp(cd); err != nil {
+		if err := canaryController.ScaleFromZero(cd); err != nil {
 			c.recordEventErrorf(cd, "%v", err)
 			return false
 		}
-		if err := c.deployer.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
+		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
 			return false
 		}
@@ -636,25 +640,25 @@ func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, shouldAdvance bool)
 	return false
 }
 
-func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary) bool {
+func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary, canaryController canary.Controller) bool {
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
-		if diff, _ := c.deployer.HasDeploymentChanged(cd); diff {
+		if diff, _ := canaryController.HasTargetChanged(cd); diff {
 			return true
 		}
-		if diff, _ := c.deployer.ConfigTracker.HasConfigChanged(cd); diff {
+		if diff, _ := canaryController.HaveDependenciesChanged(cd); diff {
 			return true
 		}
 	}
 	return false
 }
 
-func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary) bool {
+func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary, canaryController canary.Controller) bool {
 	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
 		if webhook.Type == flaggerv1.ConfirmRolloutHook {
 			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
 				if canary.Status.Phase != flaggerv1.CanaryPhaseWaiting {
-					if err := c.deployer.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaiting); err != nil {
+					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaiting); err != nil {
 						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 					}
 					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for approval %s",
@@ -664,7 +668,7 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary) bool {
 				return false
 			} else {
 				if canary.Status.Phase == flaggerv1.CanaryPhaseWaiting {
-					if err := c.deployer.SetStatusPhase(canary, flaggerv1.CanaryPhaseProgressing); err != nil {
+					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseProgressing); err != nil {
 						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 						return false
 					}
