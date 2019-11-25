@@ -40,7 +40,7 @@ func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChec
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if !skipLivenessChecks {
+		if !skipLivenessChecks && !cd.Spec.SkipAnalysis {
 			_, readyErr := c.IsPrimaryReady(cd)
 			if readyErr != nil {
 				return "", ports, readyErr

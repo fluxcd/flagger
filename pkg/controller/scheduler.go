@@ -152,7 +152,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check primary deployment status
-	if !skipLivenessChecks {
+	if !skipLivenessChecks && !cd.Spec.SkipAnalysis {
 		if _, err := canaryController.IsPrimaryReady(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
