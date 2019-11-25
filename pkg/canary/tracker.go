@@ -16,7 +16,7 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
-// ConfigTracker is managing the operations for Kubernetes ConfigMaps and Secrets
+// configTracker is managing the operations for Kubernetes ConfigMaps and Secrets
 type ConfigTracker struct {
 	KubeClient    kubernetes.Interface
 	FlaggerClient clientset.Interface

@@ -45,9 +45,9 @@ type Controller struct {
 	logger          *zap.SugaredLogger
 	canaries        *sync.Map
 	jobs            map[string]CanaryJob
-	deployer        canary.Deployer
 	recorder        metrics.Recorder
 	notifier        notifier.Interface
+	canaryFactory   *canary.Factory
 	routerFactory   *router.Factory
 	observerFactory *metrics.Factory
 	meshProvider    string
@@ -61,11 +61,11 @@ func NewController(
 	flaggerWindow time.Duration,
 	logger *zap.SugaredLogger,
 	notifier notifier.Interface,
+	canaryFactory *canary.Factory,
 	routerFactory *router.Factory,
 	observerFactory *metrics.Factory,
 	meshProvider string,
 	version string,
-	labels []string,
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
 	flaggerscheme.AddToScheme(scheme.Scheme)
@@ -76,19 +76,6 @@ func NewController(
 	})
 	eventRecorder := eventBroadcaster.NewRecorder(
 		scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
-
-	deployer := canary.Deployer{
-		Logger:        logger,
-		KubeClient:    kubeClient,
-		FlaggerClient: flaggerClient,
-		Labels:        labels,
-		ConfigTracker: canary.ConfigTracker{
-			Logger:        logger,
-			KubeClient:    kubeClient,
-			FlaggerClient: flaggerClient,
-		},
-	}
-
 	recorder := metrics.NewRecorder(controllerAgentName, true)
 	recorder.SetInfo(version, meshProvider)
 
@@ -104,10 +91,10 @@ func NewController(
 		canaries:        new(sync.Map),
 		jobs:            map[string]CanaryJob{},
 		flaggerWindow:   flaggerWindow,
-		deployer:        deployer,
 		observerFactory: observerFactory,
 		recorder:        recorder,
 		notifier:        notifier,
+		canaryFactory:   canaryFactory,
 		routerFactory:   routerFactory,
 		meshProvider:    meshProvider,
 	}
@@ -218,7 +205,7 @@ func (c *Controller) syncHandler(key string) error {
 
 	// set status condition for new canaries
 	if cd.Status.Conditions == nil {
-		if ok, conditions := c.deployer.MakeStatusConditions(cd.Status, flaggerv1.CanaryPhaseInitializing); ok {
+		if ok, conditions := canary.MakeStatusConditions(cd.Status, flaggerv1.CanaryPhaseInitializing); ok {
 			cdCopy := cd.DeepCopy()
 			cdCopy.Status.Conditions = conditions
 			cdCopy.Status.LastTransitionTime = metav1.Now()

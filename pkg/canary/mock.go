@@ -20,7 +20,7 @@ type Mocks struct {
 	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
-	deployer      Deployer
+	deployer      DeploymentController
 	logger        *zap.SugaredLogger
 }
 
@@ -43,12 +43,12 @@ func SetupMocks() Mocks {
 
 	logger, _ := logger.NewLogger("debug")
 
-	deployer := Deployer{
-		FlaggerClient: flaggerClient,
-		KubeClient:    kubeClient,
-		Logger:        logger,
-		Labels:        []string{"app", "name"},
-		ConfigTracker: ConfigTracker{
+	deployer := DeploymentController{
+		flaggerClient: flaggerClient,
+		kubeClient:    kubeClient,
+		logger:        logger,
+		labels:        []string{"app", "name"},
+		configTracker: ConfigTracker{
 			Logger:        logger,
 			KubeClient:    kubeClient,
 			FlaggerClient: flaggerClient,

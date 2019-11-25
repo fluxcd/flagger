@@ -21,18 +21,18 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
-// Deployer is managing the operations for Kubernetes deployment kind
-type Deployer struct {
-	KubeClient    kubernetes.Interface
-	FlaggerClient clientset.Interface
-	Logger        *zap.SugaredLogger
-	ConfigTracker ConfigTracker
-	Labels        []string
+// DeploymentController is managing the operations for Kubernetes Deployment kind
+type DeploymentController struct {
+	kubeClient    kubernetes.Interface
+	flaggerClient clientset.Interface
+	logger        *zap.SugaredLogger
+	configTracker ConfigTracker
+	labels        []string
 }
 
 // Initialize creates the primary deployment, hpa,
 // scales to zero the canary deployment and returns the pod selector label and container ports
-func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports map[string]int32, err error) {
+func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports map[string]int32, err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	label, ports, err = c.createPrimaryDeployment(cd)
 	if err != nil {
@@ -47,7 +47,7 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (la
 			}
 		}
 
-		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
 			return "", ports, err
 		}
@@ -62,11 +62,11 @@ func (c *Deployer) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (la
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary
-func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
+func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
-	canary, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
@@ -80,7 +80,7 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 			targetName, cd.Namespace, targetName)
 	}
 
-	primary, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("deployment %s.%s not found", primaryName, cd.Namespace)
@@ -89,11 +89,11 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 	}
 
 	// promote secrets and config maps
-	configRefs, err := c.ConfigTracker.GetTargetConfigs(cd)
+	configRefs, err := c.configTracker.GetTargetConfigs(cd)
 	if err != nil {
 		return err
 	}
-	if err := c.ConfigTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
 		return err
 	}
 
@@ -104,7 +104,7 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.Spec.Strategy = canary.Spec.Strategy
 
 	// update spec with primary secrets and config maps
-	primaryCopy.Spec.Template.Spec = c.ConfigTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
+	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
 
 	// update pod annotations to ensure a rolling update
 	annotations, err := c.makeAnnotations(canary.Spec.Template.Annotations)
@@ -116,7 +116,7 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName, label)
 
 	// apply update
-	_, err = c.KubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
+	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
 	if err != nil {
 		return fmt.Errorf("updating deployment %s.%s template spec failed: %v",
 			primaryCopy.GetName(), primaryCopy.Namespace, err)
@@ -132,10 +132,10 @@ func (c *Deployer) Promote(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// HasDeploymentChanged returns true if the canary deployment pod spec has changed
-func (c *Deployer) HasDeploymentChanged(cd *flaggerv1.Canary) (bool, error) {
+// HasTargetChanged returns true if the canary deployment pod spec has changed
+func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
-	canary, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
@@ -164,10 +164,15 @@ func (c *Deployer) HasDeploymentChanged(cd *flaggerv1.Canary) (bool, error) {
 	return false, nil
 }
 
+// HaveDependenciesChanged returns true if the canary configmaps or secrets have changed
+func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
+	return c.configTracker.HasConfigChanged(cd)
+}
+
 // Scale sets the canary deployment replicas
-func (c *Deployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
+func (c *DeploymentController) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
@@ -178,16 +183,16 @@ func (c *Deployer) Scale(cd *flaggerv1.Canary, replicas int32) error {
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = int32p(replicas)
 
-	_, err = c.KubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
 	if err != nil {
 		return fmt.Errorf("scaling %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}
 	return nil
 }
 
-func (c *Deployer) ScaleUp(cd *flaggerv1.Canary) error {
+func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
@@ -202,18 +207,18 @@ func (c *Deployer) ScaleUp(cd *flaggerv1.Canary) error {
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = replicas
 
-	_, err = c.KubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
 	if err != nil {
 		return fmt.Errorf("scaling %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}
 	return nil
 }
 
-func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, map[string]int32, error) {
+func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) (string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
-	canaryDep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return "", nil, fmt.Errorf("deployment %s.%s not found, retrying", targetName, cd.Namespace)
@@ -236,14 +241,14 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, map[st
 		ports = p
 	}
 
-	primaryDep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// create primary secrets and config maps
-		configRefs, err := c.ConfigTracker.GetTargetConfigs(cd)
+		configRefs, err := c.configTracker.GetTargetConfigs(cd)
 		if err != nil {
 			return "", nil, err
 		}
-		if err := c.ConfigTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
 			return "", nil, err
 		}
 		annotations, err := c.makeAnnotations(canaryDep.Spec.Template.Annotations)
@@ -289,25 +294,25 @@ func (c *Deployer) createPrimaryDeployment(cd *flaggerv1.Canary) (string, map[st
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
-					Spec: c.ConfigTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, configRefs),
+					Spec: c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, configRefs),
 				},
 			},
 		}
 
-		_, err = c.KubeClient.AppsV1().Deployments(cd.Namespace).Create(primaryDep)
+		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Create(primaryDep)
 		if err != nil {
 			return "", nil, err
 		}
 
-		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
 	return label, ports, nil
 }
 
-func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
+func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	hpa, err := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+	hpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("HorizontalPodAutoscaler %s.%s not found, retrying",
@@ -328,7 +333,7 @@ func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	}
 
 	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
-	primaryHpa, err := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(primaryHpaName, metav1.GetOptions{})
+	primaryHpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(primaryHpaName, metav1.GetOptions{})
 
 	// create HPA
 	if errors.IsNotFound(err) {
@@ -348,11 +353,11 @@ func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 			Spec: hpaSpec,
 		}
 
-		_, err = c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Create(primaryHpa)
+		_, err = c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Create(primaryHpa)
 		if err != nil {
 			return err
 		}
-		c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
 		return nil
 	}
 
@@ -370,11 +375,11 @@ func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 			hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
 			hpaClone.Spec.Metrics = hpaSpec.Metrics
 
-			_, upErr := c.KubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(hpaClone)
+			_, upErr := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(hpaClone)
 			if upErr != nil {
 				return upErr
 			}
-			c.Logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s updated", primaryHpa.GetName(), cd.Namespace)
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("HorizontalPodAutoscaler %s.%s updated", primaryHpa.GetName(), cd.Namespace)
 		}
 	}
 
@@ -382,7 +387,7 @@ func (c *Deployer) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 }
 
 // makeAnnotations appends an unique ID to annotations map
-func (c *Deployer) makeAnnotations(annotations map[string]string) (map[string]string, error) {
+func (c *DeploymentController) makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	idKey := "flagger-id"
 	res := make(map[string]string)
 	uuid := make([]byte, 16)
@@ -405,8 +410,8 @@ func (c *Deployer) makeAnnotations(annotations map[string]string) (map[string]st
 }
 
 // getSelectorLabel returns the selector match label
-func (c *Deployer) getSelectorLabel(deployment *appsv1.Deployment) (string, error) {
-	for _, l := range c.Labels {
+func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (string, error) {
+	for _, l := range c.labels {
 		if _, ok := deployment.Spec.Selector.MatchLabels[l]; ok {
 			return l, nil
 		}
@@ -421,7 +426,7 @@ var sidecars = map[string]bool{
 }
 
 // getPorts returns a list of all container ports
-func (c *Deployer) getPorts(cd *flaggerv1.Canary, deployment *appsv1.Deployment) (map[string]int32, error) {
+func (c *DeploymentController) getPorts(cd *flaggerv1.Canary, deployment *appsv1.Deployment) (map[string]int32, error) {
 	ports := make(map[string]int32)
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {

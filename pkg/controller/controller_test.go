@@ -37,7 +37,7 @@ type Mocks struct {
 	kubeClient    kubernetes.Interface
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
-	deployer      canary.Deployer
+	deployer      canary.Controller
 	ctrl          *Controller
 	logger        *zap.SugaredLogger
 	router        router.Interface
@@ -63,19 +63,6 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 
 	logger, _ := logger.NewLogger("debug")
 
-	// init controller helpers
-	deployer := canary.Deployer{
-		Logger:        logger,
-		KubeClient:    kubeClient,
-		FlaggerClient: flaggerClient,
-		Labels:        []string{"app", "name"},
-		ConfigTracker: canary.ConfigTracker{
-			Logger:        logger,
-			KubeClient:    kubeClient,
-			FlaggerClient: flaggerClient,
-		},
-	}
-
 	// init controller
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
 	flaggerInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
@@ -85,6 +72,14 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 
 	// init observer
 	observerFactory, _ := metrics.NewFactory("fake", "istio", 5*time.Second)
+
+	// init canary factory
+	configTracker := canary.ConfigTracker{
+		Logger:        logger,
+		KubeClient:    kubeClient,
+		FlaggerClient: flaggerClient,
+	}
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, []string{"app", "name"}, logger)
 
 	ctrl := &Controller{
 		kubeClient:      kubeClient,
@@ -97,7 +92,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 		logger:          logger,
 		canaries:        new(sync.Map),
 		flaggerWindow:   time.Second,
-		deployer:        deployer,
+		canaryFactory:   canaryFactory,
 		observerFactory: observerFactory,
 		recorder:        metrics.NewRecorder(controllerAgentName, false),
 		routerFactory:   rf,
@@ -108,7 +103,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 
 	return Mocks{
 		canary:        c,
-		deployer:      deployer,
+		deployer:      canaryFactory.Controller("Deployment"),
 		logger:        logger,
 		flaggerClient: flaggerClient,
 		meshClient:    flaggerClient,
