@@ -4,7 +4,7 @@ set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
-NGINX_VERSION=1.24.4
+NGINX_VERSION=1.26.0
 
 echo '>>> Installing NGINX Ingress'
 helm upgrade -i nginx-ingress stable/nginx-ingress --version=${NGINX_VERSION} \
