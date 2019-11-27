@@ -117,7 +117,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	meshRouter := c.routerFactory.MeshRouter(provider)
 
 	// create or update ClusterIP services
-	if err := c.routerFactory.KubernetesRouter(labelSelector, map[string]string{}, ports).Reconcile(cd); err != nil {
+	if err := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports).Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -585,12 +585,12 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary, canaryController canary
 		return true, nil
 	}
 
-	newDep, err := canaryController.HasTargetChanged(cd)
+	newTarget, err := canaryController.HasTargetChanged(cd)
 	if err != nil {
 		return false, err
 	}
-	if newDep {
-		return newDep, nil
+	if newTarget {
+		return newTarget, nil
 	}
 
 	newCfg, err := canaryController.HaveDependenciesChanged(cd)

@@ -41,10 +41,17 @@ func (factory *Factory) Controller(kind string) Controller {
 			FlaggerClient: factory.flaggerClient,
 		},
 	}
+	serviceCtrl := &ServiceController{
+		logger:        factory.logger,
+		kubeClient:    factory.kubeClient,
+		flaggerClient: factory.flaggerClient,
+	}
 
 	switch {
 	case kind == "Deployment":
 		return deploymentCtrl
+	case kind == "Service":
+		return serviceCtrl
 	default:
 		return deploymentCtrl
 	}

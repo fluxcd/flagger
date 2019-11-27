@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/mitchellh/hashstructure"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav1 "k8s.io/api/autoscaling/v2beta1"
@@ -34,6 +33,7 @@ type DeploymentController struct {
 // scales to zero the canary deployment and returns the pod selector label and container ports
 func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports map[string]int32, err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+
 	label, ports, err = c.createPrimaryDeployment(cd)
 	if err != nil {
 		return "", ports, fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
@@ -143,30 +143,7 @@ func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, err
 		return false, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 
-	if cd.Status.LastAppliedSpec == "" {
-		return true, nil
-	}
-
-	newHash, err := hashstructure.Hash(canary.Spec.Template, nil)
-	if err != nil {
-		return false, fmt.Errorf("hash error %v", err)
-	}
-
-	// do not trigger a canary deployment on manual rollback
-	if cd.Status.LastPromotedSpec == fmt.Sprintf("%d", newHash) {
-		return false, nil
-	}
-
-	if cd.Status.LastAppliedSpec != fmt.Sprintf("%d", newHash) {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-// HaveDependenciesChanged returns true if the canary configmaps or secrets have changed
-func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
-	return c.configTracker.HasConfigChanged(cd)
+	return hasSpecChanged(cd, canary.Spec.Template)
 }
 
 // Scale sets the canary deployment replicas
@@ -423,6 +400,10 @@ func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (
 var sidecars = map[string]bool{
 	"istio-proxy": true,
 	"envoy":       true,
+}
+
+func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
+	return c.configTracker.HasConfigChanged(cd)
 }
 
 // getPorts returns a list of all container ports

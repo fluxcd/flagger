@@ -92,6 +92,17 @@ jobs:
       - run: test/e2e-kubernetes.sh
       - run: test/e2e-kubernetes-tests.sh
 
+  e2e-kubernetes-svc-testing:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: test/container-build.sh
+      - run: test/e2e-kind.sh
+      - run: test/e2e-kubernetes.sh
+      - run: test/e2e-kubernetes-svc-tests.sh
+
   e2e-smi-istio-testing:
     machine: true
     steps:
