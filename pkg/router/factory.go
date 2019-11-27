@@ -44,20 +44,13 @@ func (factory *Factory) KubernetesRouter(kind string, labelSelector string, anno
 		annotations:   annotations,
 		ports:         ports,
 	}
-	serviceRouter := &KubernetesServiceRouter{
-		logger:        factory.logger,
-		flaggerClient: factory.flaggerClient,
-		kubeClient:    factory.kubeClient,
-		labelSelector: labelSelector,
-		annotations:   annotations,
-		ports:         ports,
-	}
+	noopRouter := &KubernetesNoopRouter{}
 
 	switch {
 	case kind == "Deployment":
 		return deploymentRouter
 	case kind == "Service":
-		return serviceRouter
+		return noopRouter
 	default:
 		return deploymentRouter
 	}
