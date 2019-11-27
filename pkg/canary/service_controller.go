@@ -42,32 +42,35 @@ func (c *ServiceController) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1
 	return setStatusPhase(c.flaggerClient, cd, phase)
 }
 
-var _ Controller = &ServiceController{}
+// GetMetadata returns the pod label selector and svc ports
+func (c *ServiceController) GetMetadata(cd *flaggerv1.Canary) (string, map[string]int32, error) {
+	return "", nil, nil
+}
 
 // Initialize creates or updates the primary and canary services to prepare for the canary release process targeted on the K8s service
-func (c *ServiceController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports map[string]int32, err error) {
+func (c *ServiceController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (err error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryName := fmt.Sprintf("%s-canary", targetName)
 
 	svc, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return "", nil, err
+		return err
 	}
 
 	// canary svc
 	err = c.reconcileCanaryService(cd, canaryName, svc)
 	if err != nil {
-		return "", nil, err
+		return err
 	}
 
 	// primary svc
 	err = c.reconcilePrimaryService(cd, primaryName, svc)
 	if err != nil {
-		return "", nil, err
+		return err
 	}
 
-	return "", nil, nil
+	return nil
 }
 
 func (c *ServiceController) reconcileCanaryService(canary *flaggerv1.Canary, name string, src *corev1.Service) error {

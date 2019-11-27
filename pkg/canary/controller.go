@@ -1,21 +1,22 @@
 package canary
 
 import (
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
 type Controller interface {
-	IsPrimaryReady(canary *v1alpha3.Canary) (bool, error)
-	IsCanaryReady(canary *v1alpha3.Canary) (bool, error)
-	SyncStatus(canary *v1alpha3.Canary, status v1alpha3.CanaryStatus) error
-	SetStatusFailedChecks(canary *v1alpha3.Canary, val int) error
-	SetStatusWeight(canary *v1alpha3.Canary, val int) error
-	SetStatusIterations(canary *v1alpha3.Canary, val int) error
-	SetStatusPhase(canary *v1alpha3.Canary, phase v1alpha3.CanaryPhase) error
-	Initialize(canary *v1alpha3.Canary, skipLivenessChecks bool) (label string, ports map[string]int32, err error)
-	Promote(canary *v1alpha3.Canary) error
-	HasTargetChanged(canary *v1alpha3.Canary) (bool, error)
-	HaveDependenciesChanged(canary *v1alpha3.Canary) (bool, error)
-	Scale(canary *v1alpha3.Canary, replicas int32) error
-	ScaleFromZero(canary *v1alpha3.Canary) error
+	IsPrimaryReady(canary *flaggerv1.Canary) (bool, error)
+	IsCanaryReady(canary *flaggerv1.Canary) (bool, error)
+	GetMetadata(canary *flaggerv1.Canary) (string, map[string]int32, error)
+	SyncStatus(canary *flaggerv1.Canary, status flaggerv1.CanaryStatus) error
+	SetStatusFailedChecks(canary *flaggerv1.Canary, val int) error
+	SetStatusWeight(canary *flaggerv1.Canary, val int) error
+	SetStatusIterations(canary *flaggerv1.Canary, val int) error
+	SetStatusPhase(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error
+	Initialize(canary *flaggerv1.Canary, skipLivenessChecks bool) error
+	Promote(canary *flaggerv1.Canary) error
+	HasTargetChanged(canary *flaggerv1.Canary) (bool, error)
+	HaveDependenciesChanged(canary *flaggerv1.Canary) (bool, error)
+	Scale(canary *flaggerv1.Canary, replicas int32) error
+	ScaleFromZero(canary *flaggerv1.Canary) error
 }
