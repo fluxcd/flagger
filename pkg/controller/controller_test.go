@@ -10,6 +10,7 @@ import (
 	hpav2 "k8s.io/api/autoscaling/v2beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/record"
@@ -52,6 +53,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	// init kube clientset and register mock objects
 	kubeClient := fake.NewSimpleClientset(
 		newTestDeployment(),
+		newTestService(),
 		newTestHPA(),
 		NewTestConfigMap(),
 		NewTestConfigMapEnv(),
@@ -547,6 +549,58 @@ func newTestDeploymentV2() *appsv1.Deployment {
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+
+	return d
+}
+
+func newTestService() *corev1.Service {
+	d := &corev1.Service{
+		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": "podinfo",
+			},
+			Type: corev1.ServiceTypeClusterIP,
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Port:       9898,
+					Protocol:   corev1.ProtocolTCP,
+					TargetPort: intstr.FromString("http"),
+				},
+			},
+		},
+	}
+
+	return d
+}
+
+func newTestServiceV2() *corev1.Service {
+	d := &corev1.Service{
+		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": "podinfo-v2",
+			},
+			Type: corev1.ServiceTypeClusterIP,
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Port:       9898,
+					Protocol:   corev1.ProtocolTCP,
+					TargetPort: intstr.FromString("http"),
 				},
 			},
 		},

@@ -8,7 +8,7 @@ import (
 
 func TestServiceRouter_Create(t *testing.T) {
 	mocks := setupfakeClients()
-	router := &KubernetesRouter{
+	router := &KubernetesDeploymentRouter{
 		kubeClient:    mocks.kubeClient,
 		flaggerClient: mocks.flaggerClient,
 		logger:        mocks.logger,
@@ -48,7 +48,7 @@ func TestServiceRouter_Create(t *testing.T) {
 
 func TestServiceRouter_Update(t *testing.T) {
 	mocks := setupfakeClients()
-	router := &KubernetesRouter{
+	router := &KubernetesDeploymentRouter{
 		kubeClient:    mocks.kubeClient,
 		flaggerClient: mocks.flaggerClient,
 		logger:        mocks.logger,
@@ -90,7 +90,7 @@ func TestServiceRouter_Update(t *testing.T) {
 
 func TestServiceRouter_Undo(t *testing.T) {
 	mocks := setupfakeClients()
-	router := &KubernetesRouter{
+	router := &KubernetesDeploymentRouter{
 		kubeClient:    mocks.kubeClient,
 		flaggerClient: mocks.flaggerClient,
 		logger:        mocks.logger,

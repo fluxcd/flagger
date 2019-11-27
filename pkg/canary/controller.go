@@ -1,6 +1,8 @@
 package canary
 
-import "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+import (
+	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+)
 
 type Controller interface {
 	IsPrimaryReady(canary *v1alpha3.Canary) (bool, error)

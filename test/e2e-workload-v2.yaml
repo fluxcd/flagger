@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo-v2
+  namespace: test
+  labels:
+    app: podinfo-v2
+spec:
+  minReadySeconds: 5
+  revisionHistoryLimit: 5
+  progressDeadlineSeconds: 60
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: podinfo-v2
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9797"
+      labels:
+        app: podinfo-v2
+    spec:
+      containers:
+      - name: podinfod
+        image: stefanprodan/podinfo:3.1.1
+        imagePullPolicy: IfNotPresent
+        ports:
+          - name: http
+            containerPort: 9898
+            protocol: TCP
+          - name: http-metrics
+            containerPort: 9797
+            protocol: TCP
+          - name: grpc
+            containerPort: 9999
+            protocol: TCP
+        command:
+          - ./podinfo
+          - --port=9898
+          - --port-metrics=9797
+          - --grpc-port=9999
+          - --grpc-service-name=podinfo
+          - --level=info
+          - --random-delay=false
+          - --random-error=false
+        livenessProbe:
+          httpGet:
+            port: 9898
+            path: /healthz
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            port: 9898
+            path: /readyz
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+          requests:
+            cpu: 1m
+            memory: 16Mi
