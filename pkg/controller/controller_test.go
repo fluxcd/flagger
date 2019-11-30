@@ -73,7 +73,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", logger, flaggerClient)
 
 	// init observer
-	observerFactory, _ := metrics.NewFactory("fake", "istio", 5*time.Second)
+	observerFactory, _ := metrics.NewFactory("fake", 5*time.Second)
 
 	// init canary factory
 	configTracker := canary.ConfigTracker{

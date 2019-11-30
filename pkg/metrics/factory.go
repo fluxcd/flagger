@@ -6,19 +6,17 @@ import (
 )
 
 type Factory struct {
-	MeshProvider string
-	Client       *PrometheusClient
+	Client *PrometheusClient
 }
 
-func NewFactory(metricsServer string, meshProvider string, timeout time.Duration) (*Factory, error) {
+func NewFactory(metricsServer string, timeout time.Duration) (*Factory, error) {
 	client, err := NewPrometheusClient(metricsServer, timeout)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Factory{
-		MeshProvider: meshProvider,
-		Client:       client,
+		Client: client,
 	}, nil
 }
 
@@ -32,7 +30,7 @@ func (factory Factory) Observer(provider string) Interface {
 		return &HttpObserver{
 			client: factory.Client,
 		}
-	case provider == "appmesh":
+	case provider == "appmesh", provider == "envoy":
 		return &EnvoyObserver{
 			client: factory.Client,
 		}
@@ -44,8 +42,8 @@ func (factory Factory) Observer(provider string) Interface {
 		return &GlooObserver{
 			client: factory.Client,
 		}
-	case provider == "smi:linkerd":
-		return &LinkerdObserver{
+	case provider == "appmesh:service", provider == "envoy:service":
+		return &EnvoyServiceObserver{
 			client: factory.Client,
 		}
 	case provider == "linkerd":

@@ -13,6 +13,10 @@ import (
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
+const (
+	MetricsProviderServiceSuffix = ":service"
+)
+
 // scheduleCanaries synchronises the canary map with the jobs map,
 // for new canaries new jobs are created and started
 // for the removed canaries the jobs are stopped and deleted
@@ -747,10 +751,19 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	if r.Spec.Provider != "" {
 		metricsProvider = r.Spec.Provider
 
-		// set the metrics server to Linkerd Prometheus when Linkerd is the default mesh provider
+		// set the metrics provider to Linkerd Prometheus when Linkerd is the default mesh provider
 		if strings.Contains(c.meshProvider, "linkerd") {
 			metricsProvider = "linkerd"
 		}
+
+		// set the metrics provider to Envoy Prometheus when Envoy is the default mesh provider
+		if strings.Contains(c.meshProvider, "envoy") {
+			metricsProvider = "envoy"
+		}
+	}
+	// set the metrics provider to query Prometheus for the canary Kubernetes service if the canary target is Service
+	if r.Spec.TargetRef.Kind == "Service" {
+		metricsProvider = metricsProvider + MetricsProviderServiceSuffix
 	}
 
 	// create observer based on the mesh provider
@@ -761,7 +774,7 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	if r.Spec.MetricsServer != "" {
 		metricsServer = r.Spec.MetricsServer
 		var err error
-		observerFactory, err = metrics.NewFactory(metricsServer, metricsProvider, 5*time.Second)
+		observerFactory, err = metrics.NewFactory(metricsServer, 5*time.Second)
 		if err != nil {
 			c.recordEventErrorf(r, "Error building Prometheus client for %s %v", r.Spec.MetricsServer, err)
 			return false
