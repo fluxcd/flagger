@@ -22,8 +22,20 @@ cd crossover
 helm upgrade --install envoy stable/envoy \
   --namespace test \
   -f example/values.yaml \
-  -f example/values.services.yaml \
-  --set services.podinfo.smi.enabled=true
+  -f <(cat <<EOF
+services:
+  podinfo:
+    smi:
+      enabled: true
+    backends:
+      podinfo-primary:
+        port: 9898
+        weight: 50
+      podinfo-canary:
+        port: 9898
+        weight: 50
+EOF
+)
 ```
 
 Install Flagger and the Prometheus add-on in the same namespace as Envoy:
