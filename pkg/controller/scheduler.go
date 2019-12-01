@@ -90,8 +90,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-
 	// override the global provider if one is specified in the canary spec
 	provider := c.meshProvider
 	if cd.Spec.Provider != "" {
@@ -100,35 +98,42 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// init controller based on target kind
 	canaryController := c.canaryFactory.Controller(cd.Spec.TargetRef.Kind)
-
-	// create primary deployment and hpa if needed
-	// skip primary check for Istio since the deployment will become ready after the ClusterIP are created
-	skipPrimaryCheck := false
-	if skipLivenessChecks || strings.Contains(provider, "istio") || strings.Contains(provider, "appmesh") {
-		skipPrimaryCheck = true
-	}
-	labelSelector, ports, err := canaryController.Initialize(cd, skipPrimaryCheck)
+	labelSelector, ports, err := canaryController.GetMetadata(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
 
-	// init routers
-	meshRouter := c.routerFactory.MeshRouter(provider)
-
-	// create or update ClusterIP services
-	if err := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports).Reconcile(cd); err != nil {
+	// init Kubernetes router
+	router := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports)
+	if err := router.Initialize(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
 
-	// create or update virtual service
+	// create primary deployment and hpa
+	err = canaryController.Initialize(cd, skipLivenessChecks)
+	if err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
+	// init mesh router
+	meshRouter := c.routerFactory.MeshRouter(provider)
+
+	// create or update svc
+	if err := router.Reconcile(cd); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
+	// create or update mesh routes
 	if err := meshRouter.Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
 
-	// check for deployment spec or configs changes
+	// check for changes
 	shouldAdvance, err := c.shouldAdvance(cd, canaryController)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
@@ -199,10 +204,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 		return
 	}
-
-	defer func() {
-		c.recorder.SetDuration(cd, time.Since(begin))
-	}()
 
 	// check canary deployment status
 	var retriable = true
@@ -306,6 +307,11 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
+	// record analysis duration
+	defer func() {
+		c.recorder.SetDuration(cd, time.Since(begin))
+	}()
+
 	// check if the canary success rate is above the threshold
 	// skip check if no traffic is routed or mirrored to canary
 	if canaryWeight == 0 && cd.Status.Iterations == 0 &&
@@ -321,7 +327,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 	} else {
-		if ok := c.analyseCanary(cd); !ok {
+		if ok := c.runAnalysis(cd); !ok {
 			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
 				return
@@ -345,247 +351,259 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// strategy: A/B testing
 	if len(cd.Spec.CanaryAnalysis.Match) > 0 && cd.Spec.CanaryAnalysis.Iterations > 0 {
-		// route traffic to canary and increment iterations
-		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
-			if err := meshRouter.SetRoutes(cd, 0, 100, false); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			c.recorder.SetWeight(cd, 0, 100)
-
-			if err := canaryController.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			c.recordEventInfof(cd, "Advance %s.%s canary iteration %v/%v",
-				cd.Name, cd.Namespace, cd.Status.Iterations+1, cd.Spec.CanaryAnalysis.Iterations)
-			return
-		}
-
-		// check promotion gate
-		if promote := c.runConfirmPromotionHooks(cd); !promote {
-			return
-		}
-
-		// promote canary - max iterations reached
-		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
-			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
-				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
-			if err := canaryController.Promote(cd); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-
-			// update status phase
-			if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			return
-		}
-
+		c.runAB(cd, canaryController, meshRouter, provider)
 		return
 	}
 
 	// strategy: Blue/Green
 	if cd.Spec.CanaryAnalysis.Iterations > 0 {
-		// increment iterations
-		if cd.Spec.CanaryAnalysis.Iterations > cd.Status.Iterations {
-			// If in "mirror" mode, mirror requests during the entire B/G canary test
-			if provider != "kubernetes" &&
-				cd.Spec.CanaryAnalysis.Mirror == true && mirrored == false {
-				if err := meshRouter.SetRoutes(cd, 100, 0, true); err != nil {
-					c.recordEventWarningf(cd, "%v", err)
-				}
-				c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
-					Infof("Start traffic mirroring")
-			}
-			if err := canaryController.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			c.recordEventInfof(cd, "Advance %s.%s canary iteration %v/%v",
-				cd.Name, cd.Namespace, cd.Status.Iterations+1, cd.Spec.CanaryAnalysis.Iterations)
-			return
-		}
-
-		// check promotion gate
-		if promote := c.runConfirmPromotionHooks(cd); !promote {
-			return
-		}
-
-		// route all traffic to canary - max iterations reached
-		if cd.Spec.CanaryAnalysis.Iterations == cd.Status.Iterations {
-			if provider != "kubernetes" {
-				if cd.Spec.CanaryAnalysis.Mirror {
-					c.recordEventInfof(cd, "Stop traffic mirroring and route all traffic to canary")
-				} else {
-					c.recordEventInfof(cd, "Routing all traffic to canary")
-				}
-				if err := meshRouter.SetRoutes(cd, 0, 100, false); err != nil {
-					c.recordEventWarningf(cd, "%v", err)
-					return
-				}
-				c.recorder.SetWeight(cd, 0, 100)
-			}
-
-			// increment iterations
-			if err := canaryController.SetStatusIterations(cd, cd.Status.Iterations+1); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			return
-		}
-
-		// promote canary - max iterations reached
-		if cd.Spec.CanaryAnalysis.Iterations < cd.Status.Iterations {
-			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
-				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
-			if err := canaryController.Promote(cd); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-
-			// update status phase
-			if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			return
-		}
-
+		c.runBlueGreen(cd, canaryController, meshRouter, provider, mirrored)
 		return
 	}
 
 	// strategy: Canary progressive traffic increase
 	if cd.Spec.CanaryAnalysis.StepWeight > 0 {
-		// increase traffic weight
-		if canaryWeight < maxWeight {
-			// If in "mirror" mode, do one step of mirroring before shifting traffic to canary.
-			// When mirroring, all requests go to primary and canary, but only responses from
-			// primary go back to the user.
-			if cd.Spec.CanaryAnalysis.Mirror && canaryWeight == 0 {
-				if mirrored == false {
-					mirrored = true
-					primaryWeight = 100
-					canaryWeight = 0
-				} else {
-					mirrored = false
-					primaryWeight = 100 - cd.Spec.CanaryAnalysis.StepWeight
-					canaryWeight = cd.Spec.CanaryAnalysis.StepWeight
-				}
-				c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
-					Infof("Running mirror step %d/%d/%t", primaryWeight, canaryWeight, mirrored)
-			} else {
-
-				primaryWeight -= cd.Spec.CanaryAnalysis.StepWeight
-				if primaryWeight < 0 {
-					primaryWeight = 0
-				}
-				canaryWeight += cd.Spec.CanaryAnalysis.StepWeight
-				if canaryWeight > 100 {
-					canaryWeight = 100
-				}
-			}
-
-			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, mirrored); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-
-			if err := canaryController.SetStatusWeight(cd, canaryWeight); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-
-			c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
-			c.recordEventInfof(cd, "Advance %s.%s canary weight %v", cd.Name, cd.Namespace, canaryWeight)
-			return
-		}
-
-		// promote canary - max weight reached
-		if canaryWeight >= maxWeight {
-			// check promotion gate
-			if promote := c.runConfirmPromotionHooks(cd); !promote {
-				return
-			}
-
-			// update primary spec
-			c.recordEventInfof(cd, "Copying %s.%s template spec to %s.%s",
-				cd.Spec.TargetRef.Name, cd.Namespace, primaryName, cd.Namespace)
-			if err := canaryController.Promote(cd); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-
-			// update status phase
-			if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-
-			return
-		}
-
+		c.runCanary(cd, canaryController, meshRouter, provider, mirrored, canaryWeight, primaryWeight, maxWeight)
 	}
 
 }
 
-func (c *Controller) shouldSkipAnalysis(cd *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, primaryWeight int, canaryWeight int) bool {
-	if !cd.Spec.SkipAnalysis {
+func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, provider string, mirrored bool, canaryWeight int, primaryWeight int, maxWeight int) {
+	primaryName := fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name)
+
+	// increase traffic weight
+	if canaryWeight < maxWeight {
+		// If in "mirror" mode, do one step of mirroring before shifting traffic to canary.
+		// When mirroring, all requests go to primary and canary, but only responses from
+		// primary go back to the user.
+		if canary.Spec.CanaryAnalysis.Mirror && canaryWeight == 0 {
+			if mirrored == false {
+				mirrored = true
+				primaryWeight = 100
+				canaryWeight = 0
+			} else {
+				mirrored = false
+				primaryWeight = 100 - canary.Spec.CanaryAnalysis.StepWeight
+				canaryWeight = canary.Spec.CanaryAnalysis.StepWeight
+			}
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("Running mirror step %d/%d/%t", primaryWeight, canaryWeight, mirrored)
+		} else {
+
+			primaryWeight -= canary.Spec.CanaryAnalysis.StepWeight
+			if primaryWeight < 0 {
+				primaryWeight = 0
+			}
+			canaryWeight += canary.Spec.CanaryAnalysis.StepWeight
+			if canaryWeight > 100 {
+				canaryWeight = 100
+			}
+		}
+
+		if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, mirrored); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+
+		if err := canaryController.SetStatusWeight(canary, canaryWeight); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+
+		c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
+		c.recordEventInfof(canary, "Advance %s.%s canary weight %v", canary.Name, canary.Namespace, canaryWeight)
+		return
+	}
+
+	// promote canary - max weight reached
+	if canaryWeight >= maxWeight {
+		// check promotion gate
+		if promote := c.runConfirmPromotionHooks(canary); !promote {
+			return
+		}
+
+		// update primary spec
+		c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
+			canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
+		if err := canaryController.Promote(canary); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+
+		// update status phase
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+	}
+}
+
+func (c *Controller) runAB(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, provider string) {
+	primaryName := fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name)
+
+	// route traffic to canary and increment iterations
+	if canary.Spec.CanaryAnalysis.Iterations > canary.Status.Iterations {
+		if err := meshRouter.SetRoutes(canary, 0, 100, false); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+		c.recorder.SetWeight(canary, 0, 100)
+
+		if err := canaryController.SetStatusIterations(canary, canary.Status.Iterations+1); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+		c.recordEventInfof(canary, "Advance %s.%s canary iteration %v/%v",
+			canary.Name, canary.Namespace, canary.Status.Iterations+1, canary.Spec.CanaryAnalysis.Iterations)
+		return
+	}
+
+	// check promotion gate
+	if promote := c.runConfirmPromotionHooks(canary); !promote {
+		return
+	}
+
+	// promote canary - max iterations reached
+	if canary.Spec.CanaryAnalysis.Iterations == canary.Status.Iterations {
+		c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
+			canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
+		if err := canaryController.Promote(canary); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+
+		// update status phase
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+	}
+}
+
+func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, provider string, mirrored bool) {
+	primaryName := fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name)
+
+	// increment iterations
+	if canary.Spec.CanaryAnalysis.Iterations > canary.Status.Iterations {
+		// If in "mirror" mode, mirror requests during the entire B/G canary test
+		if provider != "kubernetes" &&
+			canary.Spec.CanaryAnalysis.Mirror == true && mirrored == false {
+			if err := meshRouter.SetRoutes(canary, 100, 0, true); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+			}
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("Start traffic mirroring")
+		}
+		if err := canaryController.SetStatusIterations(canary, canary.Status.Iterations+1); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+		c.recordEventInfof(canary, "Advance %s.%s canary iteration %v/%v",
+			canary.Name, canary.Namespace, canary.Status.Iterations+1, canary.Spec.CanaryAnalysis.Iterations)
+		return
+	}
+
+	// check promotion gate
+	if promote := c.runConfirmPromotionHooks(canary); !promote {
+		return
+	}
+
+	// route all traffic to canary - max iterations reached
+	if canary.Spec.CanaryAnalysis.Iterations == canary.Status.Iterations {
+		if provider != "kubernetes" {
+			if canary.Spec.CanaryAnalysis.Mirror {
+				c.recordEventInfof(canary, "Stop traffic mirroring and route all traffic to canary")
+			} else {
+				c.recordEventInfof(canary, "Routing all traffic to canary")
+			}
+			if err := meshRouter.SetRoutes(canary, 0, 100, false); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+				return
+			}
+			c.recorder.SetWeight(canary, 0, 100)
+		}
+
+		// increment iterations
+		if err := canaryController.SetStatusIterations(canary, canary.Status.Iterations+1); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+		return
+	}
+
+	// promote canary - max iterations reached
+	if canary.Spec.CanaryAnalysis.Iterations < canary.Status.Iterations {
+		c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
+			canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
+		if err := canaryController.Promote(canary); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+
+		// update status phase
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+	}
+
+}
+
+func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, primaryWeight int, canaryWeight int) bool {
+	if !canary.Spec.SkipAnalysis {
 		return false
 	}
 
 	// route all traffic to primary
 	primaryWeight = 100
 	canaryWeight = 0
-	if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
-		c.recordEventWarningf(cd, "%v", err)
+	if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
 		return false
 	}
-	c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
+	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
 
 	// copy spec and configs from canary to primary
-	c.recordEventInfof(cd, "Copying %s.%s template spec to %s-primary.%s",
-		cd.Spec.TargetRef.Name, cd.Namespace, cd.Spec.TargetRef.Name, cd.Namespace)
-	if err := canaryController.Promote(cd); err != nil {
-		c.recordEventWarningf(cd, "%v", err)
+	c.recordEventInfof(canary, "Copying %s.%s template spec to %s-primary.%s",
+		canary.Spec.TargetRef.Name, canary.Namespace, canary.Spec.TargetRef.Name, canary.Namespace)
+	if err := canaryController.Promote(canary); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
 		return false
 	}
 
 	// shutdown canary
-	if err := canaryController.Scale(cd, 0); err != nil {
-		c.recordEventWarningf(cd, "%v", err)
+	if err := canaryController.Scale(canary, 0); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
 		return false
 	}
 
 	// update status phase
-	if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
-		c.recordEventWarningf(cd, "%v", err)
+	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseSucceeded); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
 		return false
 	}
 
 	// notify
-	c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
-	c.recordEventInfof(cd, "Promotion completed! Canary analysis was skipped for %s.%s",
-		cd.Spec.TargetRef.Name, cd.Namespace)
-	c.sendNotification(cd, "Canary analysis was skipped, promotion finished.",
+	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
+	c.recordEventInfof(canary, "Promotion completed! Canary analysis was skipped for %s.%s",
+		canary.Spec.TargetRef.Name, canary.Namespace)
+	c.sendNotification(canary, "Canary analysis was skipped, promotion finished.",
 		false, false)
 
 	return true
 }
 
-func (c *Controller) shouldAdvance(cd *flaggerv1.Canary, canaryController canary.Controller) (bool, error) {
-	if cd.Status.LastAppliedSpec == "" ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseInitializing ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
-		cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController canary.Controller) (bool, error) {
+	if canary.Status.LastAppliedSpec == "" ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseInitializing ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
+		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true, nil
 	}
 
-	newTarget, err := canaryController.HasTargetChanged(cd)
+	newTarget, err := canaryController.HasTargetChanged(canary)
 	if err != nil {
 		return false, err
 	}
@@ -593,7 +611,7 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary, canaryController canary
 		return newTarget, nil
 	}
 
-	newCfg, err := canaryController.HaveDependenciesChanged(cd)
+	newCfg, err := canaryController.HaveDependenciesChanged(canary)
 	if err != nil {
 		return false, err
 	}
@@ -602,50 +620,50 @@ func (c *Controller) shouldAdvance(cd *flaggerv1.Canary, canaryController canary
 
 }
 
-func (c *Controller) checkCanaryStatus(cd *flaggerv1.Canary, canaryController canary.Controller, shouldAdvance bool) bool {
-	c.recorder.SetStatus(cd, cd.Status.Phase)
-	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
-		cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryController canary.Controller, shouldAdvance bool) bool {
+	c.recorder.SetStatus(canary, canary.Status.Phase)
+	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true
 	}
 
-	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
+	if canary.Status.Phase == "" || canary.Status.Phase == flaggerv1.CanaryPhaseInitializing {
+		if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 			return false
 		}
-		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseInitialized)
-		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
-		c.sendNotification(cd, "New deployment detected, initialization completed.",
+		c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseInitialized)
+		c.recordEventInfof(canary, "Initialization done! %s.%s", canary.Name, canary.Namespace)
+		c.sendNotification(canary, "New deployment detected, initialization completed.",
 			true, false)
 		return false
 	}
 
 	if shouldAdvance {
-		c.recordEventInfof(cd, "New revision detected! Scaling up %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		c.sendNotification(cd, "New revision detected, starting canary analysis.",
+		c.recordEventInfof(canary, "New revision detected! Scaling up %s.%s", canary.Spec.TargetRef.Name, canary.Namespace)
+		c.sendNotification(canary, "New revision detected, starting canary analysis.",
 			true, false)
-		if err := canaryController.ScaleFromZero(cd); err != nil {
-			c.recordEventErrorf(cd, "%v", err)
+		if err := canaryController.ScaleFromZero(canary); err != nil {
+			c.recordEventErrorf(canary, "%v", err)
 			return false
 		}
-		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
+		if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 			return false
 		}
-		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseProgressing)
+		c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseProgressing)
 		return false
 	}
 	return false
 }
 
-func (c *Controller) hasCanaryRevisionChanged(cd *flaggerv1.Canary, canaryController canary.Controller) bool {
-	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing {
-		if diff, _ := canaryController.HasTargetChanged(cd); diff {
+func (c *Controller) hasCanaryRevisionChanged(canary *flaggerv1.Canary, canaryController canary.Controller) bool {
+	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing {
+		if diff, _ := canaryController.HasTargetChanged(canary); diff {
 			return true
 		}
-		if diff, _ := canaryController.HaveDependenciesChanged(cd); diff {
+		if diff, _ := canaryController.HaveDependenciesChanged(canary); diff {
 			return true
 		}
 	}
@@ -729,7 +747,7 @@ func (c *Controller) runPostRolloutHooks(canary *flaggerv1.Canary, phase flagger
 	return true
 }
 
-func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
+func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {

@@ -14,7 +14,12 @@ func TestServiceRouter_Create(t *testing.T) {
 		logger:        mocks.logger,
 	}
 
-	err := router.Reconcile(mocks.canary)
+	err := router.Initialize(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -54,7 +59,12 @@ func TestServiceRouter_Update(t *testing.T) {
 		logger:        mocks.logger,
 	}
 
-	err := router.Reconcile(mocks.canary)
+	err := router.Initialize(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -73,6 +83,10 @@ func TestServiceRouter_Update(t *testing.T) {
 	}
 
 	// apply changes
+	err = router.Initialize(c)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	err = router.Reconcile(c)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -96,7 +110,12 @@ func TestServiceRouter_Undo(t *testing.T) {
 		logger:        mocks.logger,
 	}
 
-	err := router.Reconcile(mocks.canary)
+	err := router.Initialize(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -116,6 +135,10 @@ func TestServiceRouter_Undo(t *testing.T) {
 	}
 
 	// undo changes
+	err = router.Initialize(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	err = router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())

@@ -27,26 +27,34 @@ type KubernetesDeploymentRouter struct {
 	ports         map[string]int32
 }
 
-// Reconcile creates or updates the primary and canary services
-func (c *KubernetesDeploymentRouter) Reconcile(canary *flaggerv1.Canary) error {
+// Initialize creates the primary and canary services
+func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error {
 	targetName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryName := fmt.Sprintf("%s-canary", targetName)
 
-	// main svc
-	err := c.reconcileService(canary, targetName, primaryName)
-	if err != nil {
-		return err
-	}
-
 	// canary svc
-	err = c.reconcileService(canary, canaryName, targetName)
+	err := c.reconcileService(canary, canaryName, targetName)
 	if err != nil {
 		return err
 	}
 
 	// primary svc
 	err = c.reconcileService(canary, primaryName, primaryName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Reconcile creates or updates the main service
+func (c *KubernetesDeploymentRouter) Reconcile(canary *flaggerv1.Canary) error {
+	targetName := canary.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+
+	// main svc
+	err := c.reconcileService(canary, targetName, primaryName)
 	if err != nil {
 		return err
 	}
@@ -157,26 +165,5 @@ func (c *KubernetesDeploymentRouter) reconcileService(canary *flaggerv1.Canary, 
 		}
 	}
 
-	return nil
-}
-
-func (c *KubernetesDeploymentRouter) createService(canary *flaggerv1.Canary, name string, src *corev1.Service) error {
-	svc := buildService(canary, name, src)
-
-	if svc.Spec.Type == "ClusterIP" {
-		// Reset and let K8s assign the IP. Otherwise we get an error due to the IP is already assigned
-		svc.Spec.ClusterIP = ""
-	}
-
-	// Let K8s set this. Otherwise K8s API complains with "resourceVersion should not be set on objects to be created"
-	svc.ObjectMeta.ResourceVersion = ""
-
-	_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Create(svc)
-	if err != nil {
-		return err
-	}
-
-	c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-		Infof("Service %s.%s created", svc.GetName(), canary.Namespace)
 	return nil
 }

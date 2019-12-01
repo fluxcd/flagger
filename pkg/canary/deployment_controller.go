@@ -31,34 +31,34 @@ type DeploymentController struct {
 
 // Initialize creates the primary deployment, hpa,
 // scales to zero the canary deployment and returns the pod selector label and container ports
-func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (label string, ports map[string]int32, err error) {
+func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
-	label, ports, err = c.createPrimaryDeployment(cd)
+	err = c.createPrimaryDeployment(cd)
 	if err != nil {
-		return "", ports, fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
+		return fmt.Errorf("creating deployment %s.%s failed: %v", primaryName, cd.Namespace, err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !skipLivenessChecks && !cd.Spec.SkipAnalysis {
 			_, readyErr := c.IsPrimaryReady(cd)
 			if readyErr != nil {
-				return "", ports, readyErr
+				return readyErr
 			}
 		}
 
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
-			return "", ports, err
+			return err
 		}
 	}
 
 	if cd.Spec.AutoscalerRef != nil && cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 		if err := c.reconcilePrimaryHpa(cd, true); err != nil {
-			return "", ports, fmt.Errorf("creating HorizontalPodAutoscaler %s.%s failed: %v", primaryName, cd.Namespace, err)
+			return fmt.Errorf("creating HorizontalPodAutoscaler %s.%s failed: %v", primaryName, cd.Namespace, err)
 		}
 	}
-	return label, ports, nil
+	return nil
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary
@@ -191,9 +191,9 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) (string, map[string]int32, error) {
+// GetMetadata returns the pod label selector and svc ports
+func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
 	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
@@ -218,19 +218,39 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) (st
 		ports = p
 	}
 
+	return label, ports, nil
+}
+func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) error {
+	targetName := cd.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+
+	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("deployment %s.%s not found, retrying", targetName, cd.Namespace)
+		}
+		return err
+	}
+
+	label, err := c.getSelectorLabel(canaryDep)
+	if err != nil {
+		return fmt.Errorf("invalid label selector! Deployment %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
+			targetName, cd.Namespace, targetName)
+	}
+
 	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// create primary secrets and config maps
 		configRefs, err := c.configTracker.GetTargetConfigs(cd)
 		if err != nil {
-			return "", nil, err
+			return err
 		}
 		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
-			return "", nil, err
+			return err
 		}
 		annotations, err := c.makeAnnotations(canaryDep.Spec.Template.Annotations)
 		if err != nil {
-			return "", nil, err
+			return err
 		}
 
 		replicas := int32(1)
@@ -278,13 +298,13 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) (st
 
 		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Create(primaryDep)
 		if err != nil {
-			return "", nil, err
+			return err
 		}
 
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
-	return label, ports, nil
+	return nil
 }
 
 func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {

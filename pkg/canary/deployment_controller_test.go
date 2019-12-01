@@ -10,7 +10,7 @@ import (
 
 func TestCanaryDeployer_Sync(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -96,7 +96,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 
 func TestCanaryDeployer_IsNewSpec(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -119,7 +119,7 @@ func TestCanaryDeployer_IsNewSpec(t *testing.T) {
 
 func TestCanaryDeployer_Promote(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -185,7 +185,7 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 
 func TestCanaryDeployer_IsReady(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Error("Expected primary readiness check to fail")
 	}
@@ -203,7 +203,7 @@ func TestCanaryDeployer_IsReady(t *testing.T) {
 
 func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -225,7 +225,7 @@ func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
 
 func TestCanaryDeployer_SetState(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -247,7 +247,7 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 
 func TestCanaryDeployer_SyncStatus(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -286,7 +286,7 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 
 func TestCanaryDeployer_Scale(t *testing.T) {
 	mocks := SetupMocks()
-	_, _, err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.deployer.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
