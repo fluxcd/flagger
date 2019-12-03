@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: grafana/grafana
-  tag: 6.2.5
+  tag: 6.5.1
   pullPolicy: IfNotPresent
 
 podAnnotations: {}

@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.20.4 (2019-12-03) 
+
+Adds support for taking over a running deployment without disruption
+
+#### Improvements 
+
+- Add initialization phase to Kubernetes router [#384](https://github.com/weaveworks/flagger/pull/384)
+- Add canary controller interface and Kubernetes deployment kind implementation [#378](https://github.com/weaveworks/flagger/pull/378)
+
+#### Fixes
+
+- Skip primary check on skip analysis [#380](https://github.com/weaveworks/flagger/pull/380)
+
 ## 0.20.3 (2019-11-13) 
 
 Adds wrk to load tester tools and the App Mesh gateway chart to Flagger Helm repository
