@@ -192,15 +192,15 @@ the gateway will retry the calls for a short period of time.
 Deploy the gateway behind an AWS NLB:
 
 ```bash
-helm upgrade -i test flagger/appmesh-gateway \
---namespace flagger-system \
+helm upgrade -i appmesh-gateway flagger/appmesh-gateway \
+--namespace test \
 --set mesh.name=global
 ```
 
 Find the gateway public address:
 
 ```bash
-export URL="http://$(kubectl -n demo get svc/appmesh-gateway -ojson | jq -r ".status.loadBalancer.ingress[].hostname")"
+export URL="http://$(kubectl -n test get svc/appmesh-gateway -ojson | jq -r ".status.loadBalancer.ingress[].hostname")"
 echo $URL
 ```
 

@@ -79,7 +79,8 @@ Install the Horizontal Pod Autoscaler (HPA) metrics provider:
 
 ```bash
 helm upgrade -i metrics-server stable/metrics-server \
---namespace kube-system
+--namespace kube-system \
+--set args[0]=--kubelet-preferred-address-types=InternalIP
 ```
 
 After a minute, the metrics API should report CPU and memory usage for pods.
