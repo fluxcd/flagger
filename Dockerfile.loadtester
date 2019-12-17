@@ -10,7 +10,7 @@ curl -sSL "https://get.helm.sh/helm-v${HELM2_VERSION}-linux-amd64.tar.gz" | tar 
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helm && \
 chmod +x linux-amd64/tiller && mv linux-amd64/tiller /usr/local/bin/tiller
 
-RUN HELM3_VERSION=3.0.0-rc.3 && \
+RUN HELM3_VERSION=3.0.1 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-amd64.tar.gz" | tar xvz && \
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helmv3
 
