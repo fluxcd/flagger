@@ -30,7 +30,7 @@ chmod +x ${CODEGEN_PKG}/generate-groups.sh
 
 ${CODEGEN_PKG}/generate-groups.sh all \
     github.com/weaveworks/flagger/pkg/client github.com/weaveworks/flagger/pkg/apis \
-    "flagger:v1alpha3 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 gloo:v1" \
+    "flagger:v1alpha3 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 gloo:v1 projectcontour:v1" \
     --output-base "${TEMP_DIR}" \
     --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
 

@@ -25,6 +25,7 @@ import (
 	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	v1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
 	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
@@ -77,6 +78,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1alpha3().DestinationRules().Informer()}, nil
 	case istiov1alpha3.SchemeGroupVersion.WithResource("virtualservices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1alpha3().VirtualServices().Informer()}, nil
+
+		// Group=projectcontour.io, Version=v1
+	case projectcontourv1.SchemeGroupVersion.WithResource("httpproxies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Projectcontour().V1().HTTPProxies().Informer()}, nil
 
 		// Group=split.smi-spec.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("trafficsplits"):

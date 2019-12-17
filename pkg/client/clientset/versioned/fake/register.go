@@ -23,6 +23,7 @@ import (
 	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -39,6 +40,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	flaggerv1alpha3.AddToScheme,
 	gloov1.AddToScheme,
 	networkingv1alpha3.AddToScheme,
+	projectcontourv1.AddToScheme,
 	splitv1alpha1.AddToScheme,
 }
 

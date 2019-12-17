@@ -29,6 +29,7 @@ import (
 	gloo "github.com/weaveworks/flagger/pkg/client/informers/externalversions/gloo"
 	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/weaveworks/flagger/pkg/client/informers/externalversions/istio"
+	projectcontour "github.com/weaveworks/flagger/pkg/client/informers/externalversions/projectcontour"
 	smi "github.com/weaveworks/flagger/pkg/client/informers/externalversions/smi"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -180,6 +181,7 @@ type SharedInformerFactory interface {
 	Flagger() flagger.Interface
 	Gloo() gloo.Interface
 	Networking() istio.Interface
+	Projectcontour() projectcontour.Interface
 	Split() smi.Interface
 }
 
@@ -197,6 +199,10 @@ func (f *sharedInformerFactory) Gloo() gloo.Interface {
 
 func (f *sharedInformerFactory) Networking() istio.Interface {
 	return istio.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Projectcontour() projectcontour.Interface {
+	return projectcontour.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Split() smi.Interface {
