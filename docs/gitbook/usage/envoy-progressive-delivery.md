@@ -30,10 +30,10 @@ services:
     backends:
       podinfo-primary:
         port: 9898
-        weight: 50
+        weight: 100
       podinfo-canary:
         port: 9898
-        weight: 50
+        weight: 0
 EOF
 )
 ```
@@ -90,7 +90,7 @@ metadata:
   namespace: test
 spec:
   # specify mesh provider if it isn't the default one
-  # provider: "envoy:smi"
+  # provider: "smi:envoy"
   # deployment reference
   targetRef:
     apiVersion: apps/v1
