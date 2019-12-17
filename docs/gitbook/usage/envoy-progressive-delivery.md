@@ -15,13 +15,10 @@ kubectl create ns test
 Install Envoy along with the sidecar with Helm:
 
 ```bash
-git clone https://github.com/mumoshu/crossover.git
+helm repo add crossover https://mumoshu.github.io/crossover
 
-cd crossover
-
-helm upgrade --install envoy stable/envoy \
+helm upgrade --install envoy crossover/envoy \
   --namespace test \
-  -f example/values.yaml \
   -f <(cat <<EOF
 services:
   podinfo:
