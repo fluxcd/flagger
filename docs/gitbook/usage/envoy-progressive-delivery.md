@@ -225,10 +225,18 @@ When the canary analysis starts, Flagger will call the pre-rollout webhooks befo
 
 During the analysis the canary’s progress can be monitored with Grafana.
 
+Flagger comes with a Grafana dashboard made for canary analysis. Install Grafana with Helm:
+
+```bash
+helm upgrade -i flagger-grafana flagger/grafana \
+--namespace=test \
+--set url=http://flagger-prometheus:9090
+```
+
 Run:
 
 ```bash
-kubectl port-forward svc/flagger-grafana 3000
+kubectl port-forward --namespace test svc/flagger-grafana 3000:80
 ```
 
 The Envoy dashboard URL is 
