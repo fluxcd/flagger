@@ -10,7 +10,7 @@ var envoyQueries = map[string]string{
 		rate(
 			envoy_cluster_upstream_rq{
 				kubernetes_namespace="{{ .Namespace }}",
-				kubernetes_pod_name=~"{{ .Name }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+				envoy_cluster_name=~"{{ .Name }}-canary-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
 				envoy_response_code!~"5.*"
 			}[{{ .Interval }}]
 		)
@@ -20,7 +20,7 @@ var envoyQueries = map[string]string{
 		rate(
 			envoy_cluster_upstream_rq{
 				kubernetes_namespace="{{ .Namespace }}",
-				kubernetes_pod_name=~"{{ .Name }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+				envoy_cluster_name=~"{{ .Name }}-canary-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
 			}[{{ .Interval }}]
 		)
 	) 
@@ -32,7 +32,7 @@ var envoyQueries = map[string]string{
 			rate(
 				envoy_cluster_upstream_rq_time_bucket{
 					kubernetes_namespace="{{ .Namespace }}",
-					kubernetes_pod_name=~"{{ .Name }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+					envoy_cluster_name=~"{{ .Name }}-canary-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
 				}[{{ .Interval }}]
 			)
 		) by (le)
