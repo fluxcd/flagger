@@ -13,6 +13,10 @@ import (
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
+const (
+	MetricsProviderServiceSuffix = ":service"
+)
+
 // scheduleCanaries synchronises the canary map with the jobs map,
 // for new canaries new jobs are created and started
 // for the removed canaries the jobs are stopped and deleted
@@ -761,14 +765,26 @@ func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 	}
 
 	// override the global provider if one is specified in the canary spec
-	metricsProvider := c.meshProvider
+	var metricsProvider string
+	// set the metrics provider to Crossover Prometheus when Crossover is the mesh provider
+	// For example, `crossover` metrics provider should be used for `smi:crossover` mesh provider
+	if strings.Contains(c.meshProvider, "crossover") {
+		metricsProvider = "crossover"
+	} else {
+		metricsProvider = c.meshProvider
+	}
+
 	if r.Spec.Provider != "" {
 		metricsProvider = r.Spec.Provider
 
-		// set the metrics server to Linkerd Prometheus when Linkerd is the default mesh provider
+		// set the metrics provider to Linkerd Prometheus when Linkerd is the default mesh provider
 		if strings.Contains(c.meshProvider, "linkerd") {
 			metricsProvider = "linkerd"
 		}
+	}
+	// set the metrics provider to query Prometheus for the canary Kubernetes service if the canary target is Service
+	if r.Spec.TargetRef.Kind == "Service" {
+		metricsProvider = metricsProvider + MetricsProviderServiceSuffix
 	}
 
 	// create observer based on the mesh provider
@@ -779,7 +795,7 @@ func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 	if r.Spec.MetricsServer != "" {
 		metricsServer = r.Spec.MetricsServer
 		var err error
-		observerFactory, err = metrics.NewFactory(metricsServer, metricsProvider, 5*time.Second)
+		observerFactory, err = metrics.NewFactory(metricsServer, 5*time.Second)
 		if err != nil {
 			c.recordEventErrorf(r, "Error building Prometheus client for %s %v", r.Spec.MetricsServer, err)
 			return false
@@ -797,8 +813,8 @@ func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 			val, err := observer.GetRequestSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Interval)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					c.recordEventWarningf(r, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
+						metricsProvider, metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
 					c.recordEventErrorf(r, "Metrics server %s query failed: %v", metricsServer, err)
 				}
@@ -817,8 +833,8 @@ func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 			val, err := observer.GetRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Interval)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					c.recordEventWarningf(r, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
+						metricsProvider, metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
 					c.recordEventErrorf(r, "Metrics server %s query failed: %v", metricsServer, err)
 				}

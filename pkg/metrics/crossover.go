@@ -4,13 +4,13 @@ import (
 	"time"
 )
 
-var envoyQueries = map[string]string{
+var crossoverQueries = map[string]string{
 	"request-success-rate": `
 	sum(
 		rate(
 			envoy_cluster_upstream_rq{
 				kubernetes_namespace="{{ .Namespace }}",
-				kubernetes_pod_name=~"{{ .Name }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+				envoy_cluster_name=~"{{ .Name }}-canary",
 				envoy_response_code!~"5.*"
 			}[{{ .Interval }}]
 		)
@@ -20,7 +20,7 @@ var envoyQueries = map[string]string{
 		rate(
 			envoy_cluster_upstream_rq{
 				kubernetes_namespace="{{ .Namespace }}",
-				kubernetes_pod_name=~"{{ .Name }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+				envoy_cluster_name=~"{{ .Name }}-canary"
 			}[{{ .Interval }}]
 		)
 	) 
@@ -32,19 +32,19 @@ var envoyQueries = map[string]string{
 			rate(
 				envoy_cluster_upstream_rq_time_bucket{
 					kubernetes_namespace="{{ .Namespace }}",
-					kubernetes_pod_name=~"{{ .Name }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+					envoy_cluster_name=~"{{ .Name }}-canary"
 				}[{{ .Interval }}]
 			)
 		) by (le)
 	)`,
 }
 
-type EnvoyObserver struct {
+type CrossoverObserver struct {
 	client *PrometheusClient
 }
 
-func (ob *EnvoyObserver) GetRequestSuccessRate(name string, namespace string, interval string) (float64, error) {
-	query, err := ob.client.RenderQuery(name, namespace, interval, envoyQueries["request-success-rate"])
+func (ob *CrossoverObserver) GetRequestSuccessRate(name string, namespace string, interval string) (float64, error) {
+	query, err := ob.client.RenderQuery(name, namespace, interval, crossoverQueries["request-success-rate"])
 	if err != nil {
 		return 0, err
 	}
@@ -57,8 +57,8 @@ func (ob *EnvoyObserver) GetRequestSuccessRate(name string, namespace string, in
 	return value, nil
 }
 
-func (ob *EnvoyObserver) GetRequestDuration(name string, namespace string, interval string) (time.Duration, error) {
-	query, err := ob.client.RenderQuery(name, namespace, interval, envoyQueries["request-duration"])
+func (ob *CrossoverObserver) GetRequestDuration(name string, namespace string, interval string) (time.Duration, error) {
+	query, err := ob.client.RenderQuery(name, namespace, interval, crossoverQueries["request-duration"])
 	if err != nil {
 		return 0, err
 	}
