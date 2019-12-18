@@ -747,18 +747,21 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 	}
 
 	// override the global provider if one is specified in the canary spec
-	metricsProvider := c.meshProvider
+	var metricsProvider string
+	// set the metrics provider to Envoy Prometheus when Envoy is the mesh provider
+	// For example, `envoy` metrics provider should be used for `smi:envoy` mesh provider
+	if strings.Contains(c.meshProvider, "envoy") {
+		metricsProvider = "envoy"
+	} else {
+		metricsProvider = c.meshProvider
+	}
+
 	if r.Spec.Provider != "" {
 		metricsProvider = r.Spec.Provider
 
 		// set the metrics provider to Linkerd Prometheus when Linkerd is the default mesh provider
 		if strings.Contains(c.meshProvider, "linkerd") {
 			metricsProvider = "linkerd"
-		}
-
-		// set the metrics provider to Envoy Prometheus when Envoy is the default mesh provider
-		if strings.Contains(c.meshProvider, "envoy") {
-			metricsProvider = "envoy"
 		}
 	}
 	// set the metrics provider to query Prometheus for the canary Kubernetes service if the canary target is Service
@@ -792,8 +795,8 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 			val, err := observer.GetRequestSuccessRate(r.Spec.TargetRef.Name, r.Namespace, metric.Interval)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					c.recordEventWarningf(r, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
+						metricsProvider, metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
 					c.recordEventErrorf(r, "Metrics server %s query failed: %v", metricsServer, err)
 				}
@@ -812,8 +815,8 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 			val, err := observer.GetRequestDuration(r.Spec.TargetRef.Name, r.Namespace, metric.Interval)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for metric %s probably %s.%s is not receiving traffic",
-						metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					c.recordEventWarningf(r, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
+						metricsProvider, metric.Name, r.Spec.TargetRef.Name, r.Namespace)
 				} else {
 					c.recordEventErrorf(r, "Metrics server %s query failed: %v", metricsServer, err)
 				}

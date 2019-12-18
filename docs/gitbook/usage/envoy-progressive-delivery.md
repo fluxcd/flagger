@@ -243,7 +243,7 @@ kubectl port-forward --namespace test svc/flagger-grafana 3000:80
 ```
 
 The Envoy dashboard URL is 
-http://localhost:3000/d/flagger-envoy/envoy-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo
+http://localhost:3000/d/flagger-envoy/envoy-canary?refresh=10s&orgId=1&var-namespace=test&var-target=podinfo
 
 ![Envoy Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-grafana-appmesh.png)
 

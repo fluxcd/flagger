@@ -20,7 +20,7 @@
   "links": [],
   "panels": [
     {
-      "content": "<div class=\"dashboard-header text-center\">\n<span>RED: $canary.$namespace</span>\n</div>",
+      "content": "<div class=\"dashboard-header text-center\">\n<span>RED: $target.$namespace</span>\n</div>",
       "gridPos": {
         "h": 3,
         "w": 24,
@@ -95,7 +95,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s])), 0.001)",
+          "expr": "round(sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-primary\"}[30s])), 0.001)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -179,7 +179,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\",envoy_response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s]))",
+          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-primary\",envoy_response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-primary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -261,7 +261,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s])), 0.001)",
+          "expr": "round(sum(rate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-canary\"}[30s])), 0.001)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -345,7 +345,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\",envoy_response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s]))",
+          "expr": "sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-canary\",envoy_response_code!~\"5.*\"}[30s])) / sum(irate(envoy_cluster_upstream_rq{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-canary\"}[30s]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -407,7 +407,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "(sum(rate(envoy_cluster_upstream_cx_rx_bytes_total{kubernetes_namespace=~\"$namespace\",app=~\"$primary\"}[30s])))",
+          "expr": "(sum(rate(envoy_cluster_upstream_cx_rx_bytes_total{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-primary\"}[30s])))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -497,7 +497,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "(sum(rate(envoy_cluster_upstream_cx_rx_bytes_total{kubernetes_namespace=~\"$namespace\",app=~\"$canary\"}[30s])))",
+          "expr": "(sum(rate(envoy_cluster_upstream_cx_rx_bytes_total{kubernetes_namespace=~\"$namespace\",envoy_cluster_name=~\"$target-canary\"}[30s])))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -547,7 +547,7 @@
       }
     },
     {
-      "content": "<div class=\"dashboard-header text-center\">\n<span>USE: $canary.$namespace</span>\n</div>",
+      "content": "<div class=\"dashboard-header text-center\">\n<span>USE: $target.$namespace</span>\n</div>",
       "gridPos": {
         "h": 3,
         "w": 24,
@@ -602,7 +602,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$primary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$target-primary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -692,7 +692,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$canary.*\", pod_name!~\"$primary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{cpu=\"total\",namespace=\"$namespace\",pod_name=~\"$target.*\", pod_name!~\"$target-primary.*\", container_name!~\"POD|istio-proxy\"}[1m])) by (pod_name)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -782,7 +782,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$primary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
+          "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$target-primary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -874,7 +874,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$canary.*\", pod_name!~\"$primary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
+          "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",pod_name=~\"$target.*\", pod_name!~\"$target-primary.*\", container_name!~\"POD|istio-proxy\"}) by (pod_name)",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -975,14 +975,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$primary.*\"}[1m])) ",
+          "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$target-primary.*\"}[1m])) ",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "received",
           "refId": "A"
         },
         {
-          "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$primary.*\"}[1m]))",
+          "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$target-primary.*\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "transmited",
@@ -1081,14 +1081,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\",pod_name!~\"$primary.*\"}[1m])) ",
+          "expr": "sum(rate (container_network_receive_bytes_total{namespace=\"$namespace\",pod_name=~\"$target.*\",pod_name!~\"$target-primary.*\"}[1m])) ",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "received",
           "refId": "A"
         },
         {
-          "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$canary.*\",pod_name!~\"$primary.*\"}[1m]))",
+          "expr": "-sum (rate (container_network_transmit_bytes_total{namespace=\"$namespace\",pod_name=~\"$target.*\",pod_name!~\"$target-primary.*\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "transmited",
@@ -1170,38 +1170,16 @@
         "allValue": null,
         "current": null,
         "datasource": "prometheus",
-        "definition": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app=~\".*-primary\"}) by (app))",
+        "definition": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",envoy_cluster_name=~\".*-primary\"}) by (envoy_cluster_name))",
         "hide": 0,
         "includeAll": false,
-        "label": "Primary",
+        "label": "Target",
         "multi": false,
-        "name": "primary",
+        "name": "target",
         "options": [],
-        "query": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app=~\".*-primary\"}) by (app))",
+        "query": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",envoy_cluster_name=~\".*-primary\"}) by (envoy_cluster_name))",
         "refresh": 1,
-        "regex": "/.*app=\"([^\"]*).*/",
-        "skipUrlSync": false,
-        "sort": 1,
-        "tagValuesQuery": "",
-        "tags": [],
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "allValue": null,
-        "current": null,
-        "datasource": "prometheus",
-        "definition": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app!~\".*-primary\"}) by (app))",
-        "hide": 0,
-        "includeAll": false,
-        "label": "Canary",
-        "multi": false,
-        "name": "canary",
-        "options": [],
-        "query": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",app!~\".*-primary\"}) by (app))",
-        "refresh": 1,
-        "regex": "/.*app=\"([^\"]*).*/",
+        "regex": "/.*envoy_cluster_name=\"(.*)-primary\"/",
         "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
@@ -1244,5 +1222,5 @@
   "timezone": "",
   "title": "Envoy Canary",
   "uid": "flagger-envoy",
-  "version": 4
+  "version": 6
 }
