@@ -20,6 +20,9 @@ helm repo add crossover https://mumoshu.github.io/crossover
 helm upgrade --install envoy crossover/envoy \
   --namespace test \
   -f <(cat <<EOF
+smi:
+  apiVersions:
+    trafficSplits: v1alpha1
 services:
   podinfo:
     smi:
