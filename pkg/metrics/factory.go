@@ -46,7 +46,11 @@ func (factory Factory) Observer(provider string) Interface {
 		return &GlooObserver{
 			client: factory.Client,
 		}
-	case provider == "appmesh:service", provider == "envoy:service":
+	case provider == "smi:linkerd":
+		return &LinkerdObserver{
+			client: factory.Client,
+		}
+	case provider == "crossover:service":
 		return &CrossoverServiceObserver{
 			client: factory.Client,
 		}
