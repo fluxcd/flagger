@@ -146,7 +146,7 @@ spec:
       url: http://flagger-loadtester.test/
       timeout: 5s
       metadata:
-        cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
+        cmd: "hey -z 1m -q 10 -c 2 http://envoy.test:10000/"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
@@ -282,13 +282,13 @@ kubectl -n test exec -it deploy/flagger-loadtester bash
 Generate HTTP 500 errors:
 
 ```bash
-hey -z 1m -c 5 -q 5 http://podinfo-canary.test:9898/status/500
+hey -z 1m -c 5 -q 5 http://envoy.test:10000/status/500
 ```
 
 Generate latency:
 
 ```bash
-watch -n 1 curl http://podinfo-canary.test:9898/delay/1
+watch -n 1 curl http://envoy.test:10000/delay/1
 ```
 
 When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
