@@ -1,6 +1,8 @@
-# Envoy Canary Deployments
+# Envoy/Crossover Canary Deployments
 
-This guide shows you how to use Envoy and Flagger to automate canary deployments.
+This guide shows you how to use Envoy, [Crossover](https://github.com/mumoshu/crossover) and Flagger to automate canary deployments.
+
+Crossover is a minimal Envoy xDS implementation supports [Service Mesh Interface](https://smi-spec.io/).
 
 ### Prerequisites
 
@@ -12,7 +14,7 @@ Create a test namespace:
 kubectl create ns test
 ```
 
-Install Envoy along with the sidecar with Helm:
+Install Envoy along with the Crossover sidecar with Helm:
 
 ```bash
 helm repo add crossover https://mumoshu.github.io/crossover
@@ -23,7 +25,7 @@ helm upgrade --install envoy crossover/envoy \
 smi:
   apiVersions:
     trafficSplits: v1alpha1
-services:
+upstreams:
   podinfo:
     smi:
       enabled: true
@@ -46,7 +48,7 @@ helm repo add flagger https://flagger.app
 helm upgrade -i flagger flagger/flagger \
 --namespace test \
 --set prometheus.install=true \
---set meshProvider=smi:envoy
+--set meshProvider=smi:crossover
 ```
 
 Optionally you can enable Slack notifications:
@@ -90,7 +92,7 @@ metadata:
   namespace: test
 spec:
   # specify mesh provider if it isn't the default one
-  # provider: "smi:envoy"
+  # provider: "smi:crossover"
   # deployment reference
   targetRef:
     apiVersion: apps/v1
@@ -146,7 +148,7 @@ spec:
       url: http://flagger-loadtester.test/
       timeout: 5s
       metadata:
-        cmd: "hey -z 1m -q 10 -c 2 http://envoy.test:10000/"
+        cmd: "hey -z 1m -q 10 -c 2 -H 'Host: podinfo.test' http://envoy.test:10000/"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
@@ -282,13 +284,13 @@ kubectl -n test exec -it deploy/flagger-loadtester bash
 Generate HTTP 500 errors:
 
 ```bash
-hey -z 1m -c 5 -q 5 http://envoy.test:10000/status/500
+hey -z 1m -c 5 -q 5 -H 'Host: podinfo.test' http://envoy.test:10000/status/500
 ```
 
 Generate latency:
 
 ```bash
-watch -n 1 curl http://envoy.test:10000/delay/1
+watch -n 1 curl -H 'Host: podinfo.test' http://envoy.test:10000/delay/1
 ```
 
 When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 

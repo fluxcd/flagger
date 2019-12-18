@@ -30,8 +30,12 @@ func (factory Factory) Observer(provider string) Interface {
 		return &HttpObserver{
 			client: factory.Client,
 		}
-	case provider == "appmesh", provider == "envoy":
-		return &EnvoyObserver{
+	case provider == "appmesh":
+		return &AppMeshObserver{
+			client: factory.Client,
+		}
+	case provider == "crossover":
+		return &CrossoverObserver{
 			client: factory.Client,
 		}
 	case provider == "nginx":
@@ -43,7 +47,7 @@ func (factory Factory) Observer(provider string) Interface {
 			client: factory.Client,
 		}
 	case provider == "appmesh:service", provider == "envoy:service":
-		return &EnvoyServiceObserver{
+		return &CrossoverServiceObserver{
 			client: factory.Client,
 		}
 	case provider == "linkerd":

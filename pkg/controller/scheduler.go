@@ -748,10 +748,10 @@ func (c *Controller) analyseCanary(r *flaggerv1.Canary) bool {
 
 	// override the global provider if one is specified in the canary spec
 	var metricsProvider string
-	// set the metrics provider to Envoy Prometheus when Envoy is the mesh provider
-	// For example, `envoy` metrics provider should be used for `smi:envoy` mesh provider
-	if strings.Contains(c.meshProvider, "envoy") {
-		metricsProvider = "envoy"
+	// set the metrics provider to Crossover Prometheus when Crossover is the mesh provider
+	// For example, `crossover` metrics provider should be used for `smi:crossover` mesh provider
+	if strings.Contains(c.meshProvider, "crossover") {
+		metricsProvider = "crossover"
 	} else {
 		metricsProvider = c.meshProvider
 	}

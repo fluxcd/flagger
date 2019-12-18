@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestEnvoyServiceObserver_GetRequestSuccessRate(t *testing.T) {
+func TestCrossoverServiceObserver_GetRequestSuccessRate(t *testing.T) {
 	expected := ` sum( rate( envoy_cluster_upstream_rq{ kubernetes_namespace="default", envoy_cluster_name="podinfo-canary", envoy_response_code!~"5.*" }[1m] ) ) / sum( rate( envoy_cluster_upstream_rq{ kubernetes_namespace="default", envoy_cluster_name="podinfo-canary" }[1m] ) ) * 100`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func TestEnvoyServiceObserver_GetRequestSuccessRate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	observer := &EnvoyServiceObserver{
+	observer := &CrossoverServiceObserver{
 		client: client,
 	}
 
@@ -40,7 +40,7 @@ func TestEnvoyServiceObserver_GetRequestSuccessRate(t *testing.T) {
 	}
 }
 
-func TestEnvoyServiceObserver_GetRequestDuration(t *testing.T) {
+func TestCrossoverServiceObserver_GetRequestDuration(t *testing.T) {
 	expected := ` histogram_quantile( 0.99, sum( rate( envoy_cluster_upstream_rq_time_bucket{ kubernetes_namespace="default", envoy_cluster_name="podinfo-canary" }[1m] ) ) by (le) )`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,7 @@ func TestEnvoyServiceObserver_GetRequestDuration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	observer := &EnvoyServiceObserver{
+	observer := &CrossoverServiceObserver{
 		client: client,
 	}
 

@@ -41,7 +41,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
   * [Linkerd canary deployments](https://docs.flagger.app/usage/linkerd-progressive-delivery)
   * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
-  * [Envoy canary deployments](https://docs.flagger.app/usage/envoy-progressive-delivery)
+  * [Crossover canary deployments](https://docs.flagger.app/usage/crossover-progressive-delivery)
   * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
   * [Gloo ingress controller canary deployments](https://docs.flagger.app/usage/gloo-progressive-delivery)
   * [Blue/Green deployments](https://docs.flagger.app/usage/blue-green)
