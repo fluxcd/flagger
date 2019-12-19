@@ -99,3 +99,100 @@ func TestContourRouter_Reconcile(t *testing.T) {
 		t.Errorf("Route header condition is %v wanted %v", header, "test")
 	}
 }
+
+func TestContourRouter_Routes(t *testing.T) {
+	mocks := setupfakeClients()
+	router := &ContourRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		contourClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	// init
+	err := router.Reconcile(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// test set routers
+	err = router.SetRoutes(mocks.canary, 50, 50, false)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	proxy, err := router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	primary := proxy.Spec.Routes[0].Services[0]
+	if primary.Weight != 50 {
+		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 50)
+	}
+
+	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// test get routers
+	_, cw, _, err := router.GetRoutes(cd)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if cw != 50 {
+		t.Errorf("Got canary weight %v wanted %v", cw, 50)
+	}
+
+	// test update to A/B
+	cdClone := cd.DeepCopy()
+	cdClone.Spec.CanaryAnalysis.Iterations = 5
+	cdClone.Spec.CanaryAnalysis.Match = newMockABTest().Spec.CanaryAnalysis.Match
+	canary, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cdClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = router.Reconcile(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	proxy, err = router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	primary = proxy.Spec.Routes[0].Services[0]
+	if primary.Weight != 100 {
+		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 100)
+	}
+
+	primary = proxy.Spec.Routes[1].Services[0]
+	if primary.Weight != 100 {
+		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 100)
+	}
+
+	// test set routers for A/B
+	err = router.SetRoutes(canary, 0, 100, false)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	proxy, err = router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	primary = proxy.Spec.Routes[0].Services[0]
+	if primary.Weight != 0 {
+		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 0)
+	}
+
+	primary = proxy.Spec.Routes[1].Services[0]
+	if primary.Weight != 100 {
+		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 100)
+	}
+}
