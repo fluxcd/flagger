@@ -49,7 +49,8 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						Port:   int(canary.Spec.Service.Port),
 						Weight: uint32(0),
 					},
-				}},
+				},
+			},
 		},
 	}
 
@@ -68,6 +69,10 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 				},
 			},
 			Spec: newSpec,
+			Status: contourv1.Status{
+				CurrentStatus: "valid",
+				Description:   "valid HTTPProxy",
+			},
 		}
 
 		_, err = cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Create(proxy)
