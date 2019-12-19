@@ -39,7 +39,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 		t.Errorf("Canary weight should is %v wanted 0", services[0].Weight)
 	}
 
-	// test port update
+	// test update
 	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
@@ -47,6 +47,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 
 	cdClone := cd.DeepCopy()
 	cdClone.Spec.Service.Port = 8080
+	cdClone.Spec.Service.Timeout = "1m"
 	canary, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cdClone)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -64,9 +65,23 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	}
 
 	port := proxy.Spec.Routes[0].Services[0].Port
-
 	if port != 8080 {
 		t.Errorf("Service port is %v wanted %v", port, 8080)
+	}
+
+	timeout := proxy.Spec.Routes[0].TimeoutPolicy.Response
+	if timeout != "1m" {
+		t.Errorf("HTTPProxy timeout is %v wanted %v", timeout, "1m")
+	}
+
+	prefix := proxy.Spec.Routes[0].Conditions[0].Prefix
+	if prefix != "/podinfo" {
+		t.Errorf("HTTPProxy prefix is %v wanted %v", prefix, "podinfo")
+	}
+
+	retry := proxy.Spec.Routes[0].RetryPolicy.NumRetries
+	if retry != 10 {
+		t.Errorf("HTTPProxy NumRetries is %v wanted %v", retry, 10)
 	}
 
 	// test headers update

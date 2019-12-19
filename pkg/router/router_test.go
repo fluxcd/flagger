@@ -128,6 +128,15 @@ func newMockCanary() *flaggerv1.Canary {
 						"POST",
 					},
 				},
+				Match: []istiov1alpha3.HTTPMatchRequest{
+					{Uri: &istiov1alpha1.StringMatch{
+						Prefix: "/podinfo",
+					}},
+				},
+				Retries: &istiov1alpha3.HTTPRetry{
+					Attempts:      10,
+					PerTryTimeout: "30s",
+				},
 			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
