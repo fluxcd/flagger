@@ -35,7 +35,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 			{
 				Conditions: []contourv1.Condition{
 					{
-						Prefix: "/",
+						Prefix: cr.makePrefix(canary),
 					},
 				},
 				TimeoutPolicy: cr.makeTimeoutPolicy(canary),
@@ -79,7 +79,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 				{
 					Conditions: []contourv1.Condition{
 						{
-							Prefix: "/",
+							Prefix: cr.makePrefix(canary),
 						},
 					},
 					TimeoutPolicy: cr.makeTimeoutPolicy(canary),
@@ -222,7 +222,7 @@ func (cr *ContourRouter) SetRoutes(
 			{
 				Conditions: []contourv1.Condition{
 					{
-						Prefix: "/",
+						Prefix: cr.makePrefix(canary),
 					},
 				},
 				TimeoutPolicy: cr.makeTimeoutPolicy(canary),
@@ -246,7 +246,7 @@ func (cr *ContourRouter) SetRoutes(
 		proxy.Spec = contourv1.HTTPProxySpec{
 			Routes: []contourv1.Route{
 				{
-					Conditions: cr.makeConditions(canary),
+					Conditions:    cr.makeConditions(canary),
 					TimeoutPolicy: cr.makeTimeoutPolicy(canary),
 					RetryPolicy:   cr.makeRetryPolicy(canary),
 					Services: []contourv1.Service{
@@ -265,7 +265,7 @@ func (cr *ContourRouter) SetRoutes(
 				{
 					Conditions: []contourv1.Condition{
 						{
-							Prefix: "/",
+							Prefix: cr.makePrefix(canary),
 						},
 					},
 					TimeoutPolicy: cr.makeTimeoutPolicy(canary),
@@ -294,6 +294,18 @@ func (cr *ContourRouter) SetRoutes(
 	return nil
 }
 
+func (cr *ContourRouter) makePrefix(canary *flaggerv1.Canary) string {
+	prefix := "/"
+
+	if len(canary.Spec.Service.Match) > 0 &&
+		canary.Spec.Service.Match[0].Uri != nil &&
+		canary.Spec.Service.Match[0].Uri.Prefix != "" {
+		prefix = canary.Spec.Service.Match[0].Uri.Prefix
+	}
+
+	return prefix
+}
+
 func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Condition {
 	list := []contourv1.Condition{}
 
@@ -316,13 +328,16 @@ func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Co
 						Contains: stringMatch.Prefix,
 					}
 				}
-				list = append(list, contourv1.Condition{Prefix: "/", Header: h})
+				list = append(list, contourv1.Condition{
+					Prefix: cr.makePrefix(canary),
+					Header: h,
+				})
 			}
 		}
 	} else {
 		list = []contourv1.Condition{
 			{
-				Prefix: "/",
+				Prefix: cr.makePrefix(canary),
 			},
 		}
 	}
