@@ -38,6 +38,8 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						Prefix: "/",
 					},
 				},
+				TimeoutPolicy: cr.makeTimeoutPolicy(canary),
+				RetryPolicy:   cr.makeRetryPolicy(canary),
 				Services: []contourv1.Service{
 					{
 						Name:   primaryName,
@@ -58,7 +60,9 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 		newSpec = contourv1.HTTPProxySpec{
 			Routes: []contourv1.Route{
 				{
-					Conditions: cr.makeConditions(canary),
+					Conditions:    cr.makeConditions(canary),
+					TimeoutPolicy: cr.makeTimeoutPolicy(canary),
+					RetryPolicy:   cr.makeRetryPolicy(canary),
 					Services: []contourv1.Service{
 						{
 							Name:   primaryName,
@@ -78,6 +82,8 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 							Prefix: "/",
 						},
 					},
+					TimeoutPolicy: cr.makeTimeoutPolicy(canary),
+					RetryPolicy:   cr.makeRetryPolicy(canary),
 					Services: []contourv1.Service{
 						{
 							Name:   primaryName,
@@ -219,6 +225,8 @@ func (cr *ContourRouter) SetRoutes(
 						Prefix: "/",
 					},
 				},
+				TimeoutPolicy: cr.makeTimeoutPolicy(canary),
+				RetryPolicy:   cr.makeRetryPolicy(canary),
 				Services: []contourv1.Service{
 					{
 						Name:   primaryName,
@@ -239,6 +247,8 @@ func (cr *ContourRouter) SetRoutes(
 			Routes: []contourv1.Route{
 				{
 					Conditions: cr.makeConditions(canary),
+					TimeoutPolicy: cr.makeTimeoutPolicy(canary),
+					RetryPolicy:   cr.makeRetryPolicy(canary),
 					Services: []contourv1.Service{
 						{
 							Name:   primaryName,
@@ -258,6 +268,8 @@ func (cr *ContourRouter) SetRoutes(
 							Prefix: "/",
 						},
 					},
+					TimeoutPolicy: cr.makeTimeoutPolicy(canary),
+					RetryPolicy:   cr.makeRetryPolicy(canary),
 					Services: []contourv1.Service{
 						{
 							Name:   primaryName,
@@ -316,4 +328,23 @@ func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Co
 	}
 
 	return list
+}
+
+func (cr *ContourRouter) makeTimeoutPolicy(canary *flaggerv1.Canary) *contourv1.TimeoutPolicy {
+	if canary.Spec.Service.Timeout != "" {
+		return &contourv1.TimeoutPolicy{
+			Response: canary.Spec.Service.Timeout,
+		}
+	}
+	return nil
+}
+
+func (cr *ContourRouter) makeRetryPolicy(canary *flaggerv1.Canary) *contourv1.RetryPolicy {
+	if canary.Spec.Service.Retries != nil {
+		return &contourv1.RetryPolicy{
+			NumRetries:    uint32(canary.Spec.Service.Retries.Attempts),
+			PerTryTimeout: canary.Spec.Service.Retries.PerTryTimeout,
+		}
+	}
+	return nil
 }
