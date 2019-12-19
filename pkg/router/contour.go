@@ -54,6 +54,47 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 		},
 	}
 
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+		newSpec = contourv1.HTTPProxySpec{
+			Routes: []contourv1.Route{
+				{
+					Conditions: cr.makeConditions(canary),
+					Services: []contourv1.Service{
+						{
+							Name:   primaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(100),
+						},
+						{
+							Name:   canaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(0),
+						},
+					},
+				},
+				{
+					Conditions: []contourv1.Condition{
+						{
+							Prefix: "/",
+						},
+					},
+					Services: []contourv1.Service{
+						{
+							Name:   primaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(100),
+						},
+						{
+							Name:   canaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(0),
+						},
+					},
+				},
+			},
+		}
+	}
+
 	proxy, err := cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Get(targetName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		proxy = &contourv1.HTTPProxy{
@@ -193,9 +234,84 @@ func (cr *ContourRouter) SetRoutes(
 		},
 	}
 
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+		proxy.Spec = contourv1.HTTPProxySpec{
+			Routes: []contourv1.Route{
+				{
+					Conditions: cr.makeConditions(canary),
+					Services: []contourv1.Service{
+						{
+							Name:   primaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(primaryWeight),
+						},
+						{
+							Name:   canaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(canaryWeight),
+						},
+					},
+				},
+				{
+					Conditions: []contourv1.Condition{
+						{
+							Prefix: "/",
+						},
+					},
+					Services: []contourv1.Service{
+						{
+							Name:   primaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(100),
+						},
+						{
+							Name:   canaryName,
+							Port:   int(canary.Spec.Service.Port),
+							Weight: uint32(0),
+						},
+					},
+				},
+			},
+		}
+	}
+
 	_, err = cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Update(proxy)
 	if err != nil {
 		return fmt.Errorf("HTTPProxy %s.%s update error %v", targetName, canary.Namespace, err)
 	}
 	return nil
+}
+
+func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Condition {
+	list := []contourv1.Condition{
+		{
+			Prefix: "/",
+		},
+	}
+
+	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+		for _, match := range canary.Spec.CanaryAnalysis.Match {
+			for s, stringMatch := range match.Headers {
+				h := &contourv1.HeaderCondition{
+					Name:  s,
+					Exact: stringMatch.Exact,
+				}
+				if stringMatch.Suffix != "" {
+					h = &contourv1.HeaderCondition{
+						Name:     s,
+						Contains: stringMatch.Suffix,
+					}
+				}
+				if stringMatch.Prefix != "" {
+					h = &contourv1.HeaderCondition{
+						Name:     s,
+						Contains: stringMatch.Prefix,
+					}
+				}
+				list = append(list, contourv1.Condition{Header: h})
+			}
+		}
+	}
+
+	return list
 }
