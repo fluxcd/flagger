@@ -283,11 +283,7 @@ func (cr *ContourRouter) SetRoutes(
 }
 
 func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Condition {
-	list := []contourv1.Condition{
-		{
-			Prefix: "/",
-		},
-	}
+	list := []contourv1.Condition{}
 
 	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
 		for _, match := range canary.Spec.CanaryAnalysis.Match {
@@ -308,8 +304,14 @@ func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Co
 						Contains: stringMatch.Prefix,
 					}
 				}
-				list = append(list, contourv1.Condition{Header: h})
+				list = append(list, contourv1.Condition{Prefix: "/", Header: h})
 			}
+		}
+	} else {
+		list = []contourv1.Condition{
+			{
+				Prefix: "/",
+			},
 		}
 	}
 
