@@ -9,4 +9,3 @@ cp /tmp/bin/flagger ${REPO_ROOT}/bin && chmod +x ${REPO_ROOT}/bin/flagger
 cp /tmp/bin/loadtester ${REPO_ROOT}/bin && chmod +x ${REPO_ROOT}/bin/loadtester
 
 docker build -t test/flagger:latest . -f ${REPO_ROOT}/Dockerfile
-docker build -t test/flagger-loadtester:latest . -f ${REPO_ROOT}/Dockerfile.loadtester

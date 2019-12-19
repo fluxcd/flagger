@@ -150,6 +150,17 @@ jobs:
       - run: test/e2e-linkerd.sh
       - run: test/e2e-linkerd-tests.sh
 
+  e2e-contour-testing:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: test/container-build.sh
+      - run: test/e2e-kind.sh
+      - run: test/e2e-contour.sh
+      - run: test/e2e-contour-tests.sh
+
   push-helm-charts:
     docker:
       - image: circleci/golang:1.13
@@ -213,6 +224,9 @@ workflows:
           requires:
             - build-binary
       - e2e-linkerd-testing:
+          requires:
+            - build-binary
+      - e2e-contour-testing:
           requires:
             - build-binary
       - push-container:
