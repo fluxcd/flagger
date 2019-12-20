@@ -1,4 +1,4 @@
-namespace: flagger-system
+namespace: projectcontour
 resources:
   - namespace.yaml
 bases:
