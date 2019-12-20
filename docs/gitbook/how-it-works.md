@@ -386,7 +386,7 @@ sum(
 )
 ```
 
-Envoy query (App Mesh or Gloo):
+Envoy query (App Mesh, Contour or Gloo):
 
 ```javascript
 sum(
@@ -439,7 +439,7 @@ histogram_quantile(0.99,
 )
 ```
 
-Envoy query (App Mesh or Gloo):
+Envoy query (App Mesh, Contour or Gloo):
 
 ```javascript
 histogram_quantile(0.99, 

@@ -6,13 +6,13 @@
 
 Flagger can run automated application analysis, promotion and rollback for the following deployment strategies:
 * Canary (progressive traffic shifting)
-    * Istio, Linkerd, App Mesh, NGINX, Gloo
+    * Istio, Linkerd, App Mesh, NGINX, Contour, Gloo
 * Canary (traffic mirroring)
     * Istio
 * A/B Testing (HTTP headers and cookies traffic routing)
-    * Istio, App Mesh, NGINX
+    * Istio, App Mesh, NGINX, Contour
 * Blue/Green (traffic switch)
-    * Kubernetes CNI, Istio, Linkerd, App Mesh, NGINX, Gloo
+    * Kubernetes CNI, Istio, Linkerd, App Mesh, NGINX, Contour, Gloo
 
 For Canary deployments and A/B testing you'll need a Layer 7 traffic management solution like a service mesh or an ingress controller.
 For Blue/Green deployments no service mesh or ingress controller is required.
@@ -57,6 +57,21 @@ App Mesh example:
 ```
 
 Note that App Mesh supports a single condition.
+
+Contour example:
+
+```yaml
+  canaryAnalysis:
+    interval: 1m
+    threshold: 10
+    iterations: 2
+    match:
+      - headers:
+          user-agent:
+            prefix: "Chrome"
+```
+
+Note that Contour does not support regex, you can use prefix, suffix or exact.
 
 NGINX example:
 

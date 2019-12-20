@@ -7,7 +7,7 @@
 [![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
 
 Flagger is a Kubernetes operator that automates the promotion of canary deployments
-using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis.
+using Istio, Linkerd, App Mesh, NGINX, Contour or Gloo routing for traffic shifting and Prometheus metrics for canary analysis.
 The canary analysis can be extended with webhooks for running acceptance tests,
 load tests or any other custom validation.
 
@@ -69,7 +69,7 @@ metadata:
   namespace: test
 spec:
   # service mesh provider (optional)
-  # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo, supergloo
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, contour, gloo, supergloo
   provider: istio
   # deployment reference
   targetRef:
@@ -150,21 +150,21 @@ For more details on how the canary analysis and promotion works please [read the
 
 ## Features
 
-| Feature                                      | Istio              | Linkerd            | App Mesh           | NGINX              | Gloo               | Kubernetes CNI     |
-| -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |------------------  |------------------  |
-| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| A/B testing (headers and cookies routing)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Blue/Green deployments (traffic switch)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Manual gating (approve/pause/resume)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Feature                                      | Istio              | Linkerd            | App Mesh           | NGINX              | Gloo               | Contour            | CNI                |
+| -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |------------------  |------------------  |------------------  |
+| Canary deployments (weighted traffic)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| A/B testing (headers and cookies routing)    | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Webhooks (acceptance/load testing)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| Request duration check (L7 metric)           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: |
 
 ## Roadmap
 
-* Integrate with other ingress controllers like Contour, HAProxy, ALB
+* Integrate with other service mesh like Consul Connect and ingress controllers like HAProxy, ALB
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
 ## Contributing
@@ -175,9 +175,9 @@ When submitting bug reports please include as much details as possible:
 
 * which Flagger version
 * which Flagger CRD version
-* which Kubernetes/Istio version
-* what configuration (canary, virtual service and workloads definitions)
-* what happened (Flagger, Istio Pilot and Proxy logs)
+* which Kubernetes version
+* what configuration (canary, ingress and workloads definitions)
+* what happened (Flagger and Proxy logs)
 
 ## Getting Help
 
