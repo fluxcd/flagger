@@ -349,6 +349,7 @@ func (cr *ContourRouter) makeTimeoutPolicy(canary *flaggerv1.Canary) *contourv1.
 	if canary.Spec.Service.Timeout != "" {
 		return &contourv1.TimeoutPolicy{
 			Response: canary.Spec.Service.Timeout,
+			Idle:     "5m",
 		}
 	}
 	return nil
