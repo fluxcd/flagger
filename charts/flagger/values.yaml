@@ -33,6 +33,12 @@ msteams:
   # MS Teams incoming webhook URL
   url:
 
+podMonitor:
+  enabled: false
+  namespace:
+  interval: 15s
+  additionalLabels: {}
+
 #env:
 #- name: SLACK_URL
 #  valueFrom:
