@@ -84,6 +84,10 @@ Parameter | Description | Default
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`
 `msteams.url` | Microsoft Teams incoming webhook | None
+`podMonitor.enabled` | if `true`, create a PodMonitor for [monitoring the metrics](https://docs.flagger.app/usage/monitoring#metrics) | `false`
+`podMonitor.namespace` | the namespace where the PodMonitor is created | the same namespace 
+`podMonitor.interval` | interval at which metrics should be scraped | `15s` 
+`podMonitor.podMonitor` | additional labels to add to the PodMonitor | `{}`
 `leaderElection.enabled` | leader election must be enabled when running more than one replica | `false`
 `leaderElection.replicaCount` | number of replicas | `1`
 `ingressAnnotationsPrefix` | annotations prefix for ingresses | `custom.ingress.kubernetes.io`
