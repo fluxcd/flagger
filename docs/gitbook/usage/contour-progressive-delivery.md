@@ -210,6 +210,10 @@ podinfo-ingress   app.example.com     valid
 
 Now you can access podinfo UI using your domain address.
 
+Note that you should be using HTTPS when exposing production workloads on internet.
+You can obtain free TLS certs from Let's Encrypt, read this [guide](https://github.com/stefanprodan/eks-envoy-ingress)
+on how to configure cert-manager to secure Contour with TLS certificates.
+
 ### Automated canary promotion
 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
