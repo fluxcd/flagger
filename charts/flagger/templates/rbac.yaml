@@ -77,6 +77,11 @@ rules:
       - virtualservices
       - gateways
     verbs: ["*"]
+  - apiGroups:
+      - projectcontour.io
+    resources:
+      - httpproxies
+    verbs: ["*"]
   - nonResourceURLs:
       - /version
     verbs:

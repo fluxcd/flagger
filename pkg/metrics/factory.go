@@ -58,6 +58,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &LinkerdObserver{
 			client: factory.Client,
 		}
+	case provider == "contour":
+		return &ContourObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,

@@ -28,6 +28,8 @@ import (
 	fakegloov1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/gloo/v1/fake"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	fakenetworkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
+	projectcontourv1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
+	fakeprojectcontourv1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1/fake"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
 	fakesplitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -102,6 +104,11 @@ func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
 // NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
 func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface {
 	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
+}
+
+// ProjectcontourV1 retrieves the ProjectcontourV1Client
+func (c *Clientset) ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface {
+	return &fakeprojectcontourv1.FakeProjectcontourV1{Fake: &c.Fake}
 }
 
 // SplitV1alpha1 retrieves the SplitV1alpha1Client

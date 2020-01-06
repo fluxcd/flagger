@@ -41,6 +41,14 @@ If you want to install a specific Flagger release, add the version number to the
 kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd?ref=0.18.0
 ```
 
+Install Flagger for Contour:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger//kustomize/contour
+```
+
+This deploys Flagger and Prometheus in the `projectcontour` namespace and sets Prometheus to scrape Contour's Envoy instances.
+
 ## Generic installer
 
 Install Flagger and Prometheus:

@@ -93,6 +93,13 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			smiClient:     factory.meshClient,
 			targetMesh:    "linkerd",
 		}
+	case provider == "contour":
+		return &ContourRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			contourClient: factory.meshClient,
+		}
 	case strings.HasPrefix(provider, "gloo"):
 		upstreamDiscoveryNs := "gloo-system"
 		if strings.HasPrefix(provider, "gloo:") {
