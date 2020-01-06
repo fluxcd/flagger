@@ -83,6 +83,7 @@ Parameter | Description | Default
 `slack.url` | Slack incoming webhook | None
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`
+`eventWebhook` | If set, Flagger will publish events to the given webhook | None
 `msteams.url` | Microsoft Teams incoming webhook | None
 `podMonitor.enabled` | if `true`, create a PodMonitor for [monitoring the metrics](https://docs.flagger.app/usage/monitoring#metrics) | `false`
 `podMonitor.namespace` | the namespace where the PodMonitor is created | the same namespace 

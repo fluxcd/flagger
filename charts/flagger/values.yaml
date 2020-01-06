@@ -29,6 +29,9 @@ slack:
   # incoming webhook https://api.slack.com/incoming-webhooks
   url:
 
+# when specified, flagger will publish events to the provided webhook
+eventWebhook: ""
+
 msteams:
   # MS Teams incoming webhook URL
   url:
