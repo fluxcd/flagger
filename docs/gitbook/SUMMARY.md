@@ -19,6 +19,8 @@
 * [App Mesh Canary Deployments](usage/appmesh-progressive-delivery.md)
 * [NGINX Canary Deployments](usage/nginx-progressive-delivery.md)
 * [Gloo Canary Deployments](usage/gloo-progressive-delivery.md)
+* [Contour Canary Deployments](usage/contour-progressive-delivery.md)
+* [Crossover Canary Deployments](usage/crossover-progressive-delivery.md)
 * [Blue/Green Deployments](usage/blue-green.md)
 * [Monitoring](usage/monitoring.md)
 * [Alerting](usage/alerting.md)

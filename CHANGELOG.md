@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.21.0 (2020-01-06) 
+
+Adds support for Contour ingress controller
+
+#### Features
+
+- Add support for Contour ingress controller [#397](https://github.com/weaveworks/flagger/pull/397)
+- Add support for Envoy managed by Crossover via SMI [#386](https://github.com/weaveworks/flagger/pull/386)
+- Extend canary target ref to Kubernetes Service kind [#372](https://github.com/weaveworks/flagger/pull/372)
+
+#### Improvements 
+
+- Add Prometheus operator PodMonitor template to Helm chart [#399](https://github.com/weaveworks/flagger/pull/399)
+- Update e2e tests to Kubernetes v1.16 [#390](https://github.com/weaveworks/flagger/pull/390)
+
 ## 0.20.4 (2019-12-03) 
 
 Adds support for taking over a running deployment without disruption
