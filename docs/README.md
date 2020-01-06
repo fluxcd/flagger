@@ -9,7 +9,7 @@ features:
 - title: Safer Releases
   details: Reduce the risk of introducing a new software version in production by gradually shifting traffic to the new version while measuring metrics like HTTP/gRPC request success rate and latency.
 - title: Flexible Traffic Routing
-  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like NGINX or Gloo.
+  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo or NGINX.
 - title:  Extensible Validation
   details: Besides the builtin metrics checks, you can extend your application analysis with custom Prometheus metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
 footer: Apache License 2.0 | Copyright © 2019 Weaveworks
@@ -33,15 +33,18 @@ Flagger can run automated application analysis, testing, promotion and rollback 
     * [Istio](https://docs.flagger.app/usage/progressive-delivery),
       [Linkerd](https://docs.flagger.app/usage/linkerd-progressive-delivery),
       [App Mesh](https://docs.flagger.app/usage/appmesh-progressive-delivery),
-      [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery),
-      [Gloo](https://docs.flagger.app/usage/gloo-progressive-delivery)
+      [Contour](https://docs.flagger.app/usage/contour-progressive-delivery),
+      [Gloo](https://docs.flagger.app/usage/gloo-progressive-delivery),
+      [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery)
+
 * **A/B Testing** (HTTP headers and cookies traffic routing)
     * [Istio](https://docs.flagger.app/usage/ab-testing),
       [App Mesh](hhttps://docs.flagger.app/usage/appmesh-progressive-delivery#a-b-testing),
-      [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery#a-b-testing)
+      [Contour](https://docs.flagger.app/usage/contour-progressive-delivery),
+      [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery)
 * **Blue/Green** (traffic switching)
     * [Kubernetes CNI](https://docs.flagger.app/usage/blue-green),
-      Istio, Linkerd, App Mesh, NGINX, Gloo
+      Istio, Linkerd, App Mesh, Contour, Gloo, NGINX 
 
 Flagger can be configured to send notifications to a
 [Slack](https://docs.flagger.app/usage/alerting#slack) or
