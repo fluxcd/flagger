@@ -7,6 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/reference"
+	"k8s.io/utils/clock"
 	"net/http"
 	"net/url"
 	"time"
@@ -14,25 +19,13 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 )
 
-// CallWebhook does a HTTP POST to an external service and
-// returns an error if the response status code is non-2xx
-func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w flaggerv1.CanaryWebhook) error {
-	payload := flaggerv1.CanaryWebhookPayload{
-		Name:      name,
-		Namespace: namespace,
-		Phase:     phase,
-	}
-
-	if w.Metadata != nil {
-		payload.Metadata = *w.Metadata
-	}
-
+func callWebhook(webhook string, payload interface{}, timeout string) error {
 	payloadBin, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	hook, err := url.Parse(w.URL)
+	hook, err := url.Parse(webhook)
 	if err != nil {
 		return err
 	}
@@ -44,16 +37,16 @@ func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w f
 
 	req.Header.Set("Content-Type", "application/json")
 
-	if len(w.Timeout) < 2 {
-		w.Timeout = "10s"
+	if timeout == "" {
+		timeout = "10s"
 	}
 
-	timeout, err := time.ParseDuration(w.Timeout)
+	t, err := time.ParseDuration(timeout)
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), timeout)
+	ctx, cancel := context.WithTimeout(req.Context(), t)
 	defer cancel()
 
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
@@ -72,4 +65,53 @@ func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w f
 	}
 
 	return nil
+}
+
+// CallWebhook does a HTTP POST to an external service and
+// returns an error if the response status code is non-2xx
+func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w flaggerv1.CanaryWebhook) error {
+	payload := flaggerv1.CanaryWebhookPayload{
+		Name:      name,
+		Namespace: namespace,
+		Phase:     phase,
+	}
+
+	if w.Metadata != nil {
+		payload.Metadata = *w.Metadata
+	}
+
+	if len(w.Timeout) < 2 {
+		w.Timeout = "10s"
+	}
+
+	return callWebhook(w.URL, payload, w.Timeout)
+}
+
+func CallEventWebhook(r *flaggerv1.Canary, webhook, message, eventtype string) error {
+	t := clock.RealClock{}.Now()
+	ref, err := reference.GetReference(scheme.Scheme, r)
+	if err != nil {
+		return err
+	}
+
+	namespace := ref.Namespace
+	if namespace == "" {
+		namespace = metav1.NamespaceDefault
+	}
+
+	event := v1.Event{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%v.%x", ref.Name, t.UnixNano()),
+			Namespace: namespace,
+		},
+		InvolvedObject: *ref,
+		Reason:         "Synced",
+		Message:        message,
+		Source: v1.EventSource{
+			Component: "flagger",
+		},
+		Type: eventtype,
+	}
+
+	return callWebhook(webhook, event, "5s")
 }
