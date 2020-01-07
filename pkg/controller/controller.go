@@ -247,10 +247,10 @@ func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flagge
 	return *roll, true
 }
 
-func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, template string, args []interface{}) {
+func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventtype, template string, args []interface{}) {
 	if c.eventWebhook != "" {
 		c.logger.Info(fmt.Sprintf(template, args...))
-		err := CallEventWebhook(r, c.eventWebhook, fmt.Sprintf(template, args...), corev1.EventTypeNormal)
+		err := CallEventWebhook(r, c.eventWebhook, fmt.Sprintf(template, args...), eventtype)
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
 		}
@@ -260,19 +260,19 @@ func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, template string, ar
 func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
-	c.sendEventToWebhook(r, template, args)
+	c.sendEventToWebhook(r, corev1.EventTypeNormal, template, args)
 }
 
 func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
-	c.sendEventToWebhook(r, template, args)
+	c.sendEventToWebhook(r, corev1.EventTypeWarning, template, args)
 }
 
 func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
 	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
-	c.sendEventToWebhook(r, template, args)
+	c.sendEventToWebhook(r, corev1.EventTypeWarning, template, args)
 }
 
 func (c *Controller) sendNotification(cd *flaggerv1.Canary, message string, metadata bool, warn bool) {
