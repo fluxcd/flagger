@@ -249,7 +249,6 @@ func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flagge
 
 func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, template string, args []interface{}) {
 	if c.eventWebhook != "" {
-		c.logger.Info(fmt.Sprintf(template, args...))
 		err := CallEventWebhook(r, c.eventWebhook, fmt.Sprintf(template, args...), corev1.EventTypeNormal)
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
