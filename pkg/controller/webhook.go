@@ -7,13 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/reference"
 	"k8s.io/utils/clock"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
@@ -89,29 +86,17 @@ func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w f
 
 func CallEventWebhook(r *flaggerv1.Canary, webhook, message, eventtype string) error {
 	t := clock.RealClock{}.Now()
-	ref, err := reference.GetReference(scheme.Scheme, r)
-	if err != nil {
-		return err
-	}
 
-	namespace := ref.Namespace
-	if namespace == "" {
-		namespace = metav1.NamespaceDefault
-	}
-
-	event := v1.Event{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%v.%x", ref.Name, t.UnixNano()),
-			Namespace: namespace,
+	payload := flaggerv1.CanaryWebhookPayload{
+		Name:      r.Name,
+		Namespace: r.Namespace,
+		Phase:     r.Status.Phase,
+		Metadata: map[string]string{
+			"eventMessage": message,
+			"eventType":    eventtype,
+			"timestamp":    strconv.FormatInt(t.UnixNano(), 10),
 		},
-		InvolvedObject: *ref,
-		Reason:         "Synced",
-		Message:        message,
-		Source: v1.EventSource{
-			Component: "flagger",
-		},
-		Type: eventtype,
 	}
 
-	return callWebhook(webhook, event, "5s")
+	return callWebhook(webhook, payload, "5s")
 }
