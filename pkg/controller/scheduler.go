@@ -290,9 +290,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 
+		canaryPhaseFailed := cd.DeepCopy()
+		canaryPhaseFailed.Status.Phase = flaggerv1.CanaryPhaseFailed
+		c.recordEventWarningf(canaryPhaseFailed, "Canary failed! Scaling down %s.%s",
+			canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
+
 		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
-		c.recordEventWarningf(cd, "Canary failed! Scaling down %s.%s",
-			cd.Name, cd.Namespace)
 
 		// shutdown canary
 		if err := canaryController.Scale(cd, 0); err != nil {
