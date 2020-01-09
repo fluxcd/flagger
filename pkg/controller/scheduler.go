@@ -648,10 +648,10 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 	}
 
 	if shouldAdvance {
-		canaryProgressing := canary.DeepCopy()
-		canaryProgressing.Status.Phase = flaggerv1.CanaryPhaseProgressing
-		c.recordEventInfof(canaryProgressing, "New revision detected! Scaling up %s.%s", canaryProgressing.Spec.TargetRef.Name, canaryProgressing.Namespace)
-		c.sendNotification(canaryProgressing, "New revision detected, starting canary analysis.",
+		canaryPhaseProgressing := canary.DeepCopy()
+		canaryPhaseProgressing.Status.Phase = flaggerv1.CanaryPhaseProgressing
+		c.recordEventInfof(canaryPhaseProgressing, "New revision detected! Scaling up %s.%s", canaryPhaseProgressing.Spec.TargetRef.Name, canaryPhaseProgressing.Namespace)
+		c.sendNotification(canaryPhaseProgressing, "New revision detected, starting canary analysis.",
 			true, false)
 
 		if err := canaryController.ScaleFromZero(canary); err != nil {
