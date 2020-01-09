@@ -94,7 +94,7 @@ func CallEventWebhook(r *flaggerv1.Canary, webhook, message, eventtype string) e
 		Metadata: map[string]string{
 			"eventMessage": message,
 			"eventType":    eventtype,
-			"timestamp":    strconv.FormatInt(t.UnixNano(), 10),
+			"timestamp":    strconv.FormatInt(t.UnixNano()/1000000, 10),
 		},
 	}
 
