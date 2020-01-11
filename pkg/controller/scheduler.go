@@ -290,9 +290,12 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 			return
 		}
 
+		canaryPhaseFailed := cd.DeepCopy()
+		canaryPhaseFailed.Status.Phase = flaggerv1.CanaryPhaseFailed
+		c.recordEventWarningf(canaryPhaseFailed, "Canary failed! Scaling down %s.%s",
+			canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
+
 		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
-		c.recordEventWarningf(cd, "Canary failed! Scaling down %s.%s",
-			cd.Name, cd.Namespace)
 
 		// shutdown canary
 		if err := canaryController.Scale(cd, 0); err != nil {
@@ -645,9 +648,12 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 	}
 
 	if shouldAdvance {
-		c.recordEventInfof(canary, "New revision detected! Scaling up %s.%s", canary.Spec.TargetRef.Name, canary.Namespace)
-		c.sendNotification(canary, "New revision detected, starting canary analysis.",
+		canaryPhaseProgressing := canary.DeepCopy()
+		canaryPhaseProgressing.Status.Phase = flaggerv1.CanaryPhaseProgressing
+		c.recordEventInfof(canaryPhaseProgressing, "New revision detected! Scaling up %s.%s", canaryPhaseProgressing.Spec.TargetRef.Name, canaryPhaseProgressing.Namespace)
+		c.sendNotification(canaryPhaseProgressing, "New revision detected, starting canary analysis.",
 			true, false)
+
 		if err := canaryController.ScaleFromZero(canary); err != nil {
 			c.recordEventErrorf(canary, "%v", err)
 			return false

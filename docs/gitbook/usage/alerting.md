@@ -53,3 +53,42 @@ Besides Slack, you can use Alertmanager to trigger alerts when a canary deployme
       description: "Workload {{ $labels.name }} namespace {{ $labels.namespace }}"
 ```
 
+### Event Webhook
+
+Flagger can be configured to send event payloads to a specified webhook:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--set eventWebhook=https://example.com/flagger-canary-event-webhook
+```
+
+When configured, every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST
+request. The JSON payload has the following schema:
+
+```json
+{
+  "name": "string (canary name)",
+  "namespace": "string (canary namespace)",
+  "phase": "string (canary phase)",
+  "metadata": {
+    "eventMessage": "string (canary event message)",
+    "eventType": "string (canary event type)",
+    "timestamp": "string (unix timestamp ms)"
+  }
+}
+```
+
+Example:
+
+```json
+{
+  "name": "podinfo",
+  "namespace": "default",
+  "phase": "Progressing",
+  "metadata": {
+    "eventMessage": "New revision detected! Scaling up podinfo.default",
+    "eventType": "Normal",
+    "timestamp": "1578607635167"
+  }
+}
+```

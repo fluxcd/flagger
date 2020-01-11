@@ -45,6 +45,7 @@ var (
 	slackURL                 string
 	slackUser                string
 	slackChannel             string
+	eventWebhook             string
 	threadiness              int
 	zapReplaceGlobals        bool
 	zapEncoding              string
@@ -67,6 +68,7 @@ func init() {
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
+	flag.StringVar(&eventWebhook, "event-webhook", "", "Webhook for publishing flagger events")
 	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
@@ -200,6 +202,7 @@ func main() {
 		observerFactory,
 		meshProvider,
 		version.VERSION,
+		eventWebhook,
 	)
 
 	flaggerInformerFactory.Start(stopCh)

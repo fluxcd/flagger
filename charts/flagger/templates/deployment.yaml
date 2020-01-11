@@ -82,6 +82,9 @@ spec:
           {{- if .Values.ingressAnnotationsPrefix }}
           - -ingress-annotations-prefix={{ .Values.ingressAnnotationsPrefix }}
           {{- end }}
+          {{- if .Values.eventWebhook }}
+          - -event-webhook={{ .Values.eventWebhook }}
+          {{- end }}
           livenessProbe:
             exec:
               command:
