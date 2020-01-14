@@ -3,7 +3,6 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo '>>> Installing Contour'
 kubectl apply -f https://projectcontour.io/quickstart/contour.yaml

@@ -4,7 +4,6 @@ set -o errexit
 
 ISTIO_VER="1.4.3"
 REPO_ROOT=$(git rev-parse --show-toplevel)
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo ">>> Installing Istio ${ISTIO_VER}"
 helm repo add istio.io https://storage.googleapis.com/istio-release/releases/${ISTIO_VER}/charts

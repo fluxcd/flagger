@@ -24,7 +24,6 @@ sudo mv kind /usr/local/bin/kind
 echo ">>> Creating kind cluster"
 kind create cluster --wait 5m --image kindest/node:${KUBE_VERSION}
 
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 kubectl get pods --all-namespaces
 
 echo ">>> Installing Helm"
