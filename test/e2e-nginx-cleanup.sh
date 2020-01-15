@@ -2,8 +2,6 @@
 
 set -o errexit
 
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
-
 echo '>>> Deleting NGINX Ingress'
 helm delete --purge nginx-ingress
 

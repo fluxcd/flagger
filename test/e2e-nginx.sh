@@ -3,7 +3,6 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 NGINX_VERSION=1.26.0
 
 echo '>>> Installing NGINX Ingress'

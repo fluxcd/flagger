@@ -4,7 +4,8 @@ set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 HELM_VERSION=v2.16.1
-KIND_VERSION=v0.6.1
+KIND_VERSION=v0.7.0
+KUBE_VERSION=v1.14.10
 
 if [[ "$1" ]]; then
   KIND_VERSION=$1
@@ -21,9 +22,8 @@ chmod +x kind
 sudo mv kind /usr/local/bin/kind
 
 echo ">>> Creating kind cluster"
-kind create cluster --wait 5m #--image kindest/node:v1.16.2
+kind create cluster --wait 5m --image kindest/node:${KUBE_VERSION}
 
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 kubectl get pods --all-namespaces
 
 echo ">>> Installing Helm"

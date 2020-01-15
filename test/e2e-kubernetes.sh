@@ -3,7 +3,6 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 echo '>>> Loading Flagger image'
 kind load docker-image test/flagger:latest
