@@ -246,6 +246,7 @@ spec:
                             - rollout
                             - confirm-promotion
                             - post-rollout
+                            - event
                         url:
                           description: URL address of this webhook
                           type: string
