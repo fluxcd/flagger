@@ -547,6 +547,8 @@ The canary promotion is paused until the hooks return HTTP 200.
 While the promotion is paused, Flagger will continue to run the metrics checks and rollout hooks.
 * Post-rollout hooks are executed after the canary has been promoted or rolled back. 
 If a post rollout hook fails the error is logged.
+* Event hooks are executed every time Flagger emits a Kubernetes event. When configured,
+every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST request.
 
 Spec:
 
@@ -578,6 +580,9 @@ Spec:
         timeout: 5s
         metadata:
           some: "message"
+      - name: "send to Slack"
+        type: event
+        url: http://event-recevier.notifications/slack
 ```
 
 > **Note** that the sum of all rollout webhooks timeouts should be lower than the analysis interval. 
@@ -602,6 +607,24 @@ Response status codes:
 * timeout or non-2xx - halt advancement and increment failed checks
 
 On a non-2xx response Flagger will include the response body (if any) in the failed checks log and Kubernetes events.
+
+Event payload (HTTP POST):
+
+```json
+{
+  "name": "string (canary name)",
+  "namespace": "string (canary namespace)",
+  "phase": "string (canary phase)",
+  "metadata": {
+    "eventMessage": "string (canary event message)",
+    "eventType": "string (canary event type)",
+    "timestamp": "string (unix timestamp ms)"
+  }
+}
+```
+
+The event receiver can create alerts based on the received phase
+(possible values: ` Initialized`, `Waiting`, `Progressing`, `Promoting`, `Finalising`, `Succeeded` or `Failed`).
 
 ### Load Testing
 
