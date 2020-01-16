@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.22.0 (2020-01-16) 
+
+Adds event dispatching through webhooks
+
+#### Features
+
+- Implement event dispatching webhook [#409](https://github.com/weaveworks/flagger/pull/409)
+- Add general purpose event webhook [#401](https://github.com/weaveworks/flagger/pull/401)
+
+#### Improvements
+
+- Update Contour to v1.1 and add Linkerd header [#411](https://github.com/weaveworks/flagger/pull/411)
+- Update Istio e2e to v1.4.3 [#407](https://github.com/weaveworks/flagger/pull/407)
+- Update Kubernetes packages to 1.17 [#406](https://github.com/weaveworks/flagger/pull/406)
+
 ## 0.21.0 (2020-01-06) 
 
 Adds support for Contour ingress controller
