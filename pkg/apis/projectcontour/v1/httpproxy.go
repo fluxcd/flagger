@@ -11,7 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// source: https://github.com/projectcontour/contour/blob/master/apis/projectcontour/v1/httpproxy.go
 package v1
 
 import (
@@ -151,15 +150,20 @@ type Route struct {
 	// The policy for rewriting the path of the request URL
 	// after the request has been routed to a Service.
 	//
-	// +kubebuilder:validation:Optional
-	PathRewrite *PathRewritePolicy `json:"pathRewritePolicy,omitempty"`
+	// +optional
+	PathRewritePolicy *PathRewritePolicy `json:"pathRewritePolicy,omitempty"`
+	// The policy for managing request headers during proxying
+	// +optional
+	RequestHeadersPolicy *HeadersPolicy `json:"requestHeadersPolicy,omitempty"`
+	// The policy for managing response headers during proxying
+	// +optional
+	ResponseHeadersPolicy *HeadersPolicy `json:"responseHeadersPolicy,omitempty"`
 }
 
 func (r *Route) GetPrefixReplacements() []ReplacePrefix {
-	if r.PathRewrite != nil {
-		return r.PathRewrite.ReplacePrefix
+	if r.PathRewritePolicy != nil {
+		return r.PathRewritePolicy.ReplacePrefix
 	}
-
 	return nil
 }
 
@@ -192,6 +196,10 @@ type Service struct {
 	Name string `json:"name"`
 	// Port (defined as Integer) to proxy traffic to since a service can have multiple defined.
 	Port int `json:"port"`
+	// Protocol may be used to specify (or override) the protocol used to reach this Service.
+	// Values may be tls, h2, h2c.  It ommitted protocol-selection falls back on Service annotations.
+	// +optional
+	Protocol *string `json:"protocol,omitempty"`
 	// Weight defines percentage of traffic to balance traffic
 	// +optional
 	Weight uint32 `json:"weight,omitempty"`
@@ -200,6 +208,12 @@ type Service struct {
 	UpstreamValidation *UpstreamValidation `json:"validation,omitempty"`
 	// If Mirror is true the Service will receive a read only mirror of the traffic for this route.
 	Mirror bool `json:"mirror,omitempty"`
+	// The policy for managing request headers during proxying
+	// +optional
+	RequestHeadersPolicy *HeadersPolicy `json:"requestHeadersPolicy,omitempty"`
+	// The policy for managing response headers during proxying
+	// +optional
+	ResponseHeadersPolicy *HeadersPolicy `json:"responseHeadersPolicy,omitempty"`
 }
 
 // HTTPHealthCheckPolicy defines health checks on the upstream service.
@@ -266,7 +280,7 @@ type ReplacePrefix struct {
 	// If Prefix is not specified, all routing prefixes rendered
 	// by the include chain will be replaced.
 	//
-	// +kubebuilder:validation:Optional
+	// +optional
 	// +kubebuilder:validation:MinLength=1
 	Prefix string `json:"prefix,omitempty"`
 
@@ -286,13 +300,35 @@ type ReplacePrefix struct {
 // Exactly one field in this struct may be specified.
 type PathRewritePolicy struct {
 	// ReplacePrefix describes how the path prefix should be replaced.
-	// +kubebuilder:validation:Optional
+	// +optional
 	ReplacePrefix []ReplacePrefix `json:"replacePrefix,omitempty"`
 }
 
 // LoadBalancerPolicy defines the load balancing policy.
 type LoadBalancerPolicy struct {
 	Strategy string `json:"strategy,omitempty"`
+}
+
+// HeadersPolicy defines how headers are managed during forwarding
+type HeadersPolicy struct {
+	// Set specifies a list of HTTP header values that will be set in the HTTP header
+	// +optional
+	Set []HeaderValue `json:"set,omitempty"`
+	// Remove specifies a list of HTTP header names to remove
+	// +optional
+	Remove []string `json:"remove,omitempty"`
+}
+
+// HeaderValue represents a header name/value pair
+type HeaderValue struct {
+	// Name represents a key of a header
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+	// Value represents the value of a header specified by a key
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Value string `json:"value"`
 }
 
 // UpstreamValidation defines how to verify the backend service's certificate

@@ -45,11 +45,21 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						Name:   primaryName,
 						Port:   int(canary.Spec.Service.Port),
 						Weight: uint32(100),
+						RequestHeadersPolicy: &contourv1.HeadersPolicy{
+							Set: []contourv1.HeaderValue{
+								cr.makeLinkerdHeaderValue(canary, primaryName),
+							},
+						},
 					},
 					{
 						Name:   canaryName,
 						Port:   int(canary.Spec.Service.Port),
 						Weight: uint32(0),
+						RequestHeadersPolicy: &contourv1.HeadersPolicy{
+							Set: []contourv1.HeaderValue{
+								cr.makeLinkerdHeaderValue(canary, canaryName),
+							},
+						},
 					},
 				},
 			},
@@ -68,11 +78,21 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(100),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, primaryName),
+								},
+							},
 						},
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(0),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, canaryName),
+								},
+							},
 						},
 					},
 				},
@@ -89,11 +109,21 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(100),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, primaryName),
+								},
+							},
 						},
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(0),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, canaryName),
+								},
+							},
 						},
 					},
 				},
@@ -232,11 +262,21 @@ func (cr *ContourRouter) SetRoutes(
 						Name:   primaryName,
 						Port:   int(canary.Spec.Service.Port),
 						Weight: uint32(primaryWeight),
+						RequestHeadersPolicy: &contourv1.HeadersPolicy{
+							Set: []contourv1.HeaderValue{
+								cr.makeLinkerdHeaderValue(canary, primaryName),
+							},
+						},
 					},
 					{
 						Name:   canaryName,
 						Port:   int(canary.Spec.Service.Port),
 						Weight: uint32(canaryWeight),
+						RequestHeadersPolicy: &contourv1.HeadersPolicy{
+							Set: []contourv1.HeaderValue{
+								cr.makeLinkerdHeaderValue(canary, canaryName),
+							},
+						},
 					},
 				}},
 		},
@@ -254,11 +294,21 @@ func (cr *ContourRouter) SetRoutes(
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(primaryWeight),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, primaryName),
+								},
+							},
 						},
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(canaryWeight),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, canaryName),
+								},
+							},
 						},
 					},
 				},
@@ -275,11 +325,21 @@ func (cr *ContourRouter) SetRoutes(
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(100),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, primaryName),
+								},
+							},
 						},
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
 							Weight: uint32(0),
+							RequestHeadersPolicy: &contourv1.HeadersPolicy{
+								Set: []contourv1.HeaderValue{
+									cr.makeLinkerdHeaderValue(canary, canaryName),
+								},
+							},
 						},
 					},
 				},
@@ -363,4 +423,12 @@ func (cr *ContourRouter) makeRetryPolicy(canary *flaggerv1.Canary) *contourv1.Re
 		}
 	}
 	return nil
+}
+
+func (cr *ContourRouter) makeLinkerdHeaderValue(canary *flaggerv1.Canary, serviceName string) contourv1.HeaderValue {
+	return contourv1.HeaderValue{
+		Name:  "l5d-dst-override",
+		Value: fmt.Sprintf("%s.%.s.svc.cluster.local:%v", serviceName, canary.Namespace, canary.Spec.Service.Port),
+	}
+
 }
