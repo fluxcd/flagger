@@ -93,8 +93,10 @@ spec:
         app: podinfo
 ```
 
-Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If you use a different 
-convention you can specify your label with the `-selector-labels` flag.
+Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors.
+If you use a different convention you can specify your label with
+the `-selector-labels=my-app-label` command flag in the Flagger deployment manifest under containers args
+or by setting `--set selectorLabels=my-app-label` when installing Flagger with Helm.
 
 The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Services.
 The container port from the target deployment should match the `service.port` or `service.targetPort`.

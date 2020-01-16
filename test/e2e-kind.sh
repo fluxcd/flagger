@@ -8,7 +8,7 @@ KIND_VERSION=v0.7.0
 KUBE_VERSION=v1.14.10
 
 if [[ "$1" ]]; then
-  KIND_VERSION=$1
+  KUBE_VERSION=$1
 fi
 
 echo ">>> Installing kubectl"
