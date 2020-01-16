@@ -92,3 +92,13 @@ Example:
   }
 }
 ```
+
+The event webhook can be overwritten at canary level with:
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "send to Slack"
+        type: event
+        url: http://event-recevier.notifications/slack
+```

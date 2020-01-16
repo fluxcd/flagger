@@ -149,6 +149,8 @@ const (
 	ConfirmRolloutHook HookType = "confirm-rollout"
 	// ConfirmPromotionHook halt canary promotion until webhook returns HTTP 200
 	ConfirmPromotionHook HookType = "confirm-promotion"
+	// EventHook dispatches Flagger events to the specified endpoint
+	EventHook HookType = "event"
 )
 
 // CanaryWebhook holds the reference to external checks used for canary analysis
