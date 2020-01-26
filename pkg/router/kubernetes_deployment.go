@@ -29,12 +29,10 @@ type KubernetesDeploymentRouter struct {
 
 // Initialize creates the primary and canary services
 func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error {
-	targetName := canary.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", targetName)
-	canaryName := fmt.Sprintf("%s-canary", targetName)
+	apexName, primaryName, canaryName := canary.GetServiceNames()
 
 	// canary svc
-	err := c.reconcileService(canary, canaryName, targetName)
+	err := c.reconcileService(canary, canaryName, apexName)
 	if err != nil {
 		return err
 	}
@@ -50,11 +48,10 @@ func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error 
 
 // Reconcile creates or updates the main service
 func (c *KubernetesDeploymentRouter) Reconcile(canary *flaggerv1.Canary) error {
-	targetName := canary.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", targetName)
+	apexName, primaryName, _ := canary.GetServiceNames()
 
 	// main svc
-	err := c.reconcileService(canary, targetName, primaryName)
+	err := c.reconcileService(canary, apexName, primaryName)
 	if err != nil {
 		return err
 	}

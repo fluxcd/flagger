@@ -105,17 +105,25 @@ func NewController(
 	flaggerInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: ctrl.enqueue,
 		UpdateFunc: func(old, new interface{}) {
-			oldRoll, ok := checkCustomResourceType(old, logger)
+			oldCanary, ok := checkCustomResourceType(old, logger)
 			if !ok {
 				return
 			}
-			newRoll, ok := checkCustomResourceType(new, logger)
+			newCanary, ok := checkCustomResourceType(new, logger)
 			if !ok {
 				return
 			}
 
-			if diff := cmp.Diff(newRoll.Spec, oldRoll.Spec); diff != "" {
-				ctrl.logger.Debugf("Diff detected %s.%s %s", oldRoll.Name, oldRoll.Namespace, diff)
+			if diff := cmp.Diff(newCanary.Spec, oldCanary.Spec); diff != "" {
+				ctrl.logger.Debugf("Diff detected %s.%s %s", oldCanary.Name, oldCanary.Namespace, diff)
+
+				// warn about routing conflicts when service name changes
+				if oldCanary.Spec.Service.Name != "" && oldCanary.Spec.Service.Name != newCanary.Spec.Service.Name {
+					ctrl.logger.With("canary", fmt.Sprintf("%s.%s", oldCanary.Name, oldCanary.Namespace)).
+						Warnf("The service name changed to %s, remove %s objects to avoid routing conflicts",
+							newCanary.Spec.Service.Name, oldCanary.Spec.Service.Name)
+				}
+
 				ctrl.enqueue(new)
 			}
 		},
