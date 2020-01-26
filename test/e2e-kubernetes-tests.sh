@@ -33,6 +33,7 @@ spec:
   service:
     port: 80
     targetPort: 9898
+    name: podinfo-svc
     portDiscovery: true
   canaryAnalysis:
     interval: 15s
@@ -55,13 +56,13 @@ spec:
         timeout: 10s
         metadata:
           type: bash
-          cmd: "curl -sd 'test' http://podinfo-canary/token | grep token"
+          cmd: "curl -sd 'test' http://podinfo-svc-canary/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 http://podinfo-canary.test/"
+          cmd: "hey -z 10m -q 10 -c 2 http://podinfo-svc-canary.test/"
           logCmdOutput: "true"
 EOF
 
