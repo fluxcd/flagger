@@ -29,16 +29,16 @@ type KubernetesDeploymentRouter struct {
 
 // Initialize creates the primary and canary services
 func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error {
-	apexName, primaryName, canaryName := canary.GetServiceNames()
+	_, primaryName, canaryName := canary.GetServiceNames()
 
 	// canary svc
-	err := c.reconcileService(canary, canaryName, apexName)
+	err := c.reconcileService(canary, canaryName, canary.Spec.TargetRef.Name)
 	if err != nil {
 		return err
 	}
 
 	// primary svc
-	err = c.reconcileService(canary, primaryName, primaryName)
+	err = c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name))
 	if err != nil {
 		return err
 	}
@@ -48,10 +48,10 @@ func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error 
 
 // Reconcile creates or updates the main service
 func (c *KubernetesDeploymentRouter) Reconcile(canary *flaggerv1.Canary) error {
-	apexName, primaryName, _ := canary.GetServiceNames()
+	apexName, _, _ := canary.GetServiceNames()
 
 	// main svc
-	err := c.reconcileService(canary, apexName, primaryName)
+	err := c.reconcileService(canary, apexName, fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name))
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (c *KubernetesDeploymentRouter) GetRoutes(canary *flaggerv1.Canary) (primar
 	return 0, 0, nil
 }
 
-func (c *KubernetesDeploymentRouter) reconcileService(canary *flaggerv1.Canary, name string, target string) error {
+func (c *KubernetesDeploymentRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string) error {
 	portName := canary.Spec.Service.PortName
 	if portName == "" {
 		portName = "http"
@@ -84,7 +84,7 @@ func (c *KubernetesDeploymentRouter) reconcileService(canary *flaggerv1.Canary, 
 
 	svcSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeClusterIP,
-		Selector: map[string]string{c.labelSelector: target},
+		Selector: map[string]string{c.labelSelector: podSelector},
 		Ports: []corev1.ServicePort{
 			{
 				Name:       portName,
