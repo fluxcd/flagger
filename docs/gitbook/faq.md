@@ -188,6 +188,8 @@ spec:
     kind: Deployment
     name: podinfo
   service:
+    # service name (optional)
+    name: podinfo
     # ClusterIP port number (required)
     port: 9898
     # container port name or number
@@ -196,18 +198,20 @@ spec:
     portName: http
 ```
 
+If the `service.name` is not specified, then `targetRef.name` is used for the apex domain and canary/primary services name prefix.
+You should treat the service name as an immutable field, changing it could result in routing conflicts.
+
 Based on the canary spec service, Flagger generates the following Kubernetes ClusterIP service:
 
-* `<targetRef.name>.<namespace>.svc.cluster.local`  
+* `<service.name>.<namespace>.svc.cluster.local`  
     selector `app=<name>-primary`
-* `<targetRef.name>-primary.<namespace>.svc.cluster.local`  
+* `<service.name>-primary.<namespace>.svc.cluster.local`  
     selector `app=<name>-primary`
-* `<targetRef.name>-canary.<namespace>.svc.cluster.local`  
+* `<service.name>-canary.<namespace>.svc.cluster.local`  
     selector `app=<name>`
 
 This ensures that traffic coming from a namespace outside the mesh to `podinfo.test:9898`
 will be routed to the latest stable release of your app. 
-
 
 ```yaml
 apiVersion: v1
