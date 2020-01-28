@@ -115,6 +115,9 @@ spec:
               type: object
               required: ["port"]
               properties:
+                name:
+                  description: Kubernetes service name
+                  type: string
                 port:
                   description: Container port number
                   type: number

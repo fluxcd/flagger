@@ -86,6 +86,8 @@ spec:
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
+    # service name (optional)
+    name: podinfo
     # ClusterIP port number
     port: 9898
     # container port name or number (optional)

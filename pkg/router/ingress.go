@@ -27,8 +27,8 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("ingress selector is empty")
 	}
 
-	targetName := canary.Spec.TargetRef.Name
-	canaryName := fmt.Sprintf("%s-canary", targetName)
+	apexName, _, _ := canary.GetServiceNames()
+	canaryName := fmt.Sprintf("%s-canary", apexName)
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
 
 	ingress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canary.Spec.IngressRef.Name, metav1.GetOptions{})
@@ -42,7 +42,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 	backendExists := false
 	for k, v := range ingressClone.Spec.Rules {
 		for x, y := range v.HTTP.Paths {
-			if y.Backend.ServiceName == targetName {
+			if y.Backend.ServiceName == apexName {
 				ingressClone.Spec.Rules[k].HTTP.Paths[x].Backend.ServiceName = canaryName
 				backendExists = true
 				break
@@ -51,7 +51,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	if !backendExists {
-		return fmt.Errorf("backend %s not found in ingress %s", targetName, canary.Spec.IngressRef.Name)
+		return fmt.Errorf("backend %s not found in ingress %s", apexName, canary.Spec.IngressRef.Name)
 	}
 
 	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})

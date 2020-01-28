@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha3
 
 import (
+	"fmt"
 	"time"
 
 	hpav1 "k8s.io/api/autoscaling/v1"
@@ -69,7 +70,7 @@ type CanarySpec struct {
 	// virtual service spec
 	Service CanaryService `json:"service"`
 
-	// metrics and thresholds
+	// metrics, thresholds and webhooks spec
 	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
 
 	// the maximum time in seconds for a canary deployment to make progress
@@ -92,8 +93,9 @@ type CanaryList struct {
 }
 
 // CanaryService is used to create ClusterIP services
-// and Istio Virtual Service
+// and service mesh or ingress routing objects
 type CanaryService struct {
+	Name          string             `json:"name,omitempty"`
 	Port          int32              `json:"port"`
 	PortName      string             `json:"portName,omitempty"`
 	TargetPort    intstr.IntOrString `json:"targetPort,omitempty"`
@@ -126,7 +128,7 @@ type CanaryAnalysis struct {
 	Iterations int                              `json:"iterations,omitempty"`
 }
 
-// CanaryMetric holds the reference to Istio metrics used for canary analysis
+// CanaryMetric holds the reference to metrics used for canary analysis
 type CanaryMetric struct {
 	Name      string  `json:"name"`
 	Interval  string  `json:"interval,omitempty"`
@@ -169,6 +171,17 @@ type CanaryWebhookPayload struct {
 	Namespace string            `json:"namespace"`
 	Phase     CanaryPhase       `json:"phase"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
+}
+
+// GetServiceNames returns the apex, primary and canary Kubernetes service names
+func (c *Canary) GetServiceNames() (apexName, primaryName, canaryName string) {
+	apexName = c.Spec.TargetRef.Name
+	if c.Spec.Service.Name != "" {
+		apexName = c.Spec.Service.Name
+	}
+	primaryName = fmt.Sprintf("%s-primary", apexName)
+	canaryName = fmt.Sprintf("%s-canary", apexName)
+	return
 }
 
 // GetProgressDeadlineSeconds returns the progress deadline (default 600s)

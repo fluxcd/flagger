@@ -15,10 +15,10 @@ require (
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.10.0
 	gopkg.in/h2non/gock.v1 v1.0.14
-	k8s.io/api v0.17.0
-	k8s.io/apimachinery v0.17.1-beta.0
-	k8s.io/client-go v0.17.0
-	k8s.io/code-generator v0.17.0
+	k8s.io/api v0.17.1
+	k8s.io/apimachinery v0.17.1
+	k8s.io/client-go v0.17.1
+	k8s.io/code-generator v0.17.1
 	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
 )
 
