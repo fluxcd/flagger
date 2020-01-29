@@ -215,18 +215,29 @@ spec:
                       required: ["name", "threshold"]
                       properties:
                         name:
-                          description: Name of the Prometheus metric
+                          description: Name of the metric
                           type: string
                         interval:
-                          description: Interval of the promql query
+                          description: Interval of the query
                           type: string
                           pattern: "^[0-9]+(m|s)"
                         threshold:
-                          description: Max scalar value accepted for this metric
+                          description: Max value accepted for this metric
                           type: number
                         query:
                           description: Prometheus query
                           type: string
+                        templateRef:
+                          description: Metric template reference
+                          type: object
+                          required: ["name"]
+                          properties:
+                            name:
+                              description: Name of this metric template
+                              type: string
+                            namespace:
+                              description: Namespace of this metric template
+                              type: string
                 webhooks:
                   description: Webhook list for this canary
                   type: array
@@ -322,3 +333,62 @@ spec:
                     type:
                       description: Type of this condition
                       type: string
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: metrictemplates.flagger.app
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  group: flagger.app
+  version: v1alpha1
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+  names:
+    plural: metrictemplates
+    singular: metrictemplate
+    kind: MetricTemplate
+    categories:
+      - all
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          required:
+            - provider
+            - query
+          properties:
+            provider:
+              description: Provider of this metric template
+              type: object
+              required:
+                - type
+                - address
+              properties:
+                type:
+                  description: Type of this provider
+                  type: string
+                  enum:
+                    - prometheus
+                    - influxdb
+                address:
+                  description: API address of this provider
+                  type: string
+                secretRef:
+                  description: Kubernetes secret reference containing the provider credentials
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      description: Name of the Kubernetes secret
+                      type: string
+            query:
+              description: Query of this metric template
+              type: string

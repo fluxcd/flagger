@@ -135,6 +135,14 @@ type CanaryMetric struct {
 	Threshold float64 `json:"threshold"`
 	// +optional
 	Query string `json:"query,omitempty"`
+	// +optional
+	TemplateRef *MetricTemplateRef `json:"templateRef,omitempty"`
+}
+
+type MetricTemplateRef struct {
+	Name string `json:"name"`
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // HookType can be pre, post or during rollout

@@ -22,11 +22,12 @@ import (
 	"fmt"
 
 	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
+	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha1"
 	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	v1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
-	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	smiv1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -65,6 +66,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1beta1.SchemeGroupVersion.WithResource("virtualservices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta1().VirtualServices().Informer()}, nil
 
+		// Group=flagger.app, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("metrictemplates"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha1().MetricTemplates().Informer()}, nil
+
 		// Group=flagger.app, Version=v1alpha3
 	case v1alpha3.SchemeGroupVersion.WithResource("canaries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha3().Canaries().Informer()}, nil
@@ -84,7 +89,7 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Projectcontour().V1().HTTPProxies().Informer()}, nil
 
 		// Group=split.smi-spec.io, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("trafficsplits"):
+	case smiv1alpha1.SchemeGroupVersion.WithResource("trafficsplits"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Split().V1alpha1().TrafficSplits().Informer()}, nil
 
 	}
