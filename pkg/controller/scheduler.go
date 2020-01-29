@@ -11,6 +11,7 @@ import (
 	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	"github.com/weaveworks/flagger/pkg/canary"
 	"github.com/weaveworks/flagger/pkg/metrics/observers"
+	"github.com/weaveworks/flagger/pkg/metrics/providers"
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
@@ -765,6 +766,11 @@ func (c *Controller) runAnalysis(r *flaggerv1alpha3.Canary) bool {
 		return ok
 	}
 
+	ok = c.runMetricChecks(r)
+	if !ok {
+		return ok
+	}
+
 	return true
 }
 
@@ -866,6 +872,68 @@ func (c *Controller) runBuiltinMetricChecks(r *flaggerv1alpha3.Canary) bool {
 				return false
 			}
 			if val > float64(metric.Threshold) {
+				c.recordEventWarningf(r, "Halt %s.%s advancement %s %.2f > %v",
+					r.Name, r.Namespace, metric.Name, val, metric.Threshold)
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (c *Controller) runMetricChecks(r *flaggerv1alpha3.Canary) bool {
+	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
+		if metric.TemplateRef != nil {
+			namespace := r.Namespace
+			if metric.TemplateRef.Namespace != "" {
+				namespace = metric.TemplateRef.Namespace
+			}
+
+			template, err := c.flaggerClient.FlaggerV1alpha1().MetricTemplates(namespace).Get(metric.TemplateRef.Name, metav1.GetOptions{})
+			if err != nil {
+				c.recordEventErrorf(r, "Metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
+				return false
+			}
+
+			var credentials map[string][]byte
+			if template.Spec.Provider.SecretRef != nil {
+				secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(template.Spec.Provider.SecretRef.Name, metav1.GetOptions{})
+				if err != nil {
+					c.recordEventErrorf(r, "Metric template %s.%s secret %s error: %v",
+						metric.TemplateRef.Name, namespace, template.Spec.Provider.SecretRef.Name, err)
+					return false
+				}
+				credentials = secret.Data
+			}
+
+			factory := providers.Factory{}
+			provider, err := factory.Provider(template.Spec.Provider, credentials)
+			if err != nil {
+				c.recordEventErrorf(r, "Metric template %s.%s provider %s error: %v",
+					metric.TemplateRef.Name, namespace, template.Spec.Provider.Type, err)
+				return false
+			}
+
+			query, err := observers.RenderQuery(template.Spec.Query, toMetricModel(r, metric.Interval))
+			if err != nil {
+				c.recordEventErrorf(r, "Metric template %s.%s query render error: %v",
+					metric.TemplateRef.Name, namespace, err)
+				return false
+			}
+
+			val, err := provider.RunQuery(query)
+			if err != nil {
+				if strings.Contains(err.Error(), "no values found") {
+					c.recordEventWarningf(r, "Halt advancement no values found for custom metric: %s",
+						metric.Name)
+				} else {
+					c.recordEventErrorf(r, "Metric query failed for %s: %v", metric.Name, err)
+				}
+				return false
+			}
+
+			if val > metric.Threshold {
 				c.recordEventWarningf(r, "Halt %s.%s advancement %s %.2f > %v",
 					r.Name, r.Namespace, metric.Name, val, metric.Threshold)
 				return false
