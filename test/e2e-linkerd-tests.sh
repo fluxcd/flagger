@@ -18,6 +18,31 @@ echo '>>> Initialising canary'
 kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
 
 cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1alpha1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: linkerd
+spec:
+  provider:
+    type: prometheus
+    address: http://linkerd-prometheus.linkerd:9090
+  query: |
+    histogram_quantile(
+        0.99,
+        sum(
+            rate(
+                response_latency_ms_bucket{
+                    namespace="{{ namespace }}",
+                    deployment=~"{{ target }}",
+                    direction="inbound"
+                    }[{{ interval }}]
+                )
+            ) by (le)
+        )
+EOF
+
+cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1alpha3
 kind: Canary
 metadata:
@@ -45,6 +70,12 @@ spec:
     - name: request-duration
       threshold: 500
       interval: 30s
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: linkerd
+      threshold: 300
+      interval: 1m
     webhooks:
       - name: http-acceptance-test
         type: pre-rollout
