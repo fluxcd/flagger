@@ -1,8 +1,6 @@
-package metrics
+package providers
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,14 +10,17 @@ import (
 	"path"
 	"regexp"
 	"strconv"
-	"text/template"
 	"time"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha1"
 )
 
-// PrometheusClient is executing promql queries
-type PrometheusClient struct {
-	timeout time.Duration
-	url     url.URL
+// PrometheusProvider executes promQL queries
+type PrometheusProvider struct {
+	timeout  time.Duration
+	url      url.URL
+	username string
+	password string
 }
 
 type prometheusResponse struct {
@@ -33,54 +34,44 @@ type prometheusResponse struct {
 	}
 }
 
-// NewPrometheusClient creates a Prometheus client for the provided URL address
-func NewPrometheusClient(address string, timeout time.Duration) (*PrometheusClient, error) {
-	promURL, err := url.Parse(address)
+// NewPrometheusProvider takes a provider spec and the credentials map,
+// validates the address, extracts the username and password values if provided and
+// returns a Prometheus client ready to execute queries against the API
+func NewPrometheusProvider(provider flaggerv1.MetricTemplateProvider, credentials map[string][]byte) (*PrometheusProvider, error) {
+	promURL, err := url.Parse(provider.Address)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s address %s is not a valid URL", provider.Type, provider.Address)
 	}
 
-	return &PrometheusClient{timeout: timeout, url: *promURL}, nil
+	prom := PrometheusProvider{
+		timeout: 5 * time.Second,
+		url:     *promURL,
+	}
+
+	if provider.SecretRef != nil {
+		if username, ok := credentials["username"]; ok {
+			prom.username = string(username)
+		} else {
+			return nil, fmt.Errorf("%s credentials does not contain a username", provider.Type)
+		}
+
+		if password, ok := credentials["password"]; ok {
+			prom.password = string(password)
+		} else {
+			return nil, fmt.Errorf("%s credentials does not contain a password", provider.Type)
+		}
+	}
+
+	return &prom, nil
 }
 
-// RenderQuery renders the promql query using the provided text template
-func (p *PrometheusClient) RenderQuery(name string, namespace string, interval string, tmpl string) (string, error) {
-	meta := struct {
-		Name      string
-		Namespace string
-		Interval  string
-	}{
-		name,
-		namespace,
-		interval,
-	}
-
-	t, err := template.New("tmpl").Parse(tmpl)
-	if err != nil {
-		return "", err
-	}
-	var data bytes.Buffer
-	b := bufio.NewWriter(&data)
-
-	if err := t.Execute(b, meta); err != nil {
-		return "", err
-	}
-
-	err = b.Flush()
-	if err != nil {
-		return "", err
-	}
-
-	return data.String(), nil
-}
-
-// RunQuery executes the promql and converts the result to float64
-func (p *PrometheusClient) RunQuery(query string) (float64, error) {
+// RunQuery executes the promQL query and returns the the first result as float64
+func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 	if p.url.Host == "fake" {
 		return 100, nil
 	}
 
-	query = url.QueryEscape(p.TrimQuery(query))
+	query = url.QueryEscape(p.trimQuery(query))
 	u, err := url.Parse(fmt.Sprintf("./api/v1/query?query=%s", query))
 	if err != nil {
 		return 0, err
@@ -92,6 +83,10 @@ func (p *PrometheusClient) RunQuery(query string) (float64, error) {
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return 0, err
+	}
+
+	if p.username != "" && p.password != "" {
+		req.SetBasicAuth(p.username, p.password)
 	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
@@ -137,14 +132,8 @@ func (p *PrometheusClient) RunQuery(query string) (float64, error) {
 	return *value, nil
 }
 
-// TrimQuery takes a promql query and removes whitespace
-func (p *PrometheusClient) TrimQuery(query string) string {
-	space := regexp.MustCompile(`\s+`)
-	return space.ReplaceAllString(query, " ")
-}
-
-// IsOnline call Prometheus status endpoint and returns an error if the API is unreachable
-func (p *PrometheusClient) IsOnline() (bool, error) {
+// IsOnline calls the Prometheus status endpoint and returns an error if the API is unreachable
+func (p *PrometheusProvider) IsOnline() (bool, error) {
 	u, err := url.Parse("./api/v1/status/flags")
 	if err != nil {
 		return false, err
@@ -156,6 +145,10 @@ func (p *PrometheusClient) IsOnline() (bool, error) {
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return false, err
+	}
+
+	if p.username != "" && p.password != "" {
+		req.SetBasicAuth(p.username, p.password)
 	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
@@ -179,6 +172,8 @@ func (p *PrometheusClient) IsOnline() (bool, error) {
 	return true, nil
 }
 
-func (p *PrometheusClient) GetMetricsServer() string {
-	return p.url.String()
+// trimQuery takes a promql query and removes whitespace
+func (p *PrometheusProvider) trimQuery(query string) string {
+	space := regexp.MustCompile(`\s+`)
+	return space.ReplaceAllString(query, " ")
 }
