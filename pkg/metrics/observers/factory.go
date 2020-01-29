@@ -1,16 +1,22 @@
-package metrics
+package observers
 
 import (
 	"strings"
-	"time"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha1"
+	"github.com/weaveworks/flagger/pkg/metrics/providers"
 )
 
 type Factory struct {
-	Client *PrometheusClient
+	Client providers.Interface
 }
 
-func NewFactory(metricsServer string, timeout time.Duration) (*Factory, error) {
-	client, err := NewPrometheusClient(metricsServer, timeout)
+func NewFactory(metricsServer string) (*Factory, error) {
+	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
+		Type:      "prometheus",
+		Address:   metricsServer,
+		SecretRef: nil,
+	}, nil)
 	if err != nil {
 		return nil, err
 	}

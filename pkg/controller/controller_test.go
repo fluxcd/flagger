@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"sync"
 	"time"
 
@@ -73,7 +74,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", logger, flaggerClient)
 
 	// init observer
-	observerFactory, _ := metrics.NewFactory("fake", 5*time.Second)
+	observerFactory, _ := observers.NewFactory("fake")
 
 	// init canary factory
 	configTracker := canary.ConfigTracker{

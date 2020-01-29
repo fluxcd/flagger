@@ -1,10 +1,13 @@
-package metrics
+package observers
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha1"
+	"github.com/weaveworks/flagger/pkg/metrics/providers"
 )
 
 func TestContourObserver_GetRequestSuccessRate(t *testing.T) {
@@ -21,7 +24,11 @@ func TestContourObserver_GetRequestSuccessRate(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	client, err := NewPrometheusClient(ts.URL, time.Second)
+	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
+		Type:      "prometheus",
+		Address:   ts.URL,
+		SecretRef: nil,
+	}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +37,13 @@ func TestContourObserver_GetRequestSuccessRate(t *testing.T) {
 		client: client,
 	}
 
-	val, err := observer.GetRequestSuccessRate("podinfo", "default", "1m")
+	val, err := observer.GetRequestSuccessRate(flaggerv1.MetricTemplateModel{
+		Name:      "podinfo",
+		Namespace: "default",
+		Target:    "podinfo",
+		Service:   "podinfo",
+		Interval:  "1m",
+	})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -54,7 +67,11 @@ func TestContourObserver_GetRequestDuration(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	client, err := NewPrometheusClient(ts.URL, time.Second)
+	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
+		Type:      "prometheus",
+		Address:   ts.URL,
+		SecretRef: nil,
+	}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +80,13 @@ func TestContourObserver_GetRequestDuration(t *testing.T) {
 		client: client,
 	}
 
-	val, err := observer.GetRequestDuration("podinfo", "default", "1m")
+	val, err := observer.GetRequestDuration(flaggerv1.MetricTemplateModel{
+		Name:      "podinfo",
+		Namespace: "default",
+		Target:    "podinfo",
+		Service:   "podinfo",
+		Interval:  "1m",
+	})
 	if err != nil {
 		t.Fatal(err.Error())
 	}

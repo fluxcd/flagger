@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"sync"
 	"time"
 
@@ -49,7 +50,7 @@ type Controller struct {
 	notifier        notifier.Interface
 	canaryFactory   *canary.Factory
 	routerFactory   *router.Factory
-	observerFactory *metrics.Factory
+	observerFactory *observers.Factory
 	meshProvider    string
 	eventWebhook    string
 }
@@ -64,7 +65,7 @@ func NewController(
 	notifier notifier.Interface,
 	canaryFactory *canary.Factory,
 	routerFactory *router.Factory,
-	observerFactory *metrics.Factory,
+	observerFactory *observers.Factory,
 	meshProvider string,
 	version string,
 	eventWebhook string,

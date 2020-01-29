@@ -26,7 +26,7 @@ import (
 	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
 	"github.com/weaveworks/flagger/pkg/controller"
 	"github.com/weaveworks/flagger/pkg/logger"
-	"github.com/weaveworks/flagger/pkg/metrics"
+	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"github.com/weaveworks/flagger/pkg/notifier"
 	"github.com/weaveworks/flagger/pkg/router"
 	"github.com/weaveworks/flagger/pkg/server"
@@ -163,7 +163,7 @@ func main() {
 		logger.Infof("Watching namespace %s", namespace)
 	}
 
-	observerFactory, err := metrics.NewFactory(metricsServer, 5*time.Second)
+	observerFactory, err := observers.NewFactory(metricsServer)
 	if err != nil {
 		logger.Fatalf("Error building prometheus client: %s", err.Error())
 	}
