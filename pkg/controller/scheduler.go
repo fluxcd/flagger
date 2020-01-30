@@ -224,6 +224,17 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
+	// check if we should rollback
+	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting {
+		if ok := c.runRollbackHooks(cd, cd.Status.Phase); ok {
+			c.recordEventWarningf(cd, "Rolling back %s.%s manual webhook invoked", cd.Name, cd.Namespace)
+			c.sendNotification(cd, "Rolling back manual webhook invoked", false, true)
+			c.rollback(cd, canaryController, meshRouter)
+			return
+		}
+	}
+
 	// route all traffic to primary if analysis has succeeded
 	if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
 		if provider != "kubernetes" {
@@ -267,50 +278,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	// check if the number of failed checks reached the threshold
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing &&
 		(!retriable || cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold) {
-
-		if cd.Status.FailedChecks >= cd.Spec.CanaryAnalysis.Threshold {
-			c.recordEventWarningf(cd, "Rolling back %s.%s failed checks threshold reached %v",
-				cd.Name, cd.Namespace, cd.Status.FailedChecks)
-			c.sendNotification(cd, fmt.Sprintf("Failed checks threshold reached %v", cd.Status.FailedChecks),
-				false, true)
-		}
-
 		if !retriable {
 			c.recordEventWarningf(cd, "Rolling back %s.%s progress deadline exceeded %v",
 				cd.Name, cd.Namespace, err)
 			c.sendNotification(cd, fmt.Sprintf("Progress deadline exceeded %v", err),
 				false, true)
 		}
-
-		// route all traffic back to primary
-		primaryWeight = 100
-		canaryWeight = 0
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
-
-		canaryPhaseFailed := cd.DeepCopy()
-		canaryPhaseFailed.Status.Phase = flaggerv1.CanaryPhaseFailed
-		c.recordEventWarningf(canaryPhaseFailed, "Canary failed! Scaling down %s.%s",
-			canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
-
-		c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
-
-		// shutdown canary
-		if err := canaryController.Scale(cd, 0); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
-
-		// mark canary as failed
-		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
-			return
-		}
-
-		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseFailed)
-		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseFailed)
+		c.rollback(cd, canaryController, meshRouter)
 		return
 	}
 
@@ -757,6 +731,21 @@ func (c *Controller) runPostRolloutHooks(canary *flaggerv1.Canary, phase flagger
 	return true
 }
 
+func (c *Controller) runRollbackHooks(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) bool {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
+		if webhook.Type == flaggerv1.RollbackHook {
+			err := CallWebhook(canary.Name, canary.Namespace, phase, webhook)
+			if err != nil {
+				c.recordEventInfof(canary, "Rollback hook %s not signaling a rollback", webhook.Name)
+			} else {
+				c.recordEventWarningf(canary, "Rollback check %s passed", webhook.Name)
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
@@ -877,4 +866,43 @@ func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 	}
 
 	return true
+}
+
+func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface) {
+	if canary.Status.FailedChecks >= canary.Spec.CanaryAnalysis.Threshold {
+		c.recordEventWarningf(canary, "Rolling back %s.%s failed checks threshold reached %v",
+			canary.Name, canary.Namespace, canary.Status.FailedChecks)
+		c.sendNotification(canary, fmt.Sprintf("Failed checks threshold reached %v", canary.Status.FailedChecks),
+			false, true)
+	}
+
+	// route all traffic back to primary
+	primaryWeight := 100
+	canaryWeight := 0
+	if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
+		return
+	}
+
+	canaryPhaseFailed := canary.DeepCopy()
+	canaryPhaseFailed.Status.Phase = flaggerv1.CanaryPhaseFailed
+	c.recordEventWarningf(canaryPhaseFailed, "Canary failed! Scaling down %s.%s",
+		canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
+
+	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
+
+	// shutdown canary
+	if err := canaryController.Scale(canary, 0); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
+		return
+	}
+
+	// mark canary as failed
+	if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+		return
+	}
+
+	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
+	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
 }
