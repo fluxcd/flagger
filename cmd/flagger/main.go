@@ -11,6 +11,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -102,6 +103,8 @@ func main() {
 
 	stopCh := signals.SetupSignalHandler()
 
+	logger.Infof("Starting flagger version %s revision %s mesh provider %s", version.VERSION, version.REVISION, meshProvider)
+
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
 		logger.Fatalf("Error building kubeconfig: %v", err)
@@ -122,43 +125,14 @@ func main() {
 		logger.Fatalf("Error building flagger clientset: %s", err.Error())
 	}
 
-	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
-
-	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
-
-	logger.Infof("Starting flagger version %s revision %s mesh provider %s", version.VERSION, version.REVISION, meshProvider)
-
-	ver, err := kubeClient.Discovery().ServerVersion()
-	if err != nil {
-		logger.Fatalf("Error calling Kubernetes API: %v", err)
-	}
-
-	k8sVersionConstraint := "^1.11.0"
-
-	// We append -alpha.1 to the end of our version constraint so that prebuilds of later versions
-	// are considered valid for our purposes, as well as some managed solutions like EKS where they provide
-	// a version like `v1.12.6-eks-d69f1b`. It doesn't matter what the prelease value is here, just that it
-	// exists in our constraint.
-	semverConstraint, err := semver.NewConstraint(k8sVersionConstraint + "-alpha.1")
-	if err != nil {
-		logger.Fatalf("Error parsing kubernetes version constraint: %v", err)
-	}
-
-	k8sSemver, err := semver.NewVersion(ver.GitVersion)
-	if err != nil {
-		logger.Fatalf("Error parsing kubernetes version as a semantic version: %v", err)
-	}
-
-	if !semverConstraint.Check(k8sSemver) {
-		logger.Fatalf("Unsupported version of kubernetes detected.  Expected %s, got %v", k8sVersionConstraint, ver)
-	}
+	verifyCRDs(flaggerClient, logger)
+	verifyKubernetesVersion(kubeClient, logger)
 
 	labels := strings.Split(selectorLabels, ",")
 	if len(labels) < 1 {
 		logger.Fatalf("At least one selector label is required")
 	}
 
-	logger.Infof("Connected to Kubernetes API %s", ver)
 	if namespace != "" {
 		logger.Infof("Watching namespace %s", namespace)
 	}
@@ -180,6 +154,23 @@ func main() {
 
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
+
+	// start informers
+	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
+
+	logger.Info("Waiting for canary informer cache to sync")
+	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
+	go canaryInformer.Informer().Run(stopCh)
+	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, canaryInformer.Informer().HasSynced); !ok {
+		logger.Fatalf("failed to wait for cache to sync")
+	}
+
+	logger.Info("Waiting for metric template informer cache to sync")
+	metricInformer := flaggerInformerFactory.Flagger().V1alpha1().MetricTemplates()
+	go metricInformer.Informer().Run(stopCh)
+	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, metricInformer.Informer().HasSynced); !ok {
+		logger.Fatalf("failed to wait for cache to sync")
+	}
 
 	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient)
 	configTracker := canary.ConfigTracker{
@@ -204,17 +195,6 @@ func main() {
 		version.VERSION,
 		eventWebhook,
 	)
-
-	flaggerInformerFactory.Start(stopCh)
-
-	logger.Info("Waiting for informer caches to sync")
-	for _, synced := range []cache.InformerSynced{
-		canaryInformer.Informer().HasSynced,
-	} {
-		if ok := cache.WaitForCacheSync(stopCh, synced); !ok {
-			logger.Fatalf("Failed to wait for cache sync")
-		}
-	}
 
 	// leader election context
 	ctx, cancel := context.WithCancel(context.Background())
@@ -321,4 +301,45 @@ func fromEnv(envVar string, defaultVal string) string {
 		return os.Getenv(envVar)
 	}
 	return defaultVal
+}
+
+func verifyCRDs(flaggerClient clientset.Interface, logger *zap.SugaredLogger) {
+	_, err := flaggerClient.FlaggerV1alpha3().Canaries(namespace).List(metav1.ListOptions{Limit: 1})
+	if err != nil {
+		logger.Fatalf("Canary CRD is not registered %v", err)
+	}
+
+	_, err = flaggerClient.FlaggerV1alpha1().MetricTemplates(namespace).List(metav1.ListOptions{Limit: 1})
+	if err != nil {
+		logger.Fatalf("MetricTemplate CRD is not registered %v", err)
+	}
+}
+
+func verifyKubernetesVersion(kubeClient kubernetes.Interface, logger *zap.SugaredLogger) {
+	ver, err := kubeClient.Discovery().ServerVersion()
+	if err != nil {
+		logger.Fatalf("Error calling Kubernetes API: %v", err)
+	}
+
+	k8sVersionConstraint := "^1.11.0"
+
+	// We append -alpha.1 to the end of our version constraint so that prebuilds of later versions
+	// are considered valid for our purposes, as well as some managed solutions like EKS where they provide
+	// a version like `v1.12.6-eks-d69f1b`. It doesn't matter what the prelease value is here, just that it
+	// exists in our constraint.
+	semverConstraint, err := semver.NewConstraint(k8sVersionConstraint + "-alpha.1")
+	if err != nil {
+		logger.Fatalf("Error parsing kubernetes version constraint: %v", err)
+	}
+
+	k8sSemver, err := semver.NewVersion(ver.GitVersion)
+	if err != nil {
+		logger.Fatalf("Error parsing kubernetes version as a semantic version: %v", err)
+	}
+
+	if !semverConstraint.Check(k8sSemver) {
+		logger.Fatalf("Unsupported version of kubernetes detected.  Expected %s, got %v", k8sVersionConstraint, ver)
+	}
+
+	logger.Infof("Connected to Kubernetes API %s", ver)
 }

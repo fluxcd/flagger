@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"sync"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
 	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1alpha3"
 	"github.com/weaveworks/flagger/pkg/metrics"
+	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"github.com/weaveworks/flagger/pkg/notifier"
 	"github.com/weaveworks/flagger/pkg/router"
 )
