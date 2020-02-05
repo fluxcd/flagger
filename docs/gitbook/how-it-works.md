@@ -913,7 +913,7 @@ The `rollback` hook type can be used to manually rollback the canary promotion.
 ```yaml
   canaryAnalysis:
     webhooks:
-      - name: "rollback gate"
+      - name: "rollback"
         type: rollback
         url: http://flagger-loadtester.test/gate/halt
 ```     
