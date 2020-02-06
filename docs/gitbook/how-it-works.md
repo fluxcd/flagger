@@ -538,23 +538,23 @@ Then it compares the query result value with the metric threshold value.
 The canary analysis can be extended with webhooks. Flagger will call each webhook URL and
 determine from the response status code (HTTP 2xx) if the canary is failing or not.
 
-There are three types of hooks:
-* Confirm-rollout hooks are executed before scaling up the canary deployment and can be used for manual approval.
+There are several types of hooks:
+* **confirm-rollout** hooks are executed before scaling up the canary deployment and can be used for manual approval.
 The rollout is paused until the hook returns a successful HTTP status code.
-* Pre-rollout hooks are executed before routing traffic to canary. 
+* **pre-rollout** hooks are executed before routing traffic to canary. 
 The canary advancement is paused if a pre-rollout hook fails and if the number of failures reach the 
 threshold the canary will be rollback.
-* Rollout hooks are executed during the analysis on each iteration before the metric checks. 
+* **rollout** hooks are executed during the analysis on each iteration before the metric checks. 
 If a rollout hook call fails the canary advancement is paused and eventfully rolled back.
-* Confirm-promotion hooks are executed before the promotion step.
+* **confirm-promotion** hooks are executed before the promotion step.
 The canary promotion is paused until the hooks return HTTP 200.
 While the promotion is paused, Flagger will continue to run the metrics checks and rollout hooks.
-* Post-rollout hooks are executed after the canary has been promoted or rolled back. 
+* **post-rollout** hooks are executed after the canary has been promoted or rolled back. 
 If a post rollout hook fails the error is logged.
-* Rollback hooks are executed while a canary deployment is in either Progressing or Waiting status.
-This provides the ability to rollback during analysis or while waiting for a confirmation.  If a rollback hook
-returns a successful HTTP status code, Flagger will rollback the canary deployment.
-* Event hooks are executed every time Flagger emits a Kubernetes event. When configured,
+* **rollback** hooks are executed while a canary deployment is in either Progressing or Waiting status.
+This provides the ability to rollback during analysis or while waiting for a confirmation. If a rollback hook
+returns a successful HTTP status code, Flagger will stop the analysis and mark the canary release as failed.
+* **event** hooks are executed every time Flagger emits a Kubernetes event. When configured,
 every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST request.
 
 Spec:
