@@ -153,6 +153,8 @@ const (
 	ConfirmPromotionHook HookType = "confirm-promotion"
 	// EventHook dispatches Flagger events to the specified endpoint
 	EventHook HookType = "event"
+	// RollbackHook rollback canary anaylysis if webhook returns HTTP 200
+	RollbackHook HookType = "rollback"
 )
 
 // CanaryWebhook holds the reference to external checks used for canary analysis

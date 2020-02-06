@@ -551,6 +551,9 @@ The canary promotion is paused until the hooks return HTTP 200.
 While the promotion is paused, Flagger will continue to run the metrics checks and rollout hooks.
 * Post-rollout hooks are executed after the canary has been promoted or rolled back. 
 If a post rollout hook fails the error is logged.
+* Rollback hooks are executed while a canary deployment is in either Progressing or Waiting status.
+This provides the ability to rollback during analysis or while waiting for a confirmation.  If a rollback hook
+returns a successful HTTP status code, Flagger will rollback the canary deployment.
 * Event hooks are executed every time Flagger emits a Kubernetes event. When configured,
 every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST request.
 
@@ -584,6 +587,9 @@ Spec:
         timeout: 5s
         metadata:
           some: "message"
+      - name: "rollback gate"
+        type: rollback
+        url: http://flagger-loadtester.test/gate/halt
       - name: "send to Slack"
         type: event
         url: http://event-recevier.notifications/slack
@@ -830,6 +836,10 @@ For manual approval of a canary deployment you can use the `confirm-rollout` and
 The confirmation rollout hooks are executed before the pre-rollout hooks. 
 Flagger will halt the canary traffic shifting and analysis until the confirm webhook returns HTTP status 200.
 
+For manual rollback of a canary deployment you can use the `rollback` webhook.  The rollback hook will be called 
+during the analysis and confirmation states.  If a rollback webhook returns a successful HTTP status code, Flagger 
+will shift all traffic back to the primary instance and fail the canary. 
+
 Manual gating with Flagger's tester:
 
 ```yaml
@@ -897,5 +907,15 @@ While the promotion is paused, Flagger will continue to run the metrics checks a
         type: confirm-promotion
         url: http://flagger-loadtester.test/gate/halt
 ```
+
+The `rollback` hook type can be used to manually rollback the canary promotion.  
+
+```yaml
+  canaryAnalysis:
+    webhooks:
+      - name: "rollback"
+        type: rollback
+        url: http://flagger-loadtester.test/gate/halt
+```     
 
 If you have notifications enabled, Flagger will post a message to Slack or MS Teams if a canary promotion is waiting for approval.
