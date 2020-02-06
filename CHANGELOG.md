@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.23.0 (2020-02-06) 
+
+Adds support for service name configuration and rollback webhook
+
+#### Features
+
+- Implement service name override [#416](https://github.com/weaveworks/flagger/pull/416)
+- Add support for gated rollback [#420](https://github.com/weaveworks/flagger/pull/420)
+
 ## 0.22.0 (2020-01-16) 
 
 Adds event dispatching through webhooks
