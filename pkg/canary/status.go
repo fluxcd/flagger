@@ -2,6 +2,7 @@ package canary
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mitchellh/hashstructure"
 	ex "github.com/pkg/errors"
@@ -50,7 +51,6 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 			}
 		}
 
-		//fmt.Println(">>>>", cd.GetObjectMeta())
 		cdCopy := cd.DeepCopy()
 		cdCopy.Status.Phase = status.Phase
 		cdCopy.Status.CanaryWeight = status.CanaryWeight
@@ -64,7 +64,7 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 			cdCopy.Status.Conditions = conditions
 		}
 
-		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -93,7 +93,7 @@ func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Cana
 		cdCopy.Status.FailedChecks = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -122,7 +122,7 @@ func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, va
 		cdCopy.Status.CanaryWeight = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -152,7 +152,7 @@ func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary
 		cdCopy.Status.Iterations = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -197,7 +197,7 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 			cdCopy.Status.Conditions = conditions
 		}
 
-		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -272,4 +272,23 @@ func MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
 	}
 
 	return true, []flaggerv1.CanaryCondition{*newCondition}
+}
+
+// updateStatusWithUpgrade tries to update the status sub-resource
+// if the status update fails with:
+// Canary.flagger.app is invalid: apiVersion: Invalid value: flagger.app/v1alpha3: must be flagger.app/v1beta1
+// then the canary object will be updated to the latest API version
+func updateStatusWithUpgrade(flaggerClient clientset.Interface, cd *flaggerv1.Canary) error {
+	_, err := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cd)
+	if err != nil && strings.Contains(err.Error(), "flagger.app/v1alpha") {
+		// upgrade alpha resource
+		_, updateErr := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Update(cd)
+		if updateErr != nil {
+			return updateErr
+		}
+
+		// retry status update
+		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cd)
+	}
+	return err
 }

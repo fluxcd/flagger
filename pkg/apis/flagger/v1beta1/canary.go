@@ -121,7 +121,7 @@ type CanaryAnalysis struct {
 	MaxWeight  int                              `json:"maxWeight"`
 	Mirror     bool                             `json:"mirror,omitempty"`
 	StepWeight int                              `json:"stepWeight"`
-	Metrics    []CanaryMetric                   `json:"metrics"`
+	Metrics    []CanaryMetric                   `json:"metrics,omitempty"`
 	Webhooks   []CanaryWebhook                  `json:"webhooks,omitempty"`
 	Match      []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
 	Iterations int                              `json:"iterations,omitempty"`
