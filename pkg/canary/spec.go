@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
-func hasSpecChanged(cd *v1alpha3.Canary, spec interface{}) (bool, error) {
+func hasSpecChanged(cd *flaggerv1.Canary, spec interface{}) (bool, error) {
 	if cd.Status.LastAppliedSpec == "" {
 		return true, nil
 	}

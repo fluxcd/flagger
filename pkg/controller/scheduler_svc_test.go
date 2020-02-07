@@ -6,7 +6,7 @@ import (
 	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 func TestScheduler_ServicePromotion(t *testing.T) {
@@ -16,7 +16,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check initialized status
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -51,7 +51,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check progressing status
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -64,7 +64,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check promoting status
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -105,7 +105,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	}
 
 	// check finalising status
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -117,7 +117,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	// scale canary to zero
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}

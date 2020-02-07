@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 func callWebhook(webhook string, payload interface{}, timeout string) error {

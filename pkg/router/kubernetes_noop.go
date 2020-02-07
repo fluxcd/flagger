@@ -1,7 +1,7 @@
 package router
 
 import (
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // KubernetesNoopRouter manages nothing. This is useful when one uses Flagger for progressive delivery of

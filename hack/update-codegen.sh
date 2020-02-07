@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SCRIPT_ROOT=$(realpath $(dirname ${BASH_SOURCE})/..)
+SCRIPT_ROOT=$(git rev-parse --show-toplevel)
 
 # Grab code-generator version from go.sum.
 CODEGEN_VERSION=$(grep 'k8s.io/code-generator' go.sum | awk '{print $2}' | head -1)
@@ -30,7 +30,7 @@ chmod +x ${CODEGEN_PKG}/generate-groups.sh
 
 ${CODEGEN_PKG}/generate-groups.sh all \
     github.com/weaveworks/flagger/pkg/client github.com/weaveworks/flagger/pkg/apis \
-    "flagger:v1alpha3 flagger:v1alpha1 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 gloo:v1 projectcontour:v1" \
+    "flagger:v1beta1 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 gloo:v1 projectcontour:v1" \
     --output-base "${TEMP_DIR}" \
     --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
 

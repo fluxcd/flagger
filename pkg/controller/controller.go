@@ -19,12 +19,12 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/weaveworks/flagger/pkg/canary"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	flaggerscheme "github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
-	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
-	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1alpha3"
+	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
+	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1beta1"
 	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"github.com/weaveworks/flagger/pkg/notifier"
@@ -222,7 +222,7 @@ func (c *Controller) syncHandler(key string) error {
 			cdCopy.Status.Conditions = conditions
 			cdCopy.Status.LastTransitionTime = metav1.Now()
 			cdCopy.Status.Phase = flaggerv1.CanaryPhaseInitializing
-			_, err := c.flaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+			_, err := c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 			if err != nil {
 				c.logger.Errorf("%s status condition update error: %v", key, err)
 				return fmt.Errorf("%s status condition update error: %v", key, err)

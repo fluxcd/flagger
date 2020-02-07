@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 func TestCallWebhook(t *testing.T) {

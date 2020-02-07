@@ -22,8 +22,7 @@ import (
 	"fmt"
 
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
-	flaggerv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha1"
-	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
+	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	gloov1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
@@ -36,8 +35,7 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface
-	FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface
-	FlaggerV1alpha1() flaggerv1alpha1.FlaggerV1alpha1Interface
+	FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface
 	GlooV1() gloov1.GlooV1Interface
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
 	ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface
@@ -49,8 +47,7 @@ type Interface interface {
 type Clientset struct {
 	*discovery.DiscoveryClient
 	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
-	flaggerV1alpha3    *flaggerv1alpha3.FlaggerV1alpha3Client
-	flaggerV1alpha1    *flaggerv1alpha1.FlaggerV1alpha1Client
+	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
 	glooV1             *gloov1.GlooV1Client
 	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
 	projectcontourV1   *projectcontourv1.ProjectcontourV1Client
@@ -62,14 +59,9 @@ func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
 	return c.appmeshV1beta1
 }
 
-// FlaggerV1alpha3 retrieves the FlaggerV1alpha3Client
-func (c *Clientset) FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface {
-	return c.flaggerV1alpha3
-}
-
-// FlaggerV1alpha1 retrieves the FlaggerV1alpha1Client
-func (c *Clientset) FlaggerV1alpha1() flaggerv1alpha1.FlaggerV1alpha1Interface {
-	return c.flaggerV1alpha1
+// FlaggerV1beta1 retrieves the FlaggerV1beta1Client
+func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
+	return c.flaggerV1beta1
 }
 
 // GlooV1 retrieves the GlooV1Client
@@ -117,11 +109,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
-	cs.flaggerV1alpha3, err = flaggerv1alpha3.NewForConfig(&configShallowCopy)
-	if err != nil {
-		return nil, err
-	}
-	cs.flaggerV1alpha1, err = flaggerv1alpha1.NewForConfig(&configShallowCopy)
+	cs.flaggerV1beta1, err = flaggerv1beta1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +142,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
 	cs.appmeshV1beta1 = appmeshv1beta1.NewForConfigOrDie(c)
-	cs.flaggerV1alpha3 = flaggerv1alpha3.NewForConfigOrDie(c)
-	cs.flaggerV1alpha1 = flaggerv1alpha1.NewForConfigOrDie(c)
+	cs.flaggerV1beta1 = flaggerv1beta1.NewForConfigOrDie(c)
 	cs.glooV1 = gloov1.NewForConfigOrDie(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.NewForConfigOrDie(c)
 	cs.projectcontourV1 = projectcontourv1.NewForConfigOrDie(c)
@@ -169,8 +156,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.appmeshV1beta1 = appmeshv1beta1.New(c)
-	cs.flaggerV1alpha3 = flaggerv1alpha3.New(c)
-	cs.flaggerV1alpha1 = flaggerv1alpha1.New(c)
+	cs.flaggerV1beta1 = flaggerv1beta1.New(c)
 	cs.glooV1 = gloov1.New(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
 	cs.projectcontourV1 = projectcontourv1.New(c)

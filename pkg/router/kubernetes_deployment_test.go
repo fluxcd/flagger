@@ -69,7 +69,7 @@ func TestServiceRouter_Update(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	canary, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -77,7 +77,7 @@ func TestServiceRouter_Update(t *testing.T) {
 	canaryClone := canary.DeepCopy()
 	canaryClone.Spec.Service.PortName = "grpc"
 
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(canaryClone)
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(canaryClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

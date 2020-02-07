@@ -159,14 +159,14 @@ func main() {
 	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
 
 	logger.Info("Waiting for canary informer cache to sync")
-	canaryInformer := flaggerInformerFactory.Flagger().V1alpha3().Canaries()
+	canaryInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
 	go canaryInformer.Informer().Run(stopCh)
 	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, canaryInformer.Informer().HasSynced); !ok {
 		logger.Fatalf("failed to wait for cache to sync")
 	}
 
 	logger.Info("Waiting for metric template informer cache to sync")
-	metricInformer := flaggerInformerFactory.Flagger().V1alpha1().MetricTemplates()
+	metricInformer := flaggerInformerFactory.Flagger().V1beta1().MetricTemplates()
 	go metricInformer.Informer().Run(stopCh)
 	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, metricInformer.Informer().HasSynced); !ok {
 		logger.Fatalf("failed to wait for cache to sync")
@@ -304,12 +304,12 @@ func fromEnv(envVar string, defaultVal string) string {
 }
 
 func verifyCRDs(flaggerClient clientset.Interface, logger *zap.SugaredLogger) {
-	_, err := flaggerClient.FlaggerV1alpha3().Canaries(namespace).List(metav1.ListOptions{Limit: 1})
+	_, err := flaggerClient.FlaggerV1beta1().Canaries(namespace).List(metav1.ListOptions{Limit: 1})
 	if err != nil {
 		logger.Fatalf("Canary CRD is not registered %v", err)
 	}
 
-	_, err = flaggerClient.FlaggerV1alpha1().MetricTemplates(namespace).List(metav1.ListOptions{Limit: 1})
+	_, err = flaggerClient.FlaggerV1beta1().MetricTemplates(namespace).List(metav1.ListOptions{Limit: 1})
 	if err != nil {
 		logger.Fatalf("MetricTemplate CRD is not registered %v", err)
 	}

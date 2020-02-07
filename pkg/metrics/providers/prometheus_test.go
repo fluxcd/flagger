@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha1"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 )
@@ -66,7 +66,7 @@ func prometheusFake() fakeClients {
 func TestNewPrometheusProvider(t *testing.T) {
 	clients := prometheusFake()
 
-	template, err := clients.flaggerClient.FlaggerV1alpha1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
+	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -113,7 +113,7 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 
 	clients := prometheusFake()
 
-	template, err := clients.flaggerClient.FlaggerV1alpha1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
+	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -147,7 +147,7 @@ func TestPrometheusProvider_IsOnline(t *testing.T) {
 
 	clients := prometheusFake()
 
-	template, err := clients.flaggerClient.FlaggerV1alpha1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
+	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}

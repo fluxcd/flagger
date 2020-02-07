@@ -71,7 +71,7 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 	}
 
 	// test backends update
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("appmesh", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("appmesh", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -80,7 +80,7 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 	hosts := cdClone.Spec.Service.Backends
 	hosts = append(hosts, "test.example.com")
 	cdClone.Spec.Service.Backends = hosts
-	canary, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cdClone)
+	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
