@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	smiv1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )

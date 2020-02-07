@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 func TestScheduler_Init(t *testing.T) {
@@ -58,7 +58,7 @@ func TestScheduler_Rollback(t *testing.T) {
 	// detect changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -74,12 +74,12 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// enable skip
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	cd.Spec.SkipAnalysis = true
-	_, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cd)
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -96,7 +96,7 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 	// advance
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -178,7 +178,7 @@ func TestScheduler_Promotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check initialized status
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -228,7 +228,7 @@ func TestScheduler_Promotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check progressing status
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -241,7 +241,7 @@ func TestScheduler_Promotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check promoting status
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -300,7 +300,7 @@ func TestScheduler_Promotion(t *testing.T) {
 	}
 
 	// check finalising status
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -312,7 +312,7 @@ func TestScheduler_Promotion(t *testing.T) {
 	// scale canary to zero
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -416,7 +416,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
 	}
 
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -433,7 +433,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check finalising status
-	c, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -458,7 +458,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check rollout status
-	c, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -472,12 +472,12 @@ func TestScheduler_PortDiscovery(t *testing.T) {
 	mocks := SetupMocks(nil)
 
 	// enable port discovery
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	cd.Spec.Service.PortDiscovery = true
-	_, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cd)
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -515,14 +515,14 @@ func TestScheduler_PortDiscovery(t *testing.T) {
 func TestScheduler_TargetPortNumber(t *testing.T) {
 	mocks := SetupMocks(nil)
 
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	cd.Spec.Service.Port = 80
 	cd.Spec.Service.TargetPort = intstr.FromInt(9898)
 	cd.Spec.Service.PortDiscovery = true
-	_, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cd)
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -560,14 +560,14 @@ func TestScheduler_TargetPortNumber(t *testing.T) {
 func TestScheduler_TargetPortName(t *testing.T) {
 	mocks := SetupMocks(nil)
 
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	cd.Spec.Service.Port = 8080
 	cd.Spec.Service.TargetPort = intstr.FromString("http")
 	cd.Spec.Service.PortDiscovery = true
-	_, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cd)
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

@@ -20,8 +20,7 @@ package fake
 
 import (
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
-	flaggerv1alpha1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha1"
-	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
@@ -38,8 +37,7 @@ var codecs = serializer.NewCodecFactory(scheme)
 var parameterCodec = runtime.NewParameterCodec(scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
 	appmeshv1beta1.AddToScheme,
-	flaggerv1alpha3.AddToScheme,
-	flaggerv1alpha1.AddToScheme,
+	flaggerv1beta1.AddToScheme,
 	gloov1.AddToScheme,
 	networkingv1alpha3.AddToScheme,
 	projectcontourv1.AddToScheme,

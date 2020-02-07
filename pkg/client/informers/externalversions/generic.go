@@ -22,12 +22,11 @@ import (
 	"fmt"
 
 	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
-	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha1"
-	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	v1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
-	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
-	smiv1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -66,22 +65,20 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1beta1.SchemeGroupVersion.WithResource("virtualservices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta1().VirtualServices().Informer()}, nil
 
-		// Group=flagger.app, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("metrictemplates"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha1().MetricTemplates().Informer()}, nil
-
-		// Group=flagger.app, Version=v1alpha3
-	case v1alpha3.SchemeGroupVersion.WithResource("canaries"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1alpha3().Canaries().Informer()}, nil
+		// Group=flagger.app, Version=v1beta1
+	case flaggerv1beta1.SchemeGroupVersion.WithResource("canaries"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1beta1().Canaries().Informer()}, nil
+	case flaggerv1beta1.SchemeGroupVersion.WithResource("metrictemplates"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1beta1().MetricTemplates().Informer()}, nil
 
 		// Group=gloo.solo.io, Version=v1
 	case v1.SchemeGroupVersion.WithResource("upstreamgroups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gloo().V1().UpstreamGroups().Informer()}, nil
 
 		// Group=networking.istio.io, Version=v1alpha3
-	case istiov1alpha3.SchemeGroupVersion.WithResource("destinationrules"):
+	case v1alpha3.SchemeGroupVersion.WithResource("destinationrules"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1alpha3().DestinationRules().Informer()}, nil
-	case istiov1alpha3.SchemeGroupVersion.WithResource("virtualservices"):
+	case v1alpha3.SchemeGroupVersion.WithResource("virtualservices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1alpha3().VirtualServices().Informer()}, nil
 
 		// Group=projectcontour.io, Version=v1
@@ -89,7 +86,7 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Projectcontour().V1().HTTPProxies().Informer()}, nil
 
 		// Group=split.smi-spec.io, Version=v1alpha1
-	case smiv1alpha1.SchemeGroupVersion.WithResource("trafficsplits"):
+	case v1alpha1.SchemeGroupVersion.WithResource("trafficsplits"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Split().V1alpha1().TrafficSplits().Informer()}, nil
 
 	}

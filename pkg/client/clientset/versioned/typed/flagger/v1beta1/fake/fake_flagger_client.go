@@ -19,22 +19,26 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha1"
+	v1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeFlaggerV1alpha1 struct {
+type FakeFlaggerV1beta1 struct {
 	*testing.Fake
 }
 
-func (c *FakeFlaggerV1alpha1) MetricTemplates(namespace string) v1alpha1.MetricTemplateInterface {
+func (c *FakeFlaggerV1beta1) Canaries(namespace string) v1beta1.CanaryInterface {
+	return &FakeCanaries{c, namespace}
+}
+
+func (c *FakeFlaggerV1beta1) MetricTemplates(namespace string) v1beta1.MetricTemplateInterface {
 	return &FakeMetricTemplates{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeFlaggerV1alpha1) RESTClient() rest.Interface {
+func (c *FakeFlaggerV1beta1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

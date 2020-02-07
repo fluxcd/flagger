@@ -1,6 +1,6 @@
 package router
 
-import flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+import flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 
 type Interface interface {
 	Reconcile(canary *flaggerv1.Canary) error

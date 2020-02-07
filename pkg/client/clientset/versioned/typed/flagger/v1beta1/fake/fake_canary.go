@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	v1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,29 +30,29 @@ import (
 
 // FakeCanaries implements CanaryInterface
 type FakeCanaries struct {
-	Fake *FakeFlaggerV1alpha3
+	Fake *FakeFlaggerV1beta1
 	ns   string
 }
 
-var canariesResource = schema.GroupVersionResource{Group: "flagger.app", Version: "v1alpha3", Resource: "canaries"}
+var canariesResource = schema.GroupVersionResource{Group: "flagger.app", Version: "v1beta1", Resource: "canaries"}
 
-var canariesKind = schema.GroupVersionKind{Group: "flagger.app", Version: "v1alpha3", Kind: "Canary"}
+var canariesKind = schema.GroupVersionKind{Group: "flagger.app", Version: "v1beta1", Kind: "Canary"}
 
 // Get takes name of the canary, and returns the corresponding canary object, and an error if there is any.
-func (c *FakeCanaries) Get(name string, options v1.GetOptions) (result *v1alpha3.Canary, err error) {
+func (c *FakeCanaries) Get(name string, options v1.GetOptions) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(canariesResource, c.ns, name), &v1alpha3.Canary{})
+		Invokes(testing.NewGetAction(canariesResource, c.ns, name), &v1beta1.Canary{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.Canary), err
+	return obj.(*v1beta1.Canary), err
 }
 
 // List takes label and field selectors, and returns the list of Canaries that match those selectors.
-func (c *FakeCanaries) List(opts v1.ListOptions) (result *v1alpha3.CanaryList, err error) {
+func (c *FakeCanaries) List(opts v1.ListOptions) (result *v1beta1.CanaryList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(canariesResource, canariesKind, c.ns, opts), &v1alpha3.CanaryList{})
+		Invokes(testing.NewListAction(canariesResource, canariesKind, c.ns, opts), &v1beta1.CanaryList{})
 
 	if obj == nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *FakeCanaries) List(opts v1.ListOptions) (result *v1alpha3.CanaryList, e
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha3.CanaryList{ListMeta: obj.(*v1alpha3.CanaryList).ListMeta}
-	for _, item := range obj.(*v1alpha3.CanaryList).Items {
+	list := &v1beta1.CanaryList{ListMeta: obj.(*v1beta1.CanaryList).ListMeta}
+	for _, item := range obj.(*v1beta1.CanaryList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -79,43 +79,43 @@ func (c *FakeCanaries) Watch(opts v1.ListOptions) (watch.Interface, error) {
 }
 
 // Create takes the representation of a canary and creates it.  Returns the server's representation of the canary, and an error, if there is any.
-func (c *FakeCanaries) Create(canary *v1alpha3.Canary) (result *v1alpha3.Canary, err error) {
+func (c *FakeCanaries) Create(canary *v1beta1.Canary) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(canariesResource, c.ns, canary), &v1alpha3.Canary{})
+		Invokes(testing.NewCreateAction(canariesResource, c.ns, canary), &v1beta1.Canary{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.Canary), err
+	return obj.(*v1beta1.Canary), err
 }
 
 // Update takes the representation of a canary and updates it. Returns the server's representation of the canary, and an error, if there is any.
-func (c *FakeCanaries) Update(canary *v1alpha3.Canary) (result *v1alpha3.Canary, err error) {
+func (c *FakeCanaries) Update(canary *v1beta1.Canary) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(canariesResource, c.ns, canary), &v1alpha3.Canary{})
+		Invokes(testing.NewUpdateAction(canariesResource, c.ns, canary), &v1beta1.Canary{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.Canary), err
+	return obj.(*v1beta1.Canary), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeCanaries) UpdateStatus(canary *v1alpha3.Canary) (*v1alpha3.Canary, error) {
+func (c *FakeCanaries) UpdateStatus(canary *v1beta1.Canary) (*v1beta1.Canary, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(canariesResource, "status", c.ns, canary), &v1alpha3.Canary{})
+		Invokes(testing.NewUpdateSubresourceAction(canariesResource, "status", c.ns, canary), &v1beta1.Canary{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.Canary), err
+	return obj.(*v1beta1.Canary), err
 }
 
 // Delete takes name of the canary and deletes it. Returns an error if one occurs.
 func (c *FakeCanaries) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(canariesResource, c.ns, name), &v1alpha3.Canary{})
+		Invokes(testing.NewDeleteAction(canariesResource, c.ns, name), &v1beta1.Canary{})
 
 	return err
 }
@@ -124,17 +124,17 @@ func (c *FakeCanaries) Delete(name string, options *v1.DeleteOptions) error {
 func (c *FakeCanaries) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(canariesResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &v1alpha3.CanaryList{})
+	_, err := c.Fake.Invokes(action, &v1beta1.CanaryList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched canary.
-func (c *FakeCanaries) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha3.Canary, err error) {
+func (c *FakeCanaries) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(canariesResource, c.ns, name, pt, data, subresources...), &v1alpha3.Canary{})
+		Invokes(testing.NewPatchSubresourceAction(canariesResource, c.ns, name, pt, data, subresources...), &v1beta1.Canary{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.Canary), err
+	return obj.(*v1beta1.Canary), err
 }

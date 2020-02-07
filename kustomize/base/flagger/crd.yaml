@@ -6,16 +6,19 @@ metadata:
     helm.sh/resource-policy: keep
 spec:
   group: flagger.app
-  version: v1alpha3
+  version: v1beta1
   versions:
-    - name: v1alpha3
+    - name: v1beta1
       served: true
       storage: true
-    - name: v1alpha2
+    - name: v1alpha3
       served: true
       storage: false
+    - name: v1alpha2
+      served: false
+      storage: false
     - name: v1alpha1
-      served: true
+      served: false
       storage: false
   names:
     plural: canaries
@@ -112,6 +115,7 @@ spec:
                 name:
                   type: string
             service:
+              description: Kubernetes Service spec
               type: object
               required: ["port"]
               properties:
@@ -137,53 +141,48 @@ spec:
                   type: string
                 backends:
                   description: AppMesh backend array
-                  anyOf:
-                    - type: string
-                    - type: array
+                  type: array
+                  items:
+                    type: string
                 timeout:
                   description: Istio HTTP or gRPC request timeout
                   type: string
                 trafficPolicy:
                   description: Istio traffic policy
-                  anyOf:
-                    - type: string
-                    - type: object
+                  type: object
                 match:
-                  description: Istio URL match conditions
-                  anyOf:
-                    - type: string
-                    - type: array
+                  description: URL match conditions
+                  type: array
+                  items:
+                    type: object
                 rewrite:
-                  description: Istio URL rewrite
-                  anyOf:
-                    - type: string
-                    - type: object
+                  description: URL rewrite
+                  type: object
                 headers:
-                  description: Istio headers operations
-                  anyOf:
-                    - type: string
-                    - type: object
+                  description: Headers operations
+                  type: object
                 corsPolicy:
-                  description: Istio CORS policy
-                  anyOf:
-                    - type: string
-                    - type: object
+                  description: CORS policy
+                  type: object
                 gateways:
-                  description: Istio gateways list
-                  anyOf:
-                    - type: string
-                    - type: array
+                  description: Gateway list
+                  type: array
+                  items:
+                    type: string
                 hosts:
-                  description: Istio hosts list
-                  anyOf:
-                    - type: string
-                    - type: array
+                  description: Host list
+                  type: array
+                  items:
+                    type: string
             skipAnalysis:
+              description: Skip analysis and promote canary
               type: boolean
             canaryAnalysis:
+              description: Canary analysis for this canary
+              type: object
               properties:
                 interval:
-                  description: Canary schedule interval
+                  description: Schedule interval for this canary
                   type: string
                   pattern: "^[0-9]+(m|s)"
                 iterations:
@@ -196,84 +195,82 @@ spec:
                   description: Max traffic percentage routed to canary
                   type: number
                 stepWeight:
-                  description: Canary incremental traffic percentage step
+                  description: Incremental traffic percentage step
                   type: number
                 mirror:
                   description: Mirror traffic to canary before shifting
                   type: boolean
                 match:
                   description: A/B testing match conditions
-                  anyOf:
-                    - type: string
-                    - type: array
-                metrics:
-                  description: Prometheus query list for this canary
                   type: array
-                  properties:
-                    items:
-                      type: object
-                      required: ["name", "threshold"]
-                      properties:
-                        name:
-                          description: Name of the metric
-                          type: string
-                        interval:
-                          description: Interval of the query
-                          type: string
-                          pattern: "^[0-9]+(m|s)"
-                        threshold:
-                          description: Max value accepted for this metric
-                          type: number
-                        query:
-                          description: Prometheus query
-                          type: string
-                        templateRef:
-                          description: Metric template reference
-                          type: object
-                          required: ["name"]
-                          properties:
-                            name:
-                              description: Name of this metric template
-                              type: string
-                            namespace:
-                              description: Namespace of this metric template
-                              type: string
+                  items:
+                    type: object
+                metrics:
+                  description: Metric check list for this canary
+                  type: array
+                  items:
+                    type: object
+                    required: ["name", "threshold"]
+                    properties:
+                      name:
+                        description: Name of the metric
+                        type: string
+                      interval:
+                        description: Interval of the query
+                        type: string
+                        pattern: "^[0-9]+(m|s)"
+                      threshold:
+                        description: Max value accepted for this metric
+                        type: number
+                      query:
+                        description: Prometheus query
+                        type: string
+                      templateRef:
+                        description: Metric template reference
+                        type: object
+                        required: ["name"]
+                        properties:
+                          name:
+                            description: Name of this metric template
+                            type: string
+                          namespace:
+                            description: Namespace of this metric template
+                            type: string
                 webhooks:
                   description: Webhook list for this canary
                   type: array
-                  properties:
-                    items:
-                      type: object
-                      required: ["name", "url"]
-                      properties:
-                        name:
-                          description: Name of the webhook
-                          type: string
-                        type:
-                          description: Type of the webhook pre, post or during rollout
-                          type: string
-                          enum:
-                            - ""
-                            - confirm-rollout
-                            - pre-rollout
-                            - rollout
-                            - confirm-promotion
-                            - post-rollout
-                            - event
-                            - rollback
-                        url:
-                          description: URL address of this webhook
-                          type: string
-                          format: url
-                        timeout:
-                          description: Request timeout for this webhook
-                          type: string
-                          pattern: "^[0-9]+(m|s)"
-                        metadata:
-                          description: Metadata (key-value pairs) for this webhook
-                          anyOf:
-                            - type: string
-                            - type: object
+                  items:
+                    type: object
+                    required: ["name", "url"]
+                    properties:
+                      name:
+                        description: Name of the webhook
+                        type: string
+                      type:
+                        description: Type of the webhook pre, post or during rollout
+                        type: string
+                        enum:
+                          - ""
+                          - confirm-rollout
+                          - pre-rollout
+                          - rollout
+                          - confirm-promotion
+                          - post-rollout
+                          - event
+                          - rollback
+                      url:
+                        description: URL address of this webhook
+                        type: string
+                        format: url
+                      timeout:
+                        description: Request timeout for this webhook
+                        type: string
+                        pattern: "^[0-9]+(m|s)"
+                      metadata:
+                        description: Metadata (key-value pairs) for this webhook
+                        anyOf:
+                          - type: string
+                          - type: object
         status:
           properties:
             phase:
@@ -308,31 +305,30 @@ spec:
             conditions:
               description: Status conditions of this canary
               type: array
-              properties:
-                items:
-                  type: object
-                  required: ["type", "status", "reason"]
-                  properties:
-                    lastTransitionTime:
-                      description: LastTransitionTime of this condition
-                      format: date-time
-                      type: string
-                    lastUpdateTime:
-                      description: LastUpdateTime of this condition
-                      format: date-time
-                      type: string
-                    message:
-                      description: Message associated with this condition
-                      type: string
-                    reason:
-                      description: Reason for the current status of this condition
-                      type: string
-                    status:
-                      description: Status of this condition
-                      type: string
-                    type:
-                      description: Type of this condition
-                      type: string
+              items:
+                type: object
+                required: ["type", "status", "reason"]
+                properties:
+                  lastTransitionTime:
+                    description: LastTransitionTime of this condition
+                    format: date-time
+                    type: string
+                  lastUpdateTime:
+                    description: LastUpdateTime of this condition
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message associated with this condition
+                    type: string
+                  reason:
+                    description: Reason for the current status of this condition
+                    type: string
+                  status:
+                    description: Status of this condition
+                    type: string
+                  type:
+                    description: Type of this condition
+                    type: string
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -342,11 +338,14 @@ metadata:
     helm.sh/resource-policy: keep
 spec:
   group: flagger.app
-  version: v1alpha1
+  version: v1beta1
   versions:
-    - name: v1alpha1
+    - name: v1beta1
       served: true
       storage: true
+    - name: v1alpha1
+      served: false
+      storage: false
   names:
     plural: metrictemplates
     singular: metrictemplate

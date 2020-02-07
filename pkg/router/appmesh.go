@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	appmeshv1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 

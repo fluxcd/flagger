@@ -40,7 +40,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	}
 
 	// test update
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -48,7 +48,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	cdClone := cd.DeepCopy()
 	cdClone.Spec.Service.Port = 8080
 	cdClone.Spec.Service.Timeout = "1m"
-	canary, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cdClone)
+	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -85,7 +85,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	}
 
 	// test headers update
-	cd, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -93,7 +93,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	cdClone = cd.DeepCopy()
 	cdClone.Spec.CanaryAnalysis.Iterations = 5
 	cdClone.Spec.CanaryAnalysis.Match = newMockABTest().Spec.CanaryAnalysis.Match
-	canary, err = mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cdClone)
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -146,7 +146,7 @@ func TestContourRouter_Routes(t *testing.T) {
 		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 50)
 	}
 
-	cd, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -165,7 +165,7 @@ func TestContourRouter_Routes(t *testing.T) {
 	cdClone := cd.DeepCopy()
 	cdClone.Spec.CanaryAnalysis.Iterations = 5
 	cdClone.Spec.CanaryAnalysis.Match = newMockABTest().Spec.CanaryAnalysis.Match
-	canary, err := mocks.flaggerClient.FlaggerV1alpha3().Canaries("default").Update(cdClone)
+	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
