@@ -355,6 +355,10 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
+  additionalPrinterColumns:
+    - name: Provider
+      type: string
+      JSONPath: .spec.provider.type
   validation:
     openAPIV3Schema:
       properties:
