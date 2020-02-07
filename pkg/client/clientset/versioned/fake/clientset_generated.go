@@ -22,6 +22,8 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	fakeappmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1/fake"
+	flaggerv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha1"
+	fakeflaggerv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha1/fake"
 	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
 	fakeflaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3/fake"
 	gloov1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
@@ -94,6 +96,11 @@ func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
 // FlaggerV1alpha3 retrieves the FlaggerV1alpha3Client
 func (c *Clientset) FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface {
 	return &fakeflaggerv1alpha3.FakeFlaggerV1alpha3{Fake: &c.Fake}
+}
+
+// FlaggerV1alpha1 retrieves the FlaggerV1alpha1Client
+func (c *Clientset) FlaggerV1alpha1() flaggerv1alpha1.FlaggerV1alpha1Interface {
+	return &fakeflaggerv1alpha1.FakeFlaggerV1alpha1{Fake: &c.Fake}
 }
 
 // GlooV1 retrieves the GlooV1Client

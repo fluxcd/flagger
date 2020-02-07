@@ -32,6 +32,8 @@ rules:
     resources:
       - canaries
       - canaries/status
+      - metrictemplates
+      - metrictemplates/status
     verbs: ["*"]
   - apiGroups:
       - networking.istio.io

@@ -26,6 +26,7 @@ import (
 	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1alpha3"
 	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1alpha3"
 	"github.com/weaveworks/flagger/pkg/metrics"
+	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"github.com/weaveworks/flagger/pkg/notifier"
 	"github.com/weaveworks/flagger/pkg/router"
 )
@@ -49,7 +50,7 @@ type Controller struct {
 	notifier        notifier.Interface
 	canaryFactory   *canary.Factory
 	routerFactory   *router.Factory
-	observerFactory *metrics.Factory
+	observerFactory *observers.Factory
 	meshProvider    string
 	eventWebhook    string
 }
@@ -64,7 +65,7 @@ func NewController(
 	notifier notifier.Interface,
 	canaryFactory *canary.Factory,
 	routerFactory *router.Factory,
-	observerFactory *metrics.Factory,
+	observerFactory *observers.Factory,
 	meshProvider string,
 	version string,
 	eventWebhook string,
