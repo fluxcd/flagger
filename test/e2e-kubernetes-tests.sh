@@ -40,12 +40,14 @@ spec:
     threshold: 10
     iterations: 5
     metrics:
-    - name: request-success-rate
-      threshold: 99
-      interval: 1m
-    - name: request-duration
-      threshold: 500
-      interval: 30s
+      - name: request-success-rate
+        interval: 1m
+        thresholdRange:
+          min: 99
+      - name: request-duration
+        interval: 30s
+        thresholdRange:
+          max: 500
     webhooks:
       - name: "gate"
         type: confirm-rollout
