@@ -133,9 +133,17 @@ type CanaryMetric struct {
 	Interval  string  `json:"interval,omitempty"`
 	Threshold float64 `json:"threshold"`
 	// +optional
+	ThresholdRange *CanaryThresholdRange `json:"thresholdRange,omitempty"`
+	// +optional
 	Query string `json:"query,omitempty"`
 	// +optional
 	TemplateRef *MetricTemplateRef `json:"templateRef,omitempty"`
+}
+
+// CanaryThresholdRange defines the range used for metrics validation
+type CanaryThresholdRange struct {
+	Min *float64 `json:"min,omitempty"`
+	Max *float64 `json:"max,omitempty"`
 }
 
 type MetricTemplateRef struct {
