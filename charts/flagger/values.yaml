@@ -23,14 +23,18 @@ namespace: ""
 # defaults to: app,name,app.kubernetes.io/name
 selectorLabels: ""
 
+# when enabled, flagger will track changes in Secrets and ConfigMaps referenced in the target deployment (enabled by default)
+configTracking:
+  enabled: true
+
+# when specified, flagger will publish events to the provided webhook
+eventWebhook: ""
+
 slack:
   user: flagger
   channel:
   # incoming webhook https://api.slack.com/incoming-webhooks
   url:
-
-# when specified, flagger will publish events to the provided webhook
-eventWebhook: ""
 
 msteams:
   # MS Teams incoming webhook URL
@@ -91,5 +95,5 @@ nodeSelector: {}
 tolerations: []
 
 prometheus:
-  # to be used with AppMesh or nginx ingress
+  # to be used with ingress controllers
   install: false
