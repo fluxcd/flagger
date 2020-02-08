@@ -50,15 +50,45 @@ func TestScheduler_Rollback(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update failed checks to max
-	err := mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing, FailedChecks: 11})
+	err := mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing, FailedChecks: 10})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
-
+	// set a metric check to fail
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	cd := c.DeepCopy()
+	cd.Spec.CanaryAnalysis.Metrics = append(c.Spec.CanaryAnalysis.Metrics, flaggerv1.CanaryMetric{
+		Name:     "fail",
+		Interval: "1m",
+		ThresholdRange: &flaggerv1.CanaryThresholdRange{
+			Min: toFloatPtr(0),
+			Max: toFloatPtr(50),
+		},
+		Query: "fail",
+	})
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// run metric checks
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// finalise analysis
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// check status
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}

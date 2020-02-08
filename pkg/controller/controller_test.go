@@ -250,20 +250,37 @@ func newTestCanary() *flaggerv1.Canary {
 				MaxWeight:  50,
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "istio_requests_total",
+						Name:      "request-success-rate",
 						Threshold: 99,
 						Interval:  "1m",
 					},
 					{
-						Name:      "istio_request_duration_seconds_bucket",
-						Threshold: 500,
-						Interval:  "1m",
+						Name: "request-duration",
+						ThresholdRange: &flaggerv1.CanaryThresholdRange{
+							Min: toFloatPtr(0),
+							Max: toFloatPtr(500000),
+						},
+						Interval: "1m",
+					},
+					{
+						Name: "custom",
+						ThresholdRange: &flaggerv1.CanaryThresholdRange{
+							Min: toFloatPtr(0),
+							Max: toFloatPtr(500000),
+						},
+						Interval: "1m",
+						Query:    "fake",
 					},
 				},
 			},
 		},
 	}
 	return cd
+}
+
+func toFloatPtr(val int) *float64 {
+	v := float64(val)
+	return &v
 }
 
 func newTestCanaryMirror() *flaggerv1.Canary {
@@ -305,13 +322,16 @@ func newTestCanaryAB() *flaggerv1.Canary {
 				},
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "istio_requests_total",
-						Threshold: 99,
-						Interval:  "1m",
+						Name: "request-success-rate",
+						ThresholdRange: &flaggerv1.CanaryThresholdRange{
+							Min: toFloatPtr(99),
+							Max: toFloatPtr(100),
+						},
+						Interval: "1m",
 					},
 					{
-						Name:      "istio_request_duration_seconds_bucket",
-						Threshold: 500,
+						Name:      "request-duration",
+						Threshold: 500000,
 						Interval:  "1m",
 					},
 				},
