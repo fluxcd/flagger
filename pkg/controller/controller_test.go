@@ -77,7 +77,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	observerFactory, _ := observers.NewFactory("fake")
 
 	// init canary factory
-	configTracker := canary.ConfigTracker{
+	configTracker := &canary.ConfigTracker{
 		Logger:        logger,
 		KubeClient:    kubeClient,
 		FlaggerClient: flaggerClient,

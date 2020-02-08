@@ -11,13 +11,13 @@ type Factory struct {
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
-	configTracker ConfigTracker
+	configTracker Tracker
 	labels        []string
 }
 
 func NewFactory(kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
-	configTracker ConfigTracker,
+	configTracker Tracker,
 	labels []string,
 	logger *zap.SugaredLogger) *Factory {
 	return &Factory{
@@ -35,11 +35,7 @@ func (factory *Factory) Controller(kind string) Controller {
 		kubeClient:    factory.kubeClient,
 		flaggerClient: factory.flaggerClient,
 		labels:        factory.labels,
-		configTracker: ConfigTracker{
-			Logger:        factory.logger,
-			KubeClient:    factory.kubeClient,
-			FlaggerClient: factory.flaggerClient,
-		},
+		configTracker: factory.configTracker,
 	}
 	serviceCtrl := &ServiceController{
 		logger:        factory.logger,
@@ -55,5 +51,4 @@ func (factory *Factory) Controller(kind string) Controller {
 	default:
 		return deploymentCtrl
 	}
-
 }

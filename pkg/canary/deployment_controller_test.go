@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"k8s.io/apimachinery/pkg/api/errors"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +19,11 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
+	}
+
+	configName := depPrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
+	if configName != "podinfo-config-vol-primary" {
+		t.Errorf("Got config name %v wanted %v", configName, "podinfo-config-vol-primary")
 	}
 
 	dep := newTestDeployment()
@@ -300,5 +306,30 @@ func TestCanaryDeployer_Scale(t *testing.T) {
 
 	if *c.Spec.Replicas != 2 {
 		t.Errorf("Got replicas %v wanted %v", *c.Spec.Replicas, 2)
+	}
+}
+
+func TestCanaryDeployer_NoConfigTracking(t *testing.T) {
+	mocks := SetupMocks()
+	mocks.deployer.configTracker = &NopTracker{}
+
+	err := mocks.deployer.Initialize(mocks.canary, true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	if !errors.IsNotFound(err) {
+		t.Fatalf("Primary ConfigMap shouldn't have been created")
+	}
+
+	configName := depPrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
+	if configName != "podinfo-config-vol" {
+		t.Errorf("Got config name %v wanted %v", configName, "podinfo-config-vol")
 	}
 }
