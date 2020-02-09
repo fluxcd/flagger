@@ -747,25 +747,25 @@ func (c *Controller) runRollbackHooks(canary *flaggerv1.Canary, phase flaggerv1.
 	return false
 }
 
-func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
+func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	// run external checks
-	for _, webhook := range r.Spec.CanaryAnalysis.Webhooks {
+	for _, webhook := range canary.Spec.CanaryAnalysis.Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
-			err := CallWebhook(r.Name, r.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
-				c.recordEventWarningf(r, "Halt %s.%s advancement external check %s failed %v",
-					r.Name, r.Namespace, webhook.Name, err)
+				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
+					canary.Name, canary.Namespace, webhook.Name, err)
 				return false
 			}
 		}
 	}
 
-	ok := c.runBuiltinMetricChecks(r)
+	ok := c.runBuiltinMetricChecks(canary)
 	if !ok {
 		return ok
 	}
 
-	ok = c.runMetricChecks(r)
+	ok = c.runMetricChecks(canary)
 	if !ok {
 		return ok
 	}
@@ -773,7 +773,7 @@ func (c *Controller) runAnalysis(r *flaggerv1.Canary) bool {
 	return true
 }
 
-func (c *Controller) runBuiltinMetricChecks(r *flaggerv1.Canary) bool {
+func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 	// override the global provider if one is specified in the canary spec
 	var metricsProvider string
 	// set the metrics provider to Crossover Prometheus when Crossover is the mesh provider
@@ -784,8 +784,8 @@ func (c *Controller) runBuiltinMetricChecks(r *flaggerv1.Canary) bool {
 		metricsProvider = c.meshProvider
 	}
 
-	if r.Spec.Provider != "" {
-		metricsProvider = r.Spec.Provider
+	if canary.Spec.Provider != "" {
+		metricsProvider = canary.Spec.Provider
 
 		// set the metrics provider to Linkerd Prometheus when Linkerd is the default mesh provider
 		if strings.Contains(c.meshProvider, "linkerd") {
@@ -793,7 +793,7 @@ func (c *Controller) runBuiltinMetricChecks(r *flaggerv1.Canary) bool {
 		}
 	}
 	// set the metrics provider to query Prometheus for the canary Kubernetes service if the canary target is Service
-	if r.Spec.TargetRef.Kind == "Service" {
+	if canary.Spec.TargetRef.Kind == "Service" {
 		metricsProvider = metricsProvider + MetricsProviderServiceSuffix
 	}
 
@@ -801,78 +801,110 @@ func (c *Controller) runBuiltinMetricChecks(r *flaggerv1.Canary) bool {
 	observerFactory := c.observerFactory
 
 	// override the global metrics server if one is specified in the canary spec
-	if r.Spec.MetricsServer != "" {
+	if canary.Spec.MetricsServer != "" {
 		var err error
-		observerFactory, err = observers.NewFactory(r.Spec.MetricsServer)
+		observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer)
 		if err != nil {
-			c.recordEventErrorf(r, "Error building Prometheus client for %s %v", r.Spec.MetricsServer, err)
+			c.recordEventErrorf(canary, "Error building Prometheus client for %s %v", canary.Spec.MetricsServer, err)
 			return false
 		}
 	}
 	observer := observerFactory.Observer(metricsProvider)
 
 	// run metrics checks
-	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
+	for _, metric := range canary.Spec.CanaryAnalysis.Metrics {
 		if metric.Interval == "" {
-			metric.Interval = r.GetMetricInterval()
+			metric.Interval = canary.GetMetricInterval()
 		}
 
 		if metric.Name == "request-success-rate" {
-			val, err := observer.GetRequestSuccessRate(toMetricModel(r, metric.Interval))
+			val, err := observer.GetRequestSuccessRate(toMetricModel(canary, metric.Interval))
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
-						metricsProvider, metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					c.recordEventWarningf(canary, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
+						metricsProvider, metric.Name, canary.Spec.TargetRef.Name, canary.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Prometheus query failed: %v", err)
+					c.recordEventErrorf(canary, "Prometheus query failed: %v", err)
 				}
 				return false
 			}
-			if float64(metric.Threshold) > val {
-				c.recordEventWarningf(r, "Halt %s.%s advancement success rate %.2f%% < %v%%",
-					r.Name, r.Namespace, val, metric.Threshold)
+
+			if metric.ThresholdRange != nil {
+				tr := *metric.ThresholdRange
+				if tr.Min != nil && val < *tr.Min {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement success rate %.2f%% < %v%%",
+						canary.Name, canary.Namespace, val, *tr.Min)
+					return false
+				}
+				if tr.Max != nil && val > *tr.Max {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement success rate %.2f%% > %v%%",
+						canary.Name, canary.Namespace, val, *tr.Max)
+					return false
+				}
+			} else if metric.Threshold > val {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement success rate %.2f%% < %v%%",
+					canary.Name, canary.Namespace, val, metric.Threshold)
 				return false
 			}
-
-			//c.recordEventInfof(r, "Check %s passed %.2f%% > %v%%", metric.Name, val, metric.Threshold)
 		}
 
 		if metric.Name == "request-duration" {
-			val, err := observer.GetRequestDuration(toMetricModel(r, metric.Interval))
+			val, err := observer.GetRequestDuration(toMetricModel(canary, metric.Interval))
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
-						metricsProvider, metric.Name, r.Spec.TargetRef.Name, r.Namespace)
+					c.recordEventWarningf(canary, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
+						metricsProvider, metric.Name, canary.Spec.TargetRef.Name, canary.Namespace)
 				} else {
-					c.recordEventErrorf(r, "Prometheus query failed: %v", err)
+					c.recordEventErrorf(canary, "Prometheus query failed: %v", err)
 				}
 				return false
 			}
-			t := time.Duration(metric.Threshold) * time.Millisecond
-			if val > t {
-				c.recordEventWarningf(r, "Halt %s.%s advancement request duration %v > %v",
-					r.Name, r.Namespace, val, t)
+			if metric.ThresholdRange != nil {
+				tr := *metric.ThresholdRange
+				if tr.Min != nil && val < time.Duration(*tr.Min)*time.Millisecond {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement request duration %v < %v",
+						canary.Name, canary.Namespace, val, time.Duration(*tr.Min)*time.Millisecond)
+					return false
+				}
+				if tr.Max != nil && val > time.Duration(*tr.Max)*time.Millisecond {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement request duration %v > %v",
+						canary.Name, canary.Namespace, val, time.Duration(*tr.Max)*time.Millisecond)
+					return false
+				}
+			} else if val > time.Duration(metric.Threshold)*time.Millisecond {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement request duration %v > %v",
+					canary.Name, canary.Namespace, val, time.Duration(metric.Threshold)*time.Millisecond)
 				return false
 			}
-
-			//c.recordEventInfof(r, "Check %s passed %v < %v", metric.Name, val, metric.Threshold)
 		}
 
-		// custom checks
+		// in-line PromQL
 		if metric.Query != "" {
 			val, err := observerFactory.Client.RunQuery(metric.Query)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for custom metric: %s",
+					c.recordEventWarningf(canary, "Halt advancement no values found for metric: %s",
 						metric.Name)
 				} else {
-					c.recordEventErrorf(r, "Prometheus query failed for %s: %v", metric.Name, err)
+					c.recordEventErrorf(canary, "Prometheus query failed for %s: %v", metric.Name, err)
 				}
 				return false
 			}
-			if val > float64(metric.Threshold) {
-				c.recordEventWarningf(r, "Halt %s.%s advancement %s %.2f > %v",
-					r.Name, r.Namespace, metric.Name, val, metric.Threshold)
+			if metric.ThresholdRange != nil {
+				tr := *metric.ThresholdRange
+				if tr.Min != nil && val < *tr.Min {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement %s %.2f < %v",
+						canary.Name, canary.Namespace, metric.Name, val, *tr.Min)
+					return false
+				}
+				if tr.Max != nil && val > *tr.Max {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement %s %.2f > %v",
+						canary.Name, canary.Namespace, metric.Name, val, *tr.Max)
+					return false
+				}
+			} else if val > metric.Threshold {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement %s %.2f > %v",
+					canary.Name, canary.Namespace, metric.Name, val, metric.Threshold)
 				return false
 			}
 		}
@@ -881,17 +913,17 @@ func (c *Controller) runBuiltinMetricChecks(r *flaggerv1.Canary) bool {
 	return true
 }
 
-func (c *Controller) runMetricChecks(r *flaggerv1.Canary) bool {
-	for _, metric := range r.Spec.CanaryAnalysis.Metrics {
+func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
+	for _, metric := range canary.Spec.CanaryAnalysis.Metrics {
 		if metric.TemplateRef != nil {
-			namespace := r.Namespace
+			namespace := canary.Namespace
 			if metric.TemplateRef.Namespace != "" {
 				namespace = metric.TemplateRef.Namespace
 			}
 
 			template, err := c.flaggerClient.FlaggerV1beta1().MetricTemplates(namespace).Get(metric.TemplateRef.Name, metav1.GetOptions{})
 			if err != nil {
-				c.recordEventErrorf(r, "Metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
+				c.recordEventErrorf(canary, "Metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
 				return false
 			}
 
@@ -899,7 +931,7 @@ func (c *Controller) runMetricChecks(r *flaggerv1.Canary) bool {
 			if template.Spec.Provider.SecretRef != nil {
 				secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(template.Spec.Provider.SecretRef.Name, metav1.GetOptions{})
 				if err != nil {
-					c.recordEventErrorf(r, "Metric template %s.%s secret %s error: %v",
+					c.recordEventErrorf(canary, "Metric template %s.%s secret %s error: %v",
 						metric.TemplateRef.Name, namespace, template.Spec.Provider.SecretRef.Name, err)
 					return false
 				}
@@ -909,14 +941,14 @@ func (c *Controller) runMetricChecks(r *flaggerv1.Canary) bool {
 			factory := providers.Factory{}
 			provider, err := factory.Provider(template.Spec.Provider, credentials)
 			if err != nil {
-				c.recordEventErrorf(r, "Metric template %s.%s provider %s error: %v",
+				c.recordEventErrorf(canary, "Metric template %s.%s provider %s error: %v",
 					metric.TemplateRef.Name, namespace, template.Spec.Provider.Type, err)
 				return false
 			}
 
-			query, err := observers.RenderQuery(template.Spec.Query, toMetricModel(r, metric.Interval))
+			query, err := observers.RenderQuery(template.Spec.Query, toMetricModel(canary, metric.Interval))
 			if err != nil {
-				c.recordEventErrorf(r, "Metric template %s.%s query render error: %v",
+				c.recordEventErrorf(canary, "Metric template %s.%s query render error: %v",
 					metric.TemplateRef.Name, namespace, err)
 				return false
 			}
@@ -924,17 +956,29 @@ func (c *Controller) runMetricChecks(r *flaggerv1.Canary) bool {
 			val, err := provider.RunQuery(query)
 			if err != nil {
 				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(r, "Halt advancement no values found for custom metric: %s",
+					c.recordEventWarningf(canary, "Halt advancement no values found for custom metric: %s",
 						metric.Name)
 				} else {
-					c.recordEventErrorf(r, "Metric query failed for %s: %v", metric.Name, err)
+					c.recordEventErrorf(canary, "Metric query failed for %s: %v", metric.Name, err)
 				}
 				return false
 			}
 
-			if val > metric.Threshold {
-				c.recordEventWarningf(r, "Halt %s.%s advancement %s %.2f > %v",
-					r.Name, r.Namespace, metric.Name, val, metric.Threshold)
+			if metric.ThresholdRange != nil {
+				tr := *metric.ThresholdRange
+				if tr.Min != nil && val < *tr.Min {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement %s %.2f < %v",
+						canary.Name, canary.Namespace, metric.Name, val, *tr.Min)
+					return false
+				}
+				if tr.Max != nil && val > *tr.Max {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement %s %.2f > %v",
+						canary.Name, canary.Namespace, metric.Name, val, *tr.Max)
+					return false
+				}
+			} else if val > metric.Threshold {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement %s %.2f > %v",
+					canary.Name, canary.Namespace, metric.Name, val, metric.Threshold)
 				return false
 			}
 		}

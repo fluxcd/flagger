@@ -79,7 +79,7 @@ spec:
               description: Deployment progress deadline
               type: number
             targetRef:
-              description: Deployment selector
+              description: Target selector
               type: object
               required: ["apiVersion", "kind", "name"]
               properties:
@@ -87,32 +87,35 @@ spec:
                   type: string
                 kind:
                   type: string
+                  enum:
+                    - Deployment
+                    - Service
                 name:
                   type: string
             autoscalerRef:
               description: HPA selector
-              anyOf:
-                - type: string
-                - type: object
+              type: object
               required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
                 kind:
                   type: string
+                  enum:
+                    - HorizontalPodAutoscaler
                 name:
                   type: string
             ingressRef:
               description: NGINX ingress selector
-              anyOf:
-                - type: string
-                - type: object
+              type: object
               required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
                 kind:
                   type: string
+                  enum:
+                    - Ingress
                 name:
                   type: string
             service:
@@ -137,6 +140,9 @@ spec:
                 portDiscovery:
                   description: Enable port dicovery
                   type: boolean
+                timeout:
+                  description: HTTP or gRPC request timeout
+                  type: string
                 meshName:
                   description: AppMesh mesh name
                   type: string
@@ -145,33 +151,190 @@ spec:
                   type: array
                   items:
                     type: string
-                timeout:
-                  description: Istio HTTP or gRPC request timeout
-                  type: string
-                trafficPolicy:
-                  description: Istio traffic policy
-                  type: object
-                match:
-                  description: URL match conditions
-                  type: array
-                  items:
-                    type: object
-                rewrite:
-                  description: URL rewrite
-                  type: object
-                headers:
-                  description: Headers operations
-                  type: object
-                corsPolicy:
-                  description: CORS policy
-                  type: object
-                gateways:
-                  description: Gateway list
+                hosts:
+                  description: The list of host names for this service
                   type: array
                   items:
                     type: string
-                hosts:
-                  description: Host list
+                trafficPolicy:
+                  description: Istio mTLS traffic policy
+                  type: object
+                  properties:
+                    tls:
+                      description: TLS related settings for connections to the upstream service
+                      type: object
+                      properties:
+                        caCertificates:
+                          format: string
+                          type: string
+                        clientCertificate:
+                          description: REQUIRED if mode is `MUTUAL`.
+                          format: string
+                          type: string
+                        mode:
+                          enum:
+                            - DISABLE
+                            - SIMPLE
+                            - MUTUAL
+                            - ISTIO_MUTUAL
+                          type: string
+                        privateKey:
+                          description: REQUIRED if mode is `MUTUAL`.
+                          format: string
+                          type: string
+                        sni:
+                          description: SNI string to present to the server
+                            during TLS handshake.
+                          format: string
+                          type: string
+                        subjectAltNames:
+                          items:
+                            format: string
+                            type: string
+                          type: array
+                match:
+                  description: URI match conditions
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      uri:
+                        type: object
+                        oneOf:
+                          - required: ["exact"]
+                          - required: ["prefix"]
+                          - required: ["suffix"]
+                          - required: ["regex"]
+                        properties:
+                          exact:
+                            format: string
+                            type: string
+                          prefix:
+                            format: string
+                            type: string
+                          suffix:
+                            format: string
+                            type: string
+                          regex:
+                            format: string
+                            type: string
+                retries:
+                  description: Retry policy for HTTP requests
+                  type: object
+                  properties:
+                    attempts:
+                      description: Number of retries for a given request
+                      format: int32
+                      type: integer
+                    perTryTimeout:
+                      description: Timeout per retry attempt for a given request
+                      type: string
+                    retryOn:
+                      description: Specifies the conditions under which retry takes place
+                      format: string
+                      type: string
+                rewrite:
+                  description: Rewrite HTTP URIs
+                  type: object
+                  properties:
+                    uri:
+                      format: string
+                      type: string
+                headers:
+                  description: Headers operations
+                  type: object
+                  properties:
+                    request:
+                      properties:
+                        add:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                        remove:
+                          items:
+                            format: string
+                            type: string
+                          type: array
+                        set:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                      type: object
+                    response:
+                      properties:
+                        add:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                        remove:
+                          items:
+                            format: string
+                            type: string
+                          type: array
+                        set:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                      type: object
+                corsPolicy:
+                  description: Cross-Origin Resource Sharing policy (CORS)
+                  type: object
+                  properties:
+                    allowCredentials:
+                      type: boolean
+                    allowHeaders:
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    allowMethods:
+                      description: List of HTTP methods allowed to access the resource
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    allowOrigin:
+                      description: The list of origins that are allowed to perform
+                        CORS requests.
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    allowOrigins:
+                      description: String patterns that match allowed origins
+                      type: array
+                      items:
+                        type: object
+                        oneOf:
+                          - required:
+                              - exact
+                          - required:
+                              - prefix
+                          - required:
+                              - regex
+                        properties:
+                          exact:
+                            format: string
+                            type: string
+                          prefix:
+                            format: string
+                            type: string
+                          regex:
+                            format: string
+                            type: string
+                    exposeHeaders:
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    maxAge:
+                      type: string
+                gateways:
+                  description: The list of Istio gateway for this virtual service
                   type: array
                   items:
                     type: string
@@ -206,12 +369,35 @@ spec:
                   type: array
                   items:
                     type: object
+                    properties:
+                      headers:
+                        type: object
+                        additionalProperties:
+                          oneOf:
+                            - required: ["exact"]
+                            - required: ["prefix"]
+                            - required: ["suffix"]
+                            - required: ["regex"]
+                          type: object
+                          properties:
+                            exact:
+                              format: string
+                              type: string
+                            prefix:
+                              format: string
+                              type: string
+                            suffix:
+                              format: string
+                              type: string
+                            regex:
+                              format: string
+                              type: string
                 metrics:
                   description: Metric check list for this canary
                   type: array
                   items:
                     type: object
-                    required: ["name", "threshold"]
+                    required: ["name"]
                     properties:
                       name:
                         description: Name of the metric
@@ -223,6 +409,16 @@ spec:
                       threshold:
                         description: Max value accepted for this metric
                         type: number
+                      thresholdRange:
+                        description: Range accepted for this metric
+                        type: object
+                        properties:
+                          min:
+                            description: Min value accepted for this metric
+                            type: number
+                          max:
+                            description: Max value accepted for this metric
+                            type: number
                       query:
                         description: Prometheus query
                         type: string
@@ -269,9 +465,9 @@ spec:
                         pattern: "^[0-9]+(m|s)"
                       metadata:
                         description: Metadata (key-value pairs) for this webhook
-                        anyOf:
-                          - type: string
-                          - type: object
+                        type: object
+                        additionalProperties:
+                          type: string
         status:
           properties:
             phase:

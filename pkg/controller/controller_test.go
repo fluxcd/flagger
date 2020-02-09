@@ -49,7 +49,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	if c == nil {
 		c = newTestCanary()
 	}
-	flaggerClient := fakeFlagger.NewSimpleClientset(c)
+	flaggerClient := fakeFlagger.NewSimpleClientset(c, newTestMetricTemplate())
 
 	// init kube clientset and register mock objects
 	kubeClient := fake.NewSimpleClientset(
@@ -178,7 +178,9 @@ func NewTestSecret() *corev1.Secret {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"apiKey": []byte("test"),
+			"apiKey":   []byte("test"),
+			"username": []byte("test"),
+			"password": []byte("test"),
 		},
 	}
 }
@@ -192,7 +194,9 @@ func NewTestSecretV2() *corev1.Secret {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"apiKey": []byte("test2"),
+			"apiKey":   []byte("test2"),
+			"username": []byte("test"),
+			"password": []byte("test"),
 		},
 	}
 }
@@ -250,20 +254,40 @@ func newTestCanary() *flaggerv1.Canary {
 				MaxWeight:  50,
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "istio_requests_total",
+						Name:      "request-success-rate",
 						Threshold: 99,
 						Interval:  "1m",
 					},
 					{
-						Name:      "istio_request_duration_seconds_bucket",
-						Threshold: 500,
-						Interval:  "1m",
+						Name: "request-duration",
+						ThresholdRange: &flaggerv1.CanaryThresholdRange{
+							Min: toFloatPtr(0),
+							Max: toFloatPtr(500000),
+						},
+						Interval: "1m",
+					},
+					{
+						Name: "custom",
+						ThresholdRange: &flaggerv1.CanaryThresholdRange{
+							Min: toFloatPtr(0),
+							Max: toFloatPtr(100),
+						},
+						Interval: "1m",
+						TemplateRef: &flaggerv1.MetricTemplateRef{
+							Name:      "envoy",
+							Namespace: "default",
+						},
 					},
 				},
 			},
 		},
 	}
 	return cd
+}
+
+func toFloatPtr(val int) *float64 {
+	v := float64(val)
+	return &v
 }
 
 func newTestCanaryMirror() *flaggerv1.Canary {
@@ -305,14 +329,26 @@ func newTestCanaryAB() *flaggerv1.Canary {
 				},
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "istio_requests_total",
-						Threshold: 99,
+						Name: "request-success-rate",
+						ThresholdRange: &flaggerv1.CanaryThresholdRange{
+							Min: toFloatPtr(99),
+							Max: toFloatPtr(100),
+						},
+						Interval: "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500000,
 						Interval:  "1m",
 					},
 					{
-						Name:      "istio_request_duration_seconds_bucket",
-						Threshold: 500,
-						Interval:  "1m",
+						Name: "custom",
+						ThresholdRange: &flaggerv1.CanaryThresholdRange{
+							Min: toFloatPtr(0),
+							Max: toFloatPtr(500000),
+						},
+						Interval: "1m",
+						Query:    "fake",
 					},
 				},
 			},
@@ -636,4 +672,27 @@ func newTestHPA() *hpav2.HorizontalPodAutoscaler {
 	}
 
 	return h
+}
+
+func newTestMetricTemplate() *flaggerv1.MetricTemplate {
+	provider := flaggerv1.MetricTemplateProvider{
+		Type:    "prometheus",
+		Address: "fake",
+		SecretRef: &corev1.LocalObjectReference{
+			Name: "podinfo-secret-env",
+		},
+	}
+
+	template := &flaggerv1.MetricTemplate{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "envoy",
+		},
+		Spec: flaggerv1.MetricTemplateSpec{
+			Provider: provider,
+			Query:    `sum(envoy_cluster_upstream_rq{envoy_cluster_name=~"{{ namespace }}_{{ target }}"})`,
+		},
+	}
+	return template
 }
