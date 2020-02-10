@@ -637,6 +637,7 @@ spec:
                 - slack
                 - msteams
                 - discord
+                - rocket
             address:
               description: Hook URL address of this provider
               type: string

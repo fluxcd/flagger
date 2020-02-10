@@ -22,6 +22,8 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 		return NewSlack(f.URL, f.Username, f.Channel)
 	case provider == "discord":
 		return NewDiscord(f.URL, f.Username, f.Channel)
+	case provider == "rocket":
+		return NewRocket(f.URL, f.Username, f.Channel)
 	case provider == "msteams":
 		return NewMSTeams(f.URL)
 	}
