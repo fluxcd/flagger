@@ -202,7 +202,7 @@ func main() {
 		observerFactory,
 		meshProvider,
 		version.VERSION,
-		eventWebhook,
+		fromEnv("EVENT_WEBHOOK_URL", eventWebhook),
 	)
 
 	// leader election context
