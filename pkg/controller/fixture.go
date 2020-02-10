@@ -48,19 +48,26 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	if c == nil {
 		c = newTestCanary()
 	}
-	flaggerClient := fakeFlagger.NewSimpleClientset(c, newTestMetricTemplate())
 
-	// init kube clientset and register mock objects
+	// init Flagger clientset and register objects
+	flaggerClient := fakeFlagger.NewSimpleClientset(
+		c,
+		newTestMetricTemplate(),
+		newTestAlertProvider(),
+	)
+
+	// init Kubernetes clientset and register objects
 	kubeClient := fake.NewSimpleClientset(
 		newTestDeployment(),
 		newTestService(),
 		newTestHPA(),
-		NewTestConfigMap(),
-		NewTestConfigMapEnv(),
-		NewTestConfigMapVol(),
-		NewTestSecret(),
-		NewTestSecretEnv(),
-		NewTestSecretVol(),
+		newTestConfigMap(),
+		newTestConfigMapEnv(),
+		newTestConfigMapVol(),
+		newTestSecret(),
+		newTestSecretEnv(),
+		newTestSecretVol(),
+		newTestAlertProviderSecret(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
@@ -107,6 +114,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	ctrl.flaggerSynced = alwaysReady
 	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
 	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newTestMetricTemplate())
+	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newTestAlertProvider())
 
 	meshRouter := rf.MeshRouter("istio")
 
@@ -122,7 +130,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	}
 }
 
-func NewTestConfigMap() *corev1.ConfigMap {
+func newTestConfigMap() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -135,7 +143,7 @@ func NewTestConfigMap() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapV2() *corev1.ConfigMap {
+func newTestConfigMapV2() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -149,7 +157,7 @@ func NewTestConfigMapV2() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapEnv() *corev1.ConfigMap {
+func newTestConfigMapEnv() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -162,7 +170,7 @@ func NewTestConfigMapEnv() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapVol() *corev1.ConfigMap {
+func newTestConfigMapVol() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -175,7 +183,7 @@ func NewTestConfigMapVol() *corev1.ConfigMap {
 	}
 }
 
-func NewTestSecret() *corev1.Secret {
+func newTestSecret() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -191,7 +199,7 @@ func NewTestSecret() *corev1.Secret {
 	}
 }
 
-func NewTestSecretV2() *corev1.Secret {
+func newTestSecretV2() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -207,7 +215,7 @@ func NewTestSecretV2() *corev1.Secret {
 	}
 }
 
-func NewTestSecretEnv() *corev1.Secret {
+func newTestSecretEnv() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -221,7 +229,7 @@ func NewTestSecretEnv() *corev1.Secret {
 	}
 }
 
-func NewTestSecretVol() *corev1.Secret {
+func newTestSecretVol() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -701,4 +709,35 @@ func newTestMetricTemplate() *flaggerv1.MetricTemplate {
 		},
 	}
 	return template
+}
+
+func newTestAlertProviderSecret() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "alert-secret",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"address": []byte("http://mock.slack"),
+		},
+	}
+}
+
+func newTestAlertProvider() *flaggerv1.AlertProvider {
+	return &flaggerv1.AlertProvider{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "slack",
+		},
+		Spec: flaggerv1.AlertProviderSpec{
+			Type:    "slack",
+			Address: "http://fake.slack",
+			SecretRef: &corev1.LocalObjectReference{
+				Name: "alert-secret",
+			},
+		},
+	}
 }
