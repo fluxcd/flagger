@@ -1,5 +1,7 @@
 package notifier
 
+import "fmt"
+
 type Factory struct {
 	URL      string
 	Username string
@@ -24,5 +26,5 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 		return NewMSTeams(f.URL)
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("provider %s not supported", provider)
 }

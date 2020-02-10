@@ -45,7 +45,7 @@ func NewDiscord(hookURL string, username string, channel string) (*Discord, erro
 }
 
 // Post Discord message
-func (s *Discord) Post(workload string, namespace string, message string, fields []Field, warn bool) error {
+func (s *Discord) Post(workload string, namespace string, message string, fields []Field, severity string) error {
 	payload := SlackPayload{
 		Channel:   s.Channel,
 		Username:  s.Username,
@@ -53,7 +53,7 @@ func (s *Discord) Post(workload string, namespace string, message string, fields
 	}
 
 	color := "good"
-	if warn {
+	if severity == "error" {
 		color = "danger"
 	}
 

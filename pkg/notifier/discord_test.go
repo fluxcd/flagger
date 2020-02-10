@@ -42,7 +42,7 @@ func TestDiscord_Post(t *testing.T) {
 		t.Error("Invalid Discord URL, expected to have /slack prefix")
 	}
 
-	err = discord.Post("podinfo", "test", "test", fields, true)
+	err = discord.Post("podinfo", "test", "test", fields, "warn")
 	if err != nil {
 		t.Fatal(err)
 	}

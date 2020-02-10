@@ -37,7 +37,7 @@ func TestSlack_Post(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = slack.Post("podinfo", "test", "test", fields, true)
+	err = slack.Post("podinfo", "test", "test", fields, "error")
 	if err != nil {
 		t.Fatal(err)
 	}

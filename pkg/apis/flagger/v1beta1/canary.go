@@ -238,13 +238,22 @@ type CanaryThresholdRange struct {
 	Max *float64 `json:"max,omitempty"`
 }
 
+// AlertSeverity defines alert filtering based on severity levels
+type AlertSeverity string
+
+const (
+	SeverityInfo  AlertSeverity = "info"
+	SeverityWarn  AlertSeverity = "warn"
+	SeverityError AlertSeverity = "error"
+)
+
 // CanaryAlert defines an alert for this canary
 type CanaryAlert struct {
 	// Name of the alert
 	Name string `json:"name"`
 
 	// Severity level: info, warn, error (default info)
-	Severity string `json:"severity,omitempty"`
+	Severity AlertSeverity `json:"severity,omitempty"`
 
 	// Alert provider reference
 	ProviderRef CrossNamespaceObjectReference `json:"providerRef"`

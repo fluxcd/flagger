@@ -44,7 +44,7 @@ func NewMSTeams(hookURL string) (*MSTeams, error) {
 }
 
 // Post MS Teams message
-func (s *MSTeams) Post(workload string, namespace string, message string, fields []Field, warn bool) error {
+func (s *MSTeams) Post(workload string, namespace string, message string, fields []Field, severity string) error {
 	facts := make([]MSTeamsField, 0, len(fields))
 	for _, f := range fields {
 		facts = append(facts, MSTeamsField{f.Name, f.Value})
@@ -64,7 +64,7 @@ func (s *MSTeams) Post(workload string, namespace string, message string, fields
 		},
 	}
 
-	if warn {
+	if severity == "error" {
 		payload.ThemeColor = "FF0000"
 	}
 
