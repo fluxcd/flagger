@@ -26,6 +26,7 @@ import (
 
 type FlaggerV1beta1Interface interface {
 	RESTClient() rest.Interface
+	AlertProvidersGetter
 	CanariesGetter
 	MetricTemplatesGetter
 }
@@ -33,6 +34,10 @@ type FlaggerV1beta1Interface interface {
 // FlaggerV1beta1Client is used to interact with features provided by the flagger.app group.
 type FlaggerV1beta1Client struct {
 	restClient rest.Interface
+}
+
+func (c *FlaggerV1beta1Client) AlertProviders(namespace string) AlertProviderInterface {
+	return newAlertProviders(c, namespace)
 }
 
 func (c *FlaggerV1beta1Client) Canaries(namespace string) CanaryInterface {

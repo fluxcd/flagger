@@ -10,7 +10,7 @@ import (
 )
 
 func TestAppmeshRouter_Reconcile(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &AppMeshRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -151,7 +151,7 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 }
 
 func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &AppMeshRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -188,7 +188,7 @@ func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
 }
 
 func TestAppmeshRouter_ABTest(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &AppMeshRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -230,7 +230,7 @@ func TestAppmeshRouter_ABTest(t *testing.T) {
 }
 
 func TestAppmeshRouter_Gateway(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &AppMeshRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,

@@ -28,6 +28,10 @@ type FakeFlaggerV1beta1 struct {
 	*testing.Fake
 }
 
+func (c *FakeFlaggerV1beta1) AlertProviders(namespace string) v1beta1.AlertProviderInterface {
+	return &FakeAlertProviders{c, namespace}
+}
+
 func (c *FakeFlaggerV1beta1) Canaries(namespace string) v1beta1.CanaryInterface {
 	return &FakeCanaries{c, namespace}
 }

@@ -7,7 +7,6 @@ import (
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav1 "k8s.io/api/autoscaling/v1"
 	hpav2 "k8s.io/api/autoscaling/v2beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +33,7 @@ var (
 	noResyncPeriodFunc = func() time.Duration { return 0 }
 )
 
-type Mocks struct {
+type fixture struct {
 	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	meshClient    clientset.Interface
@@ -45,7 +44,7 @@ type Mocks struct {
 	router        router.Interface
 }
 
-func SetupMocks(c *flaggerv1.Canary) Mocks {
+func newFixture(c *flaggerv1.Canary) fixture {
 	if c == nil {
 		c = newTestCanary()
 	}
@@ -67,8 +66,13 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	logger, _ := logger.NewLogger("debug")
 
 	// init controller
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
+	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, 0)
+
+	fi := Informers{
+		CanaryInformer: flaggerInformerFactory.Flagger().V1beta1().Canaries(),
+		MetricInformer: flaggerInformerFactory.Flagger().V1beta1().MetricTemplates(),
+		AlertInformer:  flaggerInformerFactory.Flagger().V1beta1().AlertProviders(),
+	}
 
 	// init router
 	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", logger, flaggerClient)
@@ -85,26 +89,28 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, []string{"app", "name"}, logger)
 
 	ctrl := &Controller{
-		kubeClient:      kubeClient,
-		istioClient:     flaggerClient,
-		flaggerClient:   flaggerClient,
-		flaggerLister:   flaggerInformer.Lister(),
-		flaggerSynced:   flaggerInformer.Informer().HasSynced,
-		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder:   &record.FakeRecorder{},
-		logger:          logger,
-		canaries:        new(sync.Map),
-		flaggerWindow:   time.Second,
-		canaryFactory:   canaryFactory,
-		observerFactory: observerFactory,
-		recorder:        metrics.NewRecorder(controllerAgentName, false),
-		routerFactory:   rf,
+		kubeClient:       kubeClient,
+		istioClient:      flaggerClient,
+		flaggerClient:    flaggerClient,
+		flaggerInformers: fi,
+		flaggerSynced:    fi.CanaryInformer.Informer().HasSynced,
+		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder:    &record.FakeRecorder{},
+		logger:           logger,
+		canaries:         new(sync.Map),
+		flaggerWindow:    time.Second,
+		canaryFactory:    canaryFactory,
+		observerFactory:  observerFactory,
+		recorder:         metrics.NewRecorder(controllerAgentName, false),
+		routerFactory:    rf,
 	}
 	ctrl.flaggerSynced = alwaysReady
+	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
+	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newTestMetricTemplate())
 
 	meshRouter := rf.MeshRouter("istio")
 
-	return Mocks{
+	return fixture{
 		canary:        c,
 		deployer:      canaryFactory.Controller("Deployment"),
 		logger:        logger,
@@ -237,12 +243,12 @@ func newTestCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &hpav1.CrossVersionObjectReference{
+			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
@@ -273,7 +279,7 @@ func newTestCanary() *flaggerv1.Canary {
 							Max: toFloatPtr(100),
 						},
 						Interval: "1m",
-						TemplateRef: &flaggerv1.MetricTemplateRef{
+						TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
 							Name:      "envoy",
 							Namespace: "default",
 						},
@@ -304,12 +310,12 @@ func newTestCanaryAB() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &hpav1.CrossVersionObjectReference{
+			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",

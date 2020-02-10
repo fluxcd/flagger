@@ -3,7 +3,6 @@ package router
 import (
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +18,7 @@ import (
 	"github.com/weaveworks/flagger/pkg/logger"
 )
 
-type fakeClients struct {
+type fixture struct {
 	canary        *flaggerv1.Canary
 	abtest        *flaggerv1.Canary
 	appmeshCanary *flaggerv1.Canary
@@ -30,7 +29,7 @@ type fakeClients struct {
 	logger        *zap.SugaredLogger
 }
 
-func setupfakeClients() fakeClients {
+func newFixture() fixture {
 	canary := newMockCanary()
 	abtest := newMockABTest()
 	appmeshCanary := newMockCanaryAppMesh()
@@ -42,7 +41,7 @@ func setupfakeClients() fakeClients {
 	meshClient := fakeFlagger.NewSimpleClientset()
 	logger, _ := logger.NewLogger("debug")
 
-	return fakeClients{
+	return fixture{
 		canary:        canary,
 		abtest:        abtest,
 		appmeshCanary: appmeshCanary,
@@ -62,7 +61,7 @@ func newMockCanaryAppMesh() *flaggerv1.Canary {
 			Name:      "appmesh",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -108,7 +107,7 @@ func newMockCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -173,7 +172,7 @@ func newMockABTest() *flaggerv1.Canary {
 			Name:      "abtest",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "abtest",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -309,12 +308,12 @@ func newMockCanaryIngress() *flaggerv1.Canary {
 			Name:      "nginx",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			IngressRef: &hpav1.CrossVersionObjectReference{
+			IngressRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "extensions/v1beta1",
 				Kind:       "Ingress",

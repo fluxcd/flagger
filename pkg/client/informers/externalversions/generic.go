@@ -66,6 +66,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta1().VirtualServices().Informer()}, nil
 
 		// Group=flagger.app, Version=v1beta1
+	case flaggerv1beta1.SchemeGroupVersion.WithResource("alertproviders"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1beta1().AlertProviders().Informer()}, nil
 	case flaggerv1beta1.SchemeGroupVersion.WithResource("canaries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Flagger().V1beta1().Canaries().Informer()}, nil
 	case flaggerv1beta1.SchemeGroupVersion.WithResource("metrictemplates"):

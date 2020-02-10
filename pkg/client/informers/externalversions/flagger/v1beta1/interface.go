@@ -24,6 +24,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// AlertProviders returns a AlertProviderInformer.
+	AlertProviders() AlertProviderInformer
 	// Canaries returns a CanaryInformer.
 	Canaries() CanaryInformer
 	// MetricTemplates returns a MetricTemplateInformer.
@@ -39,6 +41,11 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// AlertProviders returns a AlertProviderInformer.
+func (v *version) AlertProviders() AlertProviderInformer {
+	return &alertProviderInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Canaries returns a CanaryInformer.

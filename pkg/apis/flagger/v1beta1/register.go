@@ -49,6 +49,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CanaryList{},
 		&MetricTemplate{},
 		&MetricTemplateList{},
+		&AlertProvider{},
+		&AlertProviderList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

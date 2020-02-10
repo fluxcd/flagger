@@ -921,7 +921,7 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 				namespace = metric.TemplateRef.Namespace
 			}
 
-			template, err := c.flaggerClient.FlaggerV1beta1().MetricTemplates(namespace).Get(metric.TemplateRef.Name, metav1.GetOptions{})
+			template, err := c.flaggerInformers.MetricInformer.Lister().MetricTemplates(namespace).Get(metric.TemplateRef.Name)
 			if err != nil {
 				c.recordEventErrorf(canary, "Metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
 				return false

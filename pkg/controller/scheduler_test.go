@@ -11,7 +11,7 @@ import (
 )
 
 func TestScheduler_Init(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -21,7 +21,7 @@ func TestScheduler_Init(t *testing.T) {
 }
 
 func TestScheduler_NewRevision(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update
@@ -45,7 +45,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 }
 
 func TestScheduler_Rollback(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -99,7 +99,7 @@ func TestScheduler_Rollback(t *testing.T) {
 }
 
 func TestScheduler_SkipAnalysis(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -140,7 +140,7 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 }
 
 func TestScheduler_NewRevisionReset(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -202,7 +202,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 }
 
 func TestScheduler_Promotion(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
@@ -353,7 +353,7 @@ func TestScheduler_Promotion(t *testing.T) {
 }
 
 func TestScheduler_Mirroring(t *testing.T) {
-	mocks := SetupMocks(newTestCanaryMirror())
+	mocks := newFixture(newTestCanaryMirror())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -411,7 +411,7 @@ func TestScheduler_Mirroring(t *testing.T) {
 }
 
 func TestScheduler_ABTesting(t *testing.T) {
-	mocks := SetupMocks(newTestCanaryAB())
+	mocks := newFixture(newTestCanaryAB())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -499,7 +499,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 }
 
 func TestScheduler_PortDiscovery(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	// enable port discovery
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -543,7 +543,7 @@ func TestScheduler_PortDiscovery(t *testing.T) {
 }
 
 func TestScheduler_TargetPortNumber(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
@@ -588,7 +588,7 @@ func TestScheduler_TargetPortNumber(t *testing.T) {
 }
 
 func TestScheduler_TargetPortName(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
