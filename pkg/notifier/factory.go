@@ -18,6 +18,8 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 	switch {
 	case provider == "slack":
 		return NewSlack(f.URL, f.Username, f.Channel)
+	case provider == "discord":
+		return NewDiscord(f.URL, f.Username, f.Channel)
 	case provider == "msteams":
 		return NewMSTeams(f.URL)
 	}
