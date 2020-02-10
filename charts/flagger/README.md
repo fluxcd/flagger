@@ -74,34 +74,35 @@ The following tables lists the configurable parameters of the Flagger chart and 
 
 Parameter | Description | Default
 --- | --- | ---
-`image.repository` | image repository | `weaveworks/flagger`
-`image.tag` | image tag | `<VERSION>`
-`image.pullPolicy` | image pull policy | `IfNotPresent`
-`prometheus.install` | if `true`, installs Prometheus configured to scrape all pods in the custer including the App Mesh sidecar | `false`
+`image.repository` | Image repository | `weaveworks/flagger`
+`image.tag` | Image tag | `<VERSION>`
+`image.pullPolicy` | Image pull policy | `IfNotPresent`
+`prometheus.install` | If `true`, installs Prometheus configured to scrape all pods in the custer including the App Mesh sidecar | `false`
 `metricsServer` | Prometheus URL, used when `prometheus.install` is `false` | `http://prometheus.istio-system:9090`
-`selectorLabels` | list of labels that Flagger uses to create pod selectors | `app,name,app.kubernetes.io/name`
+`selectorLabels` | List of labels that Flagger uses to create pod selectors | `app,name,app.kubernetes.io/name`
+`configTracking.enabled` | If `true`, flagger will track changes in Secrets and ConfigMaps referenced in the target deployment | `true`
+`eventWebhook` | If set, Flagger will publish events to the given webhook | None
 `slack.url` | Slack incoming webhook | None
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`
-`eventWebhook` | If set, Flagger will publish events to the given webhook | None
 `msteams.url` | Microsoft Teams incoming webhook | None
-`podMonitor.enabled` | if `true`, create a PodMonitor for [monitoring the metrics](https://docs.flagger.app/usage/monitoring#metrics) | `false`
-`podMonitor.namespace` | the namespace where the PodMonitor is created | the same namespace 
-`podMonitor.interval` | interval at which metrics should be scraped | `15s` 
-`podMonitor.podMonitor` | additional labels to add to the PodMonitor | `{}`
-`leaderElection.enabled` | leader election must be enabled when running more than one replica | `false`
-`leaderElection.replicaCount` | number of replicas | `1`
-`ingressAnnotationsPrefix` | annotations prefix for ingresses | `custom.ingress.kubernetes.io`
-`rbac.create` | if `true`, create and use RBAC resources | `true`
+`podMonitor.enabled` | If `true`, create a PodMonitor for [monitoring the metrics](https://docs.flagger.app/usage/monitoring#metrics) | `false`
+`podMonitor.namespace` | Namespace where the PodMonitor is created | the same namespace 
+`podMonitor.interval` | Interval at which metrics should be scraped | `15s` 
+`podMonitor.podMonitor` | Additional labels to add to the PodMonitor | `{}`
+`leaderElection.enabled` | If `true`, Flagger will run in HA mode | `false`
+`leaderElection.replicaCount` | Number of replicas | `1`
+`ingressAnnotationsPrefix` | Annotations prefix for ingresses | `custom.ingress.kubernetes.io`
+`rbac.create` | If `true`, create and use RBAC resources | `true`
 `rbac.pspEnabled` | If `true`, create and use a restricted pod security policy | `false`
-`crd.create` | if `true`, create Flagger's CRDs | `true`
-`resources.requests/cpu` | pod CPU request | `10m`
-`resources.requests/memory` | pod memory request | `32Mi`
-`resources.limits/cpu` | pod CPU limit | `1000m`
-`resources.limits/memory` | pod memory limit | `512Mi`
-`affinity` | node/pod affinities | None
-`nodeSelector` | node labels for pod assignment | `{}`
-`tolerations` | list of node taints to tolerate | `[]`
+`crd.create` | If `true`, create Flagger's CRDs | `true`
+`resources.requests/cpu` | Pod CPU request | `10m`
+`resources.requests/memory` | Pod memory request | `32Mi`
+`resources.limits/cpu` | Pod CPU limit | `1000m`
+`resources.limits/memory` | Pod memory limit | `512Mi`
+`affinity` | Node/pod affinities | None
+`nodeSelector` | Node labels for pod assignment | `{}`
+`tolerations` | List of node taints to tolerate | `[]`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 

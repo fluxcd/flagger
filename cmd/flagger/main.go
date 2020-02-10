@@ -56,6 +56,7 @@ var (
 	ingressAnnotationsPrefix string
 	enableLeaderElection     bool
 	leaderElectionNamespace  string
+	enableConfigTracking     bool
 	ver                      bool
 )
 
@@ -80,6 +81,7 @@ func init() {
 	flag.StringVar(&ingressAnnotationsPrefix, "ingress-annotations-prefix", "nginx.ingress.kubernetes.io", "Annotations prefix for ingresses.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election.")
 	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "kube-system", "Namespace used to create the leader election config map.")
+	flag.BoolVar(&enableConfigTracking, "enable-config-tracking", true, "Enable secrets and configmaps tracking.")
 	flag.BoolVar(&ver, "version", false, "Print version")
 }
 
@@ -173,11 +175,18 @@ func main() {
 	}
 
 	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient)
-	configTracker := canary.ConfigTracker{
-		Logger:        logger,
-		KubeClient:    kubeClient,
-		FlaggerClient: flaggerClient,
+
+	var configTracker canary.Tracker
+	if enableConfigTracking {
+		configTracker = &canary.ConfigTracker{
+			Logger:        logger,
+			KubeClient:    kubeClient,
+			FlaggerClient: flaggerClient,
+		}
+	} else {
+		configTracker = &canary.NopTracker{}
 	}
+
 	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, labels, logger)
 
 	c := controller.NewController(

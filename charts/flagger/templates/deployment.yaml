@@ -9,8 +9,10 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.leaderElection.replicaCount }}
+  {{- if eq .Values.leaderElection.enabled false }}
   strategy:
     type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ template "flagger.name" . }}
@@ -63,6 +65,9 @@ spec:
           {{- end }}
           {{- if .Values.selectorLabels }}
           - -selector-labels={{ .Values.selectorLabels }}
+          {{- end }}
+          {{- if .Values.configTracking }}
+          - -enable-config-tracking={{ .Values.configTracking.enabled }}
           {{- end }}
           {{- if .Values.namespace }}
           - -namespace={{ .Values.namespace }}

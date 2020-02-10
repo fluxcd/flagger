@@ -25,7 +25,7 @@ type DeploymentController struct {
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
-	configTracker ConfigTracker
+	configTracker Tracker
 	labels        []string
 }
 

@@ -48,7 +48,7 @@ func SetupMocks() Mocks {
 		kubeClient:    kubeClient,
 		logger:        logger,
 		labels:        []string{"app", "name"},
-		configTracker: ConfigTracker{
+		configTracker: &ConfigTracker{
 			Logger:        logger,
 			KubeClient:    kubeClient,
 			FlaggerClient: flaggerClient,
