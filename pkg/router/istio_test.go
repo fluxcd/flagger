@@ -10,7 +10,7 @@ import (
 )
 
 func TestIstioRouter_Sync(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -108,7 +108,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 }
 
 func TestIstioRouter_SetRoutes(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -213,7 +213,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 }
 
 func TestIstioRouter_GetRoutes(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -309,7 +309,7 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 }
 
 func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -338,7 +338,7 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 }
 
 func TestIstioRouter_CORS(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -371,7 +371,7 @@ func TestIstioRouter_CORS(t *testing.T) {
 }
 
 func TestIstioRouter_ABTest(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,

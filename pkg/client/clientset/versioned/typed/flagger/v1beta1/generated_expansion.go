@@ -18,6 +18,8 @@ limitations under the License.
 
 package v1beta1
 
+type AlertProviderExpansion interface{}
+
 type CanaryExpansion interface{}
 
 type MetricTemplateExpansion interface{}

@@ -7,7 +7,7 @@ import (
 )
 
 func TestContourRouter_Reconcile(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &ContourRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -116,7 +116,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 }
 
 func TestContourRouter_Routes(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &ContourRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,

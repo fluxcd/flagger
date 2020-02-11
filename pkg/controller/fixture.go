@@ -7,7 +7,6 @@ import (
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav1 "k8s.io/api/autoscaling/v1"
 	hpav2 "k8s.io/api/autoscaling/v2beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +33,7 @@ var (
 	noResyncPeriodFunc = func() time.Duration { return 0 }
 )
 
-type Mocks struct {
+type fixture struct {
 	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	meshClient    clientset.Interface
@@ -45,30 +44,42 @@ type Mocks struct {
 	router        router.Interface
 }
 
-func SetupMocks(c *flaggerv1.Canary) Mocks {
+func newFixture(c *flaggerv1.Canary) fixture {
 	if c == nil {
 		c = newTestCanary()
 	}
-	flaggerClient := fakeFlagger.NewSimpleClientset(c, newTestMetricTemplate())
 
-	// init kube clientset and register mock objects
+	// init Flagger clientset and register objects
+	flaggerClient := fakeFlagger.NewSimpleClientset(
+		c,
+		newTestMetricTemplate(),
+		newTestAlertProvider(),
+	)
+
+	// init Kubernetes clientset and register objects
 	kubeClient := fake.NewSimpleClientset(
 		newTestDeployment(),
 		newTestService(),
 		newTestHPA(),
-		NewTestConfigMap(),
-		NewTestConfigMapEnv(),
-		NewTestConfigMapVol(),
-		NewTestSecret(),
-		NewTestSecretEnv(),
-		NewTestSecretVol(),
+		newTestConfigMap(),
+		newTestConfigMapEnv(),
+		newTestConfigMapVol(),
+		newTestSecret(),
+		newTestSecretEnv(),
+		newTestSecretVol(),
+		newTestAlertProviderSecret(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
 
 	// init controller
-	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, noResyncPeriodFunc())
-	flaggerInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
+	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, 0)
+
+	fi := Informers{
+		CanaryInformer: flaggerInformerFactory.Flagger().V1beta1().Canaries(),
+		MetricInformer: flaggerInformerFactory.Flagger().V1beta1().MetricTemplates(),
+		AlertInformer:  flaggerInformerFactory.Flagger().V1beta1().AlertProviders(),
+	}
 
 	// init router
 	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", logger, flaggerClient)
@@ -85,26 +96,29 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, []string{"app", "name"}, logger)
 
 	ctrl := &Controller{
-		kubeClient:      kubeClient,
-		istioClient:     flaggerClient,
-		flaggerClient:   flaggerClient,
-		flaggerLister:   flaggerInformer.Lister(),
-		flaggerSynced:   flaggerInformer.Informer().HasSynced,
-		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder:   &record.FakeRecorder{},
-		logger:          logger,
-		canaries:        new(sync.Map),
-		flaggerWindow:   time.Second,
-		canaryFactory:   canaryFactory,
-		observerFactory: observerFactory,
-		recorder:        metrics.NewRecorder(controllerAgentName, false),
-		routerFactory:   rf,
+		kubeClient:       kubeClient,
+		istioClient:      flaggerClient,
+		flaggerClient:    flaggerClient,
+		flaggerInformers: fi,
+		flaggerSynced:    fi.CanaryInformer.Informer().HasSynced,
+		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder:    &record.FakeRecorder{},
+		logger:           logger,
+		canaries:         new(sync.Map),
+		flaggerWindow:    time.Second,
+		canaryFactory:    canaryFactory,
+		observerFactory:  observerFactory,
+		recorder:         metrics.NewRecorder(controllerAgentName, false),
+		routerFactory:    rf,
 	}
 	ctrl.flaggerSynced = alwaysReady
+	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
+	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newTestMetricTemplate())
+	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newTestAlertProvider())
 
 	meshRouter := rf.MeshRouter("istio")
 
-	return Mocks{
+	return fixture{
 		canary:        c,
 		deployer:      canaryFactory.Controller("Deployment"),
 		logger:        logger,
@@ -116,7 +130,7 @@ func SetupMocks(c *flaggerv1.Canary) Mocks {
 	}
 }
 
-func NewTestConfigMap() *corev1.ConfigMap {
+func newTestConfigMap() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -129,7 +143,7 @@ func NewTestConfigMap() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapV2() *corev1.ConfigMap {
+func newTestConfigMapV2() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -143,7 +157,7 @@ func NewTestConfigMapV2() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapEnv() *corev1.ConfigMap {
+func newTestConfigMapEnv() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -156,7 +170,7 @@ func NewTestConfigMapEnv() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapVol() *corev1.ConfigMap {
+func newTestConfigMapVol() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -169,7 +183,7 @@ func NewTestConfigMapVol() *corev1.ConfigMap {
 	}
 }
 
-func NewTestSecret() *corev1.Secret {
+func newTestSecret() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -185,7 +199,7 @@ func NewTestSecret() *corev1.Secret {
 	}
 }
 
-func NewTestSecretV2() *corev1.Secret {
+func newTestSecretV2() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -201,7 +215,7 @@ func NewTestSecretV2() *corev1.Secret {
 	}
 }
 
-func NewTestSecretEnv() *corev1.Secret {
+func newTestSecretEnv() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -215,7 +229,7 @@ func NewTestSecretEnv() *corev1.Secret {
 	}
 }
 
-func NewTestSecretVol() *corev1.Secret {
+func newTestSecretVol() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -237,12 +251,12 @@ func newTestCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &hpav1.CrossVersionObjectReference{
+			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
@@ -273,7 +287,7 @@ func newTestCanary() *flaggerv1.Canary {
 							Max: toFloatPtr(100),
 						},
 						Interval: "1m",
-						TemplateRef: &flaggerv1.MetricTemplateRef{
+						TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
 							Name:      "envoy",
 							Namespace: "default",
 						},
@@ -304,12 +318,12 @@ func newTestCanaryAB() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &hpav1.CrossVersionObjectReference{
+			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
@@ -695,4 +709,35 @@ func newTestMetricTemplate() *flaggerv1.MetricTemplate {
 		},
 	}
 	return template
+}
+
+func newTestAlertProviderSecret() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "alert-secret",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"address": []byte("http://mock.slack"),
+		},
+	}
+}
+
+func newTestAlertProvider() *flaggerv1.AlertProvider {
+	return &flaggerv1.AlertProvider{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "slack",
+		},
+		Spec: flaggerv1.AlertProviderSpec{
+			Type:    "slack",
+			Address: "http://fake.slack",
+			SecretRef: &corev1.LocalObjectReference{
+				Name: "alert-secret",
+			},
+		},
+	}
 }

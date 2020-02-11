@@ -37,7 +37,7 @@ func TestTeams_Post(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = teams.Post("podinfo", "test", "test", fields, true)
+	err = teams.Post("podinfo", "test", "test", fields, "info")
 	if err != nil {
 		t.Fatal(err)
 	}

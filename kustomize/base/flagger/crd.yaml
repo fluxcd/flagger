@@ -591,3 +591,62 @@ spec:
             query:
               description: Query of this metric template
               type: string
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: alertproviders.flagger.app
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  group: flagger.app
+  version: v1beta1
+  versions:
+    - name: v1beta1
+      served: true
+      storage: true
+  names:
+    plural: alertproviders
+    singular: alertprovider
+    kind: AlertProvider
+    categories:
+      - all
+  scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: Type
+      type: string
+      JSONPath: .spec.type
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          oneOf:
+            - required:
+              - type
+              - address
+            - required:
+              - type
+              - secretRef
+          properties:
+            type:
+              description: Type of this provider
+              type: string
+              enum:
+                - slack
+                - msteams
+                - discord
+                - rocket
+            address:
+              description: Hook URL address of this provider
+              type: string
+            secretRef:
+              description: Kubernetes secret reference containing the provider address
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  description: Name of the Kubernetes secret
+                  type: string

@@ -5,10 +5,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
-func TestRocket_Post(t *testing.T) {
+func TestDiscord_Post(t *testing.T) {
 	fields := []Field{
 		{Name: "name1", Value: "value1"},
 		{Name: "name2", Value: "value2"},
@@ -27,17 +28,21 @@ func TestRocket_Post(t *testing.T) {
 		}
 
 		if len(payload.Attachments[0].Fields) != len(fields) {
-			t.Fatal("wrong field")
+			t.Fatal("wrong facts")
 		}
 	}))
 	defer ts.Close()
 
-	rocket, err := NewRocket(ts.URL, "test", "test")
+	discord, err := NewDiscord(ts.URL, "test", "test")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = rocket.Post("podinfo", "test", "test", fields, "error")
+	if !strings.HasSuffix(discord.URL, "/slack") {
+		t.Error("Invalid Discord URL, expected to have /slack prefix")
+	}
+
+	err = discord.Post("podinfo", "test", "test", fields, "warn")
 	if err != nil {
 		t.Fatal(err)
 	}

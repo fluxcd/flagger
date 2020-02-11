@@ -24,7 +24,6 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	flaggerscheme "github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
 	flaggerinformers "github.com/weaveworks/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
-	flaggerlisters "github.com/weaveworks/flagger/pkg/client/listers/flagger/v1beta1"
 	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"github.com/weaveworks/flagger/pkg/notifier"
@@ -35,31 +34,37 @@ const controllerAgentName = "flagger"
 
 // Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
-	kubeClient      kubernetes.Interface
-	istioClient     clientset.Interface
-	flaggerClient   clientset.Interface
-	flaggerLister   flaggerlisters.CanaryLister
-	flaggerSynced   cache.InformerSynced
-	flaggerWindow   time.Duration
-	workqueue       workqueue.RateLimitingInterface
-	eventRecorder   record.EventRecorder
-	logger          *zap.SugaredLogger
-	canaries        *sync.Map
-	jobs            map[string]CanaryJob
-	recorder        metrics.Recorder
-	notifier        notifier.Interface
-	canaryFactory   *canary.Factory
-	routerFactory   *router.Factory
-	observerFactory *observers.Factory
-	meshProvider    string
-	eventWebhook    string
+	kubeClient       kubernetes.Interface
+	istioClient      clientset.Interface
+	flaggerClient    clientset.Interface
+	flaggerInformers Informers
+	flaggerSynced    cache.InformerSynced
+	flaggerWindow    time.Duration
+	workqueue        workqueue.RateLimitingInterface
+	eventRecorder    record.EventRecorder
+	logger           *zap.SugaredLogger
+	canaries         *sync.Map
+	jobs             map[string]CanaryJob
+	recorder         metrics.Recorder
+	notifier         notifier.Interface
+	canaryFactory    *canary.Factory
+	routerFactory    *router.Factory
+	observerFactory  *observers.Factory
+	meshProvider     string
+	eventWebhook     string
+}
+
+type Informers struct {
+	CanaryInformer flaggerinformers.CanaryInformer
+	MetricInformer flaggerinformers.MetricTemplateInformer
+	AlertInformer  flaggerinformers.AlertProviderInformer
 }
 
 func NewController(
 	kubeClient kubernetes.Interface,
 	istioClient clientset.Interface,
 	flaggerClient clientset.Interface,
-	flaggerInformer flaggerinformers.CanaryInformer,
+	flaggerInformers Informers,
 	flaggerWindow time.Duration,
 	logger *zap.SugaredLogger,
 	notifier notifier.Interface,
@@ -83,27 +88,27 @@ func NewController(
 	recorder.SetInfo(version, meshProvider)
 
 	ctrl := &Controller{
-		kubeClient:      kubeClient,
-		istioClient:     istioClient,
-		flaggerClient:   flaggerClient,
-		flaggerLister:   flaggerInformer.Lister(),
-		flaggerSynced:   flaggerInformer.Informer().HasSynced,
-		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder:   eventRecorder,
-		logger:          logger,
-		canaries:        new(sync.Map),
-		jobs:            map[string]CanaryJob{},
-		flaggerWindow:   flaggerWindow,
-		observerFactory: observerFactory,
-		recorder:        recorder,
-		notifier:        notifier,
-		canaryFactory:   canaryFactory,
-		routerFactory:   routerFactory,
-		meshProvider:    meshProvider,
-		eventWebhook:    eventWebhook,
+		kubeClient:       kubeClient,
+		istioClient:      istioClient,
+		flaggerClient:    flaggerClient,
+		flaggerInformers: flaggerInformers,
+		flaggerSynced:    flaggerInformers.CanaryInformer.Informer().HasSynced,
+		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder:    eventRecorder,
+		logger:           logger,
+		canaries:         new(sync.Map),
+		jobs:             map[string]CanaryJob{},
+		flaggerWindow:    flaggerWindow,
+		observerFactory:  observerFactory,
+		recorder:         recorder,
+		notifier:         notifier,
+		canaryFactory:    canaryFactory,
+		routerFactory:    routerFactory,
+		meshProvider:     meshProvider,
+		eventWebhook:     eventWebhook,
 	}
 
-	flaggerInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	flaggerInformers.CanaryInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: ctrl.enqueue,
 		UpdateFunc: func(old, new interface{}) {
 			oldCanary, ok := checkCustomResourceType(old, logger)
@@ -209,7 +214,7 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-	cd, err := c.flaggerLister.Canaries(namespace).Get(name)
+	cd, err := c.flaggerInformers.CanaryInformer.Lister().Canaries(namespace).Get(name)
 	if errors.IsNotFound(err) {
 		utilruntime.HandleError(fmt.Errorf("%s in work queue no longer exists", key))
 		return nil
@@ -254,94 +259,6 @@ func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flagge
 		return flaggerv1.Canary{}, false
 	}
 	return *roll, true
-}
-
-func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventtype, template string, args []interface{}) {
-	webhookOverride := false
-	if len(r.Spec.CanaryAnalysis.Webhooks) > 0 {
-		for _, canaryWebhook := range r.Spec.CanaryAnalysis.Webhooks {
-			if canaryWebhook.Type == flaggerv1.EventHook {
-				webhookOverride = true
-				err := CallEventWebhook(r, canaryWebhook.URL, fmt.Sprintf(template, args...), eventtype)
-				if err != nil {
-					c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
-				}
-			}
-		}
-	}
-
-	if c.eventWebhook != "" && !webhookOverride {
-		err := CallEventWebhook(r, c.eventWebhook, fmt.Sprintf(template, args...), eventtype)
-		if err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
-		}
-	}
-}
-
-func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {
-	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
-	c.eventRecorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
-	c.sendEventToWebhook(r, corev1.EventTypeNormal, template, args)
-}
-
-func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, args ...interface{}) {
-	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf(template, args...)
-	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
-	c.sendEventToWebhook(r, corev1.EventTypeWarning, template, args)
-}
-
-func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
-	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
-	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
-	c.sendEventToWebhook(r, corev1.EventTypeWarning, template, args)
-}
-
-func (c *Controller) sendNotification(cd *flaggerv1.Canary, message string, metadata bool, warn bool) {
-	if c.notifier == nil {
-		return
-	}
-
-	var fields []notifier.Field
-
-	if metadata {
-		fields = append(fields,
-			notifier.Field{
-				Name:  "Target",
-				Value: fmt.Sprintf("%s/%s.%s", cd.Spec.TargetRef.Kind, cd.Spec.TargetRef.Name, cd.Namespace),
-			},
-			notifier.Field{
-				Name:  "Failed checks threshold",
-				Value: fmt.Sprintf("%v", cd.Spec.CanaryAnalysis.Threshold),
-			},
-			notifier.Field{
-				Name:  "Progress deadline",
-				Value: fmt.Sprintf("%vs", cd.GetProgressDeadlineSeconds()),
-			},
-		)
-
-		if cd.Spec.CanaryAnalysis.StepWeight > 0 {
-			fields = append(fields, notifier.Field{
-				Name: "Traffic routing",
-				Value: fmt.Sprintf("Weight step: %v max: %v",
-					cd.Spec.CanaryAnalysis.StepWeight,
-					cd.Spec.CanaryAnalysis.MaxWeight),
-			})
-		} else if len(cd.Spec.CanaryAnalysis.Match) > 0 {
-			fields = append(fields, notifier.Field{
-				Name:  "Traffic routing",
-				Value: "A/B Testing",
-			})
-		} else if cd.Spec.CanaryAnalysis.Iterations > 0 {
-			fields = append(fields, notifier.Field{
-				Name:  "Traffic routing",
-				Value: "Blue/Green",
-			})
-		}
-	}
-	err := c.notifier.Post(cd.Name, cd.Namespace, message, fields, warn)
-	if err != nil {
-		c.logger.Error(err)
-	}
 }
 
 func int32p(i int32) *int32 {

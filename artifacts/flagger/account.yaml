@@ -44,6 +44,8 @@ rules:
       - canaries/status
       - metrictemplates
       - metrictemplates/status
+      - alertproviders
+      - alertproviders/status
     verbs: ["*"]
   - apiGroups:
       - networking.istio.io

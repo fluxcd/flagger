@@ -3,14 +3,13 @@ package controller
 import (
 	"testing"
 
-	hpav1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 func TestScheduler_ServicePromotion(t *testing.T) {
-	mocks := SetupMocks(newTestServiceCanary())
+	mocks := newFixture(newTestServiceCanary())
 
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
@@ -135,7 +134,7 @@ func newTestServiceCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "core/v1",
 				Kind:       "Service",
@@ -149,13 +148,13 @@ func newTestServiceCanary() *flaggerv1.Canary {
 				MaxWeight:  50,
 				Metrics: []flaggerv1.CanaryMetric{
 					{
-						Name:      "istio_requests_total",
+						Name:      "request-success-rate",
 						Threshold: 99,
 						Interval:  "1m",
 					},
 					{
-						Name:      "istio_request_duration_seconds_bucket",
-						Threshold: 500,
+						Name:      "request-duration",
+						Threshold: 500000,
 						Interval:  "1m",
 					},
 				},

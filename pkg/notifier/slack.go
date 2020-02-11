@@ -8,10 +8,9 @@ import (
 
 // Slack holds the hook URL
 type Slack struct {
-	URL       string
-	Username  string
-	Channel   string
-	IconEmoji string
+	URL      string
+	Username string
+	Channel  string
 }
 
 // SlackPayload holds the channel and attachments
@@ -55,22 +54,22 @@ func NewSlack(hookURL string, username string, channel string) (*Slack, error) {
 	}
 
 	return &Slack{
-		Channel:   channel,
-		URL:       hookURL,
-		Username:  username,
-		IconEmoji: ":rocket:",
+		Channel:  channel,
+		URL:      hookURL,
+		Username: username,
 	}, nil
 }
 
 // Post Slack message
-func (s *Slack) Post(workload string, namespace string, message string, fields []Field, warn bool) error {
+func (s *Slack) Post(workload string, namespace string, message string, fields []Field, severity string) error {
 	payload := SlackPayload{
-		Channel:  s.Channel,
-		Username: s.Username,
+		Channel:   s.Channel,
+		Username:  s.Username,
+		IconEmoji: ":rocket:",
 	}
 
 	color := "good"
-	if warn {
+	if severity == "error" {
 		color = "danger"
 	}
 

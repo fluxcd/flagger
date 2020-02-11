@@ -10,7 +10,7 @@ import (
 )
 
 func TestGlooRouter_Sync(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &GlooRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -43,7 +43,7 @@ func TestGlooRouter_Sync(t *testing.T) {
 }
 
 func TestGlooRouter_SetRoutes(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &GlooRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -100,7 +100,7 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 }
 
 func TestGlooRouter_GetRoutes(t *testing.T) {
-	mocks := setupfakeClients()
+	mocks := newFixture()
 	router := &GlooRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,

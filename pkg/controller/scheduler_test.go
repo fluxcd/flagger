@@ -1,17 +1,22 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/weaveworks/flagger/pkg/notifier"
 )
 
 func TestScheduler_Init(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -21,7 +26,7 @@ func TestScheduler_Init(t *testing.T) {
 }
 
 func TestScheduler_NewRevision(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update
@@ -45,7 +50,7 @@ func TestScheduler_NewRevision(t *testing.T) {
 }
 
 func TestScheduler_Rollback(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -99,7 +104,7 @@ func TestScheduler_Rollback(t *testing.T) {
 }
 
 func TestScheduler_SkipAnalysis(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -140,7 +145,7 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 }
 
 func TestScheduler_NewRevisionReset(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -202,7 +207,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 }
 
 func TestScheduler_Promotion(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
@@ -227,13 +232,13 @@ func TestScheduler_Promotion(t *testing.T) {
 	// detect pod spec changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	config2 := NewTestConfigMapV2()
+	config2 := newTestConfigMapV2()
 	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	secret2 := NewTestSecretV2()
+	secret2 := newTestSecretV2()
 	_, err = mocks.kubeClient.CoreV1().Secrets("default").Update(secret2)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -353,7 +358,7 @@ func TestScheduler_Promotion(t *testing.T) {
 }
 
 func TestScheduler_Mirroring(t *testing.T) {
-	mocks := SetupMocks(newTestCanaryMirror())
+	mocks := newFixture(newTestCanaryMirror())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -411,7 +416,7 @@ func TestScheduler_Mirroring(t *testing.T) {
 }
 
 func TestScheduler_ABTesting(t *testing.T) {
-	mocks := SetupMocks(newTestCanaryAB())
+	mocks := newFixture(newTestCanaryAB())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -499,7 +504,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 }
 
 func TestScheduler_PortDiscovery(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	// enable port discovery
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -543,7 +548,7 @@ func TestScheduler_PortDiscovery(t *testing.T) {
 }
 
 func TestScheduler_TargetPortNumber(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
@@ -588,7 +593,7 @@ func TestScheduler_TargetPortNumber(t *testing.T) {
 }
 
 func TestScheduler_TargetPortName(t *testing.T) {
-	mocks := SetupMocks(nil)
+	mocks := newFixture(nil)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
@@ -630,4 +635,54 @@ func TestScheduler_TargetPortName(t *testing.T) {
 		}
 
 	}
+}
+
+func TestScheduler_Alerts(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var payload = notifier.SlackPayload{}
+		err = json.Unmarshal(b, &payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if payload.Attachments[0].AuthorName != "podinfo.default" {
+			t.Fatal("wrong author name")
+		}
+	}))
+	defer ts.Close()
+
+	canary := newTestCanary()
+	canary.Spec.CanaryAnalysis.Alerts = []flaggerv1.CanaryAlert{
+		{
+			Name:     "slack-dev",
+			Severity: "info",
+			ProviderRef: flaggerv1.CrossNamespaceObjectReference{
+				Name:      "slack",
+				Namespace: "default",
+			},
+		},
+		{
+			Name:     "slack-prod",
+			Severity: "info",
+			ProviderRef: flaggerv1.CrossNamespaceObjectReference{
+				Name: "slack",
+			},
+		},
+	}
+	mocks := newFixture(canary)
+
+	secret := newTestAlertProviderSecret()
+	secret.Data = map[string][]byte{
+		"address": []byte(ts.URL),
+	}
+	_, err := mocks.kubeClient.CoreV1().Secrets("default").Update(secret)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// init canary and send alerts
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
 }

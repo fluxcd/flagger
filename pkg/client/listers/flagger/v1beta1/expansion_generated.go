@@ -18,6 +18,14 @@ limitations under the License.
 
 package v1beta1
 
+// AlertProviderListerExpansion allows custom methods to be added to
+// AlertProviderLister.
+type AlertProviderListerExpansion interface{}
+
+// AlertProviderNamespaceListerExpansion allows custom methods to be added to
+// AlertProviderNamespaceLister.
+type AlertProviderNamespaceListerExpansion interface{}
+
 // CanaryListerExpansion allows custom methods to be added to
 // CanaryLister.
 type CanaryListerExpansion interface{}

@@ -4,7 +4,6 @@ import (
 	"github.com/weaveworks/flagger/pkg/logger"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav1 "k8s.io/api/autoscaling/v1"
 	hpav2 "k8s.io/api/autoscaling/v2beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +15,7 @@ import (
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 )
 
-type Mocks struct {
+type fixture struct {
 	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
@@ -24,7 +23,7 @@ type Mocks struct {
 	logger        *zap.SugaredLogger
 }
 
-func SetupMocks() Mocks {
+func newFixture() fixture {
 	// init canary
 	canary := newTestCanary()
 	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
@@ -55,7 +54,7 @@ func SetupMocks() Mocks {
 		},
 	}
 
-	return Mocks{
+	return fixture{
 		canary:        canary,
 		deployer:      deployer,
 		logger:        logger,
@@ -181,12 +180,12 @@ func newTestCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: hpav1.CrossVersionObjectReference{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &hpav1.CrossVersionObjectReference{
+			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta1",
 				Kind:       "HorizontalPodAutoscaler",
@@ -196,18 +195,6 @@ func newTestCanary() *flaggerv1.Canary {
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
-				Metrics: []flaggerv1.CanaryMetric{
-					{
-						Name:      "istio_requests_total",
-						Threshold: 99,
-						Interval:  "1m",
-					},
-					{
-						Name:      "istio_request_duration_seconds_bucket",
-						Threshold: 500,
-						Interval:  "1m",
-					},
-				},
 			},
 		},
 	}

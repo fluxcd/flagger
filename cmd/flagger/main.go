@@ -129,6 +129,7 @@ func main() {
 
 	verifyCRDs(flaggerClient, logger)
 	verifyKubernetesVersion(kubeClient, logger)
+	infos := startInformers(flaggerClient, logger, stopCh)
 
 	labels := strings.Split(selectorLabels, ",")
 	if len(labels) < 1 {
@@ -157,23 +158,6 @@ func main() {
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
-	// start informers
-	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
-
-	logger.Info("Waiting for canary informer cache to sync")
-	canaryInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
-	go canaryInformer.Informer().Run(stopCh)
-	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, canaryInformer.Informer().HasSynced); !ok {
-		logger.Fatalf("failed to wait for cache to sync")
-	}
-
-	logger.Info("Waiting for metric template informer cache to sync")
-	metricInformer := flaggerInformerFactory.Flagger().V1beta1().MetricTemplates()
-	go metricInformer.Informer().Run(stopCh)
-	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, metricInformer.Informer().HasSynced); !ok {
-		logger.Fatalf("failed to wait for cache to sync")
-	}
-
 	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient)
 
 	var configTracker canary.Tracker
@@ -193,7 +177,7 @@ func main() {
 		kubeClient,
 		meshClient,
 		flaggerClient,
-		canaryInformer,
+		infos,
 		controlLoopInterval,
 		logger,
 		notifierClient,
@@ -234,6 +218,37 @@ func main() {
 		startLeaderElection(ctx, runController, ns, kubeClient, logger)
 	} else {
 		runController()
+	}
+}
+
+func startInformers(flaggerClient clientset.Interface, logger *zap.SugaredLogger, stopCh <-chan struct{}) controller.Informers {
+	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
+
+	logger.Info("Waiting for canary informer cache to sync")
+	canaryInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
+	go canaryInformer.Informer().Run(stopCh)
+	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, canaryInformer.Informer().HasSynced); !ok {
+		logger.Fatalf("failed to wait for cache to sync")
+	}
+
+	logger.Info("Waiting for metric template informer cache to sync")
+	metricInformer := flaggerInformerFactory.Flagger().V1beta1().MetricTemplates()
+	go metricInformer.Informer().Run(stopCh)
+	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, metricInformer.Informer().HasSynced); !ok {
+		logger.Fatalf("failed to wait for cache to sync")
+	}
+
+	logger.Info("Waiting for alert provider informer cache to sync")
+	alertInformer := flaggerInformerFactory.Flagger().V1beta1().AlertProviders()
+	go alertInformer.Informer().Run(stopCh)
+	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, alertInformer.Informer().HasSynced); !ok {
+		logger.Fatalf("failed to wait for cache to sync")
+	}
+
+	return controller.Informers{
+		CanaryInformer: canaryInformer,
+		MetricInformer: metricInformer,
+		AlertInformer:  alertInformer,
 	}
 }
 
@@ -321,6 +336,11 @@ func verifyCRDs(flaggerClient clientset.Interface, logger *zap.SugaredLogger) {
 	_, err = flaggerClient.FlaggerV1beta1().MetricTemplates(namespace).List(metav1.ListOptions{Limit: 1})
 	if err != nil {
 		logger.Fatalf("MetricTemplate CRD is not registered %v", err)
+	}
+
+	_, err = flaggerClient.FlaggerV1beta1().AlertProviders(namespace).List(metav1.ListOptions{Limit: 1})
+	if err != nil {
+		logger.Fatalf("AlertProvider CRD is not registered %v", err)
 	}
 }
 

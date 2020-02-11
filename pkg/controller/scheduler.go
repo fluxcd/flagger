@@ -230,7 +230,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting {
 		if ok := c.runRollbackHooks(cd, cd.Status.Phase); ok {
 			c.recordEventWarningf(cd, "Rolling back %s.%s manual webhook invoked", cd.Name, cd.Namespace)
-			c.sendNotification(cd, "Rolling back manual webhook invoked", false, true)
+			c.alert(cd, "Rolling back manual webhook invoked", false, flaggerv1.SeverityWarn)
 			c.rollback(cd, canaryController, meshRouter)
 			return
 		}
@@ -271,8 +271,8 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		c.sendNotification(cd, "Canary analysis completed successfully, promotion finished.",
-			false, false)
+		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
+			false, flaggerv1.SeverityInfo)
 		return
 	}
 
@@ -282,8 +282,8 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if !retriable {
 			c.recordEventWarningf(cd, "Rolling back %s.%s progress deadline exceeded %v",
 				cd.Name, cd.Namespace, err)
-			c.sendNotification(cd, fmt.Sprintf("Progress deadline exceeded %v", err),
-				false, true)
+			c.alert(cd, fmt.Sprintf("Progress deadline exceeded %v", err),
+				false, flaggerv1.SeverityError)
 		}
 		c.rollback(cd, canaryController, meshRouter)
 		return
@@ -569,8 +569,8 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
 	c.recordEventInfof(canary, "Promotion completed! Canary analysis was skipped for %s.%s",
 		canary.Spec.TargetRef.Name, canary.Namespace)
-	c.sendNotification(canary, "Canary analysis was skipped, promotion finished.",
-		false, false)
+	c.alert(canary, "Canary analysis was skipped, promotion finished.",
+		false, flaggerv1.SeverityInfo)
 
 	return true
 }
@@ -617,8 +617,8 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		}
 		c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseInitialized)
 		c.recordEventInfof(canary, "Initialization done! %s.%s", canary.Name, canary.Namespace)
-		c.sendNotification(canary, "New deployment detected, initialization completed.",
-			true, false)
+		c.alert(canary, "New deployment detected, initialization completed.",
+			true, flaggerv1.SeverityInfo)
 		return false
 	}
 
@@ -626,8 +626,8 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		canaryPhaseProgressing := canary.DeepCopy()
 		canaryPhaseProgressing.Status.Phase = flaggerv1.CanaryPhaseProgressing
 		c.recordEventInfof(canaryPhaseProgressing, "New revision detected! Scaling up %s.%s", canaryPhaseProgressing.Spec.TargetRef.Name, canaryPhaseProgressing.Namespace)
-		c.sendNotification(canaryPhaseProgressing, "New revision detected, starting canary analysis.",
-			true, false)
+		c.alert(canaryPhaseProgressing, "New revision detected, starting canary analysis.",
+			true, flaggerv1.SeverityInfo)
 
 		if err := canaryController.ScaleFromZero(canary); err != nil {
 			c.recordEventErrorf(canary, "%v", err)
@@ -666,7 +666,7 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary, canaryCont
 					}
 					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for approval %s",
 						canary.Name, canary.Namespace, webhook.Name)
-					c.sendNotification(canary, "Canary is waiting for approval.", false, false)
+					c.alert(canary, "Canary is waiting for approval.", false, flaggerv1.SeverityWarn)
 				}
 				return false
 			} else {
@@ -691,7 +691,7 @@ func (c *Controller) runConfirmPromotionHooks(canary *flaggerv1.Canary) bool {
 			if err != nil {
 				c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for promotion approval %s",
 					canary.Name, canary.Namespace, webhook.Name)
-				c.sendNotification(canary, "Canary promotion is waiting for approval.", false, false)
+				c.alert(canary, "Canary promotion is waiting for approval.", false, flaggerv1.SeverityWarn)
 				return false
 			} else {
 				c.recordEventInfof(canary, "Confirm-promotion check %s passed", webhook.Name)
@@ -921,7 +921,7 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 				namespace = metric.TemplateRef.Namespace
 			}
 
-			template, err := c.flaggerClient.FlaggerV1beta1().MetricTemplates(namespace).Get(metric.TemplateRef.Name, metav1.GetOptions{})
+			template, err := c.flaggerInformers.MetricInformer.Lister().MetricTemplates(namespace).Get(metric.TemplateRef.Name)
 			if err != nil {
 				c.recordEventErrorf(canary, "Metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
 				return false
@@ -1010,8 +1010,8 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	if canary.Status.FailedChecks >= canary.Spec.CanaryAnalysis.Threshold {
 		c.recordEventWarningf(canary, "Rolling back %s.%s failed checks threshold reached %v",
 			canary.Name, canary.Namespace, canary.Status.FailedChecks)
-		c.sendNotification(canary, fmt.Sprintf("Failed checks threshold reached %v", canary.Status.FailedChecks),
-			false, true)
+		c.alert(canary, fmt.Sprintf("Failed checks threshold reached %v", canary.Status.FailedChecks),
+			false, flaggerv1.SeverityError)
 	}
 
 	// route all traffic back to primary
