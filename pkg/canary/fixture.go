@@ -32,12 +32,14 @@ func newFixture() fixture {
 	kubeClient := fake.NewSimpleClientset(
 		newTestDeployment(),
 		newTestHPA(),
-		NewTestConfigMap(),
-		NewTestConfigMapEnv(),
-		NewTestConfigMapVol(),
-		NewTestSecret(),
-		NewTestSecretEnv(),
-		NewTestSecretVol(),
+		newTestConfigMap(),
+		newTestConfigMapEnv(),
+		newTestConfigMapVol(),
+		newTestConfigProjected(),
+		newTestSecret(),
+		newTestSecretEnv(),
+		newTestSecretVol(),
+		newTestSecretProjected(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
@@ -63,7 +65,7 @@ func newFixture() fixture {
 	}
 }
 
-func NewTestConfigMap() *corev1.ConfigMap {
+func newTestConfigMap() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -90,7 +92,20 @@ func NewTestConfigMapV2() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapEnv() *corev1.ConfigMap {
+func newTestConfigProjected() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-projected",
+		},
+		Data: map[string]string{
+			"color": "red",
+		},
+	}
+}
+
+func newTestConfigMapEnv() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -103,7 +118,7 @@ func NewTestConfigMapEnv() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapVol() *corev1.ConfigMap {
+func newTestConfigMapVol() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -116,7 +131,7 @@ func NewTestConfigMapVol() *corev1.ConfigMap {
 	}
 }
 
-func NewTestSecret() *corev1.Secret {
+func newTestSecret() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -130,21 +145,21 @@ func NewTestSecret() *corev1.Secret {
 	}
 }
 
-func NewTestSecretV2() *corev1.Secret {
+func newTestSecretProjected() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
-			Name:      "podinfo-secret-env",
+			Name:      "podinfo-secret-projected",
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"apiKey": []byte("test2"),
+			"apiKey": []byte("test"),
 		},
 	}
 }
 
-func NewTestSecretEnv() *corev1.Secret {
+func newTestSecretEnv() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -158,7 +173,7 @@ func NewTestSecretEnv() *corev1.Secret {
 	}
 }
 
-func NewTestSecretVol() *corev1.Secret {
+func newTestSecretVol() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -311,6 +326,41 @@ func newTestDeployment() *appsv1.Deployment {
 								},
 							},
 						},
+						{
+							Name: "projected",
+							VolumeSource: corev1.VolumeSource{
+								Projected: &corev1.ProjectedVolumeSource{
+									Sources: []corev1.VolumeProjection{
+										{
+											ConfigMap: &corev1.ConfigMapProjection{
+												LocalObjectReference: corev1.LocalObjectReference{
+													Name: "podinfo-config-projected",
+												},
+												Items: []corev1.KeyToPath{
+													{
+														Key:  "color",
+														Path: "my-group/my-color",
+													},
+												},
+											},
+										},
+										{
+											Secret: &corev1.SecretProjection{
+												LocalObjectReference: corev1.LocalObjectReference{
+													Name: "podinfo-secret-projected",
+												},
+												Items: []corev1.KeyToPath{
+													{
+														Key:  "apiKey",
+														Path: "my-group/my-api-key",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -418,6 +468,41 @@ func newTestDeploymentV2() *appsv1.Deployment {
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName: "podinfo-secret-vol",
+								},
+							},
+						},
+						{
+							Name: "projected",
+							VolumeSource: corev1.VolumeSource{
+								Projected: &corev1.ProjectedVolumeSource{
+									Sources: []corev1.VolumeProjection{
+										{
+											ConfigMap: &corev1.ConfigMapProjection{
+												LocalObjectReference: corev1.LocalObjectReference{
+													Name: "podinfo-config-projected",
+												},
+												Items: []corev1.KeyToPath{
+													{
+														Key:  "color",
+														Path: "my-group/my-color",
+													},
+												},
+											},
+										},
+										{
+											Secret: &corev1.SecretProjection{
+												LocalObjectReference: corev1.LocalObjectReference{
+													Name: "podinfo-secret-projected",
+												},
+												Items: []corev1.KeyToPath{
+													{
+														Key:  "apiKey",
+														Path: "my-group/my-api-key",
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},

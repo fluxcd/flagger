@@ -124,6 +124,32 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 				res[secret.GetName()] = *secret
 			}
 		}
+
+		if projected := volume.Projected; projected != nil {
+			for _, source := range projected.Sources {
+				if cmv := source.ConfigMap; cmv != nil {
+					config, err := ct.getRefFromConfigMap(cmv.Name, cd.Namespace)
+					if err != nil {
+						ct.Logger.Errorf("configMap %s.%s query error %v", cmv.Name, cd.Namespace, err)
+						continue
+					}
+					if config != nil {
+						res[config.GetName()] = *config
+					}
+				}
+
+				if sv := source.Secret; sv != nil {
+					secret, err := ct.getRefFromSecret(sv.Name, cd.Namespace)
+					if err != nil {
+						ct.Logger.Errorf("secret %s.%s query error %v", sv.Name, cd.Namespace, err)
+						continue
+					}
+					if secret != nil {
+						res[secret.GetName()] = *secret
+					}
+				}
+			}
+		}
 	}
 	// scan containers
 	for _, container := range targetDep.Spec.Template.Spec.Containers {
@@ -335,7 +361,26 @@ func (ct *ConfigTracker) ApplyPrimaryConfigs(spec corev1.PodSpec, refs map[strin
 				spec.Volumes[i].Secret.SecretName += "-primary"
 			}
 		}
+
+		if projected := volume.Projected; projected != nil {
+			for s, source := range projected.Sources {
+				if cmv := source.ConfigMap; cmv != nil {
+					name := fmt.Sprintf("%s/%s", ConfigRefMap, cmv.Name)
+					if _, exists := refs[name]; exists {
+						spec.Volumes[i].Projected.Sources[s].ConfigMap.Name += "-primary"
+					}
+				}
+
+				if sv := source.Secret; sv != nil {
+					name := fmt.Sprintf("%s/%s", ConfigRefSecret, sv.Name)
+					if _, exists := refs[name]; exists {
+						spec.Volumes[i].Projected.Sources[s].Secret.Name += "-primary"
+					}
+				}
+			}
+		}
 	}
+
 	// update containers
 	for _, container := range spec.Containers {
 		// update env
