@@ -57,6 +57,11 @@ podMonitor:
 #    secretKeyRef:
 #      name: msteams
 #      key: url
+#- name: EVENT_WEBHOOK_URL
+#  valueFrom:
+#    secretKeyRef:
+#      name: eventwebhook
+#      key: url
 env: []
 
 leaderElection:

@@ -62,6 +62,9 @@ helm upgrade -i flagger flagger/flagger \
 --set eventWebhook=https://example.com/flagger-canary-event-webhook
 ```
 
+The environment variable *EVENT_WEBHOOK_URL* can be used for activating the event-webhook, too.
+This is handy for using a secret to store a sensible value that could contain api keys for example.
+
 When configured, every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST
 request. The JSON payload has the following schema:
 
