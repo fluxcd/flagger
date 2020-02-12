@@ -21,14 +21,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	configName := depPrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
-	if configName != "podinfo-config-vol-primary" {
-		t.Errorf("Got config name %v wanted %v", configName, "podinfo-config-vol-primary")
-	}
-
 	dep := newTestDeployment()
-	configMap := NewTestConfigMap()
-	secret := NewTestSecret()
 
 	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
@@ -43,60 +36,6 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 
 	if hpaPrimary.Spec.ScaleTargetRef.Name != depPrimary.Name {
 		t.Errorf("Got HPA target %s wanted %s", hpaPrimary.Spec.ScaleTargetRef.Name, depPrimary.Name)
-	}
-
-	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if configPrimary.Data["color"] != configMap.Data["color"] {
-		t.Errorf("Got ConfigMap color %s wanted %s", configPrimary.Data["color"], configMap.Data["color"])
-	}
-
-	configPrimaryEnv, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-all-env-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if configPrimaryEnv.Data["color"] != configMap.Data["color"] {
-		t.Errorf("Got ConfigMap %s wanted %s", configPrimaryEnv.Data["a"], configMap.Data["color"])
-	}
-
-	configPrimaryVol, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-vol-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if configPrimaryVol.Data["color"] != configMap.Data["color"] {
-		t.Errorf("Got ConfigMap color %s wanted %s", configPrimary.Data["color"], configMap.Data["color"])
-	}
-
-	secretPrimary, err := mocks.kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-env-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if string(secretPrimary.Data["apiKey"]) != string(secret.Data["apiKey"]) {
-		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret.Data["apiKey"])
-	}
-
-	secretPrimaryEnv, err := mocks.kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-all-env-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if string(secretPrimaryEnv.Data["apiKey"]) != string(secret.Data["apiKey"]) {
-		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret.Data["apiKey"])
-	}
-
-	secretPrimaryVol, err := mocks.kubeClient.CoreV1().Secrets("default").Get("podinfo-secret-vol-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if string(secretPrimaryVol.Data["apiKey"]) != string(secret.Data["apiKey"]) {
-		t.Errorf("Got primary secret %s wanted %s", secretPrimary.Data["apiKey"], secret.Data["apiKey"])
 	}
 }
 
@@ -284,7 +223,7 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		t.Fatalf("Status tracking configs are empty")
 	}
 	configs := *res.Status.TrackedConfigs
-	secret := NewTestSecret()
+	secret := newTestSecret()
 	if _, exists := configs["secret/"+secret.GetName()]; !exists {
 		t.Errorf("Secret %s not found in status", secret.GetName())
 	}
