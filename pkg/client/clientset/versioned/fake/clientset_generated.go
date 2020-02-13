@@ -32,6 +32,8 @@ import (
 	fakeprojectcontourv1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1/fake"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
 	fakesplitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1/fake"
+	splitv1alpha2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2"
+	fakesplitv1alpha2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -114,4 +116,9 @@ func (c *Clientset) ProjectcontourV1() projectcontourv1.ProjectcontourV1Interfac
 // SplitV1alpha1 retrieves the SplitV1alpha1Client
 func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
 	return &fakesplitv1alpha1.FakeSplitV1alpha1{Fake: &c.Fake}
+}
+
+// SplitV1alpha2 retrieves the SplitV1alpha2Client
+func (c *Clientset) SplitV1alpha2() splitv1alpha2.SplitV1alpha2Interface {
+	return &fakesplitv1alpha2.FakeSplitV1alpha2{Fake: &c.Fake}
 }
