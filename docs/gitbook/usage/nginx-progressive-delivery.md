@@ -8,9 +8,10 @@ This guide shows you how to use the NGINX ingress controller and Flagger to auto
 
 Flagger requires a Kubernetes cluster **v1.11** or newer and NGINX ingress **0.24** or newer.
 
-Install NGINX with Helm:
+Install NGINX with Helm v3:
 
 ```bash
+kubectl create ns ingress-nginx
 helm upgrade -i nginx-ingress stable/nginx-ingress \
 --namespace ingress-nginx \
 --set controller.stats.enabled=true \
