@@ -3,7 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-HELM_VERSION=v2.16.1
+HELM_VERSION=v3.0.3
 KIND_VERSION=v0.7.0
 KUBE_VERSION=v1.14.10
 
@@ -29,7 +29,3 @@ kubectl get pods --all-namespaces
 echo ">>> Installing Helm"
 curl -sSL https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar xz && sudo mv linux-amd64/helm /usr/local/bin/ && rm -rf linux-amd64
 
-echo '>>> Installing Tiller'
-kubectl --namespace kube-system create sa tiller
-kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-helm init --service-account tiller --upgrade --wait
