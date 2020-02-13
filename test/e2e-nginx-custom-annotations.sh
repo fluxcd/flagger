@@ -25,8 +25,7 @@ echo '>>> Loading Flagger image'
 kind load docker-image test/flagger:latest
 
 echo '>>> Installing Flagger'
-helm install ${REPO_ROOT}/charts/flagger \
---name flagger \
+helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
 --namespace ingress-nginx \
 --set prometheus.install=true \
 --set ingressAnnotationsPrefix="custom.ingress.kubernetes.io" \
