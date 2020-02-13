@@ -6,13 +6,13 @@ This guide shows you how to use the [Gloo](https://gloo.solo.io/) ingress contro
 
 ### Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer and Gloo ingress **0.13.29** or newer.
+Flagger requires a Kubernetes cluster **v1.11** or newer and Gloo ingress **1.3.5** or newer.
 
-Install Gloo with Helm:
+Install Gloo with Helm v3:
 
 ```bash
 helm repo add gloo https://storage.googleapis.com/solo-public-helm
-
+kubectl create ns gloo-system
 helm upgrade -i gloo gloo/gloo \
 --namespace gloo-system
 ```
@@ -76,10 +76,9 @@ spec:
   virtualHost:
     domains:
       - 'app.example.com'
-    name: podinfo.test
     routes:
-      - matcher:
-          prefix: /
+      - matchers:
+         - prefix: /
         routeAction:
           upstreamGroup:
             name: podinfo
@@ -112,9 +111,6 @@ spec:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
     name: podinfo
-  # the maximum time in seconds for the canary deployment
-  # to make progress before it is rollback (default 600s)
-  progressDeadlineSeconds: 60
   service:
     # ClusterIP port number
     port: 9898
@@ -143,7 +139,7 @@ spec:
       # milliseconds
       threshold: 500
       interval: 30s
-    # testing (optinal)
+    # testing (optional)
     webhooks:
       - name: acceptance-test
         type: pre-rollout
@@ -157,7 +153,7 @@ spec:
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 2m -q 5 -c 2 -host app.example.com http://gateway-proxy-v2.gloo-system"
+          cmd: "hey -z 2m -q 5 -c 2 -host app.example.com http://gateway-proxy.gloo-system"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
@@ -348,7 +344,7 @@ podinfod=stefanprodan/podinfo:3.1.3
 Generate 404s:
 
 ```bash
-watch curl -H 'Host: app.example.com' http://gateway-proxy-v2.gloo-system/status/400
+watch curl -H 'Host: app.example.com' http://gateway-proxy.gloo-system/status/400
 ```
 
 Watch Flagger logs:

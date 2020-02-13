@@ -3,10 +3,10 @@
 set -o errexit
 
 echo '>>> Deleting NGINX Ingress'
-helm delete --purge nginx-ingress
+helm delete nginx-ingress -n ingress-nginx
 
 echo '>>> Deleting Flagger'
-helm delete --purge flagger
+helm delete flagger -n ingress-nginx
 
 echo '>>> Cleanup test namespace'
 kubectl delete namespace test --ignore-not-found=true

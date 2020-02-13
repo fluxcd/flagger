@@ -27,10 +27,9 @@ spec:
   virtualHost:
     domains:
       - app.example.com
-    name: podinfo
     routes:
-      - matcher:
-          prefix: /
+      - matchers:
+         - prefix: /
         routeAction:
           upstreamGroup:
             name: podinfo
@@ -79,13 +78,13 @@ spec:
         timeout: 10s
         metadata:
           type: bash
-          cmd: "curl -sd 'test' -H 'Host: app.example.com' http://gateway-proxy-v2.gloo-system/token | grep token"
+          cmd: "curl -sd 'test' -H 'Host: app.example.com' http://gateway-proxy.gloo-system/token | grep token"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 2m -q 5 -c 2 -host app.example.com http://gateway-proxy-v2.gloo-system"
+          cmd: "hey -z 2m -q 5 -c 2 -host app.example.com http://gateway-proxy.gloo-system"
           logCmdOutput: "true"
 EOF
 

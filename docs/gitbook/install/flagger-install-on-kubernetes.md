@@ -1,13 +1,10 @@
 # Flagger install on Kubernetes
 
-This guide walks you through setting up Flagger on a Kubernetes cluster with Helm or Kustomize.
+This guide walks you through setting up Flagger on a Kubernetes cluster with Helm v3 or Kustomize.
 
 ### Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer with the following admission controllers enabled:
-
-* MutatingAdmissionWebhook
-* ValidatingAdmissionWebhook 
+Flagger requires a Kubernetes cluster **v1.11** or newer.
 
 ### Install Flagger with Helm
 
@@ -75,25 +72,24 @@ helm upgrade -i flagger flagger/flagger \
 --set msteams.url=https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK
 ```
 
-If you don't have Tiller you can use the helm template command and apply the generated yaml with kubectl:
+You can use the helm template command and apply the generated yaml with kubectl:
 
 ```bash
 # generate
 helm fetch --untar --untardir . flagger/flagger &&
-helm template flagger \
---name flagger \
+helm template flagger ./flagger \
 --namespace=istio-system \
 --set metricsServer=http://prometheus.istio-system:9090 \
-> $HOME/flagger.yaml
+> flagger.yaml
 
 # apply
-kubectl apply -f $HOME/flagger.yaml
+kubectl apply -f flagger.yaml
 ```
 
 To uninstall the Flagger release with Helm run:
 
 ```text
-helm delete --purge flagger
+helm delete flagger
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -127,13 +123,12 @@ Or use helm template command and apply the generated yaml with kubectl:
 ```bash
 # generate
 helm fetch --untar --untardir . flagger/grafana &&
-helm template grafana \
---name flagger-grafana \
+helm template flagger-grafana ./grafana \
 --namespace=istio-system \
-> $HOME/flagger-grafana.yaml
+> flagger-grafana.yaml
 
 # apply
-kubectl apply -f $HOME/flagger-grafana.yaml
+kubectl apply -f flagger-grafana.yaml
 ```
 
 You can access Grafana using port forwarding:
