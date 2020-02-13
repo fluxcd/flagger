@@ -82,16 +82,20 @@ func TestIstioRouter_Sync(t *testing.T) {
 	gateways := vsClone.Spec.Gateways
 	gateways = append(gateways, "test-gateway.istio-system")
 	vsClone.Spec.Gateways = gateways
+	totalGateways := len(mocks.canary.Spec.Service.Gateways)
 
 	vsGateways, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Update(vsClone)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	if len(vsGateways.Spec.Gateways) != 2 {
-		t.Errorf("Got Istio VS gateway %v wanted %v", vsGateways.Spec.Gateways, 2)
+
+	totalGateways++
+	if len(vsGateways.Spec.Gateways) != totalGateways {
+		t.Errorf("Got Istio VS gateway %v wanted %v", vsGateways.Spec.Gateways, totalGateways)
 	}
 
 	// undo change
+	totalGateways--
 	err = router.Reconcile(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -102,8 +106,8 @@ func TestIstioRouter_Sync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	if len(vs.Spec.Gateways) != 1 {
-		t.Errorf("Got Istio VS gateways %v wanted %v", vs.Spec.Gateways, 1)
+	if len(vs.Spec.Gateways) != totalGateways {
+		t.Errorf("Got Istio VS gateways %v wanted %v", vs.Spec.Gateways, totalGateways)
 	}
 }
 
@@ -436,5 +440,30 @@ func TestIstioRouter_ABTest(t *testing.T) {
 
 	if mirror != nil {
 		t.Errorf("Got mirror %v wanted nil", mirror)
+	}
+}
+
+func TestIstioRouter_GatewayPort(t *testing.T) {
+	mocks := newFixture()
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	port := vs.Spec.Http[0].Route[0].Destination.Port.Number
+	if port != uint32(mocks.canary.Spec.Service.Port) {
+		t.Fatalf("Got port %v wanted %v", port, mocks.canary.Spec.Service.Port)
 	}
 }

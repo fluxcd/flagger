@@ -113,7 +113,8 @@ func newMockCanary() *flaggerv1.Canary {
 				Kind:       "Deployment",
 			},
 			Service: flaggerv1.CanaryService{
-				Port: 9898,
+				Port:          9898,
+				PortDiscovery: true,
 				Headers: &istiov1alpha3.Headers{
 					Request: &istiov1alpha3.HeaderOperations{
 						Add: map[string]string{
@@ -135,6 +136,10 @@ func newMockCanary() *flaggerv1.Canary {
 				Retries: &istiov1alpha3.HTTPRetry{
 					Attempts:      10,
 					PerTryTimeout: "30s",
+				},
+				Gateways: []string{
+					"public-gateway.istio",
+					"mesh",
 				},
 			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
 				Threshold:  10,

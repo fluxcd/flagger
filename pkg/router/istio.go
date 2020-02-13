@@ -395,5 +395,20 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 		Weight: weight,
 	}
 
+	// set destination port when an ingress gateway is specified
+	if canary.Spec.Service.PortDiscovery &&
+		len(canary.Spec.Service.Gateways) > 0 &&
+		canary.Spec.Service.Gateways[0] != "mesh" {
+		dest = istiov1alpha3.DestinationWeight{
+			Destination: istiov1alpha3.Destination{
+				Host: host,
+				Port: &istiov1alpha3.PortSelector{
+					Number: uint32(canary.Spec.Service.Port),
+				},
+			},
+			Weight: weight,
+		}
+	}
+
 	return dest
 }
