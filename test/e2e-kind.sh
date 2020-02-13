@@ -28,4 +28,4 @@ kubectl get pods --all-namespaces
 
 echo ">>> Installing Helm"
 curl -sSL https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar xz && sudo mv linux-amd64/helm /usr/local/bin/ && rm -rf linux-amd64
-
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/

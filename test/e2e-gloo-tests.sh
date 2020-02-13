@@ -27,10 +27,9 @@ spec:
   virtualHost:
     domains:
       - app.example.com
-    name: podinfo
     routes:
-      - matcher:
-          prefix: /
+      - matchers:
+         - prefix: /
         routeAction:
           upstreamGroup:
             name: podinfo
