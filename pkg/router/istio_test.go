@@ -10,7 +10,7 @@ import (
 )
 
 func TestIstioRouter_Sync(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -112,7 +112,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 }
 
 func TestIstioRouter_SetRoutes(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -217,7 +217,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 }
 
 func TestIstioRouter_GetRoutes(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -247,7 +247,7 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 		t.Errorf("Got mirror %v wanted %v", m, false)
 	}
 
-	mocks.canary = newMockMirror()
+	mocks.canary = newTestMirror()
 
 	err = router.Reconcile(mocks.canary)
 	if err != nil {
@@ -313,7 +313,7 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 }
 
 func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -342,7 +342,7 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 }
 
 func TestIstioRouter_CORS(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -375,7 +375,7 @@ func TestIstioRouter_CORS(t *testing.T) {
 }
 
 func TestIstioRouter_ABTest(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -444,7 +444,7 @@ func TestIstioRouter_ABTest(t *testing.T) {
 }
 
 func TestIstioRouter_GatewayPort(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
