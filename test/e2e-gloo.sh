@@ -7,6 +7,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo '>>> Installing Gloo'
 helm repo add gloo https://storage.googleapis.com/solo-public-helm
+kubectl create ns gloo-system
 helm upgrade -i gloo gloo/gloo --version ${GLOO_VER} \
 --namespace gloo-system \
 --set discovery.enabled=true

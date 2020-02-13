@@ -6,6 +6,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 NGINX_VERSION=1.26.0
 
 echo '>>> Installing NGINX Ingress'
+kubectl create ns ingress-nginx
 helm upgrade -i nginx-ingress stable/nginx-ingress --version=${NGINX_VERSION} \
 --wait \
 --namespace ingress-nginx \

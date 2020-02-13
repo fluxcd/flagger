@@ -6,6 +6,7 @@ ISTIO_VER="1.4.3"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo ">>> Installing Istio ${ISTIO_VER}"
+kubectl create ns istio-system
 helm repo add istio.io https://storage.googleapis.com/istio-release/releases/${ISTIO_VER}/charts
 
 echo '>>> Installing Istio CRDs'
