@@ -35,6 +35,9 @@ jobs:
       - run:
           name: Verify code gen
           command: make test-codegen
+      - run:
+          name: Release notes
+          command: make release-notes
       - save_cache:
           key: go-mod-v3-{{ checksum "go.sum" }}
           paths:
