@@ -335,9 +335,19 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 		t.Fatalf("Got HTTPRoute %v wanted %v", len(vs.Spec.Http), 1)
 	}
 
-	timeout := vs.Spec.Http[0].AppendHeaders["x-envoy-upstream-rq-timeout-ms"]
+	timeout := vs.Spec.Http[0].Headers.Request.Add["x-envoy-upstream-rq-timeout-ms"]
 	if timeout != "15000" {
 		t.Errorf("Got timeout %v wanted %v", timeout, "15000")
+	}
+
+	reqRemove := vs.Spec.Http[0].Headers.Request.Remove[0]
+	if reqRemove != "test" {
+		t.Errorf("Got Headers.Request.Remove %v wanted %v", reqRemove, "test")
+	}
+
+	resRemove := vs.Spec.Http[0].Headers.Response.Remove[0]
+	if resRemove != "token" {
+		t.Errorf("Got Headers.Response.Remove %v wanted %v", reqRemove, "token")
 	}
 }
 

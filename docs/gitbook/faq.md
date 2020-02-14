@@ -452,9 +452,7 @@ spec:
     - frontend.example.com
     - frontend
   http:
-  - appendHeaders:
-      x-some-header: "value"
-    corsPolicy:
+  - corsPolicy:
       allowHeaders:
       - x-some-header
       allowMethods:
@@ -462,6 +460,10 @@ spec:
       allowOrigin:
       - example.com
       maxAge: 24h
+    headers:
+      request:
+        add:
+          x-some-header: "value"
     match:
     - uri:
         prefix: /

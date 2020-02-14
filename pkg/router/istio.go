@@ -141,13 +141,13 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		Gateways: gateways,
 		Http: []istiov1alpha3.HTTPRoute{
 			{
-				Match:         canary.Spec.Service.Match,
-				Rewrite:       canary.Spec.Service.Rewrite,
-				Timeout:       canary.Spec.Service.Timeout,
-				Retries:       canary.Spec.Service.Retries,
-				CorsPolicy:    canary.Spec.Service.CorsPolicy,
-				AppendHeaders: addHeaders(canary),
-				Route:         canaryRoute,
+				Match:      canary.Spec.Service.Match,
+				Rewrite:    canary.Spec.Service.Rewrite,
+				Timeout:    canary.Spec.Service.Timeout,
+				Retries:    canary.Spec.Service.Retries,
+				CorsPolicy: canary.Spec.Service.CorsPolicy,
+				Headers:    canary.Spec.Service.Headers,
+				Route:      canaryRoute,
 			},
 		},
 	}
@@ -156,21 +156,21 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		canaryMatch := mergeMatchConditions(canary.Spec.CanaryAnalysis.Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
 			{
-				Match:         canaryMatch,
-				Rewrite:       canary.Spec.Service.Rewrite,
-				Timeout:       canary.Spec.Service.Timeout,
-				Retries:       canary.Spec.Service.Retries,
-				CorsPolicy:    canary.Spec.Service.CorsPolicy,
-				AppendHeaders: addHeaders(canary),
-				Route:         canaryRoute,
+				Match:      canaryMatch,
+				Rewrite:    canary.Spec.Service.Rewrite,
+				Timeout:    canary.Spec.Service.Timeout,
+				Retries:    canary.Spec.Service.Retries,
+				CorsPolicy: canary.Spec.Service.CorsPolicy,
+				Headers:    canary.Spec.Service.Headers,
+				Route:      canaryRoute,
 			},
 			{
-				Match:         canary.Spec.Service.Match,
-				Rewrite:       canary.Spec.Service.Rewrite,
-				Timeout:       canary.Spec.Service.Timeout,
-				Retries:       canary.Spec.Service.Retries,
-				CorsPolicy:    canary.Spec.Service.CorsPolicy,
-				AppendHeaders: addHeaders(canary),
+				Match:      canary.Spec.Service.Match,
+				Rewrite:    canary.Spec.Service.Rewrite,
+				Timeout:    canary.Spec.Service.Timeout,
+				Retries:    canary.Spec.Service.Retries,
+				CorsPolicy: canary.Spec.Service.CorsPolicy,
+				Headers:    canary.Spec.Service.Headers,
 				Route: []istiov1alpha3.DestinationWeight{
 					makeDestination(canary, primaryName, 100),
 				},
@@ -303,12 +303,12 @@ func (ir *IstioRouter) SetRoutes(
 	// weighted routing (progressive canary)
 	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 		{
-			Match:         canary.Spec.Service.Match,
-			Rewrite:       canary.Spec.Service.Rewrite,
-			Timeout:       canary.Spec.Service.Timeout,
-			Retries:       canary.Spec.Service.Retries,
-			CorsPolicy:    canary.Spec.Service.CorsPolicy,
-			AppendHeaders: addHeaders(canary),
+			Match:      canary.Spec.Service.Match,
+			Rewrite:    canary.Spec.Service.Rewrite,
+			Timeout:    canary.Spec.Service.Timeout,
+			Retries:    canary.Spec.Service.Retries,
+			CorsPolicy: canary.Spec.Service.CorsPolicy,
+			Headers:    canary.Spec.Service.Headers,
 			Route: []istiov1alpha3.DestinationWeight{
 				makeDestination(canary, primaryName, primaryWeight),
 				makeDestination(canary, canaryName, canaryWeight),
@@ -328,24 +328,24 @@ func (ir *IstioRouter) SetRoutes(
 		canaryMatch := mergeMatchConditions(canary.Spec.CanaryAnalysis.Match, canary.Spec.Service.Match)
 		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 			{
-				Match:         canaryMatch,
-				Rewrite:       canary.Spec.Service.Rewrite,
-				Timeout:       canary.Spec.Service.Timeout,
-				Retries:       canary.Spec.Service.Retries,
-				CorsPolicy:    canary.Spec.Service.CorsPolicy,
-				AppendHeaders: addHeaders(canary),
+				Match:      canaryMatch,
+				Rewrite:    canary.Spec.Service.Rewrite,
+				Timeout:    canary.Spec.Service.Timeout,
+				Retries:    canary.Spec.Service.Retries,
+				CorsPolicy: canary.Spec.Service.CorsPolicy,
+				Headers:    canary.Spec.Service.Headers,
 				Route: []istiov1alpha3.DestinationWeight{
 					makeDestination(canary, primaryName, primaryWeight),
 					makeDestination(canary, canaryName, canaryWeight),
 				},
 			},
 			{
-				Match:         canary.Spec.Service.Match,
-				Rewrite:       canary.Spec.Service.Rewrite,
-				Timeout:       canary.Spec.Service.Timeout,
-				Retries:       canary.Spec.Service.Retries,
-				CorsPolicy:    canary.Spec.Service.CorsPolicy,
-				AppendHeaders: addHeaders(canary),
+				Match:      canary.Spec.Service.Match,
+				Rewrite:    canary.Spec.Service.Rewrite,
+				Timeout:    canary.Spec.Service.Timeout,
+				Retries:    canary.Spec.Service.Retries,
+				CorsPolicy: canary.Spec.Service.CorsPolicy,
+				Headers:    canary.Spec.Service.Headers,
 				Route: []istiov1alpha3.DestinationWeight{
 					makeDestination(canary, primaryName, primaryWeight),
 				},
@@ -359,18 +359,6 @@ func (ir *IstioRouter) SetRoutes(
 
 	}
 	return nil
-}
-
-// addHeaders applies headers before forwarding a request to the destination service
-// compatible with Istio 1.0.x and 1.1.0
-func addHeaders(canary *flaggerv1.Canary) (headers map[string]string) {
-	if canary.Spec.Service.Headers != nil &&
-		canary.Spec.Service.Headers.Request != nil &&
-		len(canary.Spec.Service.Headers.Request.Add) > 0 {
-		headers = canary.Spec.Service.Headers.Request.Add
-	}
-
-	return
 }
 
 // mergeMatchConditions appends the URI match rules to canary conditions

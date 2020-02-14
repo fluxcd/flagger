@@ -87,6 +87,10 @@ func newTestCanary() *flaggerv1.Canary {
 						Add: map[string]string{
 							"x-envoy-upstream-rq-timeout-ms": "15000",
 						},
+						Remove: []string{"test"},
+					},
+					Response: &istiov1alpha3.HeaderOperations{
+						Remove: []string{"token"},
 					},
 				},
 				CorsPolicy: &istiov1alpha3.CorsPolicy{
