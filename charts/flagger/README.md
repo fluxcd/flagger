@@ -95,7 +95,7 @@ Parameter | Description | Default
 `ingressAnnotationsPrefix` | Annotations prefix for ingresses | `custom.ingress.kubernetes.io`
 `rbac.create` | If `true`, create and use RBAC resources | `true`
 `rbac.pspEnabled` | If `true`, create and use a restricted pod security policy | `false`
-`crd.create` | If `true`, create Flagger's CRDs | `true`
+`crd.create` | If `true`, create Flagger's CRDs (should be enabled for Helm v2 only) | `false`
 `resources.requests/cpu` | Pod CPU request | `10m`
 `resources.requests/memory` | Pod memory request | `32Mi`
 `resources.limits/cpu` | Pod CPU limit | `1000m`

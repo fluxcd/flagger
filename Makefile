@@ -54,6 +54,10 @@ test-codegen:
 test: test-fmt test-codegen
 	go test ./...
 
+crd:
+	cat artifacts/flagger/crd.yaml > charts/flagger/crds/crd.yaml
+	cat artifacts/flagger/crd.yaml > kustomize/base/flagger/crd.yaml
+
 helm-package:
 	cd charts/ && helm package ./*
 	mv charts/*.tgz bin/
