@@ -21,6 +21,7 @@ kind load docker-image test/flagger:latest
 
 echo '>>> Installing Flagger'
 helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
+--set crd.create=false \
 --namespace gloo-system \
 --set prometheus.install=true \
 --set meshProvider=gloo
