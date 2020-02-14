@@ -351,19 +351,31 @@ type TCPSettings struct {
 
 // Settings applicable to HTTP1.1/HTTP2/GRPC connections.
 type HTTPSettings struct {
-	// Maximum number of pending HTTP requests to a destination. Default 1024.
+	// Specify if http1.1 connection should be upgraded to http2 for the associated destination.
+	// DEFAULT - Use the global default.
+	// DO_NOT_UPGRADE - Do not upgrade the connection to http2.
+	// UPGRADE - Upgrade the connection to http2.
+	H2UpgradePolicy string `json:"h2UpgradePolicy,omitempty"`
+
+	// Maximum number of pending HTTP requests to a destination. Default 2^32-1.
 	HTTP1MaxPendingRequests int32 `json:"http1MaxPendingRequests,omitempty"`
 
-	// Maximum number of requests to a backend. Default 1024.
+	// Maximum number of requests to a backend. Default 2^32-1.
 	HTTP2MaxRequests int32 `json:"http2MaxRequests,omitempty"`
 
 	// Maximum number of requests per connection to a backend. Setting this
-	// parameter to 1 disables keep alive.
+	// parameter to 1 disables keep alive. Default 0, meaning "unlimited",
+	// up to 2^29.
 	MaxRequestsPerConnection int32 `json:"maxRequestsPerConnection,omitempty"`
 
 	// Maximum number of retries that can be outstanding to all hosts in a
-	// cluster at a given time. Defaults to 3.
+	// cluster at a given time. Defaults to 2^32-1.
 	MaxRetries int32 `json:"maxRetries,omitempty"`
+
+	// The idle timeout for upstream connection pool connections. The idle timeout is defined as the period in which there are no active requests.
+	// If not set, the default is 1 hour. When the idle timeout is reached the connection will be closed.
+	// Note that request based timeouts mean that HTTP/2 PINGs will not keep the connection alive. Applies to both HTTP1.1 and HTTP2 connections.
+	IdleTimeout string `json:"idleTimeout,omitempty"`
 }
 
 // A Circuit breaker implementation that tracks the status of each
@@ -407,6 +419,35 @@ type OutlierDetection struct {
 	// connection error/failure events qualify as an error.
 	ConsecutiveErrors int32 `json:"consecutiveErrors,omitempty"`
 
+	// Number of gateway errors before a host is ejected from the connection pool.
+	// When the upstream host is accessed over HTTP, a 502, 503, or 504 return
+	// code qualifies as a gateway error. When the upstream host is accessed over
+	// an opaque TCP connection, connect timeouts and connection error/failure
+	// events qualify as a gateway error.
+	// This feature is disabled by default or when set to the value 0.
+	//
+	// Note that consecutive_gateway_errors and consecutive_5xx_errors can be
+	// used separately or together. Because the errors counted by
+	// consecutive_gateway_errors are also included in consecutive_5xx_errors,
+	// if the value of consecutive_gateway_errors is greater than or equal to
+	// the value of consecutive_5xx_errors, consecutive_gateway_errors will have
+	// no effect.
+	ConsecutiveGatewayErrors *uint32 `json:"consecutiveGatewayErrors,omitempty"`
+
+	// Number of 5xx errors before a host is ejected from the connection pool.
+	// When the upstream host is accessed over an opaque TCP connection, connect
+	// timeouts, connection error/failure and request failure events qualify as a
+	// 5xx error.
+	// This feature defaults to 5 but can be disabled by setting the value to 0.
+	//
+	// Note that consecutive_gateway_errors and consecutive_5xx_errors can be
+	// used separately or together. Because the errors counted by
+	// consecutive_gateway_errors are also included in consecutive_5xx_errors,
+	// if the value of consecutive_gateway_errors is greater than or equal to
+	// the value of consecutive_5xx_errors, consecutive_gateway_errors will have
+	// no effect.
+	Consecutive5xxErrors *uint32 `json:"consecutive5xxErrors,omitempty"`
+
 	// Time interval between ejection sweep analysis. format:
 	// 1h/1m/1s/1ms. MUST BE >=1ms. Default is 10s.
 	Interval string `json:"interval,omitempty"`
@@ -421,6 +462,15 @@ type OutlierDetection struct {
 	// Maximum % of hosts in the load balancing pool for the upstream
 	// service that can be ejected. Defaults to 10%.
 	MaxEjectionPercent int32 `json:"maxEjectionPercent,omitempty"`
+
+	// Outlier detection will be enabled as long as the associated load balancing
+	// pool has at least min_health_percent hosts in healthy mode. When the
+	// percentage of healthy hosts in the load balancing pool drops below this
+	// threshold, outlier detection will be disabled and the proxy will load balance
+	// across all hosts in the pool (healthy and unhealthy). The threshold can be
+	// disabled by setting it to 0%. The default is 0% as it's not typically
+	// applicable in k8s environments with few pods per service.
+	MinHealthPercent int32 `json:"minHealthPercent,omitempty"`
 }
 
 // SSL/TLS related settings for upstream connections. See Envoy's [TLS
