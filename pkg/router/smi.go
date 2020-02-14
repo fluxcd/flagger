@@ -14,7 +14,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	smiv1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	smiv1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	smiv1alpha2 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha2"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
@@ -37,9 +38,9 @@ func (sr *SmiRouter) Reconcile(canary *flaggerv1.Canary) error {
 		host = apexName
 	}
 
-	tsSpec := smiv1.TrafficSplitSpec{
+	tsSpec := smiv1alpha1.TrafficSplitSpec{
 		Service: host,
-		Backends: []smiv1.TrafficSplitBackend{
+		Backends: []smiv1alpha1.TrafficSplitBackend{
 			{
 				Service: canaryName,
 				Weight:  resource.NewQuantity(0, resource.DecimalExponent),
@@ -54,7 +55,7 @@ func (sr *SmiRouter) Reconcile(canary *flaggerv1.Canary) error {
 	ts, err := sr.smiClient.SplitV1alpha1().TrafficSplits(canary.Namespace).Get(apexName, metav1.GetOptions{})
 	// create traffic split
 	if errors.IsNotFound(err) {
-		t := &smiv1.TrafficSplit{
+		t := &smiv1alpha1.TrafficSplit{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      apexName,
 				Namespace: canary.Namespace,
@@ -157,7 +158,7 @@ func (sr *SmiRouter) SetRoutes(
 		return fmt.Errorf("TrafficSplit %s.%s query error %v", apexName, canary.Namespace, err)
 	}
 
-	backends := []smiv1.TrafficSplitBackend{
+	backends := []smiv1alpha1.TrafficSplitBackend{
 		{
 			Service: canaryName,
 			Weight:  resource.NewQuantity(int64(canaryWeight), resource.DecimalExponent),
@@ -186,4 +187,48 @@ func (sr *SmiRouter) makeAnnotations(gateways []string) map[string]string {
 		res["VirtualService.v1alpha3.networking.istio.io/spec.gateways"] = string(g)
 	}
 	return res
+}
+
+// getWithConvert overrides invalid traffic split and sets weight based on the canary status
+func (sr *SmiRouter) getWithConvert(canary *flaggerv1.Canary, host string) (*smiv1alpha2.TrafficSplit, error) {
+	apexName, primaryName, canaryName := canary.GetServiceNames()
+	ts, err := sr.smiClient.SplitV1alpha2().TrafficSplits(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	if errors.IsInvalid(err) {
+		t := &smiv1alpha2.TrafficSplit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      apexName,
+				Namespace: canary.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+						Group:   flaggerv1.SchemeGroupVersion.Group,
+						Version: flaggerv1.SchemeGroupVersion.Version,
+						Kind:    flaggerv1.CanaryKind,
+					}),
+				},
+				Annotations: sr.makeAnnotations(canary.Spec.Service.Gateways),
+			},
+			Spec: smiv1alpha2.TrafficSplitSpec{
+				Service: host,
+				Backends: []smiv1alpha2.TrafficSplitBackend{
+					{
+						Service: canaryName,
+						Weight:  canary.Status.CanaryWeight,
+					},
+					{
+						Service: primaryName,
+						Weight:  100 - canary.Status.CanaryWeight,
+					},
+				},
+			},
+		}
+
+		_, err := sr.smiClient.SplitV1alpha2().TrafficSplits(canary.Namespace).Update(t)
+		if err != nil {
+			return nil, err
+		}
+
+		sr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Infof("TrafficSplit %s.%s converted", t.GetName(), canary.Namespace)
+	}
+	return ts, err
 }

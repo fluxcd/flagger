@@ -27,6 +27,7 @@ import (
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
+	splitv1alpha2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -40,6 +41,7 @@ type Interface interface {
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
 	ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface
 	SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface
+	SplitV1alpha2() splitv1alpha2.SplitV1alpha2Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -52,6 +54,7 @@ type Clientset struct {
 	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
 	projectcontourV1   *projectcontourv1.ProjectcontourV1Client
 	splitV1alpha1      *splitv1alpha1.SplitV1alpha1Client
+	splitV1alpha2      *splitv1alpha2.SplitV1alpha2Client
 }
 
 // AppmeshV1beta1 retrieves the AppmeshV1beta1Client
@@ -82,6 +85,11 @@ func (c *Clientset) ProjectcontourV1() projectcontourv1.ProjectcontourV1Interfac
 // SplitV1alpha1 retrieves the SplitV1alpha1Client
 func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
 	return c.splitV1alpha1
+}
+
+// SplitV1alpha2 retrieves the SplitV1alpha2Client
+func (c *Clientset) SplitV1alpha2() splitv1alpha2.SplitV1alpha2Interface {
+	return c.splitV1alpha2
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -129,6 +137,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.splitV1alpha2, err = splitv1alpha2.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 
 	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(&configShallowCopy)
 	if err != nil {
@@ -147,6 +159,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.networkingV1alpha3 = networkingv1alpha3.NewForConfigOrDie(c)
 	cs.projectcontourV1 = projectcontourv1.NewForConfigOrDie(c)
 	cs.splitV1alpha1 = splitv1alpha1.NewForConfigOrDie(c)
+	cs.splitV1alpha2 = splitv1alpha2.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -161,6 +174,7 @@ func New(c rest.Interface) *Clientset {
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
 	cs.projectcontourV1 = projectcontourv1.New(c)
 	cs.splitV1alpha1 = splitv1alpha1.New(c)
+	cs.splitV1alpha2 = splitv1alpha2.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

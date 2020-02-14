@@ -8,7 +8,7 @@ import (
 )
 
 func TestIngressRouter_Reconcile(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IngressRouter{
 		logger:            mocks.logger,
 		kubeClient:        mocks.kubeClient,
@@ -44,7 +44,7 @@ func TestIngressRouter_Reconcile(t *testing.T) {
 }
 
 func TestIngressRouter_GetSetRoutes(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &IngressRouter{
 		logger:            mocks.logger,
 		kubeClient:        mocks.kubeClient,

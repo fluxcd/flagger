@@ -27,6 +27,7 @@ import (
 	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
 	v1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	v1alpha2 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha2"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -90,6 +91,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=split.smi-spec.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("trafficsplits"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Split().V1alpha1().TrafficSplits().Informer()}, nil
+
+		// Group=split.smi-spec.io, Version=v1alpha2
+	case v1alpha2.SchemeGroupVersion.WithResource("trafficsplits"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Split().V1alpha2().TrafficSplits().Informer()}, nil
 
 	}
 

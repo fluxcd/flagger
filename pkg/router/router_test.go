@@ -29,18 +29,31 @@ type fixture struct {
 	logger        *zap.SugaredLogger
 }
 
-func newFixture() fixture {
-	canary := newMockCanary()
-	abtest := newMockABTest()
-	appmeshCanary := newMockCanaryAppMesh()
-	ingressCanary := newMockCanaryIngress()
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary, abtest, appmeshCanary, ingressCanary)
+func newFixture(c *flaggerv1.Canary) fixture {
+	canary := newTestCanary()
+	if c != nil {
+		canary = c
+	}
+	abtest := newTestABTest()
+	appmeshCanary := newTestCanaryAppMesh()
+	ingressCanary := newTestCanaryIngress()
 
-	kubeClient := fake.NewSimpleClientset(newMockDeployment(), newMockABTestDeployment(), newMockIngress())
+	flaggerClient := fakeFlagger.NewSimpleClientset(
+		canary,
+		abtest,
+		appmeshCanary,
+		ingressCanary,
+	)
+
+	kubeClient := fake.NewSimpleClientset(
+		newTestDeployment(),
+		newTestABTestDeployment(),
+		newTestIngress(),
+	)
 
 	meshClient := fakeFlagger.NewSimpleClientset()
-	logger, _ := logger.NewLogger("debug")
 
+	logger, _ := logger.NewLogger("debug")
 	return fixture{
 		canary:        canary,
 		abtest:        abtest,
@@ -53,53 +66,7 @@ func newFixture() fixture {
 	}
 }
 
-func newMockCanaryAppMesh() *flaggerv1.Canary {
-	cd := &flaggerv1.Canary{
-		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "appmesh",
-		},
-		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
-				Name:       "podinfo",
-				APIVersion: "apps/v1",
-				Kind:       "Deployment",
-			},
-			Service: flaggerv1.CanaryService{
-				Port:     9898,
-				MeshName: "global",
-				Hosts:    []string{"*"},
-				Backends: []string{"backend.default"},
-				Timeout:  "25",
-				Retries: &istiov1alpha3.HTTPRetry{
-					Attempts:      5,
-					PerTryTimeout: "gateway-error",
-					RetryOn:       "5s",
-				},
-			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
-				Threshold:  10,
-				StepWeight: 10,
-				MaxWeight:  50,
-				Metrics: []flaggerv1.CanaryMetric{
-					{
-						Name:      "request-success-rate",
-						Threshold: 99,
-						Interval:  "1m",
-					},
-					{
-						Name:      "request-duration",
-						Threshold: 500,
-						Interval:  "1m",
-					},
-				},
-			},
-		},
-	}
-	return cd
-}
-
-func newMockCanary() *flaggerv1.Canary {
+func newTestCanary() *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -163,13 +130,104 @@ func newMockCanary() *flaggerv1.Canary {
 	return cd
 }
 
-func newMockMirror() *flaggerv1.Canary {
-	cd := newMockCanary()
+func newTestCanaryAppMesh() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "appmesh",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Port:     9898,
+				MeshName: "global",
+				Hosts:    []string{"*"},
+				Backends: []string{"backend.default"},
+				Timeout:  "25",
+				Retries: &istiov1alpha3.HTTPRetry{
+					Attempts:      5,
+					PerTryTimeout: "gateway-error",
+					RetryOn:       "5s",
+				},
+			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newTestSMICanary() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Name:     "podinfo",
+				Port:     80,
+				PortName: "http",
+				TargetPort: intstr.IntOrString{
+					Type:   0,
+					IntVal: 9898,
+				},
+				PortDiscovery: true,
+			},
+			CanaryAnalysis: flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newTestMirror() *flaggerv1.Canary {
+	cd := newTestCanary()
 	cd.Spec.CanaryAnalysis.Mirror = true
 	return cd
 }
 
-func newMockABTest() *flaggerv1.Canary {
+func newTestABTest() *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -215,7 +273,7 @@ func newMockABTest() *flaggerv1.Canary {
 	return cd
 }
 
-func newMockDeployment() *appsv1.Deployment {
+func newTestDeployment() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -233,20 +291,30 @@ func newMockDeployment() *appsv1.Deployment {
 					Labels: map[string]string{
 						"app": "podinfo",
 					},
+					Annotations: map[string]string{
+						"prometheus.io/scrape": "true",
+						"prometheus.io/port":   "9797",
+					},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
 							Name:  "podinfo",
-							Image: "quay.io/stefanprodan/podinfo:1.4.0",
+							Image: "stefanprodan/podinfo:test",
 							Command: []string{
 								"./podinfo",
 								"--port=9898",
+								"--port-metrics=9797",
 							},
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
 									ContainerPort: 9898,
+									Protocol:      corev1.ProtocolTCP,
+								},
+								{
+									Name:          "http-prom",
+									ContainerPort: 9797,
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
@@ -260,7 +328,7 @@ func newMockDeployment() *appsv1.Deployment {
 	return d
 }
 
-func newMockABTestDeployment() *appsv1.Deployment {
+func newTestABTestDeployment() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -283,7 +351,7 @@ func newMockABTestDeployment() *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  "podinfo",
-							Image: "quay.io/stefanprodan/podinfo:1.4.0",
+							Image: "quay.io/stefanprodan/podinfo:test",
 							Command: []string{
 								"./podinfo",
 								"--port=9898",
@@ -305,7 +373,7 @@ func newMockABTestDeployment() *appsv1.Deployment {
 	return d
 }
 
-func newMockCanaryIngress() *flaggerv1.Canary {
+func newTestCanaryIngress() *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -342,7 +410,7 @@ func newMockCanaryIngress() *flaggerv1.Canary {
 	return cd
 }
 
-func newMockIngress() *v1beta1.Ingress {
+func newTestIngress() *v1beta1.Ingress {
 	return &v1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{

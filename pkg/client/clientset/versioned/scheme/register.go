@@ -25,6 +25,7 @@ import (
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	splitv1alpha2 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,6 +43,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	networkingv1alpha3.AddToScheme,
 	projectcontourv1.AddToScheme,
 	splitv1alpha1.AddToScheme,
+	splitv1alpha2.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

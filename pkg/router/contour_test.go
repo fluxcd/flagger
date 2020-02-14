@@ -7,7 +7,7 @@ import (
 )
 
 func TestContourRouter_Reconcile(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &ContourRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -92,7 +92,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 
 	cdClone = cd.DeepCopy()
 	cdClone.Spec.CanaryAnalysis.Iterations = 5
-	cdClone.Spec.CanaryAnalysis.Match = newMockABTest().Spec.CanaryAnalysis.Match
+	cdClone.Spec.CanaryAnalysis.Match = newTestABTest().Spec.CanaryAnalysis.Match
 	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -116,7 +116,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 }
 
 func TestContourRouter_Routes(t *testing.T) {
-	mocks := newFixture()
+	mocks := newFixture(nil)
 	router := &ContourRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -164,7 +164,7 @@ func TestContourRouter_Routes(t *testing.T) {
 	// test update to A/B
 	cdClone := cd.DeepCopy()
 	cdClone.Spec.CanaryAnalysis.Iterations = 5
-	cdClone.Spec.CanaryAnalysis.Match = newMockABTest().Spec.CanaryAnalysis.Match
+	cdClone.Spec.CanaryAnalysis.Match = newTestABTest().Spec.CanaryAnalysis.Match
 	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
 	if err != nil {
 		t.Fatal(err.Error())
