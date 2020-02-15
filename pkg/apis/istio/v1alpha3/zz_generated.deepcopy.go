@@ -426,20 +426,6 @@ func (in *HTTPRoute) DeepCopyInto(out *HTTPRoute) {
 		*out = new(CorsPolicy)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.AppendHeaders != nil {
-		in, out := &in.AppendHeaders, &out.AppendHeaders
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.RemoveResponseHeaders != nil {
-		in, out := &in.RemoveResponseHeaders, &out.RemoveResponseHeaders
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
 	if in.Headers != nil {
 		in, out := &in.Headers, &out.Headers
 		*out = new(Headers)

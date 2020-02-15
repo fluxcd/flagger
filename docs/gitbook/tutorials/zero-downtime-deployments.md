@@ -196,10 +196,10 @@ spec:
     - public-gateway.istio-system.svc.cluster.local
     hosts:
     - app.example.com
-    appendHeaders:
-      x-envoy-upstream-rq-timeout-ms: "15000"
-      x-envoy-max-retries: "10"
-      x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+    retries:
+      attempts: 10
+      perTryTimeout: 5s
+      retryOn: "gateway-error,connect-failure,refused-stream"
 ```
 
 When the HPA scales down your app, your users could run into 503 errors.
