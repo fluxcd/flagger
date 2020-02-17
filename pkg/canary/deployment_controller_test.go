@@ -1,9 +1,11 @@
 package canary
 
 import (
-	"k8s.io/apimachinery/pkg/api/errors"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -36,29 +38,6 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 
 	if hpaPrimary.Spec.ScaleTargetRef.Name != depPrimary.Name {
 		t.Errorf("Got HPA target %s wanted %s", hpaPrimary.Spec.ScaleTargetRef.Name, depPrimary.Name)
-	}
-}
-
-func TestCanaryDeployer_IsNewSpec(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	dep2 := newTestDeploymentV2()
-	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	isNew, err := mocks.deployer.HasTargetChanged(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if !isNew {
-		t.Errorf("Got %v wanted %v", isNew, true)
 	}
 }
 
@@ -270,5 +249,57 @@ func TestCanaryDeployer_NoConfigTracking(t *testing.T) {
 	configName := depPrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
 	if configName != "podinfo-config-vol" {
 		t.Errorf("Got config name %v wanted %v", configName, "podinfo-config-vol")
+	}
+}
+
+func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
+	mocks := newFixture()
+	err := mocks.deployer.Initialize(mocks.canary, true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// save last applied spec hash
+	err = mocks.deployer.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	dep, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depClone := dep.DeepCopy()
+	depClone.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU: *resource.NewQuantity(100, resource.DecimalExponent),
+		},
+	}
+
+	// update pod spec
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(depClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect change
+	isNew, err := mocks.deployer.HasTargetChanged(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if !isNew {
+		t.Errorf("Got %v wanted %v", isNew, true)
 	}
 }
