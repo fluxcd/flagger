@@ -259,13 +259,22 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
+	// save last applied hash
 	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+	err = mocks.deployer.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitializing})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 
-	// save last applied spec hash
-	err = mocks.deployer.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized})
+	// save last promoted hash
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	err = mocks.deployer.SetStatusPhase(canary, flaggerv1.CanaryPhaseInitialized)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -293,12 +302,76 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	// detect change
+	// detect change in last applied spec
 	isNew, err := mocks.deployer.HasTargetChanged(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+	if !isNew {
+		t.Errorf("Got %v wanted %v", isNew, true)
+	}
 
+	// save hash
+	err = mocks.deployer.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	dep, err = mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depClone = dep.DeepCopy()
+	depClone.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU: *resource.NewQuantity(1000, resource.DecimalExponent),
+		},
+	}
+
+	// update pod spec
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(depClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// ignore change as hash should be the same with last promoted
+	isNew, err = mocks.deployer.HasTargetChanged(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if isNew {
+		t.Errorf("Got %v wanted %v", isNew, false)
+	}
+
+	depClone = dep.DeepCopy()
+	depClone.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU: *resource.NewQuantity(600, resource.DecimalExponent),
+		},
+	}
+
+	// update pod spec
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(depClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect change
+	isNew, err = mocks.deployer.HasTargetChanged(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	if !isNew {
 		t.Errorf("Got %v wanted %v", isNew, true)
 	}

@@ -52,7 +52,7 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		cdCopy.Status.CanaryWeight = status.CanaryWeight
 		cdCopy.Status.FailedChecks = status.FailedChecks
 		cdCopy.Status.Iterations = status.Iterations
-		cdCopy.Status.LastAppliedSpec = fmt.Sprintf("%s", hash)
+		cdCopy.Status.LastAppliedSpec = hash
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 		setAll(cdCopy)
 

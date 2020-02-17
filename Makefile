@@ -108,8 +108,7 @@ release-set: fmt version-set helm-package
 
 release-notes:
 	cd /tmp && GH_REL_URL="https://github.com/buchanae/github-release-notes/releases/download/0.2.0/github-release-notes-linux-amd64-0.2.0.tar.gz" && \
-    curl -sSL $${GH_REL_URL} | tar xz && sudo mv github-release-notes /usr/local/bin/ && \
-	github-release-notes -org weaveworks -repo flagger -since-latest-release
+    curl -sSL $${GH_REL_URL} | tar xz && sudo mv github-release-notes /usr/local/bin/
 
 reset-test:
 	kubectl delete -f ./artifacts/namespaces
