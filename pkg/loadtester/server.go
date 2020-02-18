@@ -109,6 +109,85 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		logger.Infof("%s gate closed", canaryName)
 	})
 
+	mux.HandleFunc("/rollback/check", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error("reading the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		canary := &flaggerv1.CanaryWebhookPayload{}
+		err = json.Unmarshal(body, canary)
+		if err != nil {
+			logger.Error("decoding the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
+		approved := gate.isOpen(canaryName)
+		if approved {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Approved"))
+		} else {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
+		}
+
+		logger.Infof("%s rollback check: approved %v", canaryName, approved)
+	})
+	mux.HandleFunc("/rollback/open", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error("reading the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		canary := &flaggerv1.CanaryWebhookPayload{}
+		err = json.Unmarshal(body, canary)
+		if err != nil {
+			logger.Error("decoding the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
+		gate.open(canaryName)
+
+		w.WriteHeader(http.StatusAccepted)
+
+		logger.Infof("%s rollback opened", canaryName)
+	})
+	mux.HandleFunc("/rollback/close", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error("reading the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		canary := &flaggerv1.CanaryWebhookPayload{}
+		err = json.Unmarshal(body, canary)
+		if err != nil {
+			logger.Error("decoding the request body failed", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+
+		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
+		gate.close(canaryName)
+
+		w.WriteHeader(http.StatusAccepted)
+
+		logger.Infof("%s rollback closed", canaryName)
+	})
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
