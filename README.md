@@ -25,7 +25,6 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
   * [Flagger install on GKE Istio](https://docs.flagger.app/install/flagger-install-on-google-cloud)
   * [Flagger install on EKS App Mesh](https://docs.flagger.app/install/flagger-install-on-eks-appmesh)
-  * [Flagger install with SuperGloo](https://docs.flagger.app/install/flagger-install-with-supergloo)
 * How it works
   * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
   * [Routing](https://docs.flagger.app/how-it-works#istio-routing)
@@ -37,18 +36,20 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
   * [Manual gating](https://docs.flagger.app/how-it-works#manual-gating)
   * [FAQ](https://docs.flagger.app/faq)
+  * [Development guide](https://docs.flagger.app/dev-guide)
 * Usage
-  * [Istio canary deployments](https://docs.flagger.app/usage/progressive-delivery)
-  * [Linkerd canary deployments](https://docs.flagger.app/usage/linkerd-progressive-delivery)
-  * [App Mesh canary deployments](https://docs.flagger.app/usage/appmesh-progressive-delivery)
-  * [NGINX ingress controller canary deployments](https://docs.flagger.app/usage/nginx-progressive-delivery)
-  * [Gloo ingress controller canary deployments](https://docs.flagger.app/usage/gloo-progressive-delivery)
-  * [Contour Canary Deployments](https://docs.flagger.app/usage/contour-progressive-delivery)
-  * [Crossover canary deployments](https://docs.flagger.app/usage/crossover-progressive-delivery)
-  * [Blue/Green deployments](https://docs.flagger.app/usage/blue-green)
+  * [Deployment Strategies](https://docs.flagger.app/usage/deployment-strategies)
   * [Monitoring](https://docs.flagger.app/usage/monitoring)
   * [Alerting](https://docs.flagger.app/usage/alerting)
 * Tutorials
+  * [Istio Canary Deployments](https://docs.flagger.app/tutorials/istio-progressive-delivery)
+  * [Istio A/B Testing](https://docs.flagger.app/tutorials/istio-ab-testing)
+  * [Linkerd Canary Deployments](https://docs.flagger.app/tutorials/linkerd-progressive-delivery)
+  * [App Mesh Canary Deployments](https://docs.flagger.app/tutorials/appmesh-progressive-delivery)
+  * [NGINX Canary Deployments](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
+  * [Gloo Canary Deployments](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
+  * [Contour Canary Deployments](https://docs.flagger.app/tutorials/contour-progressive-delivery)
+  * [Kubernetes Blue/Green Deployments](https://docs.flagger.app/tutorials/kubernetes-blue-green)
   * [Canary deployments with Helm charts and Weave Flux](https://docs.flagger.app/tutorials/canary-helm-gitops)
 
 ## Canary CRD
