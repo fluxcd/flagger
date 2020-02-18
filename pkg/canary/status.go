@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mitchellh/hashstructure"
 	ex "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,13 +35,10 @@ func (c *DeploymentController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1
 }
 
 func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, status flaggerv1.CanaryStatus, canaryResource interface{}, setAll func(cdCopy *flaggerv1.Canary)) error {
-	hash, err := hashstructure.Hash(canaryResource, nil)
-	if err != nil {
-		return ex.Wrap(err, "SyncStatus hash error")
-	}
+	hash := computeHash(canaryResource)
 
 	firstTry := true
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		var selErr error
 		if !firstTry {
 			cd, selErr = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
@@ -56,7 +52,7 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		cdCopy.Status.CanaryWeight = status.CanaryWeight
 		cdCopy.Status.FailedChecks = status.FailedChecks
 		cdCopy.Status.Iterations = status.Iterations
-		cdCopy.Status.LastAppliedSpec = fmt.Sprintf("%d", hash)
+		cdCopy.Status.LastAppliedSpec = hash
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 		setAll(cdCopy)
 

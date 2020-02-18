@@ -4,11 +4,11 @@ go 1.13
 
 require (
 	github.com/Masterminds/semver/v3 v3.0.3
+	github.com/davecgh/go-spew v1.1.1
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/google/go-cmp v0.3.0
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/mitchellh/hashstructure v1.0.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.0.0
 	go.uber.org/atomic v1.3.2 // indirect
