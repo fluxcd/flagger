@@ -589,7 +589,7 @@ Spec:
           some: "message"
       - name: "rollback gate"
         type: rollback
-        url: http://flagger-loadtester.test/gate/halt
+        url: http://flagger-loadtester.test/rollback/check
       - name: "send to Slack"
         type: event
         url: http://event-recevier.notifications/slack
@@ -908,14 +908,29 @@ While the promotion is paused, Flagger will continue to run the metrics checks a
         url: http://flagger-loadtester.test/gate/halt
 ```
 
-The `rollback` hook type can be used to manually rollback the canary promotion.  
+The `rollback` hook type can be used to manually rollback the canary promotion.  As with gating, rollbacks can be driven 
+with Flagger's tester API by setting the rollback URL to `/rollback/check`  
 
 ```yaml
   canaryAnalysis:
     webhooks:
       - name: "rollback"
         type: rollback
-        url: http://flagger-loadtester.test/gate/halt
+        url: http://flagger-loadtester.test/rollback/check
 ```     
+
+By default rollback is closed, you can rollback a canary rollout with:
+
+```bash
+kubectl -n test exec -it flagger-loadtester-xxxx-xxxx sh
+
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/rollback/open 
+```
+
+You can close the rollback with:
+
+```bash
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/rollback/close 
+``
 
 If you have notifications enabled, Flagger will post a message to Slack or MS Teams if a canary promotion is waiting for approval.
