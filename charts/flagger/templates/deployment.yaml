@@ -47,13 +47,11 @@ spec:
         - name: kubeconfig
           secret:
             secretName: "{{ .Values.kubeconfigHost }}"
-            mode: 511
         {{- end }}
         {{- if .Values.kubeconfigSource }}
         - name: kubeconfig-source
           secret:
             secretName: "{{ .Values.kubeconfigSource }}"
-            mode: 511
         {{- end }}
       containers:
         - name: flagger
