@@ -42,11 +42,33 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}
       {{- end }}
+      volumes:
+        {{- if .Values.kubeconfigHost }}
+        - name: kubeconfig
+          secret:
+            secretName: "{{ .Values.kubeconfigHost }}"
+            mode: 511
+        {{- end }}
+        {{- if .Values.kubeconfigSource }}
+        - name: kubeconfig-source
+          secret:
+            secretName: "{{ .Values.kubeconfigSource }}"
+            mode: 511
+        {{- end }}
       containers:
         - name: flagger
           securityContext:
             readOnlyRootFilesystem: true
             runAsUser: 10001
+          volumeMounts:
+            {{- if .Values.kubeconfigHost }}
+            - name: kubeconfig
+              mountPath: "/tmp/istio-host"
+            {{- end }}
+            {{- if .Values.kubeconfigSource }}
+            - name: kubeconfig-source
+              mountPath: "/tmp/istio-source"
+            {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -89,6 +111,12 @@ spec:
           {{- end }}
           {{- if .Values.eventWebhook }}
           - -event-webhook={{ .Values.eventWebhook }}
+          {{- end }}
+          {{- if .Values.kubeconfigSource }}
+          - -kubeconfig=/tmp/istio-source/config1
+          {{- end }}
+          {{- if .Values.kubeconfigHost }}
+          - -kubeconfig-host=/tmp/istio-host/config1
           {{- end }}
           livenessProbe:
             exec:

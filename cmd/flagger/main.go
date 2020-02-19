@@ -113,29 +113,26 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error building kubeconfig: %v", err)
 	}
-
+	fmt.Println(cfg)
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building kubernetes clientset: %v", err)
 	}
 
-	// if host kube config is there than this should be spawned with host kubeconfig
-	cfgHost, err := cfg, nil
-	if kubeconfigHost != "" {
-		cfgHost, err = clientcmd.BuildConfigFromFlags(masterURL, kubeconfigHost)
-		if err != nil {
-			logger.Fatalf("Error building host kubeconfig: %v", err)
-		}
+	flaggerClient, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		logger.Fatalf("Error building flagger clientset: %s", err.Error())
+	}
+
+	//if host kube config is there than this should be spawned with host kubeconfig
+	cfgHost, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfigHost)
+	if err != nil {
+		logger.Fatalf("Error building host kubeconfig: %v", err)
 	}
 
 	meshClient, err := clientset.NewForConfig(cfgHost)
 	if err != nil {
 		logger.Fatalf("Error building mesh clientset: %v", err)
-	}
-
-	flaggerClient, err := clientset.NewForConfig(cfg)
-	if err != nil {
-		logger.Fatalf("Error building flagger clientset: %s", err.Error())
 	}
 
 	verifyCRDs(flaggerClient, logger)
