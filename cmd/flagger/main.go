@@ -113,7 +113,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error building kubeconfig: %v", err)
 	}
-	
+
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building kubernetes clientset: %v", err)
