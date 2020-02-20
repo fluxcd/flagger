@@ -102,3 +102,5 @@ tolerations: []
 prometheus:
   # to be used with ingress controllers
   install: false
+
+kubeconfigHost: ""

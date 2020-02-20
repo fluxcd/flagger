@@ -42,11 +42,22 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}
       {{- end }}
+      volumes:
+        {{- if .Values.kubeconfigHost }}
+        - name: kubeconfig
+          secret:
+            secretName: "{{ .Values.kubeconfigHost }}"
+        {{- end }}
       containers:
         - name: flagger
           securityContext:
             readOnlyRootFilesystem: true
             runAsUser: 10001
+          volumeMounts:
+            {{- if .Values.kubeconfigHost }}
+            - name: kubeconfig
+              mountPath: "/tmp/istio-host"
+            {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -89,6 +100,9 @@ spec:
           {{- end }}
           {{- if .Values.eventWebhook }}
           - -event-webhook={{ .Values.eventWebhook }}
+          {{- end }}
+          {{- if .Values.kubeconfigHost }}
+          - -kubeconfig-host=/tmp/istio-host/kubeconfig
           {{- end }}
           livenessProbe:
             exec:
