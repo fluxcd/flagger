@@ -43,10 +43,10 @@ spec:
         - name: {{ .Values.image.pullSecret }}
       {{- end }}
       volumes:
-        {{- if .Values.kubeconfigHost }}
+        {{- if .Values.istio.kubeconfig.secretName }}
         - name: kubeconfig
           secret:
-            secretName: "{{ .Values.kubeconfigHost }}"
+            secretName: "{{ .Values.istio.kubeconfig.secretName }}"
         {{- end }}
       containers:
         - name: flagger
@@ -54,7 +54,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsUser: 10001
           volumeMounts:
-            {{- if .Values.kubeconfigHost }}
+            {{- if .Values.istio.kubeconfig.secretName }}
             - name: kubeconfig
               mountPath: "/tmp/istio-host"
             {{- end }}
@@ -101,8 +101,8 @@ spec:
           {{- if .Values.eventWebhook }}
           - -event-webhook={{ .Values.eventWebhook }}
           {{- end }}
-          {{- if .Values.kubeconfigHost }}
-          - -kubeconfig-host=/tmp/istio-host/kubeconfig
+          {{- if .Values.istio.kubeconfig.secretName }}
+          - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
           {{- end }}
           livenessProbe:
             exec:

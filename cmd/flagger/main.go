@@ -58,7 +58,7 @@ var (
 	leaderElectionNamespace  string
 	enableConfigTracking     bool
 	ver                      bool
-	kubeconfigHost           string
+	kubeconfigServiceMesh    string
 )
 
 func init() {
@@ -84,7 +84,7 @@ func init() {
 	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "kube-system", "Namespace used to create the leader election config map.")
 	flag.BoolVar(&enableConfigTracking, "enable-config-tracking", true, "Enable secrets and configmaps tracking.")
 	flag.BoolVar(&ver, "version", false, "Print version")
-	flag.StringVar(&kubeconfigHost, "kubeconfig-host", "", "Path to a kubeconfig for host cluster. Only required if cluster has a host cluster.")
+	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
 }
 
 func main() {
@@ -124,8 +124,8 @@ func main() {
 		logger.Fatalf("Error building flagger clientset: %s", err.Error())
 	}
 
-	//if host kube config is there than this should be spawned with host kubeconfig
-	cfgHost, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfigHost)
+	// use a remote cluster for routing if a service mesh kubeconfig is specified
+	cfgHost, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfigServiceMesh)
 	if err != nil {
 		logger.Fatalf("Error building host kubeconfig: %v", err)
 	}

@@ -30,6 +30,22 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://prometheus:9090
 ```
 
+For Istio multi-cluster shared control plane you can install Flagger on each remote cluster and set the
+Istio control plane host cluster kubeconfig:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=istio-system \
+--set crd.create=false \
+--set meshProvider=istio \
+--set metricsServer=http://istio-cluster-prometheus:9090 \
+--set istio.kubeconfig.secretName=istio-kubeconfig \
+--set istio.kubeconfig.key=kubeconfig
+```
+
+Note that the Istio control plane kubeconfig must be stored in a Kubernetes secret with a data key named `kubeconfig`.
+For more details on how to configure the kubeconfig read the [Istio docs](https://istio.io/docs/setup/install/multicluster/shared-vpn/#credentials).
+
 Deploy Flagger for Linkerd:
 
 ```bash
