@@ -48,11 +48,6 @@ spec:
           secret:
             secretName: "{{ .Values.kubeconfigHost }}"
         {{- end }}
-        {{- if .Values.kubeconfigSource }}
-        - name: kubeconfig-source
-          secret:
-            secretName: "{{ .Values.kubeconfigSource }}"
-        {{- end }}
       containers:
         - name: flagger
           securityContext:
@@ -62,10 +57,6 @@ spec:
             {{- if .Values.kubeconfigHost }}
             - name: kubeconfig
               mountPath: "/tmp/istio-host"
-            {{- end }}
-            {{- if .Values.kubeconfigSource }}
-            - name: kubeconfig-source
-              mountPath: "/tmp/istio-source"
             {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -110,11 +101,8 @@ spec:
           {{- if .Values.eventWebhook }}
           - -event-webhook={{ .Values.eventWebhook }}
           {{- end }}
-          {{- if .Values.kubeconfigSource }}
-          - -kubeconfig=/tmp/istio-source/config1
-          {{- end }}
           {{- if .Values.kubeconfigHost }}
-          - -kubeconfig-host=/tmp/istio-host/config1
+          - -kubeconfig-host=/tmp/istio-host/kubeconfig
           {{- end }}
           livenessProbe:
             exec:

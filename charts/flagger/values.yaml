@@ -103,5 +103,4 @@ prometheus:
   # to be used with ingress controllers
   install: false
 
-kubeconfigSource: ""
-kubeconfigHost: "kubeconfig"
+kubeconfigHost: ""
