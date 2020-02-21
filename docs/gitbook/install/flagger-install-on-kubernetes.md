@@ -30,6 +30,23 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://prometheus:9090
 ```
 
+For Istio multi-cluster shared control plane you can install Flagger on each remote cluster and set the
+Istio control plane host cluster kubeconfig:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=istio-system \
+--set crd.create=false \
+--set meshProvider=istio \
+--set metricsServer=http://istio-cluster-prometheus:9090 \
+--set istio.kubeconfig.secretName=istio-kubeconfig \
+--set istio.kubeconfig.key=kubeconfig
+```
+
+Note that the Istio kubeconfig must be stored in a Kubernetes secret with a data key named `kubeconfig`.
+For more details on how to configure Istio multi-cluster credentials read the
+[Istio docs](https://istio.io/docs/setup/install/multicluster/shared-vpn/#credentials).
+
 Deploy Flagger for Linkerd:
 
 ```bash
@@ -51,6 +68,11 @@ helm upgrade -i flagger flagger/flagger \
 ```
 
 You can install Flagger in any namespace as long as it can talk to the Prometheus service on port 9090.
+
+For ingress controllers, the install instructions are:
+* [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery)
+* [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
+* [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
 
 Enable **Slack** notifications:
 
@@ -250,4 +272,5 @@ Install Flagger with Slack:
 kubectl apply -k .
 ```
 
-If you want to use MS Teams instead of Slack, replace `-slack-url` with `-msteams-url` and set the webhook address to `https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK`.
+If you want to use MS Teams instead of Slack, replace `-slack-url` with `-msteams-url` and
+set the webhook address to `https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK`.

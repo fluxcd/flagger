@@ -103,6 +103,8 @@ Parameter | Description | Default
 `affinity` | Node/pod affinities | None
 `nodeSelector` | Node labels for pod assignment | `{}`
 `tolerations` | List of node taints to tolerate | `[]`
+`istio.kubeconfig.secretName` | The name of the Kubernetes secret containing the Istio shared control plane kubeconfig | None
+`istio.kubeconfig.key` | The name of Kubernetes secret data key that contains the Istio control plane kubeconfig | `kubeconfig`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
