@@ -423,7 +423,7 @@ func (cr *ContourRouter) makeRetryPolicy(canary *flaggerv1.Canary) *contourv1.Re
 func (cr *ContourRouter) makeLinkerdHeaderValue(canary *flaggerv1.Canary, serviceName string) contourv1.HeaderValue {
 	return contourv1.HeaderValue{
 		Name:  "l5d-dst-override",
-		Value: fmt.Sprintf("%s.%.s.svc.cluster.local:%v", serviceName, canary.Namespace, canary.Spec.Service.Port),
+		Value: fmt.Sprintf("%s.%s.svc.cluster.local:%v", serviceName, canary.Namespace, canary.Spec.Service.Port),
 	}
 
 }

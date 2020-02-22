@@ -385,7 +385,7 @@ podinfod=stefanprodan/podinfo:3.1.3
 Flagger detects that the deployment revision changed and starts the A/B test:
 
 ```text
-kubectl -n appmesh-system logs deploy/flagger -f | jq .msg
+kubectl -n projectcontour logs deploy/flagger -f | jq .msg
 
 New revision detected! Starting canary analysis for podinfo.test
 Advance podinfo.test canary iteration 1/10
