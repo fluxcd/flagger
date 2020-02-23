@@ -16,36 +16,36 @@ import (
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 )
 
-type fixture struct {
+type deploymentControllerFixture struct {
 	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
-	deployer      DeploymentController
+	controller    DeploymentController
 	logger        *zap.SugaredLogger
 }
 
-func newFixture() fixture {
+func newDeploymentFixture() deploymentControllerFixture {
 	// init canary
-	canary := newTestCanary()
+	canary := newDeploymentControllerTestCanary()
 	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
 	// init kube clientset and register mock objects
 	kubeClient := fake.NewSimpleClientset(
-		newTestDeployment(),
-		newTestHPA(),
-		newTestConfigMap(),
-		newTestConfigMapEnv(),
-		newTestConfigMapVol(),
-		newTestConfigProjected(),
-		newTestSecret(),
-		newTestSecretEnv(),
-		newTestSecretVol(),
-		newTestSecretProjected(),
+		newDeploymentControllerTest(),
+		newDeploymentControllerTestHPA(),
+		newDeploymentControllerTestConfigMap(),
+		newDeploymentControllerTestConfigMapEnv(),
+		newDeploymentControllerTestConfigMapVol(),
+		newDeploymentControllerTestConfigProjected(),
+		newDeploymentControllerTestSecret(),
+		newDeploymentControllerTestSecretEnv(),
+		newDeploymentControllerTestSecretVol(),
+		newDeploymentControllerTestSecretProjected(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
 
-	deployer := DeploymentController{
+	ctrl := DeploymentController{
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
 		logger:        logger,
@@ -57,16 +57,16 @@ func newFixture() fixture {
 		},
 	}
 
-	return fixture{
+	return deploymentControllerFixture{
 		canary:        canary,
-		deployer:      deployer,
+		controller:    ctrl,
 		logger:        logger,
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
 	}
 }
 
-func newTestConfigMap() *corev1.ConfigMap {
+func newDeploymentControllerTestConfigMap() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,7 +79,7 @@ func newTestConfigMap() *corev1.ConfigMap {
 	}
 }
 
-func NewTestConfigMapV2() *corev1.ConfigMap {
+func newDeploymentControllerTestConfigMapV2() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -93,7 +93,7 @@ func NewTestConfigMapV2() *corev1.ConfigMap {
 	}
 }
 
-func newTestConfigProjected() *corev1.ConfigMap {
+func newDeploymentControllerTestConfigProjected() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -106,7 +106,7 @@ func newTestConfigProjected() *corev1.ConfigMap {
 	}
 }
 
-func newTestConfigMapEnv() *corev1.ConfigMap {
+func newDeploymentControllerTestConfigMapEnv() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -119,7 +119,7 @@ func newTestConfigMapEnv() *corev1.ConfigMap {
 	}
 }
 
-func newTestConfigMapVol() *corev1.ConfigMap {
+func newDeploymentControllerTestConfigMapVol() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -132,7 +132,7 @@ func newTestConfigMapVol() *corev1.ConfigMap {
 	}
 }
 
-func newTestSecret() *corev1.Secret {
+func newDeploymentControllerTestSecret() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -146,7 +146,7 @@ func newTestSecret() *corev1.Secret {
 	}
 }
 
-func newTestSecretProjected() *corev1.Secret {
+func newDeploymentControllerTestSecretProjected() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -160,7 +160,7 @@ func newTestSecretProjected() *corev1.Secret {
 	}
 }
 
-func newTestSecretEnv() *corev1.Secret {
+func newDeploymentControllerTestSecretEnv() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -174,7 +174,7 @@ func newTestSecretEnv() *corev1.Secret {
 	}
 }
 
-func newTestSecretVol() *corev1.Secret {
+func newDeploymentControllerTestSecretVol() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -188,7 +188,7 @@ func newTestSecretVol() *corev1.Secret {
 	}
 }
 
-func newTestCanary() *flaggerv1.Canary {
+func newDeploymentControllerTestCanary() *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -217,7 +217,7 @@ func newTestCanary() *flaggerv1.Canary {
 	return cd
 }
 
-func newTestDeployment() *appsv1.Deployment {
+func newDeploymentControllerTest() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -376,7 +376,7 @@ func newTestDeployment() *appsv1.Deployment {
 	return d
 }
 
-func newTestDeploymentV2() *appsv1.Deployment {
+func newDeploymentControllerTestV2() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -521,7 +521,7 @@ func newTestDeploymentV2() *appsv1.Deployment {
 	return d
 }
 
-func newTestHPA() *hpav2.HorizontalPodAutoscaler {
+func newDeploymentControllerTestHPA() *hpav2.HorizontalPodAutoscaler {
 	h := &hpav2.HorizontalPodAutoscaler{
 		TypeMeta: metav1.TypeMeta{APIVersion: hpav2.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{

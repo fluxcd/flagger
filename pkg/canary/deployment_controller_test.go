@@ -11,9 +11,9 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
-func TestCanaryDeployer_Sync(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_Sync(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -23,7 +23,7 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	dep := newTestDeployment()
+	dep := newDeploymentControllerTest()
 
 	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
@@ -41,20 +41,20 @@ func TestCanaryDeployer_Sync(t *testing.T) {
 	}
 }
 
-func TestCanaryDeployer_Promote(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_Promote(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	dep2 := newTestDeploymentV2()
+	dep2 := newDeploymentControllerTestV2()
 	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	config2 := NewTestConfigMapV2()
+	config2 := newDeploymentControllerTestConfigMapV2()
 	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -72,7 +72,7 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	err = mocks.deployer.Promote(mocks.canary)
+	err = mocks.controller.Promote(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -107,32 +107,32 @@ func TestCanaryDeployer_Promote(t *testing.T) {
 	}
 }
 
-func TestCanaryDeployer_IsReady(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_IsReady(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Error("Expected primary readiness check to fail")
 	}
 
-	_, err = mocks.deployer.IsPrimaryReady(mocks.canary)
+	_, err = mocks.controller.IsPrimaryReady(mocks.canary)
 	if err == nil {
 		t.Fatal(err.Error())
 	}
 
-	_, err = mocks.deployer.IsCanaryReady(mocks.canary)
+	_, err = mocks.controller.IsCanaryReady(mocks.canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 }
 
-func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_SetFailedChecks(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	err = mocks.deployer.SetStatusFailedChecks(mocks.canary, 1)
+	err = mocks.controller.SetStatusFailedChecks(mocks.canary, 1)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -147,14 +147,14 @@ func TestCanaryDeployer_SetFailedChecks(t *testing.T) {
 	}
 }
 
-func TestCanaryDeployer_SetState(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_SetState(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	err = mocks.deployer.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)
+	err = mocks.controller.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -169,9 +169,9 @@ func TestCanaryDeployer_SetState(t *testing.T) {
 	}
 }
 
-func TestCanaryDeployer_SyncStatus(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_SyncStatus(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -180,7 +180,7 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		Phase:        flaggerv1.CanaryPhaseProgressing,
 		FailedChecks: 2,
 	}
-	err = mocks.deployer.SyncStatus(mocks.canary, status)
+	err = mocks.controller.SyncStatus(mocks.canary, status)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -202,20 +202,20 @@ func TestCanaryDeployer_SyncStatus(t *testing.T) {
 		t.Fatalf("Status tracking configs are empty")
 	}
 	configs := *res.Status.TrackedConfigs
-	secret := newTestSecret()
+	secret := newDeploymentControllerTestSecret()
 	if _, exists := configs["secret/"+secret.GetName()]; !exists {
 		t.Errorf("Secret %s not found in status", secret.GetName())
 	}
 }
 
-func TestCanaryDeployer_Scale(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_Scale(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	err = mocks.deployer.Scale(mocks.canary, 2)
+	err = mocks.controller.Scale(mocks.canary, 2)
 
 	c, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
@@ -227,11 +227,11 @@ func TestCanaryDeployer_Scale(t *testing.T) {
 	}
 }
 
-func TestCanaryDeployer_NoConfigTracking(t *testing.T) {
-	mocks := newFixture()
-	mocks.deployer.configTracker = &NopTracker{}
+func TestDeploymentController_NoConfigTracking(t *testing.T) {
+	mocks := newDeploymentFixture()
+	mocks.controller.configTracker = &NopTracker{}
 
-	err := mocks.deployer.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -252,9 +252,9 @@ func TestCanaryDeployer_NoConfigTracking(t *testing.T) {
 	}
 }
 
-func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
-	mocks := newFixture()
-	err := mocks.deployer.Initialize(mocks.canary, true)
+func TestDeploymentController_HasTargetChanged(t *testing.T) {
+	mocks := newDeploymentFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -264,7 +264,7 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	err = mocks.deployer.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitializing})
+	err = mocks.controller.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitializing})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -274,7 +274,7 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	err = mocks.deployer.SetStatusPhase(canary, flaggerv1.CanaryPhaseInitialized)
+	err = mocks.controller.SetStatusPhase(canary, flaggerv1.CanaryPhaseInitialized)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -303,7 +303,7 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 	}
 
 	// detect change in last applied spec
-	isNew, err := mocks.deployer.HasTargetChanged(canary)
+	isNew, err := mocks.controller.HasTargetChanged(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -312,7 +312,7 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 	}
 
 	// save hash
-	err = mocks.deployer.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing})
+	err = mocks.controller.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -341,7 +341,7 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 	}
 
 	// ignore change as hash should be the same with last promoted
-	isNew, err = mocks.deployer.HasTargetChanged(canary)
+	isNew, err = mocks.controller.HasTargetChanged(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -368,7 +368,7 @@ func TestCanaryDeployer_HasTargetChanged(t *testing.T) {
 	}
 
 	// detect change
-	isNew, err = mocks.deployer.HasTargetChanged(canary)
+	isNew, err = mocks.controller.HasTargetChanged(canary)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
