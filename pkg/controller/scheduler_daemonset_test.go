@@ -15,23 +15,23 @@ import (
 	"github.com/weaveworks/flagger/pkg/notifier"
 )
 
-func TestScheduler_Init(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetInit(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	_, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 }
 
-func TestScheduler_NewRevision(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetNewRevision(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update
-	dep2 := newTestDeploymentV2()
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newDaemonSetTestDaemonSetV2()
+	_, err := mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -39,18 +39,14 @@ func TestScheduler_NewRevision(t *testing.T) {
 	// detect changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	c, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-
-	if *c.Spec.Replicas != 1 {
-		t.Errorf("Got canary replicas %v wanted %v", *c.Spec.Replicas, 1)
-	}
 }
 
-func TestScheduler_Rollback(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetRollback(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -82,15 +78,9 @@ func TestScheduler_Rollback(t *testing.T) {
 
 	// run metric checks
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
 
 	// finalise analysis
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
 
 	// check status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -103,8 +93,8 @@ func TestScheduler_Rollback(t *testing.T) {
 	}
 }
 
-func TestScheduler_SkipAnalysis(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetSkipAnalysis(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
@@ -120,8 +110,8 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 	}
 
 	// update
-	dep2 := newTestDeploymentV2()
-	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newDaemonSetTestDaemonSetV2()
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -144,14 +134,14 @@ func TestScheduler_SkipAnalysis(t *testing.T) {
 	}
 }
 
-func TestScheduler_NewRevisionReset(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetNewRevisionReset(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// first update
-	dep2 := newTestDeploymentV2()
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newDaemonSetTestDaemonSetV2()
+	_, err := mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -180,7 +170,7 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 
 	// second update
 	dep2.Spec.Template.Spec.ServiceAccountName = "test"
-	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -206,8 +196,8 @@ func TestScheduler_NewRevisionReset(t *testing.T) {
 	}
 }
 
-func TestScheduler_Promotion(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetPromotion(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
@@ -223,8 +213,8 @@ func TestScheduler_Promotion(t *testing.T) {
 	}
 
 	// update
-	dep2 := newTestDeploymentV2()
-	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newDaemonSetTestDaemonSetV2()
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -232,13 +222,13 @@ func TestScheduler_Promotion(t *testing.T) {
 	// detect pod spec changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
-	config2 := newTestConfigMapV2()
+	config2 := newDaemonSetTestConfigMapV2()
 	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	secret2 := newTestSecretV2()
+	secret2 := newDaemonSetTestSecretV2()
 	_, err = mocks.kubeClient.CoreV1().Secrets("default").Update(secret2)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -305,7 +295,7 @@ func TestScheduler_Promotion(t *testing.T) {
 		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
 	}
 
-	primaryDep, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	primaryDep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -357,14 +347,14 @@ func TestScheduler_Promotion(t *testing.T) {
 	}
 }
 
-func TestScheduler_Mirroring(t *testing.T) {
-	mocks := newFixture(newTestCanaryMirror())
+func TestScheduler_DaemonSetMirroring(t *testing.T) {
+	mocks := newDaemonSetFixture(newDaemonSetTestCanaryMirror())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update
-	dep2 := newTestDeploymentV2()
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newDaemonSetTestDaemonSetV2()
+	_, err := mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -415,14 +405,14 @@ func TestScheduler_Mirroring(t *testing.T) {
 	}
 }
 
-func TestScheduler_ABTesting(t *testing.T) {
-	mocks := newFixture(newTestCanaryAB())
+func TestScheduler_DaemonSetABTesting(t *testing.T) {
+	mocks := newDaemonSetFixture(newDaemonSetTestCanaryAB())
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// update
-	dep2 := newTestDeploymentV2()
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	dep2 := newDaemonSetTestDaemonSetV2()
+	_, err := mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -478,7 +468,7 @@ func TestScheduler_ABTesting(t *testing.T) {
 	}
 
 	// check if the container image tag was updated
-	primaryDep, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
+	primaryDep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -503,8 +493,8 @@ func TestScheduler_ABTesting(t *testing.T) {
 	}
 }
 
-func TestScheduler_PortDiscovery(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetPortDiscovery(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 
 	// enable port discovery
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -547,8 +537,8 @@ func TestScheduler_PortDiscovery(t *testing.T) {
 	}
 }
 
-func TestScheduler_TargetPortNumber(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetTargetPortNumber(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
@@ -592,8 +582,8 @@ func TestScheduler_TargetPortNumber(t *testing.T) {
 	}
 }
 
-func TestScheduler_TargetPortName(t *testing.T) {
-	mocks := newFixture(nil)
+func TestScheduler_DaemonSetTargetPortName(t *testing.T) {
+	mocks := newDaemonSetFixture(nil)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	if err != nil {
@@ -637,7 +627,7 @@ func TestScheduler_TargetPortName(t *testing.T) {
 	}
 }
 
-func TestScheduler_Alerts(t *testing.T) {
+func TestScheduler_DaemonSetAlerts(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -654,7 +644,7 @@ func TestScheduler_Alerts(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	canary := newTestCanary()
+	canary := newDaemonSetTestCanary()
 	canary.Spec.CanaryAnalysis.Alerts = []flaggerv1.CanaryAlert{
 		{
 			Name:     "slack-dev",
@@ -672,9 +662,9 @@ func TestScheduler_Alerts(t *testing.T) {
 			},
 		},
 	}
-	mocks := newFixture(canary)
+	mocks := newDaemonSetFixture(canary)
 
-	secret := newTestAlertProviderSecret()
+	secret := newDaemonSetTestAlertProviderSecret()
 	secret.Data = map[string][]byte{
 		"address": []byte(ts.URL),
 	}

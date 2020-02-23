@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	daemonSetScaleDownNodeSelector = map[string]string{"flux.weave.works/non-exist": "true"}
+	daemonSetScaleDownNodeSelector = map[string]string{"flagger.weave.works/non-exist": "true"}
 )
 
 // DaemonSetController is managing the operations for Kubernetes DaemonSet kind

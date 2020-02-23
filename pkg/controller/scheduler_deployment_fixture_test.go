@@ -1,9 +1,10 @@
 package controller
 
 import (
-	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"sync"
 	"time"
+
+	"github.com/weaveworks/flagger/pkg/metrics/observers"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -28,11 +29,6 @@ import (
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
-var (
-	alwaysReady        = func() bool { return true }
-	noResyncPeriodFunc = func() time.Duration { return 0 }
-)
-
 type fixture struct {
 	canary        *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
@@ -44,30 +40,30 @@ type fixture struct {
 	router        router.Interface
 }
 
-func newFixture(c *flaggerv1.Canary) fixture {
+func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	if c == nil {
-		c = newTestCanary()
+		c = newDeploymentTestCanary()
 	}
 
 	// init Flagger clientset and register objects
 	flaggerClient := fakeFlagger.NewSimpleClientset(
 		c,
-		newTestMetricTemplate(),
-		newTestAlertProvider(),
+		newDeploymentTestMetricTemplate(),
+		newDeploymentTestAlertProvider(),
 	)
 
 	// init Kubernetes clientset and register objects
 	kubeClient := fake.NewSimpleClientset(
-		newTestDeployment(),
-		newTestService(),
-		newTestHPA(),
-		newTestConfigMap(),
-		newTestConfigMapEnv(),
-		newTestConfigMapVol(),
-		newTestSecret(),
-		newTestSecretEnv(),
-		newTestSecretVol(),
-		newTestAlertProviderSecret(),
+		newDeploymentTestDeployment(),
+		newDeploymentTestService(),
+		newDeploymentTestHPA(),
+		newDeploymentTestConfigMap(),
+		newDeploymentTestConfigMapEnv(),
+		newDeploymentTestConfigMapVol(),
+		newDeploymentTestSecret(),
+		newDeploymentTestSecretEnv(),
+		newDeploymentTestSecretVol(),
+		newDeploymentTestAlertProviderSecret(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
@@ -113,8 +109,8 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	}
 	ctrl.flaggerSynced = alwaysReady
 	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
-	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newTestMetricTemplate())
-	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newTestAlertProvider())
+	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDeploymentTestMetricTemplate())
+	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newDeploymentTestAlertProvider())
 
 	meshRouter := rf.MeshRouter("istio")
 
@@ -130,7 +126,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	}
 }
 
-func newTestConfigMap() *corev1.ConfigMap {
+func newDeploymentTestConfigMap() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -143,7 +139,7 @@ func newTestConfigMap() *corev1.ConfigMap {
 	}
 }
 
-func newTestConfigMapV2() *corev1.ConfigMap {
+func newDeploymentTestConfigMapV2() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -157,7 +153,7 @@ func newTestConfigMapV2() *corev1.ConfigMap {
 	}
 }
 
-func newTestConfigMapEnv() *corev1.ConfigMap {
+func newDeploymentTestConfigMapEnv() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -170,7 +166,7 @@ func newTestConfigMapEnv() *corev1.ConfigMap {
 	}
 }
 
-func newTestConfigMapVol() *corev1.ConfigMap {
+func newDeploymentTestConfigMapVol() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -183,7 +179,7 @@ func newTestConfigMapVol() *corev1.ConfigMap {
 	}
 }
 
-func newTestSecret() *corev1.Secret {
+func newDeploymentTestSecret() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -199,7 +195,7 @@ func newTestSecret() *corev1.Secret {
 	}
 }
 
-func newTestSecretV2() *corev1.Secret {
+func newDeploymentTestSecretV2() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -215,7 +211,7 @@ func newTestSecretV2() *corev1.Secret {
 	}
 }
 
-func newTestSecretEnv() *corev1.Secret {
+func newDeploymentTestSecretEnv() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -229,7 +225,7 @@ func newTestSecretEnv() *corev1.Secret {
 	}
 }
 
-func newTestSecretVol() *corev1.Secret {
+func newDeploymentTestSecretVol() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -243,7 +239,7 @@ func newTestSecretVol() *corev1.Secret {
 	}
 }
 
-func newTestCanary() *flaggerv1.Canary {
+func newDeploymentTestCanary() *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -299,18 +295,13 @@ func newTestCanary() *flaggerv1.Canary {
 	return cd
 }
 
-func toFloatPtr(val int) *float64 {
-	v := float64(val)
-	return &v
-}
-
-func newTestCanaryMirror() *flaggerv1.Canary {
-	cd := newTestCanary()
+func newDeploymentTestCanaryMirror() *flaggerv1.Canary {
+	cd := newDeploymentTestCanary()
 	cd.Spec.CanaryAnalysis.Mirror = true
 	return cd
 }
 
-func newTestCanaryAB() *flaggerv1.Canary {
+func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -371,7 +362,7 @@ func newTestCanaryAB() *flaggerv1.Canary {
 	return cd
 }
 
-func newTestDeployment() *appsv1.Deployment {
+func newDeploymentTestDeployment() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -498,7 +489,7 @@ func newTestDeployment() *appsv1.Deployment {
 	return d
 }
 
-func newTestDeploymentV2() *appsv1.Deployment {
+func newDeploymentTestDeploymentV2() *appsv1.Deployment {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -608,7 +599,7 @@ func newTestDeploymentV2() *appsv1.Deployment {
 	return d
 }
 
-func newTestService() *corev1.Service {
+func newDeploymentTestService() *corev1.Service {
 	d := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -634,7 +625,7 @@ func newTestService() *corev1.Service {
 	return d
 }
 
-func newTestServiceV2() *corev1.Service {
+func newDeploymentTestServiceV2() *corev1.Service {
 	d := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -660,7 +651,7 @@ func newTestServiceV2() *corev1.Service {
 	return d
 }
 
-func newTestHPA() *hpav2.HorizontalPodAutoscaler {
+func newDeploymentTestHPA() *hpav2.HorizontalPodAutoscaler {
 	h := &hpav2.HorizontalPodAutoscaler{
 		TypeMeta: metav1.TypeMeta{APIVersion: hpav2.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -688,7 +679,7 @@ func newTestHPA() *hpav2.HorizontalPodAutoscaler {
 	return h
 }
 
-func newTestMetricTemplate() *flaggerv1.MetricTemplate {
+func newDeploymentTestMetricTemplate() *flaggerv1.MetricTemplate {
 	provider := flaggerv1.MetricTemplateProvider{
 		Type:    "prometheus",
 		Address: "fake",
@@ -711,7 +702,7 @@ func newTestMetricTemplate() *flaggerv1.MetricTemplate {
 	return template
 }
 
-func newTestAlertProviderSecret() *corev1.Secret {
+func newDeploymentTestAlertProviderSecret() *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -725,7 +716,7 @@ func newTestAlertProviderSecret() *corev1.Secret {
 	}
 }
 
-func newTestAlertProvider() *flaggerv1.AlertProvider {
+func newDeploymentTestAlertProvider() *flaggerv1.AlertProvider {
 	return &flaggerv1.AlertProvider{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{

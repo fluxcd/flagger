@@ -204,40 +204,6 @@ func newDaemonSetControllerTestCanary() *flaggerv1.Canary {
 	return cd
 }
 
-/*func newDaemonSetControllerWithout() *appsv1.DaemonSet {
-	n := "nginx-without-node-selector"
-	d := &appsv1.DaemonSet{
-		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      n,
-		},
-		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"name": n,
-				},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"name": n,
-					},
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  n,
-							Image: "nginx",
-						},
-					},
-				},
-			},
-		},
-	}
-	return d
-}
-*/
 func newDaemonSetControllerTestPodInfo() *appsv1.DaemonSet {
 	d := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
