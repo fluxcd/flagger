@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	daemonSetScaleDownNodeSelector = map[string]string{"flagger.weave.works/non-exist": "true"}
+	daemonSetScaleDownNodeSelector = map[string]string{"flagger.app/scale-to-zero": "true"}
 )
 
 // DaemonSetController is managing the operations for Kubernetes DaemonSet kind
@@ -97,8 +97,7 @@ func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary, skipLivenessCheck
 			}
 		}
 
-		// delete canary daemonset
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deleting %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.Scale(cd, 0); err != nil {
 			return err
 		}
@@ -177,6 +176,11 @@ func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, erro
 			return false, fmt.Errorf("daemonset %s.%s not found", targetName, cd.Namespace)
 		}
 		return false, fmt.Errorf("daemonset %s.%s query error %v", targetName, cd.Namespace, err)
+	}
+
+	// ignore `daemonSetScaleDownNodeSelector` node selector
+	for key := range daemonSetScaleDownNodeSelector {
+		delete(canary.Spec.Template.Spec.NodeSelector, key)
 	}
 
 	return hasSpecChanged(cd, canary.Spec.Template)

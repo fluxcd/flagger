@@ -87,6 +87,7 @@ spec:
                 kind:
                   type: string
                   enum:
+                    - DaemonSet
                     - Deployment
                     - Service
                 name:

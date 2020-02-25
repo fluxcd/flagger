@@ -11,7 +11,7 @@ import (
 
 // SyncStatus encodes the canary pod spec and updates the canary status
 func (c *DaemonSetController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
-	dep, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	dae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("daemonset %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
@@ -19,12 +19,17 @@ func (c *DaemonSetController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.
 		return ex.Wrap(err, "SyncStatus daemonset query error")
 	}
 
+	// ignore `daemonSetScaleDownNodeSelector` node selector
+	for key := range daemonSetScaleDownNodeSelector {
+		delete(dae.Spec.Template.Spec.NodeSelector, key)
+	}
+
 	configs, err := c.configTracker.GetConfigRefs(cd)
 	if err != nil {
 		return ex.Wrap(err, "SyncStatus configs query error")
 	}
 
-	return syncCanaryStatus(c.flaggerClient, cd, status, dep.Spec.Template, func(cdCopy *flaggerv1.Canary) {
+	return syncCanaryStatus(c.flaggerClient, cd, status, dae.Spec.Template, func(cdCopy *flaggerv1.Canary) {
 		cdCopy.Status.TrackedConfigs = configs
 	})
 }
