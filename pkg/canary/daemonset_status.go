@@ -24,6 +24,11 @@ func (c *DaemonSetController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.
 		delete(dae.Spec.Template.Spec.NodeSelector, key)
 	}
 
+	// since nil and capacity zero map would have different hash, we have to initialize here
+	if dae.Spec.Template.Spec.NodeSelector == nil {
+		dae.Spec.Template.Spec.NodeSelector = map[string]string{}
+	}
+
 	configs, err := c.configTracker.GetConfigRefs(cd)
 	if err != nil {
 		return ex.Wrap(err, "SyncStatus configs query error")

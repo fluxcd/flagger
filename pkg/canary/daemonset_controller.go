@@ -46,6 +46,7 @@ func (c *DaemonSetController) Scale(cd *flaggerv1.Canary, v int32) error {
 		for k, v := range dae.Spec.Template.Spec.NodeSelector {
 			daeCopy.Spec.Template.Spec.NodeSelector[k] = v
 		}
+
 		for k, v := range daemonSetScaleDownNodeSelector {
 			daeCopy.Spec.Template.Spec.NodeSelector[k] = v
 		}
@@ -149,6 +150,11 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	// update spec with primary secrets and config maps
 	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
 
+	// ignore `daemonSetScaleDownNodeSelector` node selector
+	for key := range daemonSetScaleDownNodeSelector {
+		delete(primaryCopy.Spec.Template.Spec.NodeSelector, key)
+	}
+
 	// update pod annotations to ensure a rolling update
 	annotations, err := makeAnnotations(canary.Spec.Template.Annotations)
 	if err != nil {
@@ -181,6 +187,11 @@ func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, erro
 	// ignore `daemonSetScaleDownNodeSelector` node selector
 	for key := range daemonSetScaleDownNodeSelector {
 		delete(canary.Spec.Template.Spec.NodeSelector, key)
+	}
+
+	// since nil and capacity zero map would have different hash, we have to initialize here
+	if canary.Spec.Template.Spec.NodeSelector == nil {
+		canary.Spec.Template.Spec.NodeSelector = map[string]string{}
 	}
 
 	return hasSpecChanged(cd, canary.Spec.Template)
@@ -234,12 +245,6 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 			targetName, cd.Namespace, canaryDae.Spec.UpdateStrategy.Type)
 	}
 
-	if cd.GetProgressDeadlineSeconds() > 0 {
-		// (@mathetake): should we?
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("progressDeadlineSeconds is ignored for DaemonSet", cd.Spec.TargetRef.Name, cd.Namespace)
-	}
-
 	label, err := c.getSelectorLabel(canaryDae)
 	if err != nil {
 		return fmt.Errorf("invalid label selector! DaemonSet %s.%s spec.selector.matchLabels must contain selector 'app: %s'",
@@ -248,6 +253,12 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 
 	primaryDep, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
+		if cd.GetProgressDeadlineSeconds() > 0 {
+			// (@mathetake): should we?
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+				Infof("progressDeadlineSeconds is ignored for DaemonSet")
+		}
+
 		// create primary secrets and config maps
 		configRefs, err := c.configTracker.GetTargetConfigs(cd)
 		if err != nil {
