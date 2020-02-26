@@ -113,7 +113,7 @@ jobs:
       - run: test/container-build.sh
       - run: test/e2e-kind.sh
       - run: test/e2e-kubernetes.sh
-      - run: test/e2e-kubernetes-svc-tests.sh
+      - run: test/e2e-kubernetes-tests-svc.sh
 
   e2e-smi-istio-testing:
     machine: true
@@ -232,6 +232,9 @@ workflows:
       - e2e-kubernetes-deployment-testing:
           requires:
             - build-binary
+      - e2e-kubernetes-svc-testing:
+          requires:
+            - build-binary
       - e2e-gloo-testing:
           requires:
             - build-binary
@@ -250,6 +253,7 @@ workflows:
             - e2e-istio-testing
             - e2e-kubernetes-daemonset-testing
             - e2e-kubernetes-deployment-testing
+            - e2e-kubernetes-svc-testing
             - e2e-gloo-testing
             - e2e-nginx-testing
             - e2e-linkerd-testing
