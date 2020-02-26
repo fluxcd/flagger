@@ -122,7 +122,7 @@ canary analysis and can be used for conformance testing or load testing.
 
 If port discovery is enabled, Flagger scans the deployment spec and extracts the containers 
 ports excluding the port specified in the canary service and Envoy sidecar ports. 
-`These ports will be used when generating the ClusterIP services.
+These ports will be used when generating the ClusterIP services.
 
 For a deployment that exposes two ports:
 

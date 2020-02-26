@@ -7,7 +7,7 @@ to drive the canary analysis and promotion.
 
 ### Canary Custom Resource
 
-For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
+For a deployment named _podinfo_, a canary can be defined using Flagger's custom resource:
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -19,16 +19,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
-  autoscalerRef:
-    apiVersion: autoscaling/v2beta1
-    kind: HorizontalPodAutoscaler
-    name: podinfo
   service:
-    name: podinfo
     port: 9898
-    portName: http
-    targetPort: 9898
-    portDiscovery: true
   canaryAnalysis:
     interval: 1m
     threshold: 10
@@ -48,7 +40,27 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
 
+### Canary target
+
+A canary resource can target a Kubernetes Deployment or DaemonSet.
+
+Kubernetes Deployment example:
+
+```yaml
+spec:
+  progressDeadlineSeconds: 60
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+```
+
 Based on the above configuration, Flagger generates the following Kubernetes objects:
+
 * `deployment/<targetRef.name>-primary`
 * `hpa/<autoscalerRef.name>-primary`
 
@@ -56,9 +68,6 @@ The primary deployment is considered the stable release of your app, by default 
 and the target deployment is scaled to zero.
 Flagger will detect changes to the target deployment (including secrets and configmaps) and will perform a
 canary analysis before promoting the new version as primary.
-
-The autoscaler reference is optional, when specified, Flagger will pause the traffic increase while the 
-target and primary deployments are scaled up or down. HPA can help reduce the resource usage during the canary analysis.
 
 If the target deployment uses secrets and/or configmaps, Flagger will create a copy of each object using the `-primary`
 prefix and will reference these objects in the primary deployment. You can disable the secrets/configmaps tracking 
@@ -87,10 +96,37 @@ If you use a different convention you can specify your label with
 the `-selector-labels=my-app-label` command flag in the Flagger deployment manifest under containers args
 or by setting `--set selectorLabels=my-app-label` when installing Flagger with Helm.
 
-The target deployment should expose a TCP port that will be used by Flagger to create the ClusterIP Services.
-The container port from the target deployment should match the `service.port` or `service.targetPort`.
+The autoscaler reference is optional, when specified, Flagger will pause the traffic increase while the 
+target and primary deployments are scaled up or down. HPA can help reduce the resource usage during the canary analysis.
 
-Based on the canary spec service, Flagger generates the following Kubernetes ClusterIP service:
+The progress deadline represents the maximum time in seconds for the canary deployment to make progress
+before it is rolled back, defaults to ten minutes.
+
+### Canary service
+
+A canary resource dictates how the target workload is exposed inside the cluster.
+The canary target should expose a TCP port that will be used by Flagger to create the ClusterIP Services.
+
+```yaml
+spec:
+  service:
+    name: podinfo
+    port: 9898
+    portName: http
+    targetPort: 9898
+    portDiscovery: true
+```
+
+The container port from the target workload should match the `service.port` or `service.targetPort`.
+The `service.name` is optional, defaults to `spec.targetRef.name`.
+The `service.targetPort` can be a container port number or name.
+The `service.portName` is optional (defaults to `http`), if your workload uses gPRC then set the port name to `grcp`.
+
+If port discovery is enabled, Flagger scans the target workload and extracts the containers 
+ports excluding the port specified in the canary service and service mesh sidecar ports. 
+These ports will be used when generating the ClusterIP services.
+
+Based on the canary spec service, Flagger creates the following Kubernetes ClusterIP service:
 
 * `<service.name>.<namespace>.svc.cluster.local`  
     selector `app=<name>-primary`
