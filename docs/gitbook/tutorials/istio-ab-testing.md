@@ -1,14 +1,12 @@
-# Istio A/B Testing 
+# Istio A/B Testing
 
 This guide shows you how to automate A/B testing with Istio and Flagger.
 
-Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
-In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
-This is particularly useful for frontend applications that require session affinity.
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
 
 ![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
 
-### Bootstrap
+## Bootstrap
 
 Create a test namespace with Istio sidecar injection enabled:
 
@@ -29,7 +27,7 @@ Deploy the load testing service to generate traffic during the canary analysis:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
-Create a canary custom resource (replace example.com with your own domain):
+Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -127,7 +125,7 @@ destinationrule.networking.istio.io/podinfo-primary
 virtualservice.networking.istio.io/podinfo
 ```
 
-### Automated canary promotion
+## Automated canary promotion
 
 Trigger a canary deployment by updating the container image:
 
@@ -178,7 +176,7 @@ prod        frontend  Succeeded     0        2019-03-15T16:15:07Z
 prod        backend   Failed        0        2019-03-14T17:05:07Z
 ```
 
-### Automated rollback
+## Automated rollback
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test Flagger's rollback.
 
@@ -194,8 +192,7 @@ Generate latency:
 watch curl -b 'type=insider' http://app.example.com/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/abtest
@@ -215,3 +212,4 @@ Events:
   Warning  Synced  2m    flagger  Rolling back podinfo.test failed checks threshold reached 2
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
+

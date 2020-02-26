@@ -1,12 +1,12 @@
-# Flagger install on Kubernetes
+# Flagger Install on Kubernetes
 
 This guide walks you through setting up Flagger on a Kubernetes cluster with Helm v3 or Kustomize.
 
-### Prerequisites
+## Prerequisites
 
 Flagger requires a Kubernetes cluster **v1.11** or newer.
 
-### Install Flagger with Helm
+## Install Flagger with Helm
 
 Add Flagger Helm repository:
 
@@ -30,8 +30,7 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://prometheus:9090
 ```
 
-For Istio multi-cluster shared control plane you can install Flagger on each remote cluster and set the
-Istio control plane host cluster kubeconfig:
+For Istio multi-cluster shared control plane you can install Flagger on each remote cluster and set the Istio control plane host cluster kubeconfig:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
@@ -43,9 +42,7 @@ helm upgrade -i flagger flagger/flagger \
 --set istio.kubeconfig.key=kubeconfig
 ```
 
-Note that the Istio kubeconfig must be stored in a Kubernetes secret with a data key named `kubeconfig`.
-For more details on how to configure Istio multi-cluster credentials read the
-[Istio docs](https://istio.io/docs/setup/install/multicluster/shared-vpn/#credentials).
+Note that the Istio kubeconfig must be stored in a Kubernetes secret with a data key named `kubeconfig`. For more details on how to configure Istio multi-cluster credentials read the [Istio docs](https://istio.io/docs/setup/install/multicluster/shared-vpn/#credentials).
 
 Deploy Flagger for Linkerd:
 
@@ -70,6 +67,7 @@ helm upgrade -i flagger flagger/flagger \
 You can install Flagger in any namespace as long as it can talk to the Prometheus service on port 9090.
 
 For ingress controllers, the install instructions are:
+
 * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery)
 * [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
 * [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
@@ -116,9 +114,7 @@ helm delete flagger
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-> **Note** that on uninstall the Canary CRD will not be removed. 
-Deleting the CRD will make Kubernetes remove all the objects owned by Flagger like Istio virtual services, 
-Kubernetes deployments and ClusterIP services.
+> **Note** that on uninstall the Canary CRD will not be removed. Deleting the CRD will make Kubernetes remove all the objects owned by Flagger like Istio virtual services, Kubernetes deployments and ClusterIP services.
 
 If you want to remove all the objects created by Flagger you have delete the Canary CRD with kubectl:
 
@@ -126,7 +122,7 @@ If you want to remove all the objects created by Flagger you have delete the Can
 kubectl delete crd canaries.flagger.app
 ```
 
-### Install Grafana with Helm
+## Install Grafana with Helm
 
 Flagger comes with a Grafana dashboard made for monitoring the canary analysis.
 
@@ -159,7 +155,7 @@ You can access Grafana using port forwarding:
 kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 ```
 
-### Install Flagger with Kustomize
+## Install Flagger with Kustomize
 
 As an alternative to Helm, Flagger can be installed with Kustomize.
 
@@ -173,8 +169,7 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
 
 This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to Istio's Prometheus instance.
 
-Note that you'll need kubectl 1.14 to run the above the command or you can download the
-[kustomize binary](https://github.com/kubernetes-sigs/kustomize/releases) and run:
+Note that you'll need kubectl 1.14 to run the above the command or you can download the [kustomize binary](https://github.com/kubernetes-sigs/kustomize/releases) and run:
 
 ```bash
 kustomize build github.com/weaveworks/flagger//kustomize/istio | kubectl apply -f -
@@ -210,11 +205,9 @@ Install Flagger and Prometheus:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/kubernetes
 ```
 
-This deploys Flagger and Prometheus in the `flagger-system` namespace,
-sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` and the mesh provider to `kubernetes`.
+This deploys Flagger and Prometheus in the `flagger-system` namespace, sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` and the mesh provider to `kubernetes`.
 
-The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that
-have the `prometheus.io/scrape: "true"` annotation.
+The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that have the `prometheus.io/scrape: "true"` annotation.
 
 To target a different provider you can specify it in the canary custom resource:
 
@@ -272,5 +265,5 @@ Install Flagger with Slack:
 kubectl apply -k .
 ```
 
-If you want to use MS Teams instead of Slack, replace `-slack-url` with `-msteams-url` and
-set the webhook address to `https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK`.
+If you want to use MS Teams instead of Slack, replace `-slack-url` with `-msteams-url` and set the webhook address to `https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK`.
+

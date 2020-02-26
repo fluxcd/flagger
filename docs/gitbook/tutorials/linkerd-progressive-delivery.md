@@ -4,7 +4,7 @@ This guide shows you how to use Linkerd and Flagger to automate canary deploymen
 
 ![Flagger Linkerd Traffic Split](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-linkerd-traffic-split.png)
 
-### Prerequisites
+## Prerequisites
 
 Flagger requires a Kubernetes cluster **v1.11** or newer and Linkerd **2.4** or newer.
 
@@ -16,14 +16,11 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd
 
 Note that you'll need kubectl 1.14 or newer to run the above command.
 
-To enable Slack or MS Teams notifications,
-see Flagger's [install docs](https://docs.flagger.app/install/flagger-install-on-kubernetes) for Kustomize or Helm options.
+To enable Slack or MS Teams notifications, see Flagger's [install docs](https://docs.flagger.app/install/flagger-install-on-kubernetes) for Kustomize or Helm options.
 
-### Bootstrap
+## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services and SMI traffic split).
-These objects expose the application inside the mesh and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services and SMI traffic split\). These objects expose the application inside the mesh and drive the canary analysis and promotion.
 
 Create a test namespace and enable Linkerd proxy injection:
 
@@ -116,8 +113,7 @@ Save the above resource as podinfo-canary.yaml and then apply it:
 kubectl apply -f ./podinfo-canary.yaml
 ```
 
-When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
-The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every half a minute.
+When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary. The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every half a minute.
 
 After a couple of seconds Flagger will create the canary objects:
 
@@ -137,14 +133,11 @@ service/podinfo-primary
 trafficsplits.split.smi-spec.io/podinfo
 ```
 
-After the boostrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test` will be routed
-to the primary pods. During the canary analysis, the `podinfo-canary.test` address can be used to target directly the canary pods.
+After the boostrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test` will be routed to the primary pods. During the canary analysis, the `podinfo-canary.test` address can be used to target directly the canary pods.
 
-### Automated canary promotion
+## Automated canary promotion
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
-like HTTP requests success rate, requests average duration and pod health.
-Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
@@ -187,7 +180,8 @@ Events:
 **Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
 
 A canary deployment is triggered by changes in any of the following objects:
-* Deployment PodSpec (container image, command, ports, env, resources, etc)
+
+* Deployment PodSpec \(container image, command, ports, env, resources, etc\)
 * ConfigMaps mounted as volumes or mapped to environment variables
 * Secrets mounted as volumes or mapped to environment variables
 
@@ -202,7 +196,7 @@ prod        frontend  Succeeded     0        2019-06-30T16:15:07Z
 prod        backend   Failed        0        2019-06-30T17:05:07Z
 ```
 
-### Automated rollback
+## Automated rollback
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses and rolls back the faulted version.
 
@@ -231,8 +225,7 @@ Generate latency:
 watch -n 1 curl http://podinfo-canary.test:9898/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo
@@ -256,7 +249,7 @@ Events:
  Canary failed! Scaling down podinfo.test
 ```
 
-### Custom metrics
+## Custom metrics
 
 The canary analysis can be extended with Prometheus queries.
 
@@ -291,9 +284,7 @@ Let's a define a check for not found errors. Edit the canary analysis and add th
         * 100
 ```
 
-The above configuration validates the canary version by checking if the HTTP 404 req/sec percentage is below
-three percent of the total traffic. If the 404s rate reaches the 3% threshold, then the analysis is aborted and the
-canary is marked as failed.
+The above configuration validates the canary version by checking if the HTTP 404 req/sec percentage is below three percent of the total traffic. If the 404s rate reaches the 3% threshold, then the analysis is aborted and the canary is marked as failed.
 
 Trigger a canary deployment by updating the container image:
 
@@ -310,7 +301,7 @@ watch -n 1 curl http://podinfo-canary:9898/status/404
 
 Watch Flagger logs:
 
-```
+```text
 kubectl -n linkerd logs deployment/flagger -f | jq .msg
 
 Starting canary deployment for podinfo.test
@@ -327,7 +318,7 @@ Canary failed! Scaling down podinfo.test
 
 If you have Slack configured, Flagger will send a notification with the reason why the canary failed.
 
-### Linkerd Ingress
+## Linkerd Ingress
 
 There are two ingress controllers that are compatible with both Flagger and Linkerd: NGINX and Gloo.
 
@@ -338,7 +329,7 @@ helm upgrade -i nginx-ingress stable/nginx-ingress \
 --namespace ingress-nginx
 ```
 
-Create an ingress definition for podinfo that rewrites the incoming header to the internal service name (required by Linkerd):
+Create an ingress definition for podinfo that rewrites the incoming header to the internal service name \(required by Linkerd\):
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -364,14 +355,11 @@ spec:
               servicePort: 9898
 ```
 
-When using an ingress controller, the Linkerd traffic split does not apply to incoming traffic since NGINX in running outside of
-the mesh. In order to run a canary analysis for a frontend app, Flagger creates a shadow ingress and sets the NGINX specific annotations.
+When using an ingress controller, the Linkerd traffic split does not apply to incoming traffic since NGINX in running outside of the mesh. In order to run a canary analysis for a frontend app, Flagger creates a shadow ingress and sets the NGINX specific annotations.
 
-### A/B Testing
+## A/B Testing
 
-Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
-In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
-This is particularly useful for frontend applications that require session affinity.
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
 
 ![Flagger Linkerd Ingress](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-nginx-linkerd.png)
 
@@ -437,8 +425,7 @@ spec:
           cmd: "hey -z 2m -q 10 -c 2 -H 'Cookie: canary=always' http://app.example.com"
 ```
 
-The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or
-those that call the service using the `X-Canary: always` header.
+The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or those that call the service using the `X-Canary: always` header.
 
 **Note** that the load test now targets the external address and uses the canary cookie.
 
@@ -471,3 +458,4 @@ Events:
  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
  Promotion completed! Scaling down podinfo.test
 ```
+

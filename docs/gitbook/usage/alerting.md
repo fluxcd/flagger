@@ -1,6 +1,6 @@
 # Alerting
 
-### Slack
+## Slack
 
 Flagger can be configured to send Slack notifications:
 
@@ -11,17 +11,15 @@ helm upgrade -i flagger flagger/flagger \
 --set slack.user=flagger
 ```
 
-Once configured with a Slack incoming **webhook**, Flagger will post messages when a canary deployment 
-has been initialised, when a new revision has been detected and if the canary analysis failed or succeeded.
+Once configured with a Slack incoming **webhook**, Flagger will post messages when a canary deployment has been initialised, when a new revision has been detected and if the canary analysis failed or succeeded.
 
 ![Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
 
-A canary deployment will be rolled back if the progress deadline exceeded or if the analysis reached the 
-maximum number of failed checks:
+A canary deployment will be rolled back if the progress deadline exceeded or if the analysis reached the maximum number of failed checks:
 
 ![Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
 
-### Microsoft Teams
+## Microsoft Teams
 
 Flagger can be configured to send notifications to Microsoft Teams:
 
@@ -38,7 +36,7 @@ And you'll get a notification on rollback:
 
 ![MS Teams Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-ms-teams-failed.png)
 
-### Prometheus Alert Manager
+## Prometheus Alert Manager
 
 Besides Slack, you can use Alertmanager to trigger alerts when a canary deployment failed:
 

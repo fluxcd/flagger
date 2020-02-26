@@ -1,10 +1,10 @@
-# NGNIX Ingress Controller Canary Deployments
+# NGINX Canary Deployments
 
 This guide shows you how to use the NGINX ingress controller and Flagger to automate canary deployments and A/B testing.
 
 ![Flagger NGINX Ingress Controller](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-nginx-overview.png)
 
-### Prerequisites
+## Prerequisites
 
 Flagger requires a Kubernetes cluster **v1.11** or newer and NGINX ingress **0.24** or newer.
 
@@ -17,7 +17,7 @@ helm upgrade -i nginx-ingress stable/nginx-ingress \
 --set controller.stats.enabled=true \
 --set controller.metrics.enabled=true \
 --set controller.podAnnotations."prometheus\.io/scrape"=true \
---set controller.podAnnotations."prometheus\.io/port"=10254 
+--set controller.podAnnotations."prometheus\.io/port"=10254
 ```
 
 Install Flagger and the Prometheus add-on in the same namespace as NGINX:
@@ -42,11 +42,9 @@ helm upgrade -i flagger flagger/flagger \
 --set slack.user=flagger
 ```
 
-### Bootstrap
+## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA), 
-then creates a series of objects (Kubernetes deployments, ClusterIP services and canary ingress). 
-These objects expose the application outside the cluster and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services and canary ingress\). These objects expose the application outside the cluster and drive the canary analysis and promotion.
 
 Create a test namespace:
 
@@ -67,7 +65,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test
 ```
 
-Create an ingress definition (replace `app.example.com` with your own domain):
+Create an ingress definition \(replace `app.example.com` with your own domain\):
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -95,7 +93,7 @@ Save the above resource as podinfo-ingress.yaml and then apply it:
 kubectl apply -f ./podinfo-ingress.yaml
 ```
 
-Create a canary custom resource (replace `app.example.com` with your own domain):
+Create a canary custom resource \(replace `app.example.com` with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -186,11 +184,9 @@ service/podinfo-primary
 ingresses.extensions/podinfo-canary
 ```
 
-### Automated canary promotion
+## Automated canary promotion
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators 
-like HTTP requests success rate, requests average duration and pod health.
-Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
@@ -244,7 +240,7 @@ prod        frontend  Succeeded     0        2019-05-05T16:15:07Z
 prod        backend   Failed        0        2019-05-04T17:05:07Z
 ```
 
-### Automated rollback
+## Automated rollback
 
 During the canary analysis you can generate HTTP 500 errors to test if Flagger pauses and rolls back the faulted version.
 
@@ -261,8 +257,7 @@ Generate HTTP 500 errors:
 watch curl http://app.example.com/status/500
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo
@@ -287,12 +282,11 @@ Events:
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
-### Custom metrics
+## Custom metrics
 
 The canary analysis can be extended with Prometheus queries.
 
-The demo app is instrumented with Prometheus so you can create a custom check that will use the HTTP request duration 
-histogram to validate the canary. 
+The demo app is instrumented with Prometheus so you can create a custom check that will use the HTTP request duration histogram to validate the canary.
 
 Edit the canary analysis and add the following metric:
 
@@ -315,8 +309,7 @@ Edit the canary analysis and add the following metric:
         )
 ```
 
-The threshold is set to 500ms so if the average request duration in the last minute 
-goes over half a second then the analysis will fail and the canary will not be promoted.
+The threshold is set to 500ms so if the average request duration in the last minute goes over half a second then the analysis will fail and the canary will not be promoted.
 
 Trigger a canary deployment by updating the container image:
 
@@ -333,7 +326,7 @@ watch curl http://app.exmaple.com/delay/2
 
 Watch Flagger logs:
 
-```
+```text
 kubectl -n nginx-ingress logs deployment/flagger -f | jq .msg
 
 Starting canary deployment for podinfo.test
@@ -351,11 +344,9 @@ Canary failed! Scaling down podinfo.test
 
 If you have Slack configured, Flagger will send a notification with the reason why the canary failed.
 
-### A/B Testing 
+## A/B Testing
 
-Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
-In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
-This is particularly useful for frontend applications that require session affinity.
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
 
 ![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
 
@@ -387,8 +378,7 @@ Edit the canary analysis, remove the max/step weight and add the match condition
           cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: canary=always' http://app.example.com/"
 ```
 
-The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or 
-those that call the service using the `X-Canary: insider` header.
+The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or those that call the service using the `X-Canary: insider` header.
 
 Trigger a canary deployment by updating the container image:
 
@@ -425,3 +415,4 @@ Events:
   Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
+

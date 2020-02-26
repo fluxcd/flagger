@@ -1,13 +1,13 @@
-# Flagger SMI
+# SMI Istio Canary Deployments
 
 This guide shows you how to use the SMI Istio adapter and Flagger to automate canary deployments.
 
-### Prerequisites
+## Prerequisites
 
-* Kubernetes > 1.13
-* Istio > 1.0
+* Kubernetes &gt; 1.13
+* Istio &gt; 1.0
 
-### Install Istio SMI adapter
+## Install Istio SMI adapter
 
 Install the SMI adapter:
 
@@ -48,7 +48,7 @@ Find the Gateway load balancer IP and add a DNS record for it:
 kubectl -n istio-system get svc/istio-ingressgateway -ojson | jq -r .status.loadBalancer.ingress[0].ip
 ```
 
-### Install Flagger and Grafana
+## Install Flagger and Grafana
 
 Add Flagger Helm repository:
 
@@ -80,7 +80,7 @@ You can access Grafana using port forwarding:
 kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 ```
 
-### Workloads bootstrap
+## Workloads bootstrap
 
 Create a test namespace with Istio sidecar injection enabled:
 
@@ -103,7 +103,7 @@ Deploy the load testing service to generate traffic during the canary analysis:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
-Create a canary custom resource (replace example.com with your own domain):
+Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -188,11 +188,9 @@ service/podinfo-primary
 trafficsplits.split.smi-spec.io/podinfo
 ```
 
-### Automated canary promotion
+## Automated canary promotion
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators 
-like HTTP requests success rate, requests average duration and pod health.
-Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
@@ -229,8 +227,7 @@ Promotion completed! Scaling down podinfo.test
 
 **Note** that if you apply new changes to the deployment during the canary analysis, Flagger will restart the analysis.
 
-During the analysis the canary’s progress can be monitored with Grafana. The Istio dashboard URL is 
-http://localhost:3000/d/flagger-istio/istio-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo
+During the analysis the canary’s progress can be monitored with Grafana. The Istio dashboard URL is [http://localhost:3000/d/flagger-istio/istio-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo](http://localhost:3000/d/flagger-istio/istio-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo)
 
 You can monitor all canaries with:
 
@@ -243,7 +240,7 @@ prod        frontend  Succeeded     0        2019-05-15T16:15:07Z
 prod        backend   Failed        0        2019-05-14T17:05:07Z
 ```
 
-### Automated rollback
+## Automated rollback
 
 During the canary analysis you can generate HTTP 500 errors and high latency to test if Flagger pauses the rollout.
 
@@ -269,8 +266,7 @@ Generate latency:
 watch curl http://podinfo-canary:9898/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, 
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo
@@ -294,3 +290,4 @@ Events:
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
+

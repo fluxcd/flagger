@@ -32,3 +32,4 @@
 * [SMI Istio Canary Deployments](tutorials/flagger-smi-istio.md)
 * [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
+

@@ -1,26 +1,25 @@
-# Flagger Development Guide
+# Development guide
 
 This document describes how to build, test and run Flagger from source.
 
-### Setup dev environment
+## Setup dev environment
 
 Flagger is written in Go and uses Go modules for dependency management.
 
 On your dev machine install the following tools:
-* go >= 1.13
-* git >= 2.20
-* bash >= 5.0
-* make >= 3.81
-* kubectl >= 1.16
-* kustomize >= 3.5
-* helm >= 3.0
-* docker >= 19.03
 
-You'll also need a Kubernetes cluster for testing Flagger.
-You can use Minikube, Kind, Docker desktop or any remote cluster
-(AKS/EKS/GKE/etc) Kubernetes version 1.14 or newer.
+* go &gt;= 1.13
+* git &gt;= 2.20
+* bash &gt;= 5.0
+* make &gt;= 3.81
+* kubectl &gt;= 1.16
+* kustomize &gt;= 3.5
+* helm &gt;= 3.0
+* docker &gt;= 19.03
 
-### Build
+You'll also need a Kubernetes cluster for testing Flagger. You can use Minikube, Kind, Docker desktop or any remote cluster \(AKS/EKS/GKE/etc\) Kubernetes version 1.14 or newer.
+
+## Build
 
 To start contributing to Flagger, fork the repository and clone it locally:
 
@@ -47,7 +46,7 @@ Build Flagger container image:
 make build
 ```
 
-### Unit testing
+## Unit testing
 
 Make a change to the source code and run the linter and unit tests:
 
@@ -67,10 +66,9 @@ If you made changes to `pkg/apis` regenerate Kubernetes client sets with:
 ./hack/update-codegen.sh
 ```
 
-### Manual testing
+## Manual testing
 
-Install a service mesh and/or an ingress controller on your cluster and deploy Flagger
-using one of the install options [listed here](https://docs.flagger.app/install/flagger-install-on-kubernetes).
+Install a service mesh and/or an ingress controller on your cluster and deploy Flagger using one of the install options [listed here](https://docs.flagger.app/install/flagger-install-on-kubernetes).
 
 If you made changes to the CRDs, apply your local copy with:
 
@@ -78,7 +76,7 @@ If you made changes to the CRDs, apply your local copy with:
 kubectl apply -f artifacts/flagger/crd.yaml
 ```
 
-Shutdown the Flagger instance installed on your cluster (replace the namespace with your mesh/ingress one):
+Shutdown the Flagger instance installed on your cluster \(replace the namespace with your mesh/ingress one\):
 
 ```bash
 kubectl -n istio-system scale deployment/flagger --replicas=0
@@ -114,9 +112,9 @@ kubectl -n istio-system set image deployment/flagger flagger=<YOUR-DOCKERHUB-USE
 kubectl -n istio-system scale deployment/flagger --replicas=1
 ```
 
-Now you can use one of the [tutorials]() to manually test your changes.
+Now you can use one of the [tutorials](dev-guide.md) to manually test your changes.
 
-### Integration testing
+## Integration testing
 
 Flagger end-to-end tests can be run locally with [Kubernetes Kind](https://github.com/kubernetes-sigs/kind).
 
@@ -157,14 +155,14 @@ Run the Linkerd e2e tests:
 ./test/e2e-linkerd-tests.sh
 ```
 
-For each service mesh and ingress controller there is a dedicated e2e test suite,
-chose one that matches your changes from this [list](https://github.com/weaveworks/flagger/tree/master/test).
+For each service mesh and ingress controller there is a dedicated e2e test suite, chose one that matches your changes from this [list](https://github.com/weaveworks/flagger/tree/master/test).
 
 When you open a pull request on Flagger repo, the unit and integration tests will be run in CI.
 
-### Release
+## Release
 
-To release a new Flagger version (e.g. `2.0.0`) follow these steps:
+To release a new Flagger version \(e.g. `2.0.0`\) follow these steps:
+
 * create a branch `git checkout -b prep-2.0.0`
 * set the version in code and manifests `TAG=2.0.0 make version-set`
 * commit changes and merge PR
@@ -172,11 +170,10 @@ To release a new Flagger version (e.g. `2.0.0`) follow these steps:
 * tag master `make release`
 
 After the tag has been pushed to GitHub, the CI release pipeline does the following:
+
 * creates a GitHub release
 * pushes the Flagger binary and change log to GitHub release
 * pushes the Flagger container image to Docker Hub
 * pushes the Helm chart to github-pages branch
 * GitHub pages publishes the new chart version on the Helm repository
-
-
 
