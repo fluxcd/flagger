@@ -253,12 +253,6 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 
 	primaryDep, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		if cd.GetProgressDeadlineSeconds() > 0 {
-			// (@mathetake): should we?
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-				Infof("progressDeadlineSeconds is ignored for DaemonSet")
-		}
-
 		// create primary secrets and config maps
 		configRefs, err := c.configTracker.GetTargetConfigs(cd)
 		if err != nil {

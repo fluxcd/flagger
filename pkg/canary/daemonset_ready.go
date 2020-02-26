@@ -2,6 +2,7 @@ package canary
 
 import (
 	"fmt"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,7 +23,7 @@ func (c *DaemonSetController) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error)
 		return true, fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
 	}
 
-	retriable, err := c.isDaemonSetReady(primary)
+	retriable, err := c.isDaemonSetReady(cd, primary)
 	if err != nil {
 		return retriable, fmt.Errorf("halt advancement %s.%s %s", primaryName, cd.Namespace, err.Error())
 	}
@@ -41,7 +42,7 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 		return true, fmt.Errorf("daemonset %s.%s query error %v", targetName, cd.Namespace, err)
 	}
 
-	retriable, err := c.isDaemonSetReady(canary)
+	retriable, err := c.isDaemonSetReady(cd, canary)
 	if err != nil {
 		return retriable, fmt.Errorf("halt advancement %s.%s %s", targetName, cd.Namespace, err.Error())
 	}
@@ -49,13 +50,21 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 }
 
 // isDaemonSetReady determines if a daemonset is ready by checking the number of old version daemons
-func (c *DaemonSetController) isDaemonSetReady(daemonSet *appsv1.DaemonSet) (bool, error) {
-	if daemonSet.Generation <= daemonSet.Status.ObservedGeneration {
-		if diff := daemonSet.Status.DesiredNumberScheduled - daemonSet.Status.UpdatedNumberScheduled; diff > 0 {
-			return true, fmt.Errorf("waiting for rollout to finish: %d old daemons not replaced yet", diff)
+func (c *DaemonSetController) isDaemonSetReady(cd *flaggerv1.Canary, daemonSet *appsv1.DaemonSet) (bool, error) {
+	if diff := daemonSet.Status.DesiredNumberScheduled - daemonSet.Status.UpdatedNumberScheduled; diff > 0 || daemonSet.Status.NumberUnavailable > 0 {
+		from := cd.Status.LastTransitionTime
+		delta := time.Duration(cd.GetProgressDeadlineSeconds()) * time.Second
+		dl := from.Add(delta)
+		if dl.Before(time.Now()) {
+			return false, fmt.Errorf("daemonset %s exceeded its progress deadline", cd.GetName())
+		} else {
+			return true, fmt.Errorf(
+				"waiting for rollout to finish: desiredNumberScheduled=%d, updatedNumberScheduled=%d, numberUnavailable=%d",
+				daemonSet.Status.DesiredNumberScheduled,
+				daemonSet.Status.UpdatedNumberScheduled,
+				daemonSet.Status.NumberUnavailable,
+			)
 		}
-	} else {
-		return true, fmt.Errorf("waiting for rollout to finish: observed daemonset generation less then desired generation")
 	}
 	return true, nil
 }

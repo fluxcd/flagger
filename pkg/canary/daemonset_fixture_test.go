@@ -1,7 +1,6 @@
 package canary
 
 import (
-	"github.com/weaveworks/flagger/pkg/logger"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,6 +12,7 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
+	"github.com/weaveworks/flagger/pkg/logger"
 )
 
 type daemonSetControllerFixture struct {

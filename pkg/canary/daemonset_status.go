@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	ex "github.com/pkg/errors"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // SyncStatus encodes the canary pod spec and updates the canary status
