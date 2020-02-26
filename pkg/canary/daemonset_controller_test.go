@@ -1,0 +1,267 @@
+package canary
+
+import (
+	"testing"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+)
+
+func TestDaemonSetController_Sync(t *testing.T) {
+	mocks := newDaemonSetFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depPrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	dep := newDaemonSetControllerTestPodInfo()
+
+	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
+	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
+	if primaryImage != sourceImage {
+		t.Errorf("Got image %s wanted %s", primaryImage, sourceImage)
+	}
+}
+
+func TestDaemonSetController_Promote(t *testing.T) {
+	mocks := newDaemonSetFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	dep2 := newDaemonSetControllerTestPodInfoV2()
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	config2 := newDaemonSetControllerTestConfigMapV2()
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = mocks.controller.Promote(mocks.canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depPrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
+	sourceImage := dep2.Spec.Template.Spec.Containers[0].Image
+	if primaryImage != sourceImage {
+		t.Errorf("Got image %s wanted %s", primaryImage, sourceImage)
+	}
+
+	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if configPrimary.Data["color"] != config2.Data["color"] {
+		t.Errorf("Got primary ConfigMap color %s wanted %s", configPrimary.Data["color"], config2.Data["color"])
+	}
+}
+
+func TestDaemonSetController_NoConfigTracking(t *testing.T) {
+	mocks := newDaemonSetFixture()
+	mocks.controller.configTracker = &NopTracker{}
+
+	err := mocks.controller.Initialize(mocks.canary, true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depPrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	if !errors.IsNotFound(err) {
+		t.Fatalf("Primary ConfigMap shouldn't have been created")
+	}
+
+	configName := depPrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
+	if configName != "podinfo-config-vol" {
+		t.Errorf("Got config name %v wanted %v", configName, "podinfo-config-vol")
+	}
+}
+
+func TestDaemonSetController_HasTargetChanged(t *testing.T) {
+	mocks := newDaemonSetFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// save last applied hash
+	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	err = mocks.controller.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitializing})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// save last promoted hash
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	err = mocks.controller.SetStatusPhase(canary, flaggerv1.CanaryPhaseInitialized)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	dep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depClone := dep.DeepCopy()
+	depClone.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU: *resource.NewQuantity(100, resource.DecimalExponent),
+		},
+	}
+
+	// update pod spec
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(depClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect change in last applied spec
+	isNew, err := mocks.controller.HasTargetChanged(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if !isNew {
+		t.Errorf("Got %v wanted %v", isNew, true)
+	}
+
+	// save hash
+	err = mocks.controller.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	dep, err = mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	depClone = dep.DeepCopy()
+	depClone.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU: *resource.NewQuantity(1000, resource.DecimalExponent),
+		},
+	}
+
+	// update pod spec
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(depClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// ignore change as hash should be the same with last promoted
+	isNew, err = mocks.controller.HasTargetChanged(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if isNew {
+		t.Errorf("Got %v wanted %v", isNew, false)
+	}
+
+	depClone = dep.DeepCopy()
+	depClone.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU: *resource.NewQuantity(600, resource.DecimalExponent),
+		},
+	}
+
+	// update pod spec
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(depClone)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect change
+	isNew, err = mocks.controller.HasTargetChanged(canary)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if !isNew {
+		t.Errorf("Got %v wanted %v", isNew, true)
+	}
+}
+
+func TestDaemonSetController_Scale(t *testing.T) {
+	t.Run("Scale", func(t *testing.T) {
+		mocks := newDaemonSetFixture()
+		err := mocks.controller.Initialize(mocks.canary, true)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		err = mocks.controller.Scale(mocks.canary, 0)
+		c, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+
+		for k := range daemonSetScaleDownNodeSelector {
+			if _, ok := c.Spec.Template.Spec.NodeSelector[k]; !ok {
+				t.Errorf("%s should exist in node selector", k)
+			}
+		}
+	})
+	t.Run("ScaleFromZeo", func(t *testing.T) {
+		mocks := newDaemonSetFixture()
+		err := mocks.controller.Initialize(mocks.canary, true)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		err = mocks.controller.ScaleFromZero(mocks.canary)
+		c, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+
+		for k := range daemonSetScaleDownNodeSelector {
+			if _, ok := c.Spec.Template.Spec.NodeSelector[k]; ok {
+				t.Errorf("%s should not exist in node selector", k)
+			}
+		}
+	})
+}

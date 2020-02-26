@@ -6,33 +6,12 @@ import (
 
 	ex "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
-
-// SyncStatus encodes the canary pod spec and updates the canary status
-func (c *DeploymentController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
-		}
-		return ex.Wrap(err, "SyncStatus deployment query error")
-	}
-
-	configs, err := c.configTracker.GetConfigRefs(cd)
-	if err != nil {
-		return ex.Wrap(err, "SyncStatus configs query error")
-	}
-
-	return syncCanaryStatus(c.flaggerClient, cd, status, dep.Spec.Template, func(cdCopy *flaggerv1.Canary) {
-		cdCopy.Status.TrackedConfigs = configs
-	})
-}
 
 func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, status flaggerv1.CanaryStatus, canaryResource interface{}, setAll func(cdCopy *flaggerv1.Canary)) error {
 	hash := computeHash(canaryResource)
@@ -56,7 +35,7 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 		setAll(cdCopy)
 
-		if ok, conditions := MakeStatusConditions(cd.Status, status.Phase); ok {
+		if ok, conditions := MakeStatusConditions(cd, status.Phase); ok {
 			cdCopy.Status.Conditions = conditions
 		}
 
@@ -68,11 +47,6 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		return ex.Wrap(err, "SyncStatus")
 	}
 	return nil
-}
-
-// SetStatusFailedChecks updates the canary failed checks counter
-func (c *DeploymentController) SetStatusFailedChecks(cd *flaggerv1.Canary, val int) error {
-	return setStatusFailedChecks(c.flaggerClient, cd, val)
 }
 
 func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
@@ -99,11 +73,6 @@ func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Cana
 	return nil
 }
 
-// SetStatusWeight updates the canary status weight value
-func (c *DeploymentController) SetStatusWeight(cd *flaggerv1.Canary, val int) error {
-	return setStatusWeight(c.flaggerClient, cd, val)
-}
-
 func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
 	firstTry := true
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
@@ -126,11 +95,6 @@ func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, va
 		return ex.Wrap(err, "SetStatusWeight")
 	}
 	return nil
-}
-
-// SetStatusIterations updates the canary status iterations value
-func (c *DeploymentController) SetStatusIterations(cd *flaggerv1.Canary, val int) error {
-	return setStatusIterations(c.flaggerClient, cd, val)
 }
 
 func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
@@ -159,11 +123,6 @@ func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary
 	return nil
 }
 
-// SetStatusPhase updates the canary status phase
-func (c *DeploymentController) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
-	return setStatusPhase(c.flaggerClient, cd, phase)
-}
-
 func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
 	firstTry := true
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
@@ -189,7 +148,7 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 			cdCopy.Status.LastPromotedSpec = cd.Status.LastAppliedSpec
 		}
 
-		if ok, conditions := MakeStatusConditions(cdCopy.Status, phase); ok {
+		if ok, conditions := MakeStatusConditions(cdCopy, phase); ok {
 			cdCopy.Status.Conditions = conditions
 		}
 
@@ -215,19 +174,19 @@ func getStatusCondition(status flaggerv1.CanaryStatus, conditionType flaggerv1.C
 }
 
 // MakeStatusCondition updates the canary status conditions based on canary phase
-func MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
+func MakeStatusConditions(cd *flaggerv1.Canary,
 	phase flaggerv1.CanaryPhase) (bool, []flaggerv1.CanaryCondition) {
-	currentCondition := getStatusCondition(canaryStatus, flaggerv1.PromotedType)
+	currentCondition := getStatusCondition(cd.Status, flaggerv1.PromotedType)
 
-	message := "New deployment detected, starting initialization."
+	message := fmt.Sprintf("New %s detected, starting initialization.", cd.Spec.TargetRef.Kind)
 	status := corev1.ConditionUnknown
 	switch phase {
 	case flaggerv1.CanaryPhaseInitializing:
 		status = corev1.ConditionUnknown
-		message = "New deployment detected, starting initialization."
+		message = fmt.Sprintf("New %s detected, starting initialization.", cd.Spec.TargetRef.Kind)
 	case flaggerv1.CanaryPhaseInitialized:
 		status = corev1.ConditionTrue
-		message = "Deployment initialization completed."
+		message = fmt.Sprintf("%s initialization completed.", cd.Spec.TargetRef.Kind)
 	case flaggerv1.CanaryPhaseWaiting:
 		status = corev1.ConditionUnknown
 		message = "Waiting for approval."
@@ -245,7 +204,7 @@ func MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
 		message = "Canary analysis completed successfully, promotion finished."
 	case flaggerv1.CanaryPhaseFailed:
 		status = corev1.ConditionFalse
-		message = "Canary analysis failed, deployment scaled to zero."
+		message = fmt.Sprintf("Canary analysis failed, %s scaled to zero.", cd.Spec.TargetRef.Kind)
 	}
 
 	newCondition := &flaggerv1.CanaryCondition{

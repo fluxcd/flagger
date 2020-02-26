@@ -1,9 +1,7 @@
 package canary
 
 import (
-	"crypto/rand"
 	"fmt"
-	"io"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
@@ -13,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -107,7 +104,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
 
 	// update pod annotations to ensure a rolling update
-	annotations, err := c.makeAnnotations(canary.Spec.Template.Annotations)
+	annotations, err := makeAnnotations(canary.Spec.Template.Annotations)
 	if err != nil {
 		return err
 	}
@@ -211,7 +208,7 @@ func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, map[st
 
 	var ports map[string]int32
 	if cd.Spec.Service.PortDiscovery {
-		p, err := c.getPorts(cd, canaryDep)
+		p, err := getPorts(cd, canaryDep.Spec.Template.Spec.Containers)
 		if err != nil {
 			return "", nil, fmt.Errorf("port discovery failed with error: %v", err)
 		}
@@ -248,7 +245,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
 			return err
 		}
-		annotations, err := c.makeAnnotations(canaryDep.Spec.Template.Annotations)
+		annotations, err := makeAnnotations(canaryDep.Spec.Template.Annotations)
 		if err != nil {
 			return err
 		}
@@ -383,29 +380,6 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 	return nil
 }
 
-// makeAnnotations appends an unique ID to annotations map
-func (c *DeploymentController) makeAnnotations(annotations map[string]string) (map[string]string, error) {
-	idKey := "flagger-id"
-	res := make(map[string]string)
-	uuid := make([]byte, 16)
-	n, err := io.ReadFull(rand.Reader, uuid)
-	if n != len(uuid) || err != nil {
-		return res, err
-	}
-	uuid[8] = uuid[8]&^0xc0 | 0x80
-	uuid[6] = uuid[6]&^0xf0 | 0x40
-	id := fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
-
-	for k, v := range annotations {
-		if k != idKey {
-			res[k] = v
-		}
-	}
-	res[idKey] = id
-
-	return res, nil
-}
-
 // getSelectorLabel returns the selector match label
 func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (string, error) {
 	for _, l := range c.labels {
@@ -417,74 +391,6 @@ func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (
 	return "", fmt.Errorf("selector not found")
 }
 
-var sidecars = map[string]bool{
-	"istio-proxy": true,
-	"envoy":       true,
-}
-
 func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
 	return c.configTracker.HasConfigChanged(cd)
-}
-
-// getPorts returns a list of all container ports
-func (c *DeploymentController) getPorts(cd *flaggerv1.Canary, deployment *appsv1.Deployment) (map[string]int32, error) {
-	ports := make(map[string]int32)
-
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		// exclude service mesh proxies based on container name
-		if _, ok := sidecars[container.Name]; ok {
-			continue
-		}
-		for i, p := range container.Ports {
-			// exclude canary.service.port or canary.service.targetPort
-			if cd.Spec.Service.TargetPort.String() == "0" {
-				if p.ContainerPort == cd.Spec.Service.Port {
-					continue
-				}
-			} else {
-				if cd.Spec.Service.TargetPort.Type == intstr.Int {
-					if p.ContainerPort == cd.Spec.Service.TargetPort.IntVal {
-						continue
-					}
-				}
-				if cd.Spec.Service.TargetPort.Type == intstr.String {
-					if p.Name == cd.Spec.Service.TargetPort.StrVal {
-						continue
-					}
-				}
-			}
-			name := fmt.Sprintf("tcp-%s-%v", container.Name, i)
-			if p.Name != "" {
-				name = p.Name
-			}
-
-			ports[name] = p.ContainerPort
-		}
-	}
-
-	return ports, nil
-}
-
-func makePrimaryLabels(labels map[string]string, primaryName string, label string) map[string]string {
-	res := make(map[string]string)
-	for k, v := range labels {
-		if k != label {
-			res[k] = v
-		}
-	}
-	res[label] = primaryName
-
-	return res
-}
-
-func int32p(i int32) *int32 {
-	return &i
-}
-
-func int32Default(i *int32) int32 {
-	if i == nil {
-		return 1
-	}
-
-	return *i
 }

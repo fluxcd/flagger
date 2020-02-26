@@ -37,6 +37,13 @@ func (factory *Factory) Controller(kind string) Controller {
 		labels:        factory.labels,
 		configTracker: factory.configTracker,
 	}
+	daemonSetCtrl := &DaemonSetController{
+		logger:        factory.logger,
+		kubeClient:    factory.kubeClient,
+		flaggerClient: factory.flaggerClient,
+		labels:        factory.labels,
+		configTracker: factory.configTracker,
+	}
 	serviceCtrl := &ServiceController{
 		logger:        factory.logger,
 		kubeClient:    factory.kubeClient,
@@ -44,6 +51,8 @@ func (factory *Factory) Controller(kind string) Controller {
 	}
 
 	switch {
+	case kind == "DaemonSet":
+		return daemonSetCtrl
 	case kind == "Deployment":
 		return deploymentCtrl
 	case kind == "Service":

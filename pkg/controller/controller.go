@@ -222,7 +222,7 @@ func (c *Controller) syncHandler(key string) error {
 
 	// set status condition for new canaries
 	if cd.Status.Conditions == nil {
-		if ok, conditions := canary.MakeStatusConditions(cd.Status, flaggerv1.CanaryPhaseInitializing); ok {
+		if ok, conditions := canary.MakeStatusConditions(cd, flaggerv1.CanaryPhaseInitializing); ok {
 			cdCopy := cd.DeepCopy()
 			cdCopy.Status.Conditions = conditions
 			cdCopy.Status.LastTransitionTime = metav1.Now()

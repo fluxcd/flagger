@@ -82,7 +82,7 @@ jobs:
       - run: test/e2e-istio.sh
       - run: test/e2e-tests.sh
 
-  e2e-kubernetes-testing:
+  e2e-kubernetes-daemonset-testing:
     machine: true
     steps:
       - checkout
@@ -91,7 +91,18 @@ jobs:
       - run: test/container-build.sh
       - run: test/e2e-kind.sh v1.17.0
       - run: test/e2e-kubernetes.sh
-      - run: test/e2e-kubernetes-tests.sh
+      - run: test/e2e-kubernetes-tests-daemonset.sh
+
+  e2e-kubernetes-deployment-testing:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: test/container-build.sh
+      - run: test/e2e-kind.sh v1.17.0
+      - run: test/e2e-kubernetes.sh
+      - run: test/e2e-kubernetes-tests-deployment.sh
 
   e2e-kubernetes-svc-testing:
     machine: true
@@ -215,7 +226,10 @@ workflows:
       - e2e-istio-testing:
           requires:
             - build-binary
-      - e2e-kubernetes-testing:
+      - e2e-kubernetes-daemonset-testing:
+          requires:
+            - build-binary
+      - e2e-kubernetes-deployment-testing:
           requires:
             - build-binary
       - e2e-gloo-testing:
@@ -234,7 +248,8 @@ workflows:
           requires:
             - build-binary
             - e2e-istio-testing
-            - e2e-kubernetes-testing
+            - e2e-kubernetes-daemonset-testing
+            - e2e-kubernetes-deployment-testing
             - e2e-gloo-testing
             - e2e-nginx-testing
             - e2e-linkerd-testing

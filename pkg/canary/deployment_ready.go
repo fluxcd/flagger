@@ -36,7 +36,7 @@ func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error
 	return true, nil
 }
 
-// IsCanaryReady checks the primary deployment status and returns an error if
+// IsCanaryReady checks the canary deployment status and returns an error if
 // the deployment is in the middle of a rolling update or if the pods are unhealthy
 // it will return a non retriable error if the rolling update is stuck
 func (c *DeploymentController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {

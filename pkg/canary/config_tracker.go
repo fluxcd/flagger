@@ -93,16 +93,36 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]ConfigRef, error) {
 	res := make(map[string]ConfigRef)
 	targetName := cd.Spec.TargetRef.Name
-	targetDep, err := ct.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return res, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
+
+	var vs []corev1.Volume
+	var cs []corev1.Container
+	switch cd.Spec.TargetRef.Kind {
+	case "Deployment":
+		targetDep, err := ct.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return res, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
+			}
+			return res, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
 		}
-		return res, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
+		vs = targetDep.Spec.Template.Spec.Volumes
+		cs = targetDep.Spec.Template.Spec.Containers
+	case "DaemonSet":
+		targetDae, err := ct.KubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return res, fmt.Errorf("daemonset %s.%s not found", targetName, cd.Namespace)
+			}
+			return res, fmt.Errorf("daemonset %s.%s query error %v", targetName, cd.Namespace, err)
+		}
+		vs = targetDae.Spec.Template.Spec.Volumes
+		cs = targetDae.Spec.Template.Spec.Containers
+	default:
+		return nil, fmt.Errorf("TargetRef.Kind invalid: %s", cd.Spec.TargetRef.Kind)
 	}
 
 	// scan volumes
-	for _, volume := range targetDep.Spec.Template.Spec.Volumes {
+	for _, volume := range vs {
 		if cmv := volume.ConfigMap; cmv != nil {
 			config, err := ct.getRefFromConfigMap(cmv.Name, cd.Namespace)
 			if err != nil {
@@ -152,7 +172,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		}
 	}
 	// scan containers
-	for _, container := range targetDep.Spec.Template.Spec.Containers {
+	for _, container := range cs {
 		// scan env
 		for _, env := range container.Env {
 			if env.ValueFrom != nil {

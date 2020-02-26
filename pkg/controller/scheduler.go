@@ -116,7 +116,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	// create primary deployment and hpa
+	// create primary
 	err = canaryController.Initialize(cd, skipLivenessChecks)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
@@ -161,7 +161,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		maxWeight = cd.Spec.CanaryAnalysis.MaxWeight
 	}
 
-	// check primary deployment status
+	// check primary status
 	if !skipLivenessChecks && !cd.Spec.SkipAnalysis {
 		if _, err := canaryController.IsPrimaryReady(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
@@ -210,7 +210,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		return
 	}
 
-	// check canary deployment status
+	// check canary status
 	var retriable = true
 	if !skipLivenessChecks {
 		retriable, err = canaryController.IsCanaryReady(cd)
@@ -617,7 +617,7 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		}
 		c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseInitialized)
 		c.recordEventInfof(canary, "Initialization done! %s.%s", canary.Name, canary.Namespace)
-		c.alert(canary, "New deployment detected, initialization completed.",
+		c.alert(canary, fmt.Sprintf("New %s detected, initialization completed.", canary.Spec.TargetRef.Kind),
 			true, flaggerv1.SeverityInfo)
 		return false
 	}

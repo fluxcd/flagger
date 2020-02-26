@@ -9,7 +9,7 @@ import (
 )
 
 func TestScheduler_ServicePromotion(t *testing.T) {
-	mocks := newFixture(newTestServiceCanary())
+	mocks := newDeploymentFixture(newTestServiceCanary())
 
 	// init
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
@@ -25,7 +25,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	}
 
 	// update
-	svc2 := newTestServiceV2()
+	svc2 := newDeploymentTestServiceV2()
 	_, err = mocks.kubeClient.CoreV1().Services("default").Update(svc2)
 	if err != nil {
 		t.Fatal(err.Error())
