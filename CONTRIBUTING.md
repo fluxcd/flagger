@@ -17,12 +17,12 @@ contribution.
 ## Chat
 
 The project uses Slack: To join the conversation, simply join the
-[Weave community](https://slack.weave.works/) Slack workspace.
+[Weave community](https://slack.weave.works/) Slack workspace #flagger channel.
 
 ## Getting Started
 
 - Fork the repository on GitHub
-- If you want to contribute as a developer, continue reading this document for further instructions
+- If you want to contribute as a developer, read [Flagger Development Guide](https://docs.flagger.app/dev-guide)
 - If you have questions, concerns, get stuck or need a hand, let us know
   on the Slack channel. We are happy to help and look forward to having
   you part of the team. No matter in which capacity.
@@ -59,7 +59,7 @@ get asked to resubmit the PR or divide the changes into more than one PR.
 
 ### Format of the Commit Message
 
-For Flux we prefer the following rules for good commit messages:
+For Flagger we prefer the following rules for good commit messages:
 
 - Limit the subject to 50 characters and write as the continuation
   of the sentence "If applied, this commit will ..."
@@ -69,4 +69,4 @@ For Flux we prefer the following rules for good commit messages:
 The [following article](https://chris.beams.io/posts/git-commit/#seven-rules)
 has some more helpful advice on documenting your work.
 
-This doc is adapted from the [Weaveworks Flux](https://github.com/weaveworks/flux/blob/master/CONTRIBUTING.md)
+This doc is adapted from [FluxCD](https://github.com/fluxcd/flux/blob/master/CONTRIBUTING.md).

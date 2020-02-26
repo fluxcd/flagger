@@ -15,6 +15,8 @@
 ## Usage
 
 * [Deployment Strategies](usage/deployment-strategies.md)
+* [Metrics Analysis](usage/metrics.md)
+* [Webhooks](usage/webhooks.md)
 * [Alerting](usage/alerting.md)
 * [Monitoring](usage/monitoring.md)
 

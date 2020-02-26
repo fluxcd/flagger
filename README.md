@@ -87,7 +87,7 @@ spec:
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
-    # service name (optional)
+    # service name (defaults to targetRef.name)
     name: podinfo
     # ClusterIP port number
     port: 9898
@@ -95,6 +95,9 @@ spec:
     targetPort: 9898
     # port name can be http or grpc (default http)
     portName: http
+    # add all the other container ports
+    # to the ClusterIP services (default false)
+    portDiscovery: true
     # HTTP match conditions (optional)
     match:
       - uri:
@@ -118,36 +121,57 @@ spec:
     # canary increment step
     # percentage (0-100)
     stepWeight: 5
-    # Istio Prometheus checks
+    # validation (optional)
     metrics:
-    # builtin checks
     - name: request-success-rate
+      # builtin Prometheus check
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       threshold: 99
       interval: 1m
     - name: request-duration
+      # builtin Prometheus check
       # maximum req duration P99
       # milliseconds
       threshold: 500
       interval: 30s
-    # custom check
-    - name: "kafka lag"
-      threshold: 100
-      query: |
-        avg_over_time(
-          kafka_consumergroup_lag{
-            consumergroup=~"podinfo-consumer-.*",
-            topic="podinfo"
-          }[1m]
-        )
+    - name: "database connections"
+      # custom Prometheus check
+      templateRef:
+        name: db-connections
+      thresholdRange:
+        min: 2
+        max: 100
+      interval: 1m
     # testing (optional)
     webhooks:
-      - name: load-test
+      - name: "conformance test"
+        type: pre-rollout
+        url: http://flagger-helmtester.test/
+        timeout: 5m
+        metadata:
+          type: "helmv3"
+          cmd: "test run podinfo -n test"
+      - name: "load test"
+        type: rollout
         url: http://flagger-loadtester.test/
-        timeout: 5s
         metadata:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo.test:9898/"
+    # alerting (optional)
+    alerts:
+      - name: "dev team Slack"
+        severity: error
+        providerRef:
+          name: dev-slack
+          namespace: flagger
+      - name: "qa team Discord"
+        severity: warn
+        providerRef:
+          name: qa-discord
+      - name: "on-call MS Teams"
+        severity: info
+        providerRef:
+          name: on-call-msteams
 ```
 
 For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/how-it-works).
