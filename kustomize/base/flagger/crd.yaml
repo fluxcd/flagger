@@ -738,6 +738,7 @@ spec:
                   enum:
                     - prometheus
                     - influxdb
+                    - datadog
                 address:
                   description: API address of this provider
                   type: string
