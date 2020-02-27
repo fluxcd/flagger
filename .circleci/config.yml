@@ -253,6 +253,10 @@ workflows:
             - e2e-gloo-testing
             - e2e-nginx-testing
             - e2e-linkerd-testing
+          filters:
+            branches:
+              only:
+                - master
 
   release:
     jobs:
