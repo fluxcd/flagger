@@ -33,7 +33,7 @@ Mirroring should be used for requests that are **idempotent** or capable of bein
 Assuming the app name is podinfo you can define a canary like:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -146,7 +146,7 @@ spec:
 You can enable port discovery so that Prometheus will be able to reach port `9090` over mTLS:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 spec:
   service:
@@ -348,7 +348,7 @@ The following spec exposes the `frontend` workload inside the mesh on `frontend.
 and outside the mesh on `frontend.example.com`. You'll have to specify an Istio ingress gateway for external hosts.
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: frontend
@@ -409,7 +409,7 @@ metadata:
   name: frontend
   namespace: test
   ownerReferences:
-    - apiVersion: flagger.app/v1alpha3
+    - apiVersion: flagger.app/v1beta1
       blockOwnerDeletion: true
       controller: true
       kind: Canary
@@ -486,7 +486,7 @@ To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9
 the service spec can contain only the container port and the traffic policy:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: backend
@@ -507,7 +507,7 @@ kind: Service
 metadata:
   name: backend-primary
   ownerReferences:
-  - apiVersion: flagger.app/v1alpha3
+  - apiVersion: flagger.app/v1beta1
     blockOwnerDeletion: true
     controller: true
     kind: Canary
@@ -535,7 +535,7 @@ Assuming you have two apps, one that servers the main website and one that serve
 For each app you can define a canary object as:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: website
@@ -552,7 +552,7 @@ spec:
     rewrite:
       uri: /
 ---
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: webapi
@@ -583,7 +583,7 @@ Note that host merging only works if the canaries are bounded to a ingress gatew
 When deploying Istio with global mTLS enabled, you have to set the TLS mode to `ISTIO_MUTUAL`:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 spec:
   service:
@@ -595,7 +595,7 @@ spec:
 If you run Istio in permissive mode you can disable TLS:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 spec:
   service:

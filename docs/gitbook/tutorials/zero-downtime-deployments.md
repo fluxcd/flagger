@@ -166,7 +166,7 @@ The above HPA ensures your app will be scaled up before the pods reach the CPU o
 To minimise the impact of downscaling operations you can make use of Envoy retry capabilities.
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 spec:
   service:

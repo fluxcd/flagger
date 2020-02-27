@@ -1,4 +1,4 @@
-# Flagger Release Guide
+# Release Guide
 
 This document describes how to release Flagger.
 

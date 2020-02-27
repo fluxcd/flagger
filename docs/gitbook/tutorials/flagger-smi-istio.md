@@ -106,7 +106,7 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo

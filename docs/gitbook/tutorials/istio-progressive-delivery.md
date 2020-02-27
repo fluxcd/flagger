@@ -30,7 +30,7 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -260,7 +260,7 @@ Note that mirroring should be used for requests that are **idempotent** or capab
 You can enable mirroring by replacing `stepWeight/maxWeight` with `iterations` and by setting `canaryAnalysis.mirror` to `true`:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo

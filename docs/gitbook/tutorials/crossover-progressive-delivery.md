@@ -82,7 +82,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 Create a canary custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo

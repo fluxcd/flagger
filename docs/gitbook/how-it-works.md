@@ -1,9 +1,7 @@
 # How it works
 
-[Flagger](https://github.com/weaveworks/flagger) takes a Kubernetes deployment and optionally 
-a horizontal pod autoscaler (HPA) and creates a series of objects 
-(Kubernetes deployments, ClusterIP services, virtual service, traffic split or ingress)
-to drive the canary analysis and promotion.
+[Flagger](https://github.com/weaveworks/flagger) can be configured to automate the release process 
+for Kubernetes workloads with a custom resource named canary.
 
 ### Canary custom resource
 
@@ -13,7 +11,7 @@ and is portable across clusters, service meshes and ingress providers.
 For a deployment named _podinfo_, a canary release with progressive traffic shifting can be defined as:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -47,6 +45,9 @@ When you deploy a new version of an app, Flagger gradually shifts traffic to the
 and at the same time, measures the requests success rate as well as the average response duration.
 You can extend the canary analysis with custom metrics, acceptance and load testing
 to harden the validation process of your app release process.
+
+If you are running multiple service meshes or ingress controllers in the same cluster,
+you can override the global provider for a specific canary with `spec.provider`.
 
 ### Canary target
 

@@ -69,7 +69,7 @@ kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
 Create a canary custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo

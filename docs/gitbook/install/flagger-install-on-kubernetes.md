@@ -222,7 +222,7 @@ that have the `prometheus.io/scrape: "true"` annotation.
 To target a different provider you can specify it in the canary custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: app

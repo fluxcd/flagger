@@ -44,7 +44,7 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 Create a canary custom resource for the podinfo deployment:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -366,7 +366,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 Edit podinfo canary analysis, set the provider to `nginx`, add the ingress reference, remove the max/step weight and add the match conditions and iterations:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
