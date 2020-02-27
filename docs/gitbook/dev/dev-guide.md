@@ -1,4 +1,4 @@
-# Flagger Development Guide
+# Development Guide
 
 This document describes how to build, test and run Flagger from source.
 
@@ -177,18 +177,3 @@ chose one that matches your changes from this [list](https://github.com/weavewor
 
 When you open a pull request on Flagger repo, the unit and integration tests will be run in CI.
 
-### Release
-
-To release a new Flagger version (e.g. `2.0.0`) follow these steps:
-* create a branch `git checkout -b prep-2.0.0`
-* set the version in code and manifests `TAG=2.0.0 make version-set`
-* commit changes and merge PR
-* checkout master `git checkout master && git pull`
-* tag master `make release`
-
-After the tag has been pushed to GitHub, the CI release pipeline does the following:
-* creates a GitHub release
-* pushes the Flagger binary and change log to GitHub release
-* pushes the Flagger container image to Docker Hub
-* pushes the Helm chart to github-pages branch
-* GitHub pages publishes the new chart version on the Helm repository

@@ -3,7 +3,6 @@
 * [Introduction](README.md)
 * [How it works](how-it-works.md)
 * [FAQ](faq.md)
-* [Development guide](dev-guide.md)
 
 ## Install
 
@@ -35,3 +34,7 @@
 * [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
 
+## Dev
+
+* [Development Guide](dev/dev-guide.md)
+* [Release Guide](dev/release-guide.md)

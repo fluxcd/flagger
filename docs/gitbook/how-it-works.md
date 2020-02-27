@@ -5,9 +5,12 @@ a horizontal pod autoscaler (HPA) and creates a series of objects
 (Kubernetes deployments, ClusterIP services, virtual service, traffic split or ingress)
 to drive the canary analysis and promotion.
 
-### Canary Custom Resource
+### Canary custom resource
 
-For a deployment named _podinfo_, a canary can be defined using Flagger's custom resource:
+The canary custom resource defines the release process of an application running on Kubernetes
+and is portable across clusters, service meshes and ingress providers.
+
+For a deployment named _podinfo_, a canary release with progressive traffic shifting can be defined as:
 
 ```yaml
 apiVersion: flagger.app/v1alpha3
@@ -39,6 +42,11 @@ spec:
         metadata:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
+
+When you deploy a new version of an app, Flagger gradually shifts traffic to the canary,
+and at the same time, measures the requests success rate as well as the average response duration.
+You can extend the canary analysis with custom metrics, acceptance and load testing
+to harden the validation process of your app release process.
 
 ### Canary target
 
@@ -139,6 +147,28 @@ This ensures that traffic to `podinfo.test:9898` will be routed to the latest st
 The `podinfo-canary.test:9898` address is available only during the 
 canary analysis and can be used for conformance testing or load testing.
 
+Besides the port mapping, the service specification can contain URI match and rewrite rules,
+timeout and retry polices:
+
+```yaml
+spec:
+  service:
+    port: 9898
+    match:
+      - uri:
+          prefix: /
+    rewrite:
+      uri: /
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+    timeout: 5s
+```
+
+When using **Istio** as the mesh provider, you can also specify
+HTTP header operations, CORS and traffic policies, Istio gateways and hosts.
+The Istio routing configuration can be found [here](faq.md#istio-routing).
+ 
 ### Canary status
 
 You can use kubectl to get the current status of canary deployments cluster wide: 
@@ -207,7 +237,7 @@ kubectl wait canary/podinfo --for=condition=promoted --timeout=5m
 kubectl get canary/podinfo | grep Succeeded
 ```
 
-### Canary Analysis
+### Canary analysis
 
 The canary analysis defines:
 * the type of [deployment strategy](usage/deployment-strategies.md)
@@ -250,4 +280,3 @@ Spec:
 The canary analysis runs periodically until it reaches the maximum traffic weight or the number of iterations.
 On each run, Flagger calls the webhooks, checks the metrics and if the failed checks threshold is reached, stops the
 analysis and rolls back the canary. If alerting is configured, Flagger will post the analysis result using the alert providers.
-
