@@ -5,7 +5,7 @@ availability, error rate percentage, average response time and any other objecti
 If a drop in performance is noticed during the SLOs analysis,
 the release will be automatically rolled back with minimum impact to end-users.
 
-### Builtin Metrics
+### Builtin metrics
 
 Flagger comes with two builtin metric checks: HTTP request success rate and duration.
 
@@ -31,11 +31,58 @@ and the window size or the time series with `interval`.
 The builtin checks are available for every service mesh / ingress controller
 and are implemented with [Prometheus queries](../faq.md#metrics).
 
-### Custom Metrics
+### Custom metrics
 
 The canary analysis can be extended with custom metric checks. Using a `MetricTemplate` custom resource, you 
 configure Flagger to connect to a metric provider and run a query that returns a `float64` value.
 The query result is used to validate the canary based on the specified threshold range.
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: my-metric
+spec:
+  provider:
+    type: # can be prometheus or datadog
+    address: # API URL
+    secretRef:
+      name: # name of the secret containing the API credentials
+  query: # metric query
+```
+
+The following variables are available in query templates:
+
+- `name` (canary.metadata.name)
+- `namespace` (canary.metadata.namespace)
+- `target` (canary.spec.targetRef.name)
+- `service` (canary.spec.service.name)
+- `ingress` (canary.spec.ingresRef.name)
+- `interval` (canary.spec.canaryAnalysis.metrics[].interval)
+
+A canary analysis metric can reference a template with `templateRef`:
+
+```yaml
+  canaryAnalysis:
+    metrics:
+      - name: "my metric"
+        templateRef:
+          name: my-metric
+          # namespace is optional
+          # when not specified, the canary namespace will be used
+          namespace: flagger
+        # accepted values
+        thresholdRange:
+          min: 10
+          max: 1000
+        # metric query time window
+        interval: 1m
+```
+
+### Prometheus 
+
+You can create custom metric checks targeting a Prometheus server
+by setting the provider type to `prometheus` and writing the query in PromQL.
 
 Prometheus template example:
 
@@ -72,16 +119,7 @@ spec:
     ) * 100
 ```
 
-The following variables are available in templates:
-
-- `name` (canary.metadata.name)
-- `namespace` (canary.metadata.namespace)
-- `target` (canary.spec.targetRef.name)
-- `service` (canary.spec.service.name)
-- `ingress` (canary.spec.ingresRef.name)
-- `interval` (canary.spec.canaryAnalysis.metrics[].interval)
-
-A canary analysis metric can reference a template with `templateRef`:
+Reference the template in the canary analysis:
 
 ```yaml
   canaryAnalysis:
@@ -89,8 +127,6 @@ A canary analysis metric can reference a template with `templateRef`:
       - name: "404s percentage"
         templateRef:
           name: not-found-percentage
-          # namespace is optional
-          # when not specified, the canary namespace will be used
           namespace: istio-system
         thresholdRange:
           max: 5
@@ -135,3 +171,65 @@ spec:
 ```
 
 The above template is for gPRC services instrumented with [go-grpc-prometheus](https://github.com/grpc-ecosystem/go-grpc-prometheus).
+
+### Datadog
+
+You can create custom metric checks using the Datadog provider.
+
+Create a secret with your Datadog API credentials:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: datadog
+  namespace: istio-system
+data:
+  datadog_api_key: your-datadog-api-key
+  datadog_application_key: your-datadog-application-key
+```
+
+Datadog template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: not-found-percentage
+  namespace: istio-system
+spec:
+  provider:
+    type: datadog
+    address: https://api.datadoghq.com
+    secretRef:
+      name: datadog
+  query: |
+    100 - (
+      sum:istio.mesh.request.count{
+        reporter:destination,
+        destination_workload_namespace:{{ namespace }},
+        destination_workload:{{ target }},
+        !response_code:404
+      }.as_count()
+      / 
+      sum:istio.mesh.request.count{
+        reporter:destination,
+        destination_workload_namespace:{{ namespace }},
+        destination_workload:{{ target }}
+      }.as_count()
+    ) * 100
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  canaryAnalysis:
+    metrics:
+      - name: "404s percentage"
+        templateRef:
+          name: not-found-percentage
+          namespace: istio-system
+        thresholdRange:
+          max: 5
+        interval: 1m
+```
