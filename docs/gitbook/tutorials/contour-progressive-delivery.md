@@ -91,7 +91,7 @@ spec:
       attempts: 3
       perTryTimeout: 5s
   # define the canary analysis timing and KPIs
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 30s
     # max number of failed metric checks before rollback
@@ -332,7 +332,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
 
 ```yaml
-canaryAnalysis:
+analysis:
   interval: 1m
   threshold: 5
   iterations: 10

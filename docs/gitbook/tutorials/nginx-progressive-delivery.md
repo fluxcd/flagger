@@ -126,7 +126,7 @@ spec:
     port: 80
     # container port number or name
     targetPort: 9898
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 10s
     # max number of failed metric checks before rollback
@@ -291,7 +291,7 @@ The demo app is instrumented with Prometheus so you can create a custom check th
 Edit the canary analysis and add the following metric:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
     - name: "latency"
       threshold: 0.5
@@ -353,7 +353,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     interval: 1m
     threshold: 10
     iterations: 10

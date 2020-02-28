@@ -25,7 +25,7 @@ every action that Flagger takes during a canary deployment will be sent as JSON 
 Spec:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "start gate"
         type: confirm-rollout
@@ -251,7 +251,7 @@ When deployed the Helm tester API will be available at `http://flagger-helmteste
 Now you can add pre-rollout webhooks to the canary analysis spec:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "smoke test"
         type: pre-rollout
@@ -268,7 +268,7 @@ If the helm test fails, Flagger will retry until the analysis threshold is reach
 If you are using Helm v3, you'll have to create a dedicated service account and add the release namespace to the test command:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "smoke test"
         type: pre-rollout
@@ -282,7 +282,7 @@ If you are using Helm v3, you'll have to create a dedicated service account and 
 As an alternative to Helm you can use the [Bash Automated Testing System](https://github.com/bats-core/bats-core) to run your tests. 
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "acceptance tests"
         type: pre-rollout
@@ -308,7 +308,7 @@ will shift all traffic back to the primary instance and fail the canary.
 Manual gating with Flagger's tester:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "gate"
         type: confirm-rollout
@@ -322,7 +322,7 @@ If you have notifications enabled, Flagger will post a message to Slack or MS Te
 Change the URL to `/gate/approve` to start the canary analysis:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "gate"
         type: confirm-rollout
@@ -332,7 +332,7 @@ Change the URL to `/gate/approve` to start the canary analysis:
 Manual gating can be driven with Flagger's tester API. Set the confirmation URL to `/gate/check`:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "ask for confirmation"
         type: confirm-rollout
@@ -366,7 +366,7 @@ The `confirm-promotion` hook type can be used to manually approve the canary pro
 While the promotion is paused, Flagger will continue to run the metrics checks and load tests.
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "promotion gate"
         type: confirm-promotion
@@ -377,7 +377,7 @@ The `rollback` hook type can be used to manually rollback the canary promotion. 
 with Flagger's tester API by setting the rollback URL to `/rollback/check`  
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "rollback"
         type: rollback

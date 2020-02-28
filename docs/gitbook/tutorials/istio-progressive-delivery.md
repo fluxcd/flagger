@@ -70,7 +70,7 @@ spec:
       attempts: 3
       perTryTimeout: 1s
       retryOn: "gateway-error,connect-failure,refused-stream"
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # max number of failed metric checks before rollback
@@ -266,7 +266,7 @@ metadata:
   name: podinfo
   namespace: test
 spec:
-  canaryAnalysis:
+  analysis:
     # schedule interval
     interval: 1m
     # max number of failed metric checks before rollback

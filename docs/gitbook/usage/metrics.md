@@ -10,7 +10,7 @@ the release will be automatically rolled back with minimum impact to end-users.
 Flagger comes with two builtin metric checks: HTTP request success rate and duration.
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
     - name: request-success-rate
       interval: 1m
@@ -63,7 +63,7 @@ The following variables are available in query templates:
 A canary analysis metric can reference a template with `templateRef`:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
       - name: "my metric"
         templateRef:
@@ -122,7 +122,7 @@ spec:
 Reference the template in the canary analysis:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
       - name: "404s percentage"
         templateRef:
@@ -223,7 +223,7 @@ spec:
 Reference the template in the canary analysis:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
       - name: "404s percentage"
         templateRef:

@@ -134,7 +134,7 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - app.example.com
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 10s
     # max number of failed metric checks before rollback

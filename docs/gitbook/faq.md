@@ -232,7 +232,7 @@ Flagger measures the request success rate and duration using Prometheus queries.
 Spec:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
@@ -294,7 +294,7 @@ sum(
 Spec:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
     - name: request-duration
       # maximum req duration P99

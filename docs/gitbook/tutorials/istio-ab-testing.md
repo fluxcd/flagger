@@ -63,7 +63,7 @@ spec:
       tls:
         # use ISTIO_MUTUAL when mTLS is enabled
         mode: DISABLE
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # total number of iterations

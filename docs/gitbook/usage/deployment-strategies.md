@@ -32,7 +32,7 @@ The canary analysis runs periodically until it reaches the maximum traffic weigh
 Spec:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # max number of failed metric checks before rollback
@@ -122,7 +122,7 @@ If Flagger finds a HTTP match condition, it will ignore the `maxWeight` and `ste
 Istio example:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # total number of iterations
@@ -155,7 +155,7 @@ interval * threshold
 App Mesh example:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     interval: 1m
     threshold: 10
     iterations: 2
@@ -170,7 +170,7 @@ Note that App Mesh supports a single condition.
 Contour example:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     interval: 1m
     threshold: 10
     iterations: 2
@@ -185,7 +185,7 @@ Note that Contour does not support regex, you can use prefix, suffix or exact.
 NGINX example:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     interval: 1m
     threshold: 10
     iterations: 2
@@ -217,7 +217,7 @@ with Kubernetes L4 networking. When using Istio you have the option to mirror tr
 You can use the blue/green deployment strategy by replacing `stepWeight/maxWeight` with `iterations` in the `canaryAnalysis` spec:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # total number of iterations
@@ -268,7 +268,7 @@ To use mirroring, set `spec.canaryAnalysis.mirror` to `true`.
 Istio example:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # total number of iterations

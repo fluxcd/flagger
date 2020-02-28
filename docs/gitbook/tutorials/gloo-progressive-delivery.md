@@ -113,7 +113,7 @@ spec:
     port: 9898
     # container port number or name (optional)
     targetPort: 9898
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 10s
     # max number of failed metric checks before rollback
@@ -299,7 +299,7 @@ The demo app is instrumented with Prometheus so you can create a custom check th
 Edit the canary analysis and add the following metric:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
     - name: "404s percentage"
       threshold: 5

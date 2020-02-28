@@ -109,7 +109,7 @@ spec:
     # container port number or name (optional)
     targetPort: 9898
   # define the canary analysis timing and KPIs
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # max number of failed metric checks before rollback

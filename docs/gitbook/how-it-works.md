@@ -22,7 +22,7 @@ spec:
     name: podinfo
   service:
     port: 9898
-  canaryAnalysis:
+  analysis:
     interval: 1m
     threshold: 10
     maxWeight: 50
@@ -249,7 +249,7 @@ The canary analysis defines:
 Spec:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval:
     # max number of failed metric checks before rollback

@@ -64,7 +64,7 @@ When promoting a workload in production, both code (container images) and config
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -110,7 +110,7 @@ spec:
   # promote the canary without analysing it (default false)
   skipAnalysis: false
   # define the canary analysis timing and KPIs
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # max number of failed metric checks before rollback

@@ -68,7 +68,7 @@ spec:
     port: 9898
     # container port number or name (optional)
     targetPort: 9898
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 30s
     # max number of failed metric checks before rollback
@@ -256,7 +256,7 @@ The canary analysis can be extended with Prometheus queries.
 Let's a define a check for not found errors. Edit the canary analysis and add the following metric:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
     - name: "404s percentage"
       threshold: 3
@@ -389,7 +389,7 @@ spec:
   service:
     # container port
     port: 9898
-  canaryAnalysis:
+  analysis:
     interval: 1m
     threshold: 10
     iterations: 10

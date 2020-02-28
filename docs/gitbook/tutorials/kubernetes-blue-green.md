@@ -93,7 +93,7 @@ spec:
   service:
     port: 9898
     portDiscovery: true
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 30s
     # max number of failed checks before rollback
@@ -258,7 +258,7 @@ The analysis can be extended with Prometheus queries. The demo app is instrument
 Edit the canary analysis and add the following metric:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
     - name: "404s percentage"
       threshold: 5
@@ -333,7 +333,7 @@ When deployed the Helm tester API will be available at `http://flagger-helmteste
 Add a helm test pre-rollout hook to your chart:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "conformance testing"
         type: pre-rollout

@@ -85,7 +85,7 @@ the address in the secret will take precedence over the **address** field in the
 The canary analysis can have a list of alerts, each alert referencing an alert provider:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     alerts:
       - name: "on-call Slack"
         severity: error
