@@ -51,6 +51,7 @@ ADD https://raw.githubusercontent.com/grpc/grpc-proto/master/grpc/health/v1/heal
 COPY ./bin/loadtester .
 
 RUN chown -R app:app ./
+RUN chown -R app:app /tmp/ghz
 
 USER app
 
