@@ -3,9 +3,10 @@ package loadtester
 import (
 	"context"
 	"encoding/hex"
-	"go.uber.org/zap"
 	"hash/fnv"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 // Modeling a loadtester task

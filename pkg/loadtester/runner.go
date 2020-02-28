@@ -2,10 +2,11 @@ package loadtester
 
 import (
 	"context"
-	"go.uber.org/zap"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type TaskRunner struct {

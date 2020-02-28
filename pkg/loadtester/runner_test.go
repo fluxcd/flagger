@@ -1,9 +1,10 @@
 package loadtester
 
 import (
-	"github.com/weaveworks/flagger/pkg/logger"
 	"testing"
 	"time"
+
+	"github.com/weaveworks/flagger/pkg/logger"
 )
 
 func TestTaskRunner_Start(t *testing.T) {

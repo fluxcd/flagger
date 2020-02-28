@@ -1,8 +1,9 @@
 package observers
 
 import (
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	"time"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 type Interface interface {

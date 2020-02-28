@@ -18,7 +18,7 @@ echo '>>> Initialising canary'
 kubectl apply -f ${REPO_ROOT}/test/e2e-daemonset.yaml
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -35,7 +35,7 @@ spec:
     targetPort: 9898
     name: podinfo-svc
     portDiscovery: true
-  canaryAnalysis:
+  analysis:
     interval: 15s
     threshold: 10
     iterations: 5

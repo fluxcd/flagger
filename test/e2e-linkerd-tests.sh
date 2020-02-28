@@ -43,7 +43,7 @@ spec:
 EOF
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -58,7 +58,7 @@ spec:
     port: 80
     targetPort: http
     portDiscovery: true
-  canaryAnalysis:
+  analysis:
     interval: 15s
     threshold: 15
     maxWeight: 50
@@ -154,7 +154,7 @@ done
 echo '✔ Canary promotion test passed'
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -168,7 +168,7 @@ spec:
   service:
     port: 80
     targetPort: 9898
-  canaryAnalysis:
+  analysis:
     interval: 15s
     threshold: 3
     maxWeight: 50

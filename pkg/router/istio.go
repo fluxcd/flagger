@@ -152,8 +152,8 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		},
 	}
 
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
-		canaryMatch := mergeMatchConditions(canary.Spec.CanaryAnalysis.Match, canary.Spec.Service.Match)
+	if len(canary.GetAnalysis().Match) > 0 {
+		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
 			{
 				Match:      canaryMatch,
@@ -323,9 +323,9 @@ func (ir *IstioRouter) SetRoutes(
 	}
 
 	// fix routing (A/B testing)
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+	if len(canary.GetAnalysis().Match) > 0 {
 		// merge the common routes with the canary ones
-		canaryMatch := mergeMatchConditions(canary.Spec.CanaryAnalysis.Match, canary.Spec.Service.Match)
+		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
 		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 			{
 				Match:      canaryMatch,

@@ -117,7 +117,7 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	}
 
 	// A/B testing
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+	if len(canary.GetAnalysis().Match) > 0 {
 		for k := range canaryIngress.Annotations {
 			if k == i.GetAnnotationWithPrefix("canary-by-cookie") || k == i.GetAnnotationWithPrefix("canary-by-header") {
 				return 0, 100, false, nil
@@ -158,11 +158,11 @@ func (i *IngressRouter) SetRoutes(
 	iClone := canaryIngress.DeepCopy()
 
 	// A/B testing
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+	if len(canary.GetAnalysis().Match) > 0 {
 		cookie := ""
 		header := ""
 		headerValue := ""
-		for _, m := range canary.Spec.CanaryAnalysis.Match {
+		for _, m := range canary.GetAnalysis().Match {
 			for k, v := range m.Headers {
 				if k == "cookie" {
 					cookie = v.Exact

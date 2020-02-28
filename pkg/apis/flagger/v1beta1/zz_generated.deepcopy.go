@@ -392,7 +392,16 @@ func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 		**out = **in
 	}
 	in.Service.DeepCopyInto(&out.Service)
-	in.CanaryAnalysis.DeepCopyInto(&out.CanaryAnalysis)
+	if in.Analysis != nil {
+		in, out := &in.Analysis, &out.Analysis
+		*out = new(CanaryAnalysis)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.CanaryAnalysis != nil {
+		in, out := &in.CanaryAnalysis, &out.CanaryAnalysis
+		*out = new(CanaryAnalysis)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.ProgressDeadlineSeconds != nil {
 		in, out := &in.ProgressDeadlineSeconds, &out.ProgressDeadlineSeconds
 		*out = new(int32)

@@ -64,7 +64,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 		},
 	}
 
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+	if len(canary.GetAnalysis().Match) > 0 {
 		newSpec = contourv1.HTTPProxySpec{
 			Routes: []contourv1.Route{
 				{
@@ -277,7 +277,7 @@ func (cr *ContourRouter) SetRoutes(
 		},
 	}
 
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+	if len(canary.GetAnalysis().Match) > 0 {
 		proxy.Spec = contourv1.HTTPProxySpec{
 			Routes: []contourv1.Route{
 				{
@@ -364,8 +364,8 @@ func (cr *ContourRouter) makePrefix(canary *flaggerv1.Canary) string {
 func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Condition {
 	list := []contourv1.Condition{}
 
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 {
-		for _, match := range canary.Spec.CanaryAnalysis.Match {
+	if len(canary.GetAnalysis().Match) > 0 {
+		for _, match := range canary.GetAnalysis().Match {
 			for s, stringMatch := range match.Headers {
 				h := &contourv1.HeaderCondition{
 					Name:  s,

@@ -3,10 +3,11 @@ package loadtester
 import (
 	"context"
 	"fmt"
-	"github.com/weaveworks/flagger/pkg/logger"
-	"gopkg.in/h2non/gock.v1"
 	"testing"
 	"time"
+
+	"github.com/weaveworks/flagger/pkg/logger"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func TestTaskNGrinder(t *testing.T) {

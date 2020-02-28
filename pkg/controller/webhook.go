@@ -7,11 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"k8s.io/utils/clock"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"k8s.io/utils/clock"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )

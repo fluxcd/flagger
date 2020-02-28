@@ -203,7 +203,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 	}
 
 	// A/B testing - header based routing
-	if len(canary.Spec.CanaryAnalysis.Match) > 0 && canaryWeight == 0 {
+	if len(canary.GetAnalysis().Match) > 0 && canaryWeight == 0 {
 		routes = []appmeshv1.Route{
 			{
 				Name:     fmt.Sprintf("%s-a", apexName),
@@ -451,7 +451,7 @@ func makeRetryPolicy(canary *flaggerv1.Canary) *appmeshv1.HttpRetryPolicy {
 func (ar *AppMeshRouter) makeHeaders(canary *flaggerv1.Canary) []appmeshv1.HttpRouteHeader {
 	headers := []appmeshv1.HttpRouteHeader{}
 
-	for _, m := range canary.Spec.CanaryAnalysis.Match {
+	for _, m := range canary.GetAnalysis().Match {
 		for key, value := range m.Headers {
 			header := appmeshv1.HttpRouteHeader{
 				Name: key,

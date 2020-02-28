@@ -34,7 +34,7 @@ spec:
 EOS
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -48,7 +48,7 @@ spec:
   progressDeadlineSeconds: 60
   service:
     port: 9898
-  canaryAnalysis:
+  analysis:
     interval: 15s
     threshold: 10
     iterations: 5

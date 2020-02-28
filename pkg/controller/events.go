@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -30,8 +31,8 @@ func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, a
 
 func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template string, args []interface{}) {
 	webhookOverride := false
-	if len(r.Spec.CanaryAnalysis.Webhooks) > 0 {
-		for _, canaryWebhook := range r.Spec.CanaryAnalysis.Webhooks {
+	if len(r.GetAnalysis().Webhooks) > 0 {
+		for _, canaryWebhook := range r.GetAnalysis().Webhooks {
 			if canaryWebhook.Type == flaggerv1.EventHook {
 				webhookOverride = true
 				err := CallEventWebhook(r, canaryWebhook.URL, fmt.Sprintf(template, args...), eventType)
@@ -51,7 +52,7 @@ func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template
 }
 
 func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bool, severity flaggerv1.AlertSeverity) {
-	if c.notifier == nil && len(canary.Spec.CanaryAnalysis.Alerts) == 0 {
+	if c.notifier == nil && len(canary.GetAnalysis().Alerts) == 0 {
 		return
 	}
 
@@ -61,7 +62,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 	}
 
 	// send alert with the global notifier
-	if len(canary.Spec.CanaryAnalysis.Alerts) == 0 {
+	if len(canary.GetAnalysis().Alerts) == 0 {
 		err := c.notifier.Post(canary.Name, canary.Namespace, message, fields, string(severity))
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
@@ -72,7 +73,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 	}
 
 	// send canary alerts
-	for _, alert := range canary.Spec.CanaryAnalysis.Alerts {
+	for _, alert := range canary.GetAnalysis().Alerts {
 		// determine if alert should be sent based on severity level
 		shouldAlert := false
 		if alert.Severity == flaggerv1.SeverityInfo {
@@ -161,7 +162,7 @@ func alertMetadata(canary *flaggerv1.Canary) []notifier.Field {
 		},
 		notifier.Field{
 			Name:  "Failed checks threshold",
-			Value: fmt.Sprintf("%v", canary.Spec.CanaryAnalysis.Threshold),
+			Value: fmt.Sprintf("%v", canary.GetAnalysisThreshold()),
 		},
 		notifier.Field{
 			Name:  "Progress deadline",
@@ -169,19 +170,19 @@ func alertMetadata(canary *flaggerv1.Canary) []notifier.Field {
 		},
 	)
 
-	if canary.Spec.CanaryAnalysis.StepWeight > 0 {
+	if canary.GetAnalysis().StepWeight > 0 {
 		fields = append(fields, notifier.Field{
 			Name: "Traffic routing",
 			Value: fmt.Sprintf("Weight step: %v max: %v",
-				canary.Spec.CanaryAnalysis.StepWeight,
-				canary.Spec.CanaryAnalysis.MaxWeight),
+				canary.GetAnalysis().StepWeight,
+				canary.GetAnalysis().MaxWeight),
 		})
-	} else if len(canary.Spec.CanaryAnalysis.Match) > 0 {
+	} else if len(canary.GetAnalysis().Match) > 0 {
 		fields = append(fields, notifier.Field{
 			Name:  "Traffic routing",
 			Value: "A/B Testing",
 		})
-	} else if canary.Spec.CanaryAnalysis.Iterations > 0 {
+	} else if canary.GetAnalysis().Iterations > 0 {
 		fields = append(fields, notifier.Field{
 			Name:  "Traffic routing",
 			Value: "Blue/Green",

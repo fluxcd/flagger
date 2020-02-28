@@ -1,5 +1,26 @@
 package controller
 
+import (
+	"fmt"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func assertPhase(flaggerClient clientset.Interface, canary string, phase flaggerv1.CanaryPhase) error {
+	c, err := flaggerClient.FlaggerV1beta1().Canaries("default").Get(canary, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if c.Status.Phase != phase {
+		return fmt.Errorf("Got canary state %v wanted %v", c.Status.Phase, phase)
+	}
+
+	return nil
+}
+
 func alwaysReady() bool {
 	return true
 }

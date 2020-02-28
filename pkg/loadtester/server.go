@@ -179,7 +179,6 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
-
 		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
 		gate.close(canaryName)
 

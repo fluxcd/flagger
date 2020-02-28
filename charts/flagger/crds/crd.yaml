@@ -42,19 +42,19 @@ spec:
       priority: 1
     - name: Interval
       type: string
-      JSONPath: .spec.canaryAnalysis.interval
+      JSONPath: .spec.analysis.interval
       priority: 1
     - name: Mirror
       type: boolean
-      JSONPath: .spec.canaryAnalysis.mirror
+      JSONPath: .spec.analysis.mirror
       priority: 1
     - name: StepWeight
       type: string
-      JSONPath: .spec.canaryAnalysis.stepWeight
+      JSONPath: .spec.analysis.stepWeight
       priority: 1
     - name: MaxWeight
       type: string
-      JSONPath: .spec.canaryAnalysis.maxWeight
+      JSONPath: .spec.analysis.maxWeight
       priority: 1
     - name: LastTransitionTime
       type: string
@@ -66,7 +66,7 @@ spec:
           required:
             - targetRef
             - service
-            - canaryAnalysis
+            - analysis
           properties:
             provider:
               description: Traffic managent provider
@@ -502,9 +502,12 @@ spec:
             skipAnalysis:
               description: Skip analysis and promote canary
               type: boolean
-            canaryAnalysis:
+            analysis:
               description: Canary analysis for this canary
               type: object
+              oneOf:
+                - required: ["interval", "threshold", "iterations"]
+                - required: ["interval", "threshold", "stepWeight"]
               properties:
                 interval:
                   description: Schedule interval for this canary
@@ -523,7 +526,7 @@ spec:
                   description: Incremental traffic percentage step
                   type: number
                 mirror:
-                  description: Mirror traffic to canary before shifting
+                  description: Mirror traffic to canary
                   type: boolean
                 match:
                   description: A/B testing match conditions

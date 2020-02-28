@@ -91,7 +91,7 @@ func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary, skipLivenessCheck
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if !skipLivenessChecks && !cd.Spec.SkipAnalysis {
+		if !skipLivenessChecks && !cd.SkipAnalysis() {
 			_, readyErr := c.IsPrimaryReady(cd)
 			if readyErr != nil {
 				return readyErr
