@@ -2,7 +2,6 @@
 
 set -o errexit
 
-
 push () {
     echo $DOCKER_PASS | docker login -u=$DOCKER_USER --password-stdin
 
@@ -11,8 +10,9 @@ push () {
         docker tag test/flagger:latest weaveworks/flagger:${BRANCH_COMMIT};
         docker push weaveworks/flagger:${BRANCH_COMMIT};
     else
-        docker tag test/flagger:latest weaveworks/flagger:${CIRCLE_TAG};
-        docker push weaveworks/flagger:${CIRCLE_TAG};
+        VER=${CIRCLE_TAG:1}
+        docker tag test/flagger:latest weaveworks/flagger:${VER};
+        docker push weaveworks/flagger:${VER};
     fi
 }
 
@@ -21,4 +21,3 @@ if [[ -z "$DOCKER_PASS" ]]; then
 else
     push
 fi
-

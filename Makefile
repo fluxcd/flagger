@@ -20,6 +20,9 @@ test-fmt:
 	gofmt -l -s ./ | grep ".*\.go"; if [ "$$?" = "0" ]; then exit 1; fi
 	goimports -l ./ | grep ".*\.go"; if [ "$$?" = "0" ]; then exit 1; fi
 
+codegen:
+	./hack/update-codegen.sh
+
 test-codegen:
 	./hack/verify-codegen.sh
 
@@ -42,16 +45,16 @@ version-set:
 	echo "Version $$next set in code, deployment, chart and kustomize"
 
 release:
-	git tag $(VERSION)
-	git push origin $(VERSION)
+	git tag "v$(VERSION)"
+	git push origin "v$(VERSION)"
 
 release-notes:
 	cd /tmp && GH_REL_URL="https://github.com/buchanae/github-release-notes/releases/download/0.2.0/github-release-notes-linux-amd64-0.2.0.tar.gz" && \
     curl -sSL $${GH_REL_URL} | tar xz && sudo mv github-release-notes /usr/local/bin/
 
 loadtester-build:
-	GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
+	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 
 loadtester-push:
-	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 	docker push weaveworks/flagger-loadtester:$(LT_VERSION)
