@@ -14,8 +14,8 @@ jobs:
           name: Run go mod download
           command: go mod download
       - run:
-          name: Run go fmt
-          command: make test-fmt
+          name: Check code formatting
+          command: go install golang.org/x/tools/cmd/goimports && make test-fmt
       - run:
           name: Build Flagger
           command: |
