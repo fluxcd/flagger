@@ -257,7 +257,7 @@ func newDeploymentTestCanary() *flaggerv1.Canary {
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
+			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
@@ -319,7 +319,7 @@ func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: flaggerv1.CanaryAnalysis{
+			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 10,
 				Match: []istiov1alpha3.HTTPMatchRequest{

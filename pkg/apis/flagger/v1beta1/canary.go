@@ -80,8 +80,11 @@ type CanarySpec struct {
 	// Service defines how ClusterIP services, service mesh or ingress routing objects are generated
 	Service CanaryService `json:"service"`
 
-	// CanaryAnalysis defines how the analysis should be performed
-	CanaryAnalysis CanaryAnalysis `json:"canaryAnalysis"`
+	// Analysis defines the validation process of a release
+	Analysis *CanaryAnalysis `json:"analysis,omitempty"`
+
+	// Deprecated: replaced by Analysis
+	CanaryAnalysis *CanaryAnalysis `json:"canaryAnalysis,omitempty"`
 
 	// ProgressDeadlineSeconds represents the maximum time in seconds for a
 	// canary deployment to make progress before it is considered to be failed
@@ -352,13 +355,22 @@ func (c *Canary) GetProgressDeadlineSeconds() int {
 	return ProgressDeadlineSeconds
 }
 
+// GetAnalysis returns the analysis v1beta1 or v1alpha3
+// to be removed along with spec.canaryAnalysis in v1
+func (c *Canary) GetAnalysis() *CanaryAnalysis {
+	if c.Spec.Analysis != nil {
+		return c.Spec.Analysis
+	}
+	return c.Spec.CanaryAnalysis
+}
+
 // GetAnalysisInterval returns the canary analysis interval (default 60s)
 func (c *Canary) GetAnalysisInterval() time.Duration {
-	if c.Spec.CanaryAnalysis.Interval == "" {
+	if c.GetAnalysis().Interval == "" {
 		return AnalysisInterval
 	}
 
-	interval, err := time.ParseDuration(c.Spec.CanaryAnalysis.Interval)
+	interval, err := time.ParseDuration(c.GetAnalysis().Interval)
 	if err != nil {
 		return AnalysisInterval
 	}
@@ -370,7 +382,24 @@ func (c *Canary) GetAnalysisInterval() time.Duration {
 	return interval
 }
 
+// GetAnalysisThreshold returns the canary threshold (default 1)
+func (c *Canary) GetAnalysisThreshold() int {
+	if c.GetAnalysis().Threshold > 0 {
+		return c.GetAnalysis().Threshold
+	}
+	return 1
+}
+
 // GetMetricInterval returns the metric interval default value (1m)
 func (c *Canary) GetMetricInterval() string {
 	return MetricInterval
+}
+
+// SkipAnalysis returns true if the analysis is nil
+// or if spec.SkipAnalysis is true
+func (c *Canary) SkipAnalysis() bool {
+	if c.Spec.Analysis == nil && c.Spec.CanaryAnalysis == nil {
+		return true
+	}
+	return c.Spec.SkipAnalysis
 }
