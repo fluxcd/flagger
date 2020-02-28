@@ -3,7 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-NGINX_VERSION=1.26.0
+NGINX_VERSION=1.33.0
 
 echo '>>> Installing NGINX Ingress'
 kubectl create ns ingress-nginx
