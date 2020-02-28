@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
+	"log"
+	"time"
+
 	"github.com/weaveworks/flagger/pkg/loadtester"
 	"github.com/weaveworks/flagger/pkg/logger"
 	"github.com/weaveworks/flagger/pkg/signals"
 	"go.uber.org/zap"
-	"log"
-	"time"
 )
 
 var VERSION = "0.12.1"

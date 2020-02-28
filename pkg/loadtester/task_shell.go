@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"os/exec"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
 const TaskTypeShell = "cmd"
