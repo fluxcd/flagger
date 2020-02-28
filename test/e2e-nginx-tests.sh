@@ -19,7 +19,7 @@ kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
 kubectl apply -f ${REPO_ROOT}/test/e2e-ingress.yaml
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -37,7 +37,7 @@ spec:
   service:
     port: 80
     targetPort: http
-  canaryAnalysis:
+  analysis:
     interval: 15s
     threshold: 15
     maxWeight: 30
@@ -156,7 +156,7 @@ done
 echo '✔ Canary promotion test passed'
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -174,7 +174,7 @@ spec:
   service:
     port: 80
     targetPort: 9898
-  canaryAnalysis:
+  analysis:
     interval: 10s
     threshold: 5
     iterations: 5

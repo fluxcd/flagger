@@ -19,7 +19,7 @@ echo '>>> Initialising canary'
 kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -39,7 +39,7 @@ spec:
           x-envoy-upstream-rq-timeout-ms: "15000"
           x-envoy-max-retries: "10"
           x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
-  canaryAnalysis:
+  analysis:
     interval: 15s
     threshold: 15
     maxWeight: 30
@@ -145,7 +145,7 @@ if [[ "$1" = "canary" ]]; then
 fi
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -161,7 +161,7 @@ spec:
     port: 80
     targetPort: 9898
     portName: http-podinfo
-  canaryAnalysis:
+  analysis:
     interval: 10s
     threshold: 5
     iterations: 5
@@ -234,7 +234,7 @@ done
 echo '✔ B/G promotion test passed'
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -250,7 +250,7 @@ spec:
     port: 80
     portName: http-podinfo
     targetPort: http
-  canaryAnalysis:
+  analysis:
     interval: 10s
     threshold: 5
     iterations: 5
