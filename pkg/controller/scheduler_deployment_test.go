@@ -144,6 +144,116 @@ func TestScheduler_DeploymentSkipAnalysis(t *testing.T) {
 	}
 }
 
+func TestScheduler_DeploymentAnalysisPhases(t *testing.T) {
+	cd := newDeploymentTestCanary()
+	cd.Spec.Analysis = &flaggerv1.CanaryAnalysis{
+		Interval:   "1m",
+		StepWeight: 100,
+	}
+	mocks := newDeploymentFixture(cd)
+
+	// init
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// update
+	dep2 := newDeploymentTestDeploymentV2()
+	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect changes
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// progressing
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// promoting
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// finalising
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseFinalising); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// succeeded
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseSucceeded); err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+func TestScheduler_DeploymentBlueGreenAnalysisPhases(t *testing.T) {
+	cd := newDeploymentTestCanary()
+	cd.Spec.Analysis = &flaggerv1.CanaryAnalysis{
+		Interval:   "1m",
+		Iterations: 1,
+	}
+	mocks := newDeploymentFixture(cd)
+
+	// init
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// update
+	dep2 := newDeploymentTestDeploymentV2()
+	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(dep2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// detect changes (progressing)
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// advance (progressing)
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// route traffic to primary (progressing)
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// promoting
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// finalising
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseFinalising); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// succeeded
+	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	if err := assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseSucceeded); err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
 func TestScheduler_DeploymentNewRevisionReset(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
 	// init
