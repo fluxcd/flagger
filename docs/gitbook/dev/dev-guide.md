@@ -58,17 +58,21 @@ Download Go modules:
 go mod download
 ```
 
-Build Flagger container image:
+Build Flagger binary and container image:
 
 ```bash
 make build
 ```
 
-Run unit tests:
+Build load tester binary and container image:
 
 ```bash
-make test
+make loadtester-build
 ```
+
+### Code changes
+
+Before submitting a PR, make sure your changes are covered by unit tests.
 
 If you made changes to `go.mod` run:
 
@@ -79,7 +83,19 @@ go mod tidy
 If you made changes to `pkg/apis` regenerate Kubernetes client sets with:
 
 ```bash
-./hack/update-codegen.sh
+make codegen
+```
+
+Run code formatters:
+
+```bash
+make fmt
+```
+
+Run unit tests:
+
+```bash
+make test
 ```
 
 ### Manual testing
