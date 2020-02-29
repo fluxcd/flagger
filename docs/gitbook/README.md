@@ -21,3 +21,28 @@ it can be used in **GitOps** pipelines together with Flux CD or JenkinsX.
 
 This project is sponsored by [Weaveworks](https://www.weave.works/)
 
+## Getting started
+
+To get started with Flagger, chose one of the supported routing providers
+and [install](install/flagger-install-on-kubernetes.md) Flagger with Helm or Kustomize.
+
+After install Flagger you can follow one the tutorials:
+
+**Service mesh tutorials**
+
+* [Istio](tutorials/istio-progressive-delivery.md)
+* [Linkerd](tutorials/linkerd-progressive-delivery.md)
+* [AWS App Mesh](tutorials/appmesh-progressive-delivery.md)
+
+**Ingress controller tutorials**
+
+* [Contour](tutorials/contour-progressive-delivery.md)
+* [Gloo](tutorials/gloo-progressive-delivery.md)
+* [NGINX Ingress](tutorials/nginx-progressive-delivery.md)
+
+**Hands-on GitOps workshops**
+
+* [Istio](https://github.com/stefanprodan/gitops-istio)
+* [Linkerd](https://helm.workshop.flagger.dev)
+* [AWS App Mesh](https://eks.hands-on.flagger.dev)
+
