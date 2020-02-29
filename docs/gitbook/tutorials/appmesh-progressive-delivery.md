@@ -389,3 +389,4 @@ Routing all traffic to primary
 Promotion completed! Scaling down podinfo.test
 ```
 
+For an in-depth look at the analysis process read the [usage docs](../usage/how-it-works.md).

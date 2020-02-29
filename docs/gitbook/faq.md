@@ -336,6 +336,11 @@ histogram_quantile(0.99,
 
 > **Note** that the metric interval should be lower or equal to the control loop interval.
 
+**Can I use custom metrics?**
+
+The analysis can be extended with metrics provided by Prometheus, Datadog and AWS CloudWatch. For more details 
+on how custom metrics can be used please read the [metrics docs](usage/metrics.md).
+
 ### Istio routing
 
 **How does Flagger interact with Istio?**

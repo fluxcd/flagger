@@ -213,3 +213,7 @@ Events:
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
+The above procedure can be extended with [custom metrics](../usage/metrics.md) checks,
+[webhooks](../usage/webhooks.md),
+[manual promotion](../usage/webhooks.md#manual-gating) approval and
+[Slack or MS Teams](../usage/alerting.md) notifications.

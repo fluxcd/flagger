@@ -44,7 +44,9 @@ helm upgrade -i flagger flagger/flagger \
 
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services and canary ingress\). These objects expose the application outside the cluster and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
+then creates a series of objects (Kubernetes deployments, ClusterIP services and canary ingress).
+These objects expose the application outside the cluster and drive the canary analysis and promotion.
 
 Create a test namespace:
 
@@ -186,7 +188,9 @@ ingresses.extensions/podinfo-canary
 
 ## Automated canary promotion
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring
+key performance indicators like HTTP requests success rate, requests average duration and pod health.
+Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
@@ -257,7 +261,8 @@ Generate HTTP 500 errors:
 watch curl http://app.example.com/status/500
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
+the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo
@@ -286,30 +291,49 @@ Events:
 
 The canary analysis can be extended with Prometheus queries.
 
-The demo app is instrumented with Prometheus so you can create a custom check that will use the HTTP request duration histogram to validate the canary.
+The demo app is instrumented with Prometheus so you can create a custom check that will use the
+HTTP request duration histogram to validate the canary.
 
-Edit the canary analysis and add the following metric:
+Create a metric template and apply it on the cluster:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: test
+spec:
+  provider:
+    type: prometheus
+    address: http://flagger-promethues.ingress-nginx:9090
+  query: |
+    histogram_quantile(0.99,
+      sum(
+        rate(
+          http_request_duration_seconds_bucket{
+            kubernetes_namespace="{{ namespace }}",
+            kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+          }[1m]
+        )
+      ) by (le)
+    )
+```
+
+Edit the canary analysis and add the latency check:
 
 ```yaml
   analysis:
     metrics:
     - name: "latency"
-      threshold: 0.5
+      templateRef:
+        name: latency
+      thresholdRange:
+        max: 0.5
       interval: 1m
-      query: |
-        histogram_quantile(0.99,
-          sum(
-            rate(
-              http_request_duration_seconds_bucket{
-                kubernetes_namespace="test",
-                kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
-              }[1m]
-            )
-          ) by (le)
-        )
 ```
 
-The threshold is set to 500ms so if the average request duration in the last minute goes over half a second then the analysis will fail and the canary will not be promoted.
+The threshold is set to 500ms so if the average request duration in the last minute goes over half a second
+then the analysis will fail and the canary will not be promoted.
 
 Trigger a canary deployment by updating the container image:
 
@@ -342,11 +366,13 @@ Rolling back podinfo.test failed checks threshold reached 5
 Canary failed! Scaling down podinfo.test
 ```
 
-If you have Slack configured, Flagger will send a notification with the reason why the canary failed.
+If you have alerting configured, Flagger will send a notification with the reason why the canary failed.
 
 ## A/B Testing
 
-Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
+In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
+This is particularly useful for frontend applications that require session affinity.
 
 ![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
 
@@ -378,7 +404,8 @@ Edit the canary analysis, remove the max/step weight and add the match condition
           cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: canary=always' http://app.example.com/"
 ```
 
-The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie set to `always` or those that call the service using the `X-Canary: insider` header.
+The above configuration will run an analysis for ten minutes targeting users that have a `canary` cookie
+set to `always` or those that call the service using the `X-Canary: insider` header.
 
 Trigger a canary deployment by updating the container image:
 
@@ -416,3 +443,7 @@ Events:
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
+The above procedure can be extended with [custom metrics](../usage/metrics.md) checks,
+[webhooks](../usage/webhooks.md),
+[manual promotion](../usage/webhooks.md#manual-gating) approval and
+[Slack or MS Teams](../usage/alerting.md) notifications.

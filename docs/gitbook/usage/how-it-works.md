@@ -168,7 +168,7 @@ spec:
 
 When using **Istio** as the mesh provider, you can also specify
 HTTP header operations, CORS and traffic policies, Istio gateways and hosts.
-The Istio routing configuration can be found [here](faq.md#istio-routing).
+The Istio routing configuration can be found [here](../faq.md#istio-routing).
  
 ### Canary status
 
@@ -241,10 +241,10 @@ kubectl get canary/podinfo | grep Succeeded
 ### Canary analysis
 
 The canary analysis defines:
-* the type of [deployment strategy](usage/deployment-strategies.md)
-* the [metrics](usage/metrics.md) used to validate the canary version
-* the [webhooks](usage/webhooks.md) used for conformance testing, load testing and manual gating
-* the [alerting settings](usage/alerting.md)
+* the type of [deployment strategy](deployment-strategies.md)
+* the [metrics](metrics.md) used to validate the canary version
+* the [webhooks](webhooks.md) used for conformance testing, load testing and manual gating
+* the [alerting settings](alerting.md)
 
 Spec:
 

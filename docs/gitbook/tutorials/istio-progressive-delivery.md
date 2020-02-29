@@ -319,5 +319,7 @@ With the above configuration, Flagger will run a canary release with the followi
 * scale to zero the canary
 * send notification with the canary analysis result
 
-The above procedure can be extended with [custom metrics](https://docs.flagger.app/how-it-works#custom-metrics) checks, [webhooks](https://docs.flagger.app/how-it-works#webhooks), [manual promotion](https://docs.flagger.app/how-it-works#manual-gating) approval and [Slack or MS Teams](https://docs.flagger.app/usage/alerting) notifications.
-
+The above procedure can be extended with [custom metrics](../usage/metrics.md) checks,
+[webhooks](../usage/webhooks.md),
+[manual promotion](../usage/webhooks.md#manual-gating) approval and
+[Slack or MS Teams](../usage/alerting.md) notifications.
