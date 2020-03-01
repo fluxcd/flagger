@@ -144,7 +144,8 @@ spec:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     # testing (optional)
     webhooks:
@@ -394,7 +395,8 @@ Edit the canary analysis, remove the max/step weight and add the match condition
             exact: "canary"
     metrics:
     - name: request-success-rate
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     webhooks:
       - name: load-test

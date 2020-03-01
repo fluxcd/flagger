@@ -23,3 +23,19 @@ Upgrade procedure:
 **Note** that after upgrading Flagger, all canaries will be triggered as the hash value used for tracking changes
 is computed differently. You can set `spec.skipAnalysis: true` in all canary manifests before upgrading Flagger,
 do the upgrade, wait for Flagger to finish the no-op promotions and finally set `skipAnalysis` to `false`.
+
+Update builtin metrics:
+* replace `threshold` with `thresholdRange.min` for request-success-rate
+* replace `threshold` with `thresholdRange.max` for request-duration
+
+```yaml
+metrics:
+- name: request-success-rate
+  thresholdRange:
+    min: 99
+  interval: 1m
+- name: request-duration
+  thresholdRange:
+    max: 500
+  interval: 1m
+```

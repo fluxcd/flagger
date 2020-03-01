@@ -85,12 +85,14 @@ spec:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     - name: request-duration
       # maximum req duration P99
       # milliseconds
-      threshold: 500
+      thresholdRange:
+        max: 500
       interval: 30s
     # testing (optional)
     webhooks:
@@ -277,10 +279,12 @@ spec:
     mirror: true
     metrics:
     - name: request-success-rate
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     - name: request-duration
-      threshold: 500
+      thresholdRange:
+        max: 500
       interval: 1m
     webhooks:
       - name: acceptance-test
