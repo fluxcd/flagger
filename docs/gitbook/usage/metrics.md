@@ -233,3 +233,86 @@ Reference the template in the canary analysis:
           max: 5
         interval: 1m
 ```
+
+
+### AWS CloudWatch metrics
+
+You can create custom metric checks using the AWS CloudWatch metrics provider.
+
+The template example:
+
+```yaml
+apiVersion: flagger.app/v1alpha1
+kind: MetricTemplate
+metadata:
+  name: cloudwatch-error-rate
+  namespace: istio-system
+spec:
+  provider:
+    type: cloudwatch
+    region: ap-northeast-1 # specify the region of your metrics
+  query: |
+    [
+        {
+            "Id": "e1",
+            "Expression": "m1 / m2",
+            "Label": "ErrorRate"
+        },
+        {
+            "Id": "m1",
+            "MetricStat": {
+                "Metric": {
+                    "Namespace": "MyKubernetesCluster",
+                    "MetricName": "ErrorCount",
+                    "Dimensions": [
+                        {
+                            "Name": "appName",
+                            "Value": "{{ name }}.{{ namespace }}"
+                        }
+                    ]
+                },
+                "Period": 60,
+                "Stat": "Sum",
+                "Unit": "Count"
+            },
+            "ReturnData": false
+        },
+        {
+            "Id": "m2",
+            "MetricStat": {
+                "Metric": {
+                    "Namespace": "MyKubernetesCluster",
+                    "MetricName": "RequestCount",
+                    "Dimensions": [
+                        {
+                            "Name": "appName",
+                            "Value": "{{ name }}.{{ namespace }}"
+                        }
+                    ]
+                },
+                "Period": 60,
+                "Stat": "Sum",
+                "Unit": "Count"
+            },
+            "ReturnData": false
+        }
+    ]
+```
+
+where the query is in the form as in [the AWS' official document](https://aws.amazon.com/premiumsupport/knowledge-center/cloudwatch-getmetricdata-api/).
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "cw custom error rate"
+        templateRef:
+          name: cloudwatch-error-rate
+          namespace: istio-system
+        thresholdRange:
+          max: 0.1
+        interval: 1m
+```
+
+Please note that the flagger need AWS IAM permission to perform `cloudwatch:GetMetricsData` to use this provider.
