@@ -54,7 +54,7 @@ func NewCloudWatchProvider(metricInterval string, provider flaggerv1.MetricTempl
 	}, err
 }
 
-// RunQuery executes the aws cloud watch metrics query against GetMetricsData endpoint
+// RunQuery executes the aws cloud watch metrics query against GetMetricData endpoint
 // and returns the the first result as float64
 func (p *CloudWatchProvider) RunQuery(query string) (float64, error) {
 	var cq []*cloudwatch.MetricDataQuery
@@ -88,9 +88,9 @@ func (p *CloudWatchProvider) RunQuery(query string) (float64, error) {
 	return aws.Float64Value(vs[0]), nil
 }
 
-// IsOnline calls GetMetricsData endpoint with the empty query
+// IsOnline calls GetMetricData endpoint with the empty query
 // and returns an error if the returned status code is NOT http.StatusBadRequests.
-// For example, if the flagger does not have permission to perform `cloudwatch:GetMetricsData`,
+// For example, if the flagger does not have permission to perform `cloudwatch:GetMetricData`,
 // the returned status code would be http.StatusForbidden
 func (p *CloudWatchProvider) IsOnline() (bool, error) {
 	_, err := p.client.GetMetricData(&cloudwatch.GetMetricDataInput{

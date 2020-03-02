@@ -315,4 +315,4 @@ Reference the template in the canary analysis:
         interval: 1m
 ```
 
-Please note that the flagger need AWS IAM permission to perform `cloudwatch:GetMetricsData` to use this provider.
+Please note that the flagger need AWS IAM permission to perform `cloudwatch:GetMetricData` to use this provider.
