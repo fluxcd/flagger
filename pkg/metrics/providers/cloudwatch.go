@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -33,14 +32,16 @@ type cloudWatchClient interface {
 // NewCloudWatchProvider takes a metricInterval, a provider spec and the credentials map, and
 // returns a cloudWatchProvider ready to execute queries against the AWS CloudWatch metrics
 func NewCloudWatchProvider(metricInterval string, provider flaggerv1.MetricTemplateProvider) (*CloudWatchProvider, error) {
-	region := strings.TrimLeft(provider.Address, "monitoring.")
-	region = strings.TrimRight(region, ".amazonaws.com")
-	sess, err := session.NewSession(
-		aws.NewConfig().
-			WithRegion(region).
-			WithMaxRetries(cloudWatchMaxRetries).
-			WithEndpoint(provider.Address),
-	)
+	if provider.Region == "" {
+		return nil, fmt.Errorf("region not specified")
+	}
+
+	sess, err := session.NewSession(aws.NewConfig().
+		WithRegion(provider.Region).WithMaxRetries(cloudWatchMaxRetries))
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating aws session: %s", err.Error())
+	}
 
 	md, err := time.ParseDuration(metricInterval)
 	if err != nil {

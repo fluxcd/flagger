@@ -733,7 +733,6 @@ spec:
               type: object
               required:
                 - type
-                - address
               properties:
                 type:
                   description: Type of this provider
@@ -755,6 +754,9 @@ spec:
                     name:
                       description: Name of the Kubernetes secret
                       type: string
+                region:
+                  description: Region of the provider
+                  type: string
             query:
               description: Query of this metric template
               type: string

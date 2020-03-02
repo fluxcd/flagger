@@ -64,11 +64,16 @@ type MetricTemplateProvider struct {
 	Type string `json:"type,omitempty"`
 
 	// HTTP(S) address of this provider
+	// +optional
 	Address string `json:"address,omitempty"`
 
 	// Secret reference containing the provider credentials
 	// +optional
 	SecretRef *corev1.LocalObjectReference `json:"secretRef,omitempty"`
+
+	// Region of the provider
+	// +optional
+	Region string `json:"region,omitempty"`
 }
 
 // MetricTemplateModel is the query template model

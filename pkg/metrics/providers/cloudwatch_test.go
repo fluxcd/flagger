@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/costandusagereportservice"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
@@ -23,19 +24,28 @@ func (c cloudWatchClientMock) GetMetricData(_ *cloudwatch.GetMetricDataInput) (*
 }
 
 func TestNewCloudWatchProvider(t *testing.T) {
-	p, err := NewCloudWatchProvider(
-		"5m",
-		flaggerv1.MetricTemplateProvider{
-			Address: "monitoring.ap-northeast-1.amazonaws.com",
-		})
+	t.Run("ok", func(t *testing.T) {
+		p, err := NewCloudWatchProvider(
+			"5m",
+			flaggerv1.MetricTemplateProvider{
+				Region: costandusagereportservice.AWSRegionApEast1,
+			})
 
-	if err != nil {
-		t.Fatal(err)
-	}
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if exp := 5 * 60 * time.Second * cloudWatchStartDeltaMultiplierOnMetricInterval; p.startDelta != exp {
-		t.Fatalf("expected %d but got %d", exp, p.startDelta)
-	}
+		if exp := 5 * 60 * time.Second * cloudWatchStartDeltaMultiplierOnMetricInterval; p.startDelta != exp {
+			t.Fatalf("expected %d but got %d", exp, p.startDelta)
+		}
+	})
+
+	t.Run("ng", func(t *testing.T) {
+		_, err := NewCloudWatchProvider("5m", flaggerv1.MetricTemplateProvider{})
+		if err == nil {
+			t.Fatal("error expected since region was not specified")
+		}
+	})
 }
 
 func TestCloudWatchProvider_IsOnline(t *testing.T) {
