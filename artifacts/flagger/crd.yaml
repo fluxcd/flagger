@@ -742,6 +742,7 @@ spec:
                     - prometheus
                     - influxdb
                     - datadog
+                    - cloudwatch
                 address:
                   description: API address of this provider
                   type: string
