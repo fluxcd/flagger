@@ -1,6 +1,7 @@
 root: ./docs/gitbook
 
 redirects:
+  how-it-works: usage/how-it-works.md
   usage/progressive-delivery: tutorials/istio-progressive-delivery.md
   usage/ab-testing: tutorials/istio-ab-testing.md
   usage/blue-green: tutorials/kubernetes-blue-green.md

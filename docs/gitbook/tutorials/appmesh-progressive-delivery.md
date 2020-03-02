@@ -51,7 +51,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 Create a canary custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -92,7 +92,7 @@ spec:
       perTryTimeout: 5s
       retryOn: "gateway-error,client-error,stream-error"
   # define the canary analysis timing and KPIs
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # max number of failed metric checks before rollback
@@ -108,12 +108,14 @@ spec:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     - name: request-duration
       # maximum req duration P99
       # milliseconds
-      threshold: 500
+      thresholdRange:
+        max: 500
       interval: 30s
     # testing (optional)
     webhooks:
@@ -329,7 +331,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     interval: 1m
     threshold: 5
     iterations: 10
@@ -389,3 +391,4 @@ Routing all traffic to primary
 Promotion completed! Scaling down podinfo.test
 ```
 
+For an in-depth look at the analysis process read the [usage docs](../usage/how-it-works.md).

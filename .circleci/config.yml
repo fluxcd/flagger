@@ -199,7 +199,7 @@ jobs:
       - run:
           name: Publish charts
           command: |
-            if echo "${CIRCLE_TAG}" | grep -Eq "[0-9]+(\.[0-9]+)*(-[a-z]+)?$"; then
+            if echo "${CIRCLE_TAG}" | grep v; then
               REPOSITORY="https://weaveworksbot:${GITHUB_TOKEN}@github.com/weaveworks/flagger.git"
               git config user.email weaveworksbot@users.noreply.github.com
               git config user.name weaveworksbot

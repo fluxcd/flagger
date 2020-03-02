@@ -2,7 +2,9 @@
 
 This guide shows you how to automate Blue/Green deployments with Flagger and Kubernetes.
 
-For applications that are not deployed on a service mesh, Flagger can orchestrate Blue/Green style deployments with Kubernetes L4 networking. When using a service mesh blue/green can be used as specified [here](https://docs.flagger.app/how-it-works#blue-green-deployments).
+For applications that are not deployed on a service mesh, Flagger can orchestrate Blue/Green style deployments
+with Kubernetes L4 networking. When using a service mesh blue/green can be used as
+specified [here](../usage/deployment-strategies.md).
 
 ![Flagger Blue/Green Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-bluegreen-steps.png)
 
@@ -42,7 +44,9 @@ helm upgrade -i flagger flagger/flagger \
 
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployment and ClusterIP services\). These objects expose the application inside the cluster and drive the canary analysis and Blue/Green promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
+then creates a series of objects (Kubernetes deployment and ClusterIP services).
+These objects expose the application inside the cluster and drive the canary analysis and Blue/Green promotion.
 
 Create a test namespace:
 
@@ -53,23 +57,19 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl apply -f ${REPO}/artifacts/canaries/deployment.yaml
-kubectl apply -f ${REPO}/artifacts/canaries/hpa.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the analysis:
 
 ```bash
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Create a canary custom resource:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -93,7 +93,7 @@ spec:
   service:
     port: 9898
     portDiscovery: true
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 30s
     # max number of failed checks before rollback
@@ -106,12 +106,14 @@ spec:
       - name: request-success-rate
         # minimum req success rate (non 5xx responses)
         # percentage (0-100)
-        threshold: 99
+        thresholdRange:
+          min: 99
         interval: 1m
       - name: request-duration
         # maximum req duration P99
         # milliseconds
-        threshold: 500
+        thresholdRange:
+          max: 500
         interval: 30s
     # acceptance/load testing hooks
     webhooks:
@@ -156,8 +158,10 @@ service/podinfo-primary
 
 Blue/Green scenario:
 
-* on bootstrap, Flagger will create three ClusterIP services \(`app-primary`,`app-canary`, `app`\) and a shadow deployment named `app-primary` that represents the blue version
-* when a new version is detected, Flagger would scale up the green version and run the conformance tests \(the tests should target the `app-canary` ClusterIP service to reach the green version\)
+* on bootstrap, Flagger will create three ClusterIP services (`app-primary`,`app-canary`, `app`)
+and a shadow deployment named `app-primary` that represents the blue version
+* when a new version is detected, Flagger would scale up the green version and run the conformance tests
+(the tests should target the `app-canary` ClusterIP service to reach the green version)
 * if the conformance tests are passing, Flagger would start the load tests and validate them with custom Prometheus queries
 * if the load test analysis is successful, Flagger will promote the new version to `app-primary` and scale down the green version
 
@@ -253,37 +257,58 @@ Events:
 
 ## Custom metrics
 
-The analysis can be extended with Prometheus queries. The demo app is instrumented with Prometheus so you can create a custom check that will use the HTTP request duration histogram to validate the canary \(green version\).
+The analysis can be extended with Prometheus queries. The demo app is instrumented with Prometheus so you can
+create a custom check that will use the HTTP request duration histogram to validate the canary (green version).
+
+
+Create a metric template and apply it on the cluster:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: not-found-percentage
+  namespace: test
+spec:
+  provider:
+    type: prometheus
+    address: http://flagger-promethues.flagger:9090
+  query: |
+    100 - sum(
+        rate(
+            http_request_duration_seconds_count{
+              kubernetes_namespace="{{ namespace }}",
+              kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+              status!="{{ interval }}"
+            }[1m]
+        )
+    )
+    /
+    sum(
+        rate(
+            http_request_duration_seconds_count{
+              kubernetes_namespace="{{ namespace }}",
+              kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+            }[{{ interval }}]
+        )
+    ) * 100
+```
 
 Edit the canary analysis and add the following metric:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     metrics:
-    - name: "404s percentage"
-      threshold: 5
-      query: |
-        100 - sum(
-            rate(
-                http_request_duration_seconds_count{
-                  kubernetes_namespace="test",
-                  kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
-                  status!="404"
-                }[1m]
-            )
-        )
-        /
-        sum(
-            rate(
-                http_request_duration_seconds_count{
-                  kubernetes_namespace="test",
-                  kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
-                }[1m]
-            )
-        ) * 100
+      - name: "404s percentage"
+        templateRef:
+          name: not-found-percentage
+        thresholdRange:
+          max: 5
+        interval: 1m
 ```
 
-The above configuration validates the canary \(green version\) by checking if the HTTP 404 req/sec percentage is below 5 percent of the total traffic. If the 404s rate reaches the 5% threshold, then the rollout is rolled back.
+The above configuration validates the canary (green version) by checking if the HTTP 404 req/sec percentage is
+below 5 percent of the total traffic. If the 404s rate reaches the 5% threshold, then the rollout is rolled back.
 
 Trigger a deployment by updating the container image:
 
@@ -312,7 +337,8 @@ Rolling back podinfo.test failed checks threshold reached 2
 Canary failed! Scaling down podinfo.test
 ```
 
-If you have Slack configured, Flagger will send a notification with the reason why the canary failed.
+If you have [alerting](../usage/alerting.md) configured,
+Flagger will send a notification with the reason why the canary failed.
 
 ## Conformance Testing with Helm
 
@@ -333,7 +359,7 @@ When deployed the Helm tester API will be available at `http://flagger-helmteste
 Add a helm test pre-rollout hook to your chart:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "conformance testing"
         type: pre-rollout
@@ -344,5 +370,8 @@ Add a helm test pre-rollout hook to your chart:
           cmd: "test {{ .Release.Name }} --cleanup"
 ```
 
-When the canary analysis starts, Flagger will call the pre-rollout webhooks. If the helm test fails, Flagger will retry until the analysis threshold is reached and the canary is rolled back.
+When the canary analysis starts, Flagger will call the pre-rollout webhooks.
+If the helm test fails, Flagger will retry until the analysis threshold is reached and the canary is rolled back.
+
+For an in-depth look at the analysis process read the [usage docs](../usage/how-it-works.md).
 

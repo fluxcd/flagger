@@ -84,7 +84,7 @@ Example:
 The event webhook can be overwritten at canary level with:
 
 ```yaml
-  canaryAnalysis:
+  analysis:
     webhooks:
       - name: "send to Slack"
         type: event

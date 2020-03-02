@@ -4,9 +4,48 @@ This guide shows you how to use Istio and Flagger to automate canary deployments
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
+## Prerequisites
+
+Flagger requires a Kubernetes cluster **v1.11** or newer and Istio **v1.0** or newer.
+
+Install Istio with telemetry support and Prometheus:
+
+```bash
+istioctl manifest apply --set profile=default
+```
+
+Install Flagger using Kustomize (kubectl 1.14) in the `istio-system` namespace:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
+```
+
+Create an ingress gateway to expose the demo app outside of the mesh:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: public-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+```
+
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services, Istio destination rules and virtual services\). These objects expose the application inside the mesh and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
+then creates a series of objects (Kubernetes deployments, ClusterIP services,
+Istio destination rules and virtual services).
+These objects expose the application inside the mesh and drive the canary analysis and promotion.
 
 Create a test namespace with Istio sidecar injection enabled:
 
@@ -27,10 +66,10 @@ Deploy the load testing service to generate traffic during the canary analysis:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
-Create a canary custom resource \(replace example.com with your own domain\):
+Create a canary custom resource (replace example.com with your own domain):
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -70,7 +109,7 @@ spec:
       attempts: 3
       perTryTimeout: 1s
       retryOn: "gateway-error,connect-failure,refused-stream"
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 1m
     # max number of failed metric checks before rollback
@@ -85,12 +124,14 @@ spec:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     - name: request-duration
       # maximum req duration P99
       # milliseconds
-      threshold: 500
+      thresholdRange:
+        max: 500
       interval: 30s
     # testing (optional)
     webhooks:
@@ -114,7 +155,8 @@ Save the above resource as podinfo-canary.yaml and then apply it:
 kubectl apply -f ./podinfo-canary.yaml
 ```
 
-When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary. The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
+When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
+The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
 
 ![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
 
@@ -224,7 +266,8 @@ Generate latency:
 watch curl http://podinfo-canary:9898/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
+the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo
@@ -253,20 +296,23 @@ Events:
 
 ![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-traffic-mirroring.png)
 
-For applications that perform read operations, Flagger can be configured to drive canary releases with traffic mirroring. Istio traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service. The response from the primary is sent back to the user and the response from the canary is discarded. Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are within the threshold values.
+For applications that perform read operations, Flagger can be configured to drive canary releases with traffic mirroring.
+Istio traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.
+The response from the primary is sent back to the user and the response from the canary is discarded.
+Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are within the threshold values.
 
-Note that mirroring should be used for requests that are **idempotent** or capable of being processed twice \(once by the primary and once by the canary\).
+Note that mirroring should be used for requests that are **idempotent** or capable of being processed twice (once by the primary and once by the canary).
 
-You can enable mirroring by replacing `stepWeight/maxWeight` with `iterations` and by setting `canaryAnalysis.mirror` to `true`:
+You can enable mirroring by replacing `stepWeight/maxWeight` with `iterations` and by setting `analysis.mirror` to `true`:
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
   namespace: test
 spec:
-  canaryAnalysis:
+  analysis:
     # schedule interval
     interval: 1m
     # max number of failed metric checks before rollback
@@ -277,10 +323,12 @@ spec:
     mirror: true
     metrics:
     - name: request-success-rate
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     - name: request-duration
-      threshold: 500
+      thresholdRange:
+        max: 500
       interval: 1m
     webhooks:
       - name: acceptance-test
@@ -299,7 +347,7 @@ spec:
 
 With the above configuration, Flagger will run a canary release with the following steps:
 
-* detect new revision \(deployment spec, secrets or configmaps changes\)
+* detect new revision (deployment spec, secrets or configmaps changes)
 * scale from zero the canary deployment
 * wait for the HPA to set the canary minimum replicas
 * check canary pods health
@@ -311,7 +359,7 @@ With the above configuration, Flagger will run a canary release with the followi
 * abort the canary release if the metrics check failure threshold is reached
 * stop traffic mirroring after the number of iterations is reached
 * route live traffic to the canary pods
-* promote the canary \(update the primary secrets, configmaps and deployment spec\)
+* promote the canary (update the primary secrets, configmaps and deployment spec)
 * wait for the primary deployment rollout to finish
 * wait for the HPA to set the primary minimum replicas
 * check primary pods health
@@ -319,5 +367,7 @@ With the above configuration, Flagger will run a canary release with the followi
 * scale to zero the canary
 * send notification with the canary analysis result
 
-The above procedure can be extended with [custom metrics](https://docs.flagger.app/how-it-works#custom-metrics) checks, [webhooks](https://docs.flagger.app/how-it-works#webhooks), [manual promotion](https://docs.flagger.app/how-it-works#manual-gating) approval and [Slack or MS Teams](https://docs.flagger.app/usage/alerting) notifications.
-
+The above procedure can be extended with [custom metrics](../usage/metrics.md) checks,
+[webhooks](../usage/webhooks.md),
+[manual promotion](../usage/webhooks.md#manual-gating) approval and
+[Slack or MS Teams](../usage/alerting.md) notifications.

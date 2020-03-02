@@ -106,7 +106,7 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -134,7 +134,7 @@ spec:
     # Istio virtual service host names (optional)
     hosts:
     - app.example.com
-  canaryAnalysis:
+  analysis:
     # schedule interval (default 60s)
     interval: 10s
     # max number of failed metric checks before rollback
@@ -149,12 +149,14 @@ spec:
     - name: request-success-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
     - name: request-duration
       # maximum req duration P99
       # milliseconds
-      threshold: 500
+      thresholdRange:
+        max: 500
       interval: 30s
     # generate traffic during analysis
     webhooks:
