@@ -16,7 +16,7 @@ kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 
 The above command will deploy Contour and an Envoy daemonset in the `projectcontour` namespace.
 
-Install Flagger using Kustomize \(kubectl 1.14\) in the `projectcontour` namespace:
+Install Flagger using Kustomize (kubectl 1.14) in the `projectcontour` namespace:
 
 ```bash
 kubectl apply -k github.com/weaveworks/flagger//kustomize/contour

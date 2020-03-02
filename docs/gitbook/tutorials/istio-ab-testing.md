@@ -2,9 +2,47 @@
 
 This guide shows you how to automate A/B testing with Istio and Flagger.
 
-Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
+In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
+This is particularly useful for frontend applications that require session affinity.
 
 ![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
+
+## Prerequisites
+
+Flagger requires a Kubernetes cluster **v1.11** or newer and Istio **v1.0** or newer.
+
+Install Istio with telemetry support and Prometheus:
+
+```bash
+istioctl manifest apply --set profile=default
+```
+
+Install Flagger using Kustomize (kubectl 1.14) in the `istio-system` namespace:
+
+```bash
+kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
+```
+
+Create an ingress gateway to expose the demo app outside of the mesh:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: public-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+```
 
 ## Bootstrap
 
@@ -132,7 +170,7 @@ virtualservice.networking.istio.io/podinfo
 Trigger a canary deployment by updating the container image:
 
 ```bash
-kubectl -n test set image deployment/abtest \
+kubectl -n test set image deployment/podinfo \
 podinfod=stefanprodan/podinfo:3.1.1
 ```
 
@@ -160,8 +198,8 @@ Events:
   Normal   Synced  55s   flagger  Advance podinfo.test canary iteration 8/10
   Normal   Synced  45s   flagger  Advance podinfo.test canary iteration 9/10
   Normal   Synced  35s   flagger  Advance podinfo.test canary iteration 10/10
-  Normal   Synced  25s   flagger  Copying podinfo.test template spec to abtest-primary.test
-  Warning  Synced  15s   flagger  Waiting for abtest-primary.test rollout to finish: 1 of 2 updated replicas are available
+  Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
+  Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
@@ -173,7 +211,7 @@ You can monitor all canaries with:
 watch kubectl get canaries --all-namespaces
 
 NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
-test        abtest    Progressing   100      2019-03-16T14:05:07Z
+test        podinfo   Progressing   100      2019-03-16T14:05:07Z
 prod        frontend  Succeeded     0        2019-03-15T16:15:07Z
 prod        backend   Failed        0        2019-03-14T17:05:07Z
 ```
@@ -194,10 +232,11 @@ Generate latency:
 watch curl -b 'type=insider' http://app.example.com/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
+the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
-kubectl -n test describe canary/abtest
+kubectl -n test describe canary/podinfo
 
 Status:
   Failed Checks:         2
