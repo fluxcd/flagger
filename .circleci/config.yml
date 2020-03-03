@@ -3,7 +3,7 @@ jobs:
 
   build-binary:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     working_directory: ~/build
     steps:
       - checkout
@@ -47,7 +47,7 @@ jobs:
 
   push-container:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     steps:
       - checkout
       - setup_remote_docker:
@@ -59,7 +59,7 @@ jobs:
 
   push-binary:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     working_directory: ~/build
     steps:
       - checkout
@@ -175,7 +175,7 @@ jobs:
 
   push-helm-charts:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     steps:
       - checkout
       - run:
