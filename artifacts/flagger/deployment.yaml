@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flagger
-  namespace: istio-system
+  namespace: default
   labels:
     app: flagger
 spec:
@@ -30,9 +30,6 @@ spec:
         command:
         - ./flagger
         - -log-level=info
-        - -control-loop-interval=10s
-        - -mesh-provider=$(MESH_PROVIDER)
-        - -metrics-server=http://prometheus.istio-system.svc.cluster.local:9090
         livenessProbe:
           exec:
             command:

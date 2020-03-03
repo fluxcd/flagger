@@ -116,10 +116,7 @@ that generates traffic during analysis when configured as a webhook.
 First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Or by using Helm:
