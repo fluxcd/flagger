@@ -2,6 +2,41 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.0-rc.1 (2020-03-03) 
+
+This is a release candidate for Flagger v1.0.0.
+
+The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.app/dev/upgrade-guide).
+
+Two new resources where added to the API: `MetricTemplate` and `AlertProvider`.
+The analysis can reference [metric templates](https://docs.flagger.app//usage/metrics#custom-metrics)
+to query Prometheus, Datadog and AWS CloudWatch.
+[Alerting](https://docs.flagger.app/v/master/usage/alerting#canary-configuration) can be configured on a per
+canary basis for Slack, MS Teams, Discord and Rocket.
+
+#### Features
+
+- Implement metric templates for Prometheus [#419](https://github.com/weaveworks/flagger/pull/419)
+    Datadog [#460](https://github.com/weaveworks/flagger/pull/460) and 
+    CloudWatch [#464](https://github.com/weaveworks/flagger/pull/464)
+- Implement metric range validation [#424](https://github.com/weaveworks/flagger/pull/424)
+- Add support for targeting DaemonSets [#455](https://github.com/weaveworks/flagger/pull/455)
+- Implement canary alerts and alert providers (Slack, MS Teams, Discord and Rocket) [#429](https://github.com/weaveworks/flagger/pull/429)
+
+#### Improvements
+
+- Add support for Istio multi-cluster [#447](https://github.com/weaveworks/flagger/pull/447) [#450](https://github.com/weaveworks/flagger/pull/450)
+- Extend Istio traffic policy [#441](https://github.com/weaveworks/flagger/pull/441),
+    add support for header operations [#442](https://github.com/weaveworks/flagger/pull/442) and 
+    set ingress destination port when multiple ports are discovered [#436](https://github.com/weaveworks/flagger/pull/436).
+- Add support for rollback gating [#449](https://github.com/weaveworks/flagger/pull/449)
+- Allow disabling ConfigMaps and Secrets tracking [#425](https://github.com/weaveworks/flagger/pull/425)
+
+#### Fixes
+
+- Fix spec changes detection [#446](https://github.com/weaveworks/flagger/pull/446)
+- Track projected ConfigMaps and Secrets [#433](https://github.com/weaveworks/flagger/pull/433)
+
 ## 0.23.0 (2020-02-06) 
 
 Adds support for service name configuration and rollback webhook
