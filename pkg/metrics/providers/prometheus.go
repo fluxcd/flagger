@@ -39,7 +39,7 @@ type prometheusResponse struct {
 // returns a Prometheus client ready to execute queries against the API
 func NewPrometheusProvider(provider flaggerv1.MetricTemplateProvider, credentials map[string][]byte) (*PrometheusProvider, error) {
 	promURL, err := url.Parse(provider.Address)
-	if err != nil {
+	if provider.Address == "" || err != nil {
 		return nil, fmt.Errorf("%s address %s is not a valid URL", provider.Type, provider.Address)
 	}
 

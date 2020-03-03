@@ -11,12 +11,13 @@ func (factory Factory) Provider(
 	provider flaggerv1.MetricTemplateProvider,
 	credentials map[string][]byte,
 ) (Interface, error) {
-
-	switch {
-	case provider.Type == "prometheus":
+	switch provider.Type {
+	case "prometheus":
 		return NewPrometheusProvider(provider, credentials)
-	case provider.Type == "datadog":
+	case "datadog":
 		return NewDatadogProvider(metricInterval, provider, credentials)
+	case "cloudwatch":
+		return NewCloudWatchProvider(metricInterval, provider)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}
