@@ -57,7 +57,8 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 List of organizations using Flagger:
 
 * [Capra Consulting](https://www.capraconsulting.no)
-* [Weaveworks](https://weave.works) 
+* [DMM.com](https://dmm-corp.com)
+* [Weaveworks](https://weave.works)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
