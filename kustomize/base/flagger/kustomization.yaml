@@ -8,4 +8,4 @@ resources:
   - deployment.yaml
 images:
   - name: weaveworks/flagger
-    newTag: 0.23.0
+    newTag: 1.0.0-rc.1
