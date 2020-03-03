@@ -1,5 +1,15 @@
-version: 2
+version: 2.1
 jobs:
   build:
-    branches:
-      ignore: gh-pages
+    machine: true
+    steps:
+      - run: "echo skip"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          branches:
+            ignore:
+              - gh-pages
