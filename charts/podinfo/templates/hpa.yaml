@@ -10,7 +10,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1beta2
+    apiVersion: apps/v1
     kind: Deployment
     name: {{ template "podinfo.fullname" . }}
   minReplicas: {{ .Values.hpa.minReplicas }}
@@ -27,11 +27,5 @@ spec:
     resource:
       name: memory
       targetAverageValue: {{ .Values.hpa.memory }}
-  {{- end }}
-  {{- if .Values.hpa.requests }}
-  - type: Pod
-      pods:
-        metricName: http_requests
-        targetAverageValue: {{ .Values.hpa.requests }}
   {{- end }}
 {{- end }}
