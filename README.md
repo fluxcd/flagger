@@ -52,6 +52,15 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Kubernetes Blue/Green Deployments](https://docs.flagger.app/tutorials/kubernetes-blue-green)
   * [Canary deployments with Helm charts and Weave Flux](https://docs.flagger.app/tutorials/canary-helm-gitops)
 
+## Who is using Flagger
+
+List of organizations using Flagger:
+
+* [Capra Consulting](https://www.capraconsulting.no)
+* [Weaveworks](https://weave.works) 
+
+If you are using Flagger, please submit a PR to add your organization to the list!
+
 ## Canary CRD
 
 Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
