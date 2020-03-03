@@ -26,7 +26,7 @@ This project is sponsored by [Weaveworks](https://www.weave.works/)
 To get started with Flagger, chose one of the supported routing providers
 and [install](install/flagger-install-on-kubernetes.md) Flagger with Helm or Kustomize.
 
-After install Flagger you can follow one the tutorials:
+After install Flagger, you can follow one of the tutorials:
 
 **Service mesh tutorials**
 
@@ -45,4 +45,3 @@ After install Flagger you can follow one the tutorials:
 * [Istio](https://github.com/stefanprodan/gitops-istio)
 * [Linkerd](https://helm.workshop.flagger.dev)
 * [AWS App Mesh](https://eks.hands-on.flagger.dev)
-

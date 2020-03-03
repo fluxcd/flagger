@@ -6,53 +6,40 @@
 [![license](https://img.shields.io/github/license/weaveworks/flagger.svg)](https://github.com/weaveworks/flagger/blob/master/LICENSE)
 [![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
 
-Flagger is a Kubernetes operator that automates the promotion of canary deployments
-using Istio, Linkerd, App Mesh, NGINX, Contour or Gloo routing for traffic shifting and Prometheus metrics for canary analysis.
-The canary analysis can be extended with webhooks for running acceptance tests,
-load tests or any other custom validation.
-
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance
-indicators like HTTP requests success rate, requests average duration and pods health.
-Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
+Flagger is a progressive delivery tool that automates the release process for applications running on Kubernetes. 
+It reduces the risk of introducing a new software version in production
+by gradually shifting traffic to the new version while measuring metrics and running conformance tests.
 
 ![flagger-overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-overview.png)
 
-## Documentation
+Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
+using a service mesh (App Mesh, Istio, Linkerd) or an ingress controller (Contour, Gloo, NGINX) for traffic routing.
+For release analysis, Flagger can query Prometheus, Datadog or CloudWatch
+and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
-Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.app)
+### Documentation
+
+Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.app).
 
 * Install
   * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
-  * [Flagger install on GKE Istio](https://docs.flagger.app/install/flagger-install-on-google-cloud)
-  * [Flagger install on EKS App Mesh](https://docs.flagger.app/install/flagger-install-on-eks-appmesh)
-* How it works
-  * [Canary custom resource](https://docs.flagger.app/how-it-works#canary-custom-resource)
-  * [Routing](https://docs.flagger.app/how-it-works#istio-routing)
-  * [Canary deployment stages](https://docs.flagger.app/how-it-works#canary-deployment)
-  * [Canary analysis](https://docs.flagger.app/how-it-works#canary-analysis)
-  * [HTTP metrics](https://docs.flagger.app/how-it-works#http-metrics)
-  * [Custom metrics](https://docs.flagger.app/how-it-works#custom-metrics)
-  * [Webhooks](https://docs.flagger.app/how-it-works#webhooks)
-  * [Load testing](https://docs.flagger.app/how-it-works#load-testing)
-  * [Manual gating](https://docs.flagger.app/how-it-works#manual-gating)
-  * [FAQ](https://docs.flagger.app/faq)
-  * [Development guide](https://docs.flagger.app/dev-guide)
 * Usage
-  * [Deployment Strategies](https://docs.flagger.app/usage/deployment-strategies)
-  * [Monitoring](https://docs.flagger.app/usage/monitoring)
+  * [How it works](https://docs.flagger.app/usage/how-it-works)
+  * [Deployment strategies](https://docs.flagger.app/usage/deployment-strategies)
+  * [Metrics analysis](https://docs.flagger.app/usage/webhooks)
+  * [Webhooks](https://docs.flagger.app/usage/webhooks)
   * [Alerting](https://docs.flagger.app/usage/alerting)
+  * [Monitoring](https://docs.flagger.app/usage/monitoring)
 * Tutorials
-  * [Istio Canary Deployments](https://docs.flagger.app/tutorials/istio-progressive-delivery)
-  * [Istio A/B Testing](https://docs.flagger.app/tutorials/istio-ab-testing)
-  * [Linkerd Canary Deployments](https://docs.flagger.app/tutorials/linkerd-progressive-delivery)
-  * [App Mesh Canary Deployments](https://docs.flagger.app/tutorials/appmesh-progressive-delivery)
-  * [NGINX Canary Deployments](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
-  * [Gloo Canary Deployments](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
-  * [Contour Canary Deployments](https://docs.flagger.app/tutorials/contour-progressive-delivery)
-  * [Kubernetes Blue/Green Deployments](https://docs.flagger.app/tutorials/kubernetes-blue-green)
-  * [Canary deployments with Helm charts and Weave Flux](https://docs.flagger.app/tutorials/canary-helm-gitops)
+  * [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery)
+  * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery)
+  * [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery)
+  * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery)
+  * [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
+  * [NGINX Ingress](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
+  * [Kubernetes Blue/Green](https://docs.flagger.app/tutorials/kubernetes-blue-green)
 
-## Who is using Flagger
+### Who is using Flagger
 
 List of organizations using Flagger:
 
@@ -63,10 +50,10 @@ List of organizations using Flagger:
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
-## Canary CRD
+### Canary CRD
 
 Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services and Istio or App Mesh virtual services).
+then creates a series of objects (Kubernetes deployments, ClusterIP services, service mesh or ingress routes).
 These objects expose the application on the mesh and drive the canary analysis and promotion.
 
 Flagger keeps track of ConfigMaps and Secrets referenced by a Kubernetes Deployment and triggers a canary analysis if any of those objects change.
@@ -187,9 +174,9 @@ spec:
           name: on-call-msteams
 ```
 
-For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/how-it-works).
+For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/usage/how-it-works).
 
-## Features
+### Features
 
 | Feature                                      | Istio              | Linkerd            | App Mesh           | NGINX              | Gloo               | Contour            | CNI                |
 | -------------------------------------------- | ------------------ | ------------------ |------------------  |------------------  |------------------  |------------------  |------------------  |
@@ -203,14 +190,16 @@ For more details on how the canary analysis and promotion works please [read the
 | Custom promql checks                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | Traffic policy, CORS, retries and timeouts   | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: |
 
-## Roadmap
+### Roadmap
 
 * Integrate with other service mesh like Consul Connect and ingress controllers like HAProxy, ALB
+* Integrate with other metrics providers like InfluxDB, Stackdriver, SignalFX
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
 
-## Contributing
+### Contributing
 
 Flagger is Apache 2.0 licensed and accepts contributions via GitHub pull requests.
+To start contributing please read the [development guide](https://docs.flagger.app/dev-guide).
 
 When submitting bug reports please include as much details as possible:
 
@@ -220,7 +209,7 @@ When submitting bug reports please include as much details as possible:
 * what configuration (canary, ingress and workloads definitions)
 * what happened (Flagger and Proxy logs)
 
-## Getting Help
+### Getting Help
 
 If you have any questions about Flagger and progressive delivery:
 

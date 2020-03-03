@@ -25,4 +25,4 @@ download() {
 
 download
 tar -xf "$TAR_FILE" -C "$TMPDIR"
-"${TMPDIR}/goreleaser" --release-notes <(github-release-notes -org weaveworks -repo flagger -since-latest-release)
+"${TMPDIR}/goreleaser" --release-notes <(github-release-notes -org weaveworks -repo flagger -since-latest-release -include-author)

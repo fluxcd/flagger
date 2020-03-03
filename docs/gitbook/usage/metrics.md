@@ -235,18 +235,17 @@ Reference the template in the canary analysis:
 ```
 
 
-### AWS CloudWatch metrics
+### Amazon CloudWatch
 
-You can create custom metric checks using the AWS CloudWatch metrics provider.
+You can create custom metric checks using the CloudWatch metrics provider.
 
-The template example:
+CloudWatch template example:
 
 ```yaml
 apiVersion: flagger.app/v1alpha1
 kind: MetricTemplate
 metadata:
   name: cloudwatch-error-rate
-  namespace: istio-system
 spec:
   provider:
     type: cloudwatch
@@ -299,20 +298,19 @@ spec:
     ]
 ```
 
-where the query is in the form as in [the AWS' official document](https://aws.amazon.com/premiumsupport/knowledge-center/cloudwatch-getmetricdata-api/).
+The query format documentation can be found [here](https://aws.amazon.com/premiumsupport/knowledge-center/cloudwatch-getmetricdata-api/).
 
 Reference the template in the canary analysis:
 
 ```yaml
   analysis:
     metrics:
-      - name: "cw custom error rate"
+      - name: "app error rate"
         templateRef:
           name: cloudwatch-error-rate
-          namespace: istio-system
         thresholdRange:
           max: 0.1
         interval: 1m
 ```
 
-Please note that the flagger need AWS IAM permission to perform `cloudwatch:GetMetricData` to use this provider.
+**Note** that Flagger need AWS IAM permission to perform `cloudwatch:GetMetricData` to use this provider.
