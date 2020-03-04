@@ -192,6 +192,7 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
+* Add support for Kubernetes [Ingress v2](https://github.com/kubernetes-sigs/service-apis)
 * Integrate with other service mesh like Consul Connect and ingress controllers like HAProxy, ALB
 * Integrate with other metrics providers like InfluxDB, Stackdriver, SignalFX
 * Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two

@@ -3,7 +3,7 @@
 [Flagger](https://github.com/weaveworks/flagger) can be configured to automate the release process 
 for Kubernetes workloads with a custom resource named canary.
 
-### Canary custom resource
+### Canary resource
 
 The canary custom resource defines the release process of an application running on Kubernetes
 and is portable across clusters, service meshes and ingress providers.
