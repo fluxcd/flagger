@@ -69,6 +69,7 @@ jobs:
           keys:
             - go-mod-v3-{{ checksum "go.sum" }}
       - run: make release-notes
+      - run: github-release-notes -org weaveworks -repo flagger -since-latest-release -include-author > /tmp/release.txt
       - run: test/goreleaser.sh
 
   e2e-istio-testing:
