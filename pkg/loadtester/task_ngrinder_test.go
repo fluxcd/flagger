@@ -6,8 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	gock "gopkg.in/h2non/gock.v1"
+
 	"github.com/weaveworks/flagger/pkg/logger"
-	"gopkg.in/h2non/gock.v1"
 )
 
 func TestTaskNGrinder(t *testing.T) {
@@ -16,9 +19,7 @@ func TestTaskNGrinder(t *testing.T) {
 	logger, _ := logger.NewLoggerWithEncoding("debug", "console")
 	canary := "podinfo.default"
 	taskFactory, ok := GetTaskFactory(TaskTypeNGrinder)
-	if !ok {
-		t.Errorf("Failed to get ngrinder task factory")
-	}
+	assert.True(t, ok, "Failed to get ngrinder task factory")
 
 	defer gock.Off()
 	gock.New(server).Post(fmt.Sprintf("perftest/api/%s/clone_and_start", cloneId)).
@@ -36,10 +37,7 @@ func TestTaskNGrinder(t *testing.T) {
 			"passwd":       "YWRtaW4=",
 			"pollInterval": "1s",
 		}, canary, logger)
-		if err != nil {
-			t.Fatalf("Failed to create ngrinder task: %s", err.Error())
-			return
-		}
+		require.NoError(t, err, "Failed to create ngrinder task")
 		ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
 		task.Run(ctx)
 		<-ctx.Done()

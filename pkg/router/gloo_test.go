@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
@@ -19,27 +21,15 @@ func TestGlooRouter_Sync(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// test insert
 	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 	dests := ug.Spec.Destinations
-	if len(dests) != 2 {
-		t.Errorf("Got Destinations %v wanted %v", len(dests), 2)
-	}
-
-	if dests[0].Weight != 100 {
-		t.Errorf("Primary weight should is %v wanted 100", dests[0].Weight)
-	}
-	if dests[1].Weight != 0 {
-		t.Errorf("Canary weight should is %v wanted 0", dests[0].Weight)
-	}
-
+	assert.Len(t, dests, 2)
+	assert.Equal(t, uint32(100), dests[0].Weight)
+	assert.Equal(t, uint32(0), dests[1].Weight)
 }
 
 func TestGlooRouter_SetRoutes(t *testing.T) {
@@ -52,28 +42,20 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	p, c, m, err := router.GetRoutes(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	p = 50
 	c = 50
 	m = false
 
 	err = router.SetRoutes(mocks.canary, p, c, m)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	var pRoute gloov1.WeightedDestination
 	var cRoute gloov1.WeightedDestination
@@ -89,14 +71,8 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 		}
 	}
 
-	if pRoute.Weight != uint32(p) {
-		t.Errorf("Got primary weight %v wanted %v", pRoute.Weight, p)
-	}
-
-	if cRoute.Weight != uint32(c) {
-		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
-	}
-
+	assert.Equal(t, uint32(p), pRoute.Weight)
+	assert.Equal(t, uint32(c), cRoute.Weight)
 }
 
 func TestGlooRouter_GetRoutes(t *testing.T) {
@@ -109,24 +85,12 @@ func TestGlooRouter_GetRoutes(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	p, c, m, err := router.GetRoutes(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
-	if p != 100 {
-		t.Errorf("Got primary weight %v wanted %v", p, 100)
-	}
-
-	if c != 0 {
-		t.Errorf("Got canary weight %v wanted %v", c, 0)
-	}
-
-	if m != false {
-		t.Errorf("Got mirror %v wanted %v", m, false)
-	}
+	assert.Equal(t, 100, p)
+	assert.Equal(t, 0, c)
+	assert.False(t, m)
 }

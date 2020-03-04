@@ -3,6 +3,9 @@ package router
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,102 +20,55 @@ func TestContourRouter_Reconcile(t *testing.T) {
 
 	// init
 	err := router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// test insert
 	proxy, err := router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	services := proxy.Spec.Routes[0].Services
-	if len(services) != 2 {
-		t.Errorf("Got Services %v wanted %v", len(services), 2)
-	}
-
-	if services[0].Weight != 100 {
-		t.Errorf("Primary weight should is %v wanted 100", services[0].Weight)
-	}
-	if services[1].Weight != 0 {
-		t.Errorf("Canary weight should is %v wanted 0", services[0].Weight)
-	}
+	require.Len(t, services, 2)
+	assert.Equal(t, uint32(100), services[0].Weight)
+	assert.Equal(t, uint32(0), services[1].Weight)
 
 	// test update
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	cdClone := cd.DeepCopy()
 	cdClone.Spec.Service.Port = 8080
 	cdClone.Spec.Service.Timeout = "1m"
 	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// apply change
 	err = router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	proxy, err = router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	port := proxy.Spec.Routes[0].Services[0].Port
-	if port != 8080 {
-		t.Errorf("Service port is %v wanted %v", port, 8080)
-	}
-
-	timeout := proxy.Spec.Routes[0].TimeoutPolicy.Response
-	if timeout != "1m" {
-		t.Errorf("HTTPProxy timeout is %v wanted %v", timeout, "1m")
-	}
-
-	prefix := proxy.Spec.Routes[0].Conditions[0].Prefix
-	if prefix != "/podinfo" {
-		t.Errorf("HTTPProxy prefix is %v wanted %v", prefix, "podinfo")
-	}
-
-	retry := proxy.Spec.Routes[0].RetryPolicy.NumRetries
-	if retry != 10 {
-		t.Errorf("HTTPProxy NumRetries is %v wanted %v", retry, 10)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 8080, proxy.Spec.Routes[0].Services[0].Port)
+	assert.Equal(t, "1m", proxy.Spec.Routes[0].TimeoutPolicy.Response)
+	assert.Equal(t, "/podinfo", proxy.Spec.Routes[0].Conditions[0].Prefix)
+	assert.Equal(t, uint32(10), proxy.Spec.Routes[0].RetryPolicy.NumRetries)
 
 	// test headers update
 	cd, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	cdClone = cd.DeepCopy()
 	cdClone.Spec.CanaryAnalysis.Iterations = 5
 	cdClone.Spec.CanaryAnalysis.Match = newTestABTest().Spec.CanaryAnalysis.Match
 	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// apply change
 	err = router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	proxy, err = router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	header := proxy.Spec.Routes[0].Conditions[0].Header.Exact
-	if header != "test" {
-		t.Errorf("Route header condition is %v wanted %v", header, "test")
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "test", proxy.Spec.Routes[0].Conditions[0].Header.Exact)
 }
 
 func TestContourRouter_Routes(t *testing.T) {
@@ -126,88 +82,55 @@ func TestContourRouter_Routes(t *testing.T) {
 
 	// init
 	err := router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// test set routers
 	err = router.SetRoutes(mocks.canary, 50, 50, false)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	proxy, err := router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	primary := proxy.Spec.Routes[0].Services[0]
-	if primary.Weight != 50 {
-		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 50)
-	}
+	assert.Equal(t, uint32(50), primary.Weight)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// test get routers
 	_, cw, _, err := router.GetRoutes(cd)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if cw != 50 {
-		t.Errorf("Got canary weight %v wanted %v", cw, 50)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 50, cw)
 
 	// test update to A/B
 	cdClone := cd.DeepCopy()
 	cdClone.Spec.CanaryAnalysis.Iterations = 5
 	cdClone.Spec.CanaryAnalysis.Match = newTestABTest().Spec.CanaryAnalysis.Match
 	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	err = router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	proxy, err = router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	primary = proxy.Spec.Routes[0].Services[0]
-	if primary.Weight != 100 {
-		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 100)
-	}
+	assert.Equal(t, uint32(100), primary.Weight)
 
 	primary = proxy.Spec.Routes[1].Services[0]
-	if primary.Weight != 100 {
-		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 100)
-	}
+	assert.Equal(t, uint32(100), primary.Weight)
 
 	// test set routers for A/B
 	err = router.SetRoutes(canary, 0, 100, false)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	proxy, err = router.contourClient.ProjectcontourV1().HTTPProxies("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	primary = proxy.Spec.Routes[0].Services[0]
-	if primary.Weight != 0 {
-		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 0)
-	}
+	assert.Equal(t, uint32(0), primary.Weight)
 
 	primary = proxy.Spec.Routes[1].Services[0]
-	if primary.Weight != 100 {
-		t.Errorf("Got primary weight %v wanted %v", primary.Weight, 100)
-	}
+	assert.Equal(t, uint32(100), primary.Weight)
 }

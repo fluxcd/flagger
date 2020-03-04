@@ -3,6 +3,9 @@ package router
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,40 +18,21 @@ func TestServiceRouter_Create(t *testing.T) {
 	}
 
 	err := router.Initialize(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	err = router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
-	if canarySvc.Spec.Ports[0].Name != "http" {
-		t.Errorf("Got svc port name %s wanted %s", canarySvc.Spec.Ports[0].Name, "http")
-	}
-
-	if canarySvc.Spec.Ports[0].Port != 9898 {
-		t.Errorf("Got svc port %v wanted %v", canarySvc.Spec.Ports[0].Port, 9898)
-	}
+	assert.Equal(t, "http", canarySvc.Spec.Ports[0].Name)
+	assert.Equal(t, int32(9898), canarySvc.Spec.Ports[0].Port)
 
 	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if primarySvc.Spec.Ports[0].Name != "http" {
-		t.Errorf("Got primary svc port name %s wanted %s", primarySvc.Spec.Ports[0].Name, "http")
-	}
-
-	if primarySvc.Spec.Ports[0].Port != 9898 {
-		t.Errorf("Got primary svc port %v wanted %v", primarySvc.Spec.Ports[0].Port, 9898)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "http", primarySvc.Spec.Ports[0].Name)
+	assert.Equal(t, int32(9898), primarySvc.Spec.Ports[0].Port)
 }
 
 func TestServiceRouter_Update(t *testing.T) {
@@ -60,46 +44,29 @@ func TestServiceRouter_Update(t *testing.T) {
 	}
 
 	err := router.Initialize(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	err = router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	canaryClone := canary.DeepCopy()
 	canaryClone.Spec.Service.PortName = "grpc"
 
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(canaryClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// apply changes
 	err = router.Initialize(c)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 	err = router.Reconcile(c)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if canarySvc.Spec.Ports[0].Name != "grpc" {
-		t.Errorf("Got svc port name %s wanted %s", canarySvc.Spec.Ports[0].Name, "grpc")
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "grpc", canarySvc.Spec.Ports[0].Name)
 }
 
 func TestServiceRouter_Undo(t *testing.T) {
@@ -111,49 +78,29 @@ func TestServiceRouter_Undo(t *testing.T) {
 	}
 
 	err := router.Initialize(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	err = router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	svcClone := canarySvc.DeepCopy()
 	svcClone.Spec.Ports[0].Name = "http2-podinfo"
 	svcClone.Spec.Ports[0].Port = 8080
 
 	_, err = mocks.kubeClient.CoreV1().Services("default").Update(svcClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// undo changes
 	err = router.Initialize(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 	err = router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	canarySvc, err = mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if canarySvc.Spec.Ports[0].Name != "http" {
-		t.Errorf("Got svc port name %s wanted %s", canarySvc.Spec.Ports[0].Name, "http")
-	}
-
-	if canarySvc.Spec.Ports[0].Port != 9898 {
-		t.Errorf("Got svc port %v wanted %v", canarySvc.Spec.Ports[0].Port, 9898)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "http", canarySvc.Spec.Ports[0].Name)
+	assert.Equal(t, int32(9898), canarySvc.Spec.Ports[0].Port)
 }

@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/weaveworks/flagger/pkg/metrics/providers"
 )
@@ -15,9 +18,7 @@ func TestHttpObserver_GetRequestSuccessRate(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
-		if promql != expected {
-			t.Errorf("\nGot %s \nWanted %s", promql, expected)
-		}
+		assert.Equal(t, expected, promql)
 
 		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"100"]}]}}`
 		w.Write([]byte(json))
@@ -29,9 +30,7 @@ func TestHttpObserver_GetRequestSuccessRate(t *testing.T) {
 		Address:   ts.URL,
 		SecretRef: nil,
 	}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	observer := &HttpObserver{
 		client: client,
@@ -44,13 +43,9 @@ func TestHttpObserver_GetRequestSuccessRate(t *testing.T) {
 		Service:   "podinfo",
 		Interval:  "1m",
 	})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
-	if val != 100 {
-		t.Errorf("Got %v wanted %v", val, 100)
-	}
+	assert.Equal(t, float64(100), val)
 }
 
 func TestHttpObserver_GetRequestDuration(t *testing.T) {
@@ -58,9 +53,7 @@ func TestHttpObserver_GetRequestDuration(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
-		if promql != expected {
-			t.Errorf("\nGot %s \nWanted %s", promql, expected)
-		}
+		assert.Equal(t, expected, promql)
 
 		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"0.100"]}]}}`
 		w.Write([]byte(json))
@@ -72,9 +65,7 @@ func TestHttpObserver_GetRequestDuration(t *testing.T) {
 		Address:   ts.URL,
 		SecretRef: nil,
 	}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	observer := &HttpObserver{
 		client: client,
@@ -87,11 +78,7 @@ func TestHttpObserver_GetRequestDuration(t *testing.T) {
 		Service:   "podinfo",
 		Interval:  "1m",
 	})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
-	if val != 100*time.Millisecond {
-		t.Errorf("Got %v wanted %v", val, 100*time.Millisecond)
-	}
+	assert.Equal(t, 100*time.Millisecond, val)
 }
