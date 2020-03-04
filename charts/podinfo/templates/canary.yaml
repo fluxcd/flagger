@@ -1,5 +1,5 @@
 {{- if .Values.canary.enabled }}
-apiVersion: flagger.app/v1alpha3
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: {{ template "podinfo.fullname" . }}
@@ -13,7 +13,6 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name:  {{ template "podinfo.fullname" . }}
-  progressDeadlineSeconds: 60
   autoscalerRef:
     apiVersion: autoscaling/v2beta1
     kind: HorizontalPodAutoscaler
@@ -29,7 +28,7 @@ spec:
     trafficPolicy:
       tls:
         mode: {{ .Values.canary.istioTLS }}
-  canaryAnalysis:
+  analysis:
     interval: {{ .Values.canary.analysis.interval }}
     threshold: {{ .Values.canary.analysis.threshold }}
     maxWeight: {{ .Values.canary.analysis.maxWeight }}
@@ -48,8 +47,8 @@ spec:
         url: {{ .Values.canary.helmtest.url }}
         timeout: 3m
         metadata:
-          type: "helm"
-          cmd: "test {{ .Release.Name }} --cleanup"
+          type: "helmv3"
+          cmd: "test {{ .Release.Name }} -n {{ .Release.Namespace }}"
       {{- end }}
       {{- if .Values.canary.loadtest.enabled }}
       - name: load-test-get
@@ -57,10 +56,5 @@ spec:
         timeout: 5s
         metadata:
           cmd: "hey -z 1m -q 5 -c 2 http://{{ template "podinfo.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}"
-      - name: load-test-post
-        url: {{ .Values.canary.loadtest.url }}
-        timeout: 5s
-        metadata:
-          cmd: "hey -z 1m -q 5 -c 2 -m POST -d '{\"test\": true}' http://{{ template "podinfo.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}/echo"
       {{- end }}
 {{- end }}

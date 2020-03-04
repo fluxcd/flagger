@@ -252,8 +252,6 @@ Create a git repository with the following content:
         └── helmtester.yaml
 ```
 
-You can find the git source [here](https://github.com/stefanprodan/flagger/tree/master/artifacts/cluster).
-
 Define the `frontend` release using Flux `HelmRelease` custom resource:
 
 ```yaml
@@ -263,8 +261,8 @@ metadata:
   name: frontend
   namespace: test
   annotations:
-    flux.weave.works/automated: "true"
-    flux.weave.works/tag.chart-image: semver:~3.1
+    fluxcd.io/automated: "true"
+    filter.fluxcd.io/chart-image: semver:~3.1
 spec:
   releaseName: frontend
   chart:
@@ -288,21 +286,27 @@ spec:
           enabled: true
 ```
 
-In the `chart` section I've defined the release source by specifying the Helm repository \(hosted on GitHub Pages\), chart name and version. In the `values` section I've overwritten the defaults set in values.yaml.
+In the `chart` section I've defined the release source by specifying the Helm repository (hosted on GitHub Pages),
+chart name and version. In the `values` section I've overwritten the defaults set in values.yaml.
 
-With the `flux.weave.works` annotations I instruct Flux to automate this release. When an image tag in the sem ver range of `3.1.0 - 3.1.99` is pushed to Docker Hub, Flux will upgrade the Helm release and from there Flagger will pick up the change and start a canary deployment.
+With the `fluxcd.io` annotations I instruct Flux to automate this release.
+When an image tag in the sem ver range of `3.1.0 - 3.1.99` is pushed to Docker Hub,
+Flux will upgrade the Helm release and from there Flagger will pick up the change and start a canary deployment.
 
-Install [Weave Flux](https://github.com/weaveworks/flux) and its Helm Operator by specifying your Git repo URL:
+Install [Flux](https://github.com/fluxcd/flux) and its
+[Helm Operator](https://github.com/fluxcd/helm-operator) by specifying your Git repo URL:
 
 ```bash
 helm repo add fluxcd https://charts.fluxcd.io
 
 helm install --name flux \
---set helmOperator.create=true \
---set helmOperator.createCRD=true \
 --set git.url=git@github.com:<USERNAME>/<REPOSITORY> \
 --namespace fluxcd \
 fluxcd/flux
+
+helm upgrade -i helm-operator fluxcd/helm-operator \
+--namespace fluxcd \
+--set git.ssh.secretName=flux-git-deploy
 ```
 
 At startup Flux generates a SSH key and logs the public key. Find the SSH public key with:
@@ -311,11 +315,14 @@ At startup Flux generates a SSH key and logs the public key. Find the SSH public
 kubectl -n fluxcd logs deployment/flux | grep identity.pub | cut -d '"' -f2
 ```
 
-In order to sync your cluster state with Git you need to copy the public key and create a deploy key with write access on your GitHub repository.
+In order to sync your cluster state with Git you need to copy the public key
+and create a deploy key with write access on your GitHub repository.
 
-Open GitHub, navigate to your fork, go to _Setting &gt; Deploy keys_ click on _Add deploy key_, check _Allow write access_, paste the Flux public key and click _Add key_.
+Open GitHub, navigate to your fork, go to _Setting &gt; Deploy keys_ click on _Add deploy key_, check _Allow write access_,
+paste the Flux public key and click _Add key_.
 
-After a couple of seconds Flux will apply the Kubernetes resources from Git and Flagger will launch the `frontend` and `backend` apps.
+After a couple of seconds Flux will apply the Kubernetes resources from Git and
+Flagger will launch the `frontend` and `backend` apps.
 
 A CI/CD pipeline for the `frontend` release could look like this:
 
@@ -336,12 +343,14 @@ If the canary fails, fix the bug, do another patch release eg `3.1.2` and the wh
 A canary deployment can fail due to any of the following reasons:
 
 * the container image can't be downloaded 
-* the deployment replica set is stuck for more then ten minutes \(eg. due to a container crash loop\)
-* the webooks \(acceptance tests, helm tests, load tests, etc\) are returning a non 2xx response
-* the HTTP success rate \(non 5xx responses\) metric drops under the threshold
+* the deployment replica set is stuck for more then ten minutes (eg. due to a container crash loop)
+* the webooks (acceptance tests, helm tests, load tests, etc) are returning a non 2xx response
+* the HTTP success rate (non 5xx responses) metric drops under the threshold
 * the HTTP average duration metric goes over the threshold
 * the Istio telemetry service is unable to collect traffic metrics
-* the metrics server \(Prometheus\) can't be reached
+* the metrics server (Prometheus) can't be reached
 
-If you want to find out more about managing Helm releases with Flux here are two in-depth guides: [gitops-helm](https://github.com/stefanprodan/gitops-helm) and [gitops-istio](https://github.com/stefanprodan/gitops-istio).
+If you want to find out more about managing Helm releases with Flux here are two in-depth guides:
+[gitops-helm](https://github.com/stefanprodan/gitops-helm)
+and [gitops-istio](https://github.com/stefanprodan/gitops-istio).
 

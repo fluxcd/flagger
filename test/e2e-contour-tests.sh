@@ -11,7 +11,7 @@ echo '>>> Creating test namespace'
 kubectl create namespace test
 
 echo '>>> Installing load tester'
-kubectl -n test apply -f ${REPO_ROOT}/artifacts/loadtester/
+kubectl apply -k ${REPO_ROOT}/kustomize/tester
 kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Initialising canary'

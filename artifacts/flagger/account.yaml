@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: flagger
-  namespace: istio-system
+  namespace: default
   labels:
     app: flagger
 ---
@@ -109,4 +109,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: flagger
-  namespace: istio-system
+  namespace: default

@@ -30,13 +30,13 @@ Spec:
       - name: "start gate"
         type: confirm-rollout
         url: http://flagger-loadtester.test/gate/approve
-      - name: "smoke test"
+      - name: "helm test"
         type: pre-rollout
-        url: http://flagger-helmtester.kube-system/
+        url: http://flagger-helmtester.flagger/
         timeout: 3m
         metadata:
-          type: "helm"
-          cmd: "test podinfo --cleanup"
+          type: "helmv3"
+          cmd: "test podinfo -n test"
       - name: "load test"
         type: rollout
         url: http://flagger-loadtester.test/
@@ -116,10 +116,7 @@ that generates traffic during analysis when configured as a webhook.
 First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
-
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/deployment.yaml
-kubectl -n test apply -f ${REPO}/artifacts/loadtester/service.yaml
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Or by using Helm:
@@ -276,7 +273,7 @@ If you are using Helm v3, you'll have to create a dedicated service account and 
         timeout: 3m
         metadata:
           type: "helmv3"
-          cmd: "test run {{ .Release.Name }} --timeout 3m -n {{ .Release.Namespace }}"
+          cmd: "test {{ .Release.Name }} --timeout 3m -n {{ .Release.Namespace }}"
 ```
 
 As an alternative to Helm you can use the [Bash Automated Testing System](https://github.com/bats-core/bats-core) to run your tests. 

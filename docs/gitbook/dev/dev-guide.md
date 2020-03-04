@@ -98,6 +98,22 @@ Run unit tests:
 make test
 ```
 
+### API changes
+
+If you made changes to `pkg/apis` regenerate the Kubernetes client sets with:
+
+```bash
+make codegen
+```
+
+Update the validation spec in `artifacts/flagger/crd.yaml` and run:
+
+```bash
+make crd
+```
+
+Note that any change to the CRDs must be accompanied by an update to the Open API schema.
+
 ### Manual testing
 
 Install a service mesh and/or an ingress controller on your cluster and deploy Flagger

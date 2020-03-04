@@ -11,7 +11,7 @@ kubectl create namespace test
 kubectl annotate namespace test linkerd.io/inject=enabled
 
 echo '>>> Installing the load tester'
-kubectl -n test apply -f ${REPO_ROOT}/artifacts/loadtester/
+kubectl apply -k ${REPO_ROOT}/kustomize/tester
 kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Initialising canary'

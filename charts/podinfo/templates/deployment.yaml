@@ -41,6 +41,8 @@ spec:
             - --backend-url={{ . }}
             {{- end }}
           env:
+          - name: PODINFO_UI_COLOR
+            value: "#34577c"
           {{- if .Values.message }}
           - name: PODINFO_UI_MESSAGE
             value: {{ .Values.message }}
