@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestTeams_Post(t *testing.T) {
@@ -17,28 +19,19 @@ func TestTeams_Post(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		var payload = MSTeamsPayload{}
 		err = json.Unmarshal(b, &payload)
+		require.NoError(t, err)
 
-		if payload.Sections[0].ActivitySubtitle != "podinfo.test" {
-			t.Fatal("wrong activity subtitle")
-		}
-		if len(payload.Sections[0].Facts) != len(fields) {
-			t.Fatal("wrong facts")
-		}
+		require.Equal(t, "podinfo.test", payload.Sections[0].ActivitySubtitle)
+		require.Equal(t, len(fields), len(payload.Sections[0].Facts))
 	}))
 	defer ts.Close()
 
 	teams, err := NewMSTeams(ts.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = teams.Post("podinfo", "test", "test", fields, "info")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }

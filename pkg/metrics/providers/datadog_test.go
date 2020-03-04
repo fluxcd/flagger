@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
@@ -21,35 +24,15 @@ func TestNewDatadogProvider(t *testing.T) {
 
 	mi := "100s"
 	md, err := time.ParseDuration(mi)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	dp, err := NewDatadogProvider("100s", flaggerv1.MetricTemplateProvider{}, cs)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if exp := "https://api.datadoghq.com/api/v1/validate"; dp.apiKeyValidationEndpoint != exp {
-		t.Fatalf("apiKeyValidationEndpoint expected %s but got %s", exp, dp.apiKeyValidationEndpoint)
-	}
-
-	if exp := "https://api.datadoghq.com/api/v1/query"; dp.metricsQueryEndpoint != exp {
-		t.Fatalf("metricsQueryEndpoint expected %s but got %s", exp, dp.metricsQueryEndpoint)
-	}
-
-	if exp := int64(md.Seconds() * datadogFromDeltaMultiplierOnMetricInterval); dp.fromDelta != exp {
-		t.Fatalf("fromDelta expected %d but got %d", exp, dp.fromDelta)
-	}
-
-	if dp.applicationKey != appKey {
-		t.Fatalf("application key expected %s but got %s", appKey, dp.applicationKey)
-	}
-
-	if dp.apiKey != apiKey {
-		t.Fatalf("api key expected %s but got %s", apiKey, dp.apiKey)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.datadoghq.com/api/v1/validate", dp.apiKeyValidationEndpoint)
+	assert.Equal(t, "https://api.datadoghq.com/api/v1/query", dp.metricsQueryEndpoint)
+	assert.Equal(t, int64(md.Seconds()*datadogFromDeltaMultiplierOnMetricInterval), dp.fromDelta)
+	assert.Equal(t, appKey, dp.applicationKey)
+	assert.Equal(t, apiKey, dp.apiKey)
 }
 
 func TestDatadogProvider_RunQuery(t *testing.T) {
@@ -61,29 +44,18 @@ func TestDatadogProvider_RunQuery(t *testing.T) {
 	now := time.Now().Unix()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		aq := r.URL.Query().Get("query")
-		if aq != eq {
-			t.Errorf("\nquery expected %s bug got %s", eq, aq)
+		assert.Equal(t, eq, aq)
+		assert.Equal(t, appKey, r.Header.Get(datadogApplicationKeyHeaderKey))
+		assert.Equal(t, apiKey, r.Header.Get(datadogAPIKeyHeaderKey))
+
+		from, err := strconv.ParseInt(r.URL.Query().Get("from"), 10, 64)
+		if assert.NoError(t, err) {
+			assert.Less(t, from, now)
 		}
 
-		if vs := r.Header.Get(datadogApplicationKeyHeaderKey); vs != appKey {
-			t.Errorf("\n%s header expected %s but got %s", datadogApplicationKeyHeaderKey, appKey, vs)
-		}
-		if vs := r.Header.Get(datadogAPIKeyHeaderKey); vs != apiKey {
-			t.Errorf("\n%s header expected %s but got %s", datadogAPIKeyHeaderKey, apiKey, vs)
-		}
-
-		rf := r.URL.Query().Get("from")
-		if from, err := strconv.ParseInt(rf, 10, 64); err == nil && from >= now {
-			t.Errorf("\nfrom %d should be less than %d", from, now)
-		} else if err != nil {
-			t.Errorf("\nfailed to parse from: %v", err)
-		}
-
-		rt := r.URL.Query().Get("to")
-		if to, err := strconv.ParseInt(rt, 10, 64); err == nil && to < now {
-			t.Errorf("\nto %d should be greater than or equals %d", to, now)
-		} else if err != nil {
-			t.Errorf("\nfailed to parse to: %v", err)
+		to, err := strconv.ParseInt(r.URL.Query().Get("to"), 10, 64)
+		if assert.NoError(t, err) {
+			assert.GreaterOrEqual(t, to, now)
 		}
 
 		json := fmt.Sprintf(`{"series": [{"pointlist": [[1577232000000,29325.102158814265],[1577318400000,56294.46758591842],[1577404800000,%f]]}]}`, expected)
@@ -98,18 +70,11 @@ func TestDatadogProvider_RunQuery(t *testing.T) {
 			datadogAPIKeySecretKey:         []byte(apiKey),
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	f, err := dp.RunQuery(eq)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if f != expected {
-		t.Fatalf("metric value expected %f but got %f", expected, f)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, expected, f)
 }
 
 func TestDatadogProvider_IsOnline(t *testing.T) {
@@ -124,12 +89,8 @@ func TestDatadogProvider_IsOnline(t *testing.T) {
 			appKey := "app-key"
 			apiKey := "api-key"
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if vs := r.Header.Get(datadogApplicationKeyHeaderKey); vs != appKey {
-					t.Errorf("\n%s header expected %s but got %s", datadogApplicationKeyHeaderKey, appKey, vs)
-				}
-				if vs := r.Header.Get(datadogAPIKeyHeaderKey); vs != apiKey {
-					t.Errorf("\n%s header expected %s but got %s", datadogAPIKeyHeaderKey, apiKey, vs)
-				}
+				assert.Equal(t, appKey, r.Header.Get(datadogApplicationKeyHeaderKey))
+				assert.Equal(t, apiKey, r.Header.Get(datadogAPIKeyHeaderKey))
 				w.WriteHeader(c.code)
 			}))
 			defer ts.Close()
@@ -141,15 +102,13 @@ func TestDatadogProvider_IsOnline(t *testing.T) {
 					datadogAPIKeySecretKey:         []byte(apiKey),
 				},
 			)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			_, err = dp.IsOnline()
-			if c.errExpected && err == nil {
-				t.Fatal("error expected but got no error")
-			} else if !c.errExpected && err != nil {
-				t.Fatalf("no error expected but got %v", err)
+			if c.errExpected {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSlack_Post(t *testing.T) {
@@ -16,29 +18,19 @@ func TestSlack_Post(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
+
 		var payload = SlackPayload{}
 		err = json.Unmarshal(b, &payload)
-
-		if payload.Attachments[0].AuthorName != "podinfo.test" {
-			t.Fatal("wrong author name")
-		}
-
-		if len(payload.Attachments[0].Fields) != len(fields) {
-			t.Fatal("wrong facts")
-		}
+		require.NoError(t, err)
+		require.Equal(t, "podinfo.test", payload.Attachments[0].AuthorName)
+		require.Equal(t, len(fields), len(payload.Attachments[0].Fields))
 	}))
 	defer ts.Close()
 
 	slack, err := NewSlack(ts.URL, "test", "test")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = slack.Post("podinfo", "test", "test", fields, "error")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }

@@ -3,6 +3,8 @@ package controller
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -16,114 +18,68 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 
 	// check initialized status
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if c.Status.Phase != flaggerv1.CanaryPhaseInitialized {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseInitialized)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseInitialized, c.Status.Phase)
 
 	// update
 	svc2 := newDeploymentTestServiceV2()
 	_, err = mocks.kubeClient.CoreV1().Services("default").Update(svc2)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// detect service spec changes
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	primaryWeight = 60
 	canaryWeight = 40
 	err = mocks.router.SetRoutes(mocks.canary, primaryWeight, canaryWeight, mirrored)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// advance
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check progressing status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if c.Status.Phase != flaggerv1.CanaryPhaseProgressing {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseProgressing)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
 
 	// promote
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	// check promoting status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if c.Status.Phase != flaggerv1.CanaryPhasePromoting {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhasePromoting)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhasePromoting, c.Status.Phase)
 
 	// finalise
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if primaryWeight != 100 {
-		t.Errorf("Got primary route %v wanted %v", primaryWeight, 100)
-	}
-
-	if canaryWeight != 0 {
-		t.Errorf("Got canary route %v wanted %v", canaryWeight, 0)
-	}
-
-	if mirrored != false {
-		t.Errorf("Got mirrored %v wanted %v", mirrored, false)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 100, primaryWeight)
+	assert.Equal(t, 0, canaryWeight)
+	assert.False(t, mirrored)
 
 	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	primaryLabelValue := primarySvc.Spec.Selector["app"]
 	canaryLabelValue := svc2.Spec.Selector["app"]
-	if primaryLabelValue != canaryLabelValue {
-		t.Errorf("Got primary selector label value %v wanted %v", primaryLabelValue, canaryLabelValue)
-	}
+	assert.Equal(t, canaryLabelValue, primaryLabelValue)
 
 	// check finalising status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if c.Status.Phase != flaggerv1.CanaryPhaseFinalising {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseFinalising)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseFinalising, c.Status.Phase)
 
 	// scale canary to zero
 	mocks.ctrl.advanceCanary("podinfo", "default", true)
 
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if c.Status.Phase != flaggerv1.CanaryPhaseSucceeded {
-		t.Errorf("Got canary state %v wanted %v", c.Status.Phase, flaggerv1.CanaryPhaseSucceeded)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseSucceeded, c.Status.Phase)
 }
 
 func newTestServiceCanary() *flaggerv1.Canary {

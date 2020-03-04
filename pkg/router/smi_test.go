@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	smiv1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
@@ -20,25 +22,16 @@ func TestSmiRouter_Sync(t *testing.T) {
 	}
 
 	err := router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// test insert
 	ts, err := router.smiClient.SplitV1alpha1().TrafficSplits("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 	dests := ts.Spec.Backends
-	if len(dests) != 2 {
-		t.Errorf("Got backends %v wanted %v", len(dests), 2)
-	}
+	assert.Len(t, dests, 2)
 
 	apexName, primaryName, canaryName := canary.GetServiceNames()
-
-	if ts.Spec.Service != apexName {
-		t.Errorf("Got service %v wanted %v", ts.Spec.Service, apexName)
-	}
+	assert.Equal(t, ts.Spec.Service, apexName)
 
 	var pRoute smiv1.TrafficSplitBackend
 	var cRoute smiv1.TrafficSplitBackend
@@ -51,30 +44,19 @@ func TestSmiRouter_Sync(t *testing.T) {
 		}
 	}
 
-	if pRoute.Weight.String() != strconv.Itoa(100) {
-		t.Errorf("%s weight is %v wanted 100", pRoute.Service, pRoute.Weight)
-	}
-	if cRoute.Weight.String() != strconv.Itoa(0) {
-		t.Errorf("%s weight is %v wanted 0", cRoute.Service, cRoute.Weight)
-	}
+	assert.Equal(t, strconv.Itoa(100), pRoute.Weight.String())
+	assert.Equal(t, strconv.Itoa(0), cRoute.Weight.String())
 
 	// test update
 	host := "test"
 	canary.Spec.Service.Name = host
 
 	err = router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	ts, err = router.smiClient.SplitV1alpha1().TrafficSplits("default").Get("test", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if ts.Spec.Service != host {
-		t.Errorf("Got service %v wanted %v", ts.Spec.Service, host)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, host, ts.Spec.Service)
 }
 
 func TestSmiRouter_SetRoutes(t *testing.T) {
@@ -88,28 +70,20 @@ func TestSmiRouter_SetRoutes(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	p, c, m, err := router.GetRoutes(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	p = 50
 	c = 50
 	m = false
 
 	err = router.SetRoutes(mocks.canary, p, c, m)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	ts, err := router.smiClient.SplitV1alpha1().TrafficSplits("default").Get("podinfo", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	var pRoute smiv1.TrafficSplitBackend
 	var cRoute smiv1.TrafficSplitBackend
@@ -124,14 +98,8 @@ func TestSmiRouter_SetRoutes(t *testing.T) {
 		}
 	}
 
-	if pRoute.Weight.String() != strconv.Itoa(p) {
-		t.Errorf("Got primary weight %v wanted %v", pRoute.Weight, p)
-	}
-
-	if cRoute.Weight.String() != strconv.Itoa(c) {
-		t.Errorf("Got canary weight %v wanted %v", cRoute.Weight, c)
-	}
-
+	assert.Equal(t, strconv.Itoa(p), pRoute.Weight.String())
+	assert.Equal(t, strconv.Itoa(c), cRoute.Weight.String())
 }
 
 func TestSmiRouter_GetRoutes(t *testing.T) {
@@ -144,24 +112,11 @@ func TestSmiRouter_GetRoutes(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	p, c, m, err := router.GetRoutes(mocks.canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if p != 100 {
-		t.Errorf("Got primary weight %v wanted %v", p, 100)
-	}
-
-	if c != 0 {
-		t.Errorf("Got canary weight %v wanted %v", c, 0)
-	}
-
-	if m != false {
-		t.Errorf("Got mirror %v wanted %v", m, false)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 100, p)
+	assert.Equal(t, 0, c)
+	assert.False(t, m)
 }

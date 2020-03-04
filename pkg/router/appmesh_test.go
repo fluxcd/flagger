@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -19,135 +22,82 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.appmeshCanary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// check virtual service
 	vsName := fmt.Sprintf("%s.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
 	vs, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	meshName := mocks.appmeshCanary.Spec.Service.MeshName
-	if vs.Spec.MeshName != meshName {
-		t.Errorf("Got mesh name %v wanted %v", vs.Spec.MeshName, meshName)
-	}
-
-	targetsCount := len(vs.Spec.Routes[0].Http.Action.WeightedTargets)
-	if targetsCount != 2 {
-		t.Errorf("Got routes %v wanted %v", targetsCount, 2)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, mocks.appmeshCanary.Spec.Service.MeshName, vs.Spec.MeshName)
+	assert.Len(t, vs.Spec.Routes[0].Http.Action.WeightedTargets, 2)
 
 	// check canary virtual service
 	vsCanaryName := fmt.Sprintf("%s-canary.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
 	vsCanary, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsCanaryName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// check if the canary virtual service routes all traffic to the canary virtual node
 	target := vsCanary.Spec.Routes[0].Http.Action.WeightedTargets[0]
 	canaryVirtualNodeName := fmt.Sprintf("%s-canary", mocks.appmeshCanary.Spec.TargetRef.Name)
-	if target.VirtualNodeName != canaryVirtualNodeName {
-		t.Errorf("Got VirtualNodeName %v wanted %v", target.VirtualNodeName, canaryVirtualNodeName)
-	}
-	if target.Weight != 100 {
-		t.Errorf("Got weight %v wanted %v", target.Weight, 100)
-	}
+	assert.Equal(t, canaryVirtualNodeName, target.VirtualNodeName)
+	assert.Equal(t, int64(100), target.Weight)
 
 	// check virtual node
 	vnName := mocks.appmeshCanary.Spec.TargetRef.Name
 	vn, err := router.appmeshClient.AppmeshV1beta1().VirtualNodes("default").Get(vnName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	primaryDNS := fmt.Sprintf("%s-primary.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
-	vnHostName := vn.Spec.ServiceDiscovery.Dns.HostName
-	if vnHostName != primaryDNS {
-		t.Errorf("Got DNS host name %v wanted %v", vnHostName, primaryDNS)
-	}
+	assert.Equal(t, primaryDNS, vn.Spec.ServiceDiscovery.Dns.HostName)
 
 	// test backends update
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("appmesh", metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	cdClone := cd.DeepCopy()
 	hosts := cdClone.Spec.Service.Backends
 	hosts = append(hosts, "test.example.com")
 	cdClone.Spec.Service.Backends = hosts
 	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cdClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// apply change
 	err = router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// verify
 	vnCanaryName := fmt.Sprintf("%s-canary", mocks.appmeshCanary.Spec.TargetRef.Name)
 	vnCanary, err := router.appmeshClient.AppmeshV1beta1().VirtualNodes("default").Get(vnCanaryName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if len(vnCanary.Spec.Backends) != 2 {
-		t.Errorf("Got backends %v wanted %v", len(vnCanary.Spec.Backends), 2)
-	}
+	require.NoError(t, err)
+	require.Len(t, vnCanary.Spec.Backends, 2)
 
 	// test weight update
 	vsClone := vs.DeepCopy()
 	vsClone.Spec.Routes[0].Http.Action.WeightedTargets[0].Weight = 50
 	vsClone.Spec.Routes[0].Http.Action.WeightedTargets[1].Weight = 50
 	vs, err = mocks.meshClient.AppmeshV1beta1().VirtualServices("default").Update(vsClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// apply change
 	err = router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	vs, err = router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
-	weight := vs.Spec.Routes[0].Http.Action.WeightedTargets[0].Weight
-	if weight != 50 {
-		t.Errorf("Got weight %v wanted %v", weight, 50)
-	}
+	vs, err = router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, int64(50), vs.Spec.Routes[0].Http.Action.WeightedTargets[0].Weight)
 
 	// test URI update
 	vsClone = vs.DeepCopy()
 	vsClone.Spec.Routes[0].Http.Match.Prefix = "api"
 	vs, err = mocks.meshClient.AppmeshV1beta1().VirtualServices("default").Update(vsClone)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// apply change
 	err = router.Reconcile(canary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 	vs, err = router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	prefix := vs.Spec.Routes[0].Http.Match.Prefix
-	if prefix != "/" {
-		t.Errorf("Got prefix %v wanted %v", prefix, "/")
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "/", vs.Spec.Routes[0].Http.Match.Prefix)
 }
 
 func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
@@ -160,31 +110,16 @@ func TestAppmeshRouter_GetSetRoutes(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.appmeshCanary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	err = router.SetRoutes(mocks.appmeshCanary, 60, 40, false)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	p, c, m, err := router.GetRoutes(mocks.appmeshCanary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	if p != 60 {
-		t.Errorf("Got primary weight %v wanted %v", p, 60)
-	}
-
-	if c != 40 {
-		t.Errorf("Got canary weight %v wanted %v", c, 40)
-	}
-
-	if m != false {
-		t.Errorf("Got mirror %v wanted %v", m, false)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 60, p)
+	assert.Equal(t, 40, c)
+	assert.False(t, m)
 }
 
 func TestAppmeshRouter_ABTest(t *testing.T) {
@@ -197,36 +132,20 @@ func TestAppmeshRouter_ABTest(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.abtest)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// check virtual service
 	vsName := fmt.Sprintf("%s.%s", mocks.abtest.Spec.TargetRef.Name, mocks.abtest.Namespace)
 	vs, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// check virtual service
-	if len(vs.Spec.Routes) != 2 {
-		t.Errorf("Got routes %v wanted %v", len(vs.Spec.Routes), 2)
-	}
+	assert.Len(t, vs.Spec.Routes, 2)
 
 	// check headers
-	if len(vs.Spec.Routes[0].Http.Match.Headers) < 1 {
-		t.Errorf("Got no http match headers")
-	}
-
-	header := vs.Spec.Routes[0].Http.Match.Headers[0].Name
-	if header != "x-user-type" {
-		t.Errorf("Got http match header %v wanted %v", header, "x-user-type")
-	}
-
-	exactMatch := *vs.Spec.Routes[0].Http.Match.Headers[0].Match.Exact
-	if exactMatch != "test" {
-		t.Errorf("Got http match header exact %v wanted %v", exactMatch, "test")
-	}
+	assert.GreaterOrEqual(t, len(vs.Spec.Routes[0].Http.Match.Headers), 1, "Got no http match headers")
+	assert.Equal(t, "x-user-type", vs.Spec.Routes[0].Http.Match.Headers[0].Name)
+	assert.Equal(t, "test", *vs.Spec.Routes[0].Http.Match.Headers[0].Match.Exact)
 }
 
 func TestAppmeshRouter_Gateway(t *testing.T) {
@@ -239,34 +158,17 @@ func TestAppmeshRouter_Gateway(t *testing.T) {
 	}
 
 	err := router.Reconcile(mocks.appmeshCanary)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
 	// check virtual service
 	vsName := fmt.Sprintf("%s.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
 	vs, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(vsName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 
-	expose := vs.Annotations["gateway.appmesh.k8s.aws/expose"]
-	if expose != "true" {
-		t.Errorf("Got gateway expose annotation %v wanted %v", expose, "true")
-	}
-
-	domain := vs.Annotations["gateway.appmesh.k8s.aws/domain"]
-	if !strings.Contains(domain, mocks.appmeshCanary.Spec.Service.Hosts[0]) {
-		t.Errorf("Got gateway domain annotation %v wanted %v", domain, mocks.appmeshCanary.Spec.Service.Hosts[0])
-	}
-
-	timeout := vs.Annotations["gateway.appmesh.k8s.aws/timeout"]
-	if timeout != mocks.appmeshCanary.Spec.Service.Timeout {
-		t.Errorf("Got gateway timeout annotation %v wanted %v", timeout, mocks.appmeshCanary.Spec.Service.Timeout)
-	}
+	assert.Equal(t, "true", vs.Annotations["gateway.appmesh.k8s.aws/expose"])
+	assert.True(t, strings.Contains(vs.Annotations["gateway.appmesh.k8s.aws/domain"], mocks.appmeshCanary.Spec.Service.Hosts[0]))
+	assert.Equal(t, mocks.appmeshCanary.Spec.Service.Timeout, vs.Annotations["gateway.appmesh.k8s.aws/timeout"])
 
 	retries := vs.Annotations["gateway.appmesh.k8s.aws/retries"]
-	if retries != strconv.Itoa(mocks.appmeshCanary.Spec.Service.Retries.Attempts) {
-		t.Errorf("Got gateway retries annotation %v wanted %v", retries, strconv.Itoa(mocks.appmeshCanary.Spec.Service.Retries.Attempts))
-	}
+	assert.Equal(t, strconv.Itoa(mocks.appmeshCanary.Spec.Service.Retries.Attempts), retries)
 }

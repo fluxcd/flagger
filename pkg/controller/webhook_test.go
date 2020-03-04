@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -26,9 +28,7 @@ func TestCallWebhook(t *testing.T) {
 	}
 
 	err := CallWebhook("podinfo", v1.NamespaceDefault, flaggerv1.CanaryPhaseProgressing, hook)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 }
 
 func TestCallWebhook_StatusCode(t *testing.T) {
@@ -42,9 +42,7 @@ func TestCallWebhook_StatusCode(t *testing.T) {
 	}
 
 	err := CallWebhook("podinfo", v1.NamespaceDefault, flaggerv1.CanaryPhaseProgressing, hook)
-	if err == nil {
-		t.Errorf("Got no error wanted %v", http.StatusInternalServerError)
-	}
+	assert.Error(t, err)
 }
 
 func TestCallEventWebhook(t *testing.T) {
@@ -99,9 +97,7 @@ func TestCallEventWebhook(t *testing.T) {
 	}
 
 	err := CallEventWebhook(canary, ts.URL, canaryMessage, canaryEventType)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.NoError(t, err)
 }
 
 func TestCallEventWebhookStatusCode(t *testing.T) {
@@ -126,7 +122,5 @@ func TestCallEventWebhookStatusCode(t *testing.T) {
 	}
 
 	err := CallEventWebhook(canary, ts.URL, canaryMessage, canaryEventType)
-	if err == nil {
-		t.Errorf("Got no error wanted %v", http.StatusInternalServerError)
-	}
+	assert.Error(t, err)
 }
