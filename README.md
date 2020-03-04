@@ -56,6 +56,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 
 List of organizations using Flagger:
 
+* [Chick-fil-A](https://www.chick-fil-a.com)
 * [Capra Consulting](https://www.capraconsulting.no)
 * [DMM.com](https://dmm-corp.com)
 * [Weaveworks](https://weave.works)

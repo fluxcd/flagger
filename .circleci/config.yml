@@ -223,6 +223,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
+                - /^user-.*/
       - e2e-istio-testing:
           requires:
             - build-binary
