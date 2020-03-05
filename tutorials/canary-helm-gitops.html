@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Canaries with Helm charts and GitOps | Flagger</title>
+    <meta name="description" content="Progressive Delivery operator for Kubernetes (Canary, A/B Testing and Blue/Green deployments)">
+    <link rel="icon" href="/favicon.png">
+  <link rel="stylesheet" href="/website.css">
+  <meta name="keywords" content="gitops kubernetes flagger istio linkerd appmesh contour gloo nginx">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Flagger">
+  <meta name="twitter:description" content="Progressive delivery Kubernetes operator (Canary, A/B Testing and Blue/Green deployments)">
+  <meta name="twitter:image:src" content="https://flagger.app/flagger-overview.png">
+    
+    <link rel="preload" href="/assets/css/0.styles.a0ada997.css" as="style"><link rel="preload" href="/assets/js/app.b4b27991.js" as="script"><link rel="preload" href="/assets/js/2.ba5bf77c.js" as="script"><link rel="preload" href="/assets/js/18.e5188926.js" as="script"><link rel="prefetch" href="/assets/js/10.bf6f38d4.js"><link rel="prefetch" href="/assets/js/11.3af38cfe.js"><link rel="prefetch" href="/assets/js/12.eca4b89c.js"><link rel="prefetch" href="/assets/js/13.9104349a.js"><link rel="prefetch" href="/assets/js/14.a4f3d810.js"><link rel="prefetch" href="/assets/js/15.aada2caa.js"><link rel="prefetch" href="/assets/js/16.3012a10b.js"><link rel="prefetch" href="/assets/js/17.a98b6aa9.js"><link rel="prefetch" href="/assets/js/19.bb9498f7.js"><link rel="prefetch" href="/assets/js/20.dce5a04e.js"><link rel="prefetch" href="/assets/js/21.df66561d.js"><link rel="prefetch" href="/assets/js/22.1c5d14b9.js"><link rel="prefetch" href="/assets/js/23.b3dcc355.js"><link rel="prefetch" href="/assets/js/24.4f54d289.js"><link rel="prefetch" href="/assets/js/25.914acd1d.js"><link rel="prefetch" href="/assets/js/26.b2d4f402.js"><link rel="prefetch" href="/assets/js/27.ea9f1f9c.js"><link rel="prefetch" href="/assets/js/28.deae273d.js"><link rel="prefetch" href="/assets/js/29.17c547e6.js"><link rel="prefetch" href="/assets/js/3.8b254d5d.js"><link rel="prefetch" href="/assets/js/30.38bd809e.js"><link rel="prefetch" href="/assets/js/31.fbfb336c.js"><link rel="prefetch" href="/assets/js/32.591c3f2b.js"><link rel="prefetch" href="/assets/js/33.c456709f.js"><link rel="prefetch" href="/assets/js/34.5a071e36.js"><link rel="prefetch" href="/assets/js/35.fc27c09e.js"><link rel="prefetch" href="/assets/js/36.144098aa.js"><link rel="prefetch" href="/assets/js/4.26a3069c.js"><link rel="prefetch" href="/assets/js/5.f92a6aca.js"><link rel="prefetch" href="/assets/js/6.ee5ffca3.js"><link rel="prefetch" href="/assets/js/7.6bf27a87.js"><link rel="prefetch" href="/assets/js/8.8b72a8d3.js"><link rel="prefetch" href="/assets/js/9.7919fc1d.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.a0ada997.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">Flagger</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="https://docs.flagger.app" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Docs
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/weaveworks/flagger/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Changelog
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/weaveworks/flagger" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="https://docs.flagger.app" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Docs
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/weaveworks/flagger/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Changelog
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/weaveworks/flagger" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav>  <ul class="sidebar-links"><li><a href="/" class="sidebar-link">Home</a></li><li><section class="sidebar-group depth-0"><a href="/intro/" class="sidebar-heading clickable"><span>Introduction</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/intro/" class="sidebar-link">Get Started</a></li><li><a href="/intro/faq.html" class="sidebar-link">FAQ</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/install/flagger-install-on-kubernetes" class="sidebar-heading clickable"><span>Install</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/install/flagger-install-on-kubernetes.html" class="sidebar-link">On Kubernetes</a></li><li><a href="/install/flagger-install-on-google-cloud.html" class="sidebar-link">On GKE Istio</a></li><li><a href="/install/flagger-install-on-eks-appmesh.html" class="sidebar-link">On EKS App Mesh</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/usage/how-it-works" class="sidebar-heading clickable"><span>Usage</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/usage/how-it-works.html" class="sidebar-link">How it works</a></li><li><a href="/usage/deployment-strategies.html" class="sidebar-link">Deployment Strategies</a></li><li><a href="/usage/metrics.html" class="sidebar-link">Metrics Analysis</a></li><li><a href="/usage/webhooks.html" class="sidebar-link">Webhooks</a></li><li><a href="/usage/alerting.html" class="sidebar-link">Alerting</a></li><li><a href="/usage/monitoring.html" class="sidebar-link">Monitoring</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/tutorials/istio-progressive-delivery" class="sidebar-heading clickable open"><span>Tutorials</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/tutorials/istio-progressive-delivery.html" class="sidebar-link">Istio Canaries</a></li><li><a href="/tutorials/istio-ab-testing.html" class="sidebar-link">Istio A/B Testing</a></li><li><a href="/tutorials/linkerd-progressive-delivery.html" class="sidebar-link">Linkerd Canaries</a></li><li><a href="/tutorials/appmesh-progressive-delivery.html" class="sidebar-link">App Mesh Canaries</a></li><li><a href="/tutorials/nginx-progressive-delivery.html" class="sidebar-link">NGINX Ingress Canaries</a></li><li><a href="/tutorials/gloo-progressive-delivery.html" class="sidebar-link">Gloo Canaries</a></li><li><a href="/tutorials/contour-progressive-delivery.html" class="sidebar-link">Contour Canaries</a></li><li><a href="/tutorials/kubernetes-blue-green.html" class="sidebar-link">Kubernetes Blue/Green</a></li><li><a href="/tutorials/canary-helm-gitops.html" class="active sidebar-link">Canaries with Helm charts and GitOps</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/tutorials/canary-helm-gitops.html#packaging" class="sidebar-link">Packaging</a></li><li class="sidebar-sub-header"><a href="/tutorials/canary-helm-gitops.html#install" class="sidebar-link">Install</a></li><li class="sidebar-sub-header"><a href="/tutorials/canary-helm-gitops.html#upgrade" class="sidebar-link">Upgrade</a></li><li class="sidebar-sub-header"><a href="/tutorials/canary-helm-gitops.html#gitops-automation" class="sidebar-link">GitOps automation</a></li></ul></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/dev/dev-guide" class="sidebar-heading clickable"><span>Dev</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/dev/dev-guide.html" class="sidebar-link">Development Guide</a></li><li><a href="/dev/release-guide.html" class="sidebar-link">Release Guide</a></li><li><a href="/dev/upgrade-guide.html" class="sidebar-link">Upgrade Guide</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="canaries-with-helm-charts-and-gitops"><a href="#canaries-with-helm-charts-and-gitops" aria-hidden="true" class="header-anchor">#</a> Canaries with Helm charts and GitOps</h1> <p>This guide shows you how to package a web app into a Helm chart, trigger canary deployments on Helm upgrade and automate the chart release process with Weave Flux.</p> <h2 id="packaging"><a href="#packaging" aria-hidden="true" class="header-anchor">#</a> Packaging</h2> <p>You'll be using the <a href="https://github.com/stefanprodan/k8s-podinfo" target="_blank" rel="noopener noreferrer">podinfo<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a> chart. This chart packages a web app made with Go, it's configuration, a horizontal pod autoscaler (HPA) and the canary configuration file.</p> <div class="language-text extra-class"><pre class="language-text"><code>├── Chart.yaml
+├── README.md
+├── templates
+│   ├── NOTES.txt
+│   ├── _helpers.tpl
+│   ├── canary.yaml
+│   ├── configmap.yaml
+│   ├── deployment.yaml
+│   ├── hpa.yaml
+│   ├── service.yaml
+│   └── tests
+│       ├── test-config.yaml
+│       └── test-pod.yaml
+└── values.yaml
+</code></pre></div><p>You can find the chart source <a href="https://github.com/stefanprodan/flagger/tree/master/charts/podinfo" target="_blank" rel="noopener noreferrer">here<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>.</p> <h2 id="install"><a href="#install" aria-hidden="true" class="header-anchor">#</a> Install</h2> <p>Create a test namespace with Istio sidecar injection enabled:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token builtin class-name">export</span> <span class="token assign-left variable">REPO</span><span class="token operator">=</span>https://raw.githubusercontent.com/weaveworks/flagger/master
+
+kubectl apply -f <span class="token variable">${REPO}</span>/artifacts/namespaces/test.yaml
+</code></pre></div><p>Add Flagger Helm repository:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> flagger https://flagger.app
+</code></pre></div><p>Install podinfo with the release name <code>frontend</code> (replace <code>example.com</code> with your own domain):</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade -i frontend flagger/podinfo <span class="token punctuation">\</span>
+--namespace <span class="token builtin class-name">test</span> <span class="token punctuation">\</span>
+--set <span class="token assign-left variable">nameOverride</span><span class="token operator">=</span>frontend <span class="token punctuation">\</span>
+--set <span class="token assign-left variable">backend</span><span class="token operator">=</span>http://backend.test:9898/echo <span class="token punctuation">\</span>
+--set canary.enabled<span class="token operator">=</span>true <span class="token punctuation">\</span>
+--set canary.istioIngress.enabled<span class="token operator">=</span>true <span class="token punctuation">\</span>
+--set canary.istioIngress.gateway<span class="token operator">=</span>public-gateway.istio-system.svc.cluster.local <span class="token punctuation">\</span>
+--set canary.istioIngress.host<span class="token operator">=</span>frontend.istio.example.com
+</code></pre></div><p>Flagger takes a Kubernetes deployment and a horizontal pod autoscaler (HPA), then creates a series of objects (Kubernetes deployments, ClusterIP services and Istio virtual services). These objects expose the application on the mesh and drive the canary analysis and promotion.</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token comment"># generated by Helm </span>
+configmap/frontend
+deployment.apps/frontend
+horizontalpodautoscaler.autoscaling/frontend
+canary.flagger.app/frontend
+
+<span class="token comment"># generated by Flagger</span>
+configmap/frontend-primary
+deployment.apps/frontend-primary
+horizontalpodautoscaler.autoscaling/frontend-primary
+service/frontend
+service/frontend-canary
+service/frontend-primary
+virtualservice.networking.istio.io/frontend
+</code></pre></div><p>When the <code>frontend-primary</code> deployment comes online, Flagger will route all traffic to the primary pods and scale to zero the <code>frontend</code> deployment.</p> <p>Open your browser and navigate to the frontend URL:</p> <p><img src="https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-frontend.png" alt="Podinfo Frontend"></p> <p>Now let's install the <code>backend</code> release without exposing it outside the mesh:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade -i backend flagger/podinfo <span class="token punctuation">\</span>
+--namespace <span class="token builtin class-name">test</span> <span class="token punctuation">\</span>
+--set <span class="token assign-left variable">nameOverride</span><span class="token operator">=</span>backend <span class="token punctuation">\</span>
+--set canary.enabled<span class="token operator">=</span>true <span class="token punctuation">\</span>
+--set canary.istioIngress.enabled<span class="token operator">=</span>false
+</code></pre></div><p>Check if Flagger has successfully deployed the canaries:</p> <div class="language-text extra-class"><pre class="language-text"><code>kubectl -n test get canaries
+
+NAME       STATUS        WEIGHT   LASTTRANSITIONTIME
+backend    Initialized   0        2019-02-12T18:53:18Z
+frontend   Initialized   0        2019-02-12T17:50:50Z
+</code></pre></div><p>Click on the ping button in the <code>frontend</code> UI to trigger a HTTP POST request that will reach the <code>backend</code> app:</p> <p><img src="https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-frontend-jaeger.png" alt="Jaeger Tracing"></p> <p>We'll use the <code>/echo</code> endpoint (same as the one the ping button calls) to generate load on both apps during a canary deployment.</p> <h2 id="upgrade"><a href="#upgrade" aria-hidden="true" class="header-anchor">#</a> Upgrade</h2> <p>First let's install a load testing service that will generate traffic during analysis:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade -i flagger-loadtester flagger/loadtester <span class="token punctuation">\</span>
+--namespace<span class="token operator">=</span>test
+</code></pre></div><p>Install Flagger's helm test runner in the <code>kube-system</code> using <code>tiller</code> service account:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade -i flagger-helmtester flagger/loadtester <span class="token punctuation">\</span>
+--namespace<span class="token operator">=</span>kube-system <span class="token punctuation">\</span>
+--set <span class="token assign-left variable">serviceAccountName</span><span class="token operator">=</span>tiller
+</code></pre></div><p>Enable the load and helm tester and deploy a new <code>frontend</code> version:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade -i frontend flagger/podinfo/ <span class="token punctuation">\</span>
+--namespace <span class="token builtin class-name">test</span> <span class="token punctuation">\</span>
+--reuse-values <span class="token punctuation">\</span>
+--set canary.loadtest.enabled<span class="token operator">=</span>true <span class="token punctuation">\</span>
+--set canary.helmtest.enabled<span class="token operator">=</span>true <span class="token punctuation">\</span>
+--set image.tag<span class="token operator">=</span><span class="token number">3.1</span>.1
+</code></pre></div><p>Flagger detects that the deployment revision changed and starts the canary analysis:</p> <div class="language-text extra-class"><pre class="language-text"><code>kubectl -n istio-system logs deployment/flagger -f | jq .msg
+
+New revision detected! Scaling up frontend.test
+Halt advancement frontend.test waiting for rollout to finish: 0 of 2 updated replicas are available
+Starting canary analysis for frontend.test
+Pre-rollout check helm test passed
+Advance frontend.test canary weight 5
+Advance frontend.test canary weight 10
+Advance frontend.test canary weight 15
+Advance frontend.test canary weight 20
+Advance frontend.test canary weight 25
+Advance frontend.test canary weight 30
+Advance frontend.test canary weight 35
+Advance frontend.test canary weight 40
+Advance frontend.test canary weight 45
+Advance frontend.test canary weight 50
+Copying frontend.test template spec to frontend-primary.test
+Halt advancement frontend-primary.test waiting for rollout to finish: 1 old replicas are pending termination
+Promotion completed! Scaling down frontend.test
+</code></pre></div><p>You can monitor the canary deployment with Grafana. Open the Flagger dashboard, select <code>test</code> from the namespace dropdown, <code>frontend-primary</code> from the primary dropdown and <code>frontend</code> from the canary dropdown.</p> <p><img src="https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-frontend-dashboard.png" alt="Flagger Grafana Dashboard"></p> <p>Now trigger a canary deployment for the <code>backend</code> app, but this time you'll change a value in the configmap:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade -i backend flagger/podinfo/ <span class="token punctuation">\</span>
+--namespace <span class="token builtin class-name">test</span> <span class="token punctuation">\</span>
+--reuse-values <span class="token punctuation">\</span>
+--set canary.loadtest.enabled<span class="token operator">=</span>true <span class="token punctuation">\</span>
+--set canary.helmtest.enabled<span class="token operator">=</span>true <span class="token punctuation">\</span>
+--set httpServer.timeout<span class="token operator">=</span>25s
+</code></pre></div><p>Generate HTTP 500 errors:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl -n <span class="token builtin class-name">test</span> <span class="token builtin class-name">exec</span> -it flagger-loadtester-xxx-yyy <span class="token function">sh</span>
+
+<span class="token function">watch</span> <span class="token function">curl</span> http://backend-canary:9898/status/500
+</code></pre></div><p>Generate latency:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl -n <span class="token builtin class-name">test</span> <span class="token builtin class-name">exec</span> -it flagger-loadtester-xxx-yyy <span class="token function">sh</span>
+
+<span class="token function">watch</span> <span class="token function">curl</span> http://backend-canary:9898/delay/1
+</code></pre></div><p>Flagger detects the config map change and starts a canary analysis. Flagger will pause the advancement when the HTTP success rate drops under 99% or when the average request duration in the last minute is over 500ms:</p> <div class="language-text extra-class"><pre class="language-text"><code>kubectl -n test describe canary backend
+
+Events:
+
+ConfigMap backend has changed
+New revision detected! Scaling up backend.test
+Starting canary analysis for backend.test
+Advance backend.test canary weight 5
+Advance backend.test canary weight 10
+Advance backend.test canary weight 15
+Advance backend.test canary weight 20
+Advance backend.test canary weight 25
+Advance backend.test canary weight 30
+Advance backend.test canary weight 35
+Halt backend.test advancement success rate 62.50% &lt; 99%
+Halt backend.test advancement success rate 88.24% &lt; 99%
+Advance backend.test canary weight 40
+Advance backend.test canary weight 45
+Halt backend.test advancement request duration 2.415s &gt; 500ms
+Halt backend.test advancement request duration 2.42s &gt; 500ms
+Advance backend.test canary weight 50
+ConfigMap backend-primary synced
+Copying backend.test template spec to backend-primary.test
+Promotion completed! Scaling down backend.test
+</code></pre></div><p><img src="https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-backend-dashboard.png" alt="Flagger Grafana Dashboard"></p> <p>If the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl -n <span class="token builtin class-name">test</span> get canary
+
+NAME       STATUS        WEIGHT   LASTTRANSITIONTIME
+backend    Succeeded     <span class="token number">0</span>        <span class="token number">2019</span>-02-12T19:33:11Z
+frontend   Failed        <span class="token number">0</span>        <span class="token number">2019</span>-02-12T19:47:20Z
+</code></pre></div><p>If you've enabled the Slack notifications, you'll receive an alert with the reason why the <code>backend</code> promotion failed.</p> <h2 id="gitops-automation"><a href="#gitops-automation" aria-hidden="true" class="header-anchor">#</a> GitOps automation</h2> <p>Instead of using Helm CLI from a CI tool to perform the install and upgrade, you could use a Git based approach. GitOps is a way to do Continuous Delivery, it works by using Git as a source of truth for declarative infrastructure and workloads. In the <a href="https://www.weave.works/technologies/gitops/" target="_blank" rel="noopener noreferrer">GitOps model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>, any change to production must be committed in source control prior to being applied on the cluster. This way rollback and audit logs are provided by Git.</p> <p><img src="https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-flux-gitops.png" alt="Helm GitOps Canary Deployment"></p> <p>In order to apply the GitOps pipeline model to Flagger canary deployments you'll need a Git repository with your workloads definitions in YAML format, a container registry where your CI system pushes immutable images and an operator that synchronizes the Git repo with the cluster state.</p> <p>Create a git repository with the following content:</p> <div class="language-text extra-class"><pre class="language-text"><code>├── namespaces
+│   └── test.yaml
+└── releases
+    └── test
+        ├── backend.yaml
+        ├── frontend.yaml
+        ├── loadtester.yaml
+        └── helmtester.yaml
+</code></pre></div><p>Define the <code>frontend</code> release using Flux <code>HelmRelease</code> custom resource:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> flux.weave.works/v1beta1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> HelmRelease
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> frontend
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> test
+  <span class="token key atrule">annotations</span><span class="token punctuation">:</span>
+    <span class="token key atrule">fluxcd.io/automated</span><span class="token punctuation">:</span> <span class="token string">&quot;true&quot;</span>
+    <span class="token key atrule">filter.fluxcd.io/chart-image</span><span class="token punctuation">:</span> semver<span class="token punctuation">:</span>~3.1
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">releaseName</span><span class="token punctuation">:</span> frontend
+  <span class="token key atrule">chart</span><span class="token punctuation">:</span>
+    <span class="token key atrule">git</span><span class="token punctuation">:</span> https<span class="token punctuation">:</span>//github.com/weaveowrks/flagger
+    <span class="token key atrule">ref</span><span class="token punctuation">:</span> master
+    <span class="token key atrule">path</span><span class="token punctuation">:</span> charts/podinfo
+  <span class="token key atrule">values</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span>
+      <span class="token key atrule">repository</span><span class="token punctuation">:</span> stefanprodan/podinfo
+      <span class="token key atrule">tag</span><span class="token punctuation">:</span> 3.1.0
+      <span class="token key atrule">backend</span><span class="token punctuation">:</span> http<span class="token punctuation">:</span>//backend<span class="token punctuation">-</span>podinfo<span class="token punctuation">:</span>9898/echo
+      <span class="token key atrule">canary</span><span class="token punctuation">:</span>
+        <span class="token key atrule">enabled</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+        <span class="token key atrule">istioIngress</span><span class="token punctuation">:</span>
+          <span class="token key atrule">enabled</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+          <span class="token key atrule">gateway</span><span class="token punctuation">:</span> public<span class="token punctuation">-</span>gateway.istio<span class="token punctuation">-</span>system.svc.cluster.local
+          <span class="token key atrule">host</span><span class="token punctuation">:</span> frontend.istio.example.com
+        <span class="token key atrule">loadtest</span><span class="token punctuation">:</span>
+          <span class="token key atrule">enabled</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+        <span class="token key atrule">helmtest</span><span class="token punctuation">:</span>
+          <span class="token key atrule">enabled</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+</code></pre></div><p>In the <code>chart</code> section I've defined the release source by specifying the Helm repository (hosted on GitHub Pages),
+chart name and version. In the <code>values</code> section I've overwritten the defaults set in values.yaml.</p> <p>With the <code>fluxcd.io</code> annotations I instruct Flux to automate this release.
+When an image tag in the sem ver range of <code>3.1.0 - 3.1.99</code> is pushed to Docker Hub,
+Flux will upgrade the Helm release and from there Flagger will pick up the change and start a canary deployment.</p> <p>Install <a href="https://github.com/fluxcd/flux" target="_blank" rel="noopener noreferrer">Flux<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a> and its
+<a href="https://github.com/fluxcd/helm-operator" target="_blank" rel="noopener noreferrer">Helm Operator<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a> by specifying your Git repo URL:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> fluxcd https://charts.fluxcd.io
+
+helm <span class="token function">install</span> --name flux <span class="token punctuation">\</span>
+--set git.url<span class="token operator">=</span>git@github.com:<span class="token operator">&lt;</span>USERNAME<span class="token operator">&gt;</span>/<span class="token operator">&lt;</span>REPOSITORY<span class="token operator">&gt;</span> <span class="token punctuation">\</span>
+--namespace fluxcd <span class="token punctuation">\</span>
+fluxcd/flux
+
+helm upgrade -i helm-operator fluxcd/helm-operator <span class="token punctuation">\</span>
+--namespace fluxcd <span class="token punctuation">\</span>
+--set git.ssh.secretName<span class="token operator">=</span>flux-git-deploy
+</code></pre></div><p>At startup Flux generates a SSH key and logs the public key. Find the SSH public key with:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl -n fluxcd logs deployment/flux <span class="token operator">|</span> <span class="token function">grep</span> identity.pub <span class="token operator">|</span> <span class="token function">cut</span> -d <span class="token string">'&quot;'</span> -f2
+</code></pre></div><p>In order to sync your cluster state with Git you need to copy the public key
+and create a deploy key with write access on your GitHub repository.</p> <p>Open GitHub, navigate to your fork, go to <em>Setting &gt; Deploy keys</em> click on <em>Add deploy key</em>, check <em>Allow write access</em>,
+paste the Flux public key and click <em>Add key</em>.</p> <p>After a couple of seconds Flux will apply the Kubernetes resources from Git and
+Flagger will launch the <code>frontend</code> and <code>backend</code> apps.</p> <p>A CI/CD pipeline for the <code>frontend</code> release could look like this:</p> <ul><li>cut a release from the master branch of the podinfo code repo with the git tag <code>3.1.1</code></li> <li>CI builds the image and pushes the <code>podinfo:3.1.1</code> image to the container registry</li> <li>Flux scans the registry and updates the Helm release <code>image.tag</code> to <code>3.1.1</code></li> <li>Flux commits and push the change to the cluster repo</li> <li>Flux applies the updated Helm release on the cluster</li> <li>Flux Helm Operator picks up the change and calls Tiller to upgrade the release</li> <li>Flagger detects a revision change and scales up the <code>frontend</code> deployment</li> <li>Flagger runs the helm test before routing traffic to the canary service</li> <li>Flagger starts the load test and runs the canary analysis</li> <li>Based on the analysis result the canary deployment is promoted to production or rolled back</li> <li>Flagger sends a Slack or MS Teams notification with the canary result</li></ul> <p>If the canary fails, fix the bug, do another patch release eg <code>3.1.2</code> and the whole process will run again.</p> <p>A canary deployment can fail due to any of the following reasons:</p> <ul><li>the container image can't be downloaded</li> <li>the deployment replica set is stuck for more then ten minutes (eg. due to a container crash loop)</li> <li>the webooks (acceptance tests, helm tests, load tests, etc) are returning a non 2xx response</li> <li>the HTTP success rate (non 5xx responses) metric drops under the threshold</li> <li>the HTTP average duration metric goes over the threshold</li> <li>the Istio telemetry service is unable to collect traffic metrics</li> <li>the metrics server (Prometheus) can't be reached</li></ul> <p>If you want to find out more about managing Helm releases with Flux here are two in-depth guides:
+<a href="https://github.com/stefanprodan/gitops-helm" target="_blank" rel="noopener noreferrer">gitops-helm<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>
+and <a href="https://github.com/stefanprodan/gitops-istio" target="_blank" rel="noopener noreferrer">gitops-istio<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>.</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+        ←
+        <a href="/tutorials/kubernetes-blue-green.html" class="prev">
+          Kubernetes Blue/Green
+        </a></span> <span class="next"><a href="/dev/dev-guide.html">
+          Development Guide
+        </a>
+        →
+      </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.b4b27991.js" defer></script><script src="/assets/js/2.ba5bf77c.js" defer></script><script src="/assets/js/18.e5188926.js" defer></script>
+  </body>
+</html>

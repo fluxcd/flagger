@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Metrics Analysis | Flagger</title>
+    <meta name="description" content="Progressive Delivery operator for Kubernetes (Canary, A/B Testing and Blue/Green deployments)">
+    <link rel="icon" href="/favicon.png">
+  <link rel="stylesheet" href="/website.css">
+  <meta name="keywords" content="gitops kubernetes flagger istio linkerd appmesh contour gloo nginx">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Flagger">
+  <meta name="twitter:description" content="Progressive delivery Kubernetes operator (Canary, A/B Testing and Blue/Green deployments)">
+  <meta name="twitter:image:src" content="https://flagger.app/flagger-overview.png">
+    
+    <link rel="preload" href="/assets/css/0.styles.a0ada997.css" as="style"><link rel="preload" href="/assets/js/app.b4b27991.js" as="script"><link rel="preload" href="/assets/js/2.ba5bf77c.js" as="script"><link rel="preload" href="/assets/js/33.c456709f.js" as="script"><link rel="prefetch" href="/assets/js/10.bf6f38d4.js"><link rel="prefetch" href="/assets/js/11.3af38cfe.js"><link rel="prefetch" href="/assets/js/12.eca4b89c.js"><link rel="prefetch" href="/assets/js/13.9104349a.js"><link rel="prefetch" href="/assets/js/14.a4f3d810.js"><link rel="prefetch" href="/assets/js/15.aada2caa.js"><link rel="prefetch" href="/assets/js/16.3012a10b.js"><link rel="prefetch" href="/assets/js/17.a98b6aa9.js"><link rel="prefetch" href="/assets/js/18.e5188926.js"><link rel="prefetch" href="/assets/js/19.bb9498f7.js"><link rel="prefetch" href="/assets/js/20.dce5a04e.js"><link rel="prefetch" href="/assets/js/21.df66561d.js"><link rel="prefetch" href="/assets/js/22.1c5d14b9.js"><link rel="prefetch" href="/assets/js/23.b3dcc355.js"><link rel="prefetch" href="/assets/js/24.4f54d289.js"><link rel="prefetch" href="/assets/js/25.914acd1d.js"><link rel="prefetch" href="/assets/js/26.b2d4f402.js"><link rel="prefetch" href="/assets/js/27.ea9f1f9c.js"><link rel="prefetch" href="/assets/js/28.deae273d.js"><link rel="prefetch" href="/assets/js/29.17c547e6.js"><link rel="prefetch" href="/assets/js/3.8b254d5d.js"><link rel="prefetch" href="/assets/js/30.38bd809e.js"><link rel="prefetch" href="/assets/js/31.fbfb336c.js"><link rel="prefetch" href="/assets/js/32.591c3f2b.js"><link rel="prefetch" href="/assets/js/34.5a071e36.js"><link rel="prefetch" href="/assets/js/35.fc27c09e.js"><link rel="prefetch" href="/assets/js/36.144098aa.js"><link rel="prefetch" href="/assets/js/4.26a3069c.js"><link rel="prefetch" href="/assets/js/5.f92a6aca.js"><link rel="prefetch" href="/assets/js/6.ee5ffca3.js"><link rel="prefetch" href="/assets/js/7.6bf27a87.js"><link rel="prefetch" href="/assets/js/8.8b72a8d3.js"><link rel="prefetch" href="/assets/js/9.7919fc1d.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.a0ada997.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">Flagger</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="https://docs.flagger.app" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Docs
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/weaveworks/flagger/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Changelog
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/weaveworks/flagger" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="https://docs.flagger.app" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Docs
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/weaveworks/flagger/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Changelog
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/weaveworks/flagger" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav>  <ul class="sidebar-links"><li><a href="/" class="sidebar-link">Home</a></li><li><section class="sidebar-group depth-0"><a href="/intro/" class="sidebar-heading clickable"><span>Introduction</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/intro/" class="sidebar-link">Get Started</a></li><li><a href="/intro/faq.html" class="sidebar-link">FAQ</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/install/flagger-install-on-kubernetes" class="sidebar-heading clickable"><span>Install</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/install/flagger-install-on-kubernetes.html" class="sidebar-link">On Kubernetes</a></li><li><a href="/install/flagger-install-on-google-cloud.html" class="sidebar-link">On GKE Istio</a></li><li><a href="/install/flagger-install-on-eks-appmesh.html" class="sidebar-link">On EKS App Mesh</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/usage/how-it-works" class="sidebar-heading clickable open"><span>Usage</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/usage/how-it-works.html" class="sidebar-link">How it works</a></li><li><a href="/usage/deployment-strategies.html" class="sidebar-link">Deployment Strategies</a></li><li><a href="/usage/metrics.html" class="active sidebar-link">Metrics Analysis</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/usage/metrics.html#builtin-metrics" class="sidebar-link">Builtin metrics</a></li><li class="sidebar-sub-header"><a href="/usage/metrics.html#custom-metrics" class="sidebar-link">Custom metrics</a></li><li class="sidebar-sub-header"><a href="/usage/metrics.html#prometheus" class="sidebar-link">Prometheus</a></li><li class="sidebar-sub-header"><a href="/usage/metrics.html#datadog" class="sidebar-link">Datadog</a></li><li class="sidebar-sub-header"><a href="/usage/metrics.html#amazon-cloudwatch" class="sidebar-link">Amazon CloudWatch</a></li></ul></li><li><a href="/usage/webhooks.html" class="sidebar-link">Webhooks</a></li><li><a href="/usage/alerting.html" class="sidebar-link">Alerting</a></li><li><a href="/usage/monitoring.html" class="sidebar-link">Monitoring</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/tutorials/istio-progressive-delivery" class="sidebar-heading clickable"><span>Tutorials</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/tutorials/istio-progressive-delivery.html" class="sidebar-link">Istio Canaries</a></li><li><a href="/tutorials/istio-ab-testing.html" class="sidebar-link">Istio A/B Testing</a></li><li><a href="/tutorials/linkerd-progressive-delivery.html" class="sidebar-link">Linkerd Canaries</a></li><li><a href="/tutorials/appmesh-progressive-delivery.html" class="sidebar-link">App Mesh Canaries</a></li><li><a href="/tutorials/nginx-progressive-delivery.html" class="sidebar-link">NGINX Ingress Canaries</a></li><li><a href="/tutorials/gloo-progressive-delivery.html" class="sidebar-link">Gloo Canaries</a></li><li><a href="/tutorials/contour-progressive-delivery.html" class="sidebar-link">Contour Canaries</a></li><li><a href="/tutorials/kubernetes-blue-green.html" class="sidebar-link">Kubernetes Blue/Green</a></li><li><a href="/tutorials/canary-helm-gitops.html" class="sidebar-link">Canaries with Helm charts and GitOps</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/dev/dev-guide" class="sidebar-heading clickable"><span>Dev</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/dev/dev-guide.html" class="sidebar-link">Development Guide</a></li><li><a href="/dev/release-guide.html" class="sidebar-link">Release Guide</a></li><li><a href="/dev/upgrade-guide.html" class="sidebar-link">Upgrade Guide</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="metrics-analysis"><a href="#metrics-analysis" aria-hidden="true" class="header-anchor">#</a> Metrics Analysis</h1> <p>As part of the analysis process, Flagger can validate service level objectives (SLOs) like
+availability, error rate percentage, average response time and any other objective based on app specific metrics.
+If a drop in performance is noticed during the SLOs analysis,
+the release will be automatically rolled back with minimum impact to end-users.</p> <h2 id="builtin-metrics"><a href="#builtin-metrics" aria-hidden="true" class="header-anchor">#</a> Builtin metrics</h2> <p>Flagger comes with two builtin metric checks: HTTP request success rate and duration.</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code>  <span class="token key atrule">analysis</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> request<span class="token punctuation">-</span>success<span class="token punctuation">-</span>rate
+      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+      <span class="token comment"># minimum req success rate (non 5xx responses)</span>
+      <span class="token comment"># percentage (0-100)</span>
+      <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+        <span class="token key atrule">min</span><span class="token punctuation">:</span> <span class="token number">99</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> request<span class="token punctuation">-</span>duration
+      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+      <span class="token comment"># maximum req duration P99</span>
+      <span class="token comment"># milliseconds</span>
+      <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+        <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">500</span>
+</code></pre></div><p>For each metric you can specify a range of accepted values with <code>thresholdRange</code>
+and the window size or the time series with <code>interval</code>.
+The builtin checks are available for every service mesh / ingress controller
+and are implemented with <a href="/faq.html#metrics">Prometheus queries</a>.</p> <h2 id="custom-metrics"><a href="#custom-metrics" aria-hidden="true" class="header-anchor">#</a> Custom metrics</h2> <p>The canary analysis can be extended with custom metric checks. Using a <code>MetricTemplate</code> custom resource, you
+configure Flagger to connect to a metric provider and run a query that returns a <code>float64</code> value.
+The query result is used to validate the canary based on the specified threshold range.</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> flagger.app/v1beta1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> MetricTemplate
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>metric
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">provider</span><span class="token punctuation">:</span>
+    <span class="token key atrule">type</span><span class="token punctuation">:</span> <span class="token comment"># can be prometheus or datadog</span>
+    <span class="token key atrule">address</span><span class="token punctuation">:</span> <span class="token comment"># API URL</span>
+    <span class="token key atrule">secretRef</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token comment"># name of the secret containing the API credentials</span>
+  <span class="token key atrule">query</span><span class="token punctuation">:</span> <span class="token comment"># metric query</span>
+</code></pre></div><p>The following variables are available in query templates:</p> <ul><li><code>name</code> (canary.metadata.name)</li> <li><code>namespace</code> (canary.metadata.namespace)</li> <li><code>target</code> (canary.spec.targetRef.name)</li> <li><code>service</code> (canary.spec.service.name)</li> <li><code>ingress</code> (canary.spec.ingresRef.name)</li> <li><code>interval</code> (canary.spec.canaryAnalysis.metrics[].interval)</li></ul> <p>A canary analysis metric can reference a template with <code>templateRef</code>:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code>  <span class="token key atrule">analysis</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token string">&quot;my metric&quot;</span>
+        <span class="token key atrule">templateRef</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>metric
+          <span class="token comment"># namespace is optional</span>
+          <span class="token comment"># when not specified, the canary namespace will be used</span>
+          <span class="token key atrule">namespace</span><span class="token punctuation">:</span> flagger
+        <span class="token comment"># accepted values</span>
+        <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+          <span class="token key atrule">min</span><span class="token punctuation">:</span> <span class="token number">10</span>
+          <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">1000</span>
+        <span class="token comment"># metric query time window</span>
+        <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+</code></pre></div><h2 id="prometheus"><a href="#prometheus" aria-hidden="true" class="header-anchor">#</a> Prometheus</h2> <p>You can create custom metric checks targeting a Prometheus server
+by setting the provider type to <code>prometheus</code> and writing the query in PromQL.</p> <p>Prometheus template example:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> flagger.app/v1beta1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> MetricTemplate
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> not<span class="token punctuation">-</span>found<span class="token punctuation">-</span>percentage
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">provider</span><span class="token punctuation">:</span>
+    <span class="token key atrule">type</span><span class="token punctuation">:</span> prometheus
+    <span class="token key atrule">address</span><span class="token punctuation">:</span> http<span class="token punctuation">:</span>//promethues.istio<span class="token punctuation">-</span>system<span class="token punctuation">:</span><span class="token number">9090</span>
+  <span class="token key atrule">query</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+    100 - sum(
+        rate(
+            istio_requests_total{
+              reporter=&quot;destination&quot;,
+              destination_workload_namespace=&quot;{{ namespace }}&quot;,
+              destination_workload=&quot;{{ target }}&quot;,
+              response_code!=&quot;404&quot;
+            }[{{ interval }}]
+        )
+    )
+    /
+    sum(
+        rate(
+            istio_requests_total{
+              reporter=&quot;destination&quot;,
+              destination_workload_namespace=&quot;{{ namespace }}&quot;,
+              destination_workload=&quot;{{ target }}&quot;
+            }[{{ interval }}]
+        )
+    ) * 100</span>
+</code></pre></div><p>Reference the template in the canary analysis:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code>  <span class="token key atrule">analysis</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token string">&quot;404s percentage&quot;</span>
+        <span class="token key atrule">templateRef</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> not<span class="token punctuation">-</span>found<span class="token punctuation">-</span>percentage
+          <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system
+        <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+          <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">5</span>
+        <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+</code></pre></div><p>The above configuration validates the canary by checking
+if the HTTP 404 req/sec percentage is below 5 percent of the total traffic.
+If the 404s rate reaches the 5% threshold, then the canary fails.</p> <p>Prometheus gRPC error rate example:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> flagger.app/v1beta1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> MetricTemplate
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> grpc<span class="token punctuation">-</span>error<span class="token punctuation">-</span>rate<span class="token punctuation">-</span>percentage
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> flagger
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">provider</span><span class="token punctuation">:</span>
+    <span class="token key atrule">type</span><span class="token punctuation">:</span> prometheus
+    <span class="token key atrule">address</span><span class="token punctuation">:</span> http<span class="token punctuation">:</span>//flagger<span class="token punctuation">-</span>promethues.flagger<span class="token punctuation">-</span>system<span class="token punctuation">:</span><span class="token number">9090</span>
+  <span class="token key atrule">query</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+    100 - sum(
+        rate(
+            grpc_server_handled_total{
+              grpc_code!=&quot;OK&quot;,
+              kubernetes_namespace=&quot;{{ namespace }}&quot;,
+              kubernetes_pod_name=~&quot;{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)&quot;
+            }[{{ interval }}]
+        )
+    )
+    /
+    sum(
+        rate(
+            grpc_server_started_total{
+              kubernetes_namespace=&quot;{{ namespace }}&quot;,
+              kubernetes_pod_name=~&quot;{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)&quot;
+            }[{{ interval }}]
+        )
+    ) * 100</span>
+</code></pre></div><p>The above template is for gPRC services instrumented with <a href="https://github.com/grpc-ecosystem/go-grpc-prometheus" target="_blank" rel="noopener noreferrer">go-grpc-prometheus<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>.</p> <h2 id="datadog"><a href="#datadog" aria-hidden="true" class="header-anchor">#</a> Datadog</h2> <p>You can create custom metric checks using the Datadog provider.</p> <p>Create a secret with your Datadog API credentials:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Secret
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> datadog
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system
+<span class="token key atrule">data</span><span class="token punctuation">:</span>
+  <span class="token key atrule">datadog_api_key</span><span class="token punctuation">:</span> your<span class="token punctuation">-</span>datadog<span class="token punctuation">-</span>api<span class="token punctuation">-</span>key
+  <span class="token key atrule">datadog_application_key</span><span class="token punctuation">:</span> your<span class="token punctuation">-</span>datadog<span class="token punctuation">-</span>application<span class="token punctuation">-</span>key
+</code></pre></div><p>Datadog template example:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> flagger.app/v1beta1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> MetricTemplate
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> not<span class="token punctuation">-</span>found<span class="token punctuation">-</span>percentage
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">provider</span><span class="token punctuation">:</span>
+    <span class="token key atrule">type</span><span class="token punctuation">:</span> datadog
+    <span class="token key atrule">address</span><span class="token punctuation">:</span> https<span class="token punctuation">:</span>//api.datadoghq.com
+    <span class="token key atrule">secretRef</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> datadog
+  <span class="token key atrule">query</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+    100 - (
+      sum:istio.mesh.request.count{
+        reporter:destination,
+        destination_workload_namespace:{{ namespace }},
+        destination_workload:{{ target }},
+        !response_code:404
+      }.as_count()
+      / 
+      sum:istio.mesh.request.count{
+        reporter:destination,
+        destination_workload_namespace:{{ namespace }},
+        destination_workload:{{ target }}
+      }.as_count()
+    ) * 100</span>
+</code></pre></div><p>Reference the template in the canary analysis:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code>  <span class="token key atrule">analysis</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token string">&quot;404s percentage&quot;</span>
+        <span class="token key atrule">templateRef</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> not<span class="token punctuation">-</span>found<span class="token punctuation">-</span>percentage
+          <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system
+        <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+          <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">5</span>
+        <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+</code></pre></div><h2 id="amazon-cloudwatch"><a href="#amazon-cloudwatch" aria-hidden="true" class="header-anchor">#</a> Amazon CloudWatch</h2> <p>You can create custom metric checks using the CloudWatch metrics provider.</p> <p>CloudWatch template example:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> flagger.app/v1alpha1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> MetricTemplate
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> cloudwatch<span class="token punctuation">-</span>error<span class="token punctuation">-</span>rate
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">provider</span><span class="token punctuation">:</span>
+    <span class="token key atrule">type</span><span class="token punctuation">:</span> cloudwatch
+    <span class="token key atrule">region</span><span class="token punctuation">:</span> ap<span class="token punctuation">-</span>northeast<span class="token punctuation">-</span><span class="token number">1 </span><span class="token comment"># specify the region of your metrics</span>
+  <span class="token key atrule">query</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+    [
+        {
+            &quot;Id&quot;: &quot;e1&quot;,
+            &quot;Expression&quot;: &quot;m1 / m2&quot;,
+            &quot;Label&quot;: &quot;ErrorRate&quot;
+        },
+        {
+            &quot;Id&quot;: &quot;m1&quot;,
+            &quot;MetricStat&quot;: {
+                &quot;Metric&quot;: {
+                    &quot;Namespace&quot;: &quot;MyKubernetesCluster&quot;,
+                    &quot;MetricName&quot;: &quot;ErrorCount&quot;,
+                    &quot;Dimensions&quot;: [
+                        {
+                            &quot;Name&quot;: &quot;appName&quot;,
+                            &quot;Value&quot;: &quot;{{ name }}.{{ namespace }}&quot;
+                        }
+                    ]
+                },
+                &quot;Period&quot;: 60,
+                &quot;Stat&quot;: &quot;Sum&quot;,
+                &quot;Unit&quot;: &quot;Count&quot;
+            },
+            &quot;ReturnData&quot;: false
+        },
+        {
+            &quot;Id&quot;: &quot;m2&quot;,
+            &quot;MetricStat&quot;: {
+                &quot;Metric&quot;: {
+                    &quot;Namespace&quot;: &quot;MyKubernetesCluster&quot;,
+                    &quot;MetricName&quot;: &quot;RequestCount&quot;,
+                    &quot;Dimensions&quot;: [
+                        {
+                            &quot;Name&quot;: &quot;appName&quot;,
+                            &quot;Value&quot;: &quot;{{ name }}.{{ namespace }}&quot;
+                        }
+                    ]
+                },
+                &quot;Period&quot;: 60,
+                &quot;Stat&quot;: &quot;Sum&quot;,
+                &quot;Unit&quot;: &quot;Count&quot;
+            },
+            &quot;ReturnData&quot;: false
+        }
+    ]</span>
+</code></pre></div><p>The query format documentation can be found <a href="https://aws.amazon.com/premiumsupport/knowledge-center/cloudwatch-getmetricdata-api/" target="_blank" rel="noopener noreferrer">here<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>.</p> <p>Reference the template in the canary analysis:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code>  <span class="token key atrule">analysis</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token string">&quot;app error rate&quot;</span>
+        <span class="token key atrule">templateRef</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> cloudwatch<span class="token punctuation">-</span>error<span class="token punctuation">-</span>rate
+        <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+          <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">0.1</span>
+        <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+</code></pre></div><p><strong>Note</strong> that Flagger need AWS IAM permission to perform <code>cloudwatch:GetMetricData</code> to use this provider.</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+        ←
+        <a href="/usage/deployment-strategies.html" class="prev">
+          Deployment Strategies
+        </a></span> <span class="next"><a href="/usage/webhooks.html">
+          Webhooks
+        </a>
+        →
+      </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.b4b27991.js" defer></script><script src="/assets/js/2.ba5bf77c.js" defer></script><script src="/assets/js/33.c456709f.js" defer></script>
+  </body>
+</html>

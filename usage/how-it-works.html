@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>How it works | Flagger</title>
+    <meta name="description" content="Progressive Delivery operator for Kubernetes (Canary, A/B Testing and Blue/Green deployments)">
+    <link rel="icon" href="/favicon.png">
+  <link rel="stylesheet" href="/website.css">
+  <meta name="keywords" content="gitops kubernetes flagger istio linkerd appmesh contour gloo nginx">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Flagger">
+  <meta name="twitter:description" content="Progressive delivery Kubernetes operator (Canary, A/B Testing and Blue/Green deployments)">
+  <meta name="twitter:image:src" content="https://flagger.app/flagger-overview.png">
+    
+    <link rel="preload" href="/assets/css/0.styles.a0ada997.css" as="style"><link rel="preload" href="/assets/js/app.b4b27991.js" as="script"><link rel="preload" href="/assets/js/2.ba5bf77c.js" as="script"><link rel="preload" href="/assets/js/32.591c3f2b.js" as="script"><link rel="prefetch" href="/assets/js/10.bf6f38d4.js"><link rel="prefetch" href="/assets/js/11.3af38cfe.js"><link rel="prefetch" href="/assets/js/12.eca4b89c.js"><link rel="prefetch" href="/assets/js/13.9104349a.js"><link rel="prefetch" href="/assets/js/14.a4f3d810.js"><link rel="prefetch" href="/assets/js/15.aada2caa.js"><link rel="prefetch" href="/assets/js/16.3012a10b.js"><link rel="prefetch" href="/assets/js/17.a98b6aa9.js"><link rel="prefetch" href="/assets/js/18.e5188926.js"><link rel="prefetch" href="/assets/js/19.bb9498f7.js"><link rel="prefetch" href="/assets/js/20.dce5a04e.js"><link rel="prefetch" href="/assets/js/21.df66561d.js"><link rel="prefetch" href="/assets/js/22.1c5d14b9.js"><link rel="prefetch" href="/assets/js/23.b3dcc355.js"><link rel="prefetch" href="/assets/js/24.4f54d289.js"><link rel="prefetch" href="/assets/js/25.914acd1d.js"><link rel="prefetch" href="/assets/js/26.b2d4f402.js"><link rel="prefetch" href="/assets/js/27.ea9f1f9c.js"><link rel="prefetch" href="/assets/js/28.deae273d.js"><link rel="prefetch" href="/assets/js/29.17c547e6.js"><link rel="prefetch" href="/assets/js/3.8b254d5d.js"><link rel="prefetch" href="/assets/js/30.38bd809e.js"><link rel="prefetch" href="/assets/js/31.fbfb336c.js"><link rel="prefetch" href="/assets/js/33.c456709f.js"><link rel="prefetch" href="/assets/js/34.5a071e36.js"><link rel="prefetch" href="/assets/js/35.fc27c09e.js"><link rel="prefetch" href="/assets/js/36.144098aa.js"><link rel="prefetch" href="/assets/js/4.26a3069c.js"><link rel="prefetch" href="/assets/js/5.f92a6aca.js"><link rel="prefetch" href="/assets/js/6.ee5ffca3.js"><link rel="prefetch" href="/assets/js/7.6bf27a87.js"><link rel="prefetch" href="/assets/js/8.8b72a8d3.js"><link rel="prefetch" href="/assets/js/9.7919fc1d.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.a0ada997.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">Flagger</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="https://docs.flagger.app" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Docs
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/weaveworks/flagger/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Changelog
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/weaveworks/flagger" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="https://docs.flagger.app" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Docs
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div><div class="nav-item"><a href="https://github.com/weaveworks/flagger/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Changelog
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/weaveworks/flagger" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav>  <ul class="sidebar-links"><li><a href="/" class="sidebar-link">Home</a></li><li><section class="sidebar-group depth-0"><a href="/intro/" class="sidebar-heading clickable"><span>Introduction</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/intro/" class="sidebar-link">Get Started</a></li><li><a href="/intro/faq.html" class="sidebar-link">FAQ</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/install/flagger-install-on-kubernetes" class="sidebar-heading clickable"><span>Install</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/install/flagger-install-on-kubernetes.html" class="sidebar-link">On Kubernetes</a></li><li><a href="/install/flagger-install-on-google-cloud.html" class="sidebar-link">On GKE Istio</a></li><li><a href="/install/flagger-install-on-eks-appmesh.html" class="sidebar-link">On EKS App Mesh</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/usage/how-it-works" class="sidebar-heading clickable open active"><span>Usage</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/usage/how-it-works.html" class="active sidebar-link">How it works</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/usage/how-it-works.html#canary-resource" class="sidebar-link">Canary resource</a></li><li class="sidebar-sub-header"><a href="/usage/how-it-works.html#canary-target" class="sidebar-link">Canary target</a></li><li class="sidebar-sub-header"><a href="/usage/how-it-works.html#canary-service" class="sidebar-link">Canary service</a></li><li class="sidebar-sub-header"><a href="/usage/how-it-works.html#canary-status" class="sidebar-link">Canary status</a></li><li class="sidebar-sub-header"><a href="/usage/how-it-works.html#canary-analysis" class="sidebar-link">Canary analysis</a></li></ul></li><li><a href="/usage/deployment-strategies.html" class="sidebar-link">Deployment Strategies</a></li><li><a href="/usage/metrics.html" class="sidebar-link">Metrics Analysis</a></li><li><a href="/usage/webhooks.html" class="sidebar-link">Webhooks</a></li><li><a href="/usage/alerting.html" class="sidebar-link">Alerting</a></li><li><a href="/usage/monitoring.html" class="sidebar-link">Monitoring</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/tutorials/istio-progressive-delivery" class="sidebar-heading clickable"><span>Tutorials</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/tutorials/istio-progressive-delivery.html" class="sidebar-link">Istio Canaries</a></li><li><a href="/tutorials/istio-ab-testing.html" class="sidebar-link">Istio A/B Testing</a></li><li><a href="/tutorials/linkerd-progressive-delivery.html" class="sidebar-link">Linkerd Canaries</a></li><li><a href="/tutorials/appmesh-progressive-delivery.html" class="sidebar-link">App Mesh Canaries</a></li><li><a href="/tutorials/nginx-progressive-delivery.html" class="sidebar-link">NGINX Ingress Canaries</a></li><li><a href="/tutorials/gloo-progressive-delivery.html" class="sidebar-link">Gloo Canaries</a></li><li><a href="/tutorials/contour-progressive-delivery.html" class="sidebar-link">Contour Canaries</a></li><li><a href="/tutorials/kubernetes-blue-green.html" class="sidebar-link">Kubernetes Blue/Green</a></li><li><a href="/tutorials/canary-helm-gitops.html" class="sidebar-link">Canaries with Helm charts and GitOps</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/dev/dev-guide" class="sidebar-heading clickable"><span>Dev</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/dev/dev-guide.html" class="sidebar-link">Development Guide</a></li><li><a href="/dev/release-guide.html" class="sidebar-link">Release Guide</a></li><li><a href="/dev/upgrade-guide.html" class="sidebar-link">Upgrade Guide</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="how-it-works"><a href="#how-it-works" aria-hidden="true" class="header-anchor">#</a> How it works</h1> <p><a href="https://github.com/weaveworks/flagger" target="_blank" rel="noopener noreferrer">Flagger<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a> can be configured to automate the release process
+for Kubernetes workloads with a custom resource named canary.</p> <h2 id="canary-resource"><a href="#canary-resource" aria-hidden="true" class="header-anchor">#</a> Canary resource</h2> <p>The canary custom resource defines the release process of an application running on Kubernetes
+and is portable across clusters, service meshes and ingress providers.</p> <p>For a deployment named <em>podinfo</em>, a canary release with progressive traffic shifting can be defined as:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> flagger.app/v1beta1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Canary
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> podinfo
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">targetRef</span><span class="token punctuation">:</span>
+    <span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
+    <span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
+    <span class="token key atrule">name</span><span class="token punctuation">:</span> podinfo
+  <span class="token key atrule">service</span><span class="token punctuation">:</span>
+    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">9898</span>
+  <span class="token key atrule">analysis</span><span class="token punctuation">:</span>
+    <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+    <span class="token key atrule">threshold</span><span class="token punctuation">:</span> <span class="token number">10</span>
+    <span class="token key atrule">maxWeight</span><span class="token punctuation">:</span> <span class="token number">50</span>
+    <span class="token key atrule">stepWeight</span><span class="token punctuation">:</span> <span class="token number">5</span>
+    <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> request<span class="token punctuation">-</span>success<span class="token punctuation">-</span>rate
+        <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+          <span class="token key atrule">min</span><span class="token punctuation">:</span> <span class="token number">99</span>
+        <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> request<span class="token punctuation">-</span>duration
+        <span class="token key atrule">thresholdRange</span><span class="token punctuation">:</span>
+          <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">500</span>
+        <span class="token key atrule">interval</span><span class="token punctuation">:</span> 1m
+    <span class="token key atrule">webhooks</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> load<span class="token punctuation">-</span>test
+        <span class="token key atrule">url</span><span class="token punctuation">:</span> http<span class="token punctuation">:</span>//flagger<span class="token punctuation">-</span>loadtester.test/
+        <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+          <span class="token key atrule">cmd</span><span class="token punctuation">:</span> <span class="token string">&quot;hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/&quot;</span>
+</code></pre></div><p>When you deploy a new version of an app, Flagger gradually shifts traffic to the canary,
+and at the same time, measures the requests success rate as well as the average response duration.
+You can extend the canary analysis with custom metrics, acceptance and load testing
+to harden the validation process of your app release process.</p> <p>If you are running multiple service meshes or ingress controllers in the same cluster,
+you can override the global provider for a specific canary with <code>spec.provider</code>.</p> <h2 id="canary-target"><a href="#canary-target" aria-hidden="true" class="header-anchor">#</a> Canary target</h2> <p>A canary resource can target a Kubernetes Deployment or DaemonSet.</p> <p>Kubernetes Deployment example:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">progressDeadlineSeconds</span><span class="token punctuation">:</span> <span class="token number">60</span>
+  <span class="token key atrule">targetRef</span><span class="token punctuation">:</span>
+    <span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
+    <span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
+    <span class="token key atrule">name</span><span class="token punctuation">:</span> podinfo
+  <span class="token key atrule">autoscalerRef</span><span class="token punctuation">:</span>
+    <span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> autoscaling/v2beta1
+    <span class="token key atrule">kind</span><span class="token punctuation">:</span> HorizontalPodAutoscaler
+    <span class="token key atrule">name</span><span class="token punctuation">:</span> podinfo
+</code></pre></div><p>Based on the above configuration, Flagger generates the following Kubernetes objects:</p> <ul><li><code>deployment/&lt;targetRef.name&gt;-primary</code></li> <li><code>hpa/&lt;autoscalerRef.name&gt;-primary</code></li></ul> <p>The primary deployment is considered the stable release of your app, by default all traffic is routed to this version
+and the target deployment is scaled to zero.
+Flagger will detect changes to the target deployment (including secrets and configmaps) and will perform a
+canary analysis before promoting the new version as primary.</p> <p>If the target deployment uses secrets and/or configmaps, Flagger will create a copy of each object using the <code>-primary</code>
+prefix and will reference these objects in the primary deployment. You can disable the secrets/configmaps tracking
+with the <code>-enable-config-tracking=false</code> command flag in the Flagger deployment manifest under containers args
+or by setting <code>--set configTracking.enabled=false</code> when installing Flagger with Helm.</p> <p><strong>Note</strong> that the target deployment must have a single label selector in the format <code>app: &lt;DEPLOYMENT-NAME&gt;</code>:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> podinfo
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> podinfo
+  <span class="token key atrule">template</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> podinfo
+</code></pre></div><p>Besides <code>app</code> Flagger supports <code>name</code> and <code>app.kubernetes.io/name</code> selectors.
+If you use a different convention you can specify your label with
+the <code>-selector-labels=my-app-label</code> command flag in the Flagger deployment manifest under containers args
+or by setting <code>--set selectorLabels=my-app-label</code> when installing Flagger with Helm.</p> <p>The autoscaler reference is optional, when specified, Flagger will pause the traffic increase while the
+target and primary deployments are scaled up or down. HPA can help reduce the resource usage during the canary analysis.</p> <p>The progress deadline represents the maximum time in seconds for the canary deployment to make progress
+before it is rolled back, defaults to ten minutes.</p> <h2 id="canary-service"><a href="#canary-service" aria-hidden="true" class="header-anchor">#</a> Canary service</h2> <p>A canary resource dictates how the target workload is exposed inside the cluster.
+The canary target should expose a TCP port that will be used by Flagger to create the ClusterIP Services.</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">service</span><span class="token punctuation">:</span>
+    <span class="token key atrule">name</span><span class="token punctuation">:</span> podinfo
+    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">9898</span>
+    <span class="token key atrule">portName</span><span class="token punctuation">:</span> http
+    <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">9898</span>
+    <span class="token key atrule">portDiscovery</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+</code></pre></div><p>The container port from the target workload should match the <code>service.port</code> or <code>service.targetPort</code>.
+The <code>service.name</code> is optional, defaults to <code>spec.targetRef.name</code>.
+The <code>service.targetPort</code> can be a container port number or name.
+The <code>service.portName</code> is optional (defaults to <code>http</code>), if your workload uses gPRC then set the port name to <code>grcp</code>.</p> <p>If port discovery is enabled, Flagger scans the target workload and extracts the containers
+ports excluding the port specified in the canary service and service mesh sidecar ports.
+These ports will be used when generating the ClusterIP services.</p> <p>Based on the canary spec service, Flagger creates the following Kubernetes ClusterIP service:</p> <ul><li><code>&lt;service.name&gt;.&lt;namespace&gt;.svc.cluster.local</code><br>
+selector <code>app=&lt;name&gt;-primary</code></li> <li><code>&lt;service.name&gt;-primary.&lt;namespace&gt;.svc.cluster.local</code><br>
+selector <code>app=&lt;name&gt;-primary</code></li> <li><code>&lt;service.name&gt;-canary.&lt;namespace&gt;.svc.cluster.local</code><br>
+selector <code>app=&lt;name&gt;</code></li></ul> <p>This ensures that traffic to <code>podinfo.test:9898</code> will be routed to the latest stable release of your app.
+The <code>podinfo-canary.test:9898</code> address is available only during the
+canary analysis and can be used for conformance testing or load testing.</p> <p>Besides the port mapping, the service specification can contain URI match and rewrite rules,
+timeout and retry polices:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">service</span><span class="token punctuation">:</span>
+    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">9898</span>
+    <span class="token key atrule">match</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">uri</span><span class="token punctuation">:</span>
+          <span class="token key atrule">prefix</span><span class="token punctuation">:</span> /
+    <span class="token key atrule">rewrite</span><span class="token punctuation">:</span>
+      <span class="token key atrule">uri</span><span class="token punctuation">:</span> /
+    <span class="token key atrule">retries</span><span class="token punctuation">:</span>
+      <span class="token key atrule">attempts</span><span class="token punctuation">:</span> <span class="token number">3</span>
+      <span class="token key atrule">perTryTimeout</span><span class="token punctuation">:</span> 1s
+    <span class="token key atrule">timeout</span><span class="token punctuation">:</span> 5s
+</code></pre></div><p>When using <strong>Istio</strong> as the mesh provider, you can also specify
+HTTP header operations, CORS and traffic policies, Istio gateways and hosts.
+The Istio routing configuration can be found <a href="/faq.html#istio-routing">here</a>.</p> <h2 id="canary-status"><a href="#canary-status" aria-hidden="true" class="header-anchor">#</a> Canary status</h2> <p>You can use kubectl to get the current status of canary deployments cluster wide:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get canaries --all-namespaces
+
+NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
+<span class="token builtin class-name">test</span>        podinfo   Progressing   <span class="token number">15</span>       <span class="token number">2019</span>-06-30T14:05:07Z
+prod        frontend  Succeeded     <span class="token number">0</span>        <span class="token number">2019</span>-06-30T16:15:07Z
+prod        backend   Failed        <span class="token number">0</span>        <span class="token number">2019</span>-06-30T17:05:07Z
+</code></pre></div><p>The status condition reflects the last known state of the canary analysis:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl -n <span class="token builtin class-name">test</span> get canary/podinfo -oyaml <span class="token operator">|</span> <span class="token function">awk</span> <span class="token string">'/status/,0'</span>
+</code></pre></div><p>A successful rollout status:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">status</span><span class="token punctuation">:</span>
+  <span class="token key atrule">canaryWeight</span><span class="token punctuation">:</span> <span class="token number">0</span>
+  <span class="token key atrule">failedChecks</span><span class="token punctuation">:</span> <span class="token number">0</span>
+  <span class="token key atrule">iterations</span><span class="token punctuation">:</span> <span class="token number">0</span>
+  <span class="token key atrule">lastAppliedSpec</span><span class="token punctuation">:</span> <span class="token string">&quot;14788816656920327485&quot;</span>
+  <span class="token key atrule">lastPromotedSpec</span><span class="token punctuation">:</span> <span class="token string">&quot;14788816656920327485&quot;</span>
+  <span class="token key atrule">conditions</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">lastTransitionTime</span><span class="token punctuation">:</span> <span class="token string">&quot;2019-07-10T08:23:18Z&quot;</span>
+    <span class="token key atrule">lastUpdateTime</span><span class="token punctuation">:</span> <span class="token string">&quot;2019-07-10T08:23:18Z&quot;</span>
+    <span class="token key atrule">message</span><span class="token punctuation">:</span> Canary analysis completed successfully<span class="token punctuation">,</span> promotion finished.
+    <span class="token key atrule">reason</span><span class="token punctuation">:</span> Succeeded
+    <span class="token key atrule">status</span><span class="token punctuation">:</span> <span class="token string">&quot;True&quot;</span>
+    <span class="token key atrule">type</span><span class="token punctuation">:</span> Promoted
+</code></pre></div><p>The <code>Promoted</code> status condition can have one of the following reasons:
+Initialized, Waiting, Progressing, Promoting, Finalising, Succeeded or Failed.
+A failed canary will have the promoted status set to <code>false</code>,
+the reason to <code>failed</code> and the last applied spec will be different to the last promoted one.</p> <p>Wait for a successful rollout:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl <span class="token function">wait</span> canary/podinfo --for<span class="token operator">=</span>condition<span class="token operator">=</span>promoted
+</code></pre></div><p>CI example:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token comment"># update the container image</span>
+kubectl <span class="token builtin class-name">set</span> image deployment/podinfo <span class="token assign-left variable">podinfod</span><span class="token operator">=</span>stefanprodan/podinfo:3.0.1
+
+<span class="token comment"># wait for Flagger to detect the change</span>
+<span class="token assign-left variable">ok</span><span class="token operator">=</span>false
+<span class="token keyword">until</span> <span class="token variable">${ok}</span><span class="token punctuation">;</span> <span class="token keyword">do</span>
+    kubectl get canary/podinfo <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">'Progressing'</span> <span class="token operator">&amp;&amp;</span> <span class="token assign-left variable">ok</span><span class="token operator">=</span>true <span class="token operator">||</span> <span class="token assign-left variable">ok</span><span class="token operator">=</span>false
+    <span class="token function">sleep</span> <span class="token number">5</span>
+<span class="token keyword">done</span>
+
+<span class="token comment"># wait for the canary analysis to finish</span>
+kubectl <span class="token function">wait</span> canary/podinfo --for<span class="token operator">=</span>condition<span class="token operator">=</span>promoted --timeout<span class="token operator">=</span>5m
+
+<span class="token comment"># check if the deployment was successful </span>
+kubectl get canary/podinfo <span class="token operator">|</span> <span class="token function">grep</span> Succeeded
+</code></pre></div><h2 id="canary-analysis"><a href="#canary-analysis" aria-hidden="true" class="header-anchor">#</a> Canary analysis</h2> <p>The canary analysis defines:</p> <ul><li>the type of <a href="/usage/deployment-strategies.html">deployment strategy</a></li> <li>the <a href="/usage/metrics.html">metrics</a> used to validate the canary version</li> <li>the <a href="/usage/webhooks.html">webhooks</a> used for conformance testing, load testing and manual gating</li> <li>the <a href="/usage/alerting.html">alerting settings</a></li></ul> <p>Spec:</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code>  <span class="token key atrule">analysis</span><span class="token punctuation">:</span>
+    <span class="token comment"># schedule interval (default 60s)</span>
+    <span class="token key atrule">interval</span><span class="token punctuation">:</span>
+    <span class="token comment"># max number of failed metric checks before rollback</span>
+    <span class="token key atrule">threshold</span><span class="token punctuation">:</span>
+    <span class="token comment"># max traffic percentage routed to canary</span>
+    <span class="token comment"># percentage (0-100)</span>
+    <span class="token key atrule">maxWeight</span><span class="token punctuation">:</span>
+    <span class="token comment"># canary increment step</span>
+    <span class="token comment"># percentage (0-100)</span>
+    <span class="token key atrule">stepWeight</span><span class="token punctuation">:</span>
+    <span class="token comment"># total number of iterations</span>
+    <span class="token comment"># used for A/B Testing and Blue/Green</span>
+    <span class="token key atrule">iterations</span><span class="token punctuation">:</span>
+    <span class="token comment"># canary match conditions</span>
+    <span class="token comment"># used for A/B Testing</span>
+    <span class="token key atrule">match</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token comment"># HTTP header</span>
+    <span class="token comment"># key performance indicators</span>
+    <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token comment"># metric check</span>
+    <span class="token comment"># alerting</span>
+    <span class="token key atrule">alerts</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token comment"># alert provider</span>
+    <span class="token comment"># external checks</span>
+    <span class="token key atrule">webhooks</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token comment"># hook</span>
+</code></pre></div><p>The canary analysis runs periodically until it reaches the maximum traffic weight or the number of iterations.
+On each run, Flagger calls the webhooks, checks the metrics and if the failed checks threshold is reached, stops the
+analysis and rolls back the canary. If alerting is configured, Flagger will post the analysis result using the alert providers.</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+        ←
+        <a href="/install/flagger-install-on-eks-appmesh.html" class="prev">
+          On EKS App Mesh
+        </a></span> <span class="next"><a href="/usage/deployment-strategies.html">
+          Deployment Strategies
+        </a>
+        →
+      </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.b4b27991.js" defer></script><script src="/assets/js/2.ba5bf77c.js" defer></script><script src="/assets/js/32.591c3f2b.js" defer></script>
+  </body>
+</html>
