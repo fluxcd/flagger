@@ -62,3 +62,4 @@ typings/
 
 bin/
 docs/.vuepress/dist/
+Makefile.dev

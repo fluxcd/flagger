@@ -11,8 +11,8 @@ features:
 - title: Flexible Traffic Routing
   details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo or NGINX.
 - title:  Extensible Validation
-  details: Besides the builtin metrics checks, you can extend your application analysis with custom Prometheus metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
-footer: Apache License 2.0 | Copyright © 2019 Weaveworks
+  details: Besides the builtin metrics checks, you can extend your application analysis with custom Prometheus, Datadog, CloudWatch metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
+footer: Apache License 2.0 | Copyright © 2018-2020 Weaveworks
 ---
 
 ## Progressive Delivery
@@ -30,25 +30,25 @@ about how the new version impacts the production environment.
 
 Flagger can run automated application analysis, testing, promotion and rollback for the following deployment strategies:
 * **Canary** (progressive traffic shifting)
-    * [Istio](https://docs.flagger.app/usage/progressive-delivery),
-      [Linkerd](https://docs.flagger.app/usage/linkerd-progressive-delivery),
-      [App Mesh](https://docs.flagger.app/usage/appmesh-progressive-delivery),
-      [Contour](https://docs.flagger.app/usage/contour-progressive-delivery),
-      [Gloo](https://docs.flagger.app/usage/gloo-progressive-delivery),
-      [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery)
+    * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery),
+      [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery),
+      [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery),
+      [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery),
+      [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery),
+      [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
 
 * **A/B Testing** (HTTP headers and cookies traffic routing)
-    * [Istio](https://docs.flagger.app/usage/ab-testing),
-      [App Mesh](hhttps://docs.flagger.app/usage/appmesh-progressive-delivery#a-b-testing),
-      [Contour](https://docs.flagger.app/usage/contour-progressive-delivery),
-      [NGINX](https://docs.flagger.app/usage/nginx-progressive-delivery)
-* **Blue/Green** (traffic switching)
-    * [Kubernetes CNI](https://docs.flagger.app/usage/blue-green),
-      Istio, Linkerd, App Mesh, Contour, Gloo, NGINX 
+    * [Istio](https://docs.flagger.app/tutorials/istio-ab-testing),
+      [App Mesh](hhttps://docs.flagger.app/tutorials/appmesh-progressive-delivery#a-b-testing),
+      [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery#a-b-testing),
+      [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery#a-b-testing)
+* **Blue/Green** (traffic switching and mirroring)
+    * [Kubernetes CNI](https://docs.flagger.app/tutorials/kubernetes-blue-green),
+      [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery#traffic-mirroring),
+      Linkerd, App Mesh, Contour, Gloo, NGINX 
 
-Flagger can be configured to send notifications to a
-[Slack](https://docs.flagger.app/usage/alerting#slack) or
-[Microsoft Teams](https://docs.flagger.app/usage/alerting#microsoft-teams) channel.
+Flagger can be configured to [send notifications](https://docs.flagger.app/usage/alerting) to
+Slack, Microsoft Teams, Discord or Rocket.
 It will post messages when a deployment has been initialised,
 when a new revision has been detected and if the canary analysis failed or succeeded.
 

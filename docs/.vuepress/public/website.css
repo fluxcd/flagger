@@ -7,3 +7,6 @@
     background: url(favicon.png) left 50% no-repeat;
     background-size: 20px 20px;
 }
+/*.theme-container .theme-default-content:not(.custom) {*/
+/*    max-width: 920px;*/
+/*}*/
