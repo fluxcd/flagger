@@ -70,7 +70,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 
 	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s query error: %v", targetName, cd.Namespace, err)
 	}
 
 	label, err := c.getSelectorLabel(canary)
@@ -80,7 +80,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 
 	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s query error: %v", primaryName, cd.Namespace, err)
 	}
 
 	// promote secrets and config maps
@@ -188,7 +188,7 @@ func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, map[st
 
 	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return "", nil, fmt.Errorf("deployment %s.%s get query error %w", targetName, cd.Namespace, err)
+		return "", nil, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	label, err := c.getSelectorLabel(canaryDep)
@@ -209,7 +209,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 
 	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deplyoment %s.%s get query error %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("deplyoment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	label, err := c.getSelectorLabel(canaryDep)

@@ -156,12 +156,12 @@ func (c *ServiceController) Promote(cd *flaggerv1.Canary) error {
 
 	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("service %s.%s get query error %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("service %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	primary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("service %s.%s get query error %w", primaryName, cd.Namespace, err)
+		return fmt.Errorf("service %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
 	primaryCopy := canary.DeepCopy()
@@ -187,7 +187,7 @@ func (c *ServiceController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error)
 	targetName := cd.Spec.TargetRef.Name
 	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return false, fmt.Errorf("service %s.%s get query error %w", targetName, cd.Namespace, err)
+		return false, fmt.Errorf("service %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 	return hasSpecChanged(cd, canary.Spec)
 }
@@ -204,7 +204,7 @@ func (c *ServiceController) ScaleFromZero(_ *flaggerv1.Canary) error {
 func (c *ServiceController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
 	dep, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("service %s.%s get query error %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		return fmt.Errorf("service %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
 	return syncCanaryStatus(c.flaggerClient, cd, status, dep.Spec, func(cdCopy *flaggerv1.Canary) {})

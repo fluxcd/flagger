@@ -102,7 +102,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 
 	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("damonset %s.%s get query error %v", targetName, cd.Namespace, err)
+		return fmt.Errorf("damonset %s.%s get query error: %v", targetName, cd.Namespace, err)
 	}
 
 	label, err := c.getSelectorLabel(canary)
@@ -112,7 +112,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 
 	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("daemonset %s.%s get query error %w", primaryName, cd.Namespace, err)
+		return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
 	// promote secrets and config maps
@@ -160,7 +160,7 @@ func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, erro
 	targetName := cd.Spec.TargetRef.Name
 	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return false, fmt.Errorf("daemonset %s.%s get query error %w", targetName, cd.Namespace, err)
+		return false, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	// ignore `daemonSetScaleDownNodeSelector` node selector
@@ -182,7 +182,7 @@ func (c *DaemonSetController) GetMetadata(cd *flaggerv1.Canary) (string, map[str
 
 	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return "", nil, fmt.Errorf("daemonset %s.%s get query error %w", targetName, cd.Namespace, err)
+		return "", nil, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	label, err := c.getSelectorLabel(canaryDae)
@@ -203,7 +203,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 
 	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("daemonset %s.%s get query error %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	if canaryDae.Spec.UpdateStrategy.Type != "" &&

@@ -17,7 +17,7 @@ func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error %w", primaryName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
 	_, err = c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds())

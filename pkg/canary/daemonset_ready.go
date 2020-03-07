@@ -16,7 +16,7 @@ func (c *DaemonSetController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("daemonset %s.%s get query error %w", primaryName, cd.Namespace, err)
+		return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
 	_, err = c.isDaemonSetReady(cd, primary)
@@ -32,7 +32,7 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 	targetName := cd.Spec.TargetRef.Name
 	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return true, fmt.Errorf("daemonset %s.%s get query error %w", targetName, cd.Namespace, err)
+		return true, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	retriable, err := c.isDaemonSetReady(cd, canary)
