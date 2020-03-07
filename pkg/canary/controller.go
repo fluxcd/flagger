@@ -5,7 +5,7 @@ import (
 )
 
 type Controller interface {
-	IsPrimaryReady(canary *flaggerv1.Canary) (bool, error)
+	IsPrimaryReady(canary *flaggerv1.Canary) error
 	IsCanaryReady(canary *flaggerv1.Canary) (bool, error)
 	GetMetadata(canary *flaggerv1.Canary) (string, map[string]int32, error)
 	SyncStatus(canary *flaggerv1.Canary, status flaggerv1.CanaryStatus) error
@@ -17,6 +17,6 @@ type Controller interface {
 	Promote(canary *flaggerv1.Canary) error
 	HasTargetChanged(canary *flaggerv1.Canary) (bool, error)
 	HaveDependenciesChanged(canary *flaggerv1.Canary) (bool, error)
-	Scale(canary *flaggerv1.Canary, replicas int32) error
+	ScaleToZero(canary *flaggerv1.Canary) error
 	ScaleFromZero(canary *flaggerv1.Canary) error
 }

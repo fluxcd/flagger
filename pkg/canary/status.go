@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	ex "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -17,12 +16,12 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 	hash := computeHash(canaryResource)
 
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 
@@ -39,72 +38,79 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 			cdCopy.Status.Conditions = conditions
 		}
 
-		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
+		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
+			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
+		}
 		firstTry = false
 		return
 	})
+
 	if err != nil {
-		return ex.Wrap(err, "SyncStatus")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
 func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(name).Get(ns, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 		cdCopy := cd.DeepCopy()
 		cdCopy.Status.FailedChecks = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
+		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
+			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
+		}
 		firstTry = false
 		return
 	})
 	if err != nil {
-		return ex.Wrap(err, "SetStatusFailedChecks")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
 func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 		cdCopy := cd.DeepCopy()
 		cdCopy.Status.CanaryWeight = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
+		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
+			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
+		}
 		firstTry = false
 		return
 	})
 	if err != nil {
-		return ex.Wrap(err, "SetStatusWeight")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
 func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 
@@ -112,25 +118,27 @@ func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary
 		cdCopy.Status.Iterations = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
+		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
+			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
+		}
 		firstTry = false
 		return
 	})
 
 	if err != nil {
-		return ex.Wrap(err, "SetStatusIterations")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
 func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 
@@ -152,12 +160,14 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 			cdCopy.Status.Conditions = conditions
 		}
 
-		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
+		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
+			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
+		}
 		firstTry = false
 		return
 	})
 	if err != nil {
-		return ex.Wrap(err, "SetStatusPhase")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
@@ -239,11 +249,14 @@ func updateStatusWithUpgrade(flaggerClient clientset.Interface, cd *flaggerv1.Ca
 		// upgrade alpha resource
 		_, updateErr := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Update(cd)
 		if updateErr != nil {
-			return updateErr
+			return fmt.Errorf("updating canary %s.%s from v1alpha to v1beta failed: %w", cd.Name, cd.Namespace, updateErr)
 		}
-
 		// retry status update
 		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cd)
+	}
+
+	if err != nil {
+		return fmt.Errorf("updating canary %s.%s status failed: %w", cd.Name, cd.Namespace, err)
 	}
 	return err
 }

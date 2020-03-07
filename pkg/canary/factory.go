@@ -50,12 +50,12 @@ func (factory *Factory) Controller(kind string) Controller {
 		flaggerClient: factory.flaggerClient,
 	}
 
-	switch {
-	case kind == "DaemonSet":
+	switch kind {
+	case "DaemonSet":
 		return daemonSetCtrl
-	case kind == "Deployment":
+	case "Deployment":
 		return deploymentCtrl
-	case kind == "Service":
+	case "Service":
 		return serviceCtrl
 	default:
 		return deploymentCtrl

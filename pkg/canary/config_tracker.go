@@ -54,7 +54,7 @@ func checksum(data interface{}) string {
 func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*ConfigRef, error) {
 	config, err := ct.KubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("configmap  %s.%s get query error: %w", name, namespace, err)
 	}
 
 	return &ConfigRef{
@@ -69,7 +69,7 @@ func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*Co
 func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*ConfigRef, error) {
 	secret, err := ct.KubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("secret %s.%s get query error: %w", name, namespace, err)
 	}
 
 	// ignore registry secrets (those should be set via service account)
@@ -100,20 +100,14 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 	case "Deployment":
 		targetDep, err := ct.KubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 		if err != nil {
-			if errors.IsNotFound(err) {
-				return res, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
-			}
-			return res, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
+			return res, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 		}
 		vs = targetDep.Spec.Template.Spec.Volumes
 		cs = targetDep.Spec.Template.Spec.Containers
 	case "DaemonSet":
 		targetDae, err := ct.KubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
 		if err != nil {
-			if errors.IsNotFound(err) {
-				return res, fmt.Errorf("daemonset %s.%s not found", targetName, cd.Namespace)
-			}
-			return res, fmt.Errorf("daemonset %s.%s query error %v", targetName, cd.Namespace, err)
+			return res, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 		}
 		vs = targetDae.Spec.Template.Spec.Volumes
 		cs = targetDae.Spec.Template.Spec.Containers
@@ -126,18 +120,16 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		if cmv := volume.ConfigMap; cmv != nil {
 			config, err := ct.getRefFromConfigMap(cmv.Name, cd.Namespace)
 			if err != nil {
-				ct.Logger.Errorf("configMap %s.%s query error %v", cmv.Name, cd.Namespace, err)
+				ct.Logger.Errorf("getRefFromConfigMap failed: %v", err)
 				continue
 			}
-			if config != nil {
-				res[config.GetName()] = *config
-			}
+			res[config.GetName()] = *config
 		}
 
 		if sv := volume.Secret; sv != nil {
 			secret, err := ct.getRefFromSecret(sv.SecretName, cd.Namespace)
 			if err != nil {
-				ct.Logger.Errorf("secret %s.%s query error %v", sv.SecretName, cd.Namespace, err)
+				ct.Logger.Errorf("getRefFromSecret failed: %v", err)
 				continue
 			}
 			if secret != nil {
@@ -150,18 +142,16 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 				if cmv := source.ConfigMap; cmv != nil {
 					config, err := ct.getRefFromConfigMap(cmv.Name, cd.Namespace)
 					if err != nil {
-						ct.Logger.Errorf("configMap %s.%s query error %v", cmv.Name, cd.Namespace, err)
+						ct.Logger.Errorf("getRefFromConfigMap failed: %v", err)
 						continue
 					}
-					if config != nil {
-						res[config.GetName()] = *config
-					}
+					res[config.GetName()] = *config
 				}
 
 				if sv := source.Secret; sv != nil {
 					secret, err := ct.getRefFromSecret(sv.Name, cd.Namespace)
 					if err != nil {
-						ct.Logger.Errorf("secret %s.%s query error %v", sv.Name, cd.Namespace, err)
+						ct.Logger.Errorf("getRefFromSecret failed: %v", err)
 						continue
 					}
 					if secret != nil {
@@ -181,17 +171,15 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 					name := env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name
 					config, err := ct.getRefFromConfigMap(name, cd.Namespace)
 					if err != nil {
-						ct.Logger.Errorf("configMap %s.%s query error %v", name, cd.Namespace, err)
+						ct.Logger.Errorf("getRefFromConfigMap failed: %v", err)
 						continue
 					}
-					if config != nil {
-						res[config.GetName()] = *config
-					}
+					res[config.GetName()] = *config
 				case env.ValueFrom.SecretKeyRef != nil:
 					name := env.ValueFrom.SecretKeyRef.LocalObjectReference.Name
 					secret, err := ct.getRefFromSecret(name, cd.Namespace)
 					if err != nil {
-						ct.Logger.Errorf("secret %s.%s query error %v", name, cd.Namespace, err)
+						ct.Logger.Errorf("getRefFromSecret failed: %v", err)
 						continue
 					}
 					if secret != nil {
@@ -207,17 +195,15 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 				name := envFrom.ConfigMapRef.LocalObjectReference.Name
 				config, err := ct.getRefFromConfigMap(name, cd.Namespace)
 				if err != nil {
-					ct.Logger.Errorf("configMap %s.%s query error %v", name, cd.Namespace, err)
+					ct.Logger.Errorf("getRefFromConfigMap failed %v", err)
 					continue
 				}
-				if config != nil {
-					res[config.GetName()] = *config
-				}
+				res[config.GetName()] = *config
 			case envFrom.SecretRef != nil:
 				name := envFrom.SecretRef.LocalObjectReference.Name
 				secret, err := ct.getRefFromSecret(name, cd.Namespace)
 				if err != nil {
-					ct.Logger.Errorf("secret %s.%s query error %v", name, cd.Namespace, err)
+					ct.Logger.Errorf("getRefFromSecret failed %v", err)
 					continue
 				}
 				if secret != nil {
@@ -235,7 +221,7 @@ func (ct *ConfigTracker) GetConfigRefs(cd *flaggerv1.Canary) (*map[string]string
 	res := make(map[string]string)
 	configs, err := ct.GetTargetConfigs(cd)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetTargetConfigs failed: %w", err)
 	}
 
 	for _, cfg := range configs {
@@ -250,7 +236,7 @@ func (ct *ConfigTracker) GetConfigRefs(cd *flaggerv1.Canary) (*map[string]string
 func (ct *ConfigTracker) HasConfigChanged(cd *flaggerv1.Canary) (bool, error) {
 	configs, err := ct.GetTargetConfigs(cd)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("GetTargetConfigs failed: %w", err)
 	}
 
 	if len(configs) == 0 && cd.Status.TrackedConfigs == nil {
@@ -286,7 +272,7 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 		case ConfigRefMap:
 			config, err := ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Get(ref.Name, metav1.GetOptions{})
 			if err != nil {
-				return err
+				return fmt.Errorf("configmap %s.%s query failed : %w", ref.Name, cd.Name, err)
 			}
 			primaryName := fmt.Sprintf("%s-primary", config.GetName())
 			primaryConfigMap := &corev1.ConfigMap{
@@ -311,10 +297,10 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 				if errors.IsNotFound(err) {
 					_, err = ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Create(primaryConfigMap)
 					if err != nil {
-						return err
+						return fmt.Errorf("creating configmap %s.%s failed: %w", primaryConfigMap.Name, cd.Namespace, err)
 					}
 				} else {
-					return err
+					return fmt.Errorf("updating configmap %s.%s failed: %w", primaryConfigMap.Name, cd.Namespace, err)
 				}
 			}
 
@@ -349,10 +335,10 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 				if errors.IsNotFound(err) {
 					_, err = ct.KubeClient.CoreV1().Secrets(cd.Namespace).Create(primarySecret)
 					if err != nil {
-						return err
+						return fmt.Errorf("creating secret %s.%s failed: %w", primarySecret.Name, cd.Namespace, err)
 					}
 				} else {
-					return err
+					return fmt.Errorf("updating secret %s.%s failed: %w", primarySecret.Name, cd.Namespace, err)
 				}
 			}
 

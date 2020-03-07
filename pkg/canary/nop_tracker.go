@@ -6,8 +6,7 @@ import (
 )
 
 // NopTracker no-operation tracker
-type NopTracker struct {
-}
+type NopTracker struct{}
 
 func (nt *NopTracker) GetTargetConfigs(*flaggerv1.Canary) (map[string]ConfigRef, error) {
 	res := make(map[string]ConfigRef)
@@ -26,6 +25,6 @@ func (nt *NopTracker) CreatePrimaryConfigs(*flaggerv1.Canary, map[string]ConfigR
 	return nil
 }
 
-func (nt *NopTracker) ApplyPrimaryConfigs(spec corev1.PodSpec, refs map[string]ConfigRef) corev1.PodSpec {
+func (nt *NopTracker) ApplyPrimaryConfigs(spec corev1.PodSpec, _ map[string]ConfigRef) corev1.PodSpec {
 	return spec
 }

@@ -163,7 +163,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check primary status
 	if !skipLivenessChecks && !cd.SkipAnalysis() {
-		if _, err := canaryController.IsPrimaryReady(cd); err != nil {
+		if err := canaryController.IsPrimaryReady(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -258,7 +258,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// scale canary to zero if promotion has finished
 	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
-		if err := canaryController.Scale(cd, 0); err != nil {
+		if err := canaryController.ScaleToZero(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -554,7 +554,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	}
 
 	// shutdown canary
-	if err := canaryController.Scale(canary, 0); err != nil {
+	if err := canaryController.ScaleToZero(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
 		return false
 	}
@@ -1030,7 +1030,7 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
 
 	// shutdown canary
-	if err := canaryController.Scale(canary, 0); err != nil {
+	if err := canaryController.ScaleToZero(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
 		return
 	}

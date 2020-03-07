@@ -77,7 +77,7 @@ func TestDeploymentController_IsReady(t *testing.T) {
 	err := mocks.controller.Initialize(mocks.canary, true)
 	require.NoError(t, err, "Expected primary readiness check to fail")
 
-	_, err = mocks.controller.IsPrimaryReady(mocks.canary)
+	err = mocks.controller.IsPrimaryReady(mocks.canary)
 	require.Error(t, err)
 
 	_, err = mocks.controller.IsCanaryReady(mocks.canary)
@@ -134,17 +134,17 @@ func TestDeploymentController_SyncStatus(t *testing.T) {
 	assert.True(t, exists, "Secret %s not found in status", secret.GetName())
 }
 
-func TestDeploymentController_Scale(t *testing.T) {
+func TestDeploymentController_ScaleToZero(t *testing.T) {
 	mocks := newDeploymentFixture()
 	err := mocks.controller.Initialize(mocks.canary, true)
 	require.NoError(t, err)
 
-	err = mocks.controller.Scale(mocks.canary, 2)
+	err = mocks.controller.ScaleToZero(mocks.canary)
 	require.NoError(t, err)
 
 	c, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, int32(2), *c.Spec.Replicas)
+	assert.Equal(t, int32(0), *c.Spec.Replicas)
 }
 
 func TestDeploymentController_NoConfigTracking(t *testing.T) {
