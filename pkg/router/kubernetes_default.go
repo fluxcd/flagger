@@ -162,3 +162,41 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 
 	return nil
 }
+
+func (c *KubernetesDeploymentRouter) Finalize(canary *flaggerv1.Canary) error {
+	apexName, _, _ := canary.GetServiceNames()
+
+	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if hasCanaryOwnerRef, isOwned := c.isOwnedByCanary(svc, canary.Name); !hasCanaryOwnerRef && !isOwned {
+		err = c.reconcileService(canary, apexName, canary.Spec.TargetRef.Name)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+//isOwnedByCanary evaluates if an object contains an OwnerReference declaration, that is of kind Canary and
+//has the same ref name as the Canary under evaluation.  It returns two bool the first returns true if
+//an OwnerReference is present and the second, returns if it is owned by the supplied name.
+func (c KubernetesDeploymentRouter) isOwnedByCanary(obj interface{}, name string) (bool, bool) {
+	var object metav1.Object
+	var ok bool
+	if object, ok = obj.(metav1.Object); ok {
+		if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
+			if ownerRef.Kind == flaggerv1.CanaryKind {
+				//And the name exists return true
+				if name == ownerRef.Name {
+					return true, true
+				}
+				return true, false
+			}
+		}
+	}
+	return false, false
+}

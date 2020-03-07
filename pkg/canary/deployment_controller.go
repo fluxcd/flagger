@@ -376,3 +376,40 @@ func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (
 func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
 	return c.configTracker.HasConfigChanged(cd)
 }
+
+
+// revertDeployment will set the replica count from the primary to the reference instance.  This method is used
+// during a delete to attempt to revert the deployment back to the original state.  Error is returned if unable
+// update the reference deployment replicas to the primary replicas
+func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error  {
+
+	//1. Get the Primary deployment if possible
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+	//2. Get the replicas value
+	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	if err != nil {
+		/*if errors.IsNotFound(err) {
+			c.logger.Warnf("deployment %s.%s not found while finalizing", primaryName, cd.Namespace)
+			return nil
+		}*/
+		return err
+	}
+	refDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	if err != nil {
+		/*if errors.IsNotFound(err) {
+			c.logger.Warnf("deployment %s.%s not found while finalizing", cd.Spec.TargetRef.Name, cd.Namespace)
+			return nil
+		}*/
+		return err
+	}
+
+	if refDep.Spec.Replicas != primaryDep.Spec.Replicas {
+		//3. Set the replicas value on the original reference deployment
+		desiredReplicas := primaryDep.Spec.Replicas
+		if err := c.Scale(cd, int32Default(desiredReplicas)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
