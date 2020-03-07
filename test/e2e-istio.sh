@@ -12,6 +12,8 @@ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VER} sh -
 echo ">>> Installing Istio ${ISTIO_VER}"
 ${REPO_ROOT}/bin/istio-${ISTIO_VER}/bin/istioctl manifest apply --set profile=default
 
+kubectl -n istio-system rollout status deployment/prometheus
+
 kubectl -n istio-system get all
 
 echo '>>> Load Flagger image in Kind'
