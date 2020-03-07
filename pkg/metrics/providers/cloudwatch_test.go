@@ -1,8 +1,8 @@
 package providers
 
 import (
+	"errors"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -146,13 +146,13 @@ func TestCloudWatchProvider_RunQuery(t *testing.T) {
 
 		_, err := p.RunQuery(query)
 		require.Error(t, err)
-		require.True(t, strings.Contains(err.Error(), "no values"))
+		require.True(t, errors.Is(err, ErrNoValuesFound))
 
 		p = CloudWatchProvider{client: cloudWatchClientMock{
 			o: &cloudwatch.GetMetricDataOutput{}}}
 
 		_, err = p.RunQuery(query)
 		require.Error(t, err)
-		require.True(t, strings.Contains(err.Error(), "no values"))
+		require.True(t, errors.Is(err, ErrNoValuesFound))
 	})
 }

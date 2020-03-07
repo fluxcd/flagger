@@ -192,7 +192,7 @@ func (c *Controller) processNextWorkItem() bool {
 		// Run the syncHandler, passing it the namespace/name string of the
 		// Foo resource to be synced.
 		if err := c.syncHandler(key); err != nil {
-			return fmt.Errorf("error syncing '%s': %s", key, err.Error())
+			return fmt.Errorf("error syncing '%s': %w", key, err)
 		}
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
@@ -230,7 +230,7 @@ func (c *Controller) syncHandler(key string) error {
 			_, err := c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
 			if err != nil {
 				c.logger.Errorf("%s status condition update error: %v", key, err)
-				return fmt.Errorf("%s status condition update error: %v", key, err)
+				return fmt.Errorf("%s status condition update error: %w", key, err)
 			}
 		}
 	}

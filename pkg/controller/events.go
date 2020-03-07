@@ -31,14 +31,12 @@ func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, a
 
 func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template string, args []interface{}) {
 	webhookOverride := false
-	if len(r.GetAnalysis().Webhooks) > 0 {
-		for _, canaryWebhook := range r.GetAnalysis().Webhooks {
-			if canaryWebhook.Type == flaggerv1.EventHook {
-				webhookOverride = true
-				err := CallEventWebhook(r, canaryWebhook.URL, fmt.Sprintf(template, args...), eventType)
-				if err != nil {
-					c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
-				}
+	for _, canaryWebhook := range r.GetAnalysis().Webhooks {
+		if canaryWebhook.Type == flaggerv1.EventHook {
+			webhookOverride = true
+			err := CallEventWebhook(r, canaryWebhook.URL, fmt.Sprintf(template, args...), eventType)
+			if err != nil {
+				c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
 			}
 		}
 	}

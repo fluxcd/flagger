@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -36,45 +37,65 @@ func TestNewDatadogProvider(t *testing.T) {
 }
 
 func TestDatadogProvider_RunQuery(t *testing.T) {
-	eq := `avg:system.cpu.user\{*}by{host}`
 	appKey := "app-key"
 	apiKey := "api-key"
-	expected := 1.11111
+	t.Run("ok", func(t *testing.T) {
+		expected := 1.11111
+		eq := `avg:system.cpu.user{*}by{host}`
+		now := time.Now().Unix()
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			aq := r.URL.Query().Get("query")
+			assert.Equal(t, eq, aq)
+			assert.Equal(t, appKey, r.Header.Get(datadogApplicationKeyHeaderKey))
+			assert.Equal(t, apiKey, r.Header.Get(datadogAPIKeyHeaderKey))
 
-	now := time.Now().Unix()
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		aq := r.URL.Query().Get("query")
-		assert.Equal(t, eq, aq)
-		assert.Equal(t, appKey, r.Header.Get(datadogApplicationKeyHeaderKey))
-		assert.Equal(t, apiKey, r.Header.Get(datadogAPIKeyHeaderKey))
+			from, err := strconv.ParseInt(r.URL.Query().Get("from"), 10, 64)
+			if assert.NoError(t, err) {
+				assert.Less(t, from, now)
+			}
 
-		from, err := strconv.ParseInt(r.URL.Query().Get("from"), 10, 64)
-		if assert.NoError(t, err) {
-			assert.Less(t, from, now)
-		}
+			to, err := strconv.ParseInt(r.URL.Query().Get("to"), 10, 64)
+			if assert.NoError(t, err) {
+				assert.GreaterOrEqual(t, to, now)
+			}
 
-		to, err := strconv.ParseInt(r.URL.Query().Get("to"), 10, 64)
-		if assert.NoError(t, err) {
-			assert.GreaterOrEqual(t, to, now)
-		}
+			json := fmt.Sprintf(`{"series": [{"pointlist": [[1577232000000,29325.102158814265],[1577318400000,56294.46758591842],[1577404800000,%f]]}]}`, expected)
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
 
-		json := fmt.Sprintf(`{"series": [{"pointlist": [[1577232000000,29325.102158814265],[1577318400000,56294.46758591842],[1577404800000,%f]]}]}`, expected)
-		w.Write([]byte(json))
-	}))
-	defer ts.Close()
+		dp, err := NewDatadogProvider("1m",
+			flaggerv1.MetricTemplateProvider{Address: ts.URL},
+			map[string][]byte{
+				datadogApplicationKeySecretKey: []byte(appKey),
+				datadogAPIKeySecretKey:         []byte(apiKey),
+			},
+		)
+		require.NoError(t, err)
 
-	dp, err := NewDatadogProvider("1m",
-		flaggerv1.MetricTemplateProvider{Address: ts.URL},
-		map[string][]byte{
-			datadogApplicationKeySecretKey: []byte(appKey),
-			datadogAPIKeySecretKey:         []byte(apiKey),
-		},
-	)
-	require.NoError(t, err)
+		f, err := dp.RunQuery(eq)
+		require.NoError(t, err)
+		assert.Equal(t, expected, f)
+	})
 
-	f, err := dp.RunQuery(eq)
-	require.NoError(t, err)
-	assert.Equal(t, expected, f)
+	t.Run("no values", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json := fmt.Sprintf(`{"series": [{"pointlist": []}]}`)
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
+
+		dp, err := NewDatadogProvider("1m",
+			flaggerv1.MetricTemplateProvider{Address: ts.URL},
+			map[string][]byte{
+				datadogApplicationKeySecretKey: []byte(appKey),
+				datadogAPIKeySecretKey:         []byte(apiKey),
+			},
+		)
+		require.NoError(t, err)
+		_, err = dp.RunQuery("")
+		require.True(t, errors.Is(err, ErrNoValuesFound))
+	})
 }
 
 func TestDatadogProvider_IsOnline(t *testing.T) {
