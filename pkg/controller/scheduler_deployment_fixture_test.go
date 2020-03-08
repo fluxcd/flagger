@@ -77,7 +77,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	}
 
 	// init router
-	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", logger, flaggerClient)
+	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", logger, flaggerClient, nil)
 
 	// init observer
 	observerFactory, _ := observers.NewFactory("fake")
