@@ -34,25 +34,20 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	}
 }
 
-// KubernetesDeploymentRouter returns a ClusterIP service router
+// KubernetesRouter returns a KubernetesRouter interface implementation
 func (factory *Factory) KubernetesRouter(kind string, labelSelector string, annotations map[string]string, ports map[string]int32) KubernetesRouter {
-	deploymentRouter := &KubernetesDeploymentRouter{
-		logger:        factory.logger,
-		flaggerClient: factory.flaggerClient,
-		kubeClient:    factory.kubeClient,
-		labelSelector: labelSelector,
-		annotations:   annotations,
-		ports:         ports,
-	}
-	noopRouter := &KubernetesNoopRouter{}
-
-	switch {
-	case kind == "Deployment":
-		return deploymentRouter
-	case kind == "Service":
-		return noopRouter
-	default:
-		return deploymentRouter
+	switch kind {
+	case "Service":
+		return &KubernetesNoopRouter{}
+	default: // Daemonset or Deployment
+		return &KubernetesDefaultRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			labelSelector: labelSelector,
+			annotations:   annotations,
+			ports:         ports,
+		}
 	}
 }
 
