@@ -125,6 +125,9 @@ func main() {
 	}
 
 	// use a remote cluster for routing if a service mesh kubeconfig is specified
+	if kubeconfigServiceMesh == "" {
+		kubeconfigServiceMesh = kubeconfig
+	}
 	cfgHost, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfigServiceMesh)
 	if err != nil {
 		logger.Fatalf("Error building host kubeconfig: %v", err)
