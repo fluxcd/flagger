@@ -17,8 +17,8 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
-// KubernetesDeploymentRouter is managing ClusterIP services
-type KubernetesDeploymentRouter struct {
+// KubernetesDefaultRouter is managing ClusterIP services
+type KubernetesDefaultRouter struct {
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
@@ -28,7 +28,7 @@ type KubernetesDeploymentRouter struct {
 }
 
 // Initialize creates the primary and canary services
-func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error {
+func (c *KubernetesDefaultRouter) Initialize(canary *flaggerv1.Canary) error {
 	_, primaryName, canaryName := canary.GetServiceNames()
 
 	// canary svc
@@ -47,7 +47,7 @@ func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error 
 }
 
 // Reconcile creates or updates the main service
-func (c *KubernetesDeploymentRouter) Reconcile(canary *flaggerv1.Canary) error {
+func (c *KubernetesDefaultRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, _, _ := canary.GetServiceNames()
 
 	// main svc
@@ -59,15 +59,15 @@ func (c *KubernetesDeploymentRouter) Reconcile(canary *flaggerv1.Canary) error {
 	return nil
 }
 
-func (c *KubernetesDeploymentRouter) SetRoutes(_ *flaggerv1.Canary, _ int, _ int) error {
+func (c *KubernetesDefaultRouter) SetRoutes(_ *flaggerv1.Canary, _ int, _ int) error {
 	return nil
 }
 
-func (c *KubernetesDeploymentRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute int, canaryRoute int, err error) {
+func (c *KubernetesDefaultRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute int, canaryRoute int, err error) {
 	return 0, 0, nil
 }
 
-func (c *KubernetesDeploymentRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string) error {
+func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string) error {
 	portName := canary.Spec.Service.PortName
 	if portName == "" {
 		portName = "http"
