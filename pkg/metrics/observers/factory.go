@@ -68,6 +68,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &ContourObserver{
 			client: factory.Client,
 		}
+	case provider == "connect":
+		return &ConnectObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,
