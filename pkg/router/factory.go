@@ -3,6 +3,7 @@ package router
 import (
 	"strings"
 
+	consulapi "github.com/hashicorp/consul/api"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
@@ -15,6 +16,7 @@ type Factory struct {
 	kubeClient               kubernetes.Interface
 	meshClient               clientset.Interface
 	flaggerClient            clientset.Interface
+	consulClient             *consulapi.Client
 	ingressAnnotationsPrefix string
 	logger                   *zap.SugaredLogger
 }
@@ -23,13 +25,15 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
 	ingressAnnotationsPrefix string,
 	logger *zap.SugaredLogger,
-	meshClient clientset.Interface) *Factory {
+	meshClient clientset.Interface,
+	consulClient *consulapi.Client) *Factory {
 	return &Factory{
 		kubeConfig:               kubeConfig,
 		meshClient:               meshClient,
 		kubeClient:               kubeClient,
 		flaggerClient:            flaggerClient,
 		ingressAnnotationsPrefix: ingressAnnotationsPrefix,
+		consulClient:             consulClient,
 		logger:                   logger,
 	}
 }
@@ -133,6 +137,13 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			kubeClient:    factory.kubeClient,
 			smiClient:     factory.meshClient,
 			targetMesh:    "linkerd",
+		}
+	case provider == "connect" && factory.consulClient != nil:
+		return &ConsulConnectRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			consulClient:  factory.consulClient,
 		}
 	default:
 		return &IstioRouter{

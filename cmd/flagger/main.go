@@ -10,6 +10,7 @@ import (
 	"time"
 
 	semver "github.com/Masterminds/semver/v3"
+	consulapi "github.com/hashicorp/consul/api"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
@@ -59,6 +60,7 @@ var (
 	enableConfigTracking     bool
 	ver                      bool
 	kubeconfigServiceMesh    string
+	enableConsulClient       bool
 )
 
 func init() {
@@ -85,6 +87,7 @@ func init() {
 	flag.BoolVar(&enableConfigTracking, "enable-config-tracking", true, "Enable secrets and configmaps tracking.")
 	flag.BoolVar(&ver, "version", false, "Print version")
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
+	flag.BoolVar(&enableConsulClient, "consul", false, "Enable consul integration.")
 }
 
 func main() {
@@ -135,6 +138,14 @@ func main() {
 		logger.Fatalf("Error building mesh clientset: %v", err)
 	}
 
+	var consulClient *consulapi.Client
+	if enableConsulClient {
+		consulClient, err = consulapi.NewClient(consulapi.DefaultConfig())
+		if err != nil {
+			logger.Fatalf("Error building consul client: %v", err)
+		}
+	}
+
 	verifyCRDs(flaggerClient, logger)
 	verifyKubernetesVersion(kubeClient, logger)
 	infos := startInformers(flaggerClient, logger, stopCh)
@@ -166,7 +177,7 @@ func main() {
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
-	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient)
+	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient, consulClient)
 
 	var configTracker canary.Tracker
 	if enableConfigTracking {

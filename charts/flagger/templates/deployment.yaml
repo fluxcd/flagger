@@ -104,6 +104,12 @@ spec:
           {{- if .Values.istio.kubeconfig.secretName }}
           - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
           {{- end }}
+          {{- if .Values.istio.kubeconfig.secretName }}
+          - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
+          {{- end }}
+          {{- if eq .Values.meshProvider "connect" }}
+          - -consul
+          {{- end }}
           livenessProbe:
             exec:
               command:
@@ -124,9 +130,15 @@ spec:
               - --spider
               - http://localhost:8080/healthz
             timeoutSeconds: 5
-          {{- if .Values.env }}
+          {{- if or .Values.env (or .Values.meshProvider "connect") }}
           env:
+          {{- if eq .Values.meshProvider "connect" }}
+            - name: CONSUL_HTTP_ADDR
+              value: {{ .Values.connect.address }}
+          {{- end }}
+          {{- if .Values.env }}
 {{ toYaml .Values.env | indent 12 }}
+          {{- end }}
           {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}

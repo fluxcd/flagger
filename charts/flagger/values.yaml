@@ -111,3 +111,10 @@ istio:
     secretName: ""
     # istio.kubeconfig.key: The name of secret data key that contains the Istio control plane kubeconfig
     key: "kubeconfig"
+
+
+# Consul connect service mesh
+# http://consul.io/docs/connect/
+connect:
+  enabled: false
+  address: localhost:8500

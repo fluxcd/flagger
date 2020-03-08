@@ -9,6 +9,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/google/go-cmp v0.3.0
 	github.com/googleapis/gnostic v0.2.0 // indirect
+	github.com/hashicorp/consul/api v1.4.0
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.0.0
