@@ -183,7 +183,6 @@ func main() {
 
 	c := controller.NewController(
 		kubeClient,
-		meshClient,
 		flaggerClient,
 		infos,
 		controlLoopInterval,

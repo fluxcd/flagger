@@ -27,26 +27,26 @@ func (c *Controller) scheduleCanaries() {
 	stats := make(map[string]int)
 
 	c.canaries.Range(func(key interface{}, value interface{}) bool {
-		canary := value.(*flaggerv1.Canary)
+		cn := value.(*flaggerv1.Canary)
 
 		// format: <name>.<namespace>
 		name := key.(string)
-		current[name] = fmt.Sprintf("%s.%s", canary.Spec.TargetRef.Name, canary.Namespace)
+		current[name] = fmt.Sprintf("%s.%s", cn.Spec.TargetRef.Name, cn.Namespace)
 
 		job, exists := c.jobs[name]
 		// schedule new job for existing job with different analysis interval or non-existing job
-		if (exists && job.GetCanaryAnalysisInterval() != canary.GetAnalysisInterval()) || !exists {
+		if (exists && job.GetCanaryAnalysisInterval() != cn.GetAnalysisInterval()) || !exists {
 			if exists {
 				job.Stop()
 			}
 
 			newJob := CanaryJob{
-				Name:             canary.Name,
-				Namespace:        canary.Namespace,
+				Name:             cn.Name,
+				Namespace:        cn.Namespace,
 				function:         c.advanceCanary,
 				done:             make(chan bool),
-				ticker:           time.NewTicker(canary.GetAnalysisInterval()),
-				analysisInterval: canary.GetAnalysisInterval(),
+				ticker:           time.NewTicker(cn.GetAnalysisInterval()),
+				analysisInterval: cn.GetAnalysisInterval(),
 			}
 
 			c.jobs[name] = newJob
@@ -54,11 +54,11 @@ func (c *Controller) scheduleCanaries() {
 		}
 
 		// compute canaries per namespace total
-		t, ok := stats[canary.Namespace]
+		t, ok := stats[cn.Namespace]
 		if !ok {
-			stats[canary.Namespace] = 1
+			stats[cn.Namespace] = 1
 		} else {
-			stats[canary.Namespace] = t + 1
+			stats[cn.Namespace] = t + 1
 		}
 		return true
 	})
@@ -75,7 +75,8 @@ func (c *Controller) scheduleCanaries() {
 	for canaryName, targetName := range current {
 		for name, target := range current {
 			if name != canaryName && target == targetName {
-				c.logger.With("canary", canaryName).Errorf("Bad things will happen! Found more than one canary with the same target %s", targetName)
+				c.logger.With("canary", canaryName).
+					Errorf("Bad things will happen! Found more than one canary with the same target %s", targetName)
 			}
 		}
 	}
@@ -111,8 +112,8 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// init Kubernetes router
-	router := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports)
-	if err := router.Initialize(cd); err != nil {
+	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports)
+	if err := kubeRouter.Initialize(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -128,7 +129,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	meshRouter := c.routerFactory.MeshRouter(provider)
 
 	// create or update svc
-	if err := router.Reconcile(cd); err != nil {
+	if err := kubeRouter.Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -206,7 +207,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 		if err := canaryController.SyncStatus(cd, status); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
-			return
 		}
 		return
 	}
@@ -305,7 +305,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if ok := c.runPreRolloutHooks(cd); !ok {
 			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
-				return
 			}
 			return
 		}
@@ -313,7 +312,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if ok := c.runAnalysis(cd); !ok {
 			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
-				return
 			}
 			return
 		}

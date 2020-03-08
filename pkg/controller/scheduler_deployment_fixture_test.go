@@ -92,7 +92,6 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 
 	ctrl := &Controller{
 		kubeClient:       kubeClient,
-		istioClient:      flaggerClient,
 		flaggerClient:    flaggerClient,
 		flaggerInformers: fi,
 		flaggerSynced:    fi.CanaryInformer.Informer().HasSynced,

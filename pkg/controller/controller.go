@@ -35,7 +35,6 @@ const controllerAgentName = "flagger"
 // Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
 	kubeClient       kubernetes.Interface
-	istioClient      clientset.Interface
 	flaggerClient    clientset.Interface
 	flaggerInformers Informers
 	flaggerSynced    cache.InformerSynced
@@ -62,7 +61,6 @@ type Informers struct {
 
 func NewController(
 	kubeClient kubernetes.Interface,
-	istioClient clientset.Interface,
 	flaggerClient clientset.Interface,
 	flaggerInformers Informers,
 	flaggerWindow time.Duration,
@@ -89,7 +87,6 @@ func NewController(
 
 	ctrl := &Controller{
 		kubeClient:       kubeClient,
-		istioClient:      istioClient,
 		flaggerClient:    flaggerClient,
 		flaggerInformers: flaggerInformers,
 		flaggerSynced:    flaggerInformers.CanaryInformer.Informer().HasSynced,
