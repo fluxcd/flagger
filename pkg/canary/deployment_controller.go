@@ -30,33 +30,31 @@ type DeploymentController struct {
 // scales to zero the canary deployment and returns the pod selector label and container ports
 func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-
-	err = c.createPrimaryDeployment(cd)
-	if err != nil {
-		return fmt.Errorf("createPrimaryDeployment %s.%s failed: %w", primaryName, cd.Namespace, err)
+	if err := c.createPrimaryDeployment(cd); err != nil {
+		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !skipLivenessChecks && !cd.SkipAnalysis() {
 			if err := c.IsPrimaryReady(cd); err != nil {
-				return fmt.Errorf("primary deployment %s.%s not ready: %w", primaryName, cd.Namespace, err)
+				return fmt.Errorf("IsPrimaryReady failed: %w", err)
 			}
 		}
 
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			Infof("Scaling down Deployment %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.ScaleToZero(cd); err != nil {
 			return fmt.Errorf("scaling down canary daemon set %s.%s failed: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 		}
 	}
 
 	if cd.Spec.AutoscalerRef != nil {
-		switch cd.Spec.AutoscalerRef.Kind {
-		case "HorizontalPodAutoscaler":
+		if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 			if err := c.reconcilePrimaryHpa(cd, true); err != nil {
 				return fmt.Errorf(
 					"initial reconcilePrimaryHpa for %s.%s failed: %w", primaryName, cd.Namespace, err)
 			}
-		default:
+		} else {
 			return fmt.Errorf("cd.Spec.AutoscalerRef.Kind is invalid: %s", cd.Spec.AutoscalerRef.Kind)
 		}
 	}
@@ -70,7 +68,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 
 	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s query error: %v", targetName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	label, err := c.getSelectorLabel(canary)
@@ -80,7 +78,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 
 	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s query error: %v", primaryName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
 	// promote secrets and config maps
@@ -137,7 +135,7 @@ func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, err
 	targetName := cd.Spec.TargetRef.Name
 	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return false, fmt.Errorf("deployment %s.%s query error: %w", targetName, cd.Namespace, err)
+		return false, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	return hasSpecChanged(cd, canary.Spec.Template)
@@ -280,7 +278,8 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 			return fmt.Errorf("creating deployment %s.%s failed: %w", primaryDep.Name, cd.Namespace, err)
 		}
 
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
 	return nil
@@ -335,7 +334,7 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 			"HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("HorizontalPodAutoscaler %s.%s exists but get query failed: %w",
+		return fmt.Errorf("HorizontalPodAutoscaler %s.%s get query failed: %w",
 			primaryHpa.Name, primaryHpa.Namespace, err)
 	}
 

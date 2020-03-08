@@ -35,10 +35,10 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 		return true, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	retriable, err := c.isDaemonSetReady(cd, canary)
+	retryable, err := c.isDaemonSetReady(cd, canary)
 	if err != nil {
-		return retriable, fmt.Errorf("canary damonset %s.%s not ready with retryablility: %v: %w",
-			targetName, cd.Namespace, retriable, err)
+		return retryable, fmt.Errorf("canary damonset %s.%s not ready with retryable %v: %w",
+			targetName, cd.Namespace, retryable, err)
 	}
 	return true, nil
 }

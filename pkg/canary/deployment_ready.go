@@ -42,11 +42,11 @@ func (c *DeploymentController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error)
 		return true, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	retriable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
+	retryable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
 	if err != nil {
-		return retriable, fmt.Errorf(
-			"canary deployment %s.%s not ready with retriablility %v: %w",
-			targetName, cd.Namespace, retriable, err,
+		return retryable, fmt.Errorf(
+			"canary deployment %s.%s not ready with retryable %v: %w",
+			targetName, cd.Namespace, retryable, err,
 		)
 	}
 	return true, nil

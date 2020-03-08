@@ -247,8 +247,7 @@ func updateStatusWithUpgrade(flaggerClient clientset.Interface, cd *flaggerv1.Ca
 	_, err := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cd)
 	if err != nil && strings.Contains(err.Error(), "flagger.app/v1alpha") {
 		// upgrade alpha resource
-		_, updateErr := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Update(cd)
-		if updateErr != nil {
+		if _, updateErr := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Update(cd); updateErr != nil {
 			return fmt.Errorf("updating canary %s.%s from v1alpha to v1beta failed: %w", cd.Name, cd.Namespace, updateErr)
 		}
 		// retry status update

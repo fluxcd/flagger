@@ -272,7 +272,7 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 		case ConfigRefMap:
 			config, err := ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Get(ref.Name, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("configmap %s.%s query failed : %w", ref.Name, cd.Name, err)
+				return fmt.Errorf("configmap %s.%s get query failed : %w", ref.Name, cd.Name, err)
 			}
 			primaryName := fmt.Sprintf("%s-primary", config.GetName())
 			primaryConfigMap := &corev1.ConfigMap{
@@ -309,7 +309,7 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 		case ConfigRefSecret:
 			secret, err := ct.KubeClient.CoreV1().Secrets(cd.Namespace).Get(ref.Name, metav1.GetOptions{})
 			if err != nil {
-				return err
+				return fmt.Errorf("secret %s.%s get query failed : %w", ref.Name, cd.Name, err)
 			}
 			primaryName := fmt.Sprintf("%s-primary", secret.GetName())
 			primarySecret := &corev1.Secret{

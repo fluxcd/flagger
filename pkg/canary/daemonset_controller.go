@@ -32,7 +32,7 @@ func (c *DaemonSetController) ScaleToZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	dae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("daemonset %s.%s query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	daeCopy := dae.DeepCopy()
@@ -72,8 +72,8 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// Initialize creates the primary DaemonSet and
-// delete the canary DaemonSet and returns the pod selector label and container ports
+// Initialize creates the primary DaemonSet, scales down the canary DaemonSet,
+// and returns the pod selector label and container ports
 func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (err error) {
 	err = c.createPrimaryDaemonSet(cd)
 	if err != nil {
@@ -87,7 +87,8 @@ func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary, skipLivenessCheck
 			}
 		}
 
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			Infof("Scaling down DaemonSet %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.ScaleToZero(cd); err != nil {
 			return fmt.Errorf("ScaleToZero failed: %w", err)
 		}
