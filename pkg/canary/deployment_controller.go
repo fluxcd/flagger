@@ -117,13 +117,12 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 
 	// update HPA
 	if cd.Spec.AutoscalerRef != nil {
-		switch cd.Spec.AutoscalerRef.Kind {
-		case "HorizontalPodAutoscaler":
+		if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
 			if err := c.reconcilePrimaryHpa(cd, false); err != nil {
 				return fmt.Errorf(
 					"reconcilePrimaryHpa for %s.%s failed: %w", primaryName, cd.Namespace, err)
 			}
-		default:
+		} else {
 			return fmt.Errorf("cd.Spec.AutoscalerRef.Kind is invalid: %s", cd.Spec.AutoscalerRef.Kind)
 		}
 	}
