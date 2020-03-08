@@ -65,8 +65,7 @@ func (s *Rocket) Post(workload string, namespace string, message string, fields 
 
 	err := postMessage(s.URL, payload)
 	if err != nil {
-		return err
+		return fmt.Errorf("postMessage failed: %w", err)
 	}
-
 	return nil
 }

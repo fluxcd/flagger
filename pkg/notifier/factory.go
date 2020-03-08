@@ -17,14 +17,14 @@ func NewFactory(URL string, username string, channel string) *Factory {
 }
 
 func (f Factory) Notifier(provider string) (Interface, error) {
-	switch {
-	case provider == "slack":
+	switch provider {
+	case "slack":
 		return NewSlack(f.URL, f.Username, f.Channel)
-	case provider == "discord":
+	case "discord":
 		return NewDiscord(f.URL, f.Username, f.Channel)
-	case provider == "rocket":
+	case "rocket":
 		return NewRocket(f.URL, f.Username, f.Channel)
-	case provider == "msteams":
+	case "msteams":
 		return NewMSTeams(f.URL)
 	}
 
