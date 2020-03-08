@@ -33,7 +33,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	ingress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canary.Spec.IngressRef.Name, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("ingress %s.%s get query error: %w", canary.Spec.IngressRef.Name, canary.Namespace, err)
 	}
 
 	ingressClone := ingress.DeepCopy()
@@ -76,16 +76,14 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 		_, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Create(ing)
 		if err != nil {
-			return err
+			return fmt.Errorf("ingress %s.%s create error: %w", ing.Name, ing.Namespace, err)
 		}
 
 		i.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 			Infof("Ingress %s.%s created", ing.GetName(), canary.Namespace)
 		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("ingress %s query error %v", canaryIngressName, err)
+	} else if err != nil {
+		return fmt.Errorf("ingress %s.%s query error: %w", canaryIngressName, canary.Namespace, err)
 	}
 
 	if diff := cmp.Diff(ingressClone.Spec, canaryIngress.Spec); diff != "" {
@@ -94,7 +92,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 		_, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Update(iClone)
 		if err != nil {
-			return fmt.Errorf("ingress %s update error %v", canaryIngressName, err)
+			return fmt.Errorf("ingress %s.%s update error: %w", canaryIngressName, iClone.Namespace, err)
 		}
 
 		i.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
@@ -113,7 +111,8 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
 	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
 	if err != nil {
-		return 0, 0, false, err
+		err = fmt.Errorf("ingress %s.%s get query error: %w", canaryIngressName, canary.Namespace, err)
+		return
 	}
 
 	// A/B testing
@@ -128,9 +127,10 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	// Canary
 	for k, v := range canaryIngress.Annotations {
 		if k == i.GetAnnotationWithPrefix("canary-weight") {
-			val, err := strconv.Atoi(v)
-			if err != nil {
-				return 0, 0, false, err
+			val, errAtoi := strconv.Atoi(v)
+			if errAtoi != nil {
+				err = fmt.Errorf("failed to convert %s to int: %w", v, errAtoi)
+				return
 			}
 
 			canaryWeight = val
@@ -145,23 +145,21 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 
 func (i *IngressRouter) SetRoutes(
 	canary *flaggerv1.Canary,
-	primaryWeight int,
+	_ int,
 	canaryWeight int,
-	mirrored bool,
+	_ bool,
 ) error {
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
 	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("ingress %s.%s get query error: %w", canaryIngressName, canary.Namespace, err)
 	}
 
 	iClone := canaryIngress.DeepCopy()
 
 	// A/B testing
 	if len(canary.GetAnalysis().Match) > 0 {
-		cookie := ""
-		header := ""
-		headerValue := ""
+		var cookie, header, headerValue string
 		for _, m := range canary.GetAnalysis().Match {
 			for k, v := range m.Headers {
 				if k == "cookie" {
@@ -188,7 +186,7 @@ func (i *IngressRouter) SetRoutes(
 
 	_, err = i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Update(iClone)
 	if err != nil {
-		return fmt.Errorf("ingress %s update error %v", canaryIngressName, err)
+		return fmt.Errorf("ingress %s.%s update error %v", iClone.Name, iClone.Namespace, err)
 	}
 
 	return nil
