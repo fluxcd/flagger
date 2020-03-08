@@ -1,6 +1,7 @@
 package observers
 
 import (
+	"fmt"
 	"time"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -63,12 +64,12 @@ func (ob *CrossoverObserver) GetRequestSuccessRate(model flaggerv1.MetricTemplat
 func (ob *CrossoverObserver) GetRequestDuration(model flaggerv1.MetricTemplateModel) (time.Duration, error) {
 	query, err := RenderQuery(crossoverQueries["request-duration"], model)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("rendering query failed: %w", err)
 	}
 
 	value, err := ob.client.RunQuery(query)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("running query failed: %w", err)
 	}
 
 	ms := time.Duration(int64(value)) * time.Millisecond

@@ -1,6 +1,7 @@
 package observers
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,38 +15,61 @@ import (
 )
 
 func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
-	expected := ` sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo", status!~"5.*" }[1m] ) ) / sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo" }[1m] ) ) * 100`
+	t.Run("ok", func(t *testing.T) {
+		expected := ` sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo", status!~"5.*" }[1m] ) ) / sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo" }[1m] ) ) * 100`
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			promql := r.URL.Query()["query"][0]
+			assert.Equal(t, expected, promql)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		promql := r.URL.Query()["query"][0]
-		assert.Equal(t, expected, promql)
+			json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"100"]}]}}`
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
 
-		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"100"]}]}}`
-		w.Write([]byte(json))
-	}))
-	defer ts.Close()
+		client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
+			Type:      "prometheus",
+			Address:   ts.URL,
+			SecretRef: nil,
+		}, nil)
+		require.NoError(t, err)
 
-	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
-		Type:      "prometheus",
-		Address:   ts.URL,
-		SecretRef: nil,
-	}, nil)
-	require.NoError(t, err)
+		observer := &NginxObserver{
+			client: client,
+		}
 
-	observer := &NginxObserver{
-		client: client,
-	}
+		val, err := observer.GetRequestSuccessRate(flaggerv1.MetricTemplateModel{
+			Name:      "podinfo",
+			Namespace: "nginx",
+			Target:    "podinfo",
+			Ingress:   "podinfo",
+			Interval:  "1m",
+		})
+		require.NoError(t, err)
 
-	val, err := observer.GetRequestSuccessRate(flaggerv1.MetricTemplateModel{
-		Name:      "podinfo",
-		Namespace: "nginx",
-		Target:    "podinfo",
-		Ingress:   "podinfo",
-		Interval:  "1m",
+		assert.Equal(t, float64(100), val)
 	})
-	require.NoError(t, err)
 
-	assert.Equal(t, float64(100), val)
+	t.Run("no values", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json := `{"status":"success","data":{"resultType":"vector","result":[]}}`
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
+
+		client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
+			Type:      "prometheus",
+			Address:   ts.URL,
+			SecretRef: nil,
+		}, nil)
+		require.NoError(t, err)
+
+		observer := &NginxObserver{
+			client: client,
+		}
+
+		_, err = observer.GetRequestSuccessRate(flaggerv1.MetricTemplateModel{})
+		require.True(t, errors.Is(err, providers.ErrNoValuesFound))
+	})
 }
 
 func TestNginxObserver_GetRequestDuration(t *testing.T) {

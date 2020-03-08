@@ -824,7 +824,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		if metric.Name == "request-success-rate" {
 			val, err := observer.GetRequestSuccessRate(toMetricModel(canary, metric.Interval))
 			if err != nil {
-				if errors.Is(err, observers.ErrNoValuesFound) {
+				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary,
 						"Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic: %v",
 						metricsProvider, metric.Name, canary.Spec.TargetRef.Name, canary.Namespace, err)
@@ -856,7 +856,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		if metric.Name == "request-duration" {
 			val, err := observer.GetRequestDuration(toMetricModel(canary, metric.Interval))
 			if err != nil {
-				if errors.Is(err, observers.ErrNoValuesFound) {
+				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
 						metricsProvider, metric.Name, canary.Spec.TargetRef.Name, canary.Namespace)
 				} else {
@@ -887,7 +887,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		if metric.Query != "" {
 			val, err := observerFactory.Client.RunQuery(metric.Query)
 			if err != nil {
-				if errors.Is(err, observers.ErrNoValuesFound) {
+				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary, "Halt advancement no values found for metric: %s",
 						metric.Name)
 				} else {

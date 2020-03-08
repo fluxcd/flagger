@@ -1,6 +1,7 @@
 package observers
 
 import (
+	"fmt"
 	"time"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -56,12 +57,12 @@ type NginxObserver struct {
 func (ob *NginxObserver) GetRequestSuccessRate(model flaggerv1.MetricTemplateModel) (float64, error) {
 	query, err := RenderQuery(nginxQueries["request-success-rate"], model)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("rendering query failed: %w", err)
 	}
 
 	value, err := ob.client.RunQuery(query)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("running query failed: %w", err)
 	}
 
 	return value, nil
@@ -70,12 +71,12 @@ func (ob *NginxObserver) GetRequestSuccessRate(model flaggerv1.MetricTemplateMod
 func (ob *NginxObserver) GetRequestDuration(model flaggerv1.MetricTemplateModel) (time.Duration, error) {
 	query, err := RenderQuery(nginxQueries["request-duration"], model)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("rendering query failed: %w", err)
 	}
 
 	value, err := ob.client.RunQuery(query)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("running query failed: %w", err)
 	}
 
 	ms := time.Duration(int64(value)) * time.Millisecond
