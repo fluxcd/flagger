@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+
 	consulapi "github.com/hashicorp/consul/api"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
