@@ -77,12 +77,12 @@ func (p *CloudWatchProvider) RunQuery(query string) (float64, error) {
 
 	mr := res.MetricDataResults
 	if len(mr) < 1 {
-		return 0, fmt.Errorf("no values found in response: %s", res.String())
+		return 0, fmt.Errorf("invalid response: %s: %w", res.String(), ErrNoValuesFound)
 	}
 
-	vs := res.MetricDataResults[0].Values
+	vs := mr[0].Values
 	if len(vs) < 1 {
-		return 0, fmt.Errorf("no values found in response: %s", res.String())
+		return 0, fmt.Errorf("invalid reponse %s: %w", res.String(), ErrNoValuesFound)
 	}
 
 	return aws.Float64Value(vs[0]), nil

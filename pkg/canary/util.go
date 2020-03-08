@@ -16,7 +16,7 @@ var sidecars = map[string]bool{
 	"envoy":       true,
 }
 
-func getPorts(cd *flaggerv1.Canary, cs []corev1.Container) (map[string]int32, error) {
+func getPorts(cd *flaggerv1.Canary, cs []corev1.Container) map[string]int32 {
 	ports := make(map[string]int32, len(cs))
 	for _, container := range cs {
 		// exclude service mesh proxies based on container name
@@ -49,7 +49,7 @@ func getPorts(cd *flaggerv1.Canary, cs []corev1.Container) (map[string]int32, er
 			ports[name] = p.ContainerPort
 		}
 	}
-	return ports, nil
+	return ports
 }
 
 // makeAnnotations appends an unique ID to annotations map
@@ -59,7 +59,7 @@ func makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	uuid := make([]byte, 16)
 	n, err := io.ReadFull(rand.Reader, uuid)
 	if n != len(uuid) || err != nil {
-		return res, err
+		return res, fmt.Errorf("%w", err)
 	}
 	uuid[8] = uuid[8]&^0xc0 | 0x80
 	uuid[6] = uuid[6]&^0xf0 | 0x40

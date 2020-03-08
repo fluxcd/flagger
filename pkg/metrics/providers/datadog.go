@@ -76,7 +76,7 @@ func NewDatadogProvider(metricInterval string,
 
 	md, err := time.ParseDuration(metricInterval)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing metric interval: %s", err.Error())
+		return nil, fmt.Errorf("error parsing metric interval: %w", err)
 	}
 
 	dd.fromDelta = int64(datadogFromDeltaMultiplierOnMetricInterval * md.Seconds())
@@ -89,7 +89,7 @@ func (p *DatadogProvider) RunQuery(query string) (float64, error) {
 
 	req, err := http.NewRequest("GET", p.metricsQueryEndpoint, nil)
 	if err != nil {
-		return 0, fmt.Errorf("error http.NewRequest: %s", err.Error())
+		return 0, fmt.Errorf("error http.NewRequest: %w", err)
 	}
 
 	req.Header.Set(datadogAPIKeyHeaderKey, p.apiKey)
@@ -105,32 +105,36 @@ func (p *DatadogProvider) RunQuery(query string) (float64, error) {
 	defer cancel()
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("request failed: %w", err)
 	}
 
 	defer r.Body.Close()
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return 0, fmt.Errorf("error reading body: %s", err.Error())
+		return 0, fmt.Errorf("error reading body: %w", err)
 	}
 
 	if r.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("error response: %s", string(b))
+		return 0, fmt.Errorf("error response: %s: %w", string(b), err)
 	}
 
 	var res datadogResponse
 	if err := json.Unmarshal(b, &res); err != nil {
-		return 0, fmt.Errorf("error unmarshaling result: %s, '%s'", err.Error(), string(b))
+		return 0, fmt.Errorf("error unmarshaling result: %w, '%s'", err, string(b))
 	}
 
 	if len(res.Series) < 1 {
-		return 0, fmt.Errorf("no values found in response: %s", string(b))
+		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
 	}
 
-	s := res.Series[0]
-	vs := s.Pointlist[len(s.Pointlist)-1]
+	pl := res.Series[0].Pointlist
+	if len(pl) < 1 {
+		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
+	}
+
+	vs := pl[len(pl)-1]
 	if len(vs) < 1 {
-		return 0, fmt.Errorf("no values found in response: %s", string(b))
+		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
 	}
 
 	return vs[1], nil
@@ -141,7 +145,7 @@ func (p *DatadogProvider) RunQuery(query string) (float64, error) {
 func (p *DatadogProvider) IsOnline() (bool, error) {
 	req, err := http.NewRequest("GET", p.apiKeyValidationEndpoint, nil)
 	if err != nil {
-		return false, fmt.Errorf("error http.NewRequest: %s", err.Error())
+		return false, fmt.Errorf("error http.NewRequest: %w", err)
 	}
 
 	req.Header.Add(datadogAPIKeyHeaderKey, p.apiKey)
@@ -151,13 +155,14 @@ func (p *DatadogProvider) IsOnline() (bool, error) {
 	defer cancel()
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("request failed: %w", err)
 	}
+
 	defer r.Body.Close()
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return false, fmt.Errorf("error reading body: %s", err.Error())
+		return false, fmt.Errorf("error reading body: %w", err)
 	}
 
 	if r.StatusCode != http.StatusOK {

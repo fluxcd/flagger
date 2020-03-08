@@ -16,7 +16,7 @@ func TestDaemonSetController_IsReady(t *testing.T) {
 	err := mocks.controller.Initialize(mocks.canary, true)
 	assert.NoError(t, err, "Expected primary readiness check to fail")
 
-	_, err = mocks.controller.IsPrimaryReady(mocks.canary)
+	err = mocks.controller.IsPrimaryReady(mocks.canary)
 	require.NoError(t, err)
 
 	_, err = mocks.controller.IsCanaryReady(mocks.canary)

@@ -161,12 +161,12 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 }
 
 func TestDaemonSetController_Scale(t *testing.T) {
-	t.Run("Scale", func(t *testing.T) {
+	t.Run("ScaleToZero", func(t *testing.T) {
 		mocks := newDaemonSetFixture()
 		err := mocks.controller.Initialize(mocks.canary, true)
 		require.NoError(t, err)
 
-		err = mocks.controller.Scale(mocks.canary, 0)
+		err = mocks.controller.ScaleToZero(mocks.canary)
 		require.NoError(t, err)
 
 		c, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})

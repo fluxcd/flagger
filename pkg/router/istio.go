@@ -28,21 +28,17 @@ type IstioRouter struct {
 func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 	_, primaryName, canaryName := canary.GetServiceNames()
 
-	err := ir.reconcileDestinationRule(canary, canaryName)
-	if err != nil {
-		return err
+	if err := ir.reconcileDestinationRule(canary, canaryName); err != nil {
+		return fmt.Errorf("reconcileDestinationRule failed: %w", err)
 	}
 
-	err = ir.reconcileDestinationRule(canary, primaryName)
-	if err != nil {
-		return err
+	if err := ir.reconcileDestinationRule(canary, primaryName); err != nil {
+		return fmt.Errorf("reconcileDestinationRule failed: %w", err)
 	}
 
-	err = ir.reconcileVirtualService(canary)
-	if err != nil {
-		return err
+	if err := ir.reconcileVirtualService(canary); err != nil {
+		return fmt.Errorf("reconcileVirtualService failed: %w", err)
 	}
-
 	return nil
 }
 
@@ -71,15 +67,13 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 		}
 		_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Create(destinationRule)
 		if err != nil {
-			return fmt.Errorf("DestinationRule %s.%s create error %v", name, canary.Namespace, err)
+			return fmt.Errorf("DestinationRule %s.%s create error: %w", name, canary.Namespace, err)
 		}
 		ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 			Infof("DestinationRule %s.%s created", destinationRule.GetName(), canary.Namespace)
 		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("DestinationRule %s.%s query error %v", name, canary.Namespace, err)
+	} else if err != nil {
+		return fmt.Errorf("DestinationRule %s.%s get query error: %w", name, canary.Namespace, err)
 	}
 
 	// update
@@ -89,7 +83,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 			clone.Spec = newSpec
 			_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Update(clone)
 			if err != nil {
-				return fmt.Errorf("DestinationRule %s.%s update error %v", name, canary.Namespace, err)
+				return fmt.Errorf("DestinationRule %s.%s update error: %w", name, canary.Namespace, err)
 			}
 			ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 				Infof("DestinationRule %s.%s updated", destinationRule.GetName(), canary.Namespace)
@@ -197,15 +191,13 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		}
 		_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Create(virtualService)
 		if err != nil {
-			return fmt.Errorf("VirtualService %s.%s create error %v", apexName, canary.Namespace, err)
+			return fmt.Errorf("VirtualService %s.%s create error: %w", apexName, canary.Namespace, err)
 		}
 		ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 			Infof("VirtualService %s.%s created", virtualService.GetName(), canary.Namespace)
 		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("VirtualService %s.%s query error %v", apexName, canary.Namespace, err)
+	} else if err != nil {
+		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
 
 	// update service but keep the original destination weights and mirror
@@ -221,7 +213,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 
 			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vtClone)
 			if err != nil {
-				return fmt.Errorf("VirtualService %s.%s update error %v", apexName, canary.Namespace, err)
+				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 			}
 			ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 				Infof("VirtualService %s.%s updated", virtualService.GetName(), canary.Namespace)
@@ -242,11 +234,7 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 	vs := &istiov1alpha3.VirtualService{}
 	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			err = fmt.Errorf("VirtualService %s.%s not found", apexName, canary.Namespace)
-			return
-		}
-		err = fmt.Errorf("VirtualService %s.%s query error %v", apexName, canary.Namespace, err)
+		err = fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 		return
 	}
 
@@ -291,11 +279,7 @@ func (ir *IstioRouter) SetRoutes(
 
 	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return fmt.Errorf("VirtualService %s.%s not found", apexName, canary.Namespace)
-
-		}
-		return fmt.Errorf("VirtualService %s.%s query error %v", apexName, canary.Namespace, err)
+		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
 
 	vsCopy := vs.DeepCopy()
@@ -355,8 +339,7 @@ func (ir *IstioRouter) SetRoutes(
 
 	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vsCopy)
 	if err != nil {
-		return fmt.Errorf("VirtualService %s.%s update failed: %v", apexName, canary.Namespace, err)
-
+		return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
 	}
 	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -14,26 +13,23 @@ import (
 // IsPrimaryReady checks the primary deployment status and returns an error if
 // the deployment is in the middle of a rolling update or if the pods are unhealthy
 // it will return a non retriable error if the rolling update is stuck
-func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
+func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return true, fmt.Errorf("deployment %s.%s not found", primaryName, cd.Namespace)
-		}
-		return true, fmt.Errorf("deployment %s.%s query error %v", primaryName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
-	retriable, err := c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds())
+	_, err = c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds())
 	if err != nil {
-		return retriable, fmt.Errorf("Halt advancement %s.%s %s", primaryName, cd.Namespace, err.Error())
+		return fmt.Errorf("primary daemonset %s.%s not ready: %w", primaryName, cd.Namespace, err)
 	}
 
 	if primary.Spec.Replicas == int32p(0) {
-		return true, fmt.Errorf("Halt %s.%s advancement primary deployment is scaled to zero",
+		return fmt.Errorf("halt %s.%s advancement: primary deployment is scaled to zero",
 			cd.Name, cd.Namespace)
 	}
-	return true, nil
+	return nil
 }
 
 // IsCanaryReady checks the canary deployment status and returns an error if
@@ -43,22 +39,16 @@ func (c *DeploymentController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error)
 	targetName := cd.Spec.TargetRef.Name
 	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return true, fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
-		}
-		return true, fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
+		return true, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	retriable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
+	retryable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
 	if err != nil {
-		if retriable {
-			return retriable, fmt.Errorf("Halt advancement %s.%s %s", targetName, cd.Namespace, err.Error())
-		} else {
-			return retriable, fmt.Errorf("deployment does not have minimum availability for more than %vs",
-				cd.GetProgressDeadlineSeconds())
-		}
+		return retryable, fmt.Errorf(
+			"canary deployment %s.%s not ready with retryable %v: %w",
+			targetName, cd.Namespace, retryable, err,
+		)
 	}
-
 	return true, nil
 }
 
@@ -93,9 +83,9 @@ func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, 
 		}
 
 	} else {
-		return true, fmt.Errorf("waiting for rollout to finish: observed deployment generation less then desired generation")
+		return true, fmt.Errorf(
+			"waiting for rollout to finish: observed deployment generation less then desired generation")
 	}
-
 	return true, nil
 }
 

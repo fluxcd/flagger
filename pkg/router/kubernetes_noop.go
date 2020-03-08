@@ -9,10 +9,10 @@ import (
 type KubernetesNoopRouter struct {
 }
 
-func (c *KubernetesNoopRouter) Initialize(canary *flaggerv1.Canary) error {
+func (c *KubernetesNoopRouter) Initialize(_ *flaggerv1.Canary) error {
 	return nil
 }
 
-func (c *KubernetesNoopRouter) Reconcile(canary *flaggerv1.Canary) error {
+func (c *KubernetesNoopRouter) Reconcile(_ *flaggerv1.Canary) error {
 	return nil
 }

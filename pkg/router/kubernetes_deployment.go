@@ -34,13 +34,13 @@ func (c *KubernetesDeploymentRouter) Initialize(canary *flaggerv1.Canary) error 
 	// canary svc
 	err := c.reconcileService(canary, canaryName, canary.Spec.TargetRef.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("reconcileService failed: %w", err)
 	}
 
 	// primary svc
 	err = c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name))
 	if err != nil {
-		return err
+		return fmt.Errorf("reconcileService failed: %w", err)
 	}
 
 	return nil
@@ -53,17 +53,17 @@ func (c *KubernetesDeploymentRouter) Reconcile(canary *flaggerv1.Canary) error {
 	// main svc
 	err := c.reconcileService(canary, apexName, fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name))
 	if err != nil {
-		return err
+		return fmt.Errorf("reconcileService failed: %w", err)
 	}
 
 	return nil
 }
 
-func (c *KubernetesDeploymentRouter) SetRoutes(canary *flaggerv1.Canary, primaryRoute int, canaryRoute int) error {
+func (c *KubernetesDeploymentRouter) SetRoutes(_ *flaggerv1.Canary, _ int, _ int) error {
 	return nil
 }
 
-func (c *KubernetesDeploymentRouter) GetRoutes(canary *flaggerv1.Canary) (primaryRoute int, canaryRoute int, err error) {
+func (c *KubernetesDeploymentRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute int, canaryRoute int, err error) {
 	return 0, 0, nil
 }
 
@@ -128,18 +128,16 @@ func (c *KubernetesDeploymentRouter) reconcileService(canary *flaggerv1.Canary, 
 			Spec: svcSpec,
 		}
 
-		_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Create(svc)
+		_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Create(svc)
 		if err != nil {
-			return err
+			return fmt.Errorf("service %s.%s create error: %w", svc.Name, canary.Namespace, err)
 		}
 
 		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 			Infof("Service %s.%s created", svc.GetName(), canary.Namespace)
 		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("service %s query error %v", name, err)
+	} else if err != nil {
+		return fmt.Errorf("service %s get query error: %w", name, err)
 	}
 
 	if svc != nil {
@@ -155,7 +153,7 @@ func (c *KubernetesDeploymentRouter) reconcileService(canary *flaggerv1.Canary, 
 			svcClone.Spec.Selector = svcSpec.Selector
 			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(svcClone)
 			if err != nil {
-				return fmt.Errorf("service %s update error %v", name, err)
+				return fmt.Errorf("service %s update error: %w", name, err)
 			}
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 				Infof("Service %s updated", svc.GetName())

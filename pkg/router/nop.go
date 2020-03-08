@@ -8,11 +8,11 @@ import (
 type NopRouter struct {
 }
 
-func (*NopRouter) Reconcile(canary *flaggerv1.Canary) error {
+func (*NopRouter) Reconcile(_ *flaggerv1.Canary) error {
 	return nil
 }
 
-func (*NopRouter) SetRoutes(canary *flaggerv1.Canary, primaryWeight int, canaryWeight int, mirror bool) error {
+func (*NopRouter) SetRoutes(_ *flaggerv1.Canary, _ int, _ int, _ bool) error {
 	return nil
 }
 

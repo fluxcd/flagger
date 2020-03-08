@@ -27,7 +27,7 @@ func (task *HelmTaskv3) Run(ctx context.Context) (bool, error) {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		task.logger.With("canary", task.canary).Errorf("command failed %s %v %s", task.command, err, out)
-		return false, fmt.Errorf(" %v %s", err, out)
+		return false, fmt.Errorf("command %s failed: %s: %w", task.command, out, err)
 	} else {
 		if task.logCmdOutput {
 			fmt.Printf("%s\n", out)

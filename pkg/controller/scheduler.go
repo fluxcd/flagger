@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -26,26 +27,26 @@ func (c *Controller) scheduleCanaries() {
 	stats := make(map[string]int)
 
 	c.canaries.Range(func(key interface{}, value interface{}) bool {
-		canary := value.(*flaggerv1.Canary)
+		cn := value.(*flaggerv1.Canary)
 
 		// format: <name>.<namespace>
 		name := key.(string)
-		current[name] = fmt.Sprintf("%s.%s", canary.Spec.TargetRef.Name, canary.Namespace)
+		current[name] = fmt.Sprintf("%s.%s", cn.Spec.TargetRef.Name, cn.Namespace)
 
 		job, exists := c.jobs[name]
 		// schedule new job for existing job with different analysis interval or non-existing job
-		if (exists && job.GetCanaryAnalysisInterval() != canary.GetAnalysisInterval()) || !exists {
+		if (exists && job.GetCanaryAnalysisInterval() != cn.GetAnalysisInterval()) || !exists {
 			if exists {
 				job.Stop()
 			}
 
 			newJob := CanaryJob{
-				Name:             canary.Name,
-				Namespace:        canary.Namespace,
+				Name:             cn.Name,
+				Namespace:        cn.Namespace,
 				function:         c.advanceCanary,
 				done:             make(chan bool),
-				ticker:           time.NewTicker(canary.GetAnalysisInterval()),
-				analysisInterval: canary.GetAnalysisInterval(),
+				ticker:           time.NewTicker(cn.GetAnalysisInterval()),
+				analysisInterval: cn.GetAnalysisInterval(),
 			}
 
 			c.jobs[name] = newJob
@@ -53,11 +54,11 @@ func (c *Controller) scheduleCanaries() {
 		}
 
 		// compute canaries per namespace total
-		t, ok := stats[canary.Namespace]
+		t, ok := stats[cn.Namespace]
 		if !ok {
-			stats[canary.Namespace] = 1
+			stats[cn.Namespace] = 1
 		} else {
-			stats[canary.Namespace] = t + 1
+			stats[cn.Namespace] = t + 1
 		}
 		return true
 	})
@@ -74,7 +75,8 @@ func (c *Controller) scheduleCanaries() {
 	for canaryName, targetName := range current {
 		for name, target := range current {
 			if name != canaryName && target == targetName {
-				c.logger.With("canary", canaryName).Errorf("Bad things will happen! Found more than one canary with the same target %s", targetName)
+				c.logger.With("canary", canaryName).
+					Errorf("Bad things will happen! Found more than one canary with the same target %s", targetName)
 			}
 		}
 	}
@@ -110,8 +112,8 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// init Kubernetes router
-	router := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports)
-	if err := router.Initialize(cd); err != nil {
+	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports)
+	if err := kubeRouter.Initialize(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -127,7 +129,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	meshRouter := c.routerFactory.MeshRouter(provider)
 
 	// create or update svc
-	if err := router.Reconcile(cd); err != nil {
+	if err := kubeRouter.Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
@@ -163,7 +165,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check primary status
 	if !skipLivenessChecks && !cd.SkipAnalysis() {
-		if _, err := canaryController.IsPrimaryReady(cd); err != nil {
+		if err := canaryController.IsPrimaryReady(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -205,7 +207,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		}
 		if err := canaryController.SyncStatus(cd, status); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
-			return
 		}
 		return
 	}
@@ -258,7 +259,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// scale canary to zero if promotion has finished
 	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
-		if err := canaryController.Scale(cd, 0); err != nil {
+		if err := canaryController.ScaleToZero(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
@@ -304,7 +305,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if ok := c.runPreRolloutHooks(cd); !ok {
 			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
-				return
 			}
 			return
 		}
@@ -312,7 +312,6 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 		if ok := c.runAnalysis(cd); !ok {
 			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
-				return
 			}
 			return
 		}
@@ -333,7 +332,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// strategy: A/B testing
 	if len(cd.GetAnalysis().Match) > 0 && cd.GetAnalysis().Iterations > 0 {
-		c.runAB(cd, canaryController, meshRouter, provider)
+		c.runAB(cd, canaryController, meshRouter)
 		return
 	}
 
@@ -345,12 +344,13 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// strategy: Canary progressive traffic increase
 	if cd.GetAnalysis().StepWeight > 0 {
-		c.runCanary(cd, canaryController, meshRouter, provider, mirrored, canaryWeight, primaryWeight, maxWeight)
+		c.runCanary(cd, canaryController, meshRouter, mirrored, canaryWeight, primaryWeight, maxWeight)
 	}
 
 }
 
-func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, provider string, mirrored bool, canaryWeight int, primaryWeight int, maxWeight int) {
+func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary.Controller,
+	meshRouter router.Interface, mirrored bool, canaryWeight int, primaryWeight int, maxWeight int) {
 	primaryName := fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name)
 
 	// increase traffic weight
@@ -420,7 +420,8 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 	}
 }
 
-func (c *Controller) runAB(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, provider string) {
+func (c *Controller) runAB(canary *flaggerv1.Canary, canaryController canary.Controller,
+	meshRouter router.Interface) {
 	primaryName := fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name)
 
 	// route traffic to canary and increment iterations
@@ -462,7 +463,8 @@ func (c *Controller) runAB(canary *flaggerv1.Canary, canaryController canary.Con
 	}
 }
 
-func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, provider string, mirrored bool) {
+func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController canary.Controller,
+	meshRouter router.Interface, provider string, mirrored bool) {
 	primaryName := fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name)
 
 	// increment iterations
@@ -554,7 +556,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	}
 
 	// shutdown canary
-	if err := canaryController.Scale(canary, 0); err != nil {
+	if err := canaryController.ScaleToZero(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
 		return false
 	}
@@ -820,9 +822,10 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		if metric.Name == "request-success-rate" {
 			val, err := observer.GetRequestSuccessRate(toMetricModel(canary, metric.Interval))
 			if err != nil {
-				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(canary, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
-						metricsProvider, metric.Name, canary.Spec.TargetRef.Name, canary.Namespace)
+				if errors.Is(err, providers.ErrNoValuesFound) {
+					c.recordEventWarningf(canary,
+						"Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic: %v",
+						metricsProvider, metric.Name, canary.Spec.TargetRef.Name, canary.Namespace, err)
 				} else {
 					c.recordEventErrorf(canary, "Prometheus query failed: %v", err)
 				}
@@ -851,7 +854,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		if metric.Name == "request-duration" {
 			val, err := observer.GetRequestDuration(toMetricModel(canary, metric.Interval))
 			if err != nil {
-				if strings.Contains(err.Error(), "no values found") {
+				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
 						metricsProvider, metric.Name, canary.Spec.TargetRef.Name, canary.Namespace)
 				} else {
@@ -882,7 +885,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		if metric.Query != "" {
 			val, err := observerFactory.Client.RunQuery(metric.Query)
 			if err != nil {
-				if strings.Contains(err.Error(), "no values found") {
+				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary, "Halt advancement no values found for metric: %s",
 						metric.Name)
 				} else {
@@ -955,9 +958,9 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 
 			val, err := provider.RunQuery(query)
 			if err != nil {
-				if strings.Contains(err.Error(), "no values found") {
-					c.recordEventWarningf(canary, "Halt advancement no values found for custom metric: %s",
-						metric.Name)
+				if errors.Is(err, providers.ErrNoValuesFound) {
+					c.recordEventWarningf(canary, "Halt advancement no values found for custom metric: %s: %v",
+						metric.Name, err)
 				} else {
 					c.recordEventErrorf(canary, "Metric query failed for %s: %v", metric.Name, err)
 				}
@@ -1030,7 +1033,7 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
 
 	// shutdown canary
-	if err := canaryController.Scale(canary, 0); err != nil {
+	if err := canaryController.ScaleToZero(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
 		return
 	}

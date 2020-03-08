@@ -74,7 +74,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 	query = url.QueryEscape(p.trimQuery(query))
 	u, err := url.Parse(fmt.Sprintf("./api/v1/query?query=%s", query))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("url.Parase failed: %w", err)
 	}
 	u.Path = path.Join(p.url.Path, u.Path)
 
@@ -82,7 +82,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("http.NewRequest failed: %w", err)
 	}
 
 	if p.username != "" && p.password != "" {
@@ -94,13 +94,13 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("request failed: %w", err)
 	}
 	defer r.Body.Close()
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return 0, fmt.Errorf("error reading body: %s", err.Error())
+		return 0, fmt.Errorf("error reading body: %w", err)
 	}
 
 	if 400 <= r.StatusCode {
@@ -110,7 +110,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 	var result prometheusResponse
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		return 0, fmt.Errorf("error unmarshaling result: %s, '%s'", err.Error(), string(b))
+		return 0, fmt.Errorf("error unmarshaling result: %w, '%s'", err, string(b))
 	}
 
 	var value *float64
@@ -126,7 +126,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 		}
 	}
 	if value == nil {
-		return 0, fmt.Errorf("no values found")
+		return 0, fmt.Errorf("%w", ErrNoValuesFound)
 	}
 
 	return *value, nil
@@ -136,7 +136,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 func (p *PrometheusProvider) IsOnline() (bool, error) {
 	u, err := url.Parse("./api/v1/status/flags")
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("url.Parse failed: %w", err)
 	}
 	u.Path = path.Join(p.url.Path, u.Path)
 
@@ -144,7 +144,7 @@ func (p *PrometheusProvider) IsOnline() (bool, error) {
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("http.NewRequest failed: %w", err)
 	}
 
 	if p.username != "" && p.password != "" {
@@ -156,13 +156,13 @@ func (p *PrometheusProvider) IsOnline() (bool, error) {
 
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("request failed: %w", err)
 	}
 	defer r.Body.Close()
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return false, fmt.Errorf("error reading body: %s", err.Error())
+		return false, fmt.Errorf("error reading body: %w", err)
 	}
 
 	if 400 <= r.StatusCode {
