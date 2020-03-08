@@ -105,7 +105,7 @@ func (p *DatadogProvider) RunQuery(query string) (float64, error) {
 	defer cancel()
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("request failed: %w", err)
 	}
 
 	defer r.Body.Close()
@@ -155,8 +155,9 @@ func (p *DatadogProvider) IsOnline() (bool, error) {
 	defer cancel()
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("request failed: %w", err)
 	}
+
 	defer r.Body.Close()
 
 	b, err := ioutil.ReadAll(r.Body)
