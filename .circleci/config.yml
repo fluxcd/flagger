@@ -72,6 +72,19 @@ jobs:
       - run: github-release-notes -org weaveworks -repo flagger -since-latest-release -include-author > /tmp/release.txt
       - run: test/goreleaser.sh
 
+  e2e-kubernetes-testing:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: test/container-build.sh
+      - run: test/e2e-kind.sh v1.17.2
+      - run: test/e2e-kubernetes.sh
+      - run: test/e2e-kubernetes-tests-deployment.sh
+      - run: test/e2e-kubernetes-cleanup.sh
+      - run: test/e2e-kubernetes-tests-daemonset.sh
+
   e2e-istio-testing:
     machine: true
     steps:
@@ -82,28 +95,6 @@ jobs:
       - run: test/e2e-kind.sh
       - run: test/e2e-istio.sh
       - run: test/e2e-istio-tests.sh
-
-  e2e-kubernetes-daemonset-testing:
-    machine: true
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/bin
-      - run: test/container-build.sh
-      - run: test/e2e-kind.sh v1.17.0
-      - run: test/e2e-kubernetes.sh
-      - run: test/e2e-kubernetes-tests-daemonset.sh
-
-  e2e-kubernetes-deployment-testing:
-    machine: true
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/bin
-      - run: test/container-build.sh
-      - run: test/e2e-kind.sh v1.17.0
-      - run: test/e2e-kubernetes.sh
-      - run: test/e2e-kubernetes-tests-deployment.sh
 
   e2e-gloo-testing:
     machine: true
@@ -203,13 +194,10 @@ workflows:
               ignore:
                 - gh-pages
                 - /^user-.*/
+      - e2e-kubernetes-testing:
+          requires:
+            - build-binary
       - e2e-istio-testing:
-          requires:
-            - build-binary
-      - e2e-kubernetes-daemonset-testing:
-          requires:
-            - build-binary
-      - e2e-kubernetes-deployment-testing:
           requires:
             - build-binary
       - e2e-gloo-testing:
@@ -227,9 +215,8 @@ workflows:
       - push-container:
           requires:
             - build-binary
+            - e2e-kubernetes-testing
             - e2e-istio-testing
-            - e2e-kubernetes-daemonset-testing
-            - e2e-kubernetes-deployment-testing
             - e2e-gloo-testing
             - e2e-nginx-testing
             - e2e-linkerd-testing
