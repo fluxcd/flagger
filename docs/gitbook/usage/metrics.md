@@ -58,7 +58,7 @@ The following variables are available in query templates:
 - `target` (canary.spec.targetRef.name)
 - `service` (canary.spec.service.name)
 - `ingress` (canary.spec.ingresRef.name)
-- `interval` (canary.spec.canaryAnalysis.metrics[].interval)
+- `interval` (canary.spec.analysis.metrics[].interval)
 
 A canary analysis metric can reference a template with `templateRef`:
 
