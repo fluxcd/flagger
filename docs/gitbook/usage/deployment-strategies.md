@@ -214,7 +214,7 @@ with Kubernetes L4 networking. When using Istio you have the option to mirror tr
 
 ![Flagger Blue/Green Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-bluegreen-steps.png)
 
-You can use the blue/green deployment strategy by replacing `stepWeight/maxWeight` with `iterations` in the `canaryAnalysis` spec:
+You can use the blue/green deployment strategy by replacing `stepWeight/maxWeight` with `iterations` in the `analysis` spec:
 
 ```yaml
   analysis:
@@ -263,7 +263,7 @@ idempotent. Before using mirroring on requests that may be writes, you should
 consider what will happen if a write is duplicated and handled by the primary
 and canary.
 
-To use mirroring, set `spec.canaryAnalysis.mirror` to `true`. 
+To use mirroring, set `spec.analysis.mirror` to `true`.
 
 Istio example:
 
