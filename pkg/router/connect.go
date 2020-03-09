@@ -59,8 +59,7 @@ func (cr *ConsulConnectRouter) updateSplitter(canary *flaggerv1.Canary, primaryW
 
 	_, _, err := cr.consulClient.ConfigEntries().Set(splitter, nil)
 	if err != nil {
-		err = fmt.Errorf("Not able to set service splitter %s.%s error %v", apexName, canary.Namespace, err)
-		return err
+		return fmt.Errorf("Not able to set service splitter %s.%s error %w", apexName, canary.Namespace, err)
 	}
 
 	return nil
@@ -85,13 +84,11 @@ func (cr *ConsulConnectRouter) reconcileResolver(canary *flaggerv1.Canary) error
 
 	result, _, err := cr.consulClient.ConfigEntries().Set(resolver, nil)
 	if err != nil {
-		err = fmt.Errorf("Failure during creation of service resolver %s.%s error %v", apexName, canary.Namespace, err)
-		return err
+		return fmt.Errorf("Failure during creation of service resolver %s.%s error: %w", apexName, canary.Namespace, err)
 	}
 
 	if !result {
-		err = fmt.Errorf("Not able to create service resolver %s.%s", apexName, canary.Namespace)
-		return err
+		return fmt.Errorf("Not able to create service resolver %s.%s", apexName, canary.Namespace)
 	}
 
 	return nil
@@ -109,7 +106,7 @@ func (cr *ConsulConnectRouter) GetRoutes(canary *flaggerv1.Canary) (
 	entry, _, err := cr.consulClient.ConfigEntries().Get(consulapi.ServiceSplitter, apexName, nil)
 
 	if err != nil {
-		err = fmt.Errorf("Service splitter %s.%s not found error %v", apexName, canary.Namespace, err)
+		err = fmt.Errorf("Service splitter %s.%s not found error %w", apexName, canary.Namespace, err)
 		return
 	}
 
@@ -128,8 +125,6 @@ func (cr *ConsulConnectRouter) GetRoutes(canary *flaggerv1.Canary) (
 			canaryWeight = int(split.Weight)
 		}
 	}
-
-	mirrored = false
 
 	if primaryWeight == 0 && canaryWeight == 0 {
 		err = fmt.Errorf("Service splitter %s.%s does not contain routes for %s-primary and %s-canary",
