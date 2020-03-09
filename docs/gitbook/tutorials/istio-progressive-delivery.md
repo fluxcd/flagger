@@ -149,6 +149,9 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
 
+**Note** that when using Istio 1.5 you have to replace the `request-duration`
+with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
+
 Save the above resource as podinfo-canary.yaml and then apply it:
 
 ```bash

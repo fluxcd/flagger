@@ -39,3 +39,49 @@ metrics:
     max: 500
   interval: 1m
 ```
+
+### Istio telemetry v2
+
+Istio 1.5 comes with a breaking change for Flagger uses. In Istio telemetry v2 the metric 
+`istio_request_duration_seconds_bucket` has been removed and replaced with `istio_request_duration_milliseconds_bucket`
+and this breaks the `request-duration` metric check.
+
+You can create a metric template using the new duration metric like this:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: istio-system
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.istio-system:9090
+  query: |
+    histogram_quantile(
+        0.99,
+        sum(
+            rate(
+                istio_request_duration_milliseconds_bucket{
+                    reporter="destination",
+                    destination_workload_namespace="{{ namespace }}",
+                    destination_workload=~"{{ target }}"
+                }[{{ interval }}]
+            )
+        ) by (le)
+    )
+```
+
+In the canary manifests, replace the `request-duration` metric with `latency`:
+
+```yaml
+metrics:
+- name: latency
+  templateRef:
+    name: latency
+    namespace: istio-system
+  thresholdRange:
+    max: 500
+  interval: 1m
+```

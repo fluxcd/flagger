@@ -138,6 +138,9 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo.test:9898/"
 ```
 
+**Note** that when using Istio 1.5 you have to replace the `request-duration`
+with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
+
 The above configuration will run an analysis for ten minutes targeting Safari users and those that have an insider cookie.
 
 Save the above resource as podinfo-abtest.yaml and then apply it:
