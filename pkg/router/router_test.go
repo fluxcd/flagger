@@ -112,7 +112,7 @@ func newTestCanary() *flaggerv1.Canary {
 					"public-gateway.istio",
 					"mesh",
 				},
-			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
@@ -158,7 +158,7 @@ func newTestCanaryAppMesh() *flaggerv1.Canary {
 					PerTryTimeout: "gateway-error",
 					RetryOn:       "5s",
 				},
-			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
@@ -203,7 +203,7 @@ func newTestSMICanary() *flaggerv1.Canary {
 				},
 				PortDiscovery: true,
 			},
-			CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
@@ -247,7 +247,7 @@ func newTestABTest() *flaggerv1.Canary {
 			Service: flaggerv1.CanaryService{
 				Port:     9898,
 				MeshName: "global",
-			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 2,
 				Match: []istiov1alpha3.HTTPMatchRequest{
@@ -397,7 +397,7 @@ func newTestCanaryIngress() *flaggerv1.Canary {
 			},
 			Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,

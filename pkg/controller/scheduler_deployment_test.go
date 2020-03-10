@@ -55,7 +55,7 @@ func TestScheduler_DeploymentRollback(t *testing.T) {
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	cd := c.DeepCopy()
-	cd.Spec.CanaryAnalysis.Metrics = append(c.Spec.CanaryAnalysis.Metrics, flaggerv1.CanaryMetric{
+	cd.Spec.Analysis.Metrics = append(c.Spec.Analysis.Metrics, flaggerv1.CanaryMetric{
 		Name:     "fail",
 		Interval: "1m",
 		ThresholdRange: &flaggerv1.CanaryThresholdRange{
@@ -519,7 +519,7 @@ func TestScheduler_DeploymentAlerts(t *testing.T) {
 	defer ts.Close()
 
 	canary := newDeploymentTestCanary()
-	canary.Spec.CanaryAnalysis.Alerts = []flaggerv1.CanaryAlert{
+	canary.Spec.Analysis.Alerts = []flaggerv1.CanaryAlert{
 		{
 			Name:     "slack-dev",
 			Severity: "info",

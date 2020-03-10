@@ -528,6 +528,9 @@ spec:
                 mirror:
                   description: Mirror traffic to canary
                   type: boolean
+                mirrorWeight:
+                  description: Percentage of traffic to be mirrored
+                  type: number
                 match:
                   description: A/B testing match conditions
                   type: array

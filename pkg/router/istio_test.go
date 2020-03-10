@@ -91,69 +91,78 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 	err := router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
-	p, c, m, err := router.GetRoutes(mocks.canary)
-	require.NoError(t, err)
-
-	p = 60
-	c = 40
-	m = false
-
-	err = router.SetRoutes(mocks.canary, p, c, m)
-	require.NoError(t, err)
-
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
-	require.NoError(t, err)
-
 	pHost := fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name)
 	cHost := fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name)
-	pRoute := istiov1alpha3.DestinationWeight{}
-	cRoute := istiov1alpha3.DestinationWeight{}
-	var mirror *istiov1alpha3.Destination
 
-	for _, http := range vs.Spec.Http {
-		for _, route := range http.Route {
-			if route.Destination.Host == pHost {
-				pRoute = route
-			}
-			if route.Destination.Host == cHost {
-				cRoute = route
-				mirror = http.Mirror
-			}
-		}
-	}
+	t.Run("normal", func(t *testing.T) {
+		p, c := 60, 40
+		err := router.SetRoutes(mocks.canary, p, c, false)
+		require.NoError(t, err)
 
-	assert.Equal(t, p, pRoute.Weight)
-	assert.Equal(t, c, cRoute.Weight)
-	assert.Nil(t, mirror)
+		vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
 
-	mirror = nil
-	p = 100
-	c = 0
-	m = true
-
-	err = router.SetRoutes(mocks.canary, p, c, m)
-	require.NoError(t, err)
-
-	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
-	require.NoError(t, err)
-
-	for _, http := range vs.Spec.Http {
-		for _, route := range http.Route {
-			if route.Destination.Host == pHost {
-				pRoute = route
-			}
-			if route.Destination.Host == cHost {
-				cRoute = route
-				mirror = http.Mirror
+		var pRoute, cRoute istiov1alpha3.DestinationWeight
+		var mirror *istiov1alpha3.Destination
+		for _, http := range vs.Spec.Http {
+			for _, route := range http.Route {
+				if route.Destination.Host == pHost {
+					pRoute = route
+				}
+				if route.Destination.Host == cHost {
+					cRoute = route
+					mirror = http.Mirror
+				}
 			}
 		}
-	}
 
-	assert.Equal(t, p, pRoute.Weight)
-	assert.Equal(t, c, cRoute.Weight)
-	if assert.NotNil(t, mirror) {
-		assert.Equal(t, cHost, mirror.Host)
-	}
+		assert.Equal(t, p, pRoute.Weight)
+		assert.Equal(t, c, cRoute.Weight)
+		assert.Nil(t, mirror)
+
+	})
+
+	t.Run("mirror", func(t *testing.T) {
+		for _, w := range []int{0, 10, 50} {
+			p, c := 100, 0
+
+			// set mirror weight
+			mocks.canary.Spec.Analysis.MirrorWeight = w
+			err := router.SetRoutes(mocks.canary, p, c, true)
+			require.NoError(t, err)
+
+			vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get("podinfo", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			var pRoute, cRoute istiov1alpha3.DestinationWeight
+			var mirror *istiov1alpha3.Destination
+			var mirrorWeight *istiov1alpha3.Percent
+			for _, http := range vs.Spec.Http {
+				for _, route := range http.Route {
+					if route.Destination.Host == pHost {
+						pRoute = route
+					}
+					if route.Destination.Host == cHost {
+						cRoute = route
+						mirror = http.Mirror
+						mirrorWeight = http.MirrorPercentage
+					}
+				}
+			}
+
+			assert.Equal(t, p, pRoute.Weight)
+			assert.Equal(t, c, cRoute.Weight)
+			if assert.NotNil(t, mirror) {
+				assert.Equal(t, cHost, mirror.Host)
+			}
+
+			if w > 0 && assert.NotNil(t, mirrorWeight) {
+				assert.Equal(t, w, int(mirrorWeight.Value))
+			} else {
+				assert.Nil(t, mirrorWeight)
+			}
+		}
+	})
 }
 
 func TestIstioRouter_GetRoutes(t *testing.T) {
