@@ -325,7 +325,7 @@ spec:
     # enable traffic shadowing 
     mirror: true
     # weight of the traffic mirrored to your canary (defaults to 100%)
-    mirrorWeight: 100.0
+    mirrorWeight: 100
     metrics:
     - name: request-success-rate
       thresholdRange:

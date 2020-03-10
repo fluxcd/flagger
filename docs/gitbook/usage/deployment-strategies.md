@@ -278,7 +278,7 @@ Istio example:
     # Traffic shadowing (compatible with Istio only)
     mirror: true
     # Weight of the traffic mirrored to your canary (defaults to 100%)
-    mirrorWeight: 100.0
+    mirrorWeight: 100
 ```
 
 Mirroring rollout steps for service mesh:

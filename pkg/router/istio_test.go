@@ -123,7 +123,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 	})
 
 	t.Run("mirror", func(t *testing.T) {
-		for _, w := range []float64{0, 10, 50} {
+		for _, w := range []int{0, 10, 50} {
 			p, c := 100, 0
 
 			// set mirror weight
@@ -157,7 +157,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 			}
 
 			if w > 0 && assert.NotNil(t, mirrorWeight) {
-				assert.Equal(t, w, mirrorWeight.Value)
+				assert.Equal(t, w, int(mirrorWeight.Value))
 			} else {
 				assert.Nil(t, mirrorWeight)
 			}
