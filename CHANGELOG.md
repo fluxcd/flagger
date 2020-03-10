@@ -8,7 +8,7 @@ This is a release candidate for Flagger v1.0.0.
 
 The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.app/dev/upgrade-guide).
 
-Two new resources where added to the API: `MetricTemplate` and `AlertProvider`.
+Two new resources were added to the API: `MetricTemplate` and `AlertProvider`.
 The analysis can reference [metric templates](https://docs.flagger.app//usage/metrics#custom-metrics)
 to query Prometheus, Datadog and AWS CloudWatch.
 [Alerting](https://docs.flagger.app/v/master/usage/alerting#canary-configuration) can be configured on a per
