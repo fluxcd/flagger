@@ -277,6 +277,8 @@ Istio example:
     threshold: 2
     # Traffic shadowing (compatible with Istio only)
     mirror: true
+    # Weight of the traffic mirrored to your canary (defaults to 100%)
+    mirrorWeight: 100.0
 ```
 
 Mirroring rollout steps for service mesh:
@@ -287,7 +289,7 @@ Mirroring rollout steps for service mesh:
 * run the acceptance tests
 * abort the canary release if tests fail
 * start the load tests
-* mirror traffic from primary to canary
+* mirror 100% of the traffic from primary to canary
 * check request success rate and request duration every minute
 * abort the canary release if the failure threshold is reached
 * stop traffic mirroring after the number of iterations is reached

@@ -324,6 +324,8 @@ spec:
     iterations: 10
     # enable traffic shadowing 
     mirror: true
+    # weight of the traffic mirrored to your canary (defaults to 100%)
+    mirrorWeight: 100.0
     metrics:
     - name: request-success-rate
       thresholdRange:
@@ -357,7 +359,7 @@ With the above configuration, Flagger will run a canary release with the followi
 * run the acceptance tests
 * abort the canary release if tests fail
 * start the load tests
-* mirror traffic from primary to canary
+* mirror 100% of the traffic from primary to canary
 * check request success rate and request duration every minute
 * abort the canary release if the metrics check failure threshold is reached
 * stop traffic mirroring after the number of iterations is reached
