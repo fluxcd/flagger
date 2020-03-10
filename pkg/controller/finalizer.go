@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+
 	ex "github.com/pkg/errors"
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/weaveworks/flagger/pkg/canary"
@@ -10,7 +11,7 @@ import (
 	"k8s.io/client-go/util/retry"
 )
 
-const finalizer = "finalizer.flagger.com"
+const finalizer = "finalizer.flagger.app"
 
 func (c *Controller) finalize(old interface{}) error {
 	var r *flaggerv1.Canary
@@ -39,7 +40,7 @@ func (c *Controller) finalize(old interface{}) error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			//No reason to wait not found
-			c.logger.Warnf("%s.%s failed due to %s not found", r.Name, r.Namespace, r.Kind)
+			c.logger.Warnf("%s.%s failed due to %s not found", r.Name, r.Namespace, r.Spec.TargetRef.Kind)
 			return nil
 		}
 		c.logger.Errorf("%s.%s failed due to %s", r.Name, r.Namespace, err)
@@ -55,7 +56,6 @@ func (c *Controller) finalize(old interface{}) error {
 	}
 
 	c.logger.Infof("%s.%s moving forward with router finalizing", r.Name, r.Namespace)
-	//TODO if I can't revert continue on?
 	labelSelector, ports, err := canaryController.GetMetadata(r)
 	if err != nil {
 		c.logger.Errorf("%s.%s failed to get metadata for router finalizing", r.Name, r.Namespace)
@@ -82,20 +82,12 @@ func (c *Controller) finalize(old interface{}) error {
 	c.logger.Infof("Finalization complete for %s.%s", r.Name, r.Namespace)
 
 	return nil
-
-
 }
 
 func (c *Controller) revertTargetRef(ctrl canary.Controller, r *flaggerv1.Canary) error {
 	if err := ctrl.Finalize(r); err != nil {
 		return err
 	}
-	/*if err != nil {
-		if errors.IsNotFound(err) {
-			return false, err
-		}
-		return true, fmt.Errorf("%s.%s failed to revert deployment to original replicas", r.Name, r.Namespace)
-	}*/
 	c.logger.Infof("%s.%s kind %s reverted", r.Name, r.Namespace, r.Spec.TargetRef.Kind)
 	return nil
 }
@@ -107,9 +99,6 @@ func (c *Controller) revertRouter(r *flaggerv1.Canary, labelSelector string, por
 		c.logger.Errorf("%s.%s router failed with error %s", r.Name, r.Namespace, err)
 		return err
 	}
-	/*if err != nil {
-		return fmt.Errorf("%s.%s failed to revert service to original state", r.Name, r.Namespace)
-	}*/
 	c.logger.Infof("Service %s.%s reverted", r.Name, r.Namespace)
 	return nil
 }
@@ -158,7 +147,7 @@ func (c *Controller) addFinalizer(canary *flaggerv1.Canary, finalizerString stri
 
 		var selErr error
 		if !firstTry {
-			canary, selErr = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.GetName(),metav1.GetOptions{})
+			canary, selErr = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.GetName(), metav1.GetOptions{})
 			if selErr != nil {
 				return selErr
 			}
@@ -167,7 +156,7 @@ func (c *Controller) addFinalizer(canary *flaggerv1.Canary, finalizerString stri
 		copy := canary.DeepCopy()
 		copy.ObjectMeta.Finalizers = append(copy.ObjectMeta.Finalizers, finalizerString)
 
-		 _, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(copy)
+		_, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(copy)
 
 		firstTry = false
 		return
@@ -182,13 +171,13 @@ func (c *Controller) addFinalizer(canary *flaggerv1.Canary, finalizerString stri
 //removeFinalizer removes a provided finalizer to the specified canary resource.
 //If failures occur the error will be returned otherwise the action is deemed successful
 //and error will be nil.
-func (c *Controller) removeFinalizer(canary *flaggerv1.Canary, finalizerString string)  error {
+func (c *Controller) removeFinalizer(canary *flaggerv1.Canary, finalizerString string) error {
 	firstTry := true
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 
 		var selErr error
 		if !firstTry {
-			canary, selErr = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.GetName(),metav1.GetOptions{})
+			canary, selErr = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.GetName(), metav1.GetOptions{})
 			if selErr != nil {
 				return selErr
 			}
@@ -217,5 +206,4 @@ func (c *Controller) removeFinalizer(canary *flaggerv1.Canary, finalizerString s
 		return ex.Wrap(err, "Remove finalizer failed")
 	}
 	return nil
-
 }

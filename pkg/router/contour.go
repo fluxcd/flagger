@@ -417,3 +417,7 @@ func (cr *ContourRouter) makeLinkerdHeaderValue(canary *flaggerv1.Canary, servic
 	}
 
 }
+
+func (cr *ContourRouter) Finalize(canary *flaggerv1.Canary) error {
+	return nil
+}

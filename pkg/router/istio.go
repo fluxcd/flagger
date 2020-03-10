@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
@@ -211,6 +212,22 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 			vtClone := virtualService.DeepCopy()
 			vtClone.Spec = newSpec
 
+			//If annotation kubectl.kubernetes.io/last-applied-configuration is present no need to duplicate
+			//serialization.  If not present store the serialized object in annotation
+			//flagger.kubernetes.io/original-configuration
+			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok {
+				b, err := json.Marshal(virtualService.Spec)
+				if err != nil {
+					ir.logger.Warnf("Unable to marshal VS %s for orig-configuration annotation", virtualService.Name)
+				}
+
+				if vtClone.ObjectMeta.Annotations == nil {
+					vtClone.ObjectMeta.Annotations = make(map[string]string)
+				}
+
+				vtClone.ObjectMeta.Annotations[configAnnotation] = string(b)
+			}
+
 			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vtClone)
 			if err != nil {
 				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
@@ -345,6 +362,50 @@ func (ir *IstioRouter) SetRoutes(
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
 	}
+	return nil
+}
+
+func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
+
+	//Need to see if I can get the annotation orig-configuration
+	apexName, _, _ := canary.GetServiceNames()
+
+	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	var storedSpec istiov1alpha3.VirtualServiceSpec
+	//If able to get and unMarshal update the spec
+	if a, ok := vs.ObjectMeta.Annotations[kubectlAnnotation]; ok {
+		var storedVS istiov1alpha3.VirtualService
+		err := json.Unmarshal([]byte(a), &storedVS)
+		if err != nil {
+			return fmt.Errorf("VirtualService %s.%s failed to unMarshal annotation %s, unable to revert",
+				apexName, canary.Namespace, kubectlAnnotation)
+		}
+		storedSpec = storedVS.Spec
+	} else if a, ok := vs.ObjectMeta.Annotations[configAnnotation]; ok {
+		var spec istiov1alpha3.VirtualServiceSpec
+		err := json.Unmarshal([]byte(a), &spec)
+		if err != nil {
+			return fmt.Errorf("VirtualService %s.%s failed to unMarshal annotation %s, unable to revert",
+				apexName, canary.Namespace, configAnnotation)
+		}
+		storedSpec = spec
+	} else {
+		ir.logger.Warnf("VirtualService %s.%s original configuration not found, unable to revert", apexName, canary.Namespace)
+		return nil
+	}
+
+	clone := vs.DeepCopy()
+	clone.Spec = storedSpec
+
+	_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(clone)
+	if err != nil {
+		return fmt.Errorf("VirtualService %s.%s update error %v, unable to revert", apexName, canary.Namespace, err)
+	}
+
 	return nil
 }
 

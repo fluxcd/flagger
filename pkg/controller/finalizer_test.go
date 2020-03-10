@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,15 +14,15 @@ import (
 //Test has finalizers
 func TestFinalizer_hasFinalizer(t *testing.T) {
 
-	withFinalizer := newTestCanary()
+	withFinalizer := newDeploymentTestCanary()
 	withFinalizer.Finalizers = append(withFinalizer.Finalizers, finalizer)
 
-	tables := []struct{
+	tables := []struct {
 		canary *flaggerv1.Canary
 		result bool
 	}{
-		{newTestCanary(), false},
-		{ withFinalizer, true},
+		{newDeploymentTestCanary(), false},
+		{withFinalizer, true},
 	}
 
 	for _, table := range tables {
@@ -35,24 +36,23 @@ func TestFinalizer_hasFinalizer(t *testing.T) {
 func TestFinalizer_addFinalizer(t *testing.T) {
 
 	mockError := fmt.Errorf("failed to add finalizer to canary %s", "testCanary")
-	cs := fakeFlagger.NewSimpleClientset(newTestCanary())
+	cs := fakeFlagger.NewSimpleClientset(newDeploymentTestCanary())
 	//prepend so it is evaluated over the catch all *
-	cs.PrependReactor("update", "canaries", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error){
+	cs.PrependReactor("update", "canaries", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, nil, mockError
 	})
-	m := Mocks{
-		canary:newTestCanary(),
+	m := fixture{
+		canary:        newDeploymentTestCanary(),
 		flaggerClient: cs,
-		ctrl:&Controller{flaggerClient:cs},
+		ctrl:          &Controller{flaggerClient: cs},
 	}
 
-
-	tables := []struct{
-		mock Mocks
+	tables := []struct {
+		mock   fixture
 		canary *flaggerv1.Canary
-		error error
+		error  error
 	}{
-		{SetupMocks(nil), newTestCanary(), nil},
+		{newDeploymentFixture(nil), newDeploymentTestCanary(), nil},
 		{m, m.canary, mockError},
 	}
 
@@ -70,27 +70,27 @@ func TestFinalizer_addFinalizer(t *testing.T) {
 
 func TestFinalizer_removeFinalizer(t *testing.T) {
 
-	withFinalizer := newTestCanary()
+	withFinalizer := newDeploymentTestCanary()
 	withFinalizer.Finalizers = append(withFinalizer.Finalizers, finalizer)
 
 	mockError := fmt.Errorf("failed to add finalizer to canary %s", "testCanary")
-	cs := fakeFlagger.NewSimpleClientset(newTestCanary())
+	cs := fakeFlagger.NewSimpleClientset(newDeploymentTestCanary())
 	//prepend so it is evaluated over the catch all *
-	cs.PrependReactor("update", "canaries", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error){
+	cs.PrependReactor("update", "canaries", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, nil, mockError
 	})
-	m := Mocks{
-		canary:withFinalizer,
+	m := fixture{
+		canary:        withFinalizer,
 		flaggerClient: cs,
-		ctrl:&Controller{flaggerClient:cs},
+		ctrl:          &Controller{flaggerClient: cs},
 	}
 
-	tables := []struct{
-		mock Mocks
+	tables := []struct {
+		mock   fixture
 		canary *flaggerv1.Canary
-		error error
+		error  error
 	}{
-		{SetupMocks(nil), withFinalizer, nil},
+		{newDeploymentFixture(nil), withFinalizer, nil},
 		{m, m.canary, mockError},
 	}
 

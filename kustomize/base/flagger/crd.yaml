@@ -502,6 +502,9 @@ spec:
             skipAnalysis:
               description: Skip analysis and promote canary
               type: boolean
+            revertOnDeletion:
+              description: Revert mutated resources to original spec on deletion
+              type: boolean
             analysis:
               description: Canary analysis for this canary
               type: object

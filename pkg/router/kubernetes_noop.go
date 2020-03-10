@@ -16,3 +16,7 @@ func (c *KubernetesNoopRouter) Initialize(_ *flaggerv1.Canary) error {
 func (c *KubernetesNoopRouter) Reconcile(_ *flaggerv1.Canary) error {
 	return nil
 }
+
+func (c *KubernetesNoopRouter) Finalize(canary *flaggerv1.Canary) error {
+	return nil
+}

@@ -185,3 +185,7 @@ func (gr *GlooRouter) SetRoutes(
 	}
 	return nil
 }
+
+func (gr *GlooRouter) Finalize(canary *flaggerv1.Canary) error {
+	return nil
+}

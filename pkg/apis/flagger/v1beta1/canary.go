@@ -94,6 +94,10 @@ type CanarySpec struct {
 	// SkipAnalysis promotes the canary without analysing it
 	// +optional
 	SkipAnalysis bool `json:"skipAnalysis,omitempty"`
+
+	// revert canary mutation on deletion of canary resource
+	// +optional
+	RevertOnDeletion bool `json:"revertOnDeletion,omitempty"`
 }
 
 // CanaryService defines how ClusterIP services, service mesh or ingress routing objects are generated

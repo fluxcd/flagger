@@ -297,6 +297,6 @@ func (c *DaemonSetController) HaveDependenciesChanged(cd *flaggerv1.Canary) (boo
 	return c.configTracker.HasConfigChanged(cd)
 }
 
-func (c *DaemonSetController) Finalize(cd *flaggerv1.Canary) error  {
+func (c *DaemonSetController) Finalize(cd *flaggerv1.Canary) error {
 	return nil
 }
