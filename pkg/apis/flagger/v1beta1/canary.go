@@ -214,14 +214,14 @@ type CanaryMetric struct {
 	// Interval represents the windows size
 	Interval string `json:"interval,omitempty"`
 
-	// Max value accepted for this metric
+	// Deprecated: Max value accepted for this metric (replaced by ThresholdRange)
 	Threshold float64 `json:"threshold"`
 
 	// Range value accepted for this metric
 	// +optional
 	ThresholdRange *CanaryThresholdRange `json:"thresholdRange,omitempty"`
 
-	// Prometheus query for this metric (deprecated in favor of TemplateRef)
+	// Deprecated: Prometheus query for this metric (replaced by TemplateRef)
 	// +optional
 	Query string `json:"query,omitempty"`
 
