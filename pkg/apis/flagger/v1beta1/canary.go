@@ -181,7 +181,7 @@ type CanaryAnalysis struct {
 
 	// Percentage of the traffic to be mirrored in the range of [0.0, 100.0].
 	// +optional
-	MirrorWeight float64 `json:"mirror_weight,omitempty"`
+	MirrorWeight float64 `json:"mirrorWeight,omitempty"`
 
 	// Max traffic percentage routed to canary
 	// +optional
