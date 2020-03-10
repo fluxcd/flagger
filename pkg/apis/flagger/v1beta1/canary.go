@@ -175,9 +175,13 @@ type CanaryAnalysis struct {
 	// +optional
 	Iterations int `json:"iterations,omitempty"`
 
-	//Enable traffic mirroring for Blue/Green
+	// Enable traffic mirroring for Blue/Green
 	// +optional
 	Mirror bool `json:"mirror,omitempty"`
+
+	// Percentage of the traffic to be mirrored  when mirroring is enabled
+	// +optional
+	MirrorWeight float64 `json:"mirror_weight,omitempty"`
 
 	// Max traffic percentage routed to canary
 	// +optional
