@@ -207,7 +207,7 @@ func newDeploymentControllerTestCanary() *flaggerv1.Canary {
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,

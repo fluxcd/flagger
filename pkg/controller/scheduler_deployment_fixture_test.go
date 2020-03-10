@@ -256,7 +256,7 @@ func newDeploymentTestCanary() *flaggerv1.Canary {
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				StepWeight: 10,
 				MaxWeight:  50,
@@ -295,7 +295,7 @@ func newDeploymentTestCanary() *flaggerv1.Canary {
 
 func newDeploymentTestCanaryMirror() *flaggerv1.Canary {
 	cd := newDeploymentTestCanary()
-	cd.Spec.CanaryAnalysis.Mirror = true
+	cd.Spec.Analysis.Mirror = true
 	return cd
 }
 
@@ -318,7 +318,7 @@ func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
-			}, CanaryAnalysis: &flaggerv1.CanaryAnalysis{
+			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 10,
 				Match: []istiov1alpha3.HTTPMatchRequest{

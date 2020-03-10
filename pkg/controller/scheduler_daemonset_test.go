@@ -55,7 +55,7 @@ func TestScheduler_DaemonSetRollback(t *testing.T) {
 	require.NoError(t, err)
 
 	cd := c.DeepCopy()
-	cd.Spec.CanaryAnalysis.Metrics = append(c.Spec.CanaryAnalysis.Metrics, flaggerv1.CanaryMetric{
+	cd.Spec.Analysis.Metrics = append(c.Spec.Analysis.Metrics, flaggerv1.CanaryMetric{
 		Name:     "fail",
 		Interval: "1m",
 		ThresholdRange: &flaggerv1.CanaryThresholdRange{
@@ -437,7 +437,7 @@ func TestScheduler_DaemonSetAlerts(t *testing.T) {
 	defer ts.Close()
 
 	canary := newDaemonSetTestCanary()
-	canary.Spec.CanaryAnalysis.Alerts = []flaggerv1.CanaryAlert{
+	canary.Spec.Analysis.Alerts = []flaggerv1.CanaryAlert{
 		{
 			Name:     "slack-dev",
 			Severity: "info",
