@@ -206,7 +206,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 			newSpec,
 			virtualService.Spec,
 			cmpopts.IgnoreFields(istiov1alpha3.DestinationWeight{}, "Weight"),
-			cmpopts.IgnoreFields(istiov1alpha3.HTTPRoute{}, "Mirror"),
+			cmpopts.IgnoreFields(istiov1alpha3.HTTPRoute{}, "Mirror", "MirrorPercentage"),
 		); diff != "" {
 			vtClone := virtualService.DeepCopy()
 			vtClone.Spec = newSpec
