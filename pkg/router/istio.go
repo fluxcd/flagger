@@ -304,6 +304,10 @@ func (ir *IstioRouter) SetRoutes(
 		vsCopy.Spec.Http[0].Mirror = &istiov1alpha3.Destination{
 			Host: canaryName,
 		}
+
+		if mw := canary.Spec.Analysis.MirrorWeight; mw > 0 {
+			vsCopy.Spec.Http[0].MirrorPercentage = &istiov1alpha3.Percent{Value: mw}
+		}
 	}
 
 	// fix routing (A/B testing)
