@@ -26,6 +26,26 @@ Traffic mirroring can be used for Blue/Green deployment strategy or a pre-stage 
 Traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.
 Mirroring should be used for requests that are **idempotent** or capable of being processed twice (once by the primary and once by the canary).
 
+**How to retry a failed release?**
+
+A canary analysis is triggered by changes in any of the following objects:
+
+* Deployment/DaemonSet PodSpec (metadata, container image, command, ports, env, resources, etc)
+* ConfigMaps mounted as volumes or mapped to environment variables
+* Secrets mounted as volumes or mapped to environment variables
+
+To retry a release you can add or change an annotation on the pod template:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+        timestamp: "2020-03-10T14:24:48+0000"
+```
+
 ### Kubernetes services
 
 **How is an application exposed inside the cluster?**
