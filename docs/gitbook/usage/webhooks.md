@@ -231,7 +231,7 @@ for the status of the test, and prevent duplicate requests from being sent in su
 
 ### Integration Testing
 
-Flagger comes with a testing service that can run Helm tests or Bats tests when configured as a webhook.
+Flagger comes with a testing service that can run Helm tests, Bats tests or Concord tests when configured as a webhook.
 
 Deploy the Helm test runner in the `kube-system` namespace using the `tiller` service account:
 
@@ -291,6 +291,33 @@ As an alternative to Helm you can use the [Bash Automated Testing System](https:
 ```
 
 Note that you should create a ConfigMap with your Bats tests and mount it inside the tester container.
+
+You can also configure the test runner to start a [Concord](https://concord.walmartlabs.com/) process.
+
+```yaml
+  analysis:
+    webhooks:
+      - name: "concord integration test"
+        type: pre-rollout
+        url: http://flagger-concordtester.default/
+        timeout: 60s
+        metadata:
+          type: "concord"
+          org: "your-concord-org"
+          project: "your-concord-project"
+          repo: "your-concord-repo"
+          entrypoint: "your-concord-entrypoint"
+          apiKeyPath: "/tmp/concord-api-key"
+          endpoint: "https://canary-endpoint/"
+          pollInterval: "5"
+          pollTimeout: "60"
+```
+
+`org`, `project`, `repo` and `entrypoint` represents where your test process runs in Concord. 
+In order to authenticate to Concord, you need to set `apiKeyPath` to a path of a file containing a valid Concord API key
+ on the `flagger-helmtester` container. This can be done via mounting a Kubernetes secret in the tester's Deployment. 
+`pollInterval` represents the interval in seconds the web-hook will call Concord to see if the process has finished (Default is 5s). 
+`pollTimeout` represents the time in seconds the web-hook will try to call Concord before timing out (Default is 30s). 
 
 ### Manual Gating
 
