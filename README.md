@@ -26,7 +26,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 * Usage
   * [How it works](https://docs.flagger.app/usage/how-it-works)
   * [Deployment strategies](https://docs.flagger.app/usage/deployment-strategies)
-  * [Metrics analysis](https://docs.flagger.app/usage/webhooks)
+  * [Metrics analysis](https://docs.flagger.app/usage/metrics)
   * [Webhooks](https://docs.flagger.app/usage/webhooks)
   * [Alerting](https://docs.flagger.app/usage/alerting)
   * [Monitoring](https://docs.flagger.app/usage/monitoring)
@@ -200,7 +200,7 @@ For more details on how the canary analysis and promotion works please [read the
 ### Contributing
 
 Flagger is Apache 2.0 licensed and accepts contributions via GitHub pull requests.
-To start contributing please read the [development guide](https://docs.flagger.app/dev-guide).
+To start contributing please read the [development guide](https://docs.flagger.app/dev/dev-guide).
 
 When submitting bug reports please include as much details as possible:
 
