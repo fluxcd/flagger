@@ -288,6 +288,34 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 				return
 			}
 
+			// run concord job (blocking task)
+			if typ == TaskTypeConcord {
+				concord, err := NewConcordTask(payload.Metadata, fmt.Sprintf("%s.%s", payload.Name, payload.Namespace), logger)
+
+				if err != nil {
+					logger.With("canary", payload.Name).Errorf("Something went wrong while inializing ConcordTask: %s", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return
+				}
+
+				ctx, cancel := context.WithTimeout(context.Background(), taskRunner.timeout)
+				defer cancel()
+
+				ok, err := concord.Run(ctx)
+				if !ok {
+					if err != nil {
+						logger.With("canary", payload.Name).Errorf("Concord task error: %s", err)
+					}
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return
+				}
+
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			taskFactory, ok := GetTaskFactory(typ)
 			if !ok {
 				w.WriteHeader(http.StatusBadRequest)
