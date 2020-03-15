@@ -289,7 +289,7 @@ func (c *DaemonSetController) getSelectorLabel(daemonSet *appsv1.DaemonSet) (str
 
 	return "", fmt.Errorf(
 		"daemonset %s.%s spec.selector.matchLabels must contain one of %v'",
-		c.labels, daemonSet.Name, daemonSet.Namespace,
+		daemonSet.Name, daemonSet.Namespace, c.labels,
 	)
 }
 

@@ -85,7 +85,11 @@ spec:
           {{- end }}
           {{- if .Values.slack.url }}
           - -slack-url={{ .Values.slack.url }}
+          {{- end }}
+          {{- if .Values.slack.user }}
           - -slack-user={{ .Values.slack.user }}
+          {{- end }}
+          {{- if .Values.slack.channel }}
           - -slack-channel={{ .Values.slack.channel }}
           {{- end }}
           {{- if .Values.msteams.url }}
