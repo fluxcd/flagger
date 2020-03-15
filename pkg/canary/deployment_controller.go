@@ -369,7 +369,7 @@ func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (
 
 	return "", fmt.Errorf(
 		"deployment %s.%s spec.selector.matchLabels must contain one of %v",
-		c.labels, deployment.Name, deployment.Namespace,
+		deployment.Name, deployment.Namespace, c.labels,
 	)
 }
 

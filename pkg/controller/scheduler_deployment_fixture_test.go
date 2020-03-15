@@ -25,6 +25,7 @@ import (
 	"github.com/weaveworks/flagger/pkg/logger"
 	"github.com/weaveworks/flagger/pkg/metrics"
 	"github.com/weaveworks/flagger/pkg/metrics/observers"
+	"github.com/weaveworks/flagger/pkg/notifier"
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
@@ -104,6 +105,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 		observerFactory:  observerFactory,
 		recorder:         metrics.NewRecorder(controllerAgentName, false),
 		routerFactory:    rf,
+		notifier:         &notifier.NopNotifier{},
 	}
 	ctrl.flaggerSynced = alwaysReady
 	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)

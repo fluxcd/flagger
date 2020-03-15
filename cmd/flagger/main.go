@@ -318,21 +318,19 @@ func initNotifier(logger *zap.SugaredLogger) (client notifier.Interface) {
 	}
 	notifierFactory := notifier.NewFactory(notifierURL, slackUser, slackChannel)
 
-	if notifierURL != "" {
-		var err error
-		client, err = notifierFactory.Notifier(provider)
-		if err != nil {
-			logger.Errorf("Notifier %v", err)
-		} else {
-			logger.Infof("Notifications enabled for %s", notifierURL[0:30])
-		}
+	var err error
+	client, err = notifierFactory.Notifier(provider)
+	if err != nil {
+		logger.Errorf("Notifier %v", err)
+	} else if len(notifierURL) > 30 {
+		logger.Infof("Notifications enabled for %s", notifierURL[0:30])
 	}
 	return
 }
 
 func fromEnv(envVar string, defaultVal string) string {
-	if os.Getenv(envVar) != "" {
-		return os.Getenv(envVar)
+	if v := os.Getenv(envVar); v != "" {
+		return v
 	}
 	return defaultVal
 }

@@ -50,10 +50,6 @@ func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template
 }
 
 func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bool, severity flaggerv1.AlertSeverity) {
-	if c.notifier == nil && len(canary.GetAnalysis().Alerts) == 0 {
-		return
-	}
-
 	var fields []notifier.Field
 	if metadata {
 		fields = alertMetadata(canary)
