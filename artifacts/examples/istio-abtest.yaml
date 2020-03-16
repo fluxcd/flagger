@@ -43,7 +43,7 @@ spec:
           regex: "^(.*?;)?(type=insider)(;.*)?$"
     - headers:
         user-agent:
-          regex: "(?=.*Safari)(?!.*Chrome).*$"
+          regex: ".*Firefox.*"
     metrics:
       - name: request-success-rate
         thresholdRange:

@@ -65,7 +65,7 @@ Deploy the load testing service to generate traffic during the canary analysis:
 kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
-Create a canary custom resource \(replace example.com with your own domain\):
+Create a canary custom resource (replace example.com with your own domain):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -112,7 +112,7 @@ spec:
     match:
       - headers:
           user-agent:
-            regex: "^(?!.*Chrome).*Safari.*"
+            regex: ".*Firefox.*"
       - headers:
           cookie:
             regex: "^(.*?;)?(type=insider)(;.*)?$"
@@ -133,7 +133,7 @@ spec:
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
-        timeout: 5s
+        timeout: 15s
         metadata:
           cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo.test:9898/"
 ```
@@ -141,7 +141,7 @@ spec:
 **Note** that when using Istio 1.5 you have to replace the `request-duration`
 with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
 
-The above configuration will run an analysis for ten minutes targeting Safari users and those that have an insider cookie.
+The above configuration will run an analysis for ten minutes targeting Firefox users and those that have an insider cookie.
 
 Save the above resource as podinfo-abtest.yaml and then apply it:
 
