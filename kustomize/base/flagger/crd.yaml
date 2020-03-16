@@ -653,6 +653,8 @@ spec:
                 - Finalising
                 - Succeeded
                 - Failed
+                - Terminating
+                - Terminated
             canaryWeight:
               description: Traffic weight percentage routed to canary
               type: number

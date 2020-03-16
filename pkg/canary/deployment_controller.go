@@ -398,7 +398,7 @@ func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bo
 	return c.configTracker.HasConfigChanged(cd)
 }
 
-// revertDeployment will set the replica count from the primary to the reference instance.  This method is used
+// Finalize will set the replica count from the primary to the reference instance.  This method is used
 // during a delete to attempt to revert the deployment back to the original state.  Error is returned if unable
 // update the reference deployment replicas to the primary replicas
 func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {

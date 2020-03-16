@@ -302,7 +302,7 @@ type CanaryWebhook struct {
 	URL string `json:"url"`
 
 	// Request timeout for this webhook
-	Timeout string `json:"timeout"`
+	Timeout string `json:"timeout,omitempty"`
 
 	// Metadata (key-value pairs) for this webhook
 	// +optional

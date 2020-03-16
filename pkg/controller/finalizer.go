@@ -43,7 +43,7 @@ func (c *Controller) finalize(old interface{}) error {
 			c.logger.Warnf("%s.%s failed due to %s not found", r.Name, r.Namespace, r.Spec.TargetRef.Kind)
 			return nil
 		}
-		c.logger.Errorf("%s.%s failed due to %s", r.Name, r.Namespace, err)
+		c.logger.Debugf("%s.%s failed due to %s", r.Name, r.Namespace, err)
 		return err
 	} else {
 		//Ensure that targetRef has met a ready state
@@ -163,7 +163,8 @@ func (c *Controller) addFinalizer(canary *flaggerv1.Canary, finalizerString stri
 	})
 
 	if err != nil {
-		return ex.Wrap(err, "Remove finalizer failed")
+		c.logger.Errorf("Failed to add finalizer %s", err)
+		return ex.Wrap(err, "Add finalizer failed")
 	}
 	return nil
 }

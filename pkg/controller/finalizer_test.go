@@ -5,6 +5,7 @@ import (
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
+	"github.com/weaveworks/flagger/pkg/logger"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sTesting "k8s.io/client-go/testing"
 
@@ -41,10 +42,16 @@ func TestFinalizer_addFinalizer(t *testing.T) {
 	cs.PrependReactor("update", "canaries", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, nil, mockError
 	})
+
+	logger, _ := logger.NewLogger("debug")
 	m := fixture{
 		canary:        newDeploymentTestCanary(),
 		flaggerClient: cs,
-		ctrl:          &Controller{flaggerClient: cs},
+		ctrl: &Controller{
+			flaggerClient: cs,
+			logger:        logger,
+		},
+		logger: logger,
 	}
 
 	tables := []struct {

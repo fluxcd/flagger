@@ -140,7 +140,7 @@ func NewController(
 				ctrl.logger.Infof("%s.%s opting out, deleting finalizers", newCanary.Name, newCanary.Namespace)
 				err := ctrl.removeFinalizer(&newCanary, finalizer)
 				if err != nil {
-					ctrl.logger.Warnf("Failed to finalizers for %s.%s", oldCanary.Name, oldCanary.Namespace)
+					ctrl.logger.Warnf("Failed to remove finalizers for %s.%s", oldCanary.Name, oldCanary.Namespace)
 					return
 				}
 			}

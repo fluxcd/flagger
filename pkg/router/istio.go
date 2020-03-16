@@ -214,7 +214,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 
 			//If annotation kubectl.kubernetes.io/last-applied-configuration is present no need to duplicate
 			//serialization.  If not present store the serialized object in annotation
-			//flagger.kubernetes.io/original-configuration
+			//flagger.kubernetes.app/original-configuration
 			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok {
 				b, err := json.Marshal(virtualService.Spec)
 				if err != nil {

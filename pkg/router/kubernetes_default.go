@@ -184,7 +184,7 @@ func (c *KubernetesDefaultRouter) Finalize(canary *flaggerv1.Canary) error {
 					svc.Name, svc.Namespace, kubectlAnnotation)
 			}
 			clone := svc.DeepCopy()
-			clone.Spec = storedSvc.Spec
+			clone.Spec.Selector = storedSvc.Spec.Selector
 
 			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(clone)
 			if err != nil {
