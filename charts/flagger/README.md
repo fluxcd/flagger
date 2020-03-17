@@ -77,6 +77,7 @@ Parameter | Description | Default
 `image.repository` | Image repository | `weaveworks/flagger`
 `image.tag` | Image tag | `<VERSION>`
 `image.pullPolicy` | Image pull policy | `IfNotPresent`
+`logLevel` | Log level | `info`
 `prometheus.install` | If `true`, installs Prometheus configured to scrape all pods in the custer including the App Mesh sidecar | `false`
 `metricsServer` | Prometheus URL, used when `prometheus.install` is `false` | `http://prometheus.istio-system:9090`
 `selectorLabels` | List of labels that Flagger uses to create pod selectors | `app,name,app.kubernetes.io/name`
