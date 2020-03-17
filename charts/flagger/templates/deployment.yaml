@@ -65,7 +65,11 @@ spec:
             containerPort: 8080
           command:
           - ./flagger
+          {{- if .Values.logLevel }}
+          - -log-level={{ .Values.logLevel }}
+          {{- else }}
           - -log-level=info
+          {{- end }}
           {{- if .Values.meshProvider }}
           - -mesh-provider={{ .Values.meshProvider }}
           {{- end }}

@@ -6,6 +6,9 @@ image:
   pullPolicy: IfNotPresent
   pullSecret:
 
+# accepted values are debug, info, warning, error (defaults to info)
+logLevel: "info"
+
 podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
