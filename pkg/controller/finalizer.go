@@ -23,6 +23,13 @@ func (c *Controller) finalize(old interface{}) error {
 		return nil
 	}
 
+	_, err := c.flaggerClient.FlaggerV1beta1().Canaries(r.Namespace).Get(r.Name, metav1.GetOptions{})
+	if err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).
+			Errorf("Canary %s.%s not found nothing to finalize", r.Name, r.Namespace)
+		return nil
+	}
+
 	//Retrieve a controller
 	canaryController := c.canaryFactory.Controller(r.Spec.TargetRef.Kind)
 
@@ -36,7 +43,7 @@ func (c *Controller) finalize(old interface{}) error {
 		c.recordEventInfof(r, "Terminating canary %s.%s", r.Name, r.Namespace)
 	}
 
-	err := c.revertTargetRef(canaryController, r)
+	err = c.revertTargetRef(canaryController, r)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			//No reason to wait not found

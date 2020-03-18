@@ -189,7 +189,7 @@ func TestDeploymentController_HasTargetChanged(t *testing.T) {
 	assert.True(t, isNew)
 }
 
-func TestCanaryDeployer_Finalize(t *testing.T) {
+func TestDeploymentController_Finalize(t *testing.T) {
 
 	mocks := newDeploymentFixture()
 

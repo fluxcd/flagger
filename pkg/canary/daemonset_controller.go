@@ -297,6 +297,11 @@ func (c *DaemonSetController) HaveDependenciesChanged(cd *flaggerv1.Canary) (boo
 	return c.configTracker.HasConfigChanged(cd)
 }
 
+//Finalize scale the reference instance from zero
 func (c *DaemonSetController) Finalize(cd *flaggerv1.Canary) error {
+
+	if err := c.ScaleFromZero(cd); err != nil {
+		return err
+	}
 	return nil
 }

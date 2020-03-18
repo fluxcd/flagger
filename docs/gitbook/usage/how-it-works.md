@@ -264,6 +264,7 @@ The recommended approach to disable canary analysis would be utilization of the 
 attribute, which limits the need for resource reconciliation.  Utilizing the `revertOnDeletion` attribute should be 
 enabled when you no longer plan to rely on Flagger for deployment management.
 
+**Note** When this feature is enabled expect a delay in the delete action due to the reconciliation.  
 
 ### Canary analysis
 
