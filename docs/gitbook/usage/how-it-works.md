@@ -240,6 +240,31 @@ kubectl wait canary/podinfo --for=condition=promoted --timeout=5m
 kubectl get canary/podinfo | grep Succeeded
 ```
 
+### Canary finalizers
+
+The default behavior of Flagger on canary deletion is to leave resources that aren't owned by the controller 
+in their current state.  This simplifies the deletion action and avoids possible deadlocks during resource 
+finalization.  In the event the canary was introduced with existing resource(s) (i.e. service, virtual service, etc.),
+they would be mutated during the initialization phase and no longer reflect their initial state.  If the desired
+functionality upon deletion is to revert the resources to their initial state, the `revertOnDeletion` attribute
+can be enabled.  
+
+```yaml
+spec:
+  revertOnDeletion: true
+```
+
+When a deletion action is submitted to the cluster, Flagger will attempt to revert the following resources:
+
+* [Canary target](#canary-target) replicas will be updated to the primary replica count
+* [Canary service](#canary-service) selector will be reverted
+* Mesh/Ingress traffic routed to the target   
+
+The recommended approach to disable canary analysis would be utilization of the `skipAnalysis`
+attribute, which limits the need for resource reconciliation.  Utilizing the `revertOnDeletion` attribute should be 
+enabled when you no longer plan to rely on Flagger for deployment management.
+
+
 ### Canary analysis
 
 The canary analysis defines:
