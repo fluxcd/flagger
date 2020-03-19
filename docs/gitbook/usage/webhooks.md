@@ -166,7 +166,7 @@ webhooks:
       cmd: "hey -z 1m -q 10 -c 2 -h2 https://podinfo.example.com/"
 ```
 
-For gRPC services you can use [bojand/ghz](https://github.com/bojand/ghz) which is a similar tool to Hey but for gPRC:
+For gRPC services you can use [bojand/ghz](https://github.com/bojand/ghz) which is a similar tool to Hey but for gRPC:
 
 ```yaml
 webhooks:

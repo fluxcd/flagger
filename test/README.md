@@ -32,7 +32,7 @@ The e2e testing infrastructure is powered by CircleCI and [Kubernetes Kind](http
 * deploy the load tester in the test namespace [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
 * deploy a demo workload (podinfo) in the test namespace [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
 * test the canary initialization with port discovery enabled and service target port [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
-* test the canary analysis and promotion using gPRC acceptance tests and HTTP load tests [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
+* test the canary analysis and promotion using gRPC acceptance tests and HTTP load tests [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
 * test the canary rollback on HTTP 500 errors [e2e-linkerd-tests.sh](e2e-linkerd-tests.sh)
 
 ### CircleCI e2e NGINX ingress workflow
