@@ -2,6 +2,43 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.0-rc.2 (2020-03-19) 
+
+This is a release candidate for Flagger v1.0.0.
+
+The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.app/dev/upgrade-guide).
+
+#### Features
+
+- Make mirror percentage configurable when using Istio traffic shadowing
+    [#492](https://github.com/weaveworks/flagger/pull/455)
+- Add support for running Concord tests with loadtester webhooks
+    [#507](https://github.com/weaveworks/flagger/pull/507)
+
+#### Improvements
+
+- docs: add Istio telemetry v2 upgrade guide
+    [#486](https://github.com/weaveworks/flagger/pull/486),
+    update A/B testing tutorial for Istio 1.5
+    [#502](https://github.com/weaveworks/flagger/pull/502),
+    add how to retry a failed release to FAQ
+    [#494](https://github.com/weaveworks/flagger/pull/494)
+- e2e: update end-to-end tests to
+    Istio 1.5 [#447](https://github.com/weaveworks/flagger/pull/447) and
+    NGINX Ingress 0.30
+    [#489](https://github.com/weaveworks/flagger/pull/489)
+    [#511](https://github.com/weaveworks/flagger/pull/511)
+- refactoring:
+    error handling [#480](https://github.com/weaveworks/flagger/pull/480),
+    scheduler [#484](https://github.com/weaveworks/flagger/pull/484) and 
+    unit tests [#475](https://github.com/weaveworks/flagger/pull/475)
+- chart: add the log level configuration to Flagger helm chart
+    [#506](https://github.com/weaveworks/flagger/pull/506)
+
+#### Fixes
+
+- Fix nil pointer for the global notifiers [#504](https://github.com/weaveworks/flagger/pull/504)
+
 ## 1.0.0-rc.1 (2020-03-03) 
 
 This is a release candidate for Flagger v1.0.0.
