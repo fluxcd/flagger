@@ -1,11 +1,14 @@
 # Flagger
 
-[Flagger](https://github.com/weaveworks/flagger) is a Kubernetes operator that automates the promotion of canary
-deployments using Istio, Linkerd, App Mesh, NGINX or Gloo routing for traffic shifting and Prometheus metrics for canary analysis. 
+[Flagger](https://github.com/weaveworks/flagger) is an operator that automates the release process of applications on Kubernetes. 
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators
-like HTTP requests success rate, requests average duration and pods health.
-Based on the KPIs analysis a canary is promoted or aborted and the analysis result is published to Slack or MS Teams.
+Flagger can run automated application analysis, testing, promotion and rollback for the following deployment strategies:
+* Canary Release (progressive traffic shifting)
+* A/B Testing (HTTP headers and cookies traffic routing)
+* Blue/Green (traffic switching and mirroring)
+
+Flagger works with service mesh solutions (Istio, Linkerd, AWS App Mesh) and with Kubernetes ingress controllers (NGINX, Gloo, Contour).
+Flagger can be configured to send alerts to various chat platforms such as Slack, Microsoft Teams, Discord and Rocket.
 
 ## Prerequisites
 
@@ -26,34 +29,58 @@ Install Flagger's custom resource definitions:
 $ kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
 ```
 
-To install the chart with the release name `flagger` for Istio:
+To install Flagger for **Istio**:
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=istio-system \
-    --set crd.create=false \
     --set meshProvider=istio \
     --set metricsServer=http://prometheus:9090
 ```
 
-To install the chart with the release name `flagger` for Linkerd:
+To install Flagger for **Linkerd**:
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=linkerd \
-    --set crd.create=false \
     --set meshProvider=linkerd \
     --set metricsServer=http://linkerd-prometheus:9090
 ```
 
-To install the chart with the release name `flagger` for AWS App Mesh:
+To install Flagger for **AWS App Mesh**:
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=appmesh-system \
-    --set crd.create=false \
     --set meshProvider=appmesh \
     --set metricsServer=http://appmesh-prometheus:9090
+```
+
+To install Flagger and Prometheus for **NGINX** Ingress (requires controller metrics enabled):
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=ingress-nginx \
+    --set meshProvider=nginx \
+    --set prometheus.install=true
+```
+
+To install Flagger and Prometheus for **Gloo** (requires Gloo discovery enabled):
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=gloo-system \
+    --set meshProvider=gloo \
+    --set prometheus.install=true
+```
+
+To install Flagger and Prometheus for **Contour**:
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=projectcontour \
+    --set meshProvider=contour \
+    --set prometheus.install=true
 ```
 
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -112,7 +139,6 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 $ helm upgrade -i flagger flagger/flagger \
   --namespace flagger-system \
-  --set crd.create=false \
   --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
   --set slack.channel=general
 ```
