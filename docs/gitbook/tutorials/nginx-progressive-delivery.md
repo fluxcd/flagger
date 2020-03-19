@@ -14,7 +14,6 @@ Install NGINX with Helm v3:
 kubectl create ns ingress-nginx
 helm upgrade -i nginx-ingress stable/nginx-ingress \
 --namespace ingress-nginx \
---set controller.stats.enabled=true \
 --set controller.metrics.enabled=true \
 --set controller.podAnnotations."prometheus\.io/scrape"=true \
 --set controller.podAnnotations."prometheus\.io/port"=10254
