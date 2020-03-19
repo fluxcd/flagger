@@ -3,7 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-NGINX_HELM_VERSION=1.33.4 # ingress v0.30.0
+NGINX_HELM_VERSION=1.34.2 # ingress v0.30.0
 
 echo '>>> Installing NGINX Ingress'
 helm upgrade -i nginx-ingress stable/nginx-ingress --version=${NGINX_HELM_VERSION} \
