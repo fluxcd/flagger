@@ -158,7 +158,7 @@ Adds support for canary and blue/green [traffic mirroring](https://docs.flagger.
 
 #### Improvements 
 
-- Allow gPRC protocol for App Mesh [#325](https://github.com/weaveworks/flagger/pull/325)
+- Allow gRPC protocol for App Mesh [#325](https://github.com/weaveworks/flagger/pull/325)
 - Enforce blue/green when using Kubernetes networking [#326](https://github.com/weaveworks/flagger/pull/326)
 
 #### Fixes
@@ -209,7 +209,7 @@ Adds support for NGINX custom annotations and Helm v3 acceptance testing
 - Add annotations prefix for NGINX ingresses [#293](https://github.com/weaveworks/flagger/pull/293)
 - Add wide columns in CRD [#289](https://github.com/weaveworks/flagger/pull/289)
 - loadtester: implement Helm v3 test command [#296](https://github.com/weaveworks/flagger/pull/296)
-- loadtester: add gPRC health check to load tester image [#295](https://github.com/weaveworks/flagger/pull/295)
+- loadtester: add gRPC health check to load tester image [#295](https://github.com/weaveworks/flagger/pull/295)
 
 #### Fixes
 

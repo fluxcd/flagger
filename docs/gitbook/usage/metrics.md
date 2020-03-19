@@ -170,7 +170,7 @@ spec:
     ) * 100
 ```
 
-The above template is for gPRC services instrumented with [go-grpc-prometheus](https://github.com/grpc-ecosystem/go-grpc-prometheus).
+The above template is for gRPC services instrumented with [go-grpc-prometheus](https://github.com/grpc-ecosystem/go-grpc-prometheus).
 
 ### Datadog
 
