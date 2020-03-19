@@ -3,14 +3,13 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-NGINX_HELM_VERSION=1.33.4 # ingress v0.30.0
+NGINX_HELM_VERSION=1.34.2 # ingress v0.30.0
 
 echo '>>> Installing NGINX Ingress'
 kubectl create ns ingress-nginx
 helm upgrade -i nginx-ingress stable/nginx-ingress --version=${NGINX_HELM_VERSION} \
 --wait \
 --namespace ingress-nginx \
---set controller.stats.enabled=true \
 --set controller.metrics.enabled=true \
 --set controller.podAnnotations."prometheus\.io/scrape"=true \
 --set controller.podAnnotations."prometheus\.io/port"=10254 \
