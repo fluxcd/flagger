@@ -4,7 +4,7 @@ set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
-CONTOUR_VER="release-1.2"
+CONTOUR_VER="release-1.3"
 
 echo '>>> Installing Contour'
 kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour.yaml
