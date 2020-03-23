@@ -2,7 +2,7 @@
 
 set -o errexit
 
-GLOO_VER="1.3.5"
+GLOO_VER="1.3.14"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo '>>> Installing Gloo'
