@@ -22,3 +22,7 @@ func (*NopRouter) GetRoutes(canary *flaggerv1.Canary) (primaryWeight int, canary
 	}
 	return 100, 0, false, nil
 }
+
+func (c *NopRouter) Finalize(canary *flaggerv1.Canary) error {
+	return nil
+}

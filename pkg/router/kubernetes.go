@@ -10,4 +10,6 @@ type KubernetesRouter interface {
 	Initialize(canary *flaggerv1.Canary) error
 	// Reconcile creates or updates the main service
 	Reconcile(canary *flaggerv1.Canary) error
+	// Revert router
+	Finalize(canary *flaggerv1.Canary) error
 }

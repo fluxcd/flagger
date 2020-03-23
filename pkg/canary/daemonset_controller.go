@@ -296,3 +296,12 @@ func (c *DaemonSetController) getSelectorLabel(daemonSet *appsv1.DaemonSet) (str
 func (c *DaemonSetController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
 	return c.configTracker.HasConfigChanged(cd)
 }
+
+//Finalize scale the reference instance from zero
+func (c *DaemonSetController) Finalize(cd *flaggerv1.Canary) error {
+
+	if err := c.ScaleFromZero(cd); err != nil {
+		return err
+	}
+	return nil
+}

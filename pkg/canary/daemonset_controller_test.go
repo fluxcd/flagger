@@ -194,3 +194,19 @@ func TestDaemonSetController_Scale(t *testing.T) {
 		}
 	})
 }
+
+func TestDaemonSetController_Finalize(t *testing.T) {
+	mocks := newDaemonSetFixture()
+	err := mocks.controller.Initialize(mocks.canary, true)
+	require.NoError(t, err)
+
+	err = mocks.controller.Finalize(mocks.canary)
+	require.NoError(t, err)
+
+	dep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	_, ok := dep.Spec.Template.Spec.NodeSelector["flagger.app/scale-to-zero"]
+
+	assert.False(t, ok)
+}

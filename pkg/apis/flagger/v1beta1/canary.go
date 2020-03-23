@@ -94,6 +94,10 @@ type CanarySpec struct {
 	// SkipAnalysis promotes the canary without analysing it
 	// +optional
 	SkipAnalysis bool `json:"skipAnalysis,omitempty"`
+
+	// revert canary mutation on deletion of canary resource
+	// +optional
+	RevertOnDeletion bool `json:"revertOnDeletion,omitempty"`
 }
 
 // CanaryService defines how ClusterIP services, service mesh or ingress routing objects are generated
@@ -298,7 +302,7 @@ type CanaryWebhook struct {
 	URL string `json:"url"`
 
 	// Request timeout for this webhook
-	Timeout string `json:"timeout"`
+	Timeout string `json:"timeout,omitempty"`
 
 	// Metadata (key-value pairs) for this webhook
 	// +optional

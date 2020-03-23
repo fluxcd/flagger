@@ -483,6 +483,10 @@ func (ar *AppMeshRouter) gatewayAnnotations(canary *flaggerv1.Canary) map[string
 	return a
 }
 
+func (ar *AppMeshRouter) Finalize(canary *flaggerv1.Canary) error {
+	return nil
+}
+
 func int64p(i int64) *int64 {
 	return &i
 }

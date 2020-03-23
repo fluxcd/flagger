@@ -1,11 +1,17 @@
 package router
 
 import (
+	"fmt"
 	"testing"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -103,4 +109,256 @@ func TestServiceRouter_Undo(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "http", canarySvc.Spec.Ports[0].Name)
 	assert.Equal(t, int32(9898), canarySvc.Spec.Ports[0].Port)
+}
+
+func TestServiceRouter_isOwnedByCanary(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+
+	isController := new(bool)
+	*isController = true
+
+	tables := []struct {
+		svc         *corev1.Service
+		isOwned     bool
+		hasOwnerRef bool
+	}{
+		//owned
+		{
+			svc: &corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "podinfo",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "flagger.app/v1alpha3",
+							Kind:       "Canary",
+							Name:       "podinfo",
+							Controller: isController,
+						},
+					},
+				},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     8080,
+					}},
+					Selector: map[string]string{"app": "podinfo"},
+				},
+			}, isOwned: true, hasOwnerRef: true,
+		},
+		//Owner ref but kind not Canary
+		{
+			svc: &corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "podinfo",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "flagger.app/v1alpha3",
+							Kind:       "Deployment",
+							Name:       "podinfo",
+							Controller: isController,
+						},
+					},
+				},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     8080,
+					}},
+					Selector: map[string]string{"app": "podinfo"},
+				},
+			}, isOwned: false, hasOwnerRef: false,
+		},
+		//Owner ref but name doesn't match
+		{
+			svc: &corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "podinfo",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "flagger.app/v1alpha3",
+							Kind:       "Canary",
+							Name:       "notpodinfo",
+							Controller: isController,
+						},
+					},
+				},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     8080,
+					}},
+					Selector: map[string]string{"app": "podinfo"},
+				},
+			}, isOwned: false, hasOwnerRef: true,
+		},
+		//No ownerRef
+		{
+			svc: &corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "podinfo",
+					Namespace: "default",
+				},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     8080,
+					}},
+					Selector: map[string]string{"app": "podinfo"},
+				},
+			}, isOwned: false, hasOwnerRef: false,
+		},
+	}
+
+	for _, table := range tables {
+		hasOwnerRef, wasOwned := router.isOwnedByCanary(table.svc, mocks.canary.Name)
+		if table.isOwned && !wasOwned {
+			t.Error("Expected to be owned, but was not")
+		} else if !table.isOwned && wasOwned {
+			t.Error("Expected not to be owned but was")
+		} else if table.hasOwnerRef && !hasOwnerRef {
+			t.Error("Expected to contain OwnerReference but not present")
+		} else if !table.hasOwnerRef && hasOwnerRef {
+			t.Error("Expected not to have an OwnerReference but present")
+		}
+	}
+
+}
+
+func TestServiceRouter_Finalize(t *testing.T) {
+
+	mocks := newFixture(nil)
+	router := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+		labelSelector: "app",
+	}
+
+	isController := new(bool)
+	*isController = true
+
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "podinfo",
+			Namespace: "default",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "flagger.app/v1alpha3",
+					Kind:       "Canary",
+					Name:       "NotOwned",
+					Controller: isController,
+				},
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{
+				Name:     "http",
+				Protocol: "TCP",
+				Port:     9898,
+			}},
+			Selector: map[string]string{"app": "podinfo"},
+		},
+	}
+
+	kubectlSvc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "podinfo",
+			Namespace: "default",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "flagger.app/v1alpha3",
+					Kind:       "Canary",
+					Name:       "NotOwned",
+					Controller: isController,
+				},
+			},
+			Annotations: map[string]string{
+				kubectlAnnotation: `{"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"podinfo"},"name":"podinfo","namespace":"test"},"spec":{"ports":[{"name":"http","port":9898,"protocol":"TCP","targetPort":9898}],"selector":{"app":"podinfo"},"type":"ClusterIP"}}`,
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{
+				Name:     "http",
+				Protocol: "TCP",
+				Port:     9898,
+			}},
+			Selector: map[string]string{"app": "podinfo"},
+		},
+	}
+
+	tables := []struct {
+		router           *KubernetesDefaultRouter
+		callSetupMethods bool
+		shouldError      bool
+		canary           *v1beta1.Canary
+		shouldMutate     bool
+	}{
+		//Won't reconcile since it is owned and would be garbage collected
+		{router: router, callSetupMethods: true, shouldError: false, canary: mocks.canary, shouldMutate: false},
+		//Service not found
+		{router: &KubernetesDefaultRouter{kubeClient: fake.NewSimpleClientset(), logger: mocks.logger}, callSetupMethods: false, shouldError: true, canary: mocks.canary, shouldMutate: false},
+		//Not owned
+		{router: &KubernetesDefaultRouter{kubeClient: fake.NewSimpleClientset(svc), logger: mocks.logger}, callSetupMethods: false, shouldError: false, canary: mocks.canary, shouldMutate: true},
+		//Kubectl annotation
+		{router: &KubernetesDefaultRouter{kubeClient: fake.NewSimpleClientset(kubectlSvc), logger: mocks.logger}, callSetupMethods: false, shouldError: false, canary: mocks.canary, shouldMutate: true},
+	}
+
+	for _, table := range tables {
+
+		if table.callSetupMethods {
+			err := table.router.Initialize(table.canary)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			err = table.router.Reconcile(table.canary)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+		}
+
+		err := table.router.Finalize(table.canary)
+
+		if table.shouldError && err == nil {
+			t.Error("Should have errored")
+		} else if !table.shouldError && err != nil {
+			t.Errorf("Shouldn't error but did %s", err)
+		}
+
+		svc, err := table.router.kubeClient.CoreV1().Services(table.canary.Namespace).Get(table.canary.Name, metav1.GetOptions{})
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				if svc.Spec.Ports[0].Name != "http" {
+					t.Errorf("Got svc port name %s wanted %s", svc.Spec.Ports[0].Name, "http")
+				}
+
+				if svc.Spec.Ports[0].Port != 9898 {
+					t.Errorf("Got svc port %v wanted %v", svc.Spec.Ports[0].Port, 9898)
+				}
+
+				if table.shouldMutate {
+					if svc.Spec.Selector["app"] != table.canary.Name {
+						t.Errorf("Got svc selector %v wanted %v", svc.Spec.Selector["app"], table.canary.Name)
+					}
+				} else {
+					if svc.Spec.Selector["app"] != fmt.Sprintf("%s-primary", table.canary.Name) {
+						t.Errorf("Got svc selector %v wanted %v", svc.Spec.Selector["app"], fmt.Sprintf("%s-primary", table.canary.Name))
+					}
+				}
+			}
+		}
+	}
+
 }

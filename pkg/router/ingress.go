@@ -237,3 +237,7 @@ func (i *IngressRouter) makeHeaderAnnotations(annotations map[string]string,
 func (i *IngressRouter) GetAnnotationWithPrefix(suffix string) string {
 	return fmt.Sprintf("%v/%v", i.annotationsPrefix, suffix)
 }
+
+func (i *IngressRouter) Finalize(canary *flaggerv1.Canary) error {
+	return nil
+}

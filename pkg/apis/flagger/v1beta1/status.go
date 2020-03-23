@@ -57,6 +57,12 @@ const (
 	// CanaryPhaseFailed means the canary analysis failed
 	// and the canary deployment has been scaled to zero
 	CanaryPhaseFailed CanaryPhase = "Failed"
+	// CanaryPhaseTerminating means the canary has been marked
+	// for deletion and in the finalizing state
+	CanaryPhaseTerminating CanaryPhase = "Terminating"
+	// CanaryPhaseTerminated means the canary has been finalized
+	// and successfully deleted
+	CanaryPhaseTerminated CanaryPhase = "Terminated"
 )
 
 // CanaryStatus is used for state persistence (read-only)

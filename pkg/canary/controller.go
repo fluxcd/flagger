@@ -19,4 +19,5 @@ type Controller interface {
 	HaveDependenciesChanged(canary *flaggerv1.Canary) (bool, error)
 	ScaleToZero(canary *flaggerv1.Canary) error
 	ScaleFromZero(canary *flaggerv1.Canary) error
+	Finalize(canary *flaggerv1.Canary) error
 }

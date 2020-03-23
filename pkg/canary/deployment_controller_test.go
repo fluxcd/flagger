@@ -188,3 +188,48 @@ func TestDeploymentController_HasTargetChanged(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, isNew)
 }
+
+func TestDeploymentController_Finalize(t *testing.T) {
+
+	mocks := newDeploymentFixture()
+
+	tables := []struct {
+		mocks            deploymentControllerFixture
+		callInitialize   bool
+		shouldError      bool
+		expectedReplicas int32
+		canary           *flaggerv1.Canary
+	}{
+		//Primary not found returns error
+		{mocks, false, false, 1, mocks.canary},
+		//Happy path
+		{mocks, true, false, 1, mocks.canary},
+	}
+
+	for _, table := range tables {
+		if table.callInitialize {
+			err := mocks.controller.Initialize(table.canary, true)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+		}
+
+		err := mocks.controller.Finalize(table.canary)
+
+		if table.shouldError && err == nil {
+			t.Error("Expected error while calling Finalize, but none was returned")
+		} else if !table.shouldError && err != nil {
+			t.Errorf("Expected no error would be returned while calling Finalize, but returned %s", err)
+		}
+
+		if table.expectedReplicas > 0 {
+			c, err := mocks.kubeClient.AppsV1().Deployments(mocks.canary.Namespace).Get(mocks.canary.Name, metav1.GetOptions{})
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+			if int32Default(c.Spec.Replicas) != table.expectedReplicas {
+				t.Errorf("Expected replicas %d recieved replicas %d", table.expectedReplicas, c.Spec.Replicas)
+			}
+		}
+	}
+}

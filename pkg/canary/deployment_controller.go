@@ -179,6 +179,27 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	return nil
 }
 
+// Scale sets the canary deployment replicas
+func (c *DeploymentController) Scale(cd *flaggerv1.Canary, replicas int32) error {
+	targetName := cd.Spec.TargetRef.Name
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("deployment %s.%s not found", targetName, cd.Namespace)
+		}
+		return fmt.Errorf("deployment %s.%s query error %v", targetName, cd.Namespace, err)
+	}
+
+	depCopy := dep.DeepCopy()
+	depCopy.Spec.Replicas = int32p(replicas)
+
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
+	if err != nil {
+		return fmt.Errorf("scaling %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
+	}
+	return nil
+}
+
 // GetMetadata returns the pod label selector and svc ports
 func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
@@ -375,4 +396,40 @@ func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (
 
 func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
 	return c.configTracker.HasConfigChanged(cd)
+}
+
+// Finalize will set the replica count from the primary to the reference instance.  This method is used
+// during a delete to attempt to revert the deployment back to the original state.  Error is returned if unable
+// update the reference deployment replicas to the primary replicas
+func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {
+
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+
+	//Get ref deployment
+	refDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	//2. Get primary if possible, if not scale from zero
+	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			if err := c.ScaleFromZero(cd); err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+
+	//3. If both ref and primary present update the replicas of the ref to match the primary
+	if refDep.Spec.Replicas != primaryDep.Spec.Replicas {
+		//3. Set the replicas value on the original reference deployment
+		if err := c.Scale(cd, int32Default(primaryDep.Spec.Replicas)); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

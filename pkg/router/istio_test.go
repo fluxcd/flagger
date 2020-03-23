@@ -1,13 +1,17 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 )
 
@@ -328,4 +332,119 @@ func TestIstioRouter_GatewayPort(t *testing.T) {
 
 	port := vs.Spec.Http[0].Route[0].Destination.Port.Number
 	assert.Equal(t, uint32(mocks.canary.Spec.Service.Port), port)
+}
+
+func TestIstioRouter_Finalize(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	flaggerSpec := &istiov1alpha3.VirtualServiceSpec{
+		Http: []istiov1alpha3.HTTPRoute{
+			{
+				Match:      mocks.canary.Spec.Service.Match,
+				Rewrite:    mocks.canary.Spec.Service.Rewrite,
+				Timeout:    mocks.canary.Spec.Service.Timeout,
+				Retries:    mocks.canary.Spec.Service.Retries,
+				CorsPolicy: mocks.canary.Spec.Service.CorsPolicy,
+			},
+		},
+	}
+
+	kubectlSpec := &istiov1alpha3.VirtualServiceSpec{
+		Hosts:    []string{"podinfo"},
+		Gateways: []string{"ingressgateway.istio-system.svc.cluster.local"},
+		Http: []istiov1alpha3.HTTPRoute{
+			{
+				Match: nil,
+				Route: []istiov1alpha3.DestinationWeight{
+					{
+						Destination: istiov1alpha3.Destination{Host: "podinfo"},
+					},
+				},
+			},
+		},
+	}
+
+	tables := []struct {
+		router        *IstioRouter
+		spec          *istiov1alpha3.VirtualServiceSpec
+		shouldError   bool
+		createVS      bool
+		canary        *v1beta1.Canary
+		callReconcile bool
+		annotation    string
+	}{
+		//VS not found
+		{router: router, spec: nil, shouldError: true, createVS: false, canary: mocks.canary, callReconcile: false, annotation: ""},
+		//No annotation found but still finalizes
+		{router: router, spec: nil, shouldError: false, createVS: false, canary: mocks.canary, callReconcile: true, annotation: ""},
+		//Spec should match annotation after finalize
+		{router: router, spec: flaggerSpec, shouldError: false, createVS: true, canary: mocks.canary, callReconcile: true, annotation: "flagger"},
+		//Need to test kubectl annotation
+		{router: router, spec: kubectlSpec, shouldError: false, createVS: true, canary: mocks.canary, callReconcile: true, annotation: "kubectl"},
+	}
+
+	for _, table := range tables {
+
+		var err error
+
+		if table.createVS {
+			vs, err := router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Get(table.canary.Name, metav1.GetOptions{})
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			if vs.Annotations == nil {
+				vs.Annotations = make(map[string]string)
+			}
+
+			if table.annotation == "flagger" {
+				b, err := json.Marshal(table.spec)
+				if err != nil {
+					t.Fatal(err.Error())
+				}
+
+				vs.Annotations[configAnnotation] = string(b)
+			} else if table.annotation == "kubectl" {
+				vs.Annotations[kubectlAnnotation] = `{"apiVersion": "networking.istio.io/v1alpha3","kind": "VirtualService","metadata": {"annotations": {},"name": "podinfo","namespace": "test"},  "spec": {"gateways": ["ingressgateway.istio-system.svc.cluster.local"],"hosts": ["podinfo"],"http": [{"route": [{"destination": {"host": "podinfo"}}]}]}}`
+
+			}
+			_, err = router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Update(vs)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+		}
+
+		if table.callReconcile {
+			err = router.Reconcile(table.canary)
+			if err != nil {
+				t.Fatal(err.Error())
+
+			}
+		}
+
+		err = router.Finalize(table.canary)
+
+		if table.shouldError && err == nil {
+			t.Errorf("Expected error from Finalize but error was not returned")
+		} else if !table.shouldError && err != nil {
+			t.Errorf("Expected no error from Finalize but error was returned %s", err)
+		} else if table.spec != nil {
+			vs, err := router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Get(table.canary.Name, metav1.GetOptions{})
+			if err != nil {
+				t.Fatal(err.Error())
+
+			}
+			if cmp.Diff(vs.Spec, *table.spec) != "" {
+
+				t.Errorf("Expected spec %+v but recieved %+v", table.spec, vs.Spec)
+			}
+		}
+
+	}
 }

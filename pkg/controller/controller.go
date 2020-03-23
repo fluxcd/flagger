@@ -128,6 +128,21 @@ func NewController(
 				}
 
 				ctrl.enqueue(new)
+			} else if !newCanary.DeletionTimestamp.IsZero() && hasFinalizer(&newCanary, finalizer) ||
+				!hasFinalizer(&newCanary, finalizer) && newCanary.Spec.RevertOnDeletion {
+				//If this was marked for deletion and has finalizers enqueue for finalizing or
+				//If this canary doesn't have finalizers and RevertOnDeletion is true updated speck enqueue
+				ctrl.enqueue(new)
+			}
+
+			//If canary no longer desires reverting, finalizers should be removed
+			if oldCanary.Spec.RevertOnDeletion && !newCanary.Spec.RevertOnDeletion {
+				ctrl.logger.Infof("%s.%s opting out, deleting finalizers", newCanary.Name, newCanary.Namespace)
+				err := ctrl.removeFinalizer(&newCanary, finalizer)
+				if err != nil {
+					ctrl.logger.Warnf("Failed to remove finalizers for %s.%s", oldCanary.Name, oldCanary.Namespace)
+					return
+				}
 			}
 		},
 		DeleteFunc: func(old interface{}) {
@@ -217,6 +232,33 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
+	//Finalize if canary has been marked for deletion and revert is desired
+	if cd.Spec.RevertOnDeletion && cd.ObjectMeta.DeletionTimestamp != nil {
+
+		//If finalizers have been previously removed proceed
+		if !hasFinalizer(cd, finalizer) {
+			c.logger.Infof("Canary %s.%s has been finalized", cd.Name, cd.Namespace)
+			return nil
+		}
+
+		if cd.Status.Phase != flaggerv1.CanaryPhaseTerminated {
+			if err := c.finalize(cd); err != nil {
+				return fmt.Errorf("unable to finalize to canary %s.%s error %s", cd.Name, cd.Namespace, err)
+			}
+		}
+
+		//Remove finalizer from Canary
+		if err := c.removeFinalizer(cd, finalizer); err != nil {
+			return fmt.Errorf("unable to remove finalizer for canary %s.%s", cd.Name, cd.Namespace)
+		}
+
+		//record event
+		c.recordEventInfof(cd, "Terminated canary %s.%s", cd.Name, cd.Namespace)
+
+		c.logger.Infof("Canary %s.%s has been successfully processed and marked for deletion", cd.Name, cd.Namespace)
+		return nil
+	}
+
 	// set status condition for new canaries
 	if cd.Status.Conditions == nil {
 		if ok, conditions := canary.MakeStatusConditions(cd, flaggerv1.CanaryPhaseInitializing); ok {
@@ -233,6 +275,14 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	c.canaries.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
+
+	//If opt in for revertOnDeletion add finaliers if not present
+	if cd.Spec.RevertOnDeletion && !hasFinalizer(cd, finalizer) {
+		if err := c.addFinalizer(cd, finalizer); err != nil {
+			return fmt.Errorf("unable to add finalizer to canary %s.%s", cd.Name, cd.Namespace)
+		}
+
+	}
 	c.logger.Infof("Synced %s", key)
 
 	return nil
