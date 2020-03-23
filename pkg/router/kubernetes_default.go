@@ -83,6 +83,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		targetPort = canary.Spec.Service.TargetPort
 	}
 
+	// set pod selector and apex port
 	svcSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeClusterIP,
 		Selector: map[string]string{c.labelSelector: podSelector},
@@ -96,6 +97,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		},
 	}
 
+	// set additional ports
 	for n, p := range c.ports {
 		cp := corev1.ServicePort{
 			Name:     n,
@@ -110,6 +112,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		svcSpec.Ports = append(svcSpec.Ports, cp)
 	}
 
+	// create service if it doesn't exists
 	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		svc = &corev1.Service{
@@ -141,13 +144,24 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		return fmt.Errorf("service %s get query error: %w", name, err)
 	}
 
+	// update existing service pod selector and ports
 	if svc != nil {
 		sortPorts := func(a, b interface{}) bool {
 			return a.(corev1.ServicePort).Port < b.(corev1.ServicePort).Port
 		}
+
+		// copy node ports from existing service
+		for _, port := range svc.Spec.Ports {
+			for i, servicePort := range svcSpec.Ports {
+				if port.Name == servicePort.Name && port.NodePort > 0 {
+					svcSpec.Ports[i].NodePort = port.NodePort
+					break
+				}
+			}
+		}
+
 		portsDiff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports, cmpopts.SortSlices(sortPorts))
 		selectorsDiff := cmp.Diff(svcSpec.Selector, svc.Spec.Selector)
-
 		if portsDiff != "" || selectorsDiff != "" {
 			svcClone := svc.DeepCopy()
 			svcClone.Spec.Ports = svcSpec.Ports
