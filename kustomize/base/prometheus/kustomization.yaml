@@ -10,6 +10,3 @@ configMapGenerator:
   - name: flagger-prometheus
     files:
       - prometheus.yml
-images:
-  - name: prom/prometheus
-    newTag: v2.15.2

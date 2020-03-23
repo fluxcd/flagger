@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.0-rc.3 (2020-03-23) 
+
+This is a release candidate for Flagger v1.0.0.
+
+The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.app/dev/upgrade-guide).
+
+#### Features
+
+- Add opt-in finalizers to revert Flagger's mutations on deletion of a canary
+    [#495](https://github.com/weaveworks/flagger/pull/495)
+
+#### Improvements
+
+- e2e: update end-to-end tests to Contour 1.3.0 and Gloo 1.3.14
+    [#519](https://github.com/weaveworks/flagger/pull/519)
+- build: update Kubernetes packages to 1.17.4
+    [#516](https://github.com/weaveworks/flagger/pull/516)
+
+#### Fixes
+
+- Preserve node ports on service reconciliation
+    [#514](https://github.com/weaveworks/flagger/pull/514)
+
 ## 1.0.0-rc.2 (2020-03-19) 
 
 This is a release candidate for Flagger v1.0.0.

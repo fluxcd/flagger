@@ -4,7 +4,7 @@ This guide walks you through setting up Flagger on a Kubernetes cluster with Hel
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer.
+Flagger requires a Kubernetes cluster **v1.13** or newer.
 
 ## Install Flagger with Helm
 
@@ -164,20 +164,11 @@ kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 
 ## Install Flagger with Kustomize
 
-As an alternative to Helm, Flagger can be installed with Kustomize.
+As an alternative to Helm, Flagger can be installed with Kustomize **3.5.0** or newer.
 
 **Service mesh specific installers**
 
 Install Flagger for Istio:
-
-```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
-```
-
-This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to Istio's Prometheus instance.
-
-Note that you'll need kubectl 1.14 to run the above the command or you can download
-the [kustomize binary](https://github.com/kubernetes-sigs/kustomize/releases) and run:
 
 ```bash
 kustomize build github.com/weaveworks/flagger//kustomize/istio | kubectl apply -f -
@@ -186,7 +177,7 @@ kustomize build github.com/weaveworks/flagger//kustomize/istio | kubectl apply -
 Install Flagger for AWS App Mesh:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/appmesh
+kustomize build github.com/weaveworks/flagger//kustomize/appmesh | kubectl apply -f -
 ```
 
 This deploys Flagger and sets the metrics server URL to App Mesh's Prometheus instance.
@@ -194,7 +185,7 @@ This deploys Flagger and sets the metrics server URL to App Mesh's Prometheus in
 Install Flagger for Linkerd:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd
+kustomize build github.com/weaveworks/flagger//kustomize/linkerd | kubectl apply -f -
 ```
 
 This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
@@ -202,15 +193,15 @@ This deploys Flagger in the `linkerd` namespace and sets the metrics server URL 
 If you want to install a specific Flagger release, add the version number to the URL:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd?ref=0.18.0
+kustomize build github.com/weaveworks/flagger//kustomize/linkerd?ref=0.18.0 | kubectl apply -f -
 ```
 
 **Generic installer**
 
-Install Flagger and Prometheus:
+Install Flagger and Prometheus for Contour, Gloo or NGINX ingress:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/kubernetes
+kustomize build github.com/weaveworks/flagger//kustomize/kubernetes | kubectl apply -f -
 ```
 
 This deploys Flagger and Prometheus in the `flagger-system` namespace, sets the metrics server URL
@@ -235,46 +226,43 @@ spec:
 
 **Customized installer**
 
-Create a kustomization file using flagger as base:
+Create a kustomization file using Flagger as base and patch the container args:
 
 ```bash
 cat > kustomization.yaml <<EOF
 namespace: istio-system
 bases:
   - github.com/weaveworks/flagger/kustomize/base/flagger
-patchesStrategicMerge:
-  - patch.yaml
-EOF
-```
-
-Create a patch and enable Slack notifications by setting the slack channel and hook URL:
-
-```bash
-cat > patch.yaml <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: flagger
-spec:
-  template:
+patches:
+- target:
+    kind: Deployment
+    name: flagger
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: flagger
     spec:
-      containers:
-        - name: flagger
-          args:
-            - -mesh-provider=istio
-            - -metrics-server=http://prometheus.istio-system:9090
-            - -slack-user=flagger
-            - -slack-channel=alerts
-            - -slack-url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+      template:
+        spec:
+          containers:
+          - name: flagger
+            args:
+              - -mesh-provider=istio
+              - -metrics-server=http://prometheus.istio-system:9090
+              - -slack-user=flagger
+              - -slack-channel=alerts
+              - -slack-url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 EOF
 ```
 
-Install Flagger with Slack:
+Install Flagger for Istio with Slack notifications:
 
 ```bash
-kubectl apply -k .
+kustomize build . | kubectl apply -f -
 ```
 
 If you want to use MS Teams instead of Slack, replace `-slack-url` with `-msteams-url` and set the webhook address
 to `https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK`.
+
 

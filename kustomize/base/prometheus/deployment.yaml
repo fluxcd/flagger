@@ -19,7 +19,7 @@ spec:
       serviceAccountName: flagger-prometheus
       containers:
           - name: prometheus
-            image: prom/prometheus:v2.15.2
+            image: prom/prometheus:v2.16.0
             imagePullPolicy: IfNotPresent
             args:
               - '--storage.tsdb.retention=2h'
