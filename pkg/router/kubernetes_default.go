@@ -113,6 +113,13 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		svcSpec.Ports = append(svcSpec.Ports, cp)
 	}
 
+	if metadata.Labels == nil {
+		metadata.Labels = make(map[string]string)
+	}
+	if metadata.Annotations == nil {
+		metadata.Annotations = make(map[string]string)
+	}
+
 	metadata.Labels[c.labelSelector] = name
 	for k, v := range c.annotations {
 		metadata.Annotations[k] = v
