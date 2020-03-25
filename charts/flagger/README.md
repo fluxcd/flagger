@@ -121,7 +121,7 @@ Parameter | Description | Default
 `leaderElection.enabled` | If `true`, Flagger will run in HA mode | `false`
 `leaderElection.replicaCount` | Number of replicas | `1`
 `serviceAccount.create` | If `true`, Flagger will create service account | `true`
-`serviceAccount.name` | The name of the service account to create or use | `""`
+`serviceAccount.name` | The name of the service account to create or use. If not set and `serviceAccount.create` is `true`, a name is generated using the Flagger fullname | `""`
 `serviceAccount.annotations` | Annotations for service account | `{}`
 `ingressAnnotationsPrefix` | Annotations prefix for ingresses | `custom.ingress.kubernetes.io`
 `rbac.create` | If `true`, create and use RBAC resources | `true`
