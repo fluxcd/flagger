@@ -22,7 +22,7 @@ func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 
 	_, err = c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds())
 	if err != nil {
-		return fmt.Errorf("primary daemonset %s.%s not ready: %w", primaryName, cd.Namespace, err)
+		return fmt.Errorf("primary deployment %s.%s not ready: %w", primaryName, cd.Namespace, err)
 	}
 
 	if primary.Spec.Replicas == int32p(0) {

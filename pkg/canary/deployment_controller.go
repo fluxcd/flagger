@@ -44,7 +44,7 @@ func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChec
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
 			Infof("Scaling down Deployment %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.ScaleToZero(cd); err != nil {
-			return fmt.Errorf("scaling down canary daemon set %s.%s failed: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
+			return fmt.Errorf("scaling down canary deployment %s.%s failed: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 		}
 	}
 
