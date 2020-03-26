@@ -166,7 +166,7 @@ spec:
 
 ## Test the canary
 
-Execute `kubectl -n test set image deployment/podinfo podinfo=stefanprodan/podinfo:3.1.0` to see if everythinf works
+Execute `kubectl -n test set image deployment/podinfo podinfo=stefanprodan/podinfo:3.1.0` to see if everything works
 
 
 
