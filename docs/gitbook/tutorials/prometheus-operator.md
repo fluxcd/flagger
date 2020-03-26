@@ -12,15 +12,16 @@ Install Prometheus-Operator with Helm v3:
 ```bash
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 helm repo update
-kubectl create ns prometheus
+kubectl create ns monitoring
 helm upgrade -i prometheus stable/prometheus-operator \
---namespace prometheus \
---set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+--namespace monitoring \
+--set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+--set fullnameOverride=prometheus
 ```
 
 The `prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false` option allows Prometheus-Operator to watch serviceMonitor outside of his namespace.
 
-You can also set `prometheus.service.type=nodePort` if you want to have
+You can also set `prometheus.service.type=nodePort` if you want to have access the Prometheus UI
 
 Install Flagger with Helm v3:
 
@@ -30,7 +31,7 @@ helm repo update
 kubectl create ns flagger
 helm upgrade -i flagger flagger/flagger \
 --namespace flagger \
---set metricsServer=http://prometheus-prometheus-oper-prometheus.prometheus:9090 \
+--set metricsServer=http://prometheus-prometheus.monitoring:9090 \
 --set meshProvider=kubernetes
 ```
 
@@ -108,9 +109,22 @@ metadata:
   namespace: test
 spec:
   provider:
-    address: http://prometheus-prometheus-oper-prometheus.prometheus:9090
+    address: http://prometheus-prometheus.monitoring:9090
     type: prometheus
-  query: rate(http_requests_total{namespace="{{ namespace }}",job="{{ target }}-canary",status!~"5.*"}[{{ interval }}]) / rate(http_requests_total{namespace="{{ namespace }}",job="{{ target }}-canary"}[{{ interval }}]) * 100
+  query: |
+    rate(
+      http_requests_total{
+        namespace="{{ namespace }}",
+        job="{{ target }}-canary",
+        status!~"5.*"
+      }[{{ interval }}]) 
+    / 
+    rate(
+      http_requests_total{
+        namespace="{{ namespace }}",
+        job="{{ target }}-canary"
+      }[{{ interval }}]
+    ) * 100
 ```
 
 You can also use `pod="{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"` instead of `job={{ target }}-canary`, if you want.
@@ -134,13 +148,11 @@ spec:
     port: 9898
     portDiscovery: true
   analysis:
-    # We set a longer interval to let Prometheus fetch metrics
     interval: 30s
     iterations: 10
     threshold: 2
     metrics:
-    # For some reason, you need to not use a standard name
-    - name: my-custom-metrics
+    - name: http-success-rate
       templateRef:
         name: request-success-rate
         namespace: test
@@ -161,7 +173,7 @@ spec:
         timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z {{ interval }} -q 10 -c 2 http://podinfo-canary.test:9898"
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898"
 ```
 
 ## Test the canary
