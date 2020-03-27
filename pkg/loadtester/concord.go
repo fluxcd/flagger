@@ -132,7 +132,7 @@ func (task *ConcordTask) Run(ctx context.Context) (bool, error) {
 }
 
 type concordProcess struct {
-	InstanceID       string   `json:"instanceId, omitempty"`
+	InstanceID       string   `json:"instanceId,omitempty"`
 	ParentInstanceID string   `json:"parentInstanceID,omitempty"`
 	ProjectName      string   `json:"projectName,omitempty"`
 	CreatedAt        string   `json:"createdAt,omitempty"`
