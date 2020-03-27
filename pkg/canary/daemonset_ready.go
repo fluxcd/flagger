@@ -44,21 +44,31 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 }
 
 // isDaemonSetReady determines if a daemonset is ready by checking the number of old version daemons
+// reference: https://github.com/kubernetes/kubernetes/blob/5232ad4a00ec93942d0b2c6359ee6cd1201b46bc/pkg/kubectl/rollout_status.go#L110
 func (c *DaemonSetController) isDaemonSetReady(cd *flaggerv1.Canary, daemonSet *appsv1.DaemonSet) (bool, error) {
-	if diff := daemonSet.Status.DesiredNumberScheduled - daemonSet.Status.UpdatedNumberScheduled; diff > 0 || daemonSet.Status.NumberUnavailable > 0 {
+	if daemonSet.Generation <= daemonSet.Status.ObservedGeneration {
+		// calculate conditions
+		newCond := daemonSet.Status.UpdatedNumberScheduled < daemonSet.Status.DesiredNumberScheduled
+		availableCond := daemonSet.Status.NumberAvailable < daemonSet.Status.DesiredNumberScheduled
+		if !newCond && !availableCond {
+			return true, nil
+		}
+
+		// check if deadline exceeded
 		from := cd.Status.LastTransitionTime
 		delta := time.Duration(cd.GetProgressDeadlineSeconds()) * time.Second
-		dl := from.Add(delta)
-		if dl.Before(time.Now()) {
+		if from.Add(delta).Before(time.Now()) {
 			return false, fmt.Errorf("exceeded its progressDeadlineSeconds: %d", cd.GetProgressDeadlineSeconds())
-		} else {
-			return true, fmt.Errorf(
-				"waiting for rollout to finish: desiredNumberScheduled=%d, updatedNumberScheduled=%d, numberUnavailable=%d",
-				daemonSet.Status.DesiredNumberScheduled,
-				daemonSet.Status.UpdatedNumberScheduled,
-				daemonSet.Status.NumberUnavailable,
-			)
+		}
+
+		// retryable
+		if newCond {
+			return true, fmt.Errorf("waiting for rollout to finish: %d out of %d new pods have been updated",
+				daemonSet.Status.UpdatedNumberScheduled, daemonSet.Status.DesiredNumberScheduled)
+		} else if availableCond {
+			return true, fmt.Errorf("waiting for rollout to finish: %d of %d updated pods are available",
+				daemonSet.Status.NumberAvailable, daemonSet.Status.DesiredNumberScheduled)
 		}
 	}
-	return true, nil
+	return true, fmt.Errorf("waiting for rollout to finish: observed daemonset generation less then desired generation")
 }
