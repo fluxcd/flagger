@@ -74,14 +74,14 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 
 // Initialize creates the primary DaemonSet, scales down the canary DaemonSet,
 // and returns the pod selector label and container ports
-func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (err error) {
+func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
 	err = c.createPrimaryDaemonSet(cd)
 	if err != nil {
 		return fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if !skipLivenessChecks && !cd.SkipAnalysis() {
+		if !cd.SkipAnalysis() {
 			if err := c.IsPrimaryReady(cd); err != nil {
 				return fmt.Errorf("IsPrimaryReady failed: %w", err)
 			}

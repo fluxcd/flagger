@@ -14,7 +14,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	mocks := newDeploymentFixture(newTestServiceCanary())
 
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check initialized status
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -27,7 +27,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect service spec changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -38,7 +38,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check progressing status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -46,7 +46,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
 
 	// promote
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check promoting status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -54,7 +54,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhasePromoting, c.Status.Phase)
 
 	// finalise
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -75,7 +75,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseFinalising, c.Status.Phase)
 
 	// scale canary to zero
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)

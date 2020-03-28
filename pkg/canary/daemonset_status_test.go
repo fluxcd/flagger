@@ -12,7 +12,7 @@ import (
 
 func TestDaemonSetController_SyncStatus(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	status := flaggerv1.CanaryStatus{
@@ -36,7 +36,7 @@ func TestDaemonSetController_SyncStatus(t *testing.T) {
 
 func TestDaemonSetController_SetFailedChecks(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	err = mocks.controller.SetStatusFailedChecks(mocks.canary, 1)
@@ -49,7 +49,7 @@ func TestDaemonSetController_SetFailedChecks(t *testing.T) {
 
 func TestDaemonSetController_SetState(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	err = mocks.controller.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)

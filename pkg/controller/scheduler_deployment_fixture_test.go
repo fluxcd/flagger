@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"fmt"
 	"sync"
+	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav2 "k8s.io/api/autoscaling/v2beta1"
@@ -38,6 +41,28 @@ type fixture struct {
 	ctrl          *Controller
 	logger        *zap.SugaredLogger
 	router        router.Interface
+}
+
+func (f fixture) makePrimaryReady(t *testing.T) {
+	primaryName := fmt.Sprintf("%s-primary", f.canary.Spec.TargetRef.Name)
+	f.makeReady(t, primaryName)
+}
+
+func (f fixture) makeCanaryReady(t *testing.T) {
+	f.makeReady(t, f.canary.Spec.TargetRef.Name)
+}
+
+func (f fixture) makeReady(t *testing.T, name string) {
+	p, err := f.kubeClient.AppsV1().
+		Deployments("default").
+		Get(name, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	p.Status = appsv1.DeploymentStatus{Replicas: 1, UpdatedReplicas: 1,
+		ReadyReplicas: 1, AvailableReplicas: 1}
+
+	_, err = f.kubeClient.AppsV1().Deployments("default").Update(p)
+	require.NoError(t, err)
 }
 
 func newDeploymentFixture(c *flaggerv1.Canary) fixture {

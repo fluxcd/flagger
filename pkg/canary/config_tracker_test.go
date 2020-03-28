@@ -15,8 +15,7 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 		configMap := newDeploymentControllerTestConfigMap()
 		configMapProjected := newDeploymentControllerTestConfigProjected()
 
-		err := mocks.controller.Initialize(mocks.canary, true)
-		require.NoError(t, err)
+		mocks.initializeCanary(t)
 
 		depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
 		require.NoError(t, err)
@@ -53,7 +52,7 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 		configMap := newDaemonSetControllerTestConfigMap()
 		configMapProjected := newDaemonSetControllerTestConfigProjected()
 
-		err := mocks.controller.Initialize(mocks.canary, true)
+		err := mocks.controller.Initialize(mocks.canary)
 		require.NoError(t, err)
 
 		depPrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -93,8 +92,7 @@ func TestConfigTracker_Secrets(t *testing.T) {
 		secret := newDeploymentControllerTestSecret()
 		secretProjected := newDeploymentControllerTestSecretProjected()
 
-		err := mocks.controller.Initialize(mocks.canary, true)
-		require.NoError(t, err)
+		mocks.initializeCanary(t)
 
 		depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
@@ -131,8 +129,7 @@ func TestConfigTracker_Secrets(t *testing.T) {
 		secret := newDaemonSetControllerTestSecret()
 		secretProjected := newDaemonSetControllerTestSecretProjected()
 
-		err := mocks.controller.Initialize(mocks.canary, true)
-		require.NoError(t, err)
+		mocks.controller.Initialize(mocks.canary)
 
 		daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {

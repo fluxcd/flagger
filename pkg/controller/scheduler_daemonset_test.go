@@ -19,7 +19,7 @@ import (
 
 func TestScheduler_DaemonSetInit(t *testing.T) {
 	mocks := newDaemonSetFixture(nil)
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	_, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -27,7 +27,7 @@ func TestScheduler_DaemonSetInit(t *testing.T) {
 
 func TestScheduler_DaemonSetNewRevision(t *testing.T) {
 	mocks := newDaemonSetFixture(nil)
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update
 	dae2 := newDaemonSetTestDaemonSetV2()
@@ -35,7 +35,7 @@ func TestScheduler_DaemonSetNewRevision(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -44,7 +44,7 @@ func TestScheduler_DaemonSetNewRevision(t *testing.T) {
 func TestScheduler_DaemonSetRollback(t *testing.T) {
 	mocks := newDaemonSetFixture(nil)
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update failed checks to max
 	err := mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing, FailedChecks: 10})
@@ -68,10 +68,10 @@ func TestScheduler_DaemonSetRollback(t *testing.T) {
 	require.NoError(t, err)
 
 	// run metric checks
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// finalise analysis
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -82,7 +82,7 @@ func TestScheduler_DaemonSetRollback(t *testing.T) {
 func TestScheduler_DaemonSetSkipAnalysis(t *testing.T) {
 	mocks := newDaemonSetFixture(nil)
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// enable skip
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -98,9 +98,9 @@ func TestScheduler_DaemonSetSkipAnalysis(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -111,7 +111,7 @@ func TestScheduler_DaemonSetSkipAnalysis(t *testing.T) {
 func TestScheduler_DaemonSetNewRevisionReset(t *testing.T) {
 	mocks := newDaemonSetFixture(nil)
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// first update
 	dae2 := newDaemonSetTestDaemonSetV2()
@@ -119,9 +119,9 @@ func TestScheduler_DaemonSetNewRevisionReset(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -135,7 +135,7 @@ func TestScheduler_DaemonSetNewRevisionReset(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -148,7 +148,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 	mocks := newDaemonSetFixture(nil)
 
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check initialized status
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -161,7 +161,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect pod spec changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	config2 := newDaemonSetTestConfigMapV2()
 	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
@@ -172,7 +172,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect configs changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -183,7 +183,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check progressing status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -191,7 +191,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
 
 	// promote
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check promoting status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -199,7 +199,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhasePromoting, c.Status.Phase)
 
 	// finalise
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -228,7 +228,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseFinalising, c.Status.Phase)
 
 	// scale canary to zero
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -238,7 +238,7 @@ func TestScheduler_DaemonSetPromotion(t *testing.T) {
 func TestScheduler_DaemonSetMirroring(t *testing.T) {
 	mocks := newDaemonSetFixture(newDaemonSetTestCanaryMirror())
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update
 	dae2 := newDaemonSetTestDaemonSetV2()
@@ -246,10 +246,10 @@ func TestScheduler_DaemonSetMirroring(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect pod spec changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check if traffic is mirrored to canary
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
@@ -259,7 +259,7 @@ func TestScheduler_DaemonSetMirroring(t *testing.T) {
 	assert.True(t, mirrored)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check if traffic is mirrored to canary
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
@@ -272,7 +272,7 @@ func TestScheduler_DaemonSetMirroring(t *testing.T) {
 func TestScheduler_DaemonSetABTesting(t *testing.T) {
 	mocks := newDaemonSetFixture(newDaemonSetTestCanaryAB())
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update
 	dae2 := newDaemonSetTestDaemonSetV2()
@@ -280,10 +280,10 @@ func TestScheduler_DaemonSetABTesting(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect pod spec changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check if traffic is routed to canary
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
@@ -300,10 +300,10 @@ func TestScheduler_DaemonSetABTesting(t *testing.T) {
 	require.NoError(t, err)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// finalising
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check finalising status
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -319,7 +319,7 @@ func TestScheduler_DaemonSetABTesting(t *testing.T) {
 	assert.Equal(t, canaryImage, primaryImage)
 
 	// shutdown canary
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check rollout status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -337,7 +337,7 @@ func TestScheduler_DaemonSetPortDiscovery(t *testing.T) {
 	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	require.NoError(t, err)
 
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -370,7 +370,7 @@ func TestScheduler_DaemonSetTargetPortNumber(t *testing.T) {
 	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	require.NoError(t, err)
 
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -403,7 +403,7 @@ func TestScheduler_DaemonSetTargetPortName(t *testing.T) {
 	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	require.NoError(t, err)
 
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -464,5 +464,5 @@ func TestScheduler_DaemonSetAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	// init canary and send alerts
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 }

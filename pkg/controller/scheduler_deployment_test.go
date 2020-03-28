@@ -19,7 +19,7 @@ import (
 
 func TestScheduler_DeploymentInit(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -27,7 +27,15 @@ func TestScheduler_DeploymentInit(t *testing.T) {
 
 func TestScheduler_DeploymentNewRevision(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// initializing ...
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialization done
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update
 	dep2 := newDeploymentTestDeploymentV2()
@@ -35,7 +43,7 @@ func TestScheduler_DeploymentNewRevision(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	c, err := mocks.kubeClient.AppsV1().Deployments("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -44,8 +52,14 @@ func TestScheduler_DeploymentNewRevision(t *testing.T) {
 
 func TestScheduler_DeploymentRollback(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
-	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update failed checks to max
 	err := mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing, FailedChecks: 10})
@@ -68,11 +82,11 @@ func TestScheduler_DeploymentRollback(t *testing.T) {
 	require.NoError(t, err)
 
 	// run metric checks
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, err)
 
 	// finalise analysis
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, err)
 
 	// check status
@@ -84,8 +98,14 @@ func TestScheduler_DeploymentRollback(t *testing.T) {
 
 func TestScheduler_DeploymentSkipAnalysis(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
-	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// enable skip
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -100,9 +120,11 @@ func TestScheduler_DeploymentSkipAnalysis(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makeCanaryReady(t)
+
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -118,8 +140,14 @@ func TestScheduler_DeploymentAnalysisPhases(t *testing.T) {
 	}
 	mocks := newDeploymentFixture(cd)
 
-	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized))
 
 	// update
@@ -128,23 +156,24 @@ func TestScheduler_DeploymentAnalysisPhases(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+	mocks.makeCanaryReady(t)
 
 	// progressing
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
 
 	// promoting
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting))
 
 	// finalising
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseFinalising))
 
 	// succeeded
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseSucceeded))
 }
 
@@ -156,8 +185,14 @@ func TestScheduler_DeploymentBlueGreenAnalysisPhases(t *testing.T) {
 	}
 	mocks := newDeploymentFixture(cd)
 
-	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized))
 
 	// update
@@ -166,34 +201,42 @@ func TestScheduler_DeploymentBlueGreenAnalysisPhases(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes (progressing)
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+	mocks.makeCanaryReady(t)
 
 	// advance (progressing)
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
 
 	// route traffic to primary (progressing)
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
 
 	// promoting
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting))
 
 	// finalising
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseFinalising))
 
 	// succeeded
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseSucceeded))
 }
 
 func TestScheduler_DeploymentNewRevisionReset(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
 	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// first update
 	dep2 := newDeploymentTestDeploymentV2()
@@ -201,9 +244,11 @@ func TestScheduler_DeploymentNewRevisionReset(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makeCanaryReady(t)
+
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -217,7 +262,7 @@ func TestScheduler_DeploymentNewRevisionReset(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -229,8 +274,14 @@ func TestScheduler_DeploymentNewRevisionReset(t *testing.T) {
 func TestScheduler_DeploymentPromotion(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
 
-	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check initialized status
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -243,7 +294,8 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect pod spec changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makeCanaryReady(t)
 
 	config2 := newDeploymentTestConfigMapV2()
 	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
@@ -254,7 +306,7 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect configs changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -265,7 +317,7 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	require.NoError(t, err)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check progressing status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -273,7 +325,7 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
 
 	// promote
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check promoting status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -281,7 +333,7 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhasePromoting, c.Status.Phase)
 
 	// finalise
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
@@ -310,7 +362,7 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseFinalising, c.Status.Phase)
 
 	// scale canary to zero
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -319,8 +371,15 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 
 func TestScheduler_DeploymentMirroring(t *testing.T) {
 	mocks := newDeploymentFixture(newDeploymentTestCanaryMirror())
-	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update
 	dep2 := newDeploymentTestDeploymentV2()
@@ -328,10 +387,11 @@ func TestScheduler_DeploymentMirroring(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect pod spec changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makeCanaryReady(t)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check if traffic is mirrored to canary
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
@@ -341,7 +401,7 @@ func TestScheduler_DeploymentMirroring(t *testing.T) {
 	assert.True(t, mirrored)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check if traffic is mirrored to canary
 	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
@@ -353,8 +413,14 @@ func TestScheduler_DeploymentMirroring(t *testing.T) {
 
 func TestScheduler_DeploymentABTesting(t *testing.T) {
 	mocks := newDeploymentFixture(newDeploymentTestCanaryAB())
-	// init
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// update
 	dep2 := newDeploymentTestDeploymentV2()
@@ -362,10 +428,11 @@ func TestScheduler_DeploymentABTesting(t *testing.T) {
 	require.NoError(t, err)
 
 	// detect pod spec changes
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makeCanaryReady(t)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check if traffic is routed to canary
 	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
@@ -382,10 +449,10 @@ func TestScheduler_DeploymentABTesting(t *testing.T) {
 	require.NoError(t, err)
 
 	// advance
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// finalising
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check finalising status
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -401,7 +468,7 @@ func TestScheduler_DeploymentABTesting(t *testing.T) {
 	assert.Equal(t, canaryImage, primaryImage)
 
 	// shutdown canary
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check rollout status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -419,7 +486,7 @@ func TestScheduler_DeploymentPortDiscovery(t *testing.T) {
 	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	require.NoError(t, err)
 
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -452,7 +519,7 @@ func TestScheduler_DeploymentTargetPortNumber(t *testing.T) {
 	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	require.NoError(t, err)
 
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -485,7 +552,7 @@ func TestScheduler_DeploymentTargetPortName(t *testing.T) {
 	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(cd)
 	require.NoError(t, err)
 
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -546,5 +613,5 @@ func TestScheduler_DeploymentAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	// init canary and send alerts
-	mocks.ctrl.advanceCanary("podinfo", "default", true)
+	mocks.ctrl.advanceCanary("podinfo", "default")
 }

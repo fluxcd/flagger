@@ -28,14 +28,14 @@ type DeploymentController struct {
 
 // Initialize creates the primary deployment, hpa,
 // scales to zero the canary deployment and returns the pod selector label and container ports
-func (c *DeploymentController) Initialize(cd *flaggerv1.Canary, skipLivenessChecks bool) (err error) {
+func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	if err := c.createPrimaryDeployment(cd); err != nil {
 		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if !skipLivenessChecks && !cd.SkipAnalysis() {
+		if !cd.SkipAnalysis() {
 			if err := c.IsPrimaryReady(cd); err != nil {
 				return fmt.Errorf("IsPrimaryReady failed: %w", err)
 			}

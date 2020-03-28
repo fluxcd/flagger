@@ -83,7 +83,7 @@ func (c *Controller) scheduleCanaries() {
 	}
 }
 
-func (c *Controller) advanceCanary(name string, namespace string, skipLivenessChecks bool) {
+func (c *Controller) advanceCanary(name string, namespace string) {
 	begin := time.Now()
 	// check if the canary exists
 	cd, err := c.flaggerClient.FlaggerV1beta1().Canaries(namespace).Get(name, metav1.GetOptions{})
@@ -115,7 +115,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// create primary
-	err = canaryController.Initialize(cd, skipLivenessChecks)
+	err = canaryController.Initialize(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -160,7 +160,7 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 	}
 
 	// check primary status
-	if !skipLivenessChecks && !cd.SkipAnalysis() {
+	if !cd.SkipAnalysis() {
 		if err := canaryController.IsPrimaryReady(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
@@ -209,12 +209,10 @@ func (c *Controller) advanceCanary(name string, namespace string, skipLivenessCh
 
 	// check canary status
 	var retriable = true
-	if !skipLivenessChecks {
-		retriable, err = canaryController.IsCanaryReady(cd)
-		if err != nil && retriable {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
+	retriable, err = canaryController.IsCanaryReady(cd)
+	if err != nil && retriable {
+		c.recordEventWarningf(cd, "%v", err)
+		return
 	}
 
 	// check if analysis should be skipped
