@@ -47,7 +47,7 @@ func (c *ServiceController) GetMetadata(_ *flaggerv1.Canary) (string, map[string
 }
 
 // Initialize creates or updates the primary and canary services to prepare for the canary release process targeted on the K8s service
-func (c *ServiceController) Initialize(cd *flaggerv1.Canary, _ bool) (err error) {
+func (c *ServiceController) Initialize(cd *flaggerv1.Canary) (err error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryName := fmt.Sprintf("%s-canary", targetName)

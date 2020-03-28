@@ -12,14 +12,13 @@ import (
 
 func TestDeploymentController_SyncStatus(t *testing.T) {
 	mocks := newDeploymentFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
-	require.NoError(t, err)
+	mocks.initializeCanary(t)
 
 	status := flaggerv1.CanaryStatus{
 		Phase:        flaggerv1.CanaryPhaseProgressing,
 		FailedChecks: 2,
 	}
-	err = mocks.controller.SyncStatus(mocks.canary, status)
+	err := mocks.controller.SyncStatus(mocks.canary, status)
 	require.NoError(t, err)
 
 	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -36,10 +35,9 @@ func TestDeploymentController_SyncStatus(t *testing.T) {
 
 func TestDeploymentController_SetFailedChecks(t *testing.T) {
 	mocks := newDeploymentFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
-	require.NoError(t, err)
+	mocks.initializeCanary(t)
 
-	err = mocks.controller.SetStatusFailedChecks(mocks.canary, 1)
+	err := mocks.controller.SetStatusFailedChecks(mocks.canary, 1)
 	require.NoError(t, err)
 
 	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
@@ -49,10 +47,9 @@ func TestDeploymentController_SetFailedChecks(t *testing.T) {
 
 func TestDeploymentController_SetState(t *testing.T) {
 	mocks := newDeploymentFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
-	require.NoError(t, err)
+	mocks.initializeCanary(t)
 
-	err = mocks.controller.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)
+	err := mocks.controller.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)
 	require.NoError(t, err)
 
 	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})

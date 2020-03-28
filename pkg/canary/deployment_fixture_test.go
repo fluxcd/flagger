@@ -1,6 +1,10 @@
 package canary
 
 import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	hpav2 "k8s.io/api/autoscaling/v2beta1"
@@ -22,6 +26,28 @@ type deploymentControllerFixture struct {
 	flaggerClient clientset.Interface
 	controller    DeploymentController
 	logger        *zap.SugaredLogger
+}
+
+func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
+	err := d.controller.Initialize(d.canary)
+	require.Error(t, err) // not ready yet
+
+	primaryName := fmt.Sprintf("%s-primary", d.canary.Spec.TargetRef.Name)
+	p, err := d.controller.kubeClient.AppsV1().
+		Deployments(d.canary.Namespace).Get(primaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	p.Status = appsv1.DeploymentStatus{
+		Replicas:          1,
+		UpdatedReplicas:   1,
+		ReadyReplicas:     1,
+		AvailableReplicas: 1,
+	}
+
+	_, err = d.controller.kubeClient.AppsV1().Deployments(d.canary.Namespace).Update(p)
+	require.NoError(t, err)
+
+	require.NoError(t, d.controller.Initialize(d.canary))
 }
 
 func newDeploymentFixture() deploymentControllerFixture {

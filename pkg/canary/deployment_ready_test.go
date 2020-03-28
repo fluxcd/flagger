@@ -8,12 +8,13 @@ import (
 
 func TestDeploymentController_IsReady(t *testing.T) {
 	mocks := newDeploymentFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
-	require.NoError(t, err, "Expected primary readiness check to fail")
+	mocks.controller.Initialize(mocks.canary)
 
-	err = mocks.controller.IsPrimaryReady(mocks.canary)
+	err := mocks.controller.IsPrimaryReady(mocks.canary)
 	require.Error(t, err)
 
 	_, err = mocks.controller.IsCanaryReady(mocks.canary)
 	require.NoError(t, err)
 }
+
+// TODO: more detailed tests as daemonset

@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,8 +13,8 @@ import (
 
 func TestDaemonSetController_IsReady(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
-	assert.NoError(t, err, "Expected primary readiness check to fail")
+	err := mocks.controller.Initialize(mocks.canary)
+	require.NoError(t, err)
 
 	err = mocks.controller.IsPrimaryReady(mocks.canary)
 	require.NoError(t, err)

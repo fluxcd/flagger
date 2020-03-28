@@ -15,7 +15,7 @@ import (
 
 func TestDaemonSetController_Sync(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -29,7 +29,7 @@ func TestDaemonSetController_Sync(t *testing.T) {
 
 func TestDaemonSetController_Promote(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	dae2 := newDaemonSetControllerTestPodInfoV2()
@@ -60,7 +60,7 @@ func TestDaemonSetController_NoConfigTracking(t *testing.T) {
 	mocks := newDaemonSetFixture()
 	mocks.controller.configTracker = &NopTracker{}
 
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
@@ -75,7 +75,7 @@ func TestDaemonSetController_NoConfigTracking(t *testing.T) {
 
 func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	// save last applied hash
@@ -163,7 +163,7 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 func TestDaemonSetController_Scale(t *testing.T) {
 	t.Run("ScaleToZero", func(t *testing.T) {
 		mocks := newDaemonSetFixture()
-		err := mocks.controller.Initialize(mocks.canary, true)
+		err := mocks.controller.Initialize(mocks.canary)
 		require.NoError(t, err)
 
 		err = mocks.controller.ScaleToZero(mocks.canary)
@@ -179,7 +179,7 @@ func TestDaemonSetController_Scale(t *testing.T) {
 	})
 	t.Run("ScaleFromZeo", func(t *testing.T) {
 		mocks := newDaemonSetFixture()
-		err := mocks.controller.Initialize(mocks.canary, true)
+		err := mocks.controller.Initialize(mocks.canary)
 		require.NoError(t, err)
 
 		err = mocks.controller.ScaleFromZero(mocks.canary)
@@ -197,7 +197,7 @@ func TestDaemonSetController_Scale(t *testing.T) {
 
 func TestDaemonSetController_Finalize(t *testing.T) {
 	mocks := newDaemonSetFixture()
-	err := mocks.controller.Initialize(mocks.canary, true)
+	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	err = mocks.controller.Finalize(mocks.canary)
