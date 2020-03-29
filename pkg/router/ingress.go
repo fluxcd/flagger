@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +31,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 	canaryName := fmt.Sprintf("%s-canary", apexName)
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
 
-	ingress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canary.Spec.IngressRef.Name, metav1.GetOptions{})
+	ingress, err := i.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(canary.Spec.IngressRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("ingress %s.%s get query error: %w", canary.Spec.IngressRef.Name, canary.Namespace, err)
 	}
@@ -54,7 +54,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("backend %s not found in ingress %s", apexName, canary.Spec.IngressRef.Name)
 	}
 
-	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
+	canaryIngress, err := i.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
 
 	if errors.IsNotFound(err) {
 		ing := &v1beta1.Ingress{
@@ -74,7 +74,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 			Spec: ingressClone.Spec,
 		}
 
-		_, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Create(ing)
+		_, err := i.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Create(ing)
 		if err != nil {
 			return fmt.Errorf("ingress %s.%s create error: %w", ing.Name, ing.Namespace, err)
 		}
@@ -90,7 +90,7 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 		iClone := canaryIngress.DeepCopy()
 		iClone.Spec = ingressClone.Spec
 
-		_, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Update(iClone)
+		_, err := i.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Update(iClone)
 		if err != nil {
 			return fmt.Errorf("ingress %s.%s update error: %w", canaryIngressName, iClone.Namespace, err)
 		}
@@ -109,7 +109,7 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	err error,
 ) {
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
-	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
+	canaryIngress, err := i.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("ingress %s.%s get query error: %w", canaryIngressName, canary.Namespace, err)
 		return
@@ -150,7 +150,7 @@ func (i *IngressRouter) SetRoutes(
 	_ bool,
 ) error {
 	canaryIngressName := fmt.Sprintf("%s-canary", canary.Spec.IngressRef.Name)
-	canaryIngress, err := i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
+	canaryIngress, err := i.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(canaryIngressName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("ingress %s.%s get query error: %w", canaryIngressName, canary.Namespace, err)
 	}
@@ -184,7 +184,7 @@ func (i *IngressRouter) SetRoutes(
 		iClone.Annotations = i.makeAnnotations(iClone.Annotations)
 	}
 
-	_, err = i.kubeClient.ExtensionsV1beta1().Ingresses(canary.Namespace).Update(iClone)
+	_, err = i.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Update(iClone)
 	if err != nil {
 		return fmt.Errorf("ingress %s.%s update error %v", iClone.Name, iClone.Namespace, err)
 	}
