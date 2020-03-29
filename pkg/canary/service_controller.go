@@ -222,6 +222,6 @@ func (c *ServiceController) IsCanaryReady(_ *flaggerv1.Canary) (bool, error) {
 	return true, nil
 }
 
-func (c *ServiceController) Finalize(cd *flaggerv1.Canary) error {
+func (c *ServiceController) Finalize(_ *flaggerv1.Canary) error {
 	return nil
 }

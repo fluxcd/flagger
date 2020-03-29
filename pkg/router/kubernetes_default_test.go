@@ -127,7 +127,7 @@ func TestServiceRouter_isOwnedByCanary(t *testing.T) {
 		isOwned     bool
 		hasOwnerRef bool
 	}{
-		//owned
+		// owned
 		{
 			svc: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -152,7 +152,7 @@ func TestServiceRouter_isOwnedByCanary(t *testing.T) {
 				},
 			}, isOwned: true, hasOwnerRef: true,
 		},
-		//Owner ref but kind not Canary
+		// Owner ref but kind not Canary
 		{
 			svc: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -177,7 +177,7 @@ func TestServiceRouter_isOwnedByCanary(t *testing.T) {
 				},
 			}, isOwned: false, hasOwnerRef: false,
 		},
-		//Owner ref but name doesn't match
+		// Owner ref but name doesn't match
 		{
 			svc: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -202,7 +202,7 @@ func TestServiceRouter_isOwnedByCanary(t *testing.T) {
 				},
 			}, isOwned: false, hasOwnerRef: true,
 		},
-		//No ownerRef
+		// No ownerRef
 		{
 			svc: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -305,13 +305,13 @@ func TestServiceRouter_Finalize(t *testing.T) {
 		canary           *v1beta1.Canary
 		shouldMutate     bool
 	}{
-		//Won't reconcile since it is owned and would be garbage collected
+		// Won't reconcile since it is owned and would be garbage collected
 		{router: router, callSetupMethods: true, shouldError: false, canary: mocks.canary, shouldMutate: false},
-		//Service not found
+		// Service not found
 		{router: &KubernetesDefaultRouter{kubeClient: fake.NewSimpleClientset(), logger: mocks.logger}, callSetupMethods: false, shouldError: true, canary: mocks.canary, shouldMutate: false},
-		//Not owned
+		// Not owned
 		{router: &KubernetesDefaultRouter{kubeClient: fake.NewSimpleClientset(svc), logger: mocks.logger}, callSetupMethods: false, shouldError: false, canary: mocks.canary, shouldMutate: true},
-		//Kubectl annotation
+		// Kubectl annotation
 		{router: &KubernetesDefaultRouter{kubeClient: fake.NewSimpleClientset(kubectlSvc), logger: mocks.logger}, callSetupMethods: false, shouldError: false, canary: mocks.canary, shouldMutate: true},
 	}
 
@@ -319,46 +319,30 @@ func TestServiceRouter_Finalize(t *testing.T) {
 
 		if table.callSetupMethods {
 			err := table.router.Initialize(table.canary)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
+			require.NoError(t, err)
 			err = table.router.Reconcile(table.canary)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
+			require.NoError(t, err)
 		}
 
 		err := table.router.Finalize(table.canary)
-
-		if table.shouldError && err == nil {
-			t.Error("Should have errored")
-		} else if !table.shouldError && err != nil {
-			t.Errorf("Shouldn't error but did %s", err)
+		if table.shouldError {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
 		}
 
 		svc, err := table.router.kubeClient.CoreV1().Services(table.canary.Namespace).Get(table.canary.Name, metav1.GetOptions{})
 		if err != nil {
 			if !errors.IsNotFound(err) {
-				if svc.Spec.Ports[0].Name != "http" {
-					t.Errorf("Got svc port name %s wanted %s", svc.Spec.Ports[0].Name, "http")
-				}
-
-				if svc.Spec.Ports[0].Port != 9898 {
-					t.Errorf("Got svc port %v wanted %v", svc.Spec.Ports[0].Port, 9898)
-				}
+				require.Equal(t, "http", svc.Spec.Ports[0].Name)
+				require.Equal(t, 9898, svc.Spec.Ports[0].Port)
 
 				if table.shouldMutate {
-					if svc.Spec.Selector["app"] != table.canary.Name {
-						t.Errorf("Got svc selector %v wanted %v", svc.Spec.Selector["app"], table.canary.Name)
-					}
+					require.Equal(t, table.canary.Name, svc.Spec.Selector["app"])
 				} else {
-					if svc.Spec.Selector["app"] != fmt.Sprintf("%s-primary", table.canary.Name) {
-						t.Errorf("Got svc selector %v wanted %v", svc.Spec.Selector["app"], fmt.Sprintf("%s-primary", table.canary.Name))
-					}
+					require.Equal(t, fmt.Sprintf("%s-primary", table.canary.Name), svc.Spec.Selector["app"])
 				}
 			}
 		}
 	}
-
 }

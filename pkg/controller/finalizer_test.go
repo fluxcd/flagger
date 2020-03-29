@@ -2,77 +2,56 @@ package controller
 
 import (
 	"fmt"
+	"testing"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
-	"github.com/weaveworks/flagger/pkg/logger"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sTesting "k8s.io/client-go/testing"
 
-	"testing"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
 )
 
-//Test has finalizers
 func TestFinalizer_hasFinalizer(t *testing.T) {
+	c := newDeploymentTestCanary()
+	require.False(t, hasFinalizer(c))
 
-	withFinalizer := newDeploymentTestCanary()
-	withFinalizer.Finalizers = append(withFinalizer.Finalizers, finalizer)
-
-	tables := []struct {
-		canary *flaggerv1.Canary
-		result bool
-	}{
-		{newDeploymentTestCanary(), false},
-		{withFinalizer, true},
-	}
-
-	for _, table := range tables {
-		isPresent := hasFinalizer(table.canary, finalizer)
-		if isPresent != table.result {
-			t.Errorf("Result of hasFinalizer returned [%t], but expected [%t]", isPresent, table.result)
-		}
-	}
+	c.Finalizers = append(c.Finalizers, finalizer)
+	require.True(t, hasFinalizer(c))
 }
 
 func TestFinalizer_addFinalizer(t *testing.T) {
 
-	mockError := fmt.Errorf("failed to add finalizer to canary %s", "testCanary")
 	cs := fakeFlagger.NewSimpleClientset(newDeploymentTestCanary())
-	//prepend so it is evaluated over the catch all *
+	// prepend so it is evaluated over the catch all *
 	cs.PrependReactor("update", "canaries", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
-		return true, nil, mockError
+		return true, nil, fmt.Errorf("failed to add finalizer to canary %s", "testCanary")
 	})
 
-	logger, _ := logger.NewLogger("debug")
 	m := fixture{
 		canary:        newDeploymentTestCanary(),
 		flaggerClient: cs,
-		ctrl: &Controller{
-			flaggerClient: cs,
-			logger:        logger,
-		},
-		logger: logger,
+		ctrl:          &Controller{flaggerClient: cs},
 	}
 
 	tables := []struct {
 		mock   fixture
 		canary *flaggerv1.Canary
-		error  error
+		expErr bool
 	}{
-		{newDeploymentFixture(nil), newDeploymentTestCanary(), nil},
-		{m, m.canary, mockError},
+		{newDeploymentFixture(nil), newDeploymentTestCanary(), false},
+		{m, m.canary, true},
 	}
 
 	for _, table := range tables {
-		response := table.mock.ctrl.addFinalizer(table.canary, finalizer)
+		err := table.mock.ctrl.addFinalizer(table.canary)
 
-		if table.error != nil && response == nil {
-			t.Errorf("Expected an error from addFinalizer, but wasn't present")
-		} else if table.error == nil && response != nil {
-			t.Errorf("Expected no error from addFinalizer, but returned error %s", response)
+		if table.expErr {
+			require.NotNil(t, err)
+		} else {
+			require.Nil(t, err)
 		}
 	}
-
 }
 
 func TestFinalizer_removeFinalizer(t *testing.T) {
@@ -80,11 +59,10 @@ func TestFinalizer_removeFinalizer(t *testing.T) {
 	withFinalizer := newDeploymentTestCanary()
 	withFinalizer.Finalizers = append(withFinalizer.Finalizers, finalizer)
 
-	mockError := fmt.Errorf("failed to add finalizer to canary %s", "testCanary")
 	cs := fakeFlagger.NewSimpleClientset(newDeploymentTestCanary())
-	//prepend so it is evaluated over the catch all *
+	// prepend so it is evaluated over the catch all *
 	cs.PrependReactor("update", "canaries", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
-		return true, nil, mockError
+		return true, nil, fmt.Errorf("failed to add finalizer to canary %s", "testCanary")
 	})
 	m := fixture{
 		canary:        withFinalizer,
@@ -95,20 +73,18 @@ func TestFinalizer_removeFinalizer(t *testing.T) {
 	tables := []struct {
 		mock   fixture
 		canary *flaggerv1.Canary
-		error  error
+		expErr bool
 	}{
-		{newDeploymentFixture(nil), withFinalizer, nil},
-		{m, m.canary, mockError},
+		{newDeploymentFixture(nil), withFinalizer, false},
+		{m, m.canary, true},
 	}
 
 	for _, table := range tables {
-		response := table.mock.ctrl.removeFinalizer(table.canary, finalizer)
-
-		if table.error != nil && response == nil {
-			t.Errorf("Expected an error from addFinalizer, but wasn't present")
-		} else if table.error == nil && response != nil {
-			t.Errorf("Expected no error from addFinalizer, but returned error %s", response)
+		err := table.mock.ctrl.removeFinalizer(table.canary)
+		if table.expErr {
+			require.NotNil(t, err)
+		} else {
+			require.Nil(t, err)
 		}
-
 	}
 }

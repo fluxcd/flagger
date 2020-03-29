@@ -187,32 +187,24 @@ func TestDeploymentController_Finalize(t *testing.T) {
 	mocks := newDeploymentFixture()
 
 	for _, tc := range []struct {
-		mocks            deploymentControllerFixture
-		callInitialize   bool
-		shouldError      bool
-		expectedReplicas int32
-		canary           *flaggerv1.Canary
+		mocks          deploymentControllerFixture
+		callInitialize bool
+		canary         *flaggerv1.Canary
 	}{
 		// primary not found returns error
-		{mocks, false, false, 1, mocks.canary},
+		{mocks, false, mocks.canary},
 		// happy path
-		{mocks, true, false, 1, mocks.canary},
+		{mocks, true, mocks.canary},
 	} {
 		if tc.callInitialize {
 			mocks.initializeCanary(t)
 		}
 
 		err := mocks.controller.Finalize(tc.canary)
-		if tc.shouldError {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
-		}
+		require.NoError(t, err)
 
-		if tc.expectedReplicas > 0 {
-			c, err := mocks.kubeClient.AppsV1().Deployments(mocks.canary.Namespace).Get(mocks.canary.Name, metav1.GetOptions{})
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedReplicas, *c.Spec.Replicas)
-		}
+		c, err := mocks.kubeClient.AppsV1().Deployments(mocks.canary.Namespace).Get(mocks.canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, int32(1), *c.Spec.Replicas)
 	}
 }

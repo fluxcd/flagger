@@ -178,60 +178,57 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 	return nil
 }
 
-//Finalize reverts the apex router if not owned by the Flagger controller.
+// Finalize reverts the apex router if not owned by the Flagger controller.
 func (c *KubernetesDefaultRouter) Finalize(canary *flaggerv1.Canary) error {
 	apexName, _, _ := canary.GetServiceNames()
 
 	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(apexName, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("service %s.%s get query error: %w", apexName, canary.Namespace, err)
 	}
 
-	//No need to do any reconciliation if the router is owned by the controller
+	// No need to do any reconciliation if the router is owned by the controller
 	if hasCanaryOwnerRef, isOwned := c.isOwnedByCanary(svc, canary.Name); !hasCanaryOwnerRef && !isOwned {
-		//If kubectl annotation is present that will be utilized, else reconcile
+		// If kubectl annotation is present that will be utilized, else reconcile
 		if a, ok := svc.Annotations[kubectlAnnotation]; ok {
 			var storedSvc corev1.Service
-			err := json.Unmarshal([]byte(a), &storedSvc)
-			if err != nil {
-				return fmt.Errorf("router %s.%s failed to unMarshal annotation %s, unable to revert",
+			if err := json.Unmarshal([]byte(a), &storedSvc); err != nil {
+				return fmt.Errorf("router %s.%s failed to unMarshal annotation %s",
 					svc.Name, svc.Namespace, kubectlAnnotation)
 			}
 			clone := svc.DeepCopy()
 			clone.Spec.Selector = storedSvc.Spec.Selector
 
-			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(clone)
-			if err != nil {
+			if _, err := c.kubeClient.CoreV1().Services(canary.Namespace).Update(clone); err != nil {
 				return fmt.Errorf("service %s update error: %w", clone.Name, err)
 			}
-
 		} else {
 			err = c.reconcileService(canary, apexName, canary.Spec.TargetRef.Name)
 			if err != nil {
-				return err
+				return fmt.Errorf("reconcileService failed: %w", err)
 			}
 		}
 	}
-
 	return nil
 }
 
-//isOwnedByCanary evaluates if an object contains an OwnerReference declaration, that is of kind Canary and
-//has the same ref name as the Canary under evaluation.  It returns two bool the first returns true if
-//an OwnerReference is present and the second, returns if it is owned by the supplied name.
+// isOwnedByCanary evaluates if an object contains an OwnerReference declaration, that is of kind Canary and
+// has the same ref name as the Canary under evaluation.  It returns two bool the first returns true if
+// an OwnerReference is present and the second returns true if it is owned by the supplied name.
 func (c KubernetesDefaultRouter) isOwnedByCanary(obj interface{}, name string) (bool, bool) {
-	var object metav1.Object
-	var ok bool
-	if object, ok = obj.(metav1.Object); ok {
-		if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
-			if ownerRef.Kind == flaggerv1.CanaryKind {
-				//And the name exists return true
-				if name == ownerRef.Name {
-					return true, true
-				}
-				return true, false
-			}
-		}
+	object, ok := obj.(metav1.Object)
+	if !ok {
+		return false, false
 	}
-	return false, false
+
+	ownerRef := metav1.GetControllerOf(object)
+	if ownerRef == nil {
+		return false, false
+	}
+
+	if ownerRef.Kind != flaggerv1.CanaryKind {
+		return false, false
+	}
+
+	return true, ownerRef.Name == name
 }

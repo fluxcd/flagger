@@ -366,33 +366,27 @@ func (ir *IstioRouter) SetRoutes(
 }
 
 func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
-
-	//Need to see if I can get the annotation orig-configuration
+	// Need to see if I can get the annotation orig-configuration
 	apexName, _, _ := canary.GetServiceNames()
 
 	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("VirtualService %s.%s get query error: %w", apexName, canary.Namespace, err)
 	}
 
 	var storedSpec istiov1alpha3.VirtualServiceSpec
-	//If able to get and unMarshal update the spec
 	if a, ok := vs.ObjectMeta.Annotations[kubectlAnnotation]; ok {
 		var storedVS istiov1alpha3.VirtualService
-		err := json.Unmarshal([]byte(a), &storedVS)
-		if err != nil {
-			return fmt.Errorf("VirtualService %s.%s failed to unMarshal annotation %s, unable to revert",
+		if err := json.Unmarshal([]byte(a), &storedVS); err != nil {
+			return fmt.Errorf("VirtualService %s.%s failed to unMarshal annotation %s",
 				apexName, canary.Namespace, kubectlAnnotation)
 		}
 		storedSpec = storedVS.Spec
 	} else if a, ok := vs.ObjectMeta.Annotations[configAnnotation]; ok {
-		var spec istiov1alpha3.VirtualServiceSpec
-		err := json.Unmarshal([]byte(a), &spec)
-		if err != nil {
-			return fmt.Errorf("VirtualService %s.%s failed to unMarshal annotation %s, unable to revert",
+		if err := json.Unmarshal([]byte(a), &storedSpec); err != nil {
+			return fmt.Errorf("VirtualService %s.%s failed to unMarshal annotation %s",
 				apexName, canary.Namespace, configAnnotation)
 		}
-		storedSpec = spec
 	} else {
 		ir.logger.Warnf("VirtualService %s.%s original configuration not found, unable to revert", apexName, canary.Namespace)
 		return nil
@@ -403,9 +397,8 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 
 	_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(clone)
 	if err != nil {
-		return fmt.Errorf("VirtualService %s.%s update error %v, unable to revert", apexName, canary.Namespace, err)
+		return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 	}
-
 	return nil
 }
 
