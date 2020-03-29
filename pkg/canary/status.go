@@ -56,7 +56,7 @@ func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Cana
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(name).Get(ns, metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -82,7 +82,7 @@ func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, va
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -108,7 +108,7 @@ func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -136,7 +136,7 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}

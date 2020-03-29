@@ -238,6 +238,6 @@ func (i *IngressRouter) GetAnnotationWithPrefix(suffix string) string {
 	return fmt.Sprintf("%v/%v", i.annotationsPrefix, suffix)
 }
 
-func (i *IngressRouter) Finalize(canary *flaggerv1.Canary) error {
+func (i *IngressRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
 }

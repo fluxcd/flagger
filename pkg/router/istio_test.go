@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -379,72 +377,54 @@ func TestIstioRouter_Finalize(t *testing.T) {
 		callReconcile bool
 		annotation    string
 	}{
-		//VS not found
+		// VS not found
 		{router: router, spec: nil, shouldError: true, createVS: false, canary: mocks.canary, callReconcile: false, annotation: ""},
-		//No annotation found but still finalizes
+		// No annotation found but still finalizes
 		{router: router, spec: nil, shouldError: false, createVS: false, canary: mocks.canary, callReconcile: true, annotation: ""},
-		//Spec should match annotation after finalize
+		// Spec should match annotation after finalize
 		{router: router, spec: flaggerSpec, shouldError: false, createVS: true, canary: mocks.canary, callReconcile: true, annotation: "flagger"},
-		//Need to test kubectl annotation
+		// Need to test kubectl annotation
 		{router: router, spec: kubectlSpec, shouldError: false, createVS: true, canary: mocks.canary, callReconcile: true, annotation: "kubectl"},
 	}
 
 	for _, table := range tables {
-
 		var err error
-
 		if table.createVS {
 			vs, err := router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Get(table.canary.Name, metav1.GetOptions{})
-			if err != nil {
-				t.Fatal(err.Error())
-			}
+			require.NoError(t, err)
 
 			if vs.Annotations == nil {
 				vs.Annotations = make(map[string]string)
 			}
 
-			if table.annotation == "flagger" {
+			switch table.annotation {
+			case "flagger":
 				b, err := json.Marshal(table.spec)
-				if err != nil {
-					t.Fatal(err.Error())
-				}
-
+				require.NoError(t, err)
 				vs.Annotations[configAnnotation] = string(b)
-			} else if table.annotation == "kubectl" {
+			case "kubectl":
 				vs.Annotations[kubectlAnnotation] = `{"apiVersion": "networking.istio.io/v1alpha3","kind": "VirtualService","metadata": {"annotations": {},"name": "podinfo","namespace": "test"},  "spec": {"gateways": ["ingressgateway.istio-system.svc.cluster.local"],"hosts": ["podinfo"],"http": [{"route": [{"destination": {"host": "podinfo"}}]}]}}`
-
 			}
 			_, err = router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Update(vs)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
+			require.NoError(t, err)
 		}
 
 		if table.callReconcile {
 			err = router.Reconcile(table.canary)
-			if err != nil {
-				t.Fatal(err.Error())
-
-			}
+			require.NoError(t, err)
 		}
 
 		err = router.Finalize(table.canary)
-
-		if table.shouldError && err == nil {
-			t.Errorf("Expected error from Finalize but error was not returned")
-		} else if !table.shouldError && err != nil {
-			t.Errorf("Expected no error from Finalize but error was returned %s", err)
-		} else if table.spec != nil {
-			vs, err := router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Get(table.canary.Name, metav1.GetOptions{})
-			if err != nil {
-				t.Fatal(err.Error())
-
-			}
-			if cmp.Diff(vs.Spec, *table.spec) != "" {
-
-				t.Errorf("Expected spec %+v but recieved %+v", table.spec, vs.Spec)
-			}
+		if table.shouldError {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
 		}
 
+		if table.spec != nil {
+			vs, err := router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Get(table.canary.Name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, *table.spec, vs.Spec)
+		}
 	}
 }

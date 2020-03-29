@@ -225,6 +225,6 @@ func (sr *SmiRouter) getWithConvert(canary *flaggerv1.Canary, host string) (*smi
 	return ts, nil
 }
 
-func (sr *SmiRouter) Finalize(canary *flaggerv1.Canary) error {
+func (sr *SmiRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
 }

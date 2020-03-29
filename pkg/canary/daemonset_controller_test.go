@@ -207,6 +207,5 @@ func TestDaemonSetController_Finalize(t *testing.T) {
 	require.NoError(t, err)
 
 	_, ok := dep.Spec.Template.Spec.NodeSelector["flagger.app/scale-to-zero"]
-
 	assert.False(t, ok)
 }

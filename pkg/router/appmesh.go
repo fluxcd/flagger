@@ -483,7 +483,7 @@ func (ar *AppMeshRouter) gatewayAnnotations(canary *flaggerv1.Canary) map[string
 	return a
 }
 
-func (ar *AppMeshRouter) Finalize(canary *flaggerv1.Canary) error {
+func (ar *AppMeshRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
 }
 
