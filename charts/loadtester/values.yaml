@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: weaveworks/flagger-loadtester
-  tag: 0.14.0
+  tag: 0.15.0
   pullPolicy: IfNotPresent
 
 podAnnotations:
