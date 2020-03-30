@@ -342,7 +342,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		Addr:         ":" + port,
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 1 * time.Minute,
+		WriteTimeout: timeout,
 		IdleTimeout:  15 * time.Second,
 	}
 
