@@ -9,6 +9,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type TaskRunnerInterface interface {
+	Add(task Task)
+	GetTotalExecs() uint64
+	Start(interval time.Duration, stopCh <-chan struct{})
+	Timeout() time.Duration
+}
+
 type TaskRunner struct {
 	logger       *zap.SugaredLogger
 	timeout      time.Duration
@@ -80,4 +87,8 @@ func (tr *TaskRunner) Start(interval time.Duration, stopCh <-chan struct{}) {
 			return
 		}
 	}
+}
+
+func (tr *TaskRunner) Timeout() time.Duration {
+	return tr.timeout
 }

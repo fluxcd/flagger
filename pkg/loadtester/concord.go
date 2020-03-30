@@ -121,14 +121,15 @@ func (task *ConcordTask) String() string {
 	return fmt.Sprintf("%s %s %s %s", task.Org, task.Project, task.Repo, task.Entrypoint)
 }
 
-func (task *ConcordTask) Run(ctx context.Context) (bool, error) {
+func (task *ConcordTask) Run(ctx context.Context) (*TaskRunResult, error) {
 	instance, err := task.startProcess()
 	if err != nil {
 		task.logger.Errorf("failed to start process: %s", err.Error())
-		return false, err
+		return &TaskRunResult{false, nil}, err
 	}
 
-	return task.checkStatus(ctx, instance, task.PollInterval)
+	ok, err := task.checkStatus(ctx, instance, task.PollInterval)
+	return &TaskRunResult{ok, nil}, err
 }
 
 type concordProcess struct {

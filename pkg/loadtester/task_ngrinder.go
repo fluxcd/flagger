@@ -86,17 +86,17 @@ func (task *NGrinderTask) StopEndpoint() *url.URL {
 }
 
 // initiate a clone_and_start request and get new test id from response
-func (task *NGrinderTask) Run(ctx context.Context) bool {
+func (task *NGrinderTask) Run(ctx context.Context) *TaskRunResult {
 	url := task.CloneAndStartEndpoint().String()
 	result, err := task.request("POST", url, ctx)
 	if err != nil {
 		task.logger.With("canary", task.canary).
 			Errorf("failed to clone and start ngrinder test %s: %s", url, err.Error())
-		return false
+		return &TaskRunResult{false, nil}
 	}
 	id := result["id"]
 	task.testId = int(id.(float64))
-	return task.PollStatus(ctx)
+	return &TaskRunResult{task.PollStatus(ctx), nil}
 }
 
 func (task *NGrinderTask) String() string {
