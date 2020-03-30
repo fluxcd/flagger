@@ -25,7 +25,7 @@ func TestIngressRouter_Reconcile(t *testing.T) {
 	canaryWeightAn := "custom.ingress.kubernetes.io/canary-weight"
 
 	canaryName := fmt.Sprintf("%s-canary", mocks.ingressCanary.Spec.IngressRef.Name)
-	inCanary, err := router.kubeClient.ExtensionsV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
+	inCanary, err := router.kubeClient.NetworkingV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// test initialisation
@@ -58,7 +58,7 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 	canaryWeightAn := "prefix1.nginx.ingress.kubernetes.io/canary-weight"
 
 	canaryName := fmt.Sprintf("%s-canary", mocks.ingressCanary.Spec.IngressRef.Name)
-	inCanary, err := router.kubeClient.ExtensionsV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
+	inCanary, err := router.kubeClient.NetworkingV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// test rollout
@@ -72,7 +72,7 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 	err = router.SetRoutes(mocks.ingressCanary, p, c, m)
 	require.NoError(t, err)
 
-	inCanary, err = router.kubeClient.ExtensionsV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
+	inCanary, err = router.kubeClient.NetworkingV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// test promotion
