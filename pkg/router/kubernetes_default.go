@@ -219,7 +219,7 @@ func (c *KubernetesDefaultRouter) Finalize(canary *flaggerv1.Canary) error {
 				return fmt.Errorf("service %s update error: %w", clone.Name, err)
 			}
 		} else {
-			err = c.reconcileService(canary, apexName, canary.Spec.TargetRef.Name)
+			err = c.reconcileService(canary, apexName, canary.Spec.TargetRef.Name, canary.Spec.Service.Apex)
 			if err != nil {
 				return fmt.Errorf("reconcileService failed: %w", err)
 			}
