@@ -14,27 +14,61 @@ rules:
     resources:
       - events
       - configmaps
+      - configmaps/finalizers
       - secrets
+      - secrets/finalizers
       - services
-    verbs: ["*"]
+      - services/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - apps
     resources:
       - daemonsets
+      - daemonsets/finalizers
       - deployments
-    verbs: ["*"]
+      - deployments/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - autoscaling
     resources:
       - horizontalpodautoscalers
-    verbs: ["*"]
+      - horizontalpodautoscalers/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - extensions
       - networking.k8s.io
     resources:
       - ingresses
-      - ingresses/status
-    verbs: ["*"]
+      - ingresses/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - flagger.app
     resources:
@@ -44,50 +78,98 @@ rules:
       - metrictemplates/status
       - alertproviders
       - alertproviders/status
-    verbs: ["*"]
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - networking.istio.io
     resources:
       - virtualservices
-      - virtualservices/status
+      - virtualservices/finalizers
       - destinationrules
-      - destinationrules/status
-    verbs: ["*"]
+      - destinationrules/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - appmesh.k8s.aws
     resources:
-      - meshes
-      - meshes/status
       - virtualnodes
-      - virtualnodes/status
+      - virtualnodes/finalizers
       - virtualservices
-      - virtualservices/status
-    verbs: ["*"]
+      - virtualservices/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - split.smi-spec.io
     resources:
       - trafficsplits
-    verbs: ["*"]
+      - trafficsplits/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - specs.smi-spec.io
+    resources:
+      - httproutegroups
+      - httproutegroups/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - gloo.solo.io
     resources:
-      - settings
       - upstreams
+      - upstreams/finalizers
       - upstreamgroups
-      - proxies
-      - virtualservices
-    verbs: ["*"]
-  - apiGroups:
-      - gateway.solo.io
-    resources:
-      - virtualservices
-      - gateways
-    verbs: ["*"]
+      - upstreamgroups/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - apiGroups:
       - projectcontour.io
     resources:
       - httpproxies
-    verbs: ["*"]
+      - httpproxies/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - nonResourceURLs:
       - /version
     verbs:
