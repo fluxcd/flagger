@@ -83,7 +83,7 @@ func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !cd.SkipAnalysis() {
 			if err := c.IsPrimaryReady(cd); err != nil {
-				return fmt.Errorf("IsPrimaryReady failed: %w", err)
+				return fmt.Errorf("%w", err)
 			}
 		}
 

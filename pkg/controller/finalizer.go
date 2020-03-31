@@ -12,63 +12,61 @@ import (
 const finalizer = "finalizer.flagger.app"
 
 func (c *Controller) finalize(old interface{}) error {
-
-	r, ok := old.(*flaggerv1.Canary)
+	canary, ok := old.(*flaggerv1.Canary)
 	if !ok {
 		return fmt.Errorf("received unexpected object: %v", old)
 	}
 
-	_, err := c.flaggerClient.FlaggerV1beta1().Canaries(r.Namespace).Get(r.Name, metav1.GetOptions{})
+	_, err := c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("get query error: %w", err)
 	}
 
 	// Retrieve a controller
-	canaryController := c.canaryFactory.Controller(r.Spec.TargetRef.Kind)
+	canaryController := c.canaryFactory.Controller(canary.Spec.TargetRef.Kind)
 
 	// Set the status to terminating if not already in that state
-	if r.Status.Phase != flaggerv1.CanaryPhaseTerminating {
-		if err := canaryController.SetStatusPhase(r, flaggerv1.CanaryPhaseTerminating); err != nil {
+	if canary.Status.Phase != flaggerv1.CanaryPhaseTerminating {
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseTerminating); err != nil {
 			return fmt.Errorf("failed to update status: %w", err)
 		}
 
 		// record event
-		c.recordEventInfof(r, "Terminating canary %s.%s", r.Name, r.Namespace)
+		c.recordEventInfof(canary, "Terminating canary %s.%s", canary.Name, canary.Namespace)
 	}
 
-	err = canaryController.Finalize(r)
+	// Revert the Kubernetes deployment or daemonset
+	err = canaryController.Finalize(canary)
 	if err != nil {
 		return fmt.Errorf("failed to revert target: %w", err)
 	}
-	c.logger.Infof("%s.%s kind %s reverted", r.Name, r.Namespace, r.Spec.TargetRef.Kind)
+	c.logger.Infof("%s.%s kind %s reverted", canary.Name, canary.Namespace, canary.Spec.TargetRef.Kind)
 
 	// Ensure that targetRef has met a ready state
-	c.logger.Infof("Checking is canary is ready %s.%s", r.Name, r.Namespace)
-	_, err = canaryController.IsCanaryReady(r)
+	c.logger.Infof("Checking is canary is ready %s.%s", canary.Name, canary.Namespace)
+	_, err = canaryController.IsCanaryReady(canary)
 	if err != nil {
 		return fmt.Errorf("canary not ready during finalizing: %w", err)
 	}
 
-	c.logger.Infof("%s.%s moving forward with router finalizing", r.Name, r.Namespace)
-	labelSelector, ports, err := canaryController.GetMetadata(r)
+	labelSelector, ports, err := canaryController.GetMetadata(canary)
 	if err != nil {
 		return fmt.Errorf("failed to get metadata for router finalizing: %w", err)
 	}
 
-	// Revert the router
-	router := c.routerFactory.KubernetesRouter(r.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports)
-	if err := router.Finalize(r); err != nil {
+	// Revert the Kubernetes service
+	router := c.routerFactory.KubernetesRouter(canary.Spec.TargetRef.Kind, labelSelector, map[string]string{}, ports)
+	if err := router.Finalize(canary); err != nil {
 		return fmt.Errorf("failed revert router: %w", err)
 	}
-	c.logger.Infof("%s.%s router reverted", r.Name, r.Namespace)
+	c.logger.Infof("%s.%s router reverted", canary.Name, canary.Namespace)
 
-	// TODO if I can't revert the mesh continue on?
-	// Revert the Mesh
-	if err := c.revertMesh(r); err != nil {
+	// Revert the mesh objects
+	if err := c.revertMesh(canary); err != nil {
 		return fmt.Errorf("failed to revert mesh: %w", err)
 	}
 
-	c.logger.Infof("Finalization complete for %s.%s", r.Name, r.Namespace)
+	c.logger.Infof("Finalization complete for %s.%s", canary.Name, canary.Namespace)
 	return nil
 }
 
