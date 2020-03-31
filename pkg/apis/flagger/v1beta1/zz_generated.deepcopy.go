@@ -364,9 +364,21 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	in.Apex.DeepCopyInto(&out.Apex)
-	in.Primary.DeepCopyInto(&out.Primary)
-	in.Canary.DeepCopyInto(&out.Canary)
+	if in.Apex != nil {
+		in, out := &in.Apex, &out.Apex
+		*out = new(CustomMetadata)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Primary != nil {
+		in, out := &in.Primary, &out.Primary
+		*out = new(CustomMetadata)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Canary != nil {
+		in, out := &in.Canary, &out.Canary
+		*out = new(CustomMetadata)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

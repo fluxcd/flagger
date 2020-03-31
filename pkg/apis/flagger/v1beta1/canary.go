@@ -171,15 +171,15 @@ type CanaryService struct {
 
 	// Apex is metadata to add to the apex service
 	// +optional
-	Apex CustomMetadata `json:"apex,omitempty"`
+	Apex *CustomMetadata `json:"apex,omitempty"`
 
 	// Primary is the metadata to add to the primary service
 	// +optional
-	Primary CustomMetadata `json:"primary,omitempty"`
+	Primary *CustomMetadata `json:"primary,omitempty"`
 
 	// Canary is the metadata to add to the canary service
 	// +optional
-	Canary CustomMetadata `json:"canary,omitempty"`
+	Canary *CustomMetadata `json:"canary,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done

@@ -69,7 +69,7 @@ func (c *KubernetesDefaultRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute i
 	return 0, 0, nil
 }
 
-func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string, metadata flaggerv1.CustomMetadata) error {
+func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string, metadata *flaggerv1.CustomMetadata) error {
 	portName := canary.Spec.Service.PortName
 	if portName == "" {
 		portName = "http"
@@ -111,6 +111,10 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		}
 
 		svcSpec.Ports = append(svcSpec.Ports, cp)
+	}
+
+	if metadata == nil {
+		metadata = &flaggerv1.CustomMetadata{}
 	}
 
 	if metadata.Labels == nil {
@@ -219,7 +223,7 @@ func (c *KubernetesDefaultRouter) Finalize(canary *flaggerv1.Canary) error {
 				return fmt.Errorf("service %s update error: %w", clone.Name, err)
 			}
 		} else {
-			err = c.reconcileService(canary, apexName, canary.Spec.TargetRef.Name, canary.Spec.Service.Apex)
+			err = c.reconcileService(canary, apexName, canary.Spec.TargetRef.Name, nil)
 			if err != nil {
 				return fmt.Errorf("reconcileService failed: %w", err)
 			}
