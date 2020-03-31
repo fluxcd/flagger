@@ -202,7 +202,7 @@ func (c *Controller) processNextWorkItem() bool {
 			return nil
 		}
 		// Run the syncHandler, passing it the namespace/name string of the
-		// Foo resource to be synced.
+		// Canary resource to be synced.
 		if err := c.syncHandler(key); err != nil {
 			return fmt.Errorf("error syncing '%s': %w", key, err)
 		}
@@ -234,7 +234,6 @@ func (c *Controller) syncHandler(key string) error {
 
 	// Finalize if canary has been marked for deletion and revert is desired
 	if cd.Spec.RevertOnDeletion && cd.ObjectMeta.DeletionTimestamp != nil {
-
 		// If finalizers have been previously removed proceed
 		if !hasFinalizer(cd) {
 			c.logger.Infof("Canary %s.%s has been finalized", cd.Name, cd.Namespace)
@@ -243,12 +242,16 @@ func (c *Controller) syncHandler(key string) error {
 
 		if cd.Status.Phase != flaggerv1.CanaryPhaseTerminated {
 			if err := c.finalize(cd); err != nil {
+				c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+					Errorf("Unable to finalize canary: %v", err)
 				return fmt.Errorf("unable to finalize to canary %s.%s error: %w", cd.Name, cd.Namespace, err)
 			}
 		}
 
 		// Remove finalizer from Canary
 		if err := c.removeFinalizer(cd); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+				Errorf("Unable to remove finalizer for canary %s.%s error: %v", cd.Name, cd.Namespace, err)
 			return fmt.Errorf("unable to remove finalizer for canary %s.%s: %w", cd.Name, cd.Namespace, err)
 		}
 
@@ -302,7 +305,7 @@ func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flagge
 	var roll *flaggerv1.Canary
 	var ok bool
 	if roll, ok = obj.(*flaggerv1.Canary); !ok {
-		logger.Errorf("Event Watch received an invalid object: %#v", obj)
+		logger.Errorf("Event watch received an invalid object: %#v", obj)
 		return flaggerv1.Canary{}, false
 	}
 	return *roll, true
