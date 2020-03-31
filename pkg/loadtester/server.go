@@ -187,11 +187,8 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 
 	mux.HandleFunc("/", HandleNewTask(logger, taskRunner))
 	srv := &http.Server{
-		Addr:         ":" + port,
-		Handler:      mux,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: timeout,
-		IdleTimeout:  15 * time.Second,
+		Addr:    ":" + port,
+		Handler: mux,
 	}
 
 	// run server in background
@@ -250,11 +247,11 @@ func HandleNewTask(logger *zap.SugaredLogger, taskRunner TaskRunnerInterface) fu
 				rtnCmdOutput, err = strconv.ParseBool(rtn)
 			}
 
-			// run bats command (blocking task)
+			// run bash command (blocking task)
 			if typ == TaskTypeBash {
-				logger.With("canary", payload.Name).Infof("bats command %s", payload.Metadata["cmd"])
+				logger.With("canary", payload.Name).Infof("bash command %s", payload.Metadata["cmd"])
 
-				bats := BashTask{
+				bashTask := BashTask{
 					command:      payload.Metadata["cmd"],
 					logCmdOutput: true,
 					TaskBase: TaskBase{
@@ -266,7 +263,7 @@ func HandleNewTask(logger *zap.SugaredLogger, taskRunner TaskRunnerInterface) fu
 				ctx, cancel := context.WithTimeout(context.Background(), taskRunner.Timeout())
 				defer cancel()
 
-				result, err := bats.Run(ctx)
+				result, err := bashTask.Run(ctx)
 				if !result.ok {
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte(err.Error()))
