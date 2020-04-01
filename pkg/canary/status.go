@@ -38,9 +38,7 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 			cdCopy.Status.Conditions = conditions
 		}
 
-		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
-			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
-		}
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -65,9 +63,7 @@ func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Cana
 		cdCopy.Status.FailedChecks = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
-			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
-		}
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -91,9 +87,7 @@ func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, va
 		cdCopy.Status.CanaryWeight = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
-			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
-		}
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -118,9 +112,7 @@ func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary
 		cdCopy.Status.Iterations = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
-			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
-		}
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
@@ -160,9 +152,7 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 			cdCopy.Status.Conditions = conditions
 		}
 
-		if err = updateStatusWithUpgrade(flaggerClient, cdCopy); err != nil {
-			return fmt.Errorf("updateStatusWithUpgrade failed: %w", err)
-		}
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
