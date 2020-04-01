@@ -30,6 +30,14 @@ selectorLabels: ""
 configTracking:
   enabled: true
 
+# when enabled, it will add a security context for the flagger pod. You may
+# need to disable this if you are running flagger on OpenShift
+securityContext:
+  enabled: true
+  context:
+    readOnlyRootFilesystem: true
+    runAsUser: 10001
+
 # when specified, flagger will publish events to the provided webhook
 eventWebhook: ""
 
