@@ -632,6 +632,13 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		return true
 	}
 
+	var err error
+	canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.Name, metav1.GetOptions{})
+	if err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+		return false
+	}
+
 	if canary.Status.Phase == "" || canary.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
