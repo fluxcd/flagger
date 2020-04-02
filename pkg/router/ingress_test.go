@@ -25,7 +25,6 @@ func TestIngressRouter_Reconcile(t *testing.T) {
 	require.NoError(t, err)
 
 	canaryAn := "custom.ingress.kubernetes.io/canary"
-	canaryWeightAn := "custom.ingress.kubernetes.io/canary-weight"
 
 	canaryName := fmt.Sprintf("%s-canary", mocks.ingressCanary.Spec.IngressRef.Name)
 	inCanary, err := router.kubeClient.NetworkingV1beta1().Ingresses("default").Get(canaryName, metav1.GetOptions{})
@@ -33,7 +32,6 @@ func TestIngressRouter_Reconcile(t *testing.T) {
 
 	// test initialisation
 	assert.Equal(t, "false", inCanary.Annotations[canaryAn])
-	assert.Equal(t, "0", inCanary.Annotations[canaryWeightAn])
 }
 
 func TestIngressRouter_GetSetRoutes(t *testing.T) {
@@ -80,7 +78,6 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 
 	// test promotion
 	assert.Equal(t, "false", inCanary.Annotations[canaryAn])
-	assert.Equal(t, "0", inCanary.Annotations[canaryWeightAn])
 }
 
 func TestIngressRouter_ABTest(t *testing.T) {

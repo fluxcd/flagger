@@ -166,11 +166,8 @@ func (i *IngressRouter) SetRoutes(
 					cookie = v.Exact
 				} else {
 					header = k
-					if v.Regex != "" {
-						headerRegex = v.Regex
-					} else {
-						headerValue = v.Exact
-					}
+					headerRegex = v.Regex
+					headerValue = v.Exact
 				}
 			}
 		}
@@ -206,7 +203,6 @@ func (i *IngressRouter) makeAnnotations(annotations map[string]string) map[strin
 	}
 
 	res[i.GetAnnotationWithPrefix("canary")] = "false"
-	res[i.GetAnnotationWithPrefix("canary-weight")] = "0"
 
 	return res
 }
@@ -221,7 +217,6 @@ func (i *IngressRouter) makeHeaderAnnotations(annotations map[string]string,
 	}
 
 	res[i.GetAnnotationWithPrefix("canary")] = "true"
-	res[i.GetAnnotationWithPrefix("canary-weight")] = "0"
 
 	if cookie != "" {
 		res[i.GetAnnotationWithPrefix("canary-by-cookie")] = cookie
