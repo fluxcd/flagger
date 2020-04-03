@@ -159,19 +159,20 @@ func (i *IngressRouter) SetRoutes(
 
 	// A/B testing
 	if len(canary.GetAnalysis().Match) > 0 {
-		var cookie, header, headerValue string
+		var cookie, header, headerValue, headerRegex string
 		for _, m := range canary.GetAnalysis().Match {
 			for k, v := range m.Headers {
 				if k == "cookie" {
 					cookie = v.Exact
 				} else {
 					header = k
+					headerRegex = v.Regex
 					headerValue = v.Exact
 				}
 			}
 		}
 
-		iClone.Annotations = i.makeHeaderAnnotations(iClone.Annotations, header, headerValue, cookie)
+		iClone.Annotations = i.makeHeaderAnnotations(iClone.Annotations, header, headerValue, headerRegex, cookie)
 	} else {
 		// canary
 		iClone.Annotations[i.GetAnnotationWithPrefix("canary-weight")] = fmt.Sprintf("%v", canaryWeight)
@@ -202,13 +203,12 @@ func (i *IngressRouter) makeAnnotations(annotations map[string]string) map[strin
 	}
 
 	res[i.GetAnnotationWithPrefix("canary")] = "false"
-	res[i.GetAnnotationWithPrefix("canary-weight")] = "0"
 
 	return res
 }
 
 func (i *IngressRouter) makeHeaderAnnotations(annotations map[string]string,
-	header string, headerValue string, cookie string) map[string]string {
+	header string, headerValue string, headerRegex string, cookie string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range annotations {
 		if !strings.Contains(v, i.GetAnnotationWithPrefix("canary")) {
@@ -217,7 +217,6 @@ func (i *IngressRouter) makeHeaderAnnotations(annotations map[string]string,
 	}
 
 	res[i.GetAnnotationWithPrefix("canary")] = "true"
-	res[i.GetAnnotationWithPrefix("canary-weight")] = "0"
 
 	if cookie != "" {
 		res[i.GetAnnotationWithPrefix("canary-by-cookie")] = cookie
@@ -229,6 +228,10 @@ func (i *IngressRouter) makeHeaderAnnotations(annotations map[string]string,
 
 	if headerValue != "" {
 		res[i.GetAnnotationWithPrefix("canary-by-header-value")] = headerValue
+	}
+
+	if headerRegex != "" {
+		res[i.GetAnnotationWithPrefix("canary-by-header-pattern")] = headerRegex
 	}
 
 	return res

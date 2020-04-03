@@ -29,7 +29,7 @@
 * [Contour Canary Deployments](tutorials/contour-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Crossover Canary Deployments](tutorials/crossover-progressive-delivery.md)
-* [SMI Istio Canary Deployments](tutorials/flagger-smi-istio.md)
+* [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
 * [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
 

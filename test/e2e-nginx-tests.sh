@@ -18,6 +18,65 @@ echo '>>> Initialising canary'
 kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
 kubectl apply -f ${REPO_ROOT}/test/e2e-ingress.yaml
 
+echo '>>> Create metric templates'
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: error-rate
+  namespace: ingress-nginx
+spec:
+  provider:
+    type: prometheus
+    address: http://flagger-prometheus.ingress-nginx:9090
+  query: |
+    100 - sum(
+            rate(
+                http_request_duration_seconds_count{
+                    kubernetes_namespace="{{ namespace }}",
+                    kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+                    path="root",
+                    status!~"5.*"
+                }[{{ interval }}]
+            )
+        )
+        /
+        sum(
+            rate(
+                http_request_duration_seconds_count{
+                    kubernetes_namespace="{{ namespace }}",
+                    kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+                    path="root"
+                }[{{ interval }}]
+            )
+        )
+        * 100
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: ingress-nginx
+spec:
+  provider:
+    type: prometheus
+    address: http://flagger-prometheus.ingress-nginx:9090
+  query: |
+    histogram_quantile(0.99,
+      sum(
+        rate(
+          http_request_duration_seconds_bucket{
+            kubernetes_namespace="{{ namespace }}",
+            kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+            path="root"
+          }[{{ interval }}]
+        )
+      ) by (le)
+    )
+EOF
+
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: Canary
@@ -39,58 +98,30 @@ spec:
     targetPort: http
   analysis:
     interval: 15s
-    threshold: 15
-    maxWeight: 30
-    stepWeight: 10
+    threshold: 5
+    maxWeight: 40
+    stepWeight: 20
     metrics:
-    - name: "http-request-success-rate"
-      threshold: 99
-      interval: 1m
-      query: |
-        100 - sum(
-                rate(
-                    http_request_duration_seconds_count{
-                        kubernetes_namespace="test",
-                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-                        path="root",
-                        status!~"5.*"
-                    }[1m]
-                )
-            )
-            /
-            sum(
-                rate(
-                    http_request_duration_seconds_count{
-                        kubernetes_namespace="test",
-                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-                        path="root"
-                    }[1m]
-                )
-            )
-            * 100
-    - name: "latency"
-      threshold: 0.5
-      interval: 1m
-      query: |
-        histogram_quantile(0.99,
-          sum(
-            rate(
-              http_request_duration_seconds_bucket{
-                kubernetes_namespace="test",
-                kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-                path="root"
-              }[1m]
-            )
-          ) by (le)
-        )
+    - name: error-rate
+      templateRef:
+        name: error-rate
+        namespace: ingress-nginx
+      thresholdRange:
+        max: 1
+      interval: 30s
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: ingress-nginx
+      thresholdRange:
+        max: 0.5
+      interval: 30s
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
-        timeout: 5s
         metadata:
           type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 -host app.example.com http://nginx-ingress-controller.ingress-nginx"
-          logCmdOutput: "true"
+          cmd: "hey -z 2m -q 10 -c 2 -host app.example.com http://nginx-ingress-controller.ingress-nginx"
 EOF
 
 echo '>>> Waiting for primary to be ready'
@@ -173,73 +204,56 @@ spec:
   progressDeadlineSeconds: 60
   service:
     port: 80
-    targetPort: 9898
+    targetPort: http
   analysis:
-    interval: 10s
+    interval: 15s
     threshold: 5
-    iterations: 5
+    iterations: 3
     match:
-      - headers:
-          x-canary:
-            exact: "insider"
-      - headers:
-          cookie:
-            exact: "canary"
+    - headers:
+        x-user:
+          exact: "insider"
     metrics:
-    - name: "http-request-success-rate"
-      threshold: 99
-      interval: 1m
-      query: |
-        100 - sum(
-                rate(
-                    http_request_duration_seconds_count{
-                        kubernetes_namespace="test",
-                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-                        path="root",
-                        status!~"5.*"
-                    }[1m]
-                )
-            )
-            /
-            sum(
-                rate(
-                    http_request_duration_seconds_count{
-                        kubernetes_namespace="test",
-                        kubernetes_pod_name=~"podinfo-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-                        path="root"
-                    }[1m]
-                )
-            )
-            * 100
+    - name: error-rate
+      templateRef:
+        name: error-rate
+        namespace: ingress-nginx
+      thresholdRange:
+        max: 1
+      interval: 30s
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: ingress-nginx
+      thresholdRange:
+        max: 0.5
+      interval: 30s
     webhooks:
-      - name: pre
-        type: pre-rollout
+      - name: test-header-routing
+        type: rollout
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 -H 'X-Canary: insider' -host app.example.com http://nginx-ingress-controller.ingress-nginx"
-          logCmdOutput: "true"
-      - name: post
-        type: post-rollout
+          type: bash
+          cmd: "curl -sH 'x-user: insider' -H 'Host: app.example.com' http://nginx-ingress-controller.ingress-nginx | grep '3.1.2'"
+      - name: load-test
+        type: rollout
         url: http://flagger-loadtester.test/
-        timeout: 15s
         metadata:
           type: cmd
-          cmd: "curl -sH 'Host: app.example.com' http://nginx-ingress-controller.ingress-nginx"
-          logCmdOutput: "true"
+          cmd: "hey -z 2m -q 10 -c 2 -H 'x-user: insider' -host app.example.com http://nginx-ingress-controller.ingress-nginx"
 EOF
 
 echo '>>> Triggering A/B testing'
 kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.2
 
 echo '>>> Waiting for A/B testing promotion'
-retries=50
+retries=6
 count=0
 ok=false
 until ${ok}; do
     kubectl -n test describe deployment/podinfo-primary | grep '3.1.2' && ok=true || ok=false
-    sleep 10
+    sleep 30
     kubectl -n ingress-nginx logs deployment/flagger --tail 1
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
