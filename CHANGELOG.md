@@ -2,6 +2,52 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.0-rc.4 (2020-04-03) 
+
+This is a release candidate for Flagger v1.0.0.
+
+The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.app/dev/upgrade-guide).
+
+**Breaking change**: the minimum supported version of Kubernetes is v1.14.0.
+
+#### Features
+
+- Implement NGINX Ingress header regex matching
+    [#546](https://github.com/weaveworks/flagger/pull/546)
+
+#### Improvements
+
+- pkg/router: update ingress API to networking.k8s.io/v1beta1
+    [#534](https://github.com/weaveworks/flagger/pull/534)
+- loadtester: add return cmd output option
+    [#535](https://github.com/weaveworks/flagger/pull/535)
+- refactoring: finalizer error handling and unit testing
+    [#531](https://github.com/weaveworks/flagger/pull/535)
+    [#530](https://github.com/weaveworks/flagger/pull/530)
+- chart: add finalizers to RBAC rules for OpenShift
+    [#537](https://github.com/weaveworks/flagger/pull/537)
+- chart: allow security context to be disabled on OpenShift
+    [#543](https://github.com/weaveworks/flagger/pull/543)
+- chart: add annotations for service account 
+    [#521](https://github.com/weaveworks/flagger/pull/521)
+- docs: Add Prometheus Operator tutorial
+    [#524](https://github.com/weaveworks/flagger/pull/524)
+
+#### Fixes
+
+- pkg/controller: avoid status conflicts on initialization
+    [#544](https://github.com/weaveworks/flagger/pull/544)
+- pkg/canary: fix status retry
+    [#541](https://github.com/weaveworks/flagger/pull/541)
+- loadtester: fix timeout errors
+    [#539](https://github.com/weaveworks/flagger/pull/539)
+- pkg/canary/daemonset: fix readiness check
+    [#529](https://github.com/weaveworks/flagger/pull/529)
+- logs: reduce log verbosity and fix typos
+    [#540](https://github.com/weaveworks/flagger/pull/540)
+    [#526](https://github.com/weaveworks/flagger/pull/526)
+
+
 ## 1.0.0-rc.3 (2020-03-23) 
 
 This is a release candidate for Flagger v1.0.0.

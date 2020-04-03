@@ -230,7 +230,7 @@ spec:
       serviceAccountName: {{ template "flagger.serviceAccountName" . }}-prometheus
       containers:
         - name: prometheus
-          image: "docker.io/prom/prometheus:v2.16.0"
+          image: {{ .Values.prometheus.image }}
           imagePullPolicy: IfNotPresent
           args:
             - '--storage.tsdb.retention=2h'

@@ -12,8 +12,7 @@ Flagger can be configured to send alerts to various chat platforms such as Slack
 
 ## Prerequisites
 
-* Kubernetes >= 1.11
-* Prometheus >= 2.6
+* Kubernetes >= 1.14
 
 ## Installing the Chart
 

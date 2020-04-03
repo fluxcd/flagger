@@ -12,6 +12,7 @@ Canary CRD changes in `canaries.flagger.app/v1beta1`:
 * the `spec.analysis.metrics[].templateRef` can reference a `metrictemplate.flagger.app/v1beta1` resource
 * the `metric.threshold` field has been deprecated and replaced with `metric.thresholdRange`
 * the `metric.query` field has been deprecated and replaced with `metric.templateRef`
+* the `spec.ingressRef.apiVersion` accepts `networking.k8s.io/v1beta1`
 * the `spec.targetRef` can reference `DaemonSet` kind
 
 Upgrade procedure:
