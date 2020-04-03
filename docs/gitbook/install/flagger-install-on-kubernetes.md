@@ -4,7 +4,7 @@ This guide walks you through setting up Flagger on a Kubernetes cluster with Hel
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.13** or newer.
+Flagger requires a Kubernetes cluster **v1.14** or newer.
 
 ## Install Flagger with Helm
 
