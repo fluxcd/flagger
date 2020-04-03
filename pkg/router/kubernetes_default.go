@@ -180,12 +180,38 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			}
 		}
 
+		updateService := false
+		svcClone := svc.DeepCopy()
+
 		portsDiff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports, cmpopts.SortSlices(sortPorts))
 		selectorsDiff := cmp.Diff(svcSpec.Selector, svc.Spec.Selector)
+
 		if portsDiff != "" || selectorsDiff != "" {
 			svcClone := svc.DeepCopy()
 			svcClone.Spec.Ports = svcSpec.Ports
 			svcClone.Spec.Selector = svcSpec.Selector
+			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), svcClone, metav1.UpdateOptions{})
+			updateService = true
+		}
+
+		// TODO: Handle annotation/label removal
+		annotationsDiff := cmp.Diff(metadata.Annotations, svc.ObjectMeta.Annotations)
+		if annotationsDiff != "" {
+			for k, v := range metadata.Annotations {
+				svcClone.ObjectMeta.Annotations[k] = v
+			}
+			updateService = true
+		}
+
+		labelsDiff := cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels)
+		if labelsDiff != "" {
+			for k, v := range metadata.Labels {
+				svcClone.ObjectMeta.Labels[k] = v
+			}
+			updateService = true
+		}
+
+		if updateService {
 			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), svcClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("service %s update error: %w", name, err)
