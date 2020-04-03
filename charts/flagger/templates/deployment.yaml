@@ -50,9 +50,10 @@ spec:
         {{- end }}
       containers:
         - name: flagger
+          {{- if .Values.securityContext.enabled }}
           securityContext:
-            readOnlyRootFilesystem: true
-            runAsUser: 10001
+{{ toYaml .Values.securityContext.context | indent 12 }}
+          {{- end }}
           volumeMounts:
             {{- if .Values.istio.kubeconfig.secretName }}
             - name: kubeconfig
