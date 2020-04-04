@@ -367,13 +367,13 @@ func TestServiceRouter_InitializeMetadata(t *testing.T) {
 	err := router.Initialize(mocks.canary)
 	require.NoError(t, err)
 
-	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "test", canarySvc.Annotations["test"])
 	assert.Equal(t, "test", canarySvc.Labels["test"])
 	assert.Equal(t, "podinfo-canary", canarySvc.Labels["app"])
 
-	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
+	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 0, len(primarySvc.Annotations))
 	assert.Equal(t, "podinfo-primary", primarySvc.Labels["app"])
@@ -399,19 +399,33 @@ func TestServiceRouter_ReconcileMetadata(t *testing.T) {
 	err = router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
-	apexSvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo", metav1.GetOptions{})
+	apexSvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "test", apexSvc.Annotations["test"])
 	assert.Equal(t, "test", apexSvc.Labels["test"])
 	assert.Equal(t, "podinfo", apexSvc.Labels["app"])
 
-	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-canary", metav1.GetOptions{})
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 0, len(canarySvc.Annotations))
 	assert.Equal(t, "podinfo-canary", canarySvc.Labels["app"])
 
-	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
+	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 0, len(primarySvc.Annotations))
 	assert.Equal(t, "podinfo-primary", primarySvc.Labels["app"])
+
+	mocks.canary.Spec.Service.Apex = &flaggerv1.CustomMetadata{
+		Labels:      map[string]string{"test": "test1"},
+		Annotations: map[string]string{"test1": "test"},
+	}
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	apexSvc, err = mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "test", apexSvc.Annotations["test1"])
+	assert.Equal(t, "test1", apexSvc.Labels["test"])
+	assert.Equal(t, "podinfo", apexSvc.Labels["app"])
 }

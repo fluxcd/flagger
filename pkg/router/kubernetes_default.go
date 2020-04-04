@@ -25,7 +25,6 @@ type KubernetesDefaultRouter struct {
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 	labelSelector string
-	annotations   map[string]string
 	ports         map[string]int32
 }
 
@@ -120,13 +119,10 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 	if metadata.Labels == nil {
 		metadata.Labels = make(map[string]string)
 	}
+	metadata.Labels[c.labelSelector] = name
+
 	if metadata.Annotations == nil {
 		metadata.Annotations = make(map[string]string)
-	}
-
-	metadata.Labels[c.labelSelector] = name
-	for k, v := range c.annotations {
-		metadata.Annotations[k] = v
 	}
 
 	c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
@@ -187,7 +183,6 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		selectorsDiff := cmp.Diff(svcSpec.Selector, svc.Spec.Selector)
 
 		if portsDiff != "" || selectorsDiff != "" {
-			svcClone := svc.DeepCopy()
 			svcClone.Spec.Ports = svcSpec.Ports
 			svcClone.Spec.Selector = svcSpec.Selector
 			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), svcClone, metav1.UpdateOptions{})
