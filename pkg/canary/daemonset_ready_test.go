@@ -30,9 +30,9 @@ func TestDaemonSetController_isDaemonSetReady(t *testing.T) {
 	// observed generation is less than desired generation
 	ds := &appsv1.DaemonSet{Status: appsv1.DaemonSetStatus{}}
 	ds.Status.ObservedGeneration--
-	retyable, err := mocks.controller.isDaemonSetReady(cd, ds)
+	retryable, err := mocks.controller.isDaemonSetReady(cd, ds)
 	require.Error(t, err)
-	require.True(t, retyable)
+	require.True(t, retryable)
 
 	// succeeded
 	ds = &appsv1.DaemonSet{Status: appsv1.DaemonSetStatus{
@@ -40,9 +40,9 @@ func TestDaemonSetController_isDaemonSetReady(t *testing.T) {
 		DesiredNumberScheduled: 1,
 		NumberAvailable:        1,
 	}}
-	retyable, err = mocks.controller.isDaemonSetReady(cd, ds)
+	retryable, err = mocks.controller.isDaemonSetReady(cd, ds)
 	require.NoError(t, err)
-	require.True(t, retyable)
+	require.True(t, retryable)
 
 	// deadline exceeded
 	ds = &appsv1.DaemonSet{Status: appsv1.DaemonSetStatus{
@@ -51,9 +51,9 @@ func TestDaemonSetController_isDaemonSetReady(t *testing.T) {
 	}}
 	cd.Status.LastTransitionTime = metav1.Now()
 	cd.Spec.ProgressDeadlineSeconds = int32p(-1e6)
-	retyable, err = mocks.controller.isDaemonSetReady(cd, ds)
+	retryable, err = mocks.controller.isDaemonSetReady(cd, ds)
 	require.Error(t, err)
-	require.False(t, retyable)
+	require.False(t, retryable)
 
 	// only newCond not satisfied
 	ds = &appsv1.DaemonSet{Status: appsv1.DaemonSetStatus{
@@ -62,9 +62,9 @@ func TestDaemonSetController_isDaemonSetReady(t *testing.T) {
 		NumberAvailable:        1,
 	}}
 	cd.Spec.ProgressDeadlineSeconds = int32p(1e6)
-	retyable, err = mocks.controller.isDaemonSetReady(cd, ds)
+	retryable, err = mocks.controller.isDaemonSetReady(cd, ds)
 	require.Error(t, err)
-	require.True(t, retyable)
+	require.True(t, retryable)
 	require.True(t, strings.Contains(err.Error(), "new pods"))
 
 	// only availableCond not satisfied
@@ -73,8 +73,8 @@ func TestDaemonSetController_isDaemonSetReady(t *testing.T) {
 		DesiredNumberScheduled: 1,
 		NumberAvailable:        0,
 	}}
-	retyable, err = mocks.controller.isDaemonSetReady(cd, ds)
+	retryable, err = mocks.controller.isDaemonSetReady(cd, ds)
 	require.Error(t, err)
-	require.True(t, retyable)
+	require.True(t, retryable)
 	require.True(t, strings.Contains(err.Error(), "available"))
 }
