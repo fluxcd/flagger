@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"strconv"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestSmiRouter_Sync(t *testing.T) {
 	require.NoError(t, err)
 
 	// test insert
-	ts, err := router.smiClient.SplitV1alpha1().TrafficSplits("default").Get("podinfo", metav1.GetOptions{})
+	ts, err := router.smiClient.SplitV1alpha1().TrafficSplits("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	dests := ts.Spec.Backends
 	assert.Len(t, dests, 2)
@@ -54,7 +55,7 @@ func TestSmiRouter_Sync(t *testing.T) {
 	err = router.Reconcile(canary)
 	require.NoError(t, err)
 
-	ts, err = router.smiClient.SplitV1alpha1().TrafficSplits("default").Get("test", metav1.GetOptions{})
+	ts, err = router.smiClient.SplitV1alpha1().TrafficSplits("default").Get(context.TODO(), "test", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, host, ts.Spec.Service)
 }
@@ -82,7 +83,7 @@ func TestSmiRouter_SetRoutes(t *testing.T) {
 	err = router.SetRoutes(mocks.canary, p, c, m)
 	require.NoError(t, err)
 
-	ts, err := router.smiClient.SplitV1alpha1().TrafficSplits("default").Get("podinfo", metav1.GetOptions{})
+	ts, err := router.smiClient.SplitV1alpha1().TrafficSplits("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	var pRoute smiv1.TrafficSplitBackend

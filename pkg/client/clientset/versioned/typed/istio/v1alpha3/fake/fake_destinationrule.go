@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var destinationrulesResource = schema.GroupVersionResource{Group: "networking.is
 var destinationrulesKind = schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1alpha3", Kind: "DestinationRule"}
 
 // Get takes name of the destinationRule, and returns the corresponding destinationRule object, and an error if there is any.
-func (c *FakeDestinationRules) Get(name string, options v1.GetOptions) (result *v1alpha3.DestinationRule, err error) {
+func (c *FakeDestinationRules) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha3.DestinationRule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(destinationrulesResource, c.ns, name), &v1alpha3.DestinationRule{})
 
@@ -50,7 +52,7 @@ func (c *FakeDestinationRules) Get(name string, options v1.GetOptions) (result *
 }
 
 // List takes label and field selectors, and returns the list of DestinationRules that match those selectors.
-func (c *FakeDestinationRules) List(opts v1.ListOptions) (result *v1alpha3.DestinationRuleList, err error) {
+func (c *FakeDestinationRules) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha3.DestinationRuleList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(destinationrulesResource, destinationrulesKind, c.ns, opts), &v1alpha3.DestinationRuleList{})
 
@@ -72,14 +74,14 @@ func (c *FakeDestinationRules) List(opts v1.ListOptions) (result *v1alpha3.Desti
 }
 
 // Watch returns a watch.Interface that watches the requested destinationRules.
-func (c *FakeDestinationRules) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeDestinationRules) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(destinationrulesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a destinationRule and creates it.  Returns the server's representation of the destinationRule, and an error, if there is any.
-func (c *FakeDestinationRules) Create(destinationRule *v1alpha3.DestinationRule) (result *v1alpha3.DestinationRule, err error) {
+func (c *FakeDestinationRules) Create(ctx context.Context, destinationRule *v1alpha3.DestinationRule, opts v1.CreateOptions) (result *v1alpha3.DestinationRule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(destinationrulesResource, c.ns, destinationRule), &v1alpha3.DestinationRule{})
 
@@ -90,7 +92,7 @@ func (c *FakeDestinationRules) Create(destinationRule *v1alpha3.DestinationRule)
 }
 
 // Update takes the representation of a destinationRule and updates it. Returns the server's representation of the destinationRule, and an error, if there is any.
-func (c *FakeDestinationRules) Update(destinationRule *v1alpha3.DestinationRule) (result *v1alpha3.DestinationRule, err error) {
+func (c *FakeDestinationRules) Update(ctx context.Context, destinationRule *v1alpha3.DestinationRule, opts v1.UpdateOptions) (result *v1alpha3.DestinationRule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(destinationrulesResource, c.ns, destinationRule), &v1alpha3.DestinationRule{})
 
@@ -101,7 +103,7 @@ func (c *FakeDestinationRules) Update(destinationRule *v1alpha3.DestinationRule)
 }
 
 // Delete takes name of the destinationRule and deletes it. Returns an error if one occurs.
-func (c *FakeDestinationRules) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeDestinationRules) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(destinationrulesResource, c.ns, name), &v1alpha3.DestinationRule{})
 
@@ -109,15 +111,15 @@ func (c *FakeDestinationRules) Delete(name string, options *v1.DeleteOptions) er
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeDestinationRules) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(destinationrulesResource, c.ns, listOptions)
+func (c *FakeDestinationRules) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(destinationrulesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha3.DestinationRuleList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched destinationRule.
-func (c *FakeDestinationRules) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha3.DestinationRule, err error) {
+func (c *FakeDestinationRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha3.DestinationRule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(destinationrulesResource, c.ns, name, pt, data, subresources...), &v1alpha3.DestinationRule{})
 

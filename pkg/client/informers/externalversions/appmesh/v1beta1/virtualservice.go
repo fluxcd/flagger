@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	time "time"
 
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
@@ -61,13 +62,13 @@ func NewFilteredVirtualServiceInformer(client versioned.Interface, namespace str
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta1().VirtualServices(namespace).List(options)
+				return client.AppmeshV1beta1().VirtualServices(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta1().VirtualServices(namespace).Watch(options)
+				return client.AppmeshV1beta1().VirtualServices(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&appmeshv1beta1.VirtualService{},

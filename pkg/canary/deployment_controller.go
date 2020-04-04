@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
@@ -66,7 +67,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -76,7 +77,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
-	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
@@ -109,7 +110,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName, label)
 
 	// apply update
-	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(primaryCopy)
+	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("updating deployment %s.%s template spec failed: %w",
 			primaryCopy.GetName(), primaryCopy.Namespace, err)
@@ -132,7 +133,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 // HasTargetChanged returns true if the canary deployment pod spec has changed
 func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return false, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -143,7 +144,7 @@ func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, err
 // Scale sets the canary deployment replicas
 func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -151,7 +152,7 @@ func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = int32p(0)
 
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s update query error: %w", targetName, cd.Namespace, err)
 	}
@@ -160,7 +161,7 @@ func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
 
 func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -172,7 +173,7 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = replicas
 
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("scaling up %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}
@@ -183,7 +184,7 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 
-	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return "", nil, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -204,7 +205,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
-	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deplyoment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -214,7 +215,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
-	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// create primary secrets and config maps
 		configRefs, err := c.configTracker.GetTargetConfigs(cd)
@@ -272,7 +273,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 			},
 		}
 
-		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Create(primaryDep)
+		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Create(context.TODO(), primaryDep, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("creating deployment %s.%s failed: %w", primaryDep.Name, cd.Namespace, err)
 		}
@@ -286,7 +287,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 
 func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	hpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+	hpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("HorizontalPodAutoscaler %s.%s get query error: %w",
 			cd.Spec.AutoscalerRef.Name, cd.Namespace, err)
@@ -304,7 +305,7 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 	}
 
 	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
-	primaryHpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(primaryHpaName, metav1.GetOptions{})
+	primaryHpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
 
 	// create HPA
 	if errors.IsNotFound(err) {
@@ -324,7 +325,7 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 			Spec: hpaSpec,
 		}
 
-		_, err = c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Create(primaryHpa)
+		_, err = c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Create(context.TODO(), primaryHpa, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("creating HorizontalPodAutoscaler %s.%s failed: %w",
 				primaryHpa.Name, primaryHpa.Namespace, err)
@@ -347,7 +348,7 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 			hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
 			hpaClone.Spec.Metrics = hpaSpec.Metrics
 
-			_, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(hpaClone)
+			_, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("updating HorizontalPodAutoscaler %s.%s failed: %w",
 					hpaClone.Name, hpaClone.Namespace, err)
@@ -383,14 +384,14 @@ func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bo
 func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {
 
 	// get ref deployment
-	refDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	refDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deplyoment %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
 	// get primary if possible, if not scale from zero
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			if err := c.ScaleFromZero(cd); err != nil {
@@ -414,14 +415,14 @@ func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {
 // Scale sets the canary deployment replicas
 func (c *DeploymentController) scale(cd *flaggerv1.Canary, replicas int32) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s query error: %w", targetName, cd.Namespace, err)
 	}
 
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = int32p(replicas)
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(depCopy)
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("scaling %s.%s to %v failed: %w", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}

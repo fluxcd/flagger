@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var virtualnodesResource = schema.GroupVersionResource{Group: "appmesh.k8s.aws",
 var virtualnodesKind = schema.GroupVersionKind{Group: "appmesh.k8s.aws", Version: "v1beta1", Kind: "VirtualNode"}
 
 // Get takes name of the virtualNode, and returns the corresponding virtualNode object, and an error if there is any.
-func (c *FakeVirtualNodes) Get(name string, options v1.GetOptions) (result *v1beta1.VirtualNode, err error) {
+func (c *FakeVirtualNodes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.VirtualNode, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(virtualnodesResource, c.ns, name), &v1beta1.VirtualNode{})
 
@@ -50,7 +52,7 @@ func (c *FakeVirtualNodes) Get(name string, options v1.GetOptions) (result *v1be
 }
 
 // List takes label and field selectors, and returns the list of VirtualNodes that match those selectors.
-func (c *FakeVirtualNodes) List(opts v1.ListOptions) (result *v1beta1.VirtualNodeList, err error) {
+func (c *FakeVirtualNodes) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.VirtualNodeList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(virtualnodesResource, virtualnodesKind, c.ns, opts), &v1beta1.VirtualNodeList{})
 
@@ -72,14 +74,14 @@ func (c *FakeVirtualNodes) List(opts v1.ListOptions) (result *v1beta1.VirtualNod
 }
 
 // Watch returns a watch.Interface that watches the requested virtualNodes.
-func (c *FakeVirtualNodes) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeVirtualNodes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(virtualnodesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a virtualNode and creates it.  Returns the server's representation of the virtualNode, and an error, if there is any.
-func (c *FakeVirtualNodes) Create(virtualNode *v1beta1.VirtualNode) (result *v1beta1.VirtualNode, err error) {
+func (c *FakeVirtualNodes) Create(ctx context.Context, virtualNode *v1beta1.VirtualNode, opts v1.CreateOptions) (result *v1beta1.VirtualNode, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(virtualnodesResource, c.ns, virtualNode), &v1beta1.VirtualNode{})
 
@@ -90,7 +92,7 @@ func (c *FakeVirtualNodes) Create(virtualNode *v1beta1.VirtualNode) (result *v1b
 }
 
 // Update takes the representation of a virtualNode and updates it. Returns the server's representation of the virtualNode, and an error, if there is any.
-func (c *FakeVirtualNodes) Update(virtualNode *v1beta1.VirtualNode) (result *v1beta1.VirtualNode, err error) {
+func (c *FakeVirtualNodes) Update(ctx context.Context, virtualNode *v1beta1.VirtualNode, opts v1.UpdateOptions) (result *v1beta1.VirtualNode, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(virtualnodesResource, c.ns, virtualNode), &v1beta1.VirtualNode{})
 
@@ -102,7 +104,7 @@ func (c *FakeVirtualNodes) Update(virtualNode *v1beta1.VirtualNode) (result *v1b
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeVirtualNodes) UpdateStatus(virtualNode *v1beta1.VirtualNode) (*v1beta1.VirtualNode, error) {
+func (c *FakeVirtualNodes) UpdateStatus(ctx context.Context, virtualNode *v1beta1.VirtualNode, opts v1.UpdateOptions) (*v1beta1.VirtualNode, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(virtualnodesResource, "status", c.ns, virtualNode), &v1beta1.VirtualNode{})
 
@@ -113,7 +115,7 @@ func (c *FakeVirtualNodes) UpdateStatus(virtualNode *v1beta1.VirtualNode) (*v1be
 }
 
 // Delete takes name of the virtualNode and deletes it. Returns an error if one occurs.
-func (c *FakeVirtualNodes) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeVirtualNodes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(virtualnodesResource, c.ns, name), &v1beta1.VirtualNode{})
 
@@ -121,15 +123,15 @@ func (c *FakeVirtualNodes) Delete(name string, options *v1.DeleteOptions) error 
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeVirtualNodes) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(virtualnodesResource, c.ns, listOptions)
+func (c *FakeVirtualNodes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(virtualnodesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.VirtualNodeList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched virtualNode.
-func (c *FakeVirtualNodes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.VirtualNode, err error) {
+func (c *FakeVirtualNodes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.VirtualNode, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(virtualnodesResource, c.ns, name, pt, data, subresources...), &v1beta1.VirtualNode{})
 

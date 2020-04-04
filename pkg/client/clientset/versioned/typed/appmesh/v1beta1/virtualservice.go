@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	"time"
 
 	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
@@ -37,15 +38,15 @@ type VirtualServicesGetter interface {
 
 // VirtualServiceInterface has methods to work with VirtualService resources.
 type VirtualServiceInterface interface {
-	Create(*v1beta1.VirtualService) (*v1beta1.VirtualService, error)
-	Update(*v1beta1.VirtualService) (*v1beta1.VirtualService, error)
-	UpdateStatus(*v1beta1.VirtualService) (*v1beta1.VirtualService, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1beta1.VirtualService, error)
-	List(opts v1.ListOptions) (*v1beta1.VirtualServiceList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.VirtualService, err error)
+	Create(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.CreateOptions) (*v1beta1.VirtualService, error)
+	Update(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.UpdateOptions) (*v1beta1.VirtualService, error)
+	UpdateStatus(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.UpdateOptions) (*v1beta1.VirtualService, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.VirtualService, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.VirtualServiceList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.VirtualService, err error)
 	VirtualServiceExpansion
 }
 
@@ -64,20 +65,20 @@ func newVirtualServices(c *AppmeshV1beta1Client, namespace string) *virtualServi
 }
 
 // Get takes name of the virtualService, and returns the corresponding virtualService object, and an error if there is any.
-func (c *virtualServices) Get(name string, options v1.GetOptions) (result *v1beta1.VirtualService, err error) {
+func (c *virtualServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.VirtualService, err error) {
 	result = &v1beta1.VirtualService{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("virtualservices").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of VirtualServices that match those selectors.
-func (c *virtualServices) List(opts v1.ListOptions) (result *v1beta1.VirtualServiceList, err error) {
+func (c *virtualServices) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.VirtualServiceList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,13 +89,13 @@ func (c *virtualServices) List(opts v1.ListOptions) (result *v1beta1.VirtualServ
 		Resource("virtualservices").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested virtualServices.
-func (c *virtualServices) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *virtualServices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -105,87 +106,90 @@ func (c *virtualServices) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("virtualservices").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a virtualService and creates it.  Returns the server's representation of the virtualService, and an error, if there is any.
-func (c *virtualServices) Create(virtualService *v1beta1.VirtualService) (result *v1beta1.VirtualService, err error) {
+func (c *virtualServices) Create(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.CreateOptions) (result *v1beta1.VirtualService, err error) {
 	result = &v1beta1.VirtualService{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("virtualservices").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(virtualService).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a virtualService and updates it. Returns the server's representation of the virtualService, and an error, if there is any.
-func (c *virtualServices) Update(virtualService *v1beta1.VirtualService) (result *v1beta1.VirtualService, err error) {
+func (c *virtualServices) Update(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.UpdateOptions) (result *v1beta1.VirtualService, err error) {
 	result = &v1beta1.VirtualService{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("virtualservices").
 		Name(virtualService.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(virtualService).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *virtualServices) UpdateStatus(virtualService *v1beta1.VirtualService) (result *v1beta1.VirtualService, err error) {
+func (c *virtualServices) UpdateStatus(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.UpdateOptions) (result *v1beta1.VirtualService, err error) {
 	result = &v1beta1.VirtualService{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("virtualservices").
 		Name(virtualService.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(virtualService).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the virtualService and deletes it. Returns an error if one occurs.
-func (c *virtualServices) Delete(name string, options *v1.DeleteOptions) error {
+func (c *virtualServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("virtualservices").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *virtualServices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *virtualServices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("virtualservices").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched virtualService.
-func (c *virtualServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.VirtualService, err error) {
+func (c *virtualServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.VirtualService, err error) {
 	result = &v1beta1.VirtualService{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("virtualservices").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

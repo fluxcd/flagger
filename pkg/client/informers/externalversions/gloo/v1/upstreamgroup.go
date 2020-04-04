@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	time "time"
 
 	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
@@ -61,13 +62,13 @@ func NewFilteredUpstreamGroupInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GlooV1().UpstreamGroups(namespace).List(options)
+				return client.GlooV1().UpstreamGroups(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GlooV1().UpstreamGroups(namespace).Watch(options)
+				return client.GlooV1().UpstreamGroups(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&gloov1.UpstreamGroup{},

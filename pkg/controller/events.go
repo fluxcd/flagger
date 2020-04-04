@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,7 +104,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 
 		// extract address from secret
 		if provider.Spec.SecretRef != nil {
-			secret, err := c.kubeClient.CoreV1().Secrets(providerNamespace).Get(provider.Spec.SecretRef.Name, metav1.GetOptions{})
+			secret, err := c.kubeClient.CoreV1().Secrets(providerNamespace).Get(context.TODO(), provider.Spec.SecretRef.Name, metav1.GetOptions{})
 			if err != nil {
 				c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 					Errorf("alert provider %s.%s secretRef error: %v", alert.ProviderRef.Name, providerNamespace, err)

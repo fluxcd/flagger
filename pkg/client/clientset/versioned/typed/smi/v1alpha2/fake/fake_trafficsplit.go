@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1alpha2 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var trafficsplitsResource = schema.GroupVersionResource{Group: "split.smi-spec.i
 var trafficsplitsKind = schema.GroupVersionKind{Group: "split.smi-spec.io", Version: "v1alpha2", Kind: "TrafficSplit"}
 
 // Get takes name of the trafficSplit, and returns the corresponding trafficSplit object, and an error if there is any.
-func (c *FakeTrafficSplits) Get(name string, options v1.GetOptions) (result *v1alpha2.TrafficSplit, err error) {
+func (c *FakeTrafficSplits) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.TrafficSplit, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(trafficsplitsResource, c.ns, name), &v1alpha2.TrafficSplit{})
 
@@ -50,7 +52,7 @@ func (c *FakeTrafficSplits) Get(name string, options v1.GetOptions) (result *v1a
 }
 
 // List takes label and field selectors, and returns the list of TrafficSplits that match those selectors.
-func (c *FakeTrafficSplits) List(opts v1.ListOptions) (result *v1alpha2.TrafficSplitList, err error) {
+func (c *FakeTrafficSplits) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.TrafficSplitList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(trafficsplitsResource, trafficsplitsKind, c.ns, opts), &v1alpha2.TrafficSplitList{})
 
@@ -72,14 +74,14 @@ func (c *FakeTrafficSplits) List(opts v1.ListOptions) (result *v1alpha2.TrafficS
 }
 
 // Watch returns a watch.Interface that watches the requested trafficSplits.
-func (c *FakeTrafficSplits) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeTrafficSplits) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(trafficsplitsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a trafficSplit and creates it.  Returns the server's representation of the trafficSplit, and an error, if there is any.
-func (c *FakeTrafficSplits) Create(trafficSplit *v1alpha2.TrafficSplit) (result *v1alpha2.TrafficSplit, err error) {
+func (c *FakeTrafficSplits) Create(ctx context.Context, trafficSplit *v1alpha2.TrafficSplit, opts v1.CreateOptions) (result *v1alpha2.TrafficSplit, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(trafficsplitsResource, c.ns, trafficSplit), &v1alpha2.TrafficSplit{})
 
@@ -90,7 +92,7 @@ func (c *FakeTrafficSplits) Create(trafficSplit *v1alpha2.TrafficSplit) (result 
 }
 
 // Update takes the representation of a trafficSplit and updates it. Returns the server's representation of the trafficSplit, and an error, if there is any.
-func (c *FakeTrafficSplits) Update(trafficSplit *v1alpha2.TrafficSplit) (result *v1alpha2.TrafficSplit, err error) {
+func (c *FakeTrafficSplits) Update(ctx context.Context, trafficSplit *v1alpha2.TrafficSplit, opts v1.UpdateOptions) (result *v1alpha2.TrafficSplit, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(trafficsplitsResource, c.ns, trafficSplit), &v1alpha2.TrafficSplit{})
 
@@ -101,7 +103,7 @@ func (c *FakeTrafficSplits) Update(trafficSplit *v1alpha2.TrafficSplit) (result 
 }
 
 // Delete takes name of the trafficSplit and deletes it. Returns an error if one occurs.
-func (c *FakeTrafficSplits) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeTrafficSplits) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(trafficsplitsResource, c.ns, name), &v1alpha2.TrafficSplit{})
 
@@ -109,15 +111,15 @@ func (c *FakeTrafficSplits) Delete(name string, options *v1.DeleteOptions) error
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeTrafficSplits) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(trafficsplitsResource, c.ns, listOptions)
+func (c *FakeTrafficSplits) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(trafficsplitsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha2.TrafficSplitList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched trafficSplit.
-func (c *FakeTrafficSplits) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha2.TrafficSplit, err error) {
+func (c *FakeTrafficSplits) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.TrafficSplit, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(trafficsplitsResource, c.ns, name, pt, data, subresources...), &v1alpha2.TrafficSplit{})
 

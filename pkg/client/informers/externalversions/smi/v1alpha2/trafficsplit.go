@@ -19,6 +19,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"context"
 	time "time"
 
 	smiv1alpha2 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha2"
@@ -61,13 +62,13 @@ func NewFilteredTrafficSplitInformer(client versioned.Interface, namespace strin
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SplitV1alpha2().TrafficSplits(namespace).List(options)
+				return client.SplitV1alpha2().TrafficSplits(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SplitV1alpha2().TrafficSplits(namespace).Watch(options)
+				return client.SplitV1alpha2().TrafficSplits(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&smiv1alpha2.TrafficSplit{},

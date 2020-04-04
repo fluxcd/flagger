@@ -336,17 +336,17 @@ func fromEnv(envVar string, defaultVal string) string {
 }
 
 func verifyCRDs(flaggerClient clientset.Interface, logger *zap.SugaredLogger) {
-	_, err := flaggerClient.FlaggerV1beta1().Canaries(namespace).List(metav1.ListOptions{Limit: 1})
+	_, err := flaggerClient.FlaggerV1beta1().Canaries(namespace).List(context.TODO(), metav1.ListOptions{Limit: 1})
 	if err != nil {
 		logger.Fatalf("Canary CRD is not registered %v", err)
 	}
 
-	_, err = flaggerClient.FlaggerV1beta1().MetricTemplates(namespace).List(metav1.ListOptions{Limit: 1})
+	_, err = flaggerClient.FlaggerV1beta1().MetricTemplates(namespace).List(context.TODO(), metav1.ListOptions{Limit: 1})
 	if err != nil {
 		logger.Fatalf("MetricTemplate CRD is not registered %v", err)
 	}
 
-	_, err = flaggerClient.FlaggerV1beta1().AlertProviders(namespace).List(metav1.ListOptions{Limit: 1})
+	_, err = flaggerClient.FlaggerV1beta1().AlertProviders(namespace).List(context.TODO(), metav1.ListOptions{Limit: 1})
 	if err != nil {
 		logger.Fatalf("AlertProvider CRD is not registered %v", err)
 	}

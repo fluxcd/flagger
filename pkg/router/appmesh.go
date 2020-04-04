@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -110,7 +111,7 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 		vnSpec.Backends = backends
 	}
 
-	virtualnode, err := ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Get(name, metav1.GetOptions{})
+	virtualnode, err := ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 
 	// create virtual node
 	if errors.IsNotFound(err) {
@@ -128,7 +129,7 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 			},
 			Spec: vnSpec,
 		}
-		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Create(virtualnode)
+		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Create(context.TODO(), virtualnode, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("VirtualNode %s.%s create error %w", name, canary.Namespace, err)
 		}
@@ -144,7 +145,7 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 		if diff := cmp.Diff(vnSpec, virtualnode.Spec); diff != "" {
 			vnClone := virtualnode.DeepCopy()
 			vnClone.Spec = vnSpec
-			_, err = ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Update(vnClone)
+			_, err = ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Update(context.TODO(), vnClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("VirtualNode %s update error %w", name, err)
 			}
@@ -263,7 +264,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 		Routes: routes,
 	}
 
-	virtualService, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(name, metav1.GetOptions{})
+	virtualService, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 
 	// create virtual service
 	if errors.IsNotFound(err) {
@@ -290,7 +291,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 			}
 		}
 
-		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Create(virtualService)
+		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Create(context.TODO(), virtualService, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("VirtualService %s create error %w", name, err)
 		}
@@ -316,7 +317,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 				}
 			}
 
-			_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Update(vsClone)
+			_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("VirtualService %s update error: %w", name, err)
 			}
@@ -337,7 +338,7 @@ func (ar *AppMeshRouter) GetRoutes(canary *flaggerv1.Canary) (
 ) {
 	apexName, _, _ := canary.GetServiceNames()
 	vsName := fmt.Sprintf("%s.%s", apexName, canary.Namespace)
-	vs, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
+	vs, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), vsName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("VirtualService %s get query error: %w", vsName, err)
 		return
@@ -377,7 +378,7 @@ func (ar *AppMeshRouter) SetRoutes(
 ) error {
 	apexName, _, _ := canary.GetServiceNames()
 	vsName := fmt.Sprintf("%s.%s", apexName, canary.Namespace)
-	vs, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(vsName, metav1.GetOptions{})
+	vs, err := ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), vsName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s get query error: %w", vsName, err)
 	}
@@ -396,7 +397,7 @@ func (ar *AppMeshRouter) SetRoutes(
 		},
 	}
 
-	_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Update(vsClone)
+	_, err = ar.appmeshClient.AppmeshV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsClone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s update error: %w", vsName, err)
 	}

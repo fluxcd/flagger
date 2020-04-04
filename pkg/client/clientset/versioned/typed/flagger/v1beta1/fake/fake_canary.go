@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var canariesResource = schema.GroupVersionResource{Group: "flagger.app", Version
 var canariesKind = schema.GroupVersionKind{Group: "flagger.app", Version: "v1beta1", Kind: "Canary"}
 
 // Get takes name of the canary, and returns the corresponding canary object, and an error if there is any.
-func (c *FakeCanaries) Get(name string, options v1.GetOptions) (result *v1beta1.Canary, err error) {
+func (c *FakeCanaries) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(canariesResource, c.ns, name), &v1beta1.Canary{})
 
@@ -50,7 +52,7 @@ func (c *FakeCanaries) Get(name string, options v1.GetOptions) (result *v1beta1.
 }
 
 // List takes label and field selectors, and returns the list of Canaries that match those selectors.
-func (c *FakeCanaries) List(opts v1.ListOptions) (result *v1beta1.CanaryList, err error) {
+func (c *FakeCanaries) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.CanaryList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(canariesResource, canariesKind, c.ns, opts), &v1beta1.CanaryList{})
 
@@ -72,14 +74,14 @@ func (c *FakeCanaries) List(opts v1.ListOptions) (result *v1beta1.CanaryList, er
 }
 
 // Watch returns a watch.Interface that watches the requested canaries.
-func (c *FakeCanaries) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeCanaries) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(canariesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a canary and creates it.  Returns the server's representation of the canary, and an error, if there is any.
-func (c *FakeCanaries) Create(canary *v1beta1.Canary) (result *v1beta1.Canary, err error) {
+func (c *FakeCanaries) Create(ctx context.Context, canary *v1beta1.Canary, opts v1.CreateOptions) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(canariesResource, c.ns, canary), &v1beta1.Canary{})
 
@@ -90,7 +92,7 @@ func (c *FakeCanaries) Create(canary *v1beta1.Canary) (result *v1beta1.Canary, e
 }
 
 // Update takes the representation of a canary and updates it. Returns the server's representation of the canary, and an error, if there is any.
-func (c *FakeCanaries) Update(canary *v1beta1.Canary) (result *v1beta1.Canary, err error) {
+func (c *FakeCanaries) Update(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(canariesResource, c.ns, canary), &v1beta1.Canary{})
 
@@ -102,7 +104,7 @@ func (c *FakeCanaries) Update(canary *v1beta1.Canary) (result *v1beta1.Canary, e
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeCanaries) UpdateStatus(canary *v1beta1.Canary) (*v1beta1.Canary, error) {
+func (c *FakeCanaries) UpdateStatus(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (*v1beta1.Canary, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(canariesResource, "status", c.ns, canary), &v1beta1.Canary{})
 
@@ -113,7 +115,7 @@ func (c *FakeCanaries) UpdateStatus(canary *v1beta1.Canary) (*v1beta1.Canary, er
 }
 
 // Delete takes name of the canary and deletes it. Returns an error if one occurs.
-func (c *FakeCanaries) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeCanaries) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(canariesResource, c.ns, name), &v1beta1.Canary{})
 
@@ -121,15 +123,15 @@ func (c *FakeCanaries) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeCanaries) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(canariesResource, c.ns, listOptions)
+func (c *FakeCanaries) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(canariesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.CanaryList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched canary.
-func (c *FakeCanaries) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.Canary, err error) {
+func (c *FakeCanaries) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Canary, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(canariesResource, c.ns, name, pt, data, subresources...), &v1beta1.Canary{})
 

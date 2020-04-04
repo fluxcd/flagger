@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	time "time"
 
 	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -61,13 +62,13 @@ func NewFilteredCanaryInformer(client versioned.Interface, namespace string, res
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().Canaries(namespace).List(options)
+				return client.FlaggerV1beta1().Canaries(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().Canaries(namespace).Watch(options)
+				return client.FlaggerV1beta1().Canaries(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&flaggerv1beta1.Canary{},

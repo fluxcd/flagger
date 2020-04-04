@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -24,7 +25,7 @@ func TestGlooRouter_Sync(t *testing.T) {
 	require.NoError(t, err)
 
 	// test insert
-	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get("podinfo", metav1.GetOptions{})
+	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	dests := ug.Spec.Destinations
 	assert.Len(t, dests, 2)
@@ -54,7 +55,7 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	err = router.SetRoutes(mocks.canary, p, c, m)
 	require.NoError(t, err)
 
-	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get("podinfo", metav1.GetOptions{})
+	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	var pRoute gloov1.WeightedDestination

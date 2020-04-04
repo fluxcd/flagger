@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -34,7 +35,7 @@ func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
 
 	primaryName := fmt.Sprintf("%s-primary", d.canary.Spec.TargetRef.Name)
 	p, err := d.controller.kubeClient.AppsV1().
-		Deployments(d.canary.Namespace).Get(primaryName, metav1.GetOptions{})
+		Deployments(d.canary.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	p.Status = appsv1.DeploymentStatus{
@@ -44,7 +45,7 @@ func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
 		AvailableReplicas: 1,
 	}
 
-	_, err = d.controller.kubeClient.AppsV1().Deployments(d.canary.Namespace).Update(p)
+	_, err = d.controller.kubeClient.AppsV1().Deployments(d.canary.Namespace).Update(context.TODO(), p, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	require.NoError(t, d.controller.Initialize(d.canary))

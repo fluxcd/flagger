@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,7 +11,7 @@ import (
 
 // SyncStatus encodes the canary pod spec and updates the canary status
 func (c *DaemonSetController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
-	dae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	dae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("daemonset %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}

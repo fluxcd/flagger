@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -19,7 +20,7 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -54,7 +55,7 @@ func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Cana
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -78,7 +79,7 @@ func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, va
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -102,7 +103,7 @@ func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -128,7 +129,7 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -234,14 +235,14 @@ func MakeStatusConditions(cd *flaggerv1.Canary,
 // Canary.flagger.app is invalid: apiVersion: Invalid value: flagger.app/v1alpha3: must be flagger.app/v1beta1
 // then the canary object will be updated to the latest API version
 func updateStatusWithUpgrade(flaggerClient clientset.Interface, cd *flaggerv1.Canary) error {
-	_, err := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cd)
+	_, err := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(context.TODO(), cd, metav1.UpdateOptions{})
 	if err != nil && strings.Contains(err.Error(), "flagger.app/v1alpha") {
 		// upgrade alpha resource
-		if _, updateErr := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Update(cd); updateErr != nil {
+		if _, updateErr := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Update(context.TODO(), cd, metav1.UpdateOptions{}); updateErr != nil {
 			return fmt.Errorf("updating canary %s.%s from v1alpha to v1beta failed: %w", cd.Name, cd.Namespace, updateErr)
 		}
 		// retry status update
-		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cd)
+		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(context.TODO(), cd, metav1.UpdateOptions{})
 	}
 
 	if err != nil {
