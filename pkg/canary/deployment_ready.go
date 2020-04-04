@@ -81,7 +81,6 @@ func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, 
 			return retriable, fmt.Errorf("waiting for rollout to finish: %d of %d updated replicas are available",
 				deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
 		}
-
 	} else {
 		return true, fmt.Errorf(
 			"waiting for rollout to finish: observed deployment generation less then desired generation")
