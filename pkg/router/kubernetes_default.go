@@ -194,21 +194,16 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			updateService = true
 		}
 
-		// TODO: Handle annotation/label removal
-		annotationsDiff := cmp.Diff(metadata.Annotations, svc.ObjectMeta.Annotations)
-		if annotationsDiff != "" {
-			for k, v := range metadata.Annotations {
-				svcClone.ObjectMeta.Annotations[k] = v
+		// update annotations and labels only if the service has been created by Flagger
+		if _, owned := c.isOwnedByCanary(svc, canary.Name); owned {
+			if cmp.Diff(metadata.Annotations, svc.ObjectMeta.Annotations) != "" {
+				svcClone.ObjectMeta.Annotations = metadata.Annotations
+				updateService = true
 			}
-			updateService = true
-		}
-
-		labelsDiff := cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels)
-		if labelsDiff != "" {
-			for k, v := range metadata.Labels {
-				svcClone.ObjectMeta.Labels[k] = v
+			if cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels) != "" {
+				svcClone.ObjectMeta.Labels = metadata.Labels
+				updateService = true
 			}
-			updateService = true
 		}
 
 		if updateService {
