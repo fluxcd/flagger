@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
@@ -54,7 +55,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 		},
 	}
 
-	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		upstreamGroup = &gloov1.UpstreamGroup{
 			ObjectMeta: metav1.ObjectMeta{
@@ -71,7 +72,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 			Spec: newSpec,
 		}
 
-		_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Create(upstreamGroup)
+		_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Create(context.TODO(), upstreamGroup, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("UpstreamGroup %s.%s create error: %w", apexName, canary.Namespace, err)
 		}
@@ -92,7 +93,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 			clone := upstreamGroup.DeepCopy()
 			clone.Spec = newSpec
 
-			_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Update(clone)
+			_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("UpstreamGroup %s.%s update error: %w", apexName, canary.Namespace, err)
 			}
@@ -114,7 +115,7 @@ func (gr *GlooRouter) GetRoutes(canary *flaggerv1.Canary) (
 	apexName := canary.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-%s-primary-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
 
-	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("UpstreamGroup %s.%s get query error: %w", apexName, canary.Namespace, err)
 		return
@@ -151,7 +152,7 @@ func (gr *GlooRouter) SetRoutes(
 		return fmt.Errorf("RoutingRule %s.%s update failed: no valid weights", apexName, canary.Namespace)
 	}
 
-	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	upstreamGroup, err := gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("UpstreamGroup %s.%s query error: %w", apexName, canary.Namespace, err)
 	}
@@ -179,7 +180,7 @@ func (gr *GlooRouter) SetRoutes(
 		},
 	}
 
-	_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Update(upstreamGroup)
+	_, err = gr.glooClient.GlooV1().UpstreamGroups(canary.Namespace).Update(context.TODO(), upstreamGroup, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("UpstreamGroup %s.%s update error: %w", apexName, canary.Namespace, err)
 	}

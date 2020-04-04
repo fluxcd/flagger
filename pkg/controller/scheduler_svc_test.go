@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,13 +18,13 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check initialized status
-	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, flaggerv1.CanaryPhaseInitialized, c.Status.Phase)
 
 	// update
 	svc2 := newDeploymentTestServiceV2()
-	_, err = mocks.kubeClient.CoreV1().Services("default").Update(svc2)
+	_, err = mocks.kubeClient.CoreV1().Services("default").Update(context.TODO(), svc2, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// detect service spec changes
@@ -41,7 +42,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check progressing status
-	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
 
@@ -49,7 +50,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
 	// check promoting status
-	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, flaggerv1.CanaryPhasePromoting, c.Status.Phase)
 
@@ -62,7 +63,7 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	assert.Equal(t, 0, canaryWeight)
 	assert.False(t, mirrored)
 
-	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get("podinfo-primary", metav1.GetOptions{})
+	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	primaryLabelValue := primarySvc.Spec.Selector["app"]
@@ -70,14 +71,14 @@ func TestScheduler_ServicePromotion(t *testing.T) {
 	assert.Equal(t, canaryLabelValue, primaryLabelValue)
 
 	// check finalising status
-	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, flaggerv1.CanaryPhaseFinalising, c.Status.Phase)
 
 	// scale canary to zero
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
-	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, flaggerv1.CanaryPhaseSucceeded, c.Status.Phase)
 }

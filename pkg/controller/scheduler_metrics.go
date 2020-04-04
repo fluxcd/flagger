@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
@@ -169,7 +170,7 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 
 			var credentials map[string][]byte
 			if template.Spec.Provider.SecretRef != nil {
-				secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(template.Spec.Provider.SecretRef.Name, metav1.GetOptions{})
+				secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), template.Spec.Provider.SecretRef.Name, metav1.GetOptions{})
 				if err != nil {
 					c.recordEventErrorf(canary, "Metric template %s.%s secret %s error: %v",
 						metric.TemplateRef.Name, namespace, template.Spec.Provider.SecretRef.Name, err)

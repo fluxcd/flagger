@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -113,7 +114,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 	}
 
 	// create service if it doesn't exists
-	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(name, metav1.GetOptions{})
+	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		svc = &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
@@ -132,7 +133,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			Spec: svcSpec,
 		}
 
-		_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Create(svc)
+		_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Create(context.TODO(), svc, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("service %s.%s create error: %w", svc.Name, canary.Namespace, err)
 		}
@@ -166,7 +167,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			svcClone := svc.DeepCopy()
 			svcClone.Spec.Ports = svcSpec.Ports
 			svcClone.Spec.Selector = svcSpec.Selector
-			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(svcClone)
+			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), svcClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("service %s update error: %w", name, err)
 			}
@@ -182,7 +183,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 func (c *KubernetesDefaultRouter) Finalize(canary *flaggerv1.Canary) error {
 	apexName, _, _ := canary.GetServiceNames()
 
-	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", apexName, canary.Namespace, err)
 	}
@@ -199,7 +200,7 @@ func (c *KubernetesDefaultRouter) Finalize(canary *flaggerv1.Canary) error {
 			clone := svc.DeepCopy()
 			clone.Spec.Selector = storedSvc.Spec.Selector
 
-			if _, err := c.kubeClient.CoreV1().Services(canary.Namespace).Update(clone); err != nil {
+			if _, err := c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{}); err != nil {
 				return fmt.Errorf("service %s update error: %w", clone.Name, err)
 			}
 		} else {

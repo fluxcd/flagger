@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	"time"
 
 	v1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
@@ -37,15 +38,15 @@ type MeshesGetter interface {
 
 // MeshInterface has methods to work with Mesh resources.
 type MeshInterface interface {
-	Create(*v1beta1.Mesh) (*v1beta1.Mesh, error)
-	Update(*v1beta1.Mesh) (*v1beta1.Mesh, error)
-	UpdateStatus(*v1beta1.Mesh) (*v1beta1.Mesh, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1beta1.Mesh, error)
-	List(opts v1.ListOptions) (*v1beta1.MeshList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.Mesh, err error)
+	Create(ctx context.Context, mesh *v1beta1.Mesh, opts v1.CreateOptions) (*v1beta1.Mesh, error)
+	Update(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (*v1beta1.Mesh, error)
+	UpdateStatus(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (*v1beta1.Mesh, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.Mesh, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.MeshList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Mesh, err error)
 	MeshExpansion
 }
 
@@ -62,19 +63,19 @@ func newMeshes(c *AppmeshV1beta1Client) *meshes {
 }
 
 // Get takes name of the mesh, and returns the corresponding mesh object, and an error if there is any.
-func (c *meshes) Get(name string, options v1.GetOptions) (result *v1beta1.Mesh, err error) {
+func (c *meshes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Mesh, err error) {
 	result = &v1beta1.Mesh{}
 	err = c.client.Get().
 		Resource("meshes").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Meshes that match those selectors.
-func (c *meshes) List(opts v1.ListOptions) (result *v1beta1.MeshList, err error) {
+func (c *meshes) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.MeshList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -84,13 +85,13 @@ func (c *meshes) List(opts v1.ListOptions) (result *v1beta1.MeshList, err error)
 		Resource("meshes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested meshes.
-func (c *meshes) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *meshes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -100,81 +101,84 @@ func (c *meshes) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("meshes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a mesh and creates it.  Returns the server's representation of the mesh, and an error, if there is any.
-func (c *meshes) Create(mesh *v1beta1.Mesh) (result *v1beta1.Mesh, err error) {
+func (c *meshes) Create(ctx context.Context, mesh *v1beta1.Mesh, opts v1.CreateOptions) (result *v1beta1.Mesh, err error) {
 	result = &v1beta1.Mesh{}
 	err = c.client.Post().
 		Resource("meshes").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(mesh).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a mesh and updates it. Returns the server's representation of the mesh, and an error, if there is any.
-func (c *meshes) Update(mesh *v1beta1.Mesh) (result *v1beta1.Mesh, err error) {
+func (c *meshes) Update(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (result *v1beta1.Mesh, err error) {
 	result = &v1beta1.Mesh{}
 	err = c.client.Put().
 		Resource("meshes").
 		Name(mesh.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(mesh).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *meshes) UpdateStatus(mesh *v1beta1.Mesh) (result *v1beta1.Mesh, err error) {
+func (c *meshes) UpdateStatus(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (result *v1beta1.Mesh, err error) {
 	result = &v1beta1.Mesh{}
 	err = c.client.Put().
 		Resource("meshes").
 		Name(mesh.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(mesh).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the mesh and deletes it. Returns an error if one occurs.
-func (c *meshes) Delete(name string, options *v1.DeleteOptions) error {
+func (c *meshes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("meshes").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *meshes) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *meshes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("meshes").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched mesh.
-func (c *meshes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.Mesh, err error) {
+func (c *meshes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Mesh, err error) {
 	result = &v1beta1.Mesh{}
 	err = c.client.Patch(pt).
 		Resource("meshes").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -69,10 +70,10 @@ func prometheusFake() fakeClients {
 func TestNewPrometheusProvider(t *testing.T) {
 	clients := prometheusFake()
 
-	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
+	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	secret, err := clients.kubeClient.CoreV1().Secrets("default").Get("prometheus", metav1.GetOptions{})
+	secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
@@ -104,11 +105,11 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 
 		clients := prometheusFake()
 
-		template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
+		template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
 		require.NoError(t, err)
 		template.Spec.Provider.Address = ts.URL
 
-		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get("prometheus", metav1.GetOptions{})
+		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
@@ -130,11 +131,11 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 		clients := prometheusFake()
 
 		template, err := clients.flaggerClient.FlaggerV1beta1().
-			MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
+			MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
 		require.NoError(t, err)
 		template.Spec.Provider.Address = ts.URL
 
-		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get("prometheus", metav1.GetOptions{})
+		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
@@ -153,7 +154,7 @@ func TestPrometheusProvider_IsOnline(t *testing.T) {
 
 	clients := prometheusFake()
 
-	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get("prometheus", metav1.GetOptions{})
+	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
 	require.NoError(t, err)
 	template.Spec.Provider.Address = ts.URL
 	template.Spec.Provider.SecretRef = nil

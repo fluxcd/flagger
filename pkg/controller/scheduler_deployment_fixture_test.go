@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -55,13 +56,13 @@ func (f fixture) makeCanaryReady(t *testing.T) {
 func (f fixture) makeReady(t *testing.T, name string) {
 	p, err := f.kubeClient.AppsV1().
 		Deployments("default").
-		Get(name, metav1.GetOptions{})
+		Get(context.TODO(), name, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	p.Status = appsv1.DeploymentStatus{Replicas: 1, UpdatedReplicas: 1,
 		ReadyReplicas: 1, AvailableReplicas: 1}
 
-	_, err = f.kubeClient.AppsV1().Deployments("default").Update(p)
+	_, err = f.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), p, metav1.UpdateOptions{})
 	require.NoError(t, err)
 }
 

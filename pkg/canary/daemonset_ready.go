@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 // the daemonset is in the middle of a rolling update
 func (c *DaemonSetController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
@@ -30,7 +31,7 @@ func (c *DaemonSetController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 // the daemonset is in the middle of a rolling update
 func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
-	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return true, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}

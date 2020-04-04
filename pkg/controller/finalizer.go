@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,7 @@ func (c *Controller) finalize(old interface{}) error {
 		return fmt.Errorf("received unexpected object: %v", old)
 	}
 
-	_, err := c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.Name, metav1.GetOptions{})
+	_, err := c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(context.TODO(), canary.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("get query error: %w", err)
 	}
@@ -106,7 +107,7 @@ func (c *Controller) addFinalizer(canary *flaggerv1.Canary) error {
 	name, ns := canary.GetName(), canary.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -114,7 +115,7 @@ func (c *Controller) addFinalizer(canary *flaggerv1.Canary) error {
 
 		cCopy := canary.DeepCopy()
 		cCopy.ObjectMeta.Finalizers = append(cCopy.ObjectMeta.Finalizers, finalizer)
-		_, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(cCopy)
+		_, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(context.TODO(), cCopy, metav1.UpdateOptions{})
 		firstTry = false
 		return
 	})
@@ -133,7 +134,7 @@ func (c *Controller) removeFinalizer(canary *flaggerv1.Canary) error {
 	name, ns := canary.GetName(), canary.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(ns).Get(name, metav1.GetOptions{})
+			canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
@@ -153,7 +154,7 @@ func (c *Controller) removeFinalizer(canary *flaggerv1.Canary) error {
 		}
 
 		cCopy.ObjectMeta.Finalizers = nfs
-		_, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(cCopy)
+		_, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(context.TODO(), cCopy, metav1.UpdateOptions{})
 		firstTry = false
 		return
 	})

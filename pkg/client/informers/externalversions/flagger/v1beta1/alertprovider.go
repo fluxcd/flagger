@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	time "time"
 
 	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
@@ -61,13 +62,13 @@ func NewFilteredAlertProviderInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().AlertProviders(namespace).List(options)
+				return client.FlaggerV1beta1().AlertProviders(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().AlertProviders(namespace).Watch(options)
+				return client.FlaggerV1beta1().AlertProviders(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&flaggerv1beta1.AlertProvider{},

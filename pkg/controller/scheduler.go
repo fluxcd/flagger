@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -86,7 +87,7 @@ func (c *Controller) scheduleCanaries() {
 func (c *Controller) advanceCanary(name string, namespace string) {
 	begin := time.Now()
 	// check if the canary exists
-	cd, err := c.flaggerClient.FlaggerV1beta1().Canaries(namespace).Get(name, metav1.GetOptions{})
+	cd, err := c.flaggerClient.FlaggerV1beta1().Canaries(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
 			Errorf("Canary %s.%s not found", name, namespace)
@@ -633,7 +634,7 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 	}
 
 	var err error
-	canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(canary.Name, metav1.GetOptions{})
+	canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(context.TODO(), canary.Name, metav1.GetOptions{})
 	if err != nil {
 		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 		return false

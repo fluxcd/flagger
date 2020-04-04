@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -30,7 +31,7 @@ type DaemonSetController struct {
 
 func (c *DaemonSetController) ScaleToZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
-	dae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	dae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -46,7 +47,7 @@ func (c *DaemonSetController) ScaleToZero(cd *flaggerv1.Canary) error {
 		daeCopy.Spec.Template.Spec.NodeSelector[k] = v
 	}
 
-	_, err = c.kubeClient.AppsV1().DaemonSets(dae.Namespace).Update(daeCopy)
+	_, err = c.kubeClient.AppsV1().DaemonSets(dae.Namespace).Update(context.TODO(), daeCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("updating daemonset %s.%s failed: %w", daeCopy.GetName(), daeCopy.Namespace, err)
 	}
@@ -55,7 +56,7 @@ func (c *DaemonSetController) ScaleToZero(cd *flaggerv1.Canary) error {
 
 func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("daemonset %s.%s query error: %w", targetName, cd.Namespace, err)
 	}
@@ -65,7 +66,7 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 		delete(depCopy.Spec.Template.Spec.NodeSelector, k)
 	}
 
-	_, err = c.kubeClient.AppsV1().DaemonSets(dep.Namespace).Update(depCopy)
+	_, err = c.kubeClient.AppsV1().DaemonSets(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("scaling up daemonset %s.%s failed: %w", depCopy.GetName(), depCopy.Namespace, err)
 	}
@@ -101,7 +102,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
-	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("damonset %s.%s get query error: %v", targetName, cd.Namespace, err)
 	}
@@ -111,7 +112,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
-	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
@@ -148,7 +149,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName, label)
 
 	// apply update
-	_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Update(primaryCopy)
+	_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("updating daemonset %s.%s template spec failed: %w",
 			primaryCopy.GetName(), primaryCopy.Namespace, err)
@@ -159,7 +160,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 // HasTargetChanged returns true if the canary DaemonSet pod spec has changed
 func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
-	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return false, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -181,7 +182,7 @@ func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, erro
 func (c *DaemonSetController) GetMetadata(cd *flaggerv1.Canary) (string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 
-	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return "", nil, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -202,7 +203,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
-	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -218,7 +219,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
-	primaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// create primary secrets and config maps
 		configRefs, err := c.configTracker.GetTargetConfigs(cd)
@@ -269,7 +270,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 			},
 		}
 
-		_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Create(primaryDae)
+		_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Create(context.TODO(), primaryDae, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("creating daemonset %s.%s failed: %w", primaryDae.Name, cd.Namespace, err)
 		}

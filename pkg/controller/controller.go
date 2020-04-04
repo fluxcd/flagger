@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -269,7 +270,7 @@ func (c *Controller) syncHandler(key string) error {
 			cdCopy.Status.Conditions = conditions
 			cdCopy.Status.LastTransitionTime = metav1.Now()
 			cdCopy.Status.Phase = flaggerv1.CanaryPhaseInitializing
-			_, err := c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+			_, err := c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(context.TODO(), cdCopy, metav1.UpdateOptions{})
 			if err != nil {
 				c.logger.Errorf("%s status condition update error: %v", key, err)
 				return fmt.Errorf("%s status condition update error: %w", key, err)

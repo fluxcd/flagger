@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ func TestDaemonSetController_SyncStatus(t *testing.T) {
 	err = mocks.controller.SyncStatus(mocks.canary, status)
 	require.NoError(t, err)
 
-	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, status.Phase, res.Status.Phase)
 	assert.Equal(t, status.FailedChecks, res.Status.FailedChecks)
@@ -42,7 +43,7 @@ func TestDaemonSetController_SetFailedChecks(t *testing.T) {
 	err = mocks.controller.SetStatusFailedChecks(mocks.canary, 1)
 	require.NoError(t, err)
 
-	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 1, res.Status.FailedChecks)
 }
@@ -55,7 +56,7 @@ func TestDaemonSetController_SetState(t *testing.T) {
 	err = mocks.controller.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)
 	require.NoError(t, err)
 
-	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	res, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, res.Status.Phase)
 }

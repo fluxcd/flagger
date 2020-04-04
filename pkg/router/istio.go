@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -49,7 +50,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 		TrafficPolicy: canary.Spec.Service.TrafficPolicy,
 	}
 
-	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(name, metav1.GetOptions{})
+	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
 		destinationRule = &istiov1alpha3.DestinationRule{
@@ -66,7 +67,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 			},
 			Spec: newSpec,
 		}
-		_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Create(destinationRule)
+		_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Create(context.TODO(), destinationRule, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("DestinationRule %s.%s create error: %w", name, canary.Namespace, err)
 		}
@@ -82,7 +83,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 		if diff := cmp.Diff(newSpec, destinationRule.Spec); diff != "" {
 			clone := destinationRule.DeepCopy()
 			clone.Spec = newSpec
-			_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Update(clone)
+			_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("DestinationRule %s.%s update error: %w", name, canary.Namespace, err)
 			}
@@ -173,7 +174,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		}
 	}
 
-	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
 		virtualService = &istiov1alpha3.VirtualService{
@@ -190,7 +191,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 			},
 			Spec: newSpec,
 		}
-		_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Create(virtualService)
+		_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Create(context.TODO(), virtualService, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s create error: %w", apexName, canary.Namespace, err)
 		}
@@ -228,7 +229,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				vtClone.ObjectMeta.Annotations[configAnnotation] = string(b)
 			}
 
-			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vtClone)
+			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vtClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 			}
@@ -249,7 +250,7 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 ) {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 	vs := &istiov1alpha3.VirtualService{}
-	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 		return
@@ -294,7 +295,7 @@ func (ir *IstioRouter) SetRoutes(
 ) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
-	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
@@ -358,7 +359,7 @@ func (ir *IstioRouter) SetRoutes(
 		}
 	}
 
-	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(vsCopy)
+	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
 	}
@@ -369,7 +370,7 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 	// Need to see if I can get the annotation orig-configuration
 	apexName, _, _ := canary.GetServiceNames()
 
-	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(apexName, metav1.GetOptions{})
+	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error: %w", apexName, canary.Namespace, err)
 	}
@@ -395,7 +396,7 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 	clone := vs.DeepCopy()
 	clone.Spec = storedSpec
 
-	_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(clone)
+	_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 	}

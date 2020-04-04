@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func TestDaemonSetController_Sync(t *testing.T) {
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
-	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
+	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	dae := newDaemonSetControllerTestPodInfo()
@@ -33,24 +34,24 @@ func TestDaemonSetController_Promote(t *testing.T) {
 	require.NoError(t, err)
 
 	dae2 := newDaemonSetControllerTestPodInfoV2()
-	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(dae2)
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(context.TODO(), dae2, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	config2 := newDaemonSetControllerTestConfigMapV2()
-	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(config2)
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(context.TODO(), config2, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	err = mocks.controller.Promote(mocks.canary)
 	require.NoError(t, err)
 
-	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
+	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	primaryImage := daePrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dae2.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, primaryImage, sourceImage)
 
-	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 	if assert.NoError(t, err) {
 		assert.Equal(t, configPrimary.Data["color"], config2.Data["color"])
 	}
@@ -63,10 +64,10 @@ func TestDaemonSetController_NoConfigTracking(t *testing.T) {
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
-	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo-primary", metav1.GetOptions{})
+	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Get("podinfo-config-env-primary", metav1.GetOptions{})
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 	require.True(t, errors.IsNotFound(err), "Primary ConfigMap shouldn't have been created")
 
 	configName := daePrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
@@ -79,20 +80,20 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 	require.NoError(t, err)
 
 	// save last applied hash
-	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	err = mocks.controller.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitializing})
 	require.NoError(t, err)
 
 	// save last promoted hash
-	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	err = mocks.controller.SetStatusPhase(canary, flaggerv1.CanaryPhaseInitialized)
 	require.NoError(t, err)
 
-	dep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+	dep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	depClone := dep.DeepCopy()
@@ -103,10 +104,10 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 	}
 
 	// update pod spec
-	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(depClone)
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(context.TODO(), depClone, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// detect change in last applied spec
@@ -118,7 +119,7 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 	err = mocks.controller.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing})
 	require.NoError(t, err)
 
-	dep, err = mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+	dep, err = mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	depClone = dep.DeepCopy()
@@ -129,10 +130,10 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 	}
 
 	// update pod spec
-	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(depClone)
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(context.TODO(), depClone, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// ignore change as hash should be the same with last promoted
@@ -148,10 +149,10 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 	}
 
 	// update pod spec
-	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(depClone)
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(context.TODO(), depClone, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get("podinfo", metav1.GetOptions{})
+	canary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// detect change
@@ -169,7 +170,7 @@ func TestDaemonSetController_Scale(t *testing.T) {
 		err = mocks.controller.ScaleToZero(mocks.canary)
 		require.NoError(t, err)
 
-		c, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+		c, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		for k := range daemonSetScaleDownNodeSelector {
@@ -185,7 +186,7 @@ func TestDaemonSetController_Scale(t *testing.T) {
 		err = mocks.controller.ScaleFromZero(mocks.canary)
 		require.NoError(t, err)
 
-		c, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+		c, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		for k := range daemonSetScaleDownNodeSelector {
@@ -203,7 +204,7 @@ func TestDaemonSetController_Finalize(t *testing.T) {
 	err = mocks.controller.Finalize(mocks.canary)
 	require.NoError(t, err)
 
-	dep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get("podinfo", metav1.GetOptions{})
+	dep, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	_, ok := dep.Spec.Template.Spec.NodeSelector["flagger.app/scale-to-zero"]

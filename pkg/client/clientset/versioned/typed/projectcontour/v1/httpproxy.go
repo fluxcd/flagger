@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"time"
 
 	v1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
@@ -37,15 +38,15 @@ type HTTPProxiesGetter interface {
 
 // HTTPProxyInterface has methods to work with HTTPProxy resources.
 type HTTPProxyInterface interface {
-	Create(*v1.HTTPProxy) (*v1.HTTPProxy, error)
-	Update(*v1.HTTPProxy) (*v1.HTTPProxy, error)
-	UpdateStatus(*v1.HTTPProxy) (*v1.HTTPProxy, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.HTTPProxy, error)
-	List(opts metav1.ListOptions) (*v1.HTTPProxyList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.HTTPProxy, err error)
+	Create(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.CreateOptions) (*v1.HTTPProxy, error)
+	Update(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (*v1.HTTPProxy, error)
+	UpdateStatus(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (*v1.HTTPProxy, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.HTTPProxy, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.HTTPProxyList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.HTTPProxy, err error)
 	HTTPProxyExpansion
 }
 
@@ -64,20 +65,20 @@ func newHTTPProxies(c *ProjectcontourV1Client, namespace string) *hTTPProxies {
 }
 
 // Get takes name of the hTTPProxy, and returns the corresponding hTTPProxy object, and an error if there is any.
-func (c *hTTPProxies) Get(name string, options metav1.GetOptions) (result *v1.HTTPProxy, err error) {
+func (c *hTTPProxies) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.HTTPProxy, err error) {
 	result = &v1.HTTPProxy{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("httpproxies").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of HTTPProxies that match those selectors.
-func (c *hTTPProxies) List(opts metav1.ListOptions) (result *v1.HTTPProxyList, err error) {
+func (c *hTTPProxies) List(ctx context.Context, opts metav1.ListOptions) (result *v1.HTTPProxyList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,13 +89,13 @@ func (c *hTTPProxies) List(opts metav1.ListOptions) (result *v1.HTTPProxyList, e
 		Resource("httpproxies").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested hTTPProxies.
-func (c *hTTPProxies) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *hTTPProxies) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -105,87 +106,90 @@ func (c *hTTPProxies) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("httpproxies").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a hTTPProxy and creates it.  Returns the server's representation of the hTTPProxy, and an error, if there is any.
-func (c *hTTPProxies) Create(hTTPProxy *v1.HTTPProxy) (result *v1.HTTPProxy, err error) {
+func (c *hTTPProxies) Create(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.CreateOptions) (result *v1.HTTPProxy, err error) {
 	result = &v1.HTTPProxy{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("httpproxies").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(hTTPProxy).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a hTTPProxy and updates it. Returns the server's representation of the hTTPProxy, and an error, if there is any.
-func (c *hTTPProxies) Update(hTTPProxy *v1.HTTPProxy) (result *v1.HTTPProxy, err error) {
+func (c *hTTPProxies) Update(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (result *v1.HTTPProxy, err error) {
 	result = &v1.HTTPProxy{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("httpproxies").
 		Name(hTTPProxy.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(hTTPProxy).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *hTTPProxies) UpdateStatus(hTTPProxy *v1.HTTPProxy) (result *v1.HTTPProxy, err error) {
+func (c *hTTPProxies) UpdateStatus(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (result *v1.HTTPProxy, err error) {
 	result = &v1.HTTPProxy{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("httpproxies").
 		Name(hTTPProxy.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(hTTPProxy).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the hTTPProxy and deletes it. Returns an error if one occurs.
-func (c *hTTPProxies) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *hTTPProxies) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("httpproxies").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *hTTPProxies) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *hTTPProxies) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("httpproxies").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched hTTPProxy.
-func (c *hTTPProxies) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.HTTPProxy, err error) {
+func (c *hTTPProxies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.HTTPProxy, err error) {
 	result = &v1.HTTPProxy{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("httpproxies").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

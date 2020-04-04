@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"context"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -52,7 +53,7 @@ func (c *ServiceController) Initialize(cd *flaggerv1.Canary) (err error) {
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryName := fmt.Sprintf("%s-canary", targetName)
 
-	svc, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	svc, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
@@ -69,7 +70,7 @@ func (c *ServiceController) Initialize(cd *flaggerv1.Canary) (err error) {
 }
 
 func (c *ServiceController) reconcileCanaryService(canary *flaggerv1.Canary, name string, src *corev1.Service) error {
-	current, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(name, metav1.GetOptions{})
+	current, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return c.createService(canary, name, src)
 	} else if err != nil {
@@ -88,7 +89,7 @@ func (c *ServiceController) reconcileCanaryService(canary *flaggerv1.Canary, nam
 
 	ns.ObjectMeta.ResourceVersion = current.ObjectMeta.ResourceVersion
 
-	_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(ns)
+	_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), ns, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("updating service %s.%s failed: %w", name, canary.Namespace, err)
 	}
@@ -99,7 +100,7 @@ func (c *ServiceController) reconcileCanaryService(canary *flaggerv1.Canary, nam
 }
 
 func (c *ServiceController) reconcilePrimaryService(canary *flaggerv1.Canary, name string, src *corev1.Service) error {
-	_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(name, metav1.GetOptions{})
+	_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return c.createService(canary, name, src)
 	} else if err != nil {
@@ -119,7 +120,7 @@ func (c *ServiceController) createService(canary *flaggerv1.Canary, name string,
 	// Let K8s set this. Otherwise K8s API complains with "resourceVersion should not be set on objects to be created"
 	svc.ObjectMeta.ResourceVersion = ""
 
-	_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Create(svc)
+	_, err := c.kubeClient.CoreV1().Services(canary.Namespace).Create(context.TODO(), svc, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("creating service %s.%s query error: %w", canary.Name, canary.Namespace, err)
 	}
@@ -154,12 +155,12 @@ func (c *ServiceController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
-	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	primary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(primaryName, metav1.GetOptions{})
+	primary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
@@ -173,7 +174,7 @@ func (c *ServiceController) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.ObjectMeta.UID = primary.ObjectMeta.UID
 
 	// apply update
-	_, err = c.kubeClient.CoreV1().Services(cd.Namespace).Update(primaryCopy)
+	_, err = c.kubeClient.CoreV1().Services(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("updating service %s.%s spec failed: %w",
 			primaryCopy.GetName(), primaryCopy.Namespace, err)
@@ -185,7 +186,7 @@ func (c *ServiceController) Promote(cd *flaggerv1.Canary) error {
 // HasServiceChanged returns true if the canary service spec has changed
 func (c *ServiceController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
-	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(targetName, metav1.GetOptions{})
+	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return false, fmt.Errorf("service %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
@@ -202,7 +203,7 @@ func (c *ServiceController) ScaleFromZero(_ *flaggerv1.Canary) error {
 }
 
 func (c *ServiceController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
-	dep, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	dep, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
