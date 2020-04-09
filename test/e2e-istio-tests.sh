@@ -60,6 +60,11 @@ spec:
   service:
     port: 9898
     portDiscovery: true
+    apex:
+      annotations:
+        test: "annotations-test"
+      labels:
+        test: "labels-test"
     headers:
       request:
         add:
@@ -109,6 +114,11 @@ until ${ok}; do
 done
 
 echo '✔ Canary initialization test passed'
+
+kubectl -n test get svc/podinfo -oyaml | grep annotations-test
+kubectl -n test get svc/podinfo -oyaml | grep labels-test
+
+echo '✔ Canary service custom metadata test passed'
 
 echo '>>> Triggering canary deployment'
 kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1

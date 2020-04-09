@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -303,7 +303,7 @@ func TestServiceRouter_Finalize(t *testing.T) {
 		router           *KubernetesDefaultRouter
 		callSetupMethods bool
 		shouldError      bool
-		canary           *v1beta1.Canary
+		canary           *flaggerv1.Canary
 		shouldMutate     bool
 	}{
 		// Won't reconcile since it is owned and would be garbage collected
@@ -346,4 +346,86 @@ func TestServiceRouter_Finalize(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestServiceRouter_InitializeMetadata(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+		labelSelector: "app",
+	}
+
+	metadata := &flaggerv1.CustomMetadata{
+		Labels:      map[string]string{"test": "test"},
+		Annotations: map[string]string{"test": "test"},
+	}
+
+	mocks.canary.Spec.Service.Canary = metadata
+
+	err := router.Initialize(mocks.canary)
+	require.NoError(t, err)
+
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "test", canarySvc.Annotations["test"])
+	assert.Equal(t, "test", canarySvc.Labels["test"])
+	assert.Equal(t, "podinfo-canary", canarySvc.Labels["app"])
+
+	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(primarySvc.Annotations))
+	assert.Equal(t, "podinfo-primary", primarySvc.Labels["app"])
+}
+
+func TestServiceRouter_ReconcileMetadata(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+		labelSelector: "app",
+	}
+
+	mocks.canary.Spec.Service.Apex = &flaggerv1.CustomMetadata{
+		Labels:      map[string]string{"test": "test"},
+		Annotations: map[string]string{"test": "test"},
+	}
+
+	err := router.Initialize(mocks.canary)
+	require.NoError(t, err)
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	apexSvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "test", apexSvc.Annotations["test"])
+	assert.Equal(t, "test", apexSvc.Labels["test"])
+	assert.Equal(t, "podinfo", apexSvc.Labels["app"])
+
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(canarySvc.Annotations))
+	assert.Equal(t, "podinfo-canary", canarySvc.Labels["app"])
+
+	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(primarySvc.Annotations))
+	assert.Equal(t, "podinfo-primary", primarySvc.Labels["app"])
+
+	mocks.canary.Spec.Service.Apex = &flaggerv1.CustomMetadata{
+		Labels:      map[string]string{"test": "test1"},
+		Annotations: map[string]string{"test1": "test"},
+	}
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	apexSvc, err = mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "test", apexSvc.Annotations["test1"])
+	assert.Equal(t, "test1", apexSvc.Labels["test"])
+	assert.Equal(t, "podinfo", apexSvc.Labels["app"])
 }
