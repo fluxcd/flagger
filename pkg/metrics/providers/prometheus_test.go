@@ -147,22 +147,61 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 }
 
 func TestPrometheusProvider_IsOnline(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadGateway)
-	}))
-	defer ts.Close()
+	t.Run("fail", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusBadGateway)
+		}))
+		defer ts.Close()
 
-	clients := prometheusFake()
+		clients := prometheusFake()
 
-	template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
-	require.NoError(t, err)
-	template.Spec.Provider.Address = ts.URL
-	template.Spec.Provider.SecretRef = nil
+		template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+		require.NoError(t, err)
+		template.Spec.Provider.Address = ts.URL
+		template.Spec.Provider.SecretRef = nil
 
-	prom, err := NewPrometheusProvider(template.Spec.Provider, nil)
-	require.NoError(t, err)
+		prom, err := NewPrometheusProvider(template.Spec.Provider, nil)
+		require.NoError(t, err)
 
-	ok, err := prom.IsOnline()
-	assert.Error(t, err, "Got no error wanted %v", http.StatusBadGateway)
-	assert.False(t, ok)
+		ok, err := prom.IsOnline()
+		assert.Error(t, err, "Got no error wanted %v", http.StatusBadGateway)
+		assert.False(t, ok)
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		expected := `vector(1)`
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			promql := r.URL.Query()["query"][0]
+			assert.Equal(t, expected, promql)
+
+			if assert.Contains(t, r.Header, "Authorization") {
+
+			}
+			header, ok := r.Header["Authorization"]
+			if assert.True(t, ok, "Authorization header not found") {
+				assert.True(t, strings.Contains(header[0], "Basic"), "Basic authorization header not found")
+			}
+
+			json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.458,"1"]}]}}`
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
+
+		clients := prometheusFake()
+
+		template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+		require.NoError(t, err)
+		template.Spec.Provider.Address = ts.URL
+
+		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
+		require.NoError(t, err)
+
+		ok, err := prom.IsOnline()
+		require.NoError(t, err)
+
+		assert.Equal(t, true, ok)
+	})
 }
