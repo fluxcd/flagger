@@ -15,6 +15,8 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
+const prometheusOnlineQuery = "vector(1)"
+
 // PrometheusProvider executes promQL queries
 type PrometheusProvider struct {
 	timeout  time.Duration
@@ -132,41 +134,15 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 	return *value, nil
 }
 
-// IsOnline calls the Prometheus status endpoint and returns an error if the API is unreachable
+// IsOnline run simple Prometheus query and returns an error if the API is unreachable
 func (p *PrometheusProvider) IsOnline() (bool, error) {
-	u, err := url.Parse("./api/v1/status/flags")
+	value, err := p.RunQuery(prometheusOnlineQuery)
 	if err != nil {
-		return false, fmt.Errorf("url.Parse failed: %w", err)
-	}
-	u.Path = path.Join(p.url.Path, u.Path)
-
-	u = p.url.ResolveReference(u)
-
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return false, fmt.Errorf("http.NewRequest failed: %w", err)
+		return false, fmt.Errorf("running query failed: %w", err)
 	}
 
-	if p.username != "" && p.password != "" {
-		req.SetBasicAuth(p.username, p.password)
-	}
-
-	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
-	defer cancel()
-
-	r, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil {
-		return false, fmt.Errorf("request failed: %w", err)
-	}
-	defer r.Body.Close()
-
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return false, fmt.Errorf("error reading body: %w", err)
-	}
-
-	if 400 <= r.StatusCode {
-		return false, fmt.Errorf("error response: %s", string(b))
+	if value != float64(1) {
+		return false, fmt.Errorf("value is not 1 for query: %s", prometheusOnlineQuery)
 	}
 
 	return true, nil
