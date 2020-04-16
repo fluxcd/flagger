@@ -92,7 +92,7 @@ jobs:
       - attach_workspace:
           at: /tmp/bin
       - run: test/container-build.sh
-      - run: test/e2e-kind.sh
+      - run: test/e2e-kind.sh v1.16.4
       - run: test/e2e-istio.sh
       - run: test/e2e-istio-tests.sh
 
