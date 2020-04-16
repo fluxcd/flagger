@@ -45,12 +45,12 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	err := router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
-	p, c, m, err := router.GetRoutes(mocks.canary)
+	_, _, _, err = router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
 
-	p = 50
-	c = 50
-	m = false
+	p := 50
+	c := 50
+	m := false
 
 	err = router.SetRoutes(mocks.canary, p, c, m)
 	require.NoError(t, err)

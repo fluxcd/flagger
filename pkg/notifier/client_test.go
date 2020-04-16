@@ -17,6 +17,7 @@ func Test_postMessage(t *testing.T) {
 
 		var payload = make(map[string]string)
 		err = json.Unmarshal(b, &payload)
+		require.NoError(t, err)
 
 		require.Equal(t, "success", payload["status"])
 	}))

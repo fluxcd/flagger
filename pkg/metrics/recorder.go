@@ -85,7 +85,7 @@ func (cr *Recorder) SetTotal(namespace string, total int) {
 
 // SetStatus sets the last known canary analysis status
 func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) {
-	status := 1
+	var status int
 	switch phase {
 	case flaggerv1.CanaryPhaseProgressing:
 		status = 0

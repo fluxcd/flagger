@@ -50,17 +50,17 @@ type ConcordTask struct {
 func NewConcordTask(metadata map[string]string, canary string, logger *zap.SugaredLogger) (*ConcordTask, error) {
 	var pollIntervalInt, pollTimeoutInt int
 
-	if _, found := metadata["server"]; found == false {
+	if _, found := metadata["server"]; !found {
 		return nil, errors.New("`server` is required with type concord")
 	}
 	pURL, err := url.Parse(metadata["server"])
 	if err != nil {
 		return nil, errors.New("failed to create base URL from metadata `concord_url`")
 	}
-	if _, found := metadata["org"]; found == false {
+	if _, found := metadata["org"]; !found {
 		return nil, errors.New("`org` is required with type concord")
 	}
-	if _, found := metadata["project"]; found == false {
+	if _, found := metadata["project"]; !found {
 		return nil, errors.New("`project` is required with type concord")
 	}
 	if _, found := metadata["repo"]; found == false {

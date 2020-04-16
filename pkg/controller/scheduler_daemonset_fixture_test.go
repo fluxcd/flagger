@@ -613,32 +613,6 @@ func newDaemonSetTestService() *corev1.Service {
 	return d
 }
 
-func newDaemonSetTestServiceV2() *corev1.Service {
-	d := &corev1.Service{
-		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "podinfo",
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{
-				"app": "podinfo-v2",
-			},
-			Type: corev1.ServiceTypeClusterIP,
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "http",
-					Port:       9898,
-					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromString("http"),
-				},
-			},
-		},
-	}
-
-	return d
-}
-
 func newDaemonSetTestMetricTemplate() *flaggerv1.MetricTemplate {
 	provider := flaggerv1.MetricTemplateProvider{
 		Type:    "prometheus",
