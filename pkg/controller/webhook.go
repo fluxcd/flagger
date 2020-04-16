@@ -12,8 +12,6 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/utils/clock"
-
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
@@ -86,7 +84,7 @@ func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w f
 }
 
 func CallEventWebhook(r *flaggerv1.Canary, webhook, message, eventtype string) error {
-	t := clock.RealClock{}.Now()
+	t := time.Now()
 
 	payload := flaggerv1.CanaryWebhookPayload{
 		Name:      r.Name,
