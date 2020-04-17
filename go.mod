@@ -15,7 +15,6 @@ require (
 	k8s.io/apimachinery v0.18.0
 	k8s.io/client-go v0.18.0
 	k8s.io/code-generator v0.18.0
-	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 )
 
 replace k8s.io/klog => github.com/stefanprodan/klog v0.0.0-20190418165334-9cbb78b20423
