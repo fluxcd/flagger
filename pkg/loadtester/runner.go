@@ -22,7 +22,6 @@ type TaskRunner struct {
 	todoTasks    *sync.Map
 	runningTasks *sync.Map
 	totalExecs   uint64
-	logCmdOutput bool
 }
 
 func NewTaskRunner(logger *zap.SugaredLogger, timeout time.Duration) *TaskRunner {

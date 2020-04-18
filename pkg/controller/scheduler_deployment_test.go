@@ -309,12 +309,12 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	// detect configs changes
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
-	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
+	_, _, _, err = mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
 
-	primaryWeight = 60
-	canaryWeight = 40
-	err = mocks.router.SetRoutes(mocks.canary, primaryWeight, canaryWeight, mirrored)
+	primaryWeight := 60
+	canaryWeight := 40
+	err = mocks.router.SetRoutes(mocks.canary, primaryWeight, canaryWeight, false)
 	require.NoError(t, err)
 
 	// advance
@@ -336,7 +336,7 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	// finalise
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
-	primaryWeight, canaryWeight, mirrored, err = mocks.router.GetRoutes(mocks.canary)
+	primaryWeight, canaryWeight, mirrored, err := mocks.router.GetRoutes(mocks.canary)
 	require.NoError(t, err)
 	assert.Equal(t, 100, primaryWeight)
 	assert.Equal(t, 0, canaryWeight)

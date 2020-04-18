@@ -293,7 +293,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// check if the canary success rate is above the threshold
 	// skip check if no traffic is routed or mirrored to canary
 	if canaryWeight == 0 && cd.Status.Iterations == 0 &&
-		(cd.GetAnalysis().Mirror == false || mirrored == false) {
+		!(cd.GetAnalysis().Mirror && mirrored) {
 		c.recordEventInfof(cd, "Starting canary analysis for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// run pre-rollout web hooks
@@ -354,7 +354,7 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 		// When mirroring, all requests go to primary and canary, but only responses from
 		// primary go back to the user.
 		if canary.GetAnalysis().Mirror && canaryWeight == 0 {
-			if mirrored == false {
+			if !mirrored {
 				mirrored = true
 				primaryWeight = 100
 				canaryWeight = 0
@@ -466,7 +466,7 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 	if canary.GetAnalysis().Iterations > canary.Status.Iterations {
 		// If in "mirror" mode, mirror requests during the entire B/G canary test
 		if provider != "kubernetes" &&
-			canary.GetAnalysis().Mirror == true && mirrored == false {
+			canary.GetAnalysis().Mirror && !mirrored {
 			if err := meshRouter.SetRoutes(canary, 100, 0, true); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
 			}
