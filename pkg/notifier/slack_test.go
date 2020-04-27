@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRocket_Post(t *testing.T) {
+func TestSlack_Post(t *testing.T) {
 	fields := []Field{
 		{Name: "name1", Value: "value1"},
 		{Name: "name2", Value: "value2"},
@@ -28,10 +28,10 @@ func TestRocket_Post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	rocket, err := NewRocket(ts.URL, "test", "test")
+	slack, err := NewSlack(ts.URL, "test", "test")
 	require.NoError(t, err)
 
-	err = rocket.Post("podinfo", "test", "test", fields, "error")
+	err = slack.Post("podinfo", "test", "test", fields, "error")
 	require.NoError(t, err)
 
 }
