@@ -613,6 +613,12 @@ func TestScheduler_DeploymentAlerts(t *testing.T) {
 	_, err := mocks.kubeClient.CoreV1().Secrets("default").Update(context.TODO(), secret, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	// init canary and send alerts
+	// init canary
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialization done - now send alert
 	mocks.ctrl.advanceCanary("podinfo", "default")
 }
