@@ -46,6 +46,7 @@ List of organizations using Flagger:
 * [Chick-fil-A](https://www.chick-fil-a.com)
 * [Capra Consulting](https://www.capraconsulting.no)
 * [DMM.com](https://dmm-corp.com)
+* [MediaMarktSaturn](https://www.mediamarktsaturn.com)
 * [Weaveworks](https://weave.works)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
