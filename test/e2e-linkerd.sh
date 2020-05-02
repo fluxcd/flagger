@@ -2,7 +2,7 @@
 
 set -o errexit
 
-LINKERD_VER="stable-2.7.0"
+LINKERD_VER="stable-2.7.1"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 curl -SsL https://github.com/linkerd/linkerd2/releases/download/${LINKERD_VER}/linkerd2-cli-${LINKERD_VER}-linux > ${REPO_ROOT}/bin/linkerd
