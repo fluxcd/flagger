@@ -22,6 +22,8 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	fakeappmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1/fake"
+	appmeshv1beta2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
+	fakeappmeshv1beta2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2/fake"
 	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	fakeflaggerv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1/fake"
 	gloov1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
@@ -87,6 +89,11 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 }
 
 var _ clientset.Interface = &Clientset{}
+
+// AppmeshV1beta2 retrieves the AppmeshV1beta2Client
+func (c *Clientset) AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface {
+	return &fakeappmeshv1beta2.FakeAppmeshV1beta2{Fake: &c.Fake}
+}
 
 // AppmeshV1beta1 retrieves the AppmeshV1beta1Client
 func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
