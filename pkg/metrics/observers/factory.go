@@ -28,44 +28,32 @@ func NewFactory(metricsServer string) (*Factory, error) {
 
 func (factory Factory) Observer(provider string) Interface {
 	switch {
-	case provider == "none":
-		return &HttpObserver{
-			client: factory.Client,
-		}
-	case provider == "kubernetes":
-		return &HttpObserver{
-			client: factory.Client,
-		}
-	case provider == "appmesh":
+	case provider == flaggerv1.AppMeshProvider:
 		return &AppMeshObserver{
 			client: factory.Client,
 		}
-	case provider == "crossover":
-		return &CrossoverObserver{
+	case provider == flaggerv1.LinkerdProvider:
+		return &LinkerdObserver{
 			client: factory.Client,
 		}
-	case provider == "nginx":
-		return &NginxObserver{
+	case provider == flaggerv1.IstioProvider:
+		return &IstioObserver{
 			client: factory.Client,
 		}
-	case strings.HasPrefix(provider, "gloo"):
+	case provider == flaggerv1.ContourProvider:
+		return &ContourObserver{
+			client: factory.Client,
+		}
+	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
 		return &GlooObserver{
 			client: factory.Client,
 		}
-	case provider == "smi:linkerd":
-		return &LinkerdObserver{
+	case provider == flaggerv1.NGINXProvider:
+		return &NginxObserver{
 			client: factory.Client,
 		}
-	case provider == "crossover:service":
-		return &CrossoverServiceObserver{
-			client: factory.Client,
-		}
-	case provider == "linkerd":
-		return &LinkerdObserver{
-			client: factory.Client,
-		}
-	case provider == "contour":
-		return &ContourObserver{
+	case provider == flaggerv1.KubernetesProvider:
+		return &HttpObserver{
 			client: factory.Client,
 		}
 	default:
