@@ -51,17 +51,6 @@ helm upgrade -i flagger flagger/flagger \
 --set meshProvider=smi:crossover
 ```
 
-Optionally you can enable Slack notifications:
-
-```bash
-helm upgrade -i flagger flagger/flagger \
---reuse-values \
---namespace test \
---set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
---set slack.channel=general \
---set slack.user=flagger
-```
-
 ## Bootstrap
 
 Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
@@ -82,6 +71,59 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test
 ```
 
+Create a metric template to measure the HTTP requests error rate:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: error-rate
+  namespace: test
+spec:
+  provider:
+    address: http://flagger-prometheus:9090
+    type: prometheus
+  query: |
+    100 - rate(
+      envoy_cluster_upstream_rq{
+        kubernetes_namespace="{{ namespace }}",
+        envoy_cluster_name="{{ target }}-canary",
+        envoy_response_code!~"5.*"
+      }[{{ interval }}]) 
+    / 
+    rate(
+      envoy_cluster_upstream_rq{
+        kubernetes_namespace="{{ namespace }}",
+        envoy_cluster_name="{{ target }}-canary"
+      }[{{ interval }}]
+    ) * 100
+```
+
+Create a metric template to measure the HTTP requests average duration:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: test
+spec:
+  provider:
+    address: http://flagger-prometheus:9090
+    type: prometheus
+  query: |
+    histogram_quantile(0.99,
+      sum(
+        rate(
+          envoy_cluster_upstream_rq_time_bucket{
+            kubernetes_namespace="{{ namespace }}",
+            envoy_cluster_name="{{ target }}-canary"
+          }[{{ interval }}]
+        )
+      ) by (le)
+    )
+```
+
 Create a canary custom resource:
 
 ```yaml
@@ -91,15 +133,12 @@ metadata:
   name: podinfo
   namespace: test
 spec:
-  # specify mesh provider if it isn't the default one
-  # provider: "smi:crossover"
+  provider: "smi:crossover"
   # deployment reference
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
-  # the maximum time in seconds for the canary deployment
-  # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
   # HPA reference (optional)
   autoscalerRef:
@@ -107,10 +146,7 @@ spec:
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
-    # ClusterIP port number
     port: 9898
-    # container port number or name (optional)
-    targetPort: 9898
   # define the canary analysis timing and KPIs
   analysis:
     # schedule interval (default 60s)
@@ -123,21 +159,19 @@ spec:
     # canary increment step
     # percentage (0-100)
     stepWeight: 5
-    # App Mesh Prometheus checks
     metrics:
-    - name: request-success-rate
-      # minimum req success rate (non 5xx responses)
-      # percentage (0-100)
+    - name: error-rate
+      templateRef:
+        name: error-rate
       thresholdRange:
-        min: 99
-      interval: 1m
-    - name: request-duration
-      # maximum req duration P99
-      # milliseconds
-      thresholdRange:
-        max: 500
+        max: 1
       interval: 30s
-    # testing (optional)
+    - name: latency
+      templateRef:
+        name: latency
+      thresholdRange:
+        max: 0.5
+      interval: 30s
     webhooks:
     - name: acceptance-test
       type: pre-rollout
