@@ -26,16 +26,10 @@ import (
 type Interface interface {
 	// VirtualNodes returns a VirtualNodeInformer.
 	VirtualNodes() VirtualNodeInformer
-	// VirtualNodeLists returns a VirtualNodeListInformer.
-	VirtualNodeLists() VirtualNodeListInformer
 	// VirtualRouters returns a VirtualRouterInformer.
 	VirtualRouters() VirtualRouterInformer
-	// VirtualRouterLists returns a VirtualRouterListInformer.
-	VirtualRouterLists() VirtualRouterListInformer
 	// VirtualServices returns a VirtualServiceInformer.
 	VirtualServices() VirtualServiceInformer
-	// VirtualServiceLists returns a VirtualServiceListInformer.
-	VirtualServiceLists() VirtualServiceListInformer
 }
 
 type version struct {
@@ -54,27 +48,12 @@ func (v *version) VirtualNodes() VirtualNodeInformer {
 	return &virtualNodeInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// VirtualNodeLists returns a VirtualNodeListInformer.
-func (v *version) VirtualNodeLists() VirtualNodeListInformer {
-	return &virtualNodeListInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
-}
-
 // VirtualRouters returns a VirtualRouterInformer.
 func (v *version) VirtualRouters() VirtualRouterInformer {
 	return &virtualRouterInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// VirtualRouterLists returns a VirtualRouterListInformer.
-func (v *version) VirtualRouterLists() VirtualRouterListInformer {
-	return &virtualRouterListInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
-}
-
 // VirtualServices returns a VirtualServiceInformer.
 func (v *version) VirtualServices() VirtualServiceInformer {
 	return &virtualServiceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
-}
-
-// VirtualServiceLists returns a VirtualServiceListInformer.
-func (v *version) VirtualServiceLists() VirtualServiceListInformer {
-	return &virtualServiceListInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

@@ -338,7 +338,6 @@ type VirtualNode struct {
 	Status VirtualNodeStatus `json:"status,omitempty"`
 }
 
-// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // VirtualNodeList contains a list of VirtualNode

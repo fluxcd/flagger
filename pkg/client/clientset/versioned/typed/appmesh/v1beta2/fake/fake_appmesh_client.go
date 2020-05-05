@@ -32,24 +32,12 @@ func (c *FakeAppmeshV1beta2) VirtualNodes(namespace string) v1beta2.VirtualNodeI
 	return &FakeVirtualNodes{c, namespace}
 }
 
-func (c *FakeAppmeshV1beta2) VirtualNodeLists(namespace string) v1beta2.VirtualNodeListInterface {
-	return &FakeVirtualNodeLists{c, namespace}
-}
-
 func (c *FakeAppmeshV1beta2) VirtualRouters(namespace string) v1beta2.VirtualRouterInterface {
 	return &FakeVirtualRouters{c, namespace}
 }
 
-func (c *FakeAppmeshV1beta2) VirtualRouterLists(namespace string) v1beta2.VirtualRouterListInterface {
-	return &FakeVirtualRouterLists{c, namespace}
-}
-
 func (c *FakeAppmeshV1beta2) VirtualServices(namespace string) v1beta2.VirtualServiceInterface {
 	return &FakeVirtualServices{c, namespace}
-}
-
-func (c *FakeAppmeshV1beta2) VirtualServiceLists(namespace string) v1beta2.VirtualServiceListInterface {
-	return &FakeVirtualServiceLists{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

@@ -70,16 +70,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=appmesh.k8s.aws, Version=v1beta2
 	case v1beta2.SchemeGroupVersion.WithResource("virtualnodes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta2().VirtualNodes().Informer()}, nil
-	case v1beta2.SchemeGroupVersion.WithResource("virtualnodelists"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta2().VirtualNodeLists().Informer()}, nil
 	case v1beta2.SchemeGroupVersion.WithResource("virtualrouters"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta2().VirtualRouters().Informer()}, nil
-	case v1beta2.SchemeGroupVersion.WithResource("virtualrouterlists"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta2().VirtualRouterLists().Informer()}, nil
 	case v1beta2.SchemeGroupVersion.WithResource("virtualservices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta2().VirtualServices().Informer()}, nil
-	case v1beta2.SchemeGroupVersion.WithResource("virtualservicelists"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta2().VirtualServiceLists().Informer()}, nil
 
 		// Group=flagger.app, Version=v1beta1
 	case flaggerv1beta1.SchemeGroupVersion.WithResource("alertproviders"):

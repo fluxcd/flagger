@@ -20,12 +20,6 @@ package v1beta2
 
 type VirtualNodeExpansion interface{}
 
-type VirtualNodeListExpansion interface{}
-
 type VirtualRouterExpansion interface{}
 
-type VirtualRouterListExpansion interface{}
-
 type VirtualServiceExpansion interface{}
-
-type VirtualServiceListExpansion interface{}

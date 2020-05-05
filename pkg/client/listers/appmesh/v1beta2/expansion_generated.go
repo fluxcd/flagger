@@ -26,14 +26,6 @@ type VirtualNodeListerExpansion interface{}
 // VirtualNodeNamespaceLister.
 type VirtualNodeNamespaceListerExpansion interface{}
 
-// VirtualNodeListListerExpansion allows custom methods to be added to
-// VirtualNodeListLister.
-type VirtualNodeListListerExpansion interface{}
-
-// VirtualNodeListNamespaceListerExpansion allows custom methods to be added to
-// VirtualNodeListNamespaceLister.
-type VirtualNodeListNamespaceListerExpansion interface{}
-
 // VirtualRouterListerExpansion allows custom methods to be added to
 // VirtualRouterLister.
 type VirtualRouterListerExpansion interface{}
@@ -42,14 +34,6 @@ type VirtualRouterListerExpansion interface{}
 // VirtualRouterNamespaceLister.
 type VirtualRouterNamespaceListerExpansion interface{}
 
-// VirtualRouterListListerExpansion allows custom methods to be added to
-// VirtualRouterListLister.
-type VirtualRouterListListerExpansion interface{}
-
-// VirtualRouterListNamespaceListerExpansion allows custom methods to be added to
-// VirtualRouterListNamespaceLister.
-type VirtualRouterListNamespaceListerExpansion interface{}
-
 // VirtualServiceListerExpansion allows custom methods to be added to
 // VirtualServiceLister.
 type VirtualServiceListerExpansion interface{}
@@ -57,11 +41,3 @@ type VirtualServiceListerExpansion interface{}
 // VirtualServiceNamespaceListerExpansion allows custom methods to be added to
 // VirtualServiceNamespaceLister.
 type VirtualServiceNamespaceListerExpansion interface{}
-
-// VirtualServiceListListerExpansion allows custom methods to be added to
-// VirtualServiceListLister.
-type VirtualServiceListListerExpansion interface{}
-
-// VirtualServiceListNamespaceListerExpansion allows custom methods to be added to
-// VirtualServiceListNamespaceLister.
-type VirtualServiceListNamespaceListerExpansion interface{}

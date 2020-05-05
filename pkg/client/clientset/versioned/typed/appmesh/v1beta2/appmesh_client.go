@@ -27,11 +27,8 @@ import (
 type AppmeshV1beta2Interface interface {
 	RESTClient() rest.Interface
 	VirtualNodesGetter
-	VirtualNodeListsGetter
 	VirtualRoutersGetter
-	VirtualRouterListsGetter
 	VirtualServicesGetter
-	VirtualServiceListsGetter
 }
 
 // AppmeshV1beta2Client is used to interact with features provided by the appmesh.k8s.aws group.
@@ -43,24 +40,12 @@ func (c *AppmeshV1beta2Client) VirtualNodes(namespace string) VirtualNodeInterfa
 	return newVirtualNodes(c, namespace)
 }
 
-func (c *AppmeshV1beta2Client) VirtualNodeLists(namespace string) VirtualNodeListInterface {
-	return newVirtualNodeLists(c, namespace)
-}
-
 func (c *AppmeshV1beta2Client) VirtualRouters(namespace string) VirtualRouterInterface {
 	return newVirtualRouters(c, namespace)
 }
 
-func (c *AppmeshV1beta2Client) VirtualRouterLists(namespace string) VirtualRouterListInterface {
-	return newVirtualRouterLists(c, namespace)
-}
-
 func (c *AppmeshV1beta2Client) VirtualServices(namespace string) VirtualServiceInterface {
 	return newVirtualServices(c, namespace)
-}
-
-func (c *AppmeshV1beta2Client) VirtualServiceLists(namespace string) VirtualServiceListInterface {
-	return newVirtualServiceLists(c, namespace)
 }
 
 // NewForConfig creates a new AppmeshV1beta2Client for the given config.
