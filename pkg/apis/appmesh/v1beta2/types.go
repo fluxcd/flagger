@@ -89,4 +89,3 @@ type VirtualGatewayReference struct {
 	// UID is the UID of VirtualGateway CR
 	UID types.UID `json:"uid"`
 }
-
