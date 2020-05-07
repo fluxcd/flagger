@@ -44,4 +44,4 @@ After install Flagger, you can follow one of the tutorials:
 
 * [Istio](https://github.com/stefanprodan/gitops-istio)
 * [Linkerd](https://helm.workshop.flagger.dev)
-* [AWS App Mesh](https://eks.hands-on.flagger.dev)
+* [AWS App Mesh](https://eks.handson.flagger.dev)
