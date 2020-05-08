@@ -138,7 +138,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDeploymentTestMetricTemplate())
 	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newDeploymentTestAlertProvider())
 
-	meshRouter := rf.MeshRouter("istio")
+	meshRouter := rf.MeshRouter("istio", "")
 
 	return fixture{
 		canary:        c,

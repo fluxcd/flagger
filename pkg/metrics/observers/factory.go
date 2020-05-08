@@ -28,7 +28,7 @@ func NewFactory(metricsServer string) (*Factory, error) {
 
 func (factory Factory) Observer(provider string) Interface {
 	switch {
-	case provider == flaggerv1.AppMeshProvider:
+	case strings.HasPrefix(provider, flaggerv1.AppMeshProvider):
 		return &AppMeshObserver{
 			client: factory.Client,
 		}

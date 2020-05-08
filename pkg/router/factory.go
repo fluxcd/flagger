@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
@@ -51,27 +52,40 @@ func (factory *Factory) KubernetesRouter(kind string, labelSelector string, port
 }
 
 // MeshRouter returns a service mesh router
-func (factory *Factory) MeshRouter(provider string) Interface {
+func (factory *Factory) MeshRouter(provider string, labelSelector string) Interface {
 	switch {
-	case provider == "none":
-		return &NopRouter{}
-	case provider == "kubernetes":
-		return &NopRouter{}
-	case provider == "nginx":
-		return &IngressRouter{
-			logger:            factory.logger,
-			kubeClient:        factory.kubeClient,
-			annotationsPrefix: factory.ingressAnnotationsPrefix,
+	case strings.HasPrefix(provider, flaggerv1.AppMeshProvider+":v1beta2"):
+		return &AppMeshv1beta2Router{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			appmeshClient: factory.meshClient,
+			labelSelector: labelSelector,
 		}
-	case provider == "appmesh":
+	case provider == flaggerv1.AppMeshProvider:
 		return &AppMeshRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			appmeshClient: factory.meshClient,
 		}
-	case strings.HasPrefix(provider, "smi:"):
-		mesh := strings.TrimPrefix(provider, "smi:")
+	case provider == flaggerv1.LinkerdProvider:
+		return &SmiRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    flaggerv1.LinkerdProvider,
+		}
+	case provider == flaggerv1.IstioProvider:
+		return &IstioRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			istioClient:   factory.meshClient,
+		}
+	case strings.HasPrefix(provider, flaggerv1.SMIProvider):
+		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":")
 		return &SmiRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
@@ -79,25 +93,17 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			smiClient:     factory.meshClient,
 			targetMesh:    mesh,
 		}
-	case provider == "linkerd":
-		return &SmiRouter{
-			logger:        factory.logger,
-			flaggerClient: factory.flaggerClient,
-			kubeClient:    factory.kubeClient,
-			smiClient:     factory.meshClient,
-			targetMesh:    "linkerd",
-		}
-	case provider == "contour":
+	case provider == flaggerv1.ContourProvider:
 		return &ContourRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			contourClient: factory.meshClient,
 		}
-	case strings.HasPrefix(provider, "gloo"):
-		upstreamDiscoveryNs := "gloo-system"
-		if strings.HasPrefix(provider, "gloo:") {
-			upstreamDiscoveryNs = strings.TrimPrefix(provider, "gloo:")
+	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
+		upstreamDiscoveryNs := flaggerv1.GlooProvider + "-system"
+		if strings.HasPrefix(provider, flaggerv1.GlooProvider+":") {
+			upstreamDiscoveryNs = strings.TrimPrefix(provider, flaggerv1.GlooProvider+":")
 		}
 		return &GlooRouter{
 			logger:              factory.logger,
@@ -106,28 +112,14 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			glooClient:          factory.meshClient,
 			upstreamDiscoveryNs: upstreamDiscoveryNs,
 		}
-	case strings.HasPrefix(provider, "supergloo:appmesh"):
-		return &AppMeshRouter{
-			logger:        factory.logger,
-			flaggerClient: factory.flaggerClient,
-			kubeClient:    factory.kubeClient,
-			appmeshClient: factory.meshClient,
+	case provider == flaggerv1.NGINXProvider:
+		return &IngressRouter{
+			logger:            factory.logger,
+			kubeClient:        factory.kubeClient,
+			annotationsPrefix: factory.ingressAnnotationsPrefix,
 		}
-	case strings.HasPrefix(provider, "supergloo:istio"):
-		return &IstioRouter{
-			logger:        factory.logger,
-			flaggerClient: factory.flaggerClient,
-			kubeClient:    factory.kubeClient,
-			istioClient:   factory.meshClient,
-		}
-	case strings.HasPrefix(provider, "supergloo:linkerd"):
-		return &SmiRouter{
-			logger:        factory.logger,
-			flaggerClient: factory.flaggerClient,
-			kubeClient:    factory.kubeClient,
-			smiClient:     factory.meshClient,
-			targetMesh:    "linkerd",
-		}
+	case provider == flaggerv1.KubernetesProvider:
+		return &NopRouter{}
 	default:
 		return &IstioRouter{
 			logger:        factory.logger,
