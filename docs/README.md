@@ -39,7 +39,7 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 
 * **A/B Testing** (HTTP headers and cookies traffic routing)
     * [Istio](https://docs.flagger.app/tutorials/istio-ab-testing),
-      [App Mesh](hhttps://docs.flagger.app/tutorials/appmesh-progressive-delivery#a-b-testing),
+      [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery#a-b-testing),
       [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery#a-b-testing),
       [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery#a-b-testing)
 * **Blue/Green** (traffic switching and mirroring)
@@ -71,7 +71,7 @@ to accelerate and simplify application deployments and operations tasks to Kuber
 
 GitOps tutorials:
 * [Progressive Delivery for Istio with Flagger and FluxCD](https://github.com/stefanprodan/gitops-istio)
-* [Progressive Delivery for AWS App Mesh with Flagger and FluxCD](https://eks.hands-on.flagger.dev)
+* [Progressive Delivery for AWS App Mesh with Flagger and FluxCD](https://eks.handson.flagger.dev)
 * [Progressive Delivery for Linkerd with Flagger, FluxCD and Helm v3](https://helm.workshop.flagger.dev)
 
 ## Getting Help
