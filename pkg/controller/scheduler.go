@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,31 +111,45 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// init Kubernetes router
 	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, ports)
+
+	// reconcile the canary/primary services
 	if err := kubeRouter.Initialize(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
 
-	// create primary
+	// init mesh router
+	meshRouter := c.routerFactory.MeshRouter(provider, labelSelector)
+
+	// register the AppMesh VirtualNodes before creating the primary deployment
+	// otherwise the pods will not be injected with the Envoy proxy
+	if strings.HasPrefix(provider, flaggerv1.AppMeshProvider) {
+		if err := meshRouter.Reconcile(cd); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+	}
+
+	// create primary workload
 	err = canaryController.Initialize(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
 
-	// init mesh router
-	meshRouter := c.routerFactory.MeshRouter(provider)
-
-	// create or update svc
+	// change the apex service pod selector to primary
 	if err := kubeRouter.Reconcile(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
 	}
 
-	// create or update mesh routes
-	if err := meshRouter.Reconcile(cd); err != nil {
-		c.recordEventWarningf(cd, "%v", err)
-		return
+	// take over an existing virtual service or ingress
+	// runs after the primary is ready to ensure zero downtime
+	if !strings.HasPrefix(provider, flaggerv1.AppMeshProvider) {
+		if err := meshRouter.Reconcile(cd); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
 	}
 
 	// check for changes
