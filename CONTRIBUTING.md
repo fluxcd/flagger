@@ -22,7 +22,7 @@ The project uses Slack: To join the conversation, simply join the
 ## Getting Started
 
 - Fork the repository on GitHub
-- If you want to contribute as a developer, read [Flagger Development Guide](https://docs.flagger.app/dev-guide)
+- If you want to contribute as a developer, read [Flagger Development Guide](https://docs.flagger.app/dev/dev-guide)
 - If you have questions, concerns, get stuck or need a hand, let us know
   on the Slack channel. We are happy to help and look forward to having
   you part of the team. No matter in which capacity.
