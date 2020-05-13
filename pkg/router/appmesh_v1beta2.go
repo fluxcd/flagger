@@ -269,7 +269,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 		Listeners: []appmeshv1.VirtualRouterListener{
 			{
 				PortMapping: appmeshv1.PortMapping{
-					Port:     appmeshv1.PortNumber(canary.Spec.Service.Port),
+					Port:     ar.getContainerPort(canary),
 					Protocol: protocol,
 				},
 			},

@@ -52,7 +52,7 @@ func TestAppmeshv1beta2Router_Reconcile(t *testing.T) {
 	vnPrimary, err := router.appmeshClient.AppmeshV1beta2().VirtualNodes("default").Get(context.TODO(), primaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
-	primaryDNS := fmt.Sprintf("%s.%s.svc.cluster.local", primaryName, mocks.appmeshCanary.Namespace)
+	primaryDNS := fmt.Sprintf("%s.%s.svc.cluster.local.", primaryName, mocks.appmeshCanary.Namespace)
 	assert.Equal(t, primaryDNS, vnPrimary.Spec.ServiceDiscovery.DNS.Hostname)
 
 	// test backends update
