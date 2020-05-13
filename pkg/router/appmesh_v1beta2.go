@@ -31,9 +31,10 @@ type AppMeshv1beta2Router struct {
 
 // Reconcile creates or updates App Mesh virtual nodes and virtual services
 func (ar *AppMeshv1beta2Router) Reconcile(canary *flaggerv1.Canary) error {
+	svcSuffix := "svc.cluster.local."
 	apexName, primaryName, canaryName := canary.GetServiceNames()
-	primaryHost := fmt.Sprintf("%s.%s.svc.cluster.local", primaryName, canary.Namespace)
-	canaryHost := fmt.Sprintf("%s.%s.svc.cluster.local", canaryName, canary.Namespace)
+	primaryHost := fmt.Sprintf("%s.%s.%s", primaryName, canary.Namespace, svcSuffix)
+	canaryHost := fmt.Sprintf("%s.%s.%s", canaryName, canary.Namespace, svcSuffix)
 
 	// sync virtual node e.g. app-namespace
 	// DNS app.namespace
