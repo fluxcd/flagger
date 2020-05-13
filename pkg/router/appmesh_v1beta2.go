@@ -81,7 +81,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 		Listeners: []appmeshv1.Listener{
 			{
 				PortMapping: appmeshv1.PortMapping{
-					Port:     appmeshv1.PortNumber(canary.Spec.Service.Port),
+					Port:     ar.getContainerPort(canary),
 					Protocol: protocol,
 				},
 			},
@@ -505,6 +505,14 @@ func (ar *AppMeshv1beta2Router) getProtocol(canary *flaggerv1.Canary) appmeshv1.
 		return appmeshv1.PortProtocolGRPC
 	}
 	return appmeshv1.PortProtocolHTTP
+}
+
+func (ar *AppMeshv1beta2Router) getContainerPort(canary *flaggerv1.Canary) appmeshv1.PortNumber {
+	containerPort := canary.Spec.Service.Port
+	if canary.Spec.Service.TargetPort.IntVal > 0 {
+		containerPort = canary.Spec.Service.TargetPort.IntVal
+	}
+	return appmeshv1.PortNumber(containerPort)
 }
 
 func (ar *AppMeshv1beta2Router) gatewayAnnotations(canary *flaggerv1.Canary) map[string]string {
