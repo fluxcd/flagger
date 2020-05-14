@@ -17,6 +17,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 		flaggerClient: mocks.flaggerClient,
 		contourClient: mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
+		ingressClass:  "contour",
 	}
 
 	// init
@@ -31,6 +32,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	require.Len(t, services, 2)
 	assert.Equal(t, uint32(100), services[0].Weight)
 	assert.Equal(t, uint32(0), services[1].Weight)
+	assert.Equal(t, "contour", proxy.Annotations["projectcontour.io/ingress.class"])
 
 	// test update
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
