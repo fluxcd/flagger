@@ -28,7 +28,7 @@ type ContourRouter struct {
 
 // Reconcile creates or updates the HTTP proxy
 func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
-	annotation := "projectcontour.io/ingress.class"
+	const annotation = "projectcontour.io/ingress.class"
 
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
