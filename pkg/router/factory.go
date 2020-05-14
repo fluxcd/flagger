@@ -102,6 +102,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			contourClient: factory.meshClient,
+			ingressClass:  factory.ingressClass,
 		}
 	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
 		upstreamDiscoveryNs := flaggerv1.GlooProvider + "-system"
