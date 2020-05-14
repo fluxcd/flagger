@@ -100,6 +100,8 @@ until ${ok}; do
     fi
 done
 
+kubectl -n test get httpproxy podinfo -oyaml | grep 'projectcontour.io/ingress.class: contour'
+
 echo '✔ Canary initialization test passed'
 
 echo '>>> Triggering canary deployment'
