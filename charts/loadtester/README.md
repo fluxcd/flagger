@@ -22,7 +22,7 @@ To install the chart with the release name `flagger-loadtester`:
 helm upgrade -i flagger-loadtester flagger/loadtester
 ```
 
-The command deploys Grafana on the Kubernetes cluster in the default namespace.
+The command deploys loadtester on the Kubernetes cluster in the default namespace.
 
 > **Tip**: Note that the namespace where you deploy the load tester should have the Istio or App Mesh sidecar injection enabled
 
