@@ -4,7 +4,7 @@ set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
-CONTOUR_VER="release-1.3"
+CONTOUR_VER="release-1.4"
 
 echo '>>> Installing Contour'
 kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour.yaml
@@ -19,7 +19,8 @@ echo '>>> Installing Flagger'
 helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
 --namespace projectcontour \
 --set prometheus.install=true \
---set meshProvider=contour
+--set meshProvider=contour \
+--set ingressClass=contour
 
 kubectl -n projectcontour set image deployment/flagger flagger=test/flagger:latest
 

@@ -30,6 +30,12 @@ selectorLabels: ""
 configTracking:
   enabled: true
 
+# annotations prefix for NGINX ingresses
+ingressAnnotationsPrefix: ""
+
+# ingress class used for annotating HTTPProxy objects
+ingressClass: ""
+
 # when enabled, it will add a security context for the flagger pod. You may
 # need to disable this if you are running flagger on OpenShift
 securityContext:

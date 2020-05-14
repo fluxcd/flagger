@@ -79,6 +79,7 @@ To install Flagger and Prometheus for **Contour**:
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=projectcontour \
     --set meshProvider=contour \
+    --set ingressClass=contour \
     --set prometheus.install=true
 ```
 
@@ -135,6 +136,8 @@ Parameter | Description | Default
 `tolerations` | List of node taints to tolerate | `[]`
 `istio.kubeconfig.secretName` | The name of the Kubernetes secret containing the Istio shared control plane kubeconfig | None
 `istio.kubeconfig.key` | The name of Kubernetes secret data key that contains the Istio control plane kubeconfig | `kubeconfig`
+`ingressAnnotationsPrefix` | Annotations prefix for NGINX ingresses | None
+`ingressClass` | Ingress class used for annotating HTTPProxy objects, e.g. `contour` | None
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 

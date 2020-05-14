@@ -23,10 +23,13 @@ type ContourRouter struct {
 	contourClient clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
+	ingressClass  string
 }
 
 // Reconcile creates or updates the HTTP proxy
 func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
+	const annotation = "projectcontour.io/ingress.class"
+
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
 	newSpec := contourv1.HTTPProxySpec{
@@ -149,6 +152,12 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 				CurrentStatus: "valid",
 				Description:   "valid HTTPProxy",
 			},
+		}
+
+		if cr.ingressClass != "" {
+			proxy.Annotations = map[string]string{
+				annotation: cr.ingressClass,
+			}
 		}
 
 		_, err = cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Create(context.TODO(), proxy, metav1.CreateOptions{})

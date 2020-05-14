@@ -54,6 +54,7 @@ var (
 	meshProvider             string
 	selectorLabels           string
 	ingressAnnotationsPrefix string
+	ingressClass             string
 	enableLeaderElection     bool
 	leaderElectionNamespace  string
 	enableConfigTracking     bool
@@ -77,9 +78,10 @@ func init() {
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object.")
-	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, supergloo, nginx or smi.")
+	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, contour, gloo or nginx.")
 	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors.")
-	flag.StringVar(&ingressAnnotationsPrefix, "ingress-annotations-prefix", "nginx.ingress.kubernetes.io", "Annotations prefix for ingresses.")
+	flag.StringVar(&ingressAnnotationsPrefix, "ingress-annotations-prefix", "nginx.ingress.kubernetes.io", "Annotations prefix for NGINX ingresses.")
+	flag.StringVar(&ingressClass, "ingress-class", "", "Ingress class used for annotating HTTPProxy objects.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election.")
 	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "kube-system", "Namespace used to create the leader election config map.")
 	flag.BoolVar(&enableConfigTracking, "enable-config-tracking", true, "Enable secrets and configmaps tracking.")
@@ -169,7 +171,7 @@ func main() {
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
-	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, logger, meshClient)
+	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, ingressClass, logger, meshClient)
 
 	var configTracker canary.Tracker
 	if enableConfigTracking {

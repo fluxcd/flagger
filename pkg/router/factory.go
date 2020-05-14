@@ -17,12 +17,14 @@ type Factory struct {
 	meshClient               clientset.Interface
 	flaggerClient            clientset.Interface
 	ingressAnnotationsPrefix string
+	ingressClass             string
 	logger                   *zap.SugaredLogger
 }
 
 func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
 	ingressAnnotationsPrefix string,
+	ingressClass string,
 	logger *zap.SugaredLogger,
 	meshClient clientset.Interface) *Factory {
 	return &Factory{
@@ -31,6 +33,7 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 		kubeClient:               kubeClient,
 		flaggerClient:            flaggerClient,
 		ingressAnnotationsPrefix: ingressAnnotationsPrefix,
+		ingressClass:             ingressClass,
 		logger:                   logger,
 	}
 }
@@ -99,6 +102,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			contourClient: factory.meshClient,
+			ingressClass:  factory.ingressClass,
 		}
 	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
 		upstreamDiscoveryNs := flaggerv1.GlooProvider + "-system"
