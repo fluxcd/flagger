@@ -14,6 +14,7 @@ Canary CRD changes in `canaries.flagger.app/v1beta1`:
 * the `metric.query` field has been deprecated and replaced with `metric.templateRef`
 * the `spec.ingressRef.apiVersion` accepts `networking.k8s.io/v1beta1`
 * the `spec.targetRef` can reference `DaemonSet` kind
+* the `spec.service.meshName` field has been deprecated and no longer used for `provider: appmesh:v1beta2`
 
 Upgrade procedure:
 * install the `v1beta1` CRDs
