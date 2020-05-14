@@ -90,9 +90,6 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 			promql := r.URL.Query()["query"][0]
 			assert.Equal(t, expected, promql)
 
-			if assert.Contains(t, r.Header, "Authorization") {
-
-			}
 			header, ok := r.Header["Authorization"]
 			if assert.True(t, ok, "Authorization header not found") {
 				assert.True(t, strings.Contains(header[0], "Basic"), "Basic authorization header not found")
@@ -174,9 +171,6 @@ func TestPrometheusProvider_IsOnline(t *testing.T) {
 			promql := r.URL.Query()["query"][0]
 			assert.Equal(t, expected, promql)
 
-			if assert.Contains(t, r.Header, "Authorization") {
-
-			}
 			header, ok := r.Header["Authorization"]
 			if assert.True(t, ok, "Authorization header not found") {
 				assert.True(t, strings.Contains(header[0], "Basic"), "Basic authorization header not found")
