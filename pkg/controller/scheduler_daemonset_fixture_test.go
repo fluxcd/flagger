@@ -110,7 +110,7 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDaemonSetTestMetricTemplate())
 	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newDaemonSetTestAlertProvider())
 
-	meshRouter := rf.MeshRouter("istio")
+	meshRouter := rf.MeshRouter("istio", "")
 
 	return daemonSetFixture{
 		canary:        c,

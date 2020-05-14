@@ -106,6 +106,8 @@ rules:
     resources:
       - virtualnodes
       - virtualnodes/finalizers
+      - virtualrouters
+      - virtualrouters/finalizers
       - virtualservices
       - virtualservices/finalizers
     verbs:

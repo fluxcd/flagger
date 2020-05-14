@@ -118,7 +118,7 @@ spec:
     ) * 100
 ```
 
-Amd a metric template to measure the HTTP requests average duration:
+Create a metric template to measure the HTTP requests average duration:
 
 ```yaml
 apiVersion: flagger.app/v1beta1

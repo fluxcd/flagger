@@ -181,7 +181,6 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 
 		portsDiff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports, cmpopts.SortSlices(sortPorts))
 		selectorsDiff := cmp.Diff(svcSpec.Selector, svc.Spec.Selector)
-
 		if portsDiff != "" || selectorsDiff != "" {
 			svcClone.Spec.Ports = svcSpec.Ports
 			svcClone.Spec.Selector = svcSpec.Selector
@@ -191,11 +190,14 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 
 		// update annotations and labels only if the service has been created by Flagger
 		if _, owned := c.isOwnedByCanary(svc, canary.Name); owned {
-			if cmp.Diff(metadata.Annotations, svc.ObjectMeta.Annotations) != "" {
+			if svc.ObjectMeta.Annotations == nil {
+				svc.ObjectMeta.Annotations = make(map[string]string)
+			}
+			if diff := cmp.Diff(metadata.Annotations, svc.ObjectMeta.Annotations); diff != "" {
 				svcClone.ObjectMeta.Annotations = metadata.Annotations
 				updateService = true
 			}
-			if cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels) != "" {
+			if diff := cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels); diff != "" {
 				svcClone.ObjectMeta.Labels = metadata.Labels
 				updateService = true
 			}

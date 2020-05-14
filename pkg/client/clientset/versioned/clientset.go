@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
+	appmeshv1beta2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	gloov1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
@@ -35,6 +36,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface
 	AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface
 	FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface
 	GlooV1() gloov1.GlooV1Interface
@@ -48,6 +50,7 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	appmeshV1beta2     *appmeshv1beta2.AppmeshV1beta2Client
 	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
 	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
 	glooV1             *gloov1.GlooV1Client
@@ -55,6 +58,11 @@ type Clientset struct {
 	projectcontourV1   *projectcontourv1.ProjectcontourV1Client
 	splitV1alpha1      *splitv1alpha1.SplitV1alpha1Client
 	splitV1alpha2      *splitv1alpha2.SplitV1alpha2Client
+}
+
+// AppmeshV1beta2 retrieves the AppmeshV1beta2Client
+func (c *Clientset) AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface {
+	return c.appmeshV1beta2
 }
 
 // AppmeshV1beta1 retrieves the AppmeshV1beta1Client
@@ -113,6 +121,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.appmeshV1beta2, err = appmeshv1beta2.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.appmeshV1beta1, err = appmeshv1beta1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -153,6 +165,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.appmeshV1beta2 = appmeshv1beta2.NewForConfigOrDie(c)
 	cs.appmeshV1beta1 = appmeshv1beta1.NewForConfigOrDie(c)
 	cs.flaggerV1beta1 = flaggerv1beta1.NewForConfigOrDie(c)
 	cs.glooV1 = gloov1.NewForConfigOrDie(c)
@@ -168,6 +181,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.appmeshV1beta2 = appmeshv1beta2.New(c)
 	cs.appmeshV1beta1 = appmeshv1beta1.New(c)
 	cs.flaggerV1beta1 = flaggerv1beta1.New(c)
 	cs.glooV1 = gloov1.New(c)
