@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -10,7 +9,6 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -265,16 +263,9 @@ func (c *Controller) syncHandler(key string) error {
 
 	// set status condition for new canaries
 	if cd.Status.Conditions == nil {
-		if ok, conditions := canary.MakeStatusConditions(cd, flaggerv1.CanaryPhaseInitializing); ok {
-			cdCopy := cd.DeepCopy()
-			cdCopy.Status.Conditions = conditions
-			cdCopy.Status.LastTransitionTime = metav1.Now()
-			cdCopy.Status.Phase = flaggerv1.CanaryPhaseInitializing
-			_, err := c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(context.TODO(), cdCopy, metav1.UpdateOptions{})
-			if err != nil {
-				c.logger.Errorf("%s status condition update error: %v", key, err)
-				return fmt.Errorf("%s status condition update error: %w", key, err)
-			}
+		if err := c.setPhaseInitializing(cd); err != nil {
+			c.logger.Errorf("%s unable to set initializing status: %v", key, err)
+			return fmt.Errorf("%s initializing error: %w", key, err)
 		}
 	}
 

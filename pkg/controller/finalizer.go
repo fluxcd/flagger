@@ -44,7 +44,7 @@ func (c *Controller) finalize(old interface{}) error {
 	c.logger.Infof("%s.%s kind %s reverted", canary.Name, canary.Namespace, canary.Spec.TargetRef.Kind)
 
 	// Ensure that targetRef has met a ready state
-	c.logger.Infof("Checking is canary is ready %s.%s", canary.Name, canary.Namespace)
+	c.logger.Infof("Checking if canary is ready %s.%s", canary.Name, canary.Namespace)
 	_, err = canaryController.IsCanaryReady(canary)
 	if err != nil {
 		return fmt.Errorf("canary not ready during finalizing: %w", err)
