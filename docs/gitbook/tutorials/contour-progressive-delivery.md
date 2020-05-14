@@ -24,7 +24,7 @@ kubectl apply -k github.com/weaveworks/flagger//kustomize/contour
 
 The above command will deploy Flagger and Prometheus configured to scrape the Contour's Envoy instances.
 
-Or you can install Flagger using Helm:
+Or you can install Flagger using Helm v3:
 
 ```bash
 helm repo add flagger https://flagger.app
@@ -32,6 +32,7 @@ helm repo add flagger https://flagger.app
 helm upgrade -i flagger flagger/flagger \
 --namespace projectcontour \
 --set meshProvider=contour \
+--set ingressClass=contour \
 --set prometheus.install=true
 ```
 

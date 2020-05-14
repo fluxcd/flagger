@@ -2,7 +2,7 @@
 
 image:
   repository: weaveworks/flagger
-  tag: 1.0.0-rc.4
+  tag: 1.0.0-rc.5
   pullPolicy: IfNotPresent
   pullSecret:
 
@@ -121,7 +121,7 @@ tolerations: []
 prometheus:
   # to be used with ingress controllers
   install: false
-  image: docker.io/prom/prometheus:v2.17.1
+  image: docker.io/prom/prometheus:v2.18.1
 
 #  Istio multi-cluster service mesh (shared control plane single-network)
 # https://istio.io/docs/setup/install/multicluster/shared-vpn/

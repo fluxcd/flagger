@@ -150,7 +150,30 @@ This ensures that traffic to `podinfo.test:9898` will be routed to the latest st
 The `podinfo-canary.test:9898` address is available only during the 
 canary analysis and can be used for conformance testing or load testing.
 
-Besides the port mapping, the service specification can contain URI match and rewrite rules,
+You can configure Flagger to set annotations and labels for the generated services with:
+
+```yaml
+spec:
+  service:
+    port: 9898
+    apex:
+      annotations:
+        test: "test"
+      labels:
+        test: "test"
+    canary:
+      annotations:
+        test: "test"
+      labels:
+        test: "test"
+    primary:
+      annotations:
+        test: "test"
+      labels:
+        test: "test"
+```
+
+Besides port mapping and metadata, the service specification can contain URI match and rewrite rules,
 timeout and retry polices:
 
 ```yaml

@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.0-rc.5 (2020-05-14) 
+
+This is a release candidate for Flagger v1.0.0.
+
+The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.app/dev/upgrade-guide).
+
+#### Features
+
+- Add support for AWS AppMesh v1beta2 API
+    [#584](https://github.com/weaveworks/flagger/pull/584)
+- Add support for Contour v1.4 ingress class
+    [#588](https://github.com/weaveworks/flagger/pull/588)
+- Add user-specified labels/annotations to the generated Services
+    [#538](https://github.com/weaveworks/flagger/pull/538)
+
+#### Improvements
+
+- Support compatible Prometheus service
+    [#557](https://github.com/weaveworks/flagger/pull/557)
+- Update e2e tests and packages to Kubernetes v1.18
+    [#549](https://github.com/weaveworks/flagger/pull/549)
+    [#576](https://github.com/weaveworks/flagger/pull/576)
+
+#### Fixes
+
+- pkg/controller: retry canary initialization on conflict
+    [#586](https://github.com/weaveworks/flagger/pull/586)
+
 ## 1.0.0-rc.4 (2020-04-03) 
 
 This is a release candidate for Flagger v1.0.0.
