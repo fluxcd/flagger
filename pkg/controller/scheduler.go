@@ -7,6 +7,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/weaveworks/flagger/pkg/canary"
@@ -737,4 +738,33 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
 	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
+}
+
+func (c *Controller) setPhaseInitializing(cd *flaggerv1.Canary) error {
+	phase := flaggerv1.CanaryPhaseInitializing
+	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
+		if !firstTry {
+			cd, err = c.flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
+			}
+		}
+
+		if ok, conditions := canary.MakeStatusConditions(cd, phase); ok {
+			cdCopy := cd.DeepCopy()
+			cdCopy.Status.Conditions = conditions
+			cdCopy.Status.LastTransitionTime = metav1.Now()
+			cdCopy.Status.Phase = phase
+			_, err = c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(context.TODO(), cdCopy, metav1.UpdateOptions{})
+		}
+		firstTry = false
+		return
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed after retries: %w", err)
+	}
+	return nil
 }
