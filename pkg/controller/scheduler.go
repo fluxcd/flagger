@@ -119,7 +119,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	if !cd.SkipAnalysis() && (cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing) {
 		if err := c.checkMetricProviderAvailability(cd); err != nil {
 			c.recordEventErrorf(cd, "Error checking metric providers: %v", err)
-			return
 		}
 	}
 
