@@ -562,7 +562,10 @@ spec:
                   description: Max traffic percentage routed to canary
                   type: number
                 stepWeight:
-                  description: Incremental traffic percentage step
+                  description: Incremental traffic percentage step for the analysis phase
+                  type: number
+                stepWeightPromotion:
+                  description: Incremental traffic percentage step for the promotion phase
                   type: number
                 mirror:
                   description: Mirror traffic to canary
