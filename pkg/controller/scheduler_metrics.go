@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -12,6 +13,66 @@ import (
 	"github.com/weaveworks/flagger/pkg/metrics/observers"
 	"github.com/weaveworks/flagger/pkg/metrics/providers"
 )
+
+const (
+	MetricsProviderServiceSuffix = ":service"
+)
+
+// to be called during canary initialization
+func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) error {
+	for _, metric := range canary.GetAnalysis().Metrics {
+		if metric.Name == "request-success-rate" || metric.Name == "request-duration" {
+			observerFactory := c.observerFactory
+			if canary.Spec.MetricsServer != "" {
+				var err error
+				observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer)
+				if err != nil {
+					return fmt.Errorf("error building Prometheus client for %s %v", canary.Spec.MetricsServer, err)
+				}
+			}
+			if ok, err := observerFactory.Client.IsOnline(); !ok || err != nil {
+				return fmt.Errorf("prometheus not avaiable: %v", err)
+			}
+			continue
+		}
+
+		if metric.TemplateRef != nil {
+			namespace := canary.Namespace
+			if metric.TemplateRef.Namespace != "" {
+				namespace = metric.TemplateRef.Namespace
+			}
+
+			template, err := c.flaggerInformers.MetricInformer.Lister().MetricTemplates(namespace).Get(metric.TemplateRef.Name)
+			if err != nil {
+				return fmt.Errorf("metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
+			}
+
+			var credentials map[string][]byte
+			if template.Spec.Provider.SecretRef != nil {
+				secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), template.Spec.Provider.SecretRef.Name, metav1.GetOptions{})
+				if err != nil {
+					return fmt.Errorf("metric template %s.%s secret %s error: %v",
+						metric.TemplateRef.Name, namespace, template.Spec.Provider.SecretRef.Name, err)
+				}
+				credentials = secret.Data
+			}
+
+			factory := providers.Factory{}
+			provider, err := factory.Provider(metric.Interval, template.Spec.Provider, credentials)
+			if err != nil {
+				return fmt.Errorf("metric template %s.%s provider %s error: %v",
+					metric.TemplateRef.Name, namespace, template.Spec.Provider.Type, err)
+			}
+
+			if ok, err := provider.IsOnline(); !ok || err != nil {
+				return fmt.Errorf("%v in metric tempalte %s.%s not avaiable: %v", template.Spec.Provider.Type,
+					template.Name, template.Namespace, err)
+			}
+		}
+	}
+	c.recordEventInfof(canary, "all the metrics providers are available!")
+	return nil
+}
 
 func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 	// override the global provider if one is specified in the canary spec

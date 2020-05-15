@@ -14,10 +14,6 @@ import (
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
-const (
-	MetricsProviderServiceSuffix = ":service"
-)
-
 // scheduleCanaries synchronises the canary map with the jobs map,
 // for new canaries new jobs are created and started
 // for the removed canaries the jobs are stopped and deleted
@@ -117,6 +113,14 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	if err := kubeRouter.Initialize(cd); err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
+	}
+
+	// check metric servers' availability
+	if !cd.SkipAnalysis() && (cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing) {
+		if err := c.checkMetricProviderAvailability(cd); err != nil {
+			c.recordEventErrorf(cd, "Error checking metric providers: %v", err)
+			return
+		}
 	}
 
 	// init mesh router
