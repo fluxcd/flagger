@@ -107,7 +107,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", "", logger, flaggerClient)
 
 	// init observer
-	observerFactory, _ := observers.NewFactory("fake")
+	observerFactory, _ := observers.NewFactory(testMetricsServerURL)
 
 	// init canary factory
 	configTracker := &canary.ConfigTracker{
@@ -708,7 +708,7 @@ func newDeploymentTestHPA() *hpav2.HorizontalPodAutoscaler {
 func newDeploymentTestMetricTemplate() *flaggerv1.MetricTemplate {
 	provider := flaggerv1.MetricTemplateProvider{
 		Type:    "prometheus",
-		Address: "fake",
+		Address: testMetricsServerURL,
 		SecretRef: &corev1.LocalObjectReference{
 			Name: "podinfo-secret-env",
 		},

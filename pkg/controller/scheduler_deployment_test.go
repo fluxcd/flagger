@@ -84,11 +84,9 @@ func TestScheduler_DeploymentRollback(t *testing.T) {
 
 	// run metric checks
 	mocks.ctrl.advanceCanary("podinfo", "default")
-	require.NoError(t, err)
 
 	// finalise analysis
 	mocks.ctrl.advanceCanary("podinfo", "default")
-	require.NoError(t, err)
 
 	// check status
 	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
