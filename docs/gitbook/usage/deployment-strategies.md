@@ -159,6 +159,34 @@ And the time it takes for a canary to be rollback when the metrics or webhook ch
 interval * threshold 
 ```
 
+Istio example:
+
+```yaml
+  analysis:
+    interval: 1m
+    threshold: 10
+    iterations: 2
+    match:
+      - headers:
+          x-canary:
+            exact: "insider"
+      - headers:
+          cookie:
+            regex: "^(.*?;)?(canary=always)(;.*)?$"
+      - sourceLabels:
+          app.kubernetes.io/name: "scheduler"
+```
+
+The header keys must be lowercase and use hyphen as the separator.
+Header values are case-sensitive and formatted as follows:
+- `exact: "value"` for exact string match
+- `prefix: "value"` for prefix-based match
+- `suffix: "value"` for suffix-based match
+- `regex: "value"` for [RE2](https://github.com/google/re2/wiki/Syntax) style regex-based match
+
+Note that the `sourceLabels` match conditions are applicable only when the `mesh` gateway
+is included in the `canary.service.gateways` list.
+
 App Mesh example:
 
 ```yaml
@@ -205,7 +233,8 @@ NGINX example:
             exact: "canary"
 ```
 
-Note that the NGINX ingress controller supports only exact matching for a single header and the cookie value is set to `always`.
+Note that the NGINX ingress controller supports only exact matching for cookies names where the value must be set to `always`.
+Starting with NGINX ingress v0.31, regex matching is supported for header values.
 
 The above configurations will route users with the x-canary header or canary cookie to the canary instance during analysis:
 
