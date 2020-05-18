@@ -134,8 +134,9 @@ func TestScheduler_DeploymentSkipAnalysis(t *testing.T) {
 func TestScheduler_DeploymentAnalysisPhases(t *testing.T) {
 	cd := newDeploymentTestCanary()
 	cd.Spec.Analysis = &flaggerv1.CanaryAnalysis{
-		Interval:   "1m",
-		StepWeight: 100,
+		Interval:            "1m",
+		StepWeight:          100,
+		StepWeightPromotion: 50,
 	}
 	mocks := newDeploymentFixture(cd)
 
@@ -163,7 +164,11 @@ func TestScheduler_DeploymentAnalysisPhases(t *testing.T) {
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
 
-	// promoting
+	// start promotion
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting))
+
+	// end promotion
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting))
 

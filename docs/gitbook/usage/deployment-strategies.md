@@ -43,13 +43,16 @@ Spec:
     # canary increment step
     # percentage (0-100)
     stepWeight: 2
+    # promotion increment step (default 100)
+    # percentage (0-100)
+    stepWeightPromotion: 100
   # deploy straight to production without
   # the metrics and webhook checks
   skipAnalysis: false
 ```
 
 The above analysis, if it succeeds, will run for 25 minutes while validating the HTTP metrics and webhooks every minute.
-You can determine the minimum time that it takes to validate and promote a canary deployment using this formula:
+You can determine the minimum time it takes to validate and promote a canary deployment using this formula:
 
 ```
 interval * (maxWeight / stepWeight)
@@ -60,6 +63,10 @@ And the time it takes for a canary to be rollback when the metrics or webhook ch
 ```
 interval * threshold 
 ```
+
+When `stepWeightPromotion` is specified, the promotion phase happens in stages,
+the traffic is routed back to the primary pods in a progressive manner,
+the primary weight is increased until it reaches 100%.
 
 In emergency cases, you may want to skip the analysis phase and ship changes directly to production. 
 At any time you can set the `spec.skipAnalysis: true`. 

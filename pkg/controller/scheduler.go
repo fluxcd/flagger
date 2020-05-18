@@ -251,23 +251,9 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 	}
 
-	// route all traffic to primary if analysis has succeeded
+	// route traffic back to primary if analysis has succeeded
 	if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
-		if provider != "kubernetes" {
-			c.recordEventInfof(cd, "Routing all traffic to primary")
-			if err := meshRouter.SetRoutes(cd, 100, 0, false); err != nil {
-				c.recordEventWarningf(cd, "%v", err)
-				return
-			}
-			c.recorder.SetWeight(cd, 100, 0)
-		}
-
-		// update status phase
-		if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseFinalising); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
-
+		c.runPromotionTrafficShift(cd, canaryController, meshRouter, provider, canaryWeight, primaryWeight)
 		return
 	}
 
@@ -332,7 +318,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// use blue/green strategy for kubernetes provider
-	if provider == "kubernetes" {
+	if provider == flaggerv1.KubernetesProvider {
 		if len(cd.GetAnalysis().Match) > 0 {
 			c.recordEventWarningf(cd, "A/B testing is not supported when using the kubernetes provider")
 			cd.GetAnalysis().Match = nil
@@ -360,6 +346,63 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	if cd.GetAnalysis().StepWeight > 0 {
 		c.runCanary(cd, canaryController, meshRouter, mirrored, canaryWeight, primaryWeight, maxWeight)
 	}
+
+}
+
+func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryController canary.Controller,
+	meshRouter router.Interface, provider string, canaryWeight int, primaryWeight int) {
+	// finalize promotion since no traffic shifting is possible for Kubernetes CNI
+	if provider == flaggerv1.KubernetesProvider {
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+		}
+		return
+	}
+
+	// route all traffic to primary in one go when promotion step wight is not set
+	if canary.Spec.Analysis.StepWeightPromotion == 0 {
+		c.recordEventInfof(canary, "Routing all traffic to primary")
+		if err := meshRouter.SetRoutes(canary, 100, 0, false); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+		c.recorder.SetWeight(canary, 100, 0)
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+		}
+		return
+	}
+
+	// increment the primary traffic weight until it reaches 100%
+	if canaryWeight > 0 {
+		primaryWeight += canary.GetAnalysis().StepWeightPromotion
+		if primaryWeight > 100 {
+			primaryWeight = 100
+		}
+		canaryWeight -= canary.GetAnalysis().StepWeightPromotion
+		if canaryWeight < 0 {
+			canaryWeight = 0
+		}
+		if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+		c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
+		c.recordEventInfof(canary, "Advance %s.%s primary weight %v", canary.Name, canary.Namespace, primaryWeight)
+
+		// finalize promotion
+		if primaryWeight == 100 {
+			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+			}
+		} else {
+			if err := canaryController.SetStatusWeight(canary, canaryWeight); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+			}
+		}
+	}
+
+	return
 
 }
 
