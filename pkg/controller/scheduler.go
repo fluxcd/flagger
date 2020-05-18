@@ -355,7 +355,6 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 	if provider == flaggerv1.KubernetesProvider {
 		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
-			return
 		}
 		return
 	}
@@ -370,7 +369,6 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 		c.recorder.SetWeight(canary, 100, 0)
 		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
-			return
 		}
 		return
 	}
