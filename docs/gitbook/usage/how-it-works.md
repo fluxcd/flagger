@@ -311,6 +311,9 @@ Spec:
     # canary increment step
     # percentage (0-100)
     stepWeight:
+    # promotion increment step
+    # percentage (0-100)
+    stepWeightPromotion:
     # total number of iterations
     # used for A/B Testing and Blue/Green
     iterations:
