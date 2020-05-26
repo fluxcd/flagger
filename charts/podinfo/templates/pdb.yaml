@@ -1,5 +1,5 @@
-apiVersion: v1
-kind: Service
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
 metadata:
   name: {{ template "podinfo.fullname" . }}
   labels:
@@ -8,11 +8,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  type: {{ .Values.service.type }}
-  ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+  maxUnavailable: {{ .Values.pdb }}
   selector:
-    app: {{ template "podinfo.fullname" . }}
+    matchLabels:
+      app: {{ template "podinfo.fullname" . }}{{ if .Values.canary.enabled }}-primary{{ end }}

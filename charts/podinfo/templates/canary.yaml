@@ -9,6 +9,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  revertOnDeletion: true
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
