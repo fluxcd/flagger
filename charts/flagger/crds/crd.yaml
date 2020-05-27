@@ -599,8 +599,15 @@ spec:
                               format: string
                               type: string
                             regex:
+                              description: RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)
                               format: string
                               type: string
+                      sourceLabels:
+                        description: Applicable only when the 'mesh' gateway is included in the service.gateways list
+                        type: object
+                        additionalProperties:
+                          format: string
+                          type: string
                 metrics:
                   description: Metric check list for this canary
                   type: array
