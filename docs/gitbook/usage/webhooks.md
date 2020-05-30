@@ -276,6 +276,9 @@ If you are using Helm v3, you'll have to create a dedicated service account and 
           cmd: "test {{ .Release.Name }} --timeout 3m -n {{ .Release.Namespace }}"
 ```
 
+If the test hangs or logs error messages hinting to insufficient permissions it can be related to RBAC,
+check the [Troubleshooting](#Troubleshooting) section for an example configuration.
+
 As an alternative to Helm you can use the [Bash Automated Testing System](https://github.com/bats-core/bats-core) to run your tests. 
 
 ```yaml
@@ -423,3 +426,51 @@ curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/rollback/
 ```
 
 If you have notifications enabled, Flagger will post a message to Slack or MS Teams if a canary has been rolled back.
+
+### Troubleshooting 
+
+#### Manually check if helm test is running
+
+To debug in depth any issues with helm tests, you can execute commands on the flagger-loadtester pod.
+```bash
+kubectl  exec -it deploy/flagger-loadtester -- bash
+helmv3 test <release> -n <namespace> --debug
+```
+
+#### Helm tests hang during canary deployment
+
+If test execution hangs or displays insufficient permissions, check your RBAC settings.
+
+```yaml
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: helm-smoke-tester
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "watch", "list", "update"]
+  # choose the permission based on helm test type (Pod or Job) 
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["create", "list", "delete", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "jobs/log"]
+    verbs: ["create", "list", "delete", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: helm-smoke-tester
+  # Don't forget to update accordingly
+  namespace: namespace-of-the-tested-release
+subjects:
+  - kind: User
+    name: system:serviceaccount:linkerd:default
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: helm-smoke-tester
+  apiGroup: rbac.authorization.k8s.io
+```
