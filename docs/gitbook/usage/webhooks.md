@@ -433,7 +433,7 @@ If you have notifications enabled, Flagger will post a message to Slack or MS Te
 
 To debug in depth any issues with helm tests, you can execute commands on the flagger-loadtester pod.
 ```bash
-kubectl -n linkerd exec -it flagger-loadtester -- bash
+kubectl  exec -it deploy/flagger-loadtester -- bash
 helmv3 test ....
 ```
 
