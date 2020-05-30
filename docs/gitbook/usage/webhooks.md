@@ -434,7 +434,7 @@ If you have notifications enabled, Flagger will post a message to Slack or MS Te
 To debug in depth any issues with helm tests, you can execute commands on the flagger-loadtester pod.
 ```bash
 kubectl  exec -it deploy/flagger-loadtester -- bash
-helmv3 test <release> -n <namespace>
+helmv3 test <release> -n <namespace> --debug
 ```
 
 #### Helm tests hang during canary deployment
