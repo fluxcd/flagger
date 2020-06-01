@@ -80,6 +80,17 @@ func (in *CorsPolicy) DeepCopyInto(out *CorsPolicy) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AllowOrigins != nil {
+		in, out := &in.AllowOrigins, &out.AllowOrigins
+		*out = make([]*v1alpha1.StringMatch, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(v1alpha1.StringMatch)
+				**out = **in
+			}
+		}
+	}
 	if in.AllowMethods != nil {
 		in, out := &in.AllowMethods, &out.AllowMethods
 		*out = make([]string, len(*in))

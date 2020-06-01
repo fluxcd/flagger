@@ -705,6 +705,12 @@ type CorsPolicy struct {
 	// header. Wildcard * will allow all origins.
 	AllowOrigin []string `json:"allowOrigin,omitempty"`
 
+	// String patterns that match allowed origins. An origin is allowed if
+	// any of the string matchers match. If a match is found, then the
+	// outgoing Access-Control-Allow-Origin would be set to the origin as
+	// provided by the client.
+	AllowOrigins []*v1alpha1.StringMatch `json:"allowOrigins,omitempty"`
+
 	// List of HTTP methods allowed to access the resource. The content will
 	// be serialized into the Access-Control-Allow-Methods header.
 	AllowMethods []string `json:"allowMethods,omitempty"`
