@@ -1,16 +1,11 @@
-FROM alpine:3.11
+FROM alpine:3.12.0
 
-RUN addgroup -S flagger \
-    && adduser -S -g flagger flagger \
-    && apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates
 
 WORKDIR /home/flagger
 
-COPY /bin/flagger .
+USER nobody
 
-RUN chown -R flagger:flagger ./
-
-USER flagger
+COPY --chown=nobody:nobody /bin/flagger .
 
 ENTRYPOINT ["./flagger"]
-
