@@ -337,7 +337,7 @@ the canary is scaled to zero and the rollout is marked as failed.
 ```text
 kubectl -n test logs deploy/flagger -f | jq .msg
 
-New revision detected! Starting canary analysis for podinfo.test
+New revision detected! progressing canary analysis for podinfo.test
 Pre-rollout check acceptance-test passed
 Advance podinfo.test canary weight 5
 Advance podinfo.test canary weight 10
