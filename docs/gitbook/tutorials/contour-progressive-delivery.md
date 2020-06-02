@@ -319,7 +319,7 @@ the canary is scaled to zero and the rollout is marked as failed.
 ```text
 kubectl -n projectcontour logs deploy/flagger -f | jq .msg
 
-New revision detected! Starting canary analysis for podinfo.test
+New revision detected! progressing canary analysis for podinfo.test
 Pre-rollout check acceptance-test passed
 Advance podinfo.test canary weight 5
 Advance podinfo.test canary weight 10
@@ -392,7 +392,7 @@ Flagger detects that the deployment revision changed and starts the A/B test:
 ```text
 kubectl -n projectcontour logs deploy/flagger -f | jq .msg
 
-New revision detected! Starting canary analysis for podinfo.test
+New revision detected! Progressing canary analysis for podinfo.test
 Advance podinfo.test canary iteration 1/10
 Advance podinfo.test canary iteration 2/10
 Advance podinfo.test canary iteration 3/10

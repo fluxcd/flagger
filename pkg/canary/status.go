@@ -193,7 +193,7 @@ func MakeStatusConditions(cd *flaggerv1.Canary,
 		message = "Waiting for approval."
 	case flaggerv1.CanaryPhaseProgressing:
 		status = corev1.ConditionUnknown
-		message = "New revision detected, starting canary analysis."
+		message = "New revision detected, progressing canary analysis."
 	case flaggerv1.CanaryPhasePromoting:
 		status = corev1.ConditionUnknown
 		message = "Canary analysis completed, starting primary rolling update."
