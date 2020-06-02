@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -30,6 +31,8 @@ const defaultPollTimeout = 30
 const concordStatusSuccess = "FINISHED"
 const concordStatusFailed = "FAILED"
 
+const ARGUMENTS_INPUT_PREFIX = "arguments."
+
 // ConcordTask represents a concord task
 type ConcordTask struct {
 	TaskBase
@@ -38,6 +41,7 @@ type ConcordTask struct {
 	Project      string
 	Repo         string
 	Entrypoint   string
+	Arguments    map[string]string
 	APIKeyPath   string
 	Endpoint     string
 	PollInterval time.Duration
@@ -49,6 +53,7 @@ type ConcordTask struct {
 // NewConcordTask instantiates a new Concord Task
 func NewConcordTask(metadata map[string]string, canary string, logger *zap.SugaredLogger) (*ConcordTask, error) {
 	var pollIntervalInt, pollTimeoutInt int
+	var arguments = make(map[string]string)
 
 	if _, found := metadata["server"]; !found {
 		return nil, errors.New("`server` is required with type concord")
@@ -96,6 +101,16 @@ func NewConcordTask(metadata map[string]string, canary string, logger *zap.Sugar
 		}
 	}
 
+	for key, value := range metadata {
+		if key == "arguments.endpoint" {
+			return nil, errors.New("You cannot override Endpoint through arguments. You must override Endpoint directly")
+		}
+
+		if strings.HasPrefix(key, ARGUMENTS_INPUT_PREFIX) {
+			arguments[key[len(ARGUMENTS_INPUT_PREFIX):]] = value
+		}
+	}
+
 	return &ConcordTask{
 		TaskBase: TaskBase{
 			logger: logger,
@@ -107,6 +122,7 @@ func NewConcordTask(metadata map[string]string, canary string, logger *zap.Sugar
 		Entrypoint:   metadata["entrypoint"],
 		APIKeyPath:   metadata["apiKeyPath"],
 		Endpoint:     metadata["endpoint"],
+		Arguments:    arguments,
 		PollInterval: time.Duration(pollIntervalInt) * time.Second,
 		PollTimeout:  time.Duration(pollTimeoutInt) * time.Second,
 		httpClient:   &http.Client{Timeout: 60 * time.Second},
@@ -181,14 +197,22 @@ func (task *ConcordTask) do(req *http.Request, v interface{}) (*http.Response, e
 	return resp, err
 }
 
+func (task *ConcordTask) buildFields(w *multipart.Writer) {
+	_ = w.WriteField("org", task.Org)
+	_ = w.WriteField("project", task.Project)
+	_ = w.WriteField("repo", task.Repo)
+	_ = w.WriteField("entryPoint", task.Entrypoint)
+	_ = w.WriteField("arguments.endpoint", task.Endpoint)
+
+	for key, value := range task.Arguments {
+		_ = w.WriteField(fmt.Sprintf("arguments.%s", key), value)
+	}
+}
+
 func (task *ConcordTask) startProcess() (string, error) {
 	requestBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(requestBody)
-	_ = writer.WriteField("org", task.Org)
-	_ = writer.WriteField("project", task.Project)
-	_ = writer.WriteField("repo", task.Repo)
-	_ = writer.WriteField("entryPoint", task.Entrypoint)
-	_ = writer.WriteField("arguments.endpoint", task.Endpoint)
+	task.buildFields(writer)
 
 	err := writer.Close()
 	if err != nil {
