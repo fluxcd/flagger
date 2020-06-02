@@ -7,7 +7,7 @@ This document describes how to build, test and run Flagger from source.
 Flagger is written in Go and uses Go modules for dependency management.
 
 On your dev machine install the following tools:
-* go >= 1.13
+* go >= 1.14
 * git >= 2.20
 * bash >= 5.0
 * make >= 3.81
