@@ -52,8 +52,13 @@ func TestAppmeshv1beta2Router_Reconcile(t *testing.T) {
 	vnPrimary, err := router.appmeshClient.AppmeshV1beta2().VirtualNodes("default").Get(context.TODO(), primaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
+	// check FQDN
 	primaryDNS := fmt.Sprintf("%s.%s.svc.cluster.local.", primaryName, mocks.appmeshCanary.Namespace)
 	assert.Equal(t, primaryDNS, vnPrimary.Spec.ServiceDiscovery.DNS.Hostname)
+
+	// check timeout
+	assert.Equal(t, int64(30000), vrApex.Spec.Routes[0].HTTPRoute.Timeout.PerRequest.Value)
+	assert.Equal(t, int64(30000), vnPrimary.Spec.Listeners[0].Timeout.HTTP.PerRequest.Value)
 
 	// test backends update
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), mocks.appmeshCanary.Name, metav1.GetOptions{})

@@ -152,7 +152,7 @@ func newTestCanaryAppMesh() *flaggerv1.Canary {
 				MeshName: "global",
 				Hosts:    []string{"*"},
 				Backends: []string{"backend.default"},
-				Timeout:  "25",
+				Timeout:  "30s",
 				Retries: &istiov1alpha3.HTTPRetry{
 					Attempts:      5,
 					PerTryTimeout: "gateway-error",

@@ -452,6 +452,19 @@ func (ar *AppMeshv1beta2Router) SetRoutes(
 	return nil
 }
 
+// getTimeout converts the Canary.Service.Timeout to AppMesh Duration
+func (ar *AppMeshv1beta2Router) getTimeout(canary *flaggerv1.Canary) *appmeshv1.Duration {
+	if canary.Spec.Service.Timeout != "" {
+		if d, err := time.ParseDuration(canary.Spec.Service.Timeout); err == nil {
+			return &appmeshv1.Duration{
+				Unit:  appmeshv1.DurationUnitMS,
+				Value: d.Milliseconds(),
+			}
+		}
+	}
+	return nil
+}
+
 // makeRouteTimeout creates an AppMesh HTTPTimeout from the Canary.Service.Timeout
 func (ar *AppMeshv1beta2Router) makeRouteTimeout(canary *flaggerv1.Canary) *appmeshv1.HTTPTimeout {
 	if timeout := ar.getTimeout(canary); timeout != nil {
@@ -541,24 +554,6 @@ func (ar *AppMeshv1beta2Router) getContainerPort(canary *flaggerv1.Canary) appme
 		containerPort = canary.Spec.Service.TargetPort.IntVal
 	}
 	return appmeshv1.PortNumber(containerPort)
-}
-
-// getTimeout converts the Canary.Service.Timeout to AppMesh Duration
-func (ar *AppMeshv1beta2Router) getTimeout(canary *flaggerv1.Canary) *appmeshv1.Duration {
-	if canary.Spec.Service.Timeout != "" {
-		timeout := int64(1500)
-		if d, err := time.ParseDuration(canary.Spec.Service.Retries.PerTryTimeout); err == nil {
-			timeout = d.Milliseconds()
-		} else {
-			return nil
-		}
-
-		return &appmeshv1.Duration{
-			Unit:  appmeshv1.DurationUnitMS,
-			Value: timeout,
-		}
-	}
-	return nil
 }
 
 func (ar *AppMeshv1beta2Router) gatewayAnnotations(canary *flaggerv1.Canary) map[string]string {
