@@ -89,3 +89,27 @@ type VirtualGatewayReference struct {
 	// UID is the UID of VirtualGateway CR
 	UID types.UID `json:"uid"`
 }
+
+type HTTPTimeout struct {
+	// An object that represents per request timeout duration.
+	// +optional
+	PerRequest *Duration `json:"perRequest,omitempty"`
+	// An object that represents idle timeout duration.
+	// +optional
+	Idle *Duration `json:"idle,omitempty"`
+}
+
+type GRPCTimeout struct {
+	// An object that represents per request timeout duration.
+	// +optional
+	PerRequest *Duration `json:"perRequest,omitempty"`
+	// An object that represents idle timeout duration.
+	// +optional
+	Idle *Duration `json:"idle,omitempty"`
+}
+
+type TCPTimeout struct {
+	// An object that represents idle timeout duration.
+	// +optional
+	Idle *Duration `json:"idle,omitempty"`
+}

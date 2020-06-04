@@ -82,41 +82,30 @@ type BackendDefaults struct {
 // HealthCheckPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HealthCheckPolicy.html
 type HealthCheckPolicy struct {
 	// The number of consecutive successful health checks that must occur before declaring listener healthy.
-	// If unspecified, defaults to be 10
 	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:validation:Maximum=10
-	// +optional
-	HealthyThreshold *int64 `json:"healthyThreshold,omitempty"`
+	HealthyThreshold int64 `json:"healthyThreshold"`
 	// The time period in milliseconds between each health check execution.
-	// If unspecified, defaults to be 30000
 	// +kubebuilder:validation:Minimum=5000
 	// +kubebuilder:validation:Maximum=300000
-	// +optional
-	IntervalMillis *int64 `json:"intervalMillis,omitempty"`
+	IntervalMillis int64 `json:"intervalMillis"`
 	// The destination path for the health check request.
 	// This value is only used if the specified protocol is http or http2. For any other protocol, this value is ignored.
 	// +optional
 	Path *string `json:"path,omitempty"`
 	// The destination port for the health check request.
-	// If unspecified, defaults to be same as port defined in the PortMapping for the listener.
 	// +optional
 	Port *PortNumber `json:"port,omitempty"`
 	// The protocol for the health check request
-	// If unspecified, defaults to be same as protocol defined in the PortMapping for the listener.
-	// +optional
-	Protocol *PortProtocol `json:"protocol,omitempty"`
+	Protocol PortProtocol `json:"protocol"`
 	// The amount of time to wait when receiving a response from the health check, in milliseconds.
-	// If unspecified, defaults to be 5000
 	// +kubebuilder:validation:Minimum=2000
 	// +kubebuilder:validation:Maximum=60000
-	// +optional
-	TimeoutMillis *int64 `json:"timeoutMillis,omitempty"`
+	TimeoutMillis int64 `json:"timeoutMillis"`
 	// The number of consecutive failed health checks that must occur before declaring a virtual node unhealthy.
-	// If unspecified, defaults to be 2
 	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:validation:Maximum=10
-	// +optional
-	UnhealthyThreshold *int64 `json:"unhealthyThreshold,omitempty"`
+	UnhealthyThreshold int64 `json:"unhealthyThreshold"`
 }
 
 // ListenerTLSACMCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html
@@ -164,6 +153,22 @@ type ListenerTLS struct {
 	Mode ListenerTLSMode `json:"mode"`
 }
 
+// ListenerTimeout refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTimeout.html
+type ListenerTimeout struct {
+	// Specifies tcp timeout information for the virtual node.
+	// +optional
+	TCP *TCPTimeout `json:"tcp,omitempty"`
+	// Specifies http timeout information for the virtual node.
+	// +optional
+	HTTP *HTTPTimeout `json:"http,omitempty"`
+	// Specifies http2 information for the virtual node.
+	// +optional
+	HTTP2 *HTTPTimeout `json:"http2,omitempty"`
+	// Specifies grpc timeout information for the virtual node.
+	// +optional
+	GRPC *GRPCTimeout `json:"grpc,omitempty"`
+}
+
 // Listener refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html
 type Listener struct {
 	// The port mapping information for the listener.
@@ -174,6 +179,9 @@ type Listener struct {
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *ListenerTLS `json:"tls,omitempty"`
+	// A reference to an object that represents
+	// +optional
+	Timeout *ListenerTimeout `json:"timeout,omitempty"`
 }
 
 // AWSCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
@@ -264,16 +272,6 @@ type VirtualNodeCondition struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
-type AWSCloudMapServiceStatus struct {
-	// NamespaceID is AWS CloudMap Service object's namespace Id
-	// +optional
-	NamespaceID *string `json:"namespaceID,omitempty"`
-	// ServiceID is AWS CloudMap Service object's Id
-	// +optional
-	ServiceID *string `json:"serviceID,omitempty"`
-}
-
 // VirtualNodeSpec defines the desired state of VirtualNode
 // refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
 type VirtualNodeSpec struct {
@@ -282,7 +280,9 @@ type VirtualNodeSpec struct {
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
 	// PodSelector selects Pods using labels to designate VirtualNode membership.
-	// if unspecified or empty, it selects no pods.
+	// This field follows standard label selector semantics:
+	//	if present but empty, it selects all pods within namespace.
+	// 	if absent, it selects no pod.
 	// +optional
 	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
 	// The listener that the virtual node is expected to receive inbound traffic from
@@ -320,9 +320,10 @@ type VirtualNodeStatus struct {
 	// The current VirtualNode status.
 	// +optional
 	Conditions []VirtualNodeCondition `json:"conditions,omitempty"`
-	// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
+
+	// The generation observed by the VirtualNode controller.
 	// +optional
-	AWSCloudMapServiceStatus *AWSCloudMapServiceStatus `json:"awsCloudMapServiceStatus,omitempty"`
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +genclient
