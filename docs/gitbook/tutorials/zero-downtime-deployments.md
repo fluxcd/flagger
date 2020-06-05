@@ -87,7 +87,7 @@ Your app container should have a `preStop` hook that delays the container shutdo
 
 Even if your app reacts to `SIGTERM` and tries to complete the inflight requests before shutdown, that doesn't mean that the response will make it back to the caller. If the Envoy sidecar shuts down before your app, then the caller will receive a 503 error.
 
-To mitigate this issue you can add a `preStop` hook to the Istio proxy and wait for the main app to exist before Envoy exists.
+To mitigate this issue you can add a `preStop` hook to the Istio proxy and wait for the main app to exit before Envoy exits.
 
 ```bash
 #!/bin/bash
