@@ -1,19 +1,3 @@
-/*
-
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package v1beta2
 
 import (
@@ -149,6 +133,9 @@ type HTTPRoute struct {
 	// An object that represents a retry policy.
 	// +optional
 	RetryPolicy *HTTPRetryPolicy `json:"retryPolicy,omitempty"`
+	// An object that represents a http timeout.
+	// +optional
+	Timeout *HTTPTimeout `json:"timeout,omitempty"`
 }
 
 // TCPRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRouteAction.html
@@ -163,6 +150,9 @@ type TCPRouteAction struct {
 type TCPRoute struct {
 	// The action to take if a match is determined.
 	Action TCPRouteAction `json:"action"`
+	// An object that represents a tcp timeout.
+	// +optional
+	Timeout *TCPTimeout `json:"timeout,omitempty"`
 }
 
 // GRPCRouteMetadataMatchMethod refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadataMatchMethod.html
@@ -261,6 +251,9 @@ type GRPCRoute struct {
 	// An object that represents a retry policy.
 	// +optional
 	RetryPolicy *GRPCRetryPolicy `json:"retryPolicy,omitempty"`
+	// An object that represents a grpc timeout.
+	// +optional
+	Timeout *GRPCTimeout `json:"timeout,omitempty"`
 }
 
 // Route refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_RouteSpec.html
@@ -345,6 +338,10 @@ type VirtualRouterStatus struct {
 	// The current VirtualRouter status.
 	// +optional
 	Conditions []VirtualRouterCondition `json:"conditions,omitempty"`
+
+	// The generation observed by the VirtualRouter controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +genclient

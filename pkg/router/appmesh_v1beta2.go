@@ -78,6 +78,8 @@ func (ar *AppMeshv1beta2Router) Reconcile(canary *flaggerv1.Canary) error {
 // the virtual node naming format is name-role-namespace
 func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, name string, podSelector string, host string) error {
 	protocol := ar.getProtocol(canary)
+	timeout := ar.makeListenerTimeout(canary)
+
 	vnSpec := appmeshv1.VirtualNodeSpec{
 		Listeners: []appmeshv1.Listener{
 			{
@@ -85,6 +87,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 					Port:     ar.getContainerPort(canary),
 					Protocol: protocol,
 				},
+				Timeout: timeout,
 			},
 		},
 		ServiceDiscovery: &appmeshv1.ServiceDiscovery{
@@ -170,6 +173,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 	canaryVirtualNode := fmt.Sprintf("%s-canary", apexName)
 	primaryVirtualNode := fmt.Sprintf("%s-primary", apexName)
 	protocol := ar.getProtocol(canary)
+	timeout := ar.makeRouteTimeout(canary)
 
 	routerName := apexName
 	if canaryWeight > 0 {
@@ -191,6 +195,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 				Match: appmeshv1.HTTPRouteMatch{
 					Prefix: routePrefix,
 				},
+				Timeout:     timeout,
 				RetryPolicy: ar.makeRetryPolicy(canary),
 				Action: appmeshv1.HTTPRouteAction{
 					WeightedTargets: []appmeshv1.WeightedTarget{
@@ -223,6 +228,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 						Prefix:  routePrefix,
 						Headers: ar.makeHeaders(canary),
 					},
+					Timeout:     timeout,
 					RetryPolicy: ar.makeRetryPolicy(canary),
 					Action: appmeshv1.HTTPRouteAction{
 						WeightedTargets: []appmeshv1.WeightedTarget{
@@ -249,6 +255,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 					Match: appmeshv1.HTTPRouteMatch{
 						Prefix: routePrefix,
 					},
+					Timeout:     timeout,
 					RetryPolicy: ar.makeRetryPolicy(canary),
 					Action: appmeshv1.HTTPRouteAction{
 						WeightedTargets: []appmeshv1.WeightedTarget{
@@ -441,6 +448,39 @@ func (ar *AppMeshv1beta2Router) SetRoutes(
 	_, err = ar.appmeshClient.AppmeshV1beta2().VirtualRouters(canary.Namespace).Update(context.TODO(), vrClone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualRouter %s update error: %w", apexName, err)
+	}
+	return nil
+}
+
+// getTimeout converts the Canary.Service.Timeout to AppMesh Duration
+func (ar *AppMeshv1beta2Router) getTimeout(canary *flaggerv1.Canary) *appmeshv1.Duration {
+	if canary.Spec.Service.Timeout != "" {
+		if d, err := time.ParseDuration(canary.Spec.Service.Timeout); err == nil {
+			return &appmeshv1.Duration{
+				Unit:  appmeshv1.DurationUnitMS,
+				Value: d.Milliseconds(),
+			}
+		}
+	}
+	return nil
+}
+
+// makeRouteTimeout creates an AppMesh HTTPTimeout from the Canary.Service.Timeout
+func (ar *AppMeshv1beta2Router) makeRouteTimeout(canary *flaggerv1.Canary) *appmeshv1.HTTPTimeout {
+	if timeout := ar.getTimeout(canary); timeout != nil {
+		return &appmeshv1.HTTPTimeout{
+			PerRequest: timeout,
+		}
+	}
+	return nil
+}
+
+// makeListenerTimeout creates an AppMesh ListenerTimeout from the Canary.Service.Timeout
+func (ar *AppMeshv1beta2Router) makeListenerTimeout(canary *flaggerv1.Canary) *appmeshv1.ListenerTimeout {
+	if timeout := ar.makeRouteTimeout(canary); timeout != nil {
+		return &appmeshv1.ListenerTimeout{
+			HTTP: timeout,
+		}
 	}
 	return nil
 }
