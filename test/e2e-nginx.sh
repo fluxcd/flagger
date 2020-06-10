@@ -3,7 +3,7 @@
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-NGINX_HELM_VERSION=1.34.3 # ingress v0.30.0
+NGINX_HELM_VERSION=1.39.1 # ingress v0.32.0
 
 echo '>>> Installing NGINX Ingress'
 kubectl create ns ingress-nginx
@@ -32,4 +32,3 @@ kubectl -n ingress-nginx set image deployment/flagger flagger=test/flagger:lates
 
 kubectl -n ingress-nginx rollout status deployment/flagger
 kubectl -n ingress-nginx rollout status deployment/flagger-prometheus
-
