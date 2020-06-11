@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: weaveworks/flagger-loadtester
-  tag: 0.15.0
+  tag: 0.17.0
   pullPolicy: IfNotPresent
 
 podAnnotations:
@@ -47,8 +47,15 @@ rbac:
 # name of an existing service account to use - if not creating rbac resources
 serviceAccountName: ""
 
-# App Mesh virtual node settings
+# App Mesh virtual node settings (to be used for AppMesh v1beta1)
 meshName: ""
 #backends:
 #  - app1.namespace
 #  - app2.namespace
+
+# App Mesh virtual node settings (to be used for AppMesh v1beta2)
+appmesh:
+  enabled: false
+  backends:
+  - podinfo
+  - podinfo-canary
