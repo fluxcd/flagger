@@ -121,7 +121,8 @@ tolerations: []
 prometheus:
   # to be used with ingress controllers
   install: false
-  image: docker.io/prom/prometheus:v2.18.1
+  image: docker.io/prom/prometheus:v2.19.0
+  retention: 2h
 
 #  Istio multi-cluster service mesh (shared control plane single-network)
 # https://istio.io/docs/setup/install/multicluster/shared-vpn/
