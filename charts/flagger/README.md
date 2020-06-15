@@ -90,7 +90,7 @@ The [configuration](#configuration) section lists the parameters that can be con
 To uninstall/delete the `flagger` deployment:
 
 ```console
-$ helm delete --purge flagger
+$ helm delete flagger
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -105,8 +105,9 @@ Parameter | Description | Default
 `image.tag` | Image tag | `<VERSION>`
 `image.pullPolicy` | Image pull policy | `IfNotPresent`
 `logLevel` | Log level | `info`
-`prometheus.install` | If `true`, installs Prometheus configured to scrape all pods in the custer including the App Mesh sidecar | `false`
 `metricsServer` | Prometheus URL, used when `prometheus.install` is `false` | `http://prometheus.istio-system:9090`
+`prometheus.install` | If `true`, installs Prometheus configured to scrape all pods in the custer | `false`
+`prometheus.retention` |  Prometheus data retention | `2h`
 `selectorLabels` | List of labels that Flagger uses to create pod selectors | `app,name,app.kubernetes.io/name`
 `configTracking.enabled` | If `true`, flagger will track changes in Secrets and ConfigMaps referenced in the target deployment | `true`
 `eventWebhook` | If set, Flagger will publish events to the given webhook | None

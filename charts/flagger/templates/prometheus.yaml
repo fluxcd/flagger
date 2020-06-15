@@ -233,7 +233,7 @@ spec:
           image: {{ .Values.prometheus.image }}
           imagePullPolicy: IfNotPresent
           args:
-            - '--storage.tsdb.retention=2h'
+            - '--storage.tsdb.retention={{ .Values.prometheus.retention }}'
             - '--config.file=/etc/prometheus/prometheus.yml'
           ports:
             - containerPort: 9090

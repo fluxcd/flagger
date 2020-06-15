@@ -1,8 +1,0 @@
-{{- if .Values.serviceAccount.create }}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: {{ template "appmesh-gateway.serviceAccountName" . }}
-  labels:
-{{ include "appmesh-gateway.labels" . | indent 4 }}
-{{- end }}
