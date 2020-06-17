@@ -6,7 +6,7 @@ This guide shows you how to use Istio and Flagger to automate canary deployments
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer and Istio **v1.0** or newer.
+Flagger requires a Kubernetes cluster **v1.11** or newer and Istio **v1.5** or newer.
 
 Install Istio with telemetry support and Prometheus:
 
@@ -14,7 +14,7 @@ Install Istio with telemetry support and Prometheus:
 istioctl manifest apply --set profile=default
 ```
 
-Install Flagger using Kustomize (kubectl 1.14) in the `istio-system` namespace:
+Install Flagger using Kustomize (kubectl >= 1.14) in the `istio-system` namespace:
 
 ```bash
 kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
@@ -149,7 +149,7 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
 
-**Note** that when using Istio 1.5 you have to replace the `request-duration`
+**Note** that when using Istio 1.4 you have to replace the `request-duration`
 with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
 
 Save the above resource as podinfo-canary.yaml and then apply it:

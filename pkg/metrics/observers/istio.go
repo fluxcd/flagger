@@ -36,7 +36,7 @@ var istioQueries = map[string]string{
 		0.99,
 		sum(
 			rate(
-				istio_request_duration_seconds_bucket{
+				istio_request_duration_milliseconds_bucket{
 					reporter="destination",
 					destination_workload_namespace="{{ namespace }}",
 					destination_workload=~"{{ target }}"
@@ -75,6 +75,6 @@ func (ob *IstioObserver) GetRequestDuration(model flaggerv1.MetricTemplateModel)
 		return 0, fmt.Errorf("running query failed: %w", err)
 	}
 
-	ms := time.Duration(int64(value*1000)) * time.Millisecond
+	ms := time.Duration(int64(value)) * time.Millisecond
 	return ms, nil
 }

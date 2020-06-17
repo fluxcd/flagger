@@ -49,13 +49,13 @@ func TestIstioObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestIstioObserver_GetRequestDuration(t *testing.T) {
-	expected := ` histogram_quantile( 0.99, sum( rate( istio_request_duration_seconds_bucket{ reporter="destination", destination_workload_namespace="default", destination_workload=~"podinfo" }[1m] ) ) by (le) )`
+	expected := ` histogram_quantile( 0.99, sum( rate( istio_request_duration_milliseconds_bucket{ reporter="destination", destination_workload_namespace="default", destination_workload=~"podinfo" }[1m] ) ) by (le) )`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
 		assert.Equal(t, expected, promql)
 
-		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"0.100"]}]}}`
+		json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1,"100"]}]}}`
 		w.Write([]byte(json))
 	}))
 	defer ts.Close()
