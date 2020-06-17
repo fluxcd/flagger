@@ -48,6 +48,7 @@ List of organizations using Flagger:
 * [DMM.com](https://dmm-corp.com)
 * [MediaMarktSaturn](https://www.mediamarktsaturn.com)
 * [Weaveworks](https://weave.works)
+* [Jumia Group](https://group.jumia.com)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
