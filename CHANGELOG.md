@@ -2,6 +2,36 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.0 (2020-06-17) 
+
+This is the GA release for Flagger v1.0.0.
+
+The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.app/dev/upgrade-guide).
+
+Two new resources were added to the API: `MetricTemplate` and `AlertProvider`.
+The analysis can reference [metric templates](https://docs.flagger.app//usage/metrics#custom-metrics)
+to query Prometheus, Datadog and AWS CloudWatch.
+[Alerting](https://docs.flagger.app/v/master/usage/alerting#canary-configuration) can be configured on a per
+canary basis for Slack, MS Teams, Discord and Rocket.
+
+#### Features
+
+- Implement progressive promotion
+    [#593](https://github.com/weaveworks/flagger/pull/593)
+
+#### Improvements
+
+- istio: Add source labels to analysis matching rules
+    [#594](https://github.com/weaveworks/flagger/pull/594)
+- istio: Add allow origins field to CORS spec
+    [#604](https://github.com/weaveworks/flagger/pull/604)
+- istio: Change builtin metrics to work with Istio telemetry v2
+    [#623](https://github.com/weaveworks/flagger/pull/623)
+- appmesh: Implement App Mesh v1beta2 timeout
+    [#611](https://github.com/weaveworks/flagger/pull/611)
+- metrics: Check metrics server availability during canary initialization
+    [#592](https://github.com/weaveworks/flagger/pull/592)
+
 ## 1.0.0-rc.5 (2020-05-14) 
 
 This is a release candidate for Flagger v1.0.0.

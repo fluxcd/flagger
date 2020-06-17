@@ -51,7 +51,7 @@ To install Flagger for **AWS App Mesh**:
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=appmesh-system \
-    --set meshProvider=appmesh \
+    --set meshProvider=appmesh:v1beta2 \
     --set metricsServer=http://appmesh-prometheus:9090
 ```
 
