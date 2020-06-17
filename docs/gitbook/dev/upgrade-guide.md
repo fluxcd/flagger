@@ -49,7 +49,7 @@ Istio 1.5 comes with a breaking change for Flagger uses. In Istio telemetry v2 t
 `istio_request_duration_seconds_bucket` has been removed and replaced with `istio_request_duration_milliseconds_bucket`
 and this breaks the `request-duration` metric check.
 
-You can create a metric template using the new duration metric like this:
+If are using **Istio 1.4**, you can create a metric template using the old duration metric like this:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -66,7 +66,7 @@ spec:
         0.99,
         sum(
             rate(
-                istio_request_duration_milliseconds_bucket{
+                istio_request_duration_seconds_bucket{
                     reporter="destination",
                     destination_workload_namespace="{{ namespace }}",
                     destination_workload=~"{{ target }}"
@@ -85,6 +85,6 @@ metrics:
     name: latency
     namespace: istio-system
   thresholdRange:
-    max: 500
+    max: 0.500
   interval: 1m
 ```
