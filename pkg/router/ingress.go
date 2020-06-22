@@ -46,7 +46,6 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 			if y.Backend.ServiceName == apexName {
 				ingressClone.Spec.Rules[k].HTTP.Paths[x].Backend.ServiceName = canaryName
 				backendExists = true
-				break
 			}
 		}
 	}
