@@ -49,7 +49,7 @@ const (
 	CanaryPhaseProgressing CanaryPhase = "Progressing"
 	// CanaryPhasePromoting means the canary analysis is finished and the primary spec has been updated
 	CanaryPhasePromoting CanaryPhase = "Promoting"
-	// CanaryPhaseProgressing means the canary promotion is finished and traffic has been routed back to primary
+	// CanaryPhaseFinalising means the canary promotion is finished and traffic has been routed back to primary
 	CanaryPhaseFinalising CanaryPhase = "Finalising"
 	// CanaryPhaseSucceeded means the canary analysis has been successful
 	// and the canary deployment has been promoted
