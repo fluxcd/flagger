@@ -112,6 +112,9 @@ spec:
           {{- if .Values.istio.kubeconfig.secretName }}
           - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
           {{- end }}
+          {{- if .Values.threadiness }}
+          - -threadiness={{ .Values.threadiness }}
+          {{- end }}
           livenessProbe:
             exec:
               command:

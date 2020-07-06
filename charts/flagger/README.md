@@ -134,6 +134,7 @@ Parameter | Description | Default
 `resources.limits/memory` | Pod memory limit | `512Mi`
 `affinity` | Node/pod affinities | None
 `nodeSelector` | Node labels for pod assignment | `{}`
+`threadiness` | Number of controller workers | `2`
 `tolerations` | List of node taints to tolerate | `[]`
 `istio.kubeconfig.secretName` | The name of the Kubernetes secret containing the Istio shared control plane kubeconfig | None
 `istio.kubeconfig.key` | The name of Kubernetes secret data key that contains the Istio control plane kubeconfig | `kubeconfig`
