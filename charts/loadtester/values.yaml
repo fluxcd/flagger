@@ -59,3 +59,13 @@ appmesh:
   backends:
   - podinfo
   - podinfo-canary
+
+#Istio virtual service and gatway settings. TLS secrets should be in namespace before enbaled it. ( secret format loadtester.fullname ) 
+istio:
+  enabled: false
+  host: flagger-loadtester.flagger
+  gateway:
+    enabled: false  
+  tls:
+    enabled: false
+    httpsRedirect: false 

@@ -1,0 +1,30 @@
+{{- if and (.Values.istio.enabled) (.Values.istio.gateway.enabled) }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ include "loadtester.fullname" . }}
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http-default
+        protocol: HTTP
+      hosts:
+       - {{ .Values.istio.host }}
+    {{- if .Values.istio.tls.enabled }}
+    - port:
+        number: 443
+        name: https-default
+        protocol: HTTPS
+      tls:
+        httpsRedirect: {{ .Values.istio.tls.httpsRedirect }}
+        mode: SIMPLE
+        serverCertificate: "sds"
+        privateKey: "sds"
+        credentialName: {{ include "loadtester.fullname" . }}
+      hosts:
+      - {{ .Values.istio.host }}
+    {{- end }}
+{{- end }}
