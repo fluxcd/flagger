@@ -5,14 +5,14 @@ As an alternative to Helm, Flagger can be installed with [Kustomize](https://kus
 **Prerequisites**
 
 - Kubernetes cluster **>=1.13.0**
-- Kustomize **>=3.5.0**
+- Kustomize **>=3.6.0**
 
 ## Service mesh specific installers
 
 Install Flagger for Istio:
 
 ```bash
-kustomize build github.com/weaveworks/flagger//kustomize/istio | kubectl apply -f -
+kustomize build https://github.com/weaveworks/flagger/kustomize/istio | kubectl apply -f -
 ```
 
 This deploys Flagger in the `istio-system` namespace and sets the metrics server URL to Istio's Prometheus instance.
@@ -20,7 +20,7 @@ This deploys Flagger in the `istio-system` namespace and sets the metrics server
 Install Flagger for AWS App Mesh:
 
 ```bash
-kustomize build github.com/weaveworks/flagger//kustomize/appmesh | kubectl apply -f -
+kustomize build https://github.com/weaveworks/flagger/kustomize/appmesh | kubectl apply -f -
 ```
 
 This deploys Flagger in the `appmesh-system` namespace and sets the metrics server URL to App Mesh Prometheus instance.
@@ -28,7 +28,7 @@ This deploys Flagger in the `appmesh-system` namespace and sets the metrics serv
 Install Flagger for Linkerd:
 
 ```bash
-kustomize build github.com/weaveworks/flagger//kustomize/linkerd | kubectl apply -f -
+kustomize build https://github.com/weaveworks/flagger/kustomize/linkerd | kubectl apply -f -
 ```
 
 This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
@@ -36,13 +36,13 @@ This deploys Flagger in the `linkerd` namespace and sets the metrics server URL 
 If you want to install a specific Flagger release, add the version number to the URL:
 
 ```bash
-kustomize build github.com/weaveworks/flagger//kustomize/linkerd?ref=0.18.0 | kubectl apply -f -
+kustomize build https://github.com/weaveworks/flagger/kustomize/linkerd?ref=v1.0.0 | kubectl apply -f -
 ```
 
 Install Flagger for Contour:
 
 ```bash
-kustomize build github.com/weaveworks/flagger//kustomize/contour | kubectl apply -f -
+kustomize build https://github.com/weaveworks/flagger/kustomize/contour | kubectl apply -f -
 ```
 
 This deploys Flagger and Prometheus in the `projectcontour` namespace and sets Prometheus to scrape Contour's Envoy instances.
@@ -52,7 +52,7 @@ This deploys Flagger and Prometheus in the `projectcontour` namespace and sets P
 Install Flagger and Prometheus:
 
 ```bash
-kustomize build github.com/weaveworks/flagger//kustomize/kubernetes | kubectl apply -f -
+kustomize build https://github.com/weaveworks/flagger/kustomize/kubernetes | kubectl apply -f -
 ```
 
 This deploys Flagger and Prometheus in the `flagger-system` namespace,
