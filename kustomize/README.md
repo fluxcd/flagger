@@ -1,6 +1,6 @@
 # Flagger Kustomize installer
 
-As an alternative to Helm, Flagger can be installed with [Kustomize](https:/kustomize.io/).
+As an alternative to Helm, Flagger can be installed with [Kustomize](https://kustomize.io/).
 
 **Prerequisites**
 
