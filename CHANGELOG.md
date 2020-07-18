@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.1 (2020-07-18) 
+
+Add support for App Mesh Gateway GA
+
+#### Improvements
+
+- Update App Mesh docs to v1beta2 API
+    [#649](https://github.com/weaveworks/flagger/pull/649)
+- Add threadiness to Flagger helm chart
+    [#643](https://github.com/weaveworks/flagger/pull/643)
+- Add Istio virtual service to loadtester helm chart
+    [#643](https://github.com/weaveworks/flagger/pull/643)
+
+#### Fixes
+
+- Fix multiple paths per rule on canary ingress
+    [#632](https://github.com/weaveworks/flagger/pull/632)
+- Fix installers for kustomize >= 3.6.0
+    [#646](https://github.com/weaveworks/flagger/pull/646)
+
 ## 1.0.0 (2020-06-17) 
 
 This is the GA release for Flagger v1.0.0.
