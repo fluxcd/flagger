@@ -16,7 +16,8 @@ The App Mesh integration with EKS is made out of the following components:
 
 ## Create a Kubernetes cluster
 
-In order to create an EKS cluster you can use [eksctl](https://eksctl.io). Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon.
+In order to create an EKS cluster you can use [eksctl](https://eksctl.io).
+Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon.
 
 On MacOS you can install eksctl with Homebrew:
 
@@ -25,7 +26,7 @@ brew tap weaveworks/tap
 brew install weaveworks/tap/eksctl
 ```
 
-Create an EKS cluster:
+Create an EKS cluster with:
 
 ```bash
 eksctl create cluster --name=appmesh \
@@ -35,7 +36,9 @@ eksctl create cluster --name=appmesh \
 --appmesh-access
 ```
 
-The above command will create a two nodes cluster with App Mesh [IAM policy](https://docs.aws.amazon.com/app-mesh/latest/userguide/MESH_IAM_user_policies.html) attached to the EKS node instance role.
+The above command will create a two nodes cluster with
+App Mesh [IAM policy](https://docs.aws.amazon.com/app-mesh/latest/userguide/MESH_IAM_user_policies.html)
+attached to the EKS node instance role.
 
 Verify the install with:
 
@@ -45,29 +48,17 @@ kubectl get nodes
 
 ## Install Helm
 
-Install the [Helm](https://docs.helm.sh/using_helm/#installing-helm) command-line tool:
+Install the [Helm](https://docs.helm.sh/using_helm/#installing-helm) v3 command-line tool:
 
 ```text
-brew install kubernetes-helm
+brew install helm
 ```
 
-Create a service account and a cluster role binding for Tiller:
+Add the EKS repository to Helm:
 
 ```bash
-kubectl -n kube-system create sa tiller
-
-kubectl create clusterrolebinding tiller-cluster-rule \
---clusterrole=cluster-admin \
---serviceaccount=kube-system:tiller
+helm repo add eks https://aws.github.io/eks-charts
 ```
-
-Deploy Tiller in the `kube-system` namespace:
-
-```bash
-helm init --service-account tiller
-```
-
-You should consider using SSL between Helm and Tiller, for more information on securing your Helm installation see [docs.helm.sh](https://docs.helm.sh/using_helm/#securing-your-helm-installation).
 
 ## Enable horizontal pod auto-scaling
 
@@ -87,52 +78,27 @@ kubectl -n kube-system top pods
 
 ## Install the App Mesh components
 
+Install the App Mesh CRDs:
+
+```bash
+kubectl apply -k github.com/aws/eks-charts/stable/appmesh-controller//crds?ref=master
+```
+
 Create the `appmesh-system` namespace:
 
 ```bash
 kubectl create ns appmesh-system
 ```
 
-Apply the App Mesh CRDs:
-
-```bash
-kubectl apply -k github.com/aws/eks-charts/stable/appmesh-controller//crds
-```
-
-Add the EKS repository to Helm:
-
-```bash
-helm repo add eks https://aws.github.io/eks-charts
-```
-
-Install the App Mesh CRD controller:
+Install the App Mesh controller:
 
 ```bash
 helm upgrade -i appmesh-controller eks/appmesh-controller \
 --wait --namespace appmesh-system
 ```
 
-Install the App Mesh admission controller and create a mesh called `global`:
-
-```bash
-helm upgrade -i appmesh-inject eks/appmesh-inject \
---wait --namespace appmesh-system \
---set mesh.create=true \
---set mesh.name=global
-```
-
-Verify that the global mesh is active:
-
-```bash
-kubectl describe mesh
-
-Status:
-  Mesh Condition:
-    Status:                True
-    Type:                  MeshActive
-```
-
-In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
+In order to collect the App Mesh metrics that Flagger needs to run the canary analysis,
+you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
 
 Install the App Mesh Prometheus:
 
@@ -141,7 +107,7 @@ helm upgrade -i appmesh-prometheus eks/appmesh-prometheus \
 --wait --namespace appmesh-system
 ```
 
-## Install Flagger and Grafana
+## Install Flagger
 
 Add Flagger Helm repository:
 
@@ -161,34 +127,25 @@ Deploy Flagger in the _**appmesh-system**_ namespace:
 helm upgrade -i flagger flagger/flagger \
 --namespace=appmesh-system \
 --set crd.create=false \
---set meshProvider=appmesh \
+--set meshProvider=appmesh:v1beta2 \
 --set metricsServer=http://appmesh-prometheus:9090
 ```
 
-You can enable Slack or MS Teams notifications with:
+## Install Grafana
+
+Deploy App Mesh Grafana that comes with a dashboard for monitoring Flagger's canary releases:
 
 ```bash
-helm upgrade -i flagger flagger/flagger \
---reuse-values \
---namespace=appmesh-system \
---set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
---set slack.channel=general \
---set slack.user=flagger
-```
-
-Flagger comes with a Grafana dashboard made for monitoring the canary analysis. Deploy Grafana in the _**appmesh-system**_ namespace:
-
-```bash
-helm upgrade -i flagger-grafana flagger/grafana \
---namespace=appmesh-system \
---set url=http://appmesh-prometheus:9090
+helm upgrade -i appmesh-grafana eks/appmesh-grafana \
+--namespace appmesh-system
 ```
 
 You can access Grafana using port forwarding:
 
 ```bash
-kubectl -n appmesh-system port-forward svc/flagger-grafana 3000:80
+kubectl -n appmesh-system port-forward svc/appmesh-grafana 3000:3000
 ```
 
-Now that you have Flagger running you can try the [App Mesh canary deployments tutorial](https://docs.flagger.app/usage/appmesh-progressive-delivery).
+Now that you have Flagger running,
+you can try the [App Mesh canary deployments tutorial](https://docs.flagger.app/usage/appmesh-progressive-delivery).
 
