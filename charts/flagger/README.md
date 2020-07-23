@@ -140,6 +140,7 @@ Parameter | Description | Default
 `istio.kubeconfig.key` | The name of Kubernetes secret data key that contains the Istio control plane kubeconfig | `kubeconfig`
 `ingressAnnotationsPrefix` | Annotations prefix for NGINX ingresses | None
 `ingressClass` | Ingress class used for annotating HTTPProxy objects, e.g. `contour` | None
+`podPriorityClassName` | PriorityClass name for pod priority configuration | ""
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
