@@ -27,6 +27,9 @@ spec:
       {{- else if .Values.rbac.create }}
       serviceAccountName: {{ include "loadtester.fullname" . }}
       {{- end }}
+      {{- if .Values.podPriorityClassName }}
+      priorityClassName: {{ .Values.podPriorityClassName }}
+      {{- end }}           
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
