@@ -67,6 +67,7 @@ Parameter | Description | Default
 `istio.gateway.enabled` | Create Istio gateway in namespace | `false`
 `istio.tls.enabled` | Enable TLS in gateway ( TLS secrets should be in namespace ) | `false`
 `istio.tls.httpsRedirect` | Redirect traffic to TLS port | `false`
+`podPriorityClassName` | PriorityClass name for pod priority configuration | ""
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 

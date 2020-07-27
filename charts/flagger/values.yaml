@@ -14,6 +14,9 @@ podAnnotations:
   prometheus.io/port: "8080"
   appmesh.k8s.aws/sidecarInjectorWebhook: disabled
 
+# priority class name for pod priority configuration
+podPriorityClassName: ""
+
 metricsServer: "http://prometheus:9090"
 
 # accepted values are kubernetes, istio, linkerd, appmesh, nginx, gloo or supergloo:mesh.namespace (defaults to istio)

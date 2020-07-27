@@ -9,6 +9,8 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
 
+podPriorityClassName: ""  
+
 logLevel: info
 cmd:
   timeout: 1h
