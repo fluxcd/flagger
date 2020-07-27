@@ -272,7 +272,7 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://flagger-promethues.flagger:9090
+    address: http://flagger-prometheus.flagger:9090
   query: |
     100 - sum(
         rate(

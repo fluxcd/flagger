@@ -95,7 +95,7 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://promethues.istio-system:9090
+    address: http://prometheus.istio-system:9090
   query: |
     100 - sum(
         rate(
@@ -148,7 +148,7 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://flagger-promethues.flagger-system:9090
+    address: http://flagger-prometheus.flagger-system:9090
   query: |
     100 - sum(
         rate(
