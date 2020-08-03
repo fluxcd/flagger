@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - https://raw.githubusercontent.com/zalando/skipper/master/docs/kubernetes/deploy/deployment/rbac.yaml
+  - https://raw.githubusercontent.com/zalando/skipper/master/docs/kubernetes/deploy/deployment/deployment.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: skipper-ingress
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: skipper-ingress
+      spec:
+        template:
+          spec:
+            nodeSelector:
+              $patch: delete
+            affinity:
+              $patch: delete
+            containers:
+              - name: skipper-ingress
+                resources:
+                  limits:
+                    cpu: "250m"
+                    memory: "256M"
+                  requests:
+                    cpu: "250m"
+                    memory: "256M"
