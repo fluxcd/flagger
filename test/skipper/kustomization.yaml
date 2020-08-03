@@ -16,6 +16,11 @@ patches:
         name: skipper-ingress
       spec:
         template:
+          metadata:
+            annotations:
+              prometheus.io/path: /metrics
+              prometheus.io/port: "9911"
+              prometheus.io/scrape: "true"
           spec:
             nodeSelector:
               $patch: delete
@@ -23,10 +28,9 @@ patches:
               $patch: delete
             containers:
               - name: skipper-ingress
+                image: registry.opensource.zalan.do/pathfinder/skipper:v0.11.135
+                ports:
+                  - name: metrics-port
+                    containerPort: 9911
                 resources:
-                  limits:
-                    cpu: "250m"
-                    memory: "256M"
-                  requests:
-                    cpu: "250m"
-                    memory: "256M"
+                  $patch: delete
