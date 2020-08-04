@@ -122,6 +122,11 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:        factory.kubeClient,
 			annotationsPrefix: factory.ingressAnnotationsPrefix,
 		}
+	case provider == flaggerv1.SkipperProvider:
+		return &SkipperRouter{
+			logger:     factory.logger,
+			kubeClient: factory.kubeClient,
+		}
 	case provider == flaggerv1.KubernetesProvider:
 		return &NopRouter{}
 	default:
