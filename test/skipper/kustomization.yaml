@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - https://raw.githubusercontent.com/zalando/skipper/master/docs/kubernetes/deploy/deployment/rbac.yaml
+  - https://raw.githubusercontent.com/zalando/skipper/master/docs/kubernetes/deploy/deployment/deployment.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: skipper-ingress
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: skipper-ingress
+      spec:
+        template:
+          metadata:
+            annotations:
+              prometheus.io/path: /metrics
+              prometheus.io/port: "9911"
+              prometheus.io/scrape: "true"
+          spec:
+            nodeSelector:
+              $patch: delete
+            affinity:
+              $patch: delete
+            containers:
+              - name: skipper-ingress
+                image: registry.opensource.zalan.do/pathfinder/skipper:v0.11.135
+                ports:
+                  - name: metrics-port
+                    containerPort: 9911
+                resources:
+                  $patch: delete
