@@ -2,7 +2,7 @@
 
 set -o errexit
 
-ISTIO_VER="1.6.1"
+ISTIO_VER="1.6.7"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo ">>> Downloading Istio ${ISTIO_VER}"
