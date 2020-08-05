@@ -16,7 +16,7 @@ import (
 
 func TestSkipperObserver_GetRequestSuccessRate(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		expected := ` sum( rate( skipper_response_duration_seconds_bucket{ namespace="skipper", route=~"kube_skipper__skipper_ingress.*__backend", code=~"[4|5]..", le="+Inf" }[1m] ) ) / sum( rate( skipper_response_duration_seconds_bucket{ namespace="skipper", route=~"kube_skipper__skipper_ingress.*__backend", le="+Inf" }[1m] ) ) * 100`
+		expected := ` sum( rate( skipper_response_duration_seconds_bucket{ namespace="skipper", route=~"kube(ew)?_skipper__skipper_ingress.*__backend(_[0-9]+)?", code!~"5..", le="+Inf" }[1m] ) ) / sum( rate( skipper_response_duration_seconds_bucket{ namespace="skipper", route=~"kube(ew)?_skipper__skipper_ingress.*__backend(_[0-9]+)?", le="+Inf" }[1m] ) ) * 100`
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			promql := r.URL.Query()["query"][0]
 			assert.Equal(t, expected, promql)
@@ -72,7 +72,7 @@ func TestSkipperObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestSkipperObserver_GetRequestDuration(t *testing.T) {
-	expected := ` sum( rate( skipper_response_duration_seconds_sum{ namespace="skipper", route=~"kube_skipper__skipper_ingress.*__backend" }[1m] ) ) / sum( rate( skipper_response_duration_seconds_count{ namespace="skipper", route=~"kube_skipper__skipper_ingress.*__backend" }[1m] ) ) * 1000`
+	expected := ` sum( rate( skipper_response_duration_seconds_sum{ namespace="skipper", route=~"kube(ew)?_skipper__skipper_ingress.*__backend(_[0-9]+)?" }[1m] ) ) / sum( rate( skipper_response_duration_seconds_count{ namespace="skipper", route=~"kube(ew)?_skipper__skipper_ingress.*__backend(_[0-9]+)?" }[1m] ) ) * 1000`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]

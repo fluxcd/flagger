@@ -11,7 +11,7 @@ import (
 
 var skipperQueries = map[string]string{
 	"request-success-rate": `
-	{{- $route := printf "kube_%s__%s.*__%s" namespace ingress service }}
+	{{- $route := printf "kube(ew)?_%s__%s.*__%s(_[0-9]+)?" namespace ingress service }}
 	sum(
 		rate(
 			skipper_response_duration_seconds_bucket{
@@ -34,7 +34,7 @@ var skipperQueries = map[string]string{
 	)
 	* 100`,
 	"request-duration": `
-	{{- $route := printf "kube_%s__%s.*__%s" namespace ingress service }}
+	{{- $route := printf "kube(ew)?_%s__%s.*__%s(_[0-9]+)?" namespace ingress service }}
 	sum(
 		rate(
 			skipper_response_duration_seconds_sum{
@@ -55,7 +55,7 @@ var skipperQueries = map[string]string{
 	* 1000`,
 }
 
-// SkipperObserver Implentation for Skipper (https://github.com/zalando/skipper)
+// SkipperObserver Implementation for Skipper (https://github.com/zalando/skipper)
 type SkipperObserver struct {
 	client providers.Interface
 }

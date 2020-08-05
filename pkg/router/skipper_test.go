@@ -13,7 +13,7 @@ func TestSkipperRouter_Reconcile(t *testing.T) {
 	assert := assert.New(t)
 	mocks := newFixture(nil)
 
-	tests := []struct {
+	for _, tt := range []struct {
 		name    string
 		mocks   func() fixture
 		wantErr bool
@@ -34,8 +34,7 @@ func TestSkipperRouter_Reconcile(t *testing.T) {
 			},
 			false,
 		},
-	}
-	for _, tt := range tests {
+	} {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			mocks := tt.mocks()
