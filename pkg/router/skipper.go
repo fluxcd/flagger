@@ -17,11 +17,10 @@ import (
 
 /*
 Skipper Principles:
-
 * if only one backend has a weight, only one backend will get 100% traffic
-* if two of three backends has a weight, only two should get traffic.
-* if two backends doesn't have any weight, they get equal amount of traffic.
-* weights can be int or float, but always relative.
+* if two of three or more backends have a weight, only those two should get traffic.
+* if two backends don't have any weight, it's undefined and right now they get equal amount of traffic.
+* weights can be int or float, but always treated as a ratio.
 
 Implementation:
 * apex Ingress is immutable
@@ -164,7 +163,7 @@ func (skp *SkipperRouter) SetRoutes(canary *flaggerv1.Canary, primaryWeight, can
 
 	_, err = skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Update(context.TODO(), iClone, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("ingress %s.%s update error %v", iClone.Name, iClone.Namespace, err)
+		return fmt.Errorf("ingress %s.%s update error %w", iClone.Name, iClone.Namespace, err)
 	}
 
 	return nil
