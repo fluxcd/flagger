@@ -34,3 +34,36 @@ patches:
                     containerPort: 9911
                 resources:
                   $patch: delete
+                readinessProbe:
+                  initialDelaySeconds: 5
+                args:
+                  - "skipper"
+                  - "-whitelisted-healthcheck-cidr=0.0.0.0/0" # kind uses other IP addresses
+                  - "-kubernetes"
+                  - "-kubernetes-in-cluster"
+                  - "-kubernetes-path-mode=path-prefix"
+                  - "-address=:9999"
+                  - "-proxy-preserve-host"
+                  - "-serve-host-metrics"
+                  - "-disable-metrics-compat"
+                  - "-enable-profile"
+                  - "-enable-ratelimits"
+                  - "-experimental-upgrade"
+                  - "-metrics-exp-decay-sample"
+                  - "-reverse-source-predicate"
+                  - "-lb-healthcheck-interval=3s"
+                  - "-metrics-flavour=prometheus"
+                  - "-enable-connection-metrics"
+                  - "-max-audit-body=0"
+                  - "-histogram-metric-buckets=.0001,.00025,.0005,.00075,.001,.0025,.005,.0075,.01,.025,.05,.075,.1,.2,.3,.4,.5,.75,1,2,3,4,5,7,10,15,20,30,60,120,300,600"
+                  - "-expect-continue-timeout-backend=30s"
+                  - "-keepalive-backend=30s"
+                  - "-max-idle-connection-backend=0"
+                  - "-response-header-timeout-backend=1m"
+                  - "-timeout-backend=1m"
+                  - "-tls-timeout-backend=1m"
+                  - "-close-idle-conns-period=20s"
+                  - "-idle-timeout-server=62s"
+                  - "-read-timeout-server=5m"
+                  - "-write-timeout-server=60s"
+                  - '-default-filters-prepend=enableAccessLog(4,5) -> lifo(2000,20000,"3s")'
