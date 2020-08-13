@@ -32,6 +32,10 @@ spec:
       {{- end }}           
       containers:
         - name: {{ .Chart.Name }}
+          {{- if .Values.securityContext.enabled }}
+          securityContext:
+{{ toYaml .Values.securityContext.context | indent 12 }}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
