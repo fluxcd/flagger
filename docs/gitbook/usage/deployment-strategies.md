@@ -2,7 +2,7 @@
 
 Flagger can run automated application analysis, promotion and rollback for the following deployment strategies:
 * **Canary Release** (progressive traffic shifting)
-    * Istio, Linkerd, App Mesh, NGINX, Contour, Gloo
+    * Istio, Linkerd, App Mesh, NGINX, Skipper, Contour, Gloo
 * **A/B Testing** (HTTP headers and cookies traffic routing)
     * Istio, App Mesh, NGINX, Contour
 * **Blue/Green** (traffic switching)

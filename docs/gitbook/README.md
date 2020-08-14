@@ -5,7 +5,7 @@ description: Flagger is a progressive delivery Kubernetes operator
 # Introduction
 
 [Flagger](https://github.com/weaveworks/flagger) is a **Kubernetes** operator that automates the promotion of
-canary deployments using **Istio**, **Linkerd**, **App Mesh**, **NGINX**, **Contour** or **Gloo** routing for
+canary deployments using **Istio**, **Linkerd**, **App Mesh**, **NGINX**, **Skipper**, **Contour** or **Gloo** routing for
 traffic shifting and **Prometheus** metrics for canary analysis. The canary analysis can be extended with webhooks for
 running system integration/acceptance tests, load tests, or any other custom validation.
 
@@ -39,6 +39,7 @@ After install Flagger, you can follow one of the tutorials:
 * [Contour](tutorials/contour-progressive-delivery.md)
 * [Gloo](tutorials/gloo-progressive-delivery.md)
 * [NGINX Ingress](tutorials/nginx-progressive-delivery.md)
+* [Skipper Ingress](tutorials/skipper-progressive-delivery.md)
 
 **Hands-on GitOps workshops**
 

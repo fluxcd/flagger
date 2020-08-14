@@ -25,6 +25,7 @@
 * [Linkerd Canary Deployments](tutorials/linkerd-progressive-delivery.md)
 * [App Mesh Canary Deployments](tutorials/appmesh-progressive-delivery.md)
 * [NGINX Canary Deployments](tutorials/nginx-progressive-delivery.md)
+* [Skipper Canary Deployments](tutorials/skipper-progressive-delivery.md)
 * [Gloo Canary Deployments](tutorials/gloo-progressive-delivery.md)
 * [Contour Canary Deployments](tutorials/contour-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)

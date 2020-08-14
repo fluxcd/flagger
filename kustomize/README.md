@@ -67,12 +67,12 @@ metadata:
   name: app
   namespace: test
 spec:
-  # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, gloo
   # use the kubernetes provider for Blue/Green style deployments
   provider: nginx
 ```
 
-You'll need Prometheus when using Flagger with AWS App Mesh, Gloo or NGINX ingress controller.
+You'll need Prometheus when using Flagger with AWS App Mesh, Gloo, NGINX or Skipper ingress controller.
 The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster that
 have the `prometheus.io/scrape: "true"` annotation.
 

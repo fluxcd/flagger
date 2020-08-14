@@ -9,5 +9,5 @@ spec:
         - name: flagger
           args:
             - -log-level=debug
-            - -mesh-provider=kubernetes
+            - -mesh-provider=skipper
             - -metrics-server=http://flagger-prometheus:9090
