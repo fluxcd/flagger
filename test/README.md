@@ -54,3 +54,19 @@ The e2e testing infrastructure is powered by CircleCI and [Kubernetes Kind](http
 * cleanup test environment [e2e-nginx-cleanup.sh](e2e-nginx-cleanup.sh)
 * install NGINX Ingress and Flagger with custom ingress annotations prefix [e2e-nginx-custom-annotations.sh](e2e-nginx-custom-annotations.sh)
 * repeat the canary and A/B testing workflow [e2e-nginx-tests.sh](e2e-nginx-tests.sh)
+
+### CircleCI e2e Skipper ingress workflow
+
+* install latest stable kubectl [e2e-kind.sh](e2e-kind.sh)
+* install Kubernetes Kind [e2e-kind.sh](e2e-kind.sh)
+* create local Kubernetes cluster with kind [e2e-kind.sh](e2e-kind.sh)
+* install Skipper ingress with Kustomize [e2e-skipper.sh](e2e-skipper.sh)
+* load Flagger image onto the local cluster [e2e-skipper.sh](e2e-skipper.sh)
+* install Flagger and Prometheus in the flagger-system namespace [e2e-skipper.sh](e2e-skipper.sh)
+* create a test namespace [e2e-skipper-tests.sh](e2e-skipper-tests.sh)
+* deploy the load tester in the test namespace [e2e-skipper-tests.sh](e2e-skipper-tests.sh)
+* deploy the demo workload (podinfo) and ingress in the test namespace [e2e-skipper-tests.sh](e2e-skipper-tests.sh)
+* test the canary initialization [e2e-skipper-tests.sh](e2e-skipper-tests.sh)
+* test the canary analysis and promotion using weighted traffic and the load testing webhook [e2e-skipper-tests.sh]e2e-skipper-tests.sh)
+* test the A/B testing analysis and promotion using header filters and pre/post rollout webhooks [e2e-skipper-tests.sh]e2e-skipper-tests.sh)
+* cleanup test environment [e2e-skipper-cleanup.sh](e2e-skipper-cleanup.sh)
