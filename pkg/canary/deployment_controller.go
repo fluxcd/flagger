@@ -211,6 +211,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canaryDep)
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue);
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
@@ -241,7 +242,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 				Name:      primaryName,
 				Namespace: cd.Namespace,
 				Labels: map[string]string{
-					label: labelValue,
+					label: primaryLabelValue,
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
@@ -259,12 +260,12 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 				Strategy:                canaryDep.Spec.Strategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						label: labelValue,
+						label: primaryLabelValue,
 					},
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Labels:      makePrimaryLabels(canaryDep.Spec.Template.Labels, primaryName, label),
+						Labels:      makePrimaryLabels(canaryDep.Spec.Template.Labels, primaryLabelValue, label),
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps

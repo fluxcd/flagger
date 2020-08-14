@@ -215,6 +215,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canaryDae)
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue);
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
@@ -240,7 +241,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 				Name:      primaryName,
 				Namespace: cd.Namespace,
 				Labels: map[string]string{
-					label: labelValue,
+					label: primaryLabelValue,
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
@@ -256,12 +257,12 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 				UpdateStrategy:       canaryDae.Spec.UpdateStrategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						label: labelValue,
+						label: primaryLabelValue,
 					},
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Labels:      makePrimaryLabels(canaryDae.Spec.Template.Labels, labelValue, label),
+						Labels:      makePrimaryLabels(canaryDae.Spec.Template.Labels, primaryLabelValue, label),
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
