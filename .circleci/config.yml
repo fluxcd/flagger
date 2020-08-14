@@ -153,7 +153,7 @@ jobs:
       - run: test/e2e-kind.sh
       - run: test/e2e-skipper.sh
       - run: test/e2e-skipper-tests.sh
-      - run: test/e2e-nginx-cleanup.sh
+      - run: test/e2e-skipper-cleanup.sh
 
   push-helm-charts:
     docker:

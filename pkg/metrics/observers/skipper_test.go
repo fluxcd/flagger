@@ -33,10 +33,7 @@ func TestSkipperObserver_GetRequestSuccessRate(t *testing.T) {
 		}, nil)
 		require.NoError(t, err)
 
-		observer := &SkipperObserver{
-			client: client,
-		}
-
+		observer := &SkipperObserver{client: client}
 		val, err := observer.GetRequestSuccessRate(flaggerv1.MetricTemplateModel{
 			Namespace: "skipper",
 			Interval:  "1m",
@@ -62,10 +59,7 @@ func TestSkipperObserver_GetRequestSuccessRate(t *testing.T) {
 		}, nil)
 		require.NoError(t, err)
 
-		observer := &SkipperObserver{
-			client: client,
-		}
-
+		observer := &SkipperObserver{client: client}
 		_, err = observer.GetRequestSuccessRate(flaggerv1.MetricTemplateModel{})
 		require.True(t, errors.Is(err, providers.ErrNoValuesFound))
 	})
@@ -90,10 +84,7 @@ func TestSkipperObserver_GetRequestDuration(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	observer := &SkipperObserver{
-		client: client,
-	}
-
+	observer := &SkipperObserver{client: client}
 	val, err := observer.GetRequestDuration(flaggerv1.MetricTemplateModel{
 		Namespace: "skipper",
 		Interval:  "1m",

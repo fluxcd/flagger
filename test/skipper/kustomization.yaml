@@ -1,0 +1,67 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../kustomize/base/prometheus/
+  - ../../kustomize/base/flagger/
+  - https://raw.githubusercontent.com/zalando/skipper/v0.11.140/docs/kubernetes/deploy/deployment/rbac.yaml
+  - https://raw.githubusercontent.com/zalando/skipper/v0.11.140/docs/kubernetes/deploy/deployment/service.yaml
+  - https://raw.githubusercontent.com/zalando/skipper/v0.11.140/docs/kubernetes/deploy/deployment/deployment.yaml
+  - namespace.yaml
+patchesStrategicMerge:
+  - patch.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: skipper-ingress
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: skipper-ingress
+      spec:
+        template:
+          metadata:
+            annotations:
+              prometheus.io/path: /metrics
+              prometheus.io/port: "9911"
+              prometheus.io/scrape: "true"
+          spec:
+            nodeSelector:
+              $patch: delete
+            affinity:
+              $patch: delete
+            containers:
+              - name: skipper-ingress
+                image: registry.opensource.zalan.do/pathfinder/skipper:latest
+                ports:
+                  - name: metrics-port
+                    containerPort: 9911
+                resources:
+                  $patch: delete
+                readinessProbe:
+                  initialDelaySeconds: 5
+                args:
+                  - skipper
+                  - -default-filters-prepend=enableAccessLog(4,5)
+                  - -address=:9999
+                  - -disable-metrics-compat
+                  - -enable-connection-metrics
+                  - -enable-profile
+                  - -enable-ratelimits
+                  - -experimental-upgrade
+                  - -histogram-metric-buckets=.01,1,10,100
+                  - -kubernetes-in-cluster
+                  - -kubernetes-path-mode=path-prefix
+                  - -kubernetes
+                  - -lb-healthcheck-interval=3s
+                  - -max-audit-body=0
+                  - -max-idle-connection-backend=0
+                  - -metrics-exp-decay-sample
+                  - -metrics-flavour=prometheus
+                  - -proxy-preserve-host
+                  - -route-backend-metrics
+                  - -route-backend-error-counters
+                  - -route-response-metrics
+                  - -serve-host-metrics
+                  - -serve-route-metrics
+                  - -whitelisted-healthcheck-cidr=0.0.0.0/0 # kind uses other IP addresse
