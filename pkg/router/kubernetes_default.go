@@ -125,9 +125,6 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		metadata.Annotations = make(map[string]string)
 	}
 
-	c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-		Debugw(fmt.Sprintf("Creating Service %s", name), "metadata", metadata, "service_configuration", canary.Spec.Service)
-
 	// create service if it doesn't exists
 	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
