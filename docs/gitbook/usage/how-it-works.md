@@ -75,15 +75,10 @@ Based on the above configuration, Flagger generates the following Kubernetes obj
 * `deployment/<targetRef.name>-primary`
 * `hpa/<autoscalerRef.name>-primary`
 
-The primary deployment is considered the stable release of your app, by default all traffic is routed to this version 
+The primary deployment is considered the stable release of your app, by default all traffic is routed to this version
 and the target deployment is scaled to zero.
 Flagger will detect changes to the target deployment (including secrets and configmaps) and will perform a
 canary analysis before promoting the new version as primary.
-
-If the target deployment uses secrets and/or configmaps, Flagger will create a copy of each object using the `-primary`
-prefix and will reference these objects in the primary deployment. You can disable the secrets/configmaps tracking 
-with the `-enable-config-tracking=false` command flag in the Flagger deployment manifest under containers args
-or by setting `--set configTracking.enabled=false` when installing Flagger with Helm.
 
 **Note** that the target deployment must have a single label selector in the format `app: <DEPLOYMENT-NAME>`:
 
@@ -102,10 +97,19 @@ spec:
         app: podinfo
 ```
 
-Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors.
+In addition to `app`, Flagger supports `name` and `app.kubernetes.io/name` selectors.
 If you use a different convention you can specify your label with
 the `-selector-labels=my-app-label` command flag in the Flagger deployment manifest under containers args
 or by setting `--set selectorLabels=my-app-label` when installing Flagger with Helm.
+
+If the target deployment uses secrets and/or configmaps, Flagger will create a copy of each object using the `-primary`
+suffix and will reference these objects in the primary deployment. If you annotate your ConfigMap or Secret with
+`flagger.app/config-tracking: disabled`, Flagger will use the same object for the primary deployment instead of making
+a primary copy.
+You can disable the secrets/configmaps tracking globally with the `-enable-config-tracking=false` command flag in
+the Flagger deployment manifest under containers args or by setting `--set configTracking.enabled=false` when
+installing Flagger with Helm, but disabling config-tracking using the the per Secret/ConfigMap annotation may fit your
+use-case better.
 
 The autoscaler reference is optional, when specified, Flagger will pause the traffic increase while the 
 target and primary deployments are scaled up or down. HPA can help reduce the resource usage during the canary analysis.
