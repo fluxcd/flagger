@@ -108,6 +108,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canary)
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue);
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
@@ -146,7 +147,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	}
 
 	primaryCopy.Spec.Template.Annotations = annotations
-	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, labelValue, label)
+	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryLabelValue, label)
 
 	// apply update
 	_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
