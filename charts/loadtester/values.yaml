@@ -71,3 +71,11 @@ istio:
   tls:
     enabled: false
     httpsRedirect: false 
+
+# when enabled, it will add a security context for the loadtester pod
+securityContext:
+  enabled: false
+  context:
+    readOnlyRootFilesystem: true
+    runAsUser: 100
+    runAsGroup: 101
