@@ -281,32 +281,24 @@ the canary is scaled to zero and the rollout is marked as failed.
 ```text
 kubectl -n flagger-system logs deploy/flagger -f | jq .msg
 
-"New revision detected! Scaling up podinfo.test"
-"canary deployment podinfo.test not ready: waiting for rollout to finish: 0 of 1 updated replicas are available"
-"Starting canary analysis for podinfo.test"
-"Pre-rollout check acceptance-test passed"
-"primaryWeight: 95, canaryWeight: 5"
-"Advance podinfo.test canary weight 5"
-"primaryWeight: 90, canaryWeight: 10"
-"Advance podinfo.test canary weight 10"
-"primaryWeight: 85, canaryWeight: 15"
-"Advance podinfo.test canary weight 15"
-"primaryWeight: 80, canaryWeight: 20"
-"Advance podinfo.test canary weight 20"
-"Halt podinfo.test advancement success rate 53.42% < 99%"
-"Halt podinfo.test advancement success rate 53.19% < 99%"
-"Halt podinfo.test advancement success rate 48.05% < 99%"
-"Rolling back podinfo.test failed checks threshold reached 3"
-"primaryWeight: 100, canaryWeight: 0"
-"Canary failed! Scaling down podinfo.test"
+New revision detected! Scaling up podinfo.test
+Canary deployment podinfo.test not ready: waiting for rollout to finish: 0 of 1 updated replicas are available
+Starting canary analysis for podinfo.test
+Pre-rollout check acceptance-test passed
+Advance podinfo.test canary weight 5
+Advance podinfo.test canary weight 10
+Advance podinfo.test canary weight 15
+Advance podinfo.test canary weight 20
+Halt podinfo.test advancement success rate 53.42% < 99%
+Halt podinfo.test advancement success rate 53.19% < 99%
+Halt podinfo.test advancement success rate 48.05% < 99%
+Rolling back podinfo.test failed checks threshold reached 3
+Canary failed! Scaling down podinfo.test
 ```
 
 ## Custom metrics
 
 The canary analysis can be extended with Prometheus queries.
-
-The demo app is instrumented with Prometheus so you can create a custom check that will use the
-HTTP request duration histogram to validate the canary.
 
 Create a metric template and apply it on the cluster:
 
