@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: podinfo-ingress
+  namespace: test
+  labels:
+    app: podinfo
+  annotations:
+    kubernetes.io/ingress.class: skipper
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - backend:
+              serviceName: podinfo-service
+              servicePort: 80

@@ -77,6 +77,7 @@ For ingress controllers, the install instructions are:
 * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery)
 * [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
 * [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
+* [Skipper](https://docs.flagger.app/tutorials/skipper-progressive-delivery)
 
 Enable **Slack** notifications:
 
@@ -198,7 +199,7 @@ kustomize build https://github.com/weaveworks/flagger/kustomize/linkerd?ref=v1.0
 
 **Generic installer**
 
-Install Flagger and Prometheus for Contour, Gloo or NGINX ingress:
+Install Flagger and Prometheus for Contour, Gloo, NGINX or Skipper ingress:
 
 ```bash
 kustomize build https://github.com/weaveworks/flagger/kustomize/kubernetes | kubectl apply -f -
@@ -219,7 +220,7 @@ metadata:
   name: app
   namespace: test
 spec:
-  # can be: kubernetes, istio, linkerd, appmesh, nginx, gloo
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, gloo
   # use the kubernetes provider for Blue/Green style deployments
   provider: nginx
 ```
