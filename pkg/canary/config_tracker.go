@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -50,12 +51,25 @@ func checksum(data interface{}) string {
 	return fmt.Sprintf("%x", hashBytes[:8])
 }
 
+func configIsDisabled(annotations map[string]string) bool {
+	for k, v := range annotations {
+		if k == "flagger.app/config-tracking" && strings.HasPrefix(v, "disable") {
+			return true
+		}
+	}
+	return false
+}
+
 // getRefFromConfigMap transforms a Kubernetes ConfigMap into a ConfigRef
 // and computes the checksum of the ConfigMap data
 func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*ConfigRef, error) {
 	config, err := ct.KubeClient.CoreV1().ConfigMaps(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("configmap  %s.%s get query error: %w", name, namespace, err)
+	}
+
+	if configIsDisabled(config.GetAnnotations()) {
+		return nil, nil
 	}
 
 	return &ConfigRef{
@@ -79,6 +93,10 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 		secret.Type != corev1.SecretTypeSSHAuth &&
 		secret.Type != corev1.SecretTypeTLS {
 		ct.Logger.Debugf("ignoring secret %s.%s type not supported %v", name, namespace, secret.Type)
+		return nil, nil
+	}
+
+	if configIsDisabled(secret.GetAnnotations()) {
 		return nil, nil
 	}
 
@@ -180,7 +198,9 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 			ct.Logger.Errorf("getRefFromConfigMap failed: %v", err)
 			continue
 		}
-		res[config.GetName()] = *config
+		if config != nil {
+			res[config.GetName()] = *config
+		}
 	}
 	for secretName := range secretNames {
 		secret, err := ct.getRefFromSecret(secretName, cd.Namespace)
