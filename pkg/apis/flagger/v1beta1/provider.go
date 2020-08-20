@@ -9,4 +9,5 @@ const (
 	GlooProvider       string = "gloo"
 	NGINXProvider      string = "nginx"
 	KubernetesProvider string = "kubernetes"
+	SkipperProvider    string = "skipper"
 )

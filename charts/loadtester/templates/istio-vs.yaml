@@ -1,0 +1,17 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "loadtester.fullname" . }}
+spec:
+  gateways:
+  - {{ include "loadtester.fullname" . }}
+  hosts:
+  - {{ .Values.istio.host }}
+  http:
+  - route:
+    - destination:
+        host: {{ include "loadtester.fullname" . }}
+        port:
+          number: {{ .Values.service.port }}
+{{- end }}

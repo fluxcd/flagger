@@ -56,6 +56,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &HttpObserver{
 			client: factory.Client,
 		}
+	case provider == flaggerv1.SkipperProvider:
+		return &SkipperObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,

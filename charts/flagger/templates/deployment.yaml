@@ -48,6 +48,9 @@ spec:
           secret:
             secretName: "{{ .Values.istio.kubeconfig.secretName }}"
         {{- end }}
+      {{- if .Values.podPriorityClassName }}
+      priorityClassName: {{ .Values.podPriorityClassName }}
+      {{- end }}                  
       containers:
         - name: flagger
           {{- if .Values.securityContext.enabled }}
@@ -111,6 +114,9 @@ spec:
           {{- end }}
           {{- if .Values.istio.kubeconfig.secretName }}
           - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
+          {{- end }}
+          {{- if .Values.threadiness }}
+          - -threadiness={{ .Values.threadiness }}
           {{- end }}
           livenessProbe:
             exec:

@@ -2,6 +2,54 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.1.0 (2020-08-18) 
+
+Add support for Skipper ingress controller
+
+#### Features
+
+- Skipper Ingress Controller support
+    [#670](https://github.com/weaveworks/flagger/pull/670)
+- Support per-config configTracker disable via ConfigMap/Secret annotation
+    [#671](https://github.com/weaveworks/flagger/pull/671)
+
+#### Improvements
+
+- Add priorityClassName and securityContext to Helm charts
+    [#652](https://github.com/weaveworks/flagger/pull/652)
+    [#668](https://github.com/weaveworks/flagger/pull/668)
+- Update Kubernetes packages to v1.18.8
+    [#672](https://github.com/weaveworks/flagger/pull/672)
+- Update Istio, Linkerd and Contour e2e tests
+    [#661](https://github.com/weaveworks/flagger/pull/661)
+
+#### Fixes
+
+- Fix O(log n) bug over network in GetTargetConfigs
+    [#663](https://github.com/weaveworks/flagger/pull/663)
+- Fix(grafana): metrics change since Kubernetes 1.16
+    [#663](https://github.com/weaveworks/flagger/pull/663)
+
+## 1.0.1 (2020-07-18) 
+
+Add support for App Mesh Gateway GA
+
+#### Improvements
+
+- Update App Mesh docs to v1beta2 API
+    [#649](https://github.com/weaveworks/flagger/pull/649)
+- Add threadiness to Flagger helm chart
+    [#643](https://github.com/weaveworks/flagger/pull/643)
+- Add Istio virtual service to loadtester helm chart
+    [#643](https://github.com/weaveworks/flagger/pull/643)
+
+#### Fixes
+
+- Fix multiple paths per rule on canary ingress
+    [#632](https://github.com/weaveworks/flagger/pull/632)
+- Fix installers for kustomize >= 3.6.0
+    [#646](https://github.com/weaveworks/flagger/pull/646)
+
 ## 1.0.0 (2020-06-17) 
 
 This is the GA release for Flagger v1.0.0.

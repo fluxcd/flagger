@@ -10,4 +10,5 @@ redirects:
   usage/contour-progressive-delivery: tutorials/contour-progressive-delivery.md
   usage/gloo-progressive-delivery: tutorials/gloo-progressive-delivery.md
   usage/nginx-progressive-delivery: tutorials/nginx-progressive-delivery.md
+  usage/skipper-progressive-delivery: tutorials/skipper-progressive-delivery.md
   usage/crossover-progressive-delivery: tutorials/crossover-progressive-delivery.md

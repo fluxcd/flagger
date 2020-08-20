@@ -2,12 +2,14 @@ replicaCount: 1
 
 image:
   repository: weaveworks/flagger-loadtester
-  tag: 0.17.0
+  tag: 0.18.0
   pullPolicy: IfNotPresent
 
 podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
+
+podPriorityClassName: ""  
 
 logLevel: info
 cmd:
@@ -59,3 +61,21 @@ appmesh:
   backends:
   - podinfo
   - podinfo-canary
+
+#Istio virtual service and gatway settings. TLS secrets should be in namespace before enbaled it. ( secret format loadtester.fullname ) 
+istio:
+  enabled: false
+  host: flagger-loadtester.flagger
+  gateway:
+    enabled: false  
+  tls:
+    enabled: false
+    httpsRedirect: false 
+
+# when enabled, it will add a security context for the loadtester pod
+securityContext:
+  enabled: false
+  context:
+    readOnlyRootFilesystem: true
+    runAsUser: 100
+    runAsGroup: 101

@@ -64,10 +64,14 @@ func newDeploymentFixture() deploymentControllerFixture {
 		newDeploymentControllerTestConfigMapEnv(),
 		newDeploymentControllerTestConfigMapVol(),
 		newDeploymentControllerTestConfigProjected(),
+		newDeploymentControllerTestConfigMapTrackerEnabled(),
+		newDeploymentControllerTestConfigMapTrackerDisabled(),
 		newDeploymentControllerTestSecret(),
 		newDeploymentControllerTestSecretEnv(),
 		newDeploymentControllerTestSecretVol(),
 		newDeploymentControllerTestSecretProjected(),
+		newDeploymentControllerTestSecretTrackerEnabled(),
+		newDeploymentControllerTestSecretTrackerDisabled(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
@@ -146,6 +150,42 @@ func newDeploymentControllerTestConfigMapEnv() *corev1.ConfigMap {
 	}
 }
 
+func newDeploymentControllerTestConfigMapTrackerEnabled() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-tracker-enabled",
+			Annotations: map[string]string{
+				"unrelated-annotation-1":      ":)",
+				"flagger.app/config-tracking": "enabled",
+				"unrelated-annotation-2":      "<3",
+			},
+		},
+		Data: map[string]string{
+			"color": "red",
+		},
+	}
+}
+
+func newDeploymentControllerTestConfigMapTrackerDisabled() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-tracker-disabled",
+			Annotations: map[string]string{
+				"unrelated-annotation-1":      "c:",
+				"flagger.app/config-tracking": "disabled",
+				"unrelated-annotation-2":      "^-^",
+			},
+		},
+		Data: map[string]string{
+			"color": "red",
+		},
+	}
+}
+
 func newDeploymentControllerTestConfigMapVol() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
@@ -207,6 +247,44 @@ func newDeploymentControllerTestSecretVol() *corev1.Secret {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo-secret-vol",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
+func newDeploymentControllerTestSecretTrackerEnabled() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-tracker-enabled",
+			Annotations: map[string]string{
+				"unrelated-annotation-1":      ":)",
+				"flagger.app/config-tracking": "enabled",
+				"unrelated-annotation-2":      "<3",
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
+func newDeploymentControllerTestSecretTrackerDisabled() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-tracker-disabled",
+			Annotations: map[string]string{
+				"unrelated-annotation-1":      "c:",
+				"flagger.app/config-tracking": "disabled",
+				"unrelated-annotation-2":      "^-^",
+			},
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
@@ -337,6 +415,26 @@ func newDeploymentControllerTest() *appsv1.Deployment {
 									MountPath: "/etc/podinfo/secret",
 									ReadOnly:  true,
 								},
+								{
+									Name:      "config-tracker-enabled",
+									MountPath: "/etc/podinfo/config-tracker-enabled",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "config-tracker-disabled",
+									MountPath: "/etc/podinfo/config-tracker-disabled",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "secret-tracker-enabled",
+									MountPath: "/etc/podinfo/secret-tracker-enabled",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "secret-tracker-disabled",
+									MountPath: "/etc/podinfo/secret-tracker-disabled",
+									ReadOnly:  true,
+								},
 							},
 						},
 					},
@@ -391,6 +489,42 @@ func newDeploymentControllerTest() *appsv1.Deployment {
 											},
 										},
 									},
+								},
+							},
+						},
+						{
+							Name: "config-tracker-enabled",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "podinfo-config-tracker-enabled",
+									},
+								},
+							},
+						},
+						{
+							Name: "config-tracker-disabled",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "podinfo-config-tracker-disabled",
+									},
+								},
+							},
+						},
+						{
+							Name: "secret-tracker-enabled",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "podinfo-secret-tracker-enabled",
+								},
+							},
+						},
+						{
+							Name: "secret-tracker-disabled",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "podinfo-secret-tracker-disabled",
 								},
 							},
 						},
@@ -482,6 +616,26 @@ func newDeploymentControllerTestV2() *appsv1.Deployment {
 									MountPath: "/etc/podinfo/secret",
 									ReadOnly:  true,
 								},
+								{
+									Name:      "config-tracker-enabled",
+									MountPath: "/etc/podinfo/config-tracker-enabled",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "config-tracker-disabled",
+									MountPath: "/etc/podinfo/config-tracker-disabled",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "secret-tracker-enabled",
+									MountPath: "/etc/podinfo/secret-tracker-enabled",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "secret-tracker-disabled",
+									MountPath: "/etc/podinfo/secret-tracker-disabled",
+									ReadOnly:  true,
+								},
 							},
 						},
 					},
@@ -536,6 +690,42 @@ func newDeploymentControllerTestV2() *appsv1.Deployment {
 											},
 										},
 									},
+								},
+							},
+						},
+						{
+							Name: "config-tracker-enabled",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "podinfo-config-tracker-enabled",
+									},
+								},
+							},
+						},
+						{
+							Name: "config-tracker-disabled",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "podinfo-config-tracker-disabled",
+									},
+								},
+							},
+						},
+						{
+							Name: "secret-tracker-enabled",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "podinfo-secret-tracker-enabled",
+								},
+							},
+						},
+						{
+							Name: "secret-tracker-disabled",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "podinfo-secret-tracker-disabled",
 								},
 							},
 						},

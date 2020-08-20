@@ -1,0 +1,66 @@
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  provider: skipper
+  progressDeadlineSeconds: 120
+  revertOnDeletion: true
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  ingressRef:
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    name: podinfo-ingress
+  service:
+    # service name (defaults to targetRef.name)
+    name: podinfo-service
+    # ClusterIP port number
+    port: 80
+    # container port name or number (optional)
+    targetPort: http
+    # port name can be http or grpc (default http)
+    # portName: http
+    # add all the other container ports
+    # to the ClusterIP services (default false)
+    # portDiscovery: false
+  analysis:
+    interval: 15s
+    threshold: 5
+    maxWeight: 100
+    stepWeight: 10
+    metrics:
+    - name: request-success-rate
+      interval: 15s
+      # minimum req success rate (non 5xx responses)
+      # percentage (0-100)
+      thresholdRange:
+        min: 99
+    - name: request-duration
+      interval: 15s
+      # maximum req duration P99
+      # milliseconds
+      thresholdRange:
+        max: 500
+    webhooks:
+      - name: gate
+        type: confirm-rollout
+        url: http://flagger-loadtester.test/gate/approve
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 10s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-service-canary/token | grep token"
+      - name: "load test"
+        type: rollout
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 10m -q 10 -c 2 -host app.example.com http://skipper-ingress.kube-system"
+          logCmdOutput: "true"

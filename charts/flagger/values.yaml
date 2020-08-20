@@ -2,7 +2,7 @@
 
 image:
   repository: weaveworks/flagger
-  tag: 1.0.0
+  tag: 1.1.0
   pullPolicy: IfNotPresent
   pullSecret:
 
@@ -13,6 +13,9 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
   appmesh.k8s.aws/sidecarInjectorWebhook: disabled
+
+# priority class name for pod priority configuration
+podPriorityClassName: ""
 
 metricsServer: "http://prometheus:9090"
 

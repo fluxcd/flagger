@@ -305,7 +305,7 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://flagger-promethues.ingress-nginx:9090
+    address: http://flagger-prometheus.ingress-nginx:9090
   query: |
     histogram_quantile(0.99,
       sum(
