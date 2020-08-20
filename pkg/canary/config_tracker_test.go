@@ -10,6 +10,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func TestConfigIsDisabled(t *testing.T) {
+	for _, c := range []struct {
+		annotations map[string]string
+		exp         bool
+	}{
+		{annotations: map[string]string{configTrackingDisabledAnnotationKey: "disable"}, exp: true},
+		{annotations: map[string]string{"app": "disable"}, exp: false},
+		{annotations: map[string]string{}, exp: false},
+	} {
+		assert.Equal(t, configIsDisabled(c.annotations), c.exp)
+	}
+}
+
 func TestConfigTracker_ConfigMaps(t *testing.T) {
 	t.Run("deployment", func(t *testing.T) {
 		mocks := newDeploymentFixture()
