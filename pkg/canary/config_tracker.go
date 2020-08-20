@@ -30,6 +30,8 @@ type ConfigRefType string
 const (
 	ConfigRefMap    ConfigRefType = "configmap"
 	ConfigRefSecret ConfigRefType = "secret"
+
+	configTrackingDisabledAnnotationKey = "flagger.app/config-tracking"
 )
 
 // ConfigRef holds the reference to a tracked Kubernetes ConfigMap or Secret
@@ -52,12 +54,7 @@ func checksum(data interface{}) string {
 }
 
 func configIsDisabled(annotations map[string]string) bool {
-	for k, v := range annotations {
-		if k == "flagger.app/config-tracking" && strings.HasPrefix(v, "disable") {
-			return true
-		}
-	}
-	return false
+	return strings.HasPrefix(annotations[configTrackingDisabledAnnotationKey], "disable")
 }
 
 // getRefFromConfigMap transforms a Kubernetes ConfigMap into a ConfigRef
