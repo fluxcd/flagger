@@ -73,7 +73,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canary)
-	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue);
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
@@ -212,7 +212,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary) err
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canaryDep)
-	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue);
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}

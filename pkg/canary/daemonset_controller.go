@@ -108,7 +108,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canary)
-	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue);
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
@@ -216,7 +216,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canaryDae)
-	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue);
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
