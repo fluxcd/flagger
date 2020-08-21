@@ -33,6 +33,7 @@
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
 * [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
+* [Rollout Weights](tutorials/rollout-weights.md)
 
 ## Dev
 
