@@ -19,8 +19,8 @@ func (c *Controller) maxWeight(canary *flaggerv1.Canary) int {
 	if stepWeightsLen > 0 {
 		return canary.GetAnalysis().StepWeights[stepWeightsLen-1]
 	}
-	if cd.GetAnalysis().MaxWeight > 0 {
-		maxWeight = cd.GetAnalysis().MaxWeight
+	if canary.GetAnalysis().MaxWeight > 0 {
+		return canary.GetAnalysis().MaxWeight
 	}
 	// set max weight default value to 100%
 	return 100
