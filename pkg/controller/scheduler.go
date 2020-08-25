@@ -14,6 +14,18 @@ import (
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
+func (c *Controller) maxWeight(canary *flaggerv1.Canary) int {
+	var stepWeightsLen = len(canary.GetAnalysis().StepWeights)
+	if stepWeightsLen > 0 {
+		return canary.GetAnalysis().StepWeights[stepWeightsLen-1]
+	}
+	if cd.GetAnalysis().MaxWeight > 0 {
+		maxWeight = cd.GetAnalysis().MaxWeight
+	}
+	// set max weight default value to 100%
+	return 100
+}
+
 func (c *Controller) fullWeight(canary *flaggerv1.Canary) int {
 	if canary.GetAnalysis().FullWeight > 0 {
 		return canary.GetAnalysis().FullWeight
@@ -200,10 +212,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
-	maxWeight := c.fullWeight(cd)
-	if cd.GetAnalysis().MaxWeight > 0 {
-		maxWeight = cd.GetAnalysis().MaxWeight
-	}
+	maxWeight := c.maxWeight(cd)
 
 	// check primary status
 	if !cd.SkipAnalysis() {

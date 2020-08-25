@@ -29,7 +29,6 @@ canary:
   analysis:
     promotion:
       fullWeight: 1000
-      maxWeight: 500
       stepWeights: [1, 10, 100, 800]
 ```
 This configuration performs analysis starting from 1, going through `stepWeights` values till 800.  
