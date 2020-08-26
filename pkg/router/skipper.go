@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
@@ -176,7 +177,8 @@ func (skp *SkipperRouter) SetRoutes(canary *flaggerv1.Canary, primaryWeight, can
 
 	// Disable the canary-ingress route after the canary process
 	if canaryWeight == 0 {
-		iClone.Annotations[skipperpredicateAnnotationKey] = canaryRouteDisable
+		// ensuring False() is at first place
+		iClone.Annotations[skipperpredicateAnnotationKey] = insertPredicate(iClone.Annotations[skipperpredicateAnnotationKey], canaryRouteDisable)
 	}
 
 	_, err = skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Update(
@@ -212,7 +214,7 @@ func (skp *SkipperRouter) makeAnnotations(annotations map[string]string, backend
 	}
 	annotations[skipperBackendWeightsAnnotationKey] = string(b)
 	// adding more weight to canary route solves traffic bypassing through apexIngress
-	annotations[skipperpredicateAnnotationKey] = canaryRouteWeight
+	annotations[skipperpredicateAnnotationKey] = insertPredicate(annotations[skipperpredicateAnnotationKey], canaryRouteWeight)
 
 	return annotations
 }
@@ -232,4 +234,20 @@ func (skp *SkipperRouter) backendWeights(annotation map[string]string) (backendW
 // getIngressNames returns the primary and canary Kubernetes Ingress names
 func (skp *SkipperRouter) getIngressNames(name string) (apexName, canaryName string) {
 	return name, fmt.Sprintf(canaryPatternf, name)
+}
+
+func insertPredicate(raw, insert string) string {
+	// ensuring it at first place
+	predicates := []string{insert}
+	for _, x := range strings.Split(raw, "&&") {
+		predicate := strings.TrimSpace(x)
+		// dropping conflicting predicates
+		if predicate == "" ||
+			predicate == canaryRouteWeight ||
+			predicate == canaryRouteDisable {
+			continue
+		}
+		predicates = append(predicates, predicate)
+	}
+	return strings.Join(predicates, " && ")
 }
