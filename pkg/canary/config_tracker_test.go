@@ -25,8 +25,8 @@ func TestConfigIsDisabled(t *testing.T) {
 
 func TestConfigTracker_ConfigMaps(t *testing.T) {
 	t.Run("deployment", func(t *testing.T) {
-		depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
-		mocks := newDeploymentFixture(depConfig)
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDeploymentFixture(dc)
 		configMap := newDeploymentControllerTestConfigMap()
 		configMapProjected := newDeploymentControllerTestConfigProjected()
 
@@ -90,7 +90,8 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 	})
 
 	t.Run("daemonset", func(t *testing.T) {
-		mocks := newDaemonSetFixture()
+		dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDaemonSetFixture(dc)
 		configMap := newDaemonSetControllerTestConfigMap()
 		configMapProjected := newDaemonSetControllerTestConfigProjected()
 
@@ -157,8 +158,8 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 
 func TestConfigTracker_Secrets(t *testing.T) {
 	t.Run("deployment", func(t *testing.T) {
-		depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
-		mocks := newDeploymentFixture(depConfig)
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDeploymentFixture(dc)
 		secret := newDeploymentControllerTestSecret()
 		secretProjected := newDeploymentControllerTestSecretProjected()
 
@@ -222,7 +223,8 @@ func TestConfigTracker_Secrets(t *testing.T) {
 	})
 
 	t.Run("daemonset", func(t *testing.T) {
-		mocks := newDaemonSetFixture()
+		dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDaemonSetFixture(dc)
 		secret := newDaemonSetControllerTestSecret()
 		secretProjected := newDaemonSetControllerTestSecretProjected()
 

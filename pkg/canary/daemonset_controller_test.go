@@ -15,21 +15,23 @@ import (
 )
 
 func TestDaemonSetController_Sync(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
 	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	dae := newDaemonSetControllerTestPodInfo()
+	dae := newDaemonSetControllerTestPodInfo(dc)
 	primaryImage := daePrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dae.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, primaryImage, sourceImage)
 }
 
 func TestDaemonSetController_Promote(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
@@ -58,7 +60,8 @@ func TestDaemonSetController_Promote(t *testing.T) {
 }
 
 func TestDaemonSetController_NoConfigTracking(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	mocks.controller.configTracker = &NopTracker{}
 
 	err := mocks.controller.Initialize(mocks.canary)
@@ -75,7 +78,8 @@ func TestDaemonSetController_NoConfigTracking(t *testing.T) {
 }
 
 func TestDaemonSetController_HasTargetChanged(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
@@ -163,7 +167,8 @@ func TestDaemonSetController_HasTargetChanged(t *testing.T) {
 
 func TestDaemonSetController_Scale(t *testing.T) {
 	t.Run("ScaleToZero", func(t *testing.T) {
-		mocks := newDaemonSetFixture()
+		dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDaemonSetFixture(dc)
 		err := mocks.controller.Initialize(mocks.canary)
 		require.NoError(t, err)
 
@@ -179,7 +184,8 @@ func TestDaemonSetController_Scale(t *testing.T) {
 		}
 	})
 	t.Run("ScaleFromZeo", func(t *testing.T) {
-		mocks := newDaemonSetFixture()
+		dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDaemonSetFixture(dc)
 		err := mocks.controller.Initialize(mocks.canary)
 		require.NoError(t, err)
 
@@ -197,7 +203,8 @@ func TestDaemonSetController_Scale(t *testing.T) {
 }
 
 func TestDaemonSetController_Finalize(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 

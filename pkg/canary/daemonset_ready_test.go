@@ -12,7 +12,8 @@ import (
 )
 
 func TestDaemonSetController_IsReady(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
@@ -24,7 +25,8 @@ func TestDaemonSetController_IsReady(t *testing.T) {
 }
 
 func TestDaemonSetController_isDaemonSetReady(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	cd := &flaggerv1.Canary{}
 
 	// observed generation is less than desired generation
