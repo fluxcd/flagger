@@ -12,7 +12,8 @@ import (
 )
 
 func TestDeploymentController_IsReady(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 	mocks.controller.Initialize(mocks.canary)
 
 	err := mocks.controller.IsPrimaryReady(mocks.canary)
@@ -23,7 +24,8 @@ func TestDeploymentController_IsReady(t *testing.T) {
 }
 
 func TestDeploymentController_isDeploymentReady(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 
 	// observed generation is less than desired generation
 	dp := &appsv1.Deployment{Status: appsv1.DeploymentStatus{ObservedGeneration: -1}}

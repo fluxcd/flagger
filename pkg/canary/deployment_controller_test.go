@@ -15,13 +15,14 @@ import (
 )
 
 func TestDeploymentController_Sync(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 	mocks.initializeCanary(t)
 
 	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	dep := newDeploymentControllerTest()
+	dep := newDeploymentControllerTest(depConfig)
 	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, sourceImage, primaryImage)
@@ -32,7 +33,8 @@ func TestDeploymentController_Sync(t *testing.T) {
 }
 
 func TestDeploymentController_Promote(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 	mocks.initializeCanary(t)
 
 	dep2 := newDeploymentControllerTestV2()
@@ -72,7 +74,8 @@ func TestDeploymentController_Promote(t *testing.T) {
 }
 
 func TestDeploymentController_ScaleToZero(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 	mocks.initializeCanary(t)
 
 	err := mocks.controller.ScaleToZero(mocks.canary)
@@ -84,7 +87,8 @@ func TestDeploymentController_ScaleToZero(t *testing.T) {
 }
 
 func TestDeploymentController_NoConfigTracking(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 	mocks.controller.configTracker = &NopTracker{}
 	mocks.initializeCanary(t)
 
@@ -99,7 +103,8 @@ func TestDeploymentController_NoConfigTracking(t *testing.T) {
 }
 
 func TestDeploymentController_HasTargetChanged(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 	mocks.initializeCanary(t)
 
 	// save last applied hash
@@ -185,7 +190,8 @@ func TestDeploymentController_HasTargetChanged(t *testing.T) {
 }
 
 func TestDeploymentController_Finalize(t *testing.T) {
-	mocks := newDeploymentFixture()
+	depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(depConfig)
 
 	for _, tc := range []struct {
 		mocks          deploymentControllerFixture

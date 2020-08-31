@@ -25,7 +25,8 @@ func TestConfigIsDisabled(t *testing.T) {
 
 func TestConfigTracker_ConfigMaps(t *testing.T) {
 	t.Run("deployment", func(t *testing.T) {
-		mocks := newDeploymentFixture()
+		depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDeploymentFixture(depConfig)
 		configMap := newDeploymentControllerTestConfigMap()
 		configMapProjected := newDeploymentControllerTestConfigProjected()
 
@@ -156,7 +157,8 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 
 func TestConfigTracker_Secrets(t *testing.T) {
 	t.Run("deployment", func(t *testing.T) {
-		mocks := newDeploymentFixture()
+		depConfig := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDeploymentFixture(depConfig)
 		secret := newDeploymentControllerTestSecret()
 		secretProjected := newDeploymentControllerTestSecretProjected()
 
