@@ -29,8 +29,7 @@ func TestDeploymentController_Sync_ConsistentNaming(t *testing.T) {
 	assert.Equal(t, sourceImage, primaryImage)
 
 	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
-	sourceSelectorValue := dep.Spec.Selector.MatchLabels[dc.label]
-	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", dc.labelValue))
 
 	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -51,8 +50,7 @@ func TestDeploymentController_Sync_InconsistentNaming(t *testing.T) {
 	assert.Equal(t, sourceImage, primaryImage)
 
 	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
-	sourceSelectorValue := dep.Spec.Selector.MatchLabels[dc.label]
-	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", dc.labelValue))
 
 	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
