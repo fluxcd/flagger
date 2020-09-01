@@ -29,6 +29,10 @@ type deploymentControllerFixture struct {
 	logger        *zap.SugaredLogger
 }
 
+type canaryConfigs struct {
+	targetName string
+}
+
 type deploymentConfigs struct {
 	name       string
 	labelValue string
@@ -59,7 +63,8 @@ func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
 
 func newDeploymentFixture(dc deploymentConfigs) deploymentControllerFixture {
 	// init canary
-	canary := newDeploymentControllerTestCanary()
+	cc := canaryConfigs{targetName: dc.name}
+	canary := newDeploymentControllerTestCanary(cc)
 	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
 	// init kube clientset and register mock objects
@@ -299,7 +304,7 @@ func newDeploymentControllerTestSecretTrackerDisabled() *corev1.Secret {
 	}
 }
 
-func newDeploymentControllerTestCanary() *flaggerv1.Canary {
+func newDeploymentControllerTestCanary(cc canaryConfigs) *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -308,7 +313,7 @@ func newDeploymentControllerTestCanary() *flaggerv1.Canary {
 		},
 		Spec: flaggerv1.CanarySpec{
 			TargetRef: flaggerv1.CrossNamespaceObjectReference{
-				Name:       "podinfo",
+				Name:       cc.targetName,
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},

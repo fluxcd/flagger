@@ -2,6 +2,7 @@ package canary
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,18 +15,44 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
-func TestDeploymentController_Sync(t *testing.T) {
+func TestDeploymentController_Sync_ConsistentNaming(t *testing.T) {
 	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
 	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
-	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), fmt.Sprintf("%s-primary", dc.name), metav1.GetOptions{})
 	require.NoError(t, err)
 
 	dep := newDeploymentControllerTest(dc)
 	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, sourceImage, primaryImage)
+
+	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
+	sourceSelectorValue := dep.Spec.Selector.MatchLabels[dc.label]
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
+
+	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, depPrimary.Name, hpaPrimary.Spec.ScaleTargetRef.Name)
+}
+
+func TestDeploymentController_Sync_InconsistentNaming(t *testing.T) {
+	dc := deploymentConfigs{name: "podinfo-service", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
+	mocks.initializeCanary(t)
+
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), fmt.Sprintf("%s-primary", dc.name), metav1.GetOptions{})
+	require.NoError(t, err)
+
+	dep := newDeploymentControllerTest(dc)
+	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
+	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
+	assert.Equal(t, sourceImage, primaryImage)
+
+	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
+	sourceSelectorValue := dep.Spec.Selector.MatchLabels[dc.label]
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
 
 	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
