@@ -2,6 +2,7 @@ package canary
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,19 +15,42 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
-func TestDaemonSetController_Sync(t *testing.T) {
+func TestDaemonSetController_Sync_ConsistentNaming(t *testing.T) {
 	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
 	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
-	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), fmt.Sprintf("%s-primary", dc.name), metav1.GetOptions{})
 	require.NoError(t, err)
 
 	dae := newDaemonSetControllerTestPodInfo(dc)
 	primaryImage := daePrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dae.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, primaryImage, sourceImage)
+
+	primarySelectorValue := daePrimary.Spec.Selector.MatchLabels[dc.label]
+	sourceSelectorValue := dae.Spec.Selector.MatchLabels[dc.label]
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
+}
+
+func TestDaemonSetController_Sync_InconsistentNaming(t *testing.T) {
+	dc := daemonsetConfigs{name: "podinfo-service", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
+	err := mocks.controller.Initialize(mocks.canary)
+	require.NoError(t, err)
+
+	daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), fmt.Sprintf("%s-primary", dc.name), metav1.GetOptions{})
+	require.NoError(t, err)
+
+	dae := newDaemonSetControllerTestPodInfo(dc)
+	primaryImage := daePrimary.Spec.Template.Spec.Containers[0].Image
+	sourceImage := dae.Spec.Template.Spec.Containers[0].Image
+	assert.Equal(t, primaryImage, sourceImage)
+
+	primarySelectorValue := daePrimary.Spec.Selector.MatchLabels[dc.label]
+	sourceSelectorValue := dae.Spec.Selector.MatchLabels[dc.label]
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
 }
 
 func TestDaemonSetController_Promote(t *testing.T) {

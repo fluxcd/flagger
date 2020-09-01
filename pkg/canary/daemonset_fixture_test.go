@@ -31,7 +31,7 @@ type daemonsetConfigs struct {
 
 func newDaemonSetFixture(dc daemonsetConfigs) daemonSetControllerFixture {
 	// init canary
-	canary := newDaemonSetControllerTestCanary()
+	canary := newDaemonSetControllerTestCanary(dc)
 	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
 	// init kube clientset and register mock objects
@@ -270,7 +270,7 @@ func newDaemonSetControllerTestSecretTrackerDisabled() *corev1.Secret {
 	}
 }
 
-func newDaemonSetControllerTestCanary() *flaggerv1.Canary {
+func newDaemonSetControllerTestCanary(dc daemonsetConfigs) *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -279,7 +279,7 @@ func newDaemonSetControllerTestCanary() *flaggerv1.Canary {
 		},
 		Spec: flaggerv1.CanarySpec{
 			TargetRef: flaggerv1.CrossNamespaceObjectReference{
-				Name:       "podinfo",
+				Name:       dc.name,
 				APIVersion: "apps/v1",
 				Kind:       "DaemonSet",
 			},
