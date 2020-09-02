@@ -184,7 +184,7 @@ if [ -z "$passed" ]; then
   echo -e '\u2716 podinfo selector test failed'
   exit 1
 fi
-passed=$(kubectl -n test get svc/podinfo-service -o jsonpath='{.spec.selector.app}' 2>&1 | { grep podinfo-primary || true; })
+passed=$(kubectl -n test get svc/podinfo-service-canary -o jsonpath='{.spec.selector.app}' 2>&1 | { grep podinfo || true; })
 if [ -z "$passed" ]; then
   echo -e '\u2716 podinfo-service selector test failed'
   exit 1
