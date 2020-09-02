@@ -12,6 +12,8 @@ Install Istio with telemetry support and Prometheus:
 
 ```bash
 istioctl manifest apply --set profile=default
+# istio 1.7 or newer
+istioctl install --set profile=default
 ```
 
 Install Flagger using Kustomize (kubectl >= 1.14) in the `istio-system` namespace:
