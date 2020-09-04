@@ -115,11 +115,6 @@ spec:
   service:
     port: 9898
     portDiscovery: true
-    apex:
-      annotations:
-        test: "annotations-test"
-      labels:
-        test: "labels-test"
     headers:
       request:
         add:
@@ -131,26 +126,6 @@ spec:
     threshold: 15
     maxWeight: 30
     stepWeight: 10
-    metrics:
-    - name: request-success-rate
-      thresholdRange:
-        min: 99
-      interval: 1m
-    - name: latency
-      templateRef:
-        name: latency
-        namespace: istio-system
-      thresholdRange:
-        max: 500
-      interval: 1m
-    webhooks:
-      - name: load-test
-        url: http://flagger-loadtester.test/
-        timeout: 5s
-        metadata:
-          type: cmd
-          cmd: "hey -z 10m -q 10 -c 2 http://podinfo.test:9898/"
-          logCmdOutput: "true"
 EOF
 
 echo '>>> Waiting for primary to be ready'
