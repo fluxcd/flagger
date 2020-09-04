@@ -195,9 +195,11 @@ podinfod=stefanprodan/podinfo:3.1.1
 
 Flagger detects that the deployment revision changed and starts a new rollout:
 
-```text
+```bash
 kubectl -n test describe canary/podinfo
-
+```
+output:
+```
 Status:
   Canary Weight:         0
   Failed Checks:         0
@@ -235,7 +237,9 @@ You can monitor all canaries with:
 
 ```bash
 watch kubectl get canaries --all-namespaces
-
+```
+output:
+```
 NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
 test        podinfo   Progressing   15       2019-01-16T14:05:07Z
 prod        frontend  Succeeded     0        2019-01-15T16:15:07Z
@@ -274,8 +278,11 @@ watch curl http://podinfo-canary:9898/delay/1
 When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
 the canary is scaled to zero and the rollout is marked as failed.
 
-```text
+```bash
 kubectl -n test describe canary/podinfo
+```
+output:
+```
 
 Status:
   Canary Weight:         0

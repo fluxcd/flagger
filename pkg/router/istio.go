@@ -28,18 +28,18 @@ type IstioRouter struct {
 
 // Reconcile creates or updates the Istio virtual service and destination rules
 func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
-	_, primaryName, canaryName := canary.GetServiceNames()
+	apexName, primaryName, canaryName := canary.GetServiceNames()
 
 	if err := ir.reconcileDestinationRule(canary, canaryName); err != nil {
-		return fmt.Errorf("reconcileDestinationRule failed: %w", err)
+		return fmt.Errorf("%s reconcileDestinationRule failed: %w", canaryName, err)
 	}
 
 	if err := ir.reconcileDestinationRule(canary, primaryName); err != nil {
-		return fmt.Errorf("reconcileDestinationRule failed: %w", err)
+		return fmt.Errorf("%s reconcileDestinationRule failed: %w", primaryName, err)
 	}
 
 	if err := ir.reconcileVirtualService(canary); err != nil {
-		return fmt.Errorf("reconcileVirtualService failed: %w", err)
+		return fmt.Errorf("%s reconcileVirtualService failed: %w", apexName, err)
 	}
 	return nil
 }
