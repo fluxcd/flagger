@@ -18,6 +18,8 @@ func (factory Factory) Provider(
 		return NewDatadogProvider(metricInterval, provider, credentials)
 	case "cloudwatch":
 		return NewCloudWatchProvider(metricInterval, provider)
+	case "newrelic":
+		return NewNewRelicProvider(metricInterval, provider, credentials)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}
