@@ -49,7 +49,7 @@ func NewNewRelicProvider(
 
 	accountId, ok := credentials[newrelicAccountIdSecretKey]
 	if !ok {
-		return nil, fmt.Errorf("newrelic credentials does not contain " + newrelicAccountIdSecretKey)
+		return nil, fmt.Errorf("newrelic credentials does not contain the key '%s'", newrelicAccountIdSecretKey)
 	}
 
 	queryEndpoint := fmt.Sprintf("%s/v1/accounts/%s/query", address, accountId)
@@ -61,7 +61,7 @@ func NewNewRelicProvider(
 	if b, ok := credentials[newrelicQueryKeySecretKey]; ok {
 		nr.queryKey = string(b)
 	} else {
-		return nil, fmt.Errorf("newrelic credentials does not contain " + newrelicQueryKeySecretKey)
+		return nil, fmt.Errorf("newrelic credentials does not contain the key ''%s", newrelicQueryKeySecretKey)
 	}
 
 	md, err := time.ParseDuration(metricInterval)
