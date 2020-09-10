@@ -339,7 +339,7 @@ apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
   name: newrelic-error-rate
-  namespace: istio-system
+  namespace: ingress-nginx
 spec:
   provider:
     type: newrelic
@@ -362,7 +362,7 @@ Reference the template in the canary analysis:
       - name: "error rate"
         templateRef:
           name: newrelic-error-rate
-          namespace: istio-system
+          namespace: ingress-nginx
         thresholdRange:
           max: 5
         interval: 1m
