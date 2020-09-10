@@ -50,6 +50,7 @@ List of organizations using Flagger:
 * [MediaMarktSaturn](https://www.mediamarktsaturn.com)
 * [Weaveworks](https://weave.works)
 * [Jumia Group](https://group.jumia.com)
+* [eLife](https://elifesciences.org/)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
