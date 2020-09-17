@@ -44,7 +44,7 @@ spec:
     )
 EOF
 
-echo '>>> Initialising canary'
+echo '>>> Initialising canaries'
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: Canary
@@ -98,12 +98,41 @@ spec:
           logCmdOutput: "true"
 EOF
 
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo-service
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo-service
+  progressDeadlineSeconds: 60
+  service:
+    port: 9898
+    portDiscovery: true
+    headers:
+      request:
+        add:
+          x-envoy-upstream-rq-timeout-ms: "15000"
+          x-envoy-max-retries: "10"
+          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+  analysis:
+    interval: 15s
+    threshold: 15
+    maxWeight: 30
+    stepWeight: 10
+EOF
+
 echo '>>> Waiting for primary to be ready'
 retries=50
 count=0
 ok=false
 until ${ok}; do
     kubectl -n test get canary/podinfo | grep 'Initialized' && ok=true || ok=false
+    kubectl -n test get canary/podinfo-service | grep 'Initialized' && ok=true || ok=false
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
@@ -115,8 +144,26 @@ done
 
 echo '✔ Canary initialization test passed'
 
-kubectl -n test get svc/podinfo -oyaml | grep annotations-test
-kubectl -n test get svc/podinfo -oyaml | grep labels-test
+passed=$(kubectl -n test get svc/podinfo -oyaml 2>&1 | { grep annotations-test || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 podinfo annotations test failed'
+  exit 1
+fi
+passed=$(kubectl -n test get svc/podinfo -oyaml 2>&1 | { grep labels-test || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 podinfo labels test failed'
+  exit 1
+fi
+passed=$(kubectl -n test get svc/podinfo -o jsonpath='{.spec.selector.app}' 2>&1 | { grep podinfo-primary || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 podinfo selector test failed'
+  exit 1
+fi
+passed=$(kubectl -n test get svc/podinfo-service-canary -o jsonpath='{.spec.selector.app}' 2>&1 | { grep podinfo || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 podinfo-service selector test failed'
+  exit 1
+fi
 
 echo '✔ Canary service custom metadata test passed'
 

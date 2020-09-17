@@ -75,14 +75,14 @@ func makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	return res, nil
 }
 
-func makePrimaryLabels(labels map[string]string, primaryName string, label string) map[string]string {
+func makePrimaryLabels(labels map[string]string, labelValue string, label string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range labels {
 		if k != label {
 			res[k] = v
 		}
 	}
-	res[label] = primaryName
+	res[label] = labelValue
 
 	return res
 }

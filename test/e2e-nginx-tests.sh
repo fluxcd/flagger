@@ -124,6 +124,34 @@ spec:
           cmd: "hey -z 2m -q 10 -c 2 -host app.example.com http://nginx-ingress-controller.ingress-nginx"
 EOF
 
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo-service
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo-service
+  progressDeadlineSeconds: 60
+  service:
+    port: 9898
+    portDiscovery: true
+    headers:
+      request:
+        add:
+          x-envoy-upstream-rq-timeout-ms: "15000"
+          x-envoy-max-retries: "10"
+          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+  analysis:
+    interval: 15s
+    threshold: 15
+    maxWeight: 30
+    stepWeight: 10
+EOF
+
 echo '>>> Waiting for primary to be ready'
 retries=50
 count=0
@@ -140,6 +168,19 @@ until ${ok}; do
 done
 
 echo '✔ Canary initialization test passed'
+
+passed=$(kubectl -n test get svc/podinfo -o jsonpath='{.spec.selector.app}' | { grep podinfo-primary || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 podinfo selector test failed'
+  exit 1
+fi
+passed=$(kubectl -n test get svc/podinfo-service-canary -o jsonpath='{.spec.selector.app}' | { grep podinfo || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 podinfo-service selector test failed'
+  exit 1
+fi
+
+echo '✔ Canary service custom metadata test passed'
 
 echo '>>> Triggering canary deployment'
 kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
