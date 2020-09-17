@@ -314,3 +314,56 @@ Reference the template in the canary analysis:
 ```
 
 **Note** that Flagger need AWS IAM permission to perform `cloudwatch:GetMetricData` to use this provider.
+
+### New Relic
+
+You can create custom metric checks using the New Relic provider.
+
+Create a secret with your New Relic Insights credentials:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: newrelic
+  namespace: istio-system
+data:
+  newrelic_account_id: your-account-id
+  newrelic_query_key: your-insights-query-key
+```
+
+New Relic template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: newrelic-error-rate
+  namespace: ingress-nginx
+spec:
+  provider:
+    type: newrelic
+    secretRef:
+      name: newrelic
+  query: |
+    SELECT 
+        filter(sum(nginx_ingress_controller_requests), WHERE status >= '500') / 
+        sum(nginx_ingress_controller_requests) * 100
+    FROM Metric 
+    WHERE metricName = 'nginx_ingress_controller_requests' 
+    AND ingress = '{{ ingress }}' AND  namespace = '{{ namespace }}'
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "error rate"
+        templateRef:
+          name: newrelic-error-rate
+          namespace: ingress-nginx
+        thresholdRange:
+          max: 5
+        interval: 1m
+```
