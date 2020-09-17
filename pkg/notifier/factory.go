@@ -34,6 +34,8 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 		n, err = NewRocket(f.URL, f.Username, f.Channel)
 	case "msteams":
 		n, err = NewMSTeams(f.URL)
+	case "dingding":
+		n, err = NewDingDing(f.URL, f.Username, f.Channel)
 	default:
 		err = fmt.Errorf("provider %s not supported", provider)
 	}
