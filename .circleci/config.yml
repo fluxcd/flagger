@@ -95,6 +95,7 @@ jobs:
       - run: test/e2e-kind.sh v1.18.2
       - run: test/e2e-istio.sh
       - run: test/e2e-istio-tests.sh
+      - run: test/e2e-istio-tests-skip-analysis.sh
 
   e2e-gloo-testing:
     machine: true
