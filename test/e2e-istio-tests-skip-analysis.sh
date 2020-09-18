@@ -3,21 +3,6 @@
 # This script runs e2e tests for when the canary analysis is skipped
 # Prerequisites: Kubernetes Kind and Istio
 
-set -o errexit
-
-REPO_ROOT=$(git rev-parse --show-toplevel)
-
-echo '>>> Creating test namespace'
-kubectl create namespace test
-kubectl label namespace test istio-injection=enabled
-
-echo '>>> Installing the load tester'
-kubectl apply -k ${REPO_ROOT}/kustomize/tester
-kubectl -n test rollout status deployment/flagger-loadtester
-
-echo '>>> Deploy podinfo'
-kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
-
 echo '>>> Create latency metric template'
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
