@@ -3,32 +3,6 @@
 # This script runs e2e tests for when the canary analysis is skipped
 # Prerequisites: Kubernetes Kind and Istio
 
-echo '>>> Create latency metric template'
-cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1beta1
-kind: MetricTemplate
-metadata:
-  name: latency
-  namespace: istio-system
-spec:
-  provider:
-    type: prometheus
-    address: http://prometheus.istio-system:9090
-  query: |
-    histogram_quantile(
-        0.99,
-        sum(
-            rate(
-                istio_request_duration_milliseconds_bucket{
-                    reporter="destination",
-                    destination_workload_namespace="{{ namespace }}",
-                    destination_workload=~"{{ target }}"
-                }[{{ interval }}]
-            )
-        ) by (le)
-    )
-EOF
-
 echo '>>> Initialising canary'
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
