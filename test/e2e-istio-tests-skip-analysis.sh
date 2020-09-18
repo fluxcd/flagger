@@ -151,7 +151,7 @@ if [[ "$1" = "canary" ]]; then
   exit 0
 fi
 
-echo '>>> Triggering canary deployment with a bad release (unknown docker image)'
+echo '>>> Triggering canary deployment with a bad release (non existent docker image)'
 kubectl -n test set image deployment/podinfo podinfod=stefanprodan/potato:1.0.0
 
 echo '>>> Waiting for canary to fail'
@@ -177,7 +177,7 @@ retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
+    kubectl get deployment podinfo-primary -n test -o jsonpath='{.spec.replicas}' | grep 1 && ok=true || ok=false
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
