@@ -428,7 +428,7 @@ func (c *Canary) GetMetricInterval() string {
 // SkipAnalysis returns true if the analysis is nil
 // or if spec.SkipAnalysis is true
 func (c *Canary) SkipAnalysis() bool {
-	if c.Spec.Analysis == nil || c.Spec.CanaryAnalysis == nil {
+	if c.Spec.Analysis == nil && c.Spec.CanaryAnalysis == nil {
 		return true
 	}
 	return c.Spec.SkipAnalysis

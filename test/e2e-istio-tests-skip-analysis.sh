@@ -71,8 +71,8 @@ spec:
           x-envoy-upstream-rq-timeout-ms: "15000"
           x-envoy-max-retries: "10"
           x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
+  skipAnalysis: true
   analysis:
-    skipAnalysis: true
     interval: 15s
     threshold: 15
     maxWeight: 30
