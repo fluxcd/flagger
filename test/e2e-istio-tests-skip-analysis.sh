@@ -3,6 +3,8 @@
 # This script runs e2e tests for when the canary analysis is skipped
 # Prerequisites: Kubernetes Kind and Istio
 
+set -o errexit
+
 echo '>>> Initialising canary'
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1

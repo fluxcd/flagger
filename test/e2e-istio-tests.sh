@@ -3,6 +3,8 @@
 # This script runs e2e tests for Canary, B/G and A/B initialization, analysis and promotion
 # Prerequisites: Kubernetes Kind and Istio
 
+set -o errexit
+
 echo '>>> Create latency metric template'
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
