@@ -21,17 +21,6 @@ spec:
   service:
     port: 9898
     portDiscovery: true
-    apex:
-      annotations:
-        test: "annotations-test"
-      labels:
-        test: "labels-test"
-    headers:
-      request:
-        add:
-          x-envoy-upstream-rq-timeout-ms: "15000"
-          x-envoy-max-retries: "10"
-          x-envoy-retry-on: "gateway-error,connect-failure,refused-stream"
   skipAnalysis: true
   analysis:
     interval: 15s
@@ -64,11 +53,6 @@ until ${ok}; do
 done
 
 echo '✔ Canary initialization test passed'
-
-kubectl -n test get svc/podinfo -oyaml | grep annotations-test
-kubectl -n test get svc/podinfo -oyaml | grep labels-test
-
-echo '✔ Canary service custom metadata test passed'
 
 echo '>>> Triggering canary deployment'
 kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
@@ -133,12 +117,13 @@ until ${ok}; do
     fi
 done
 
-echo '>>> Confirm primary pod still running correct version'
+echo '>>> Confirm primary pod is still running and with correct version'
 retries=50
 count=0
 ok=false
-until ${ok}; do
-    kubectl get deployment podinfo-primary -n test -o jsonpath='{.spec.replicas}' | grep 1 && ok=true || ok=false
+until ${okImage} && ${okRunning}; do
+    kubectl get deployment podinfo-primary -n test -o jsonpath='{.spec.replicas}' | grep 1 && okRunning=true || okRunning=false
+    kubectl -n test describe deployment/podinfo-primary | grep '3.1.3' && okImage=true || okImage=false
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
