@@ -236,7 +236,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check if analysis should be skipped
-	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter); skip {
+	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, err, retriable); skip {
 		return
 	}
 
@@ -616,9 +616,18 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	return true
 }
 
-func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface) bool {
+func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, err error, retriable bool) bool {
 	if !canary.SkipAnalysis() {
 		return false
+	}
+
+	// regardless if analysis is being skipped, rollback if canary failed to progress
+	if !retriable || canary.Status.FailedChecks >= canary.GetAnalysisThreshold() {
+		c.recordEventWarningf(canary, "Rolling back %s.%s progress deadline exceeded %v", canary.Name, canary.Namespace, err)
+		c.alert(canary, fmt.Sprintf("Progress deadline exceeded %v", err), false, flaggerv1.SeverityError)
+		c.rollback(canary, canaryController, meshRouter)
+
+		return true
 	}
 
 	// route all traffic to primary
