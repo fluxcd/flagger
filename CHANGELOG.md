@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.2.0 (2020-10-29) 
+
+Add support for New Relic metrics
+
+#### Features
+
+- Add New Relic as a metrics provider
+    [#691](https://github.com/weaveworks/flagger/pull/691)
+
+#### Improvements
+
+- Derive the label selector value from the target matchLabel
+    [#685](https://github.com/weaveworks/flagger/pull/685)
+- Preserve Skipper predicates
+    [#681](https://github.com/weaveworks/flagger/pull/681)
+
+#### Fixes
+
+- Do not promote when not ready on skip analysis
+    [#695](https://github.com/weaveworks/flagger/pull/695)
+    
 ## 1.1.0 (2020-08-18) 
 
 Add support for Skipper ingress controller
