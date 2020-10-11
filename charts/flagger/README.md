@@ -125,6 +125,7 @@ Parameter | Description | Default
 `serviceAccount.name` | The name of the service account to create or use. If not set and `serviceAccount.create` is `true`, a name is generated using the Flagger fullname | `""`
 `serviceAccount.annotations` | Annotations for service account | `{}`
 `ingressAnnotationsPrefix` | Annotations prefix for ingresses | `custom.ingress.kubernetes.io`
+`excludedLabelsPrefixes` | List of prefixes of labels that are excluded when creating primary controllers | `"fluxcd,jenkins"`
 `rbac.create` | If `true`, create and use RBAC resources | `true`
 `rbac.pspEnabled` | If `true`, create and use a restricted pod security policy | `false`
 `crd.create` | If `true`, create Flagger's CRDs (should be enabled for Helm v2 only) | `false`

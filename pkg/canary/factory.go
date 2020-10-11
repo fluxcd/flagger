@@ -8,34 +8,38 @@ import (
 )
 
 type Factory struct {
-	kubeClient    kubernetes.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
-	configTracker Tracker
-	labels        []string
+	kubeClient             kubernetes.Interface
+	flaggerClient          clientset.Interface
+	logger                 *zap.SugaredLogger
+	configTracker          Tracker
+	labels                 []string
+	excludedLabelsPrefixes []string
 }
 
 func NewFactory(kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
 	configTracker Tracker,
 	labels []string,
+	excludedLabelsPrefixes []string,
 	logger *zap.SugaredLogger) *Factory {
 	return &Factory{
-		kubeClient:    kubeClient,
-		flaggerClient: flaggerClient,
-		logger:        logger,
-		configTracker: configTracker,
-		labels:        labels,
+		kubeClient:             kubeClient,
+		flaggerClient:          flaggerClient,
+		logger:                 logger,
+		configTracker:          configTracker,
+		labels:                 labels,
+		excludedLabelsPrefixes: excludedLabelsPrefixes,
 	}
 }
 
 func (factory *Factory) Controller(kind string) Controller {
 	deploymentCtrl := &DeploymentController{
-		logger:        factory.logger,
-		kubeClient:    factory.kubeClient,
-		flaggerClient: factory.flaggerClient,
-		labels:        factory.labels,
-		configTracker: factory.configTracker,
+		logger:                 factory.logger,
+		kubeClient:             factory.kubeClient,
+		flaggerClient:          factory.flaggerClient,
+		labels:                 factory.labels,
+		configTracker:          factory.configTracker,
+		excludedLabelsPrefixes: factory.excludedLabelsPrefixes,
 	}
 	daemonSetCtrl := &DaemonSetController{
 		logger:        factory.logger,

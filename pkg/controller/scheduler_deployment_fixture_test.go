@@ -115,7 +115,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 		KubeClient:    kubeClient,
 		FlaggerClient: flaggerClient,
 	}
-	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, []string{"app", "name"}, logger)
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, []string{"app", "name"}, []string{"jenkins"}, logger)
 
 	ctrl := &Controller{
 		kubeClient:       kubeClient,
