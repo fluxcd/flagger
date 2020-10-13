@@ -76,18 +76,14 @@ func makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	return res, nil
 }
 
-func excludeLabelsByPrefix(labels map[string]string, excludedLabelsPrefixes []string) map[string]string {
+func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []string) map[string]string {
 	filteredLabels := make(map[string]string)
 	for key, value := range labels {
-		isPrefixExcluded := false
-		for _, excludeLabelPrefix := range excludedLabelsPrefixes {
-			if strings.HasPrefix(key, excludeLabelPrefix) {
-				isPrefixExcluded = true
+		for _, includeLabelPrefix := range includeLabelPrefixes {
+			if key == "*" || strings.HasPrefix(key, includeLabelPrefix) {
+				filteredLabels[key] = value
 				break
 			}
-		}
-		if !isPrefixExcluded {
-			filteredLabels[key] = value
 		}
 	}
 

@@ -6,20 +6,37 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExcludeLabelsByPrefix(t *testing.T) {
+func TestIncludeLabelsByPrefix(t *testing.T) {
 	labels := map[string]string{
-		"foo":     "bar",
-		"jenkins": "foo",
-		"flux123": "bar",
+		"foo":   "foo-value",
+		"bar":   "bar-value",
+		"lorem": "ipsum",
 	}
-	excludedLabelsPrefixes := []string{"jenkins", "flux"}
+	includeLabelPrefix := []string{"foo", "lor"}
 
-	filteredLabels := excludeLabelsByPrefix(labels, excludedLabelsPrefixes)
+	filteredLabels := includeLabelsByPrefix(labels, includeLabelPrefix)
 
 	assert.Equal(t, filteredLabels, map[string]string{
-		"foo": "bar",
-		// jenkins excluded
-		// and flux123 also excluded
+		"foo":   "foo-value",
+		"lorem": "ipsum",
+		// bar excluded
+	})
+}
+
+func TestIncludeLabelsByPrefixWithWildcard(t *testing.T) {
+	labels := map[string]string{
+		"foo":   "foo-value",
+		"bar":   "bar-value",
+		"lorem": "ipsum",
+	}
+	includeLabelPrefix := []string{"*"}
+
+	filteredLabels := includeLabelsByPrefix(labels, includeLabelPrefix)
+
+	assert.Equal(t, filteredLabels, map[string]string{
+		"foo":   "foo-value",
+		"bar":   "bar-value",
+		"lorem": "ipsum",
 	})
 }
 

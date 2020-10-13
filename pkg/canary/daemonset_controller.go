@@ -22,12 +22,12 @@ var (
 
 // DaemonSetController is managing the operations for Kubernetes DaemonSet kind
 type DaemonSetController struct {
-	kubeClient             kubernetes.Interface
-	flaggerClient          clientset.Interface
-	logger                 *zap.SugaredLogger
-	configTracker          Tracker
-	labels                 []string
-	excludedLabelsPrefixes []string
+	kubeClient         kubernetes.Interface
+	flaggerClient      clientset.Interface
+	logger             *zap.SugaredLogger
+	configTracker      Tracker
+	labels             []string
+	includeLabelPrefix []string
 }
 
 func (c *DaemonSetController) ScaleToZero(cd *flaggerv1.Canary) error {
@@ -77,7 +77,7 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 // Initialize creates the primary DaemonSet, scales down the canary DaemonSet,
 // and returns the pod selector label and container ports
 func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
-	err = c.createPrimaryDaemonSet(cd, c.excludedLabelsPrefixes)
+	err = c.createPrimaryDaemonSet(cd, c.includeLabelPrefix)
 	if err != nil {
 		return fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
 	}
@@ -201,7 +201,7 @@ func (c *DaemonSetController) GetMetadata(cd *flaggerv1.Canary) (string, string,
 	return label, labelValue, ports, nil
 }
 
-func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, excludedLabelsPrefixes []string) error {
+func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
@@ -217,7 +217,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, exclu
 	}
 
 	// Create the labels map but filter unwanted labels
-	labels := excludeLabelsByPrefix(canaryDae.Labels, excludedLabelsPrefixes)
+	labels := includeLabelsByPrefix(canaryDae.Labels, includeLabelPrefix)
 
 	label, labelValue, err := c.getSelectorLabel(canaryDae)
 	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
@@ -245,7 +245,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, exclu
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      primaryName,
 				Namespace: cd.Namespace,
-				Labels:    labels,
+				Labels:    makePrimaryLabels(labels, primaryLabelValue, label),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
