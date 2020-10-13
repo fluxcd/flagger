@@ -106,8 +106,8 @@ spec:
           {{- if .Values.ingressAnnotationsPrefix }}
           - -ingress-annotations-prefix={{ .Values.ingressAnnotationsPrefix }}
           {{- end }}
-          {{- if .Values.excludedLabelsPrefixes }}
-          - -excluded-labels-prefixes={{ .Values.excludedLabelsPrefixes }}
+          {{- if .Values.includeLabelPrefix }}
+          - -excluded-labels-prefixes={{ .Values.includeLabelPrefix }}
           {{- end }}
           {{- if .Values.ingressClass }}
           - -ingress-class={{ .Values.ingressClass }}
