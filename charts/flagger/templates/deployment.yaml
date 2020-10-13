@@ -107,7 +107,7 @@ spec:
           - -ingress-annotations-prefix={{ .Values.ingressAnnotationsPrefix }}
           {{- end }}
           {{- if .Values.includeLabelPrefix }}
-          - -excluded-labels-prefixes={{ .Values.includeLabelPrefix }}
+          - -include-label-prefix={{ .Values.includeLabelPrefix }}
           {{- end }}
           {{- if .Values.ingressClass }}
           - -ingress-class={{ .Values.ingressClass }}
