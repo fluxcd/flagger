@@ -80,7 +80,7 @@ func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []stri
 	filteredLabels := make(map[string]string)
 	for key, value := range labels {
 		for _, includeLabelPrefix := range includeLabelPrefixes {
-			if key == "*" || strings.HasPrefix(key, includeLabelPrefix) {
+			if includeLabelPrefix == "*" || strings.HasPrefix(key, includeLabelPrefix) {
 				filteredLabels[key] = value
 				break
 			}
