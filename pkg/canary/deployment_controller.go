@@ -244,9 +244,10 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 		// create primary deployment
 		primaryDep = &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      primaryName,
-				Namespace: cd.Namespace,
-				Labels:    makePrimaryLabels(labels, primaryLabelValue, label),
+				Name:        primaryName,
+				Namespace:   cd.Namespace,
+				Labels:      makePrimaryLabels(labels, primaryLabelValue, label),
+				Annotations: canaryDep.Annotations,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
