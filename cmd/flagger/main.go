@@ -43,6 +43,7 @@ var (
 	logLevel                 string
 	port                     string
 	msteamsURL               string
+	includeLabelPrefix       string
 	slackURL                 string
 	slackUser                string
 	slackChannel             string
@@ -74,6 +75,7 @@ func init() {
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
 	flag.StringVar(&eventWebhook, "event-webhook", "", "Webhook for publishing flagger events")
 	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
+	flag.StringVar(&includeLabelPrefix, "include-label-prefix", "", "List of prefixes of labels that are copied when creating primary deployments or daemonsets. Use * to include all.")
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
@@ -184,7 +186,9 @@ func main() {
 		configTracker = &canary.NopTracker{}
 	}
 
-	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, labels, logger)
+	includeLabelPrefixArray := strings.Split(includeLabelPrefix, ",")
+
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, labels, includeLabelPrefixArray, logger)
 
 	c := controller.NewController(
 		kubeClient,
