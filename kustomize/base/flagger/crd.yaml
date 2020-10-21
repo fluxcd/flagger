@@ -156,6 +156,9 @@ spec:
                   type: array
                   items:
                     type: string
+                isDelegation:
+                  description: enable behaving as a delegate VirtualService
+                  type: boolean
                 match:
                   description: URI match conditions
                   type: array
