@@ -2,6 +2,7 @@
 
 # This script runs e2e tests for when the canary delegation is enabled
 # Prerequisites: Kubernetes Kind and Istio
+
 set -o errexit
 
 echo '>>> Set pilot env to enable virtual service delegate'
