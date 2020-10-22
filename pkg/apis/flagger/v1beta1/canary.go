@@ -140,7 +140,7 @@ type CanaryService struct {
 	// IsDelegation behaves as a delegate virtual service
 	// if enabled, the pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set to enabled.
 	// +optional
-	IsDelegation bool `json:"is_delegation,omitempty"`
+	IsDelegation bool `json:"isDelegation,omitempty"`
 
 	// TrafficPolicy attached to the generated Istio destination rules
 	// +optional
