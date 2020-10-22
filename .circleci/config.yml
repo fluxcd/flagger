@@ -97,6 +97,10 @@ jobs:
       - run: test/e2e-istio-dependencies.sh
       - run: test/e2e-istio-tests.sh
       - run: test/e2e-istio-tests-skip-analysis.sh
+      - run: test/e2e-kubernetes-cleanup.sh
+      - run: test/e2e-istio-dependencies.sh
+      - run: test/e2e-istio-tests.sh
+      - run: test/e2e-istio-tests-delegate.sh
 
   e2e-gloo-testing:
     machine: true
