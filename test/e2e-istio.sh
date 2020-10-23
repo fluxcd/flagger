@@ -12,7 +12,8 @@ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VER} sh -
 echo ">>> Installing Istio ${ISTIO_VER}"
 ${REPO_ROOT}/bin/istio-${ISTIO_VER}/bin/istioctl manifest apply --set profile=default \
   --set values.pilot.resources.requests.cpu=100m \
-  --set values.pilot.resources.requests.memory=100Mi
+  --set values.pilot.resources.requests.memory=100Mi \
+  --set values.global.configValidation=false
 
 kubectl -n istio-system rollout status deployment/prometheus
 
