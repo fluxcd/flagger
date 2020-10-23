@@ -101,7 +101,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	if canary.Spec.Service.IsDelegation {
 		if len(canary.Spec.Service.Hosts) > 0 || len(canary.Spec.Service.Gateways) > 0 {
 			// delegate VirtualService cannot have hosts and gateways.
-			return fmt.Errorf("VirtualService %s.%s cannot have hosts and gateways", apexName, canary.Namespace)
+			return fmt.Errorf("VirtualService %s.%s cannot have hosts and gateways when delegation enabled", apexName, canary.Namespace)
 		}
 	}
 
