@@ -1,5 +1,6 @@
 namespace: istio-system
 bases:
   - ../base/flagger/
+  - ../base/prometheus/
 patchesStrategicMerge:
   - patch.yaml
