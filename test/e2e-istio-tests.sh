@@ -15,7 +15,7 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://flagger-prometheus.istio-system:9090
+    address: http://prometheus.istio-system:9090
   query: |
     histogram_quantile(
         0.99,

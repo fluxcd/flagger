@@ -14,6 +14,9 @@ ${REPO_ROOT}/bin/istio-${ISTIO_VER}/bin/istioctl manifest install --set profile=
   --set values.pilot.resources.requests.cpu=100m \
   --set values.pilot.resources.requests.memory=100Mi
 
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.7/samples/addons/prometheus.yaml
+kubectl -n istio-system rollout status deployment/prometheus
+
 kubectl -n istio-system get all
 
 echo '>>> Load Flagger image in Kind'

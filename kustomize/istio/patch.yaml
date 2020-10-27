@@ -10,7 +10,7 @@ spec:
           args:
             - -log-level=info
             - -mesh-provider=istio
-            - -metrics-server=http://flagger-prometheus:9090
+            - -metrics-server=http://prometheus:9090
             - -slack-user=flagger
             - -slack-channel=
             - -slack-url=
