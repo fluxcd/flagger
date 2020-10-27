@@ -631,7 +631,7 @@ spec:
 ```
 
 Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
-(For the use of Istio Delegation, you can refer to the [documentation](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Delegate).)
+(For the use of Istio Delegation, you can refer to the documentation of [Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Delegate) and [pilot environment variables](https://istio.io/latest/docs/reference/commands/pilot-discovery/#envvars).)
 
 ### Istio Ingress Gateway
 
