@@ -140,7 +140,11 @@ type CanaryService struct {
 	// IsDelegation behaves as a delegate virtual service
 	// if enabled, the pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set to enabled.
 	// +optional
-	IsDelegation bool `json:"isDelegation,omitempty"`
+	// If enabled, Flagger would generate Istio VirtualServices without hosts and gateway, 
+	// making the service compatible with Istio delegation. Note that pilot env 
+	//` PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
+	// +optional
+	Delegation bool `json:"delegation,omitempty"`
 
 	// TrafficPolicy attached to the generated Istio destination rules
 	// +optional
