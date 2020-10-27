@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## 1.2.0 (2020-10-29) 
+## 1.2.0 (2020-09-29) 
 
 Add support for New Relic metrics
 
