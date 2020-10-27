@@ -98,7 +98,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
-	if canary.Spec.Service.IsDelegation {
+	if canary.Spec.Service.Delegation {
 		if len(canary.Spec.Service.Hosts) > 0 || len(canary.Spec.Service.Gateways) > 0 {
 			// delegate VirtualService cannot have hosts and gateways.
 			return fmt.Errorf("VirtualService %s.%s cannot have hosts and gateways when delegation enabled", apexName, canary.Namespace)
@@ -139,7 +139,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		makeDestination(canary, canaryName, 0),
 	}
 
-	if canary.Spec.Service.IsDelegation {
+	if canary.Spec.Service.Delegation {
 		// delegate VirtualService requires the hosts and gateway empty.
 		hosts = []string{}
 		gateways = []string{}

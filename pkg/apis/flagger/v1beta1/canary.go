@@ -137,12 +137,9 @@ type CanaryService struct {
 	// +optional
 	Hosts []string `json:"hosts,omitempty"`
 
-	// IsDelegation behaves as a delegate virtual service
-	// if enabled, the pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set to enabled.
-	// +optional
-	// If enabled, Flagger would generate Istio VirtualServices without hosts and gateway, 
-	// making the service compatible with Istio delegation. Note that pilot env 
-	//` PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
+	// If enabled, Flagger would generate Istio VirtualServices without hosts and gateway,
+	// making the service compatible with Istio delegation. Note that pilot env
+	// `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
 	// +optional
 	Delegation bool `json:"delegation,omitempty"`
 

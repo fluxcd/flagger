@@ -338,7 +338,7 @@ func TestIstioRouter_Delegate(t *testing.T) {
 		mocks := newFixture(nil)
 		mocks.canary.Spec.Service.Hosts = []string{}
 		mocks.canary.Spec.Service.Gateways = []string{}
-		mocks.canary.Spec.Service.IsDelegation = true
+		mocks.canary.Spec.Service.Delegation = true
 
 		router := &IstioRouter{
 			logger:        mocks.logger,
@@ -366,7 +366,7 @@ func TestIstioRouter_Delegate(t *testing.T) {
 				"mesh",
 			}
 		}
-		mocks.canary.Spec.Service.IsDelegation = true
+		mocks.canary.Spec.Service.Delegation = true
 
 		router := &IstioRouter{
 			logger:        mocks.logger,

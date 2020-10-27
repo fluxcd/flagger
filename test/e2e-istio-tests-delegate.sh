@@ -69,7 +69,7 @@ spec:
     port: 80
     targetPort: 9898
     portDiscovery: true
-    isDelegation: true
+    delegation: true
   skipAnalysis: true
   analysis:
     interval: 15s
