@@ -333,6 +333,53 @@ func TestIstioRouter_GatewayPort(t *testing.T) {
 	assert.Equal(t, uint32(mocks.canary.Spec.Service.Port), port)
 }
 
+func TestIstioRouter_Delegate(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		mocks := newFixture(nil)
+		mocks.canary.Spec.Service.Hosts = []string{}
+		mocks.canary.Spec.Service.Gateways = []string{}
+		mocks.canary.Spec.Service.Delegation = true
+
+		router := &IstioRouter{
+			logger:        mocks.logger,
+			flaggerClient: mocks.flaggerClient,
+			istioClient:   mocks.meshClient,
+			kubeClient:    mocks.kubeClient,
+		}
+
+		err := router.Reconcile(mocks.canary)
+		require.NoError(t, err)
+
+		vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		assert.Equal(t, 0, len(vs.Spec.Hosts))
+		assert.Equal(t, 0, len(vs.Spec.Gateways))
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		mocks := newFixture(nil)
+		if len(mocks.canary.Spec.Service.Gateways) == 0 {
+			// in this case, the gateways or hosts should not be not empty because it requires to cause an error.
+			mocks.canary.Spec.Service.Gateways = []string{
+				"public-gateway.istio",
+				"mesh",
+			}
+		}
+		mocks.canary.Spec.Service.Delegation = true
+
+		router := &IstioRouter{
+			logger:        mocks.logger,
+			flaggerClient: mocks.flaggerClient,
+			istioClient:   mocks.meshClient,
+			kubeClient:    mocks.kubeClient,
+		}
+
+		err := router.Reconcile(mocks.canary)
+		require.Error(t, err)
+	})
+}
+
 func TestIstioRouter_Finalize(t *testing.T) {
 	mocks := newFixture(nil)
 	router := &IstioRouter{
