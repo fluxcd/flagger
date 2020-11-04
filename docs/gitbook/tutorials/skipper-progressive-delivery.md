@@ -351,7 +351,7 @@ podinfod=stefanprodan/podinfo:4.0.6
 Generate high response latency:
 
 ```bash
-watch curl http://app.exmaple.com/delay/2
+watch curl http://app.example.com/delay/2
 ```
 
 Watch Flagger logs:
