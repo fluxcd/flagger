@@ -38,6 +38,8 @@ import (
 var (
 	masterURL                string
 	kubeconfig               string
+	kubeconfigQPS            float64
+	kubeconfigBurst          int
 	metricsServer            string
 	controlLoopInterval      time.Duration
 	logLevel                 string
@@ -65,6 +67,8 @@ var (
 
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+	flag.Float64Var(&kubeconfigQPS, "kubeconfig-qps", 0, "Set QPS for kubeconfig.")
+	flag.IntVar(&kubeconfigBurst, "kubeconfig-burst", 0, "Set Burst for kubeconfig.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&metricsServer, "metrics-server", "http://prometheus:9090", "Prometheus URL.")
 	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "Kubernetes API sync interval.")
@@ -118,6 +122,13 @@ func main() {
 		logger.Fatalf("Error building kubeconfig: %v", err)
 	}
 
+	if kubeconfigQPS > 0 {
+		cfg.QPS = float32(kubeconfigQPS)
+	}
+
+	if kubeconfigBurst > 0 {
+		cfg.Burst = kubeconfigBurst
+	}
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building kubernetes clientset: %v", err)
@@ -137,6 +148,13 @@ func main() {
 		logger.Fatalf("Error building host kubeconfig: %v", err)
 	}
 
+	if kubeconfigQPS > 0 {
+		cfgHost.QPS = float32(kubeconfigQPS)
+	}
+
+	if kubeconfigBurst > 0 {
+		cfgHost.Burst = kubeconfigBurst
+	}
 	meshClient, err := clientset.NewForConfig(cfgHost)
 	if err != nil {
 		logger.Fatalf("Error building mesh clientset: %v", err)
