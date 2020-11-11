@@ -127,12 +127,11 @@ prometheus:
   image: docker.io/prom/prometheus:v2.21.0
   retention: 2h
 
-#  Istio multi-cluster service mesh (shared control plane single-network)
-# https://istio.io/docs/setup/install/multicluster/shared-vpn/
-
 kubeconfigQPS: ""
 kubeconfigBurst: ""
 
+#  Istio multi-cluster service mesh (shared control plane single-network)
+# https://istio.io/docs/setup/install/multicluster/shared-vpn/
 istio:
   kubeconfig:
     # istio.kubeconfig.secretName: The name of the secret containing the Istio control plane kubeconfig
