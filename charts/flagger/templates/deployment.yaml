@@ -115,6 +115,12 @@ spec:
           {{- if .Values.eventWebhook }}
           - -event-webhook={{ .Values.eventWebhook }}
           {{- end }}
+          {{- if .Values.kubeconfigQPS }}
+          - -kubeconfig-qps={{ .Values.kubeconfigQPS }}
+          {{- end }}
+          {{- if .Values.kubeconfigBurst }}
+          - -kubeconfig-burst={{ .Values.kubeconfigBurst }}
+          {{- end }}
           {{- if .Values.istio.kubeconfig.secretName }}
           - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
           {{- end }}
