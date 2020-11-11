@@ -127,8 +127,8 @@ prometheus:
   image: docker.io/prom/prometheus:v2.21.0
   retention: 2h
 
-kubeconfigQPS: ""
-kubeconfigBurst: ""
+kubeconfigQPS: "100"
+kubeconfigBurst: "250"
 
 #  Istio multi-cluster service mesh (shared control plane single-network)
 # https://istio.io/docs/setup/install/multicluster/shared-vpn/
