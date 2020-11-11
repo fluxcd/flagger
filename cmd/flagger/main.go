@@ -38,7 +38,7 @@ import (
 var (
 	masterURL                string
 	kubeconfig               string
-	kubeconfigQPS            float64
+	kubeconfigQPS            int
 	kubeconfigBurst          int
 	metricsServer            string
 	controlLoopInterval      time.Duration
@@ -67,7 +67,7 @@ var (
 
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
-	flag.Float64Var(&kubeconfigQPS, "kubeconfig-qps", 0, "Set QPS for kubeconfig.")
+	flag.IntVar(&kubeconfigQPS, "kubeconfig-qps", 0, "Set QPS for kubeconfig.")
 	flag.IntVar(&kubeconfigBurst, "kubeconfig-burst", 0, "Set Burst for kubeconfig.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&metricsServer, "metrics-server", "http://prometheus:9090", "Prometheus URL.")
