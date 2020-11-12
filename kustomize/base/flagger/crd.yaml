@@ -164,6 +164,9 @@ spec:
                   type: array
                   items:
                     type: string
+                delegation:
+                  description: enable behaving as a delegate VirtualService
+                  type: boolean
                 match:
                   description: URI match conditions
                   type: array
@@ -813,6 +816,7 @@ spec:
                     - influxdb
                     - datadog
                     - cloudwatch
+                    - newrelic
                 address:
                   description: API address of this provider
                   type: string

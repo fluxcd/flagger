@@ -12,7 +12,8 @@ import (
 )
 
 func TestDeploymentController_SyncStatus(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
 	status := flaggerv1.CanaryStatus{
@@ -35,7 +36,8 @@ func TestDeploymentController_SyncStatus(t *testing.T) {
 }
 
 func TestDeploymentController_SetFailedChecks(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
 	err := mocks.controller.SetStatusFailedChecks(mocks.canary, 1)
@@ -47,7 +49,8 @@ func TestDeploymentController_SetFailedChecks(t *testing.T) {
 }
 
 func TestDeploymentController_SetState(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
 	err := mocks.controller.SetStatusPhase(mocks.canary, flaggerv1.CanaryPhaseProgressing)

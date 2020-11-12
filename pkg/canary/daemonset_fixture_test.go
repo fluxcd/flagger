@@ -23,14 +23,20 @@ type daemonSetControllerFixture struct {
 	logger        *zap.SugaredLogger
 }
 
-func newDaemonSetFixture() daemonSetControllerFixture {
+type daemonsetConfigs struct {
+	name       string
+	labelValue string
+	label      string
+}
+
+func newDaemonSetFixture(dc daemonsetConfigs) daemonSetControllerFixture {
 	// init canary
-	canary := newDaemonSetControllerTestCanary()
+	canary := newDaemonSetControllerTestCanary(dc)
 	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
 
 	// init kube clientset and register mock objects
 	kubeClient := fake.NewSimpleClientset(
-		newDaemonSetControllerTestPodInfo(),
+		newDaemonSetControllerTestPodInfo(dc),
 		newDaemonSetControllerTestConfigMap(),
 		newDaemonSetControllerTestConfigMapEnv(),
 		newDaemonSetControllerTestConfigMapVol(),
@@ -264,7 +270,7 @@ func newDaemonSetControllerTestSecretTrackerDisabled() *corev1.Secret {
 	}
 }
 
-func newDaemonSetControllerTestCanary() *flaggerv1.Canary {
+func newDaemonSetControllerTestCanary(dc daemonsetConfigs) *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -273,7 +279,7 @@ func newDaemonSetControllerTestCanary() *flaggerv1.Canary {
 		},
 		Spec: flaggerv1.CanarySpec{
 			TargetRef: flaggerv1.CrossNamespaceObjectReference{
-				Name:       "podinfo",
+				Name:       dc.name,
 				APIVersion: "apps/v1",
 				Kind:       "DaemonSet",
 			},
@@ -282,23 +288,23 @@ func newDaemonSetControllerTestCanary() *flaggerv1.Canary {
 	return cd
 }
 
-func newDaemonSetControllerTestPodInfo() *appsv1.DaemonSet {
+func newDaemonSetControllerTestPodInfo(dc daemonsetConfigs) *appsv1.DaemonSet {
 	d := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
-			Name:      "podinfo",
+			Name:      dc.name,
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"name": "podinfo",
+					dc.label: dc.labelValue,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"name": "podinfo",
+						dc.label: dc.labelValue,
 					},
 				},
 				Spec: corev1.PodSpec{

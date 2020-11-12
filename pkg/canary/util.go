@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -75,14 +76,28 @@ func makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	return res, nil
 }
 
-func makePrimaryLabels(labels map[string]string, primaryName string, label string) map[string]string {
+func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []string) map[string]string {
+	filteredLabels := make(map[string]string)
+	for key, value := range labels {
+		for _, includeLabelPrefix := range includeLabelPrefixes {
+			if includeLabelPrefix == "*" || strings.HasPrefix(key, includeLabelPrefix) {
+				filteredLabels[key] = value
+				break
+			}
+		}
+	}
+
+	return filteredLabels
+}
+
+func makePrimaryLabels(labels map[string]string, labelValue string, label string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range labels {
 		if k != label {
 			res[k] = v
 		}
 	}
-	res[label] = primaryName
+	res[label] = labelValue
 
 	return res
 }

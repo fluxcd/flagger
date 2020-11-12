@@ -25,6 +25,7 @@ type KubernetesDefaultRouter struct {
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 	labelSelector string
+	labelValue    string
 	ports         map[string]int32
 }
 
@@ -33,13 +34,13 @@ func (c *KubernetesDefaultRouter) Initialize(canary *flaggerv1.Canary) error {
 	_, primaryName, canaryName := canary.GetServiceNames()
 
 	// canary svc
-	err := c.reconcileService(canary, canaryName, canary.Spec.TargetRef.Name, canary.Spec.Service.Canary)
+	err := c.reconcileService(canary, canaryName, c.labelValue, canary.Spec.Service.Canary)
 	if err != nil {
 		return fmt.Errorf("reconcileService failed: %w", err)
 	}
 
 	// primary svc
-	err = c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name), canary.Spec.Service.Primary)
+	err = c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", c.labelValue), canary.Spec.Service.Primary)
 	if err != nil {
 		return fmt.Errorf("reconcileService failed: %w", err)
 	}
@@ -52,7 +53,7 @@ func (c *KubernetesDefaultRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, _, _ := canary.GetServiceNames()
 
 	// main svc
-	err := c.reconcileService(canary, apexName, fmt.Sprintf("%s-primary", canary.Spec.TargetRef.Name), canary.Spec.Service.Apex)
+	err := c.reconcileService(canary, apexName, fmt.Sprintf("%s-primary", c.labelValue), canary.Spec.Service.Apex)
 	if err != nil {
 		return fmt.Errorf("reconcileService failed: %w", err)
 	}

@@ -65,7 +65,7 @@ func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) e
 			}
 
 			if ok, err := provider.IsOnline(); !ok || err != nil {
-				return fmt.Errorf("%v in metric tempalte %s.%s not avaiable: %v", template.Spec.Provider.Type,
+				return fmt.Errorf("%v in metric template %s.%s not avaiable: %v", template.Spec.Provider.Type,
 					template.Name, template.Namespace, err)
 			}
 		}

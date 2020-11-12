@@ -554,6 +554,85 @@ spec:
 Flagger works for user facing apps exposed outside the cluster via an ingress gateway
 and for backend HTTP APIs that are accessible only from inside the mesh.
 
+If `Delegation` is enabled, Flagger would generate Istio VirtualService without hosts and gateway,
+making the service compatible with Istio delegation.
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: backend
+  namespace: test
+spec:
+  service:
+    delegation: true
+    port: 9898
+  targetRef:
+    apiVersion: v1
+    kind: Deployment
+    name: podinfo
+  analysis:
+    interval: 15s
+    threshold: 15
+    maxWeight: 30
+    stepWeight: 10
+```
+
+Based on the above spec, Flagger will create the following virtual service:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: test
+  ownerReferences:
+  - apiVersion: flagger.app/v1beta1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Canary
+    name: backend
+    uid: 58562662-5e10-4512-b269-2b789c1b30fe
+spec:
+  http:
+  - route:
+    - destination:
+        host: podinfo-primary
+      weight: 100
+    - destination:
+        host: podinfo-canary
+      weight: 0
+```
+
+Therefore, The following virtual service forward the traffic to `/podinfo` by the above delegate VirtualService.
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: frontend
+  namespace: test
+spec:
+  gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    - mesh
+  hosts:
+    - frontend.example.com
+    - frontend
+  http:
+  - match:
+    - uri:
+        prefix: /podinfo
+    rewrite:
+      uri: /
+    delegate:
+      name: backend
+      namespace: test
+```
+
+Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
+(For the use of Istio Delegation, you can refer to the documentation of [Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Delegate) and [pilot environment variables](https://istio.io/latest/docs/reference/commands/pilot-discovery/#envvars).)
+
 ### Istio Ingress Gateway
 
 **How can I expose multiple canaries on the same external domain?**

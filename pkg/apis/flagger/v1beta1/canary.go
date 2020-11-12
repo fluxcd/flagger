@@ -137,6 +137,12 @@ type CanaryService struct {
 	// +optional
 	Hosts []string `json:"hosts,omitempty"`
 
+	// If enabled, Flagger would generate Istio VirtualServices without hosts and gateway,
+	// making the service compatible with Istio delegation. Note that pilot env
+	// `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
+	// +optional
+	Delegation bool `json:"delegation,omitempty"`
+
 	// TrafficPolicy attached to the generated Istio destination rules
 	// +optional
 	TrafficPolicy *istiov1alpha3.TrafficPolicy `json:"trafficPolicy,omitempty"`

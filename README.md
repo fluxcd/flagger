@@ -50,6 +50,7 @@ List of organizations using Flagger:
 * [MediaMarktSaturn](https://www.mediamarktsaturn.com)
 * [Weaveworks](https://weave.works)
 * [Jumia Group](https://group.jumia.com)
+* [eLife](https://elifesciences.org/)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
@@ -210,10 +211,20 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
+#### [GitOps Toolkit](https://github.com/fluxcd/toolkit) compatibility
+
+* Migrate Flagger to Kubernetes controller-runtime and [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder)
+* Make the Canary status compatible with [kstatus](https://github.com/kubernetes-sigs/cli-utils)
+* Make Flagger emit Kubernetes events compatible with Flux v2 notification API
+* Migrate CI to GitHub Actions and publish AMD64, ARM64 and ARMv7 container images
+* Integrate Flagger into Flux v2 as the progressive delivery component
+
+#### Integrations
+
 * Add support for Kubernetes [Ingress v2](https://github.com/kubernetes-sigs/service-apis)
-* Integrate with other service mesh like Consul Connect and ingress controllers like HAProxy, ALB
-* Integrate with other metrics providers like InfluxDB, Stackdriver, SignalFX
-* Add support for comparing the canary metrics to the primary ones and do the validation based on the derivation between the two
+* Add support for SMI compatible service mesh solutions like Open Service Mesh and Consul Connect
+* Add support for ingress controllers like HAProxy and ALB
+* Add support for metrics providers like InfluxDB, Stackdriver, SignalFX
 
 ### Contributing
 

@@ -38,11 +38,14 @@ import (
 var (
 	masterURL                string
 	kubeconfig               string
+	kubeconfigQPS            int
+	kubeconfigBurst          int
 	metricsServer            string
 	controlLoopInterval      time.Duration
 	logLevel                 string
 	port                     string
 	msteamsURL               string
+	includeLabelPrefix       string
 	slackURL                 string
 	slackUser                string
 	slackChannel             string
@@ -64,6 +67,8 @@ var (
 
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
+	flag.IntVar(&kubeconfigQPS, "kubeconfig-qps", 100, "Set QPS for kubeconfig.")
+	flag.IntVar(&kubeconfigBurst, "kubeconfig-burst", 250, "Set Burst for kubeconfig.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&metricsServer, "metrics-server", "http://prometheus:9090", "Prometheus URL.")
 	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "Kubernetes API sync interval.")
@@ -74,6 +79,7 @@ func init() {
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
 	flag.StringVar(&eventWebhook, "event-webhook", "", "Webhook for publishing flagger events")
 	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
+	flag.StringVar(&includeLabelPrefix, "include-label-prefix", "", "List of prefixes of labels that are copied when creating primary deployments or daemonsets. Use * to include all.")
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
@@ -116,6 +122,9 @@ func main() {
 		logger.Fatalf("Error building kubeconfig: %v", err)
 	}
 
+	cfg.QPS = float32(kubeconfigQPS)
+	cfg.Burst = kubeconfigBurst
+
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building kubernetes clientset: %v", err)
@@ -134,6 +143,9 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error building host kubeconfig: %v", err)
 	}
+
+	cfgHost.QPS = float32(kubeconfigQPS)
+	cfgHost.Burst = kubeconfigBurst
 
 	meshClient, err := clientset.NewForConfig(cfgHost)
 	if err != nil {
@@ -184,7 +196,9 @@ func main() {
 		configTracker = &canary.NopTracker{}
 	}
 
-	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, labels, logger)
+	includeLabelPrefixArray := strings.Split(includeLabelPrefix, ",")
+
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, labels, includeLabelPrefixArray, logger)
 
 	c := controller.NewController(
 		kubeClient,

@@ -1,7 +1,7 @@
 # Default values for podinfo.
 image:
-  repository: stefanprodan/podinfo
-  tag: 3.1.0
+  repository: ghcr.io/stefanprodan/podinfo
+  tag: 5.0.0
   pullPolicy: IfNotPresent
 
 podAnnotations: {}

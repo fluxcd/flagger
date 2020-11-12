@@ -106,11 +106,20 @@ spec:
           {{- if .Values.ingressAnnotationsPrefix }}
           - -ingress-annotations-prefix={{ .Values.ingressAnnotationsPrefix }}
           {{- end }}
+          {{- if .Values.includeLabelPrefix }}
+          - -include-label-prefix={{ .Values.includeLabelPrefix }}
+          {{- end }}
           {{- if .Values.ingressClass }}
           - -ingress-class={{ .Values.ingressClass }}
           {{- end }}
           {{- if .Values.eventWebhook }}
           - -event-webhook={{ .Values.eventWebhook }}
+          {{- end }}
+          {{- if .Values.kubeconfigQPS }}
+          - -kubeconfig-qps={{ .Values.kubeconfigQPS }}
+          {{- end }}
+          {{- if .Values.kubeconfigBurst }}
+          - -kubeconfig-burst={{ .Values.kubeconfigBurst }}
           {{- end }}
           {{- if .Values.istio.kubeconfig.secretName }}
           - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}

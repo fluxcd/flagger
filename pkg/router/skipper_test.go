@@ -105,3 +105,49 @@ func TestSkipperRouter_GetSetRoutes(t *testing.T) {
 	}
 
 }
+
+func Test_insertPredicate(t *testing.T) {
+	tests := []struct {
+		name   string
+		raw    string
+		insert string
+		want   string
+	}{
+		{
+			name:   "a few Predicates lined up",
+			raw:    `Host(/^my-host-header\.example\.org$/) && Method("GET") && Path("/hello")`,
+			insert: "Weight(100)",
+			want:   `Weight(100) && Host(/^my-host-header\.example\.org$/) && Method("GET") && Path("/hello")`,
+		},
+		{
+			name:   "adds Predicate if none is set",
+			raw:    "",
+			insert: "Weight(100)",
+			want:   `Weight(100)`,
+		},
+		{
+			name:   "removes duplicated Predicate Weight(100)",
+			raw:    `Weight(100) && Host(/^my-host-header\.example\.org$/) && Method("GET") && Path("/hello")`,
+			insert: "Weight(100)",
+			want:   `Weight(100) && Host(/^my-host-header\.example\.org$/) && Method("GET") && Path("/hello")`,
+		},
+		{
+			name:   "removes duplicated Predicate False() and reorders them",
+			raw:    `Host(/^my-host-header\.example\.org$/) && Method("GET") && Path("/hello")&&False()`,
+			insert: "False()",
+			want:   `False() && Host(/^my-host-header\.example\.org$/) && Method("GET") && Path("/hello")`,
+		},
+		{
+			name:   "removes conflicting Predicate False()",
+			raw:    `Host(/^my-host-header\.example\.org$/) &&  False() && Method("GET") && Path("/hello")`,
+			insert: "Weight(100)",
+			want:   `Weight(100) && Host(/^my-host-header\.example\.org$/) && Method("GET") && Path("/hello")`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, insertPredicate(tt.raw, tt.insert))
+		})
+	}
+}

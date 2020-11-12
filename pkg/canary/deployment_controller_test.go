@@ -2,6 +2,7 @@ package canary
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,17 +15,42 @@ import (
 	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
-func TestDeploymentController_Sync(t *testing.T) {
-	mocks := newDeploymentFixture()
+func TestDeploymentController_Sync_ConsistentNaming(t *testing.T) {
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
-	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), fmt.Sprintf("%s-primary", dc.name), metav1.GetOptions{})
 	require.NoError(t, err)
 
-	dep := newDeploymentControllerTest()
+	dep := newDeploymentControllerTest(dc)
 	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
 	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, sourceImage, primaryImage)
+
+	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", dc.labelValue))
+
+	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, depPrimary.Name, hpaPrimary.Spec.ScaleTargetRef.Name)
+}
+
+func TestDeploymentController_Sync_InconsistentNaming(t *testing.T) {
+	dc := deploymentConfigs{name: "podinfo-service", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
+	mocks.initializeCanary(t)
+
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), fmt.Sprintf("%s-primary", dc.name), metav1.GetOptions{})
+	require.NoError(t, err)
+
+	dep := newDeploymentControllerTest(dc)
+	primaryImage := depPrimary.Spec.Template.Spec.Containers[0].Image
+	sourceImage := dep.Spec.Template.Spec.Containers[0].Image
+	assert.Equal(t, sourceImage, primaryImage)
+
+	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
+	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", dc.labelValue))
 
 	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -32,7 +58,8 @@ func TestDeploymentController_Sync(t *testing.T) {
 }
 
 func TestDeploymentController_Promote(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
 	dep2 := newDeploymentControllerTestV2()
@@ -72,7 +99,8 @@ func TestDeploymentController_Promote(t *testing.T) {
 }
 
 func TestDeploymentController_ScaleToZero(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
 	err := mocks.controller.ScaleToZero(mocks.canary)
@@ -84,7 +112,8 @@ func TestDeploymentController_ScaleToZero(t *testing.T) {
 }
 
 func TestDeploymentController_NoConfigTracking(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.controller.configTracker = &NopTracker{}
 	mocks.initializeCanary(t)
 
@@ -99,7 +128,8 @@ func TestDeploymentController_NoConfigTracking(t *testing.T) {
 }
 
 func TestDeploymentController_HasTargetChanged(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 	mocks.initializeCanary(t)
 
 	// save last applied hash
@@ -185,7 +215,8 @@ func TestDeploymentController_HasTargetChanged(t *testing.T) {
 }
 
 func TestDeploymentController_Finalize(t *testing.T) {
-	mocks := newDeploymentFixture()
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
 
 	for _, tc := range []struct {
 		mocks          deploymentControllerFixture

@@ -22,11 +22,12 @@ var (
 
 // DaemonSetController is managing the operations for Kubernetes DaemonSet kind
 type DaemonSetController struct {
-	kubeClient    kubernetes.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
-	configTracker Tracker
-	labels        []string
+	kubeClient         kubernetes.Interface
+	flaggerClient      clientset.Interface
+	logger             *zap.SugaredLogger
+	configTracker      Tracker
+	labels             []string
+	includeLabelPrefix []string
 }
 
 func (c *DaemonSetController) ScaleToZero(cd *flaggerv1.Canary) error {
@@ -76,7 +77,7 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 // Initialize creates the primary DaemonSet, scales down the canary DaemonSet,
 // and returns the pod selector label and container ports
 func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
-	err = c.createPrimaryDaemonSet(cd)
+	err = c.createPrimaryDaemonSet(cd, c.includeLabelPrefix)
 	if err != nil {
 		return fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
 	}
@@ -107,7 +108,8 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("damonset %s.%s get query error: %v", targetName, cd.Namespace, err)
 	}
 
-	label, err := c.getSelectorLabel(canary)
+	label, labelValue, err := c.getSelectorLabel(canary)
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
@@ -146,7 +148,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	}
 
 	primaryCopy.Spec.Template.Annotations = annotations
-	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryName, label)
+	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryLabelValue, label)
 
 	// apply update
 	_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
@@ -179,27 +181,27 @@ func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, erro
 }
 
 // GetMetadata returns the pod label selector and svc ports
-func (c *DaemonSetController) GetMetadata(cd *flaggerv1.Canary) (string, map[string]int32, error) {
+func (c *DaemonSetController) GetMetadata(cd *flaggerv1.Canary) (string, string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 
 	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return "", nil, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return "", "", nil, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	label, err := c.getSelectorLabel(canaryDae)
+	label, labelValue, err := c.getSelectorLabel(canaryDae)
 	if err != nil {
-		return "", nil, fmt.Errorf("getSelectorLabel failed: %w", err)
+		return "", "", nil, fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
 	var ports map[string]int32
 	if cd.Spec.Service.PortDiscovery {
 		ports = getPorts(cd, canaryDae.Spec.Template.Spec.Containers)
 	}
-	return label, ports, nil
+	return label, labelValue, ports, nil
 }
 
-func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error {
+func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
@@ -214,7 +216,11 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 			targetName, cd.Namespace, canaryDae.Spec.UpdateStrategy.Type)
 	}
 
-	label, err := c.getSelectorLabel(canaryDae)
+	// Create the labels map but filter unwanted labels
+	labels := includeLabelsByPrefix(canaryDae.Labels, includeLabelPrefix)
+
+	label, labelValue, err := c.getSelectorLabel(canaryDae)
+	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
@@ -237,11 +243,10 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 		// create primary daemonset
 		primaryDae = &appsv1.DaemonSet{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      primaryName,
-				Namespace: cd.Namespace,
-				Labels: map[string]string{
-					label: primaryName,
-				},
+				Name:        primaryName,
+				Namespace:   cd.Namespace,
+				Labels:      makePrimaryLabels(labels, primaryLabelValue, label),
+				Annotations: canaryDae.Annotations,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -256,12 +261,12 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 				UpdateStrategy:       canaryDae.Spec.UpdateStrategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						label: primaryName,
+						label: primaryLabelValue,
 					},
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Labels:      makePrimaryLabels(canaryDae.Spec.Template.Labels, primaryName, label),
+						Labels:      makePrimaryLabels(canaryDae.Spec.Template.Labels, primaryLabelValue, label),
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
@@ -281,14 +286,14 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary) error
 }
 
 // getSelectorLabel returns the selector match label
-func (c *DaemonSetController) getSelectorLabel(daemonSet *appsv1.DaemonSet) (string, error) {
+func (c *DaemonSetController) getSelectorLabel(daemonSet *appsv1.DaemonSet) (string, string, error) {
 	for _, l := range c.labels {
 		if _, ok := daemonSet.Spec.Selector.MatchLabels[l]; ok {
-			return l, nil
+			return l, daemonSet.Spec.Selector.MatchLabels[l], nil
 		}
 	}
 
-	return "", fmt.Errorf(
+	return "", "", fmt.Errorf(
 		"daemonset %s.%s spec.selector.matchLabels must contain one of %v'",
 		daemonSet.Name, daemonSet.Namespace, c.labels,
 	)

@@ -12,7 +12,8 @@ import (
 )
 
 func TestDaemonSetController_SyncStatus(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
@@ -36,7 +37,8 @@ func TestDaemonSetController_SyncStatus(t *testing.T) {
 }
 
 func TestDaemonSetController_SetFailedChecks(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
@@ -49,7 +51,8 @@ func TestDaemonSetController_SetFailedChecks(t *testing.T) {
 }
 
 func TestDaemonSetController_SetState(t *testing.T) {
-	mocks := newDaemonSetFixture()
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
 	err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
