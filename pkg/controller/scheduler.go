@@ -405,7 +405,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 		return
 	}
 
-	// increment the primary traffic weight until it reaches 100%/full weight
+	// increment the primary traffic weight until it reaches total weight
 	if canaryWeight > 0 {
 		primaryWeight += canary.GetAnalysis().StepWeightPromotion
 		if primaryWeight > c.totalWeight(canary) {
