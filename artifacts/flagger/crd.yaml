@@ -48,10 +48,6 @@ spec:
       type: boolean
       JSONPath: .spec.analysis.mirror
       priority: 1
-    - name: FullWeight
-      type: string
-      JSONPath: .spec.analysis.fullWeight
-      priority: 1
     - name: StepWeight
       type: string
       JSONPath: .spec.analysis.stepWeight
@@ -569,9 +565,6 @@ spec:
                   type: number
                 threshold:
                   description: Max number of failed checks before rollback
-                  type: number
-                fullWeight:
-                  description: Sum of traffic step weights for canary and primary
                   type: number
                 maxWeight:
                   description: Max traffic weight routed to canary

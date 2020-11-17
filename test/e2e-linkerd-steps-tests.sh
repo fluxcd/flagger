@@ -61,9 +61,8 @@ spec:
   analysis:
     interval: 15s
     threshold: 15
-    fullWeight: 1000
-    maxWeight: 500
-    stepWeights: [100, 200, 300, 400, 500, 600]
+    maxWeight: 50
+    stepWeights: [10, 20, 30, 40, 50, 60]
     metrics:
     - name: request-success-rate
       threshold: 99
@@ -172,9 +171,8 @@ spec:
   analysis:
     interval: 15s
     threshold: 3
-    fullWeight: 1000
-    maxWeight: 500
-    stepWeights: [100, 200, 300, 400, 500, 600]
+    maxWeight: 50
+    stepWeights: [10, 20, 30, 40, 50, 60]
     metrics:
     - name: request-success-rate
       threshold: 99

@@ -201,11 +201,7 @@ type CanaryAnalysis struct {
 	// +optional
 	Mirror bool `json:"mirror,omitempty"`
 
-	// Sum of weights of canary and primary. If not set default 100 is used.
-	// +optional
-	FullWeight int `json:"fullWeight,omitempty"`
-
-	// Weight of the traffic to be mirrored in the range of [0, FullWeight].
+	// Weight of the traffic to be mirrored in the range of [0, 100].
 	// +optional
 	MirrorWeight int `json:"mirrorWeight,omitempty"`
 

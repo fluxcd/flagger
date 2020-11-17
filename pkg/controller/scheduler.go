@@ -26,10 +26,7 @@ func (c *Controller) maxWeight(canary *flaggerv1.Canary) int {
 	return 100
 }
 
-func (c *Controller) fullWeight(canary *flaggerv1.Canary) int {
-	if canary.GetAnalysis().FullWeight > 0 {
-		return canary.GetAnalysis().FullWeight
-	}
+func (c *Controller) totalWeight(canary *flaggerv1.Canary) int {
 	// set max weight default value to 100%
 	return 100
 }
@@ -50,7 +47,7 @@ func (c *Controller) nextStepWeight(canary *flaggerv1.Canary, canaryWeight int) 
 		}
 	}
 
-	return c.fullWeight(canary) - canaryWeight
+	return c.totalWeight(canary) - canaryWeight
 }
 
 // scheduleCanaries synchronises the canary map with the jobs map,
@@ -242,7 +239,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			cd.Spec.TargetRef.Name, cd.Namespace)
 
 		// route all traffic back to primary
-		primaryWeight = c.fullWeight(cd)
+		primaryWeight = c.totalWeight(cd)
 		canaryWeight = 0
 		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
@@ -397,11 +394,11 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 	// route all traffic to primary in one go when promotion step wight is not set
 	if canary.Spec.Analysis.StepWeightPromotion == 0 {
 		c.recordEventInfof(canary, "Routing all traffic to primary")
-		if err := meshRouter.SetRoutes(canary, c.fullWeight(canary), 0, false); err != nil {
+		if err := meshRouter.SetRoutes(canary, c.totalWeight(canary), 0, false); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
 			return
 		}
-		c.recorder.SetWeight(canary, c.fullWeight(canary), 0)
+		c.recorder.SetWeight(canary, c.totalWeight(canary), 0)
 		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
 		}
@@ -411,8 +408,8 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 	// increment the primary traffic weight until it reaches 100%/full weight
 	if canaryWeight > 0 {
 		primaryWeight += canary.GetAnalysis().StepWeightPromotion
-		if primaryWeight > c.fullWeight(canary) {
-			primaryWeight = c.fullWeight(canary)
+		if primaryWeight > c.totalWeight(canary) {
+			primaryWeight = c.totalWeight(canary)
 		}
 		canaryWeight -= canary.GetAnalysis().StepWeightPromotion
 		if canaryWeight < 0 {
@@ -426,7 +423,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 		c.recordEventInfof(canary, "Advance %s.%s primary weight %v", canary.Name, canary.Namespace, primaryWeight)
 
 		// finalize promotion
-		if primaryWeight == c.fullWeight(canary) {
+		if primaryWeight == c.totalWeight(canary) {
 			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
 			}
@@ -456,11 +453,11 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 		if canary.GetAnalysis().Mirror && canaryWeight == 0 {
 			if !mirrored {
 				mirrored = true
-				primaryWeight = c.fullWeight(canary)
+				primaryWeight = c.totalWeight(canary)
 				canaryWeight = 0
 			} else {
 				mirrored = false
-				primaryWeight = c.fullWeight(canary) - nextStepWeight
+				primaryWeight = c.totalWeight(canary) - nextStepWeight
 				canaryWeight = nextStepWeight
 			}
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
@@ -472,8 +469,8 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 				primaryWeight = 0
 			}
 			canaryWeight += nextStepWeight
-			if canaryWeight > c.fullWeight(canary) {
-				canaryWeight = c.fullWeight(canary)
+			if canaryWeight > c.totalWeight(canary) {
+				canaryWeight = c.totalWeight(canary)
 			}
 		}
 
@@ -521,11 +518,11 @@ func (c *Controller) runAB(canary *flaggerv1.Canary, canaryController canary.Con
 
 	// route traffic to canary and increment iterations
 	if canary.GetAnalysis().Iterations > canary.Status.Iterations {
-		if err := meshRouter.SetRoutes(canary, 0, c.fullWeight(canary), false); err != nil {
+		if err := meshRouter.SetRoutes(canary, 0, c.totalWeight(canary), false); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
 			return
 		}
-		c.recorder.SetWeight(canary, 0, c.fullWeight(canary))
+		c.recorder.SetWeight(canary, 0, c.totalWeight(canary))
 
 		if err := canaryController.SetStatusIterations(canary, canary.Status.Iterations+1); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
@@ -567,7 +564,7 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 		// If in "mirror" mode, mirror requests during the entire B/G canary test
 		if provider != "kubernetes" &&
 			canary.GetAnalysis().Mirror && !mirrored {
-			if err := meshRouter.SetRoutes(canary, c.fullWeight(canary), 0, true); err != nil {
+			if err := meshRouter.SetRoutes(canary, c.totalWeight(canary), 0, true); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
 			}
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
@@ -595,11 +592,11 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 			} else {
 				c.recordEventInfof(canary, "Routing all traffic to canary")
 			}
-			if err := meshRouter.SetRoutes(canary, 0, c.fullWeight(canary), false); err != nil {
+			if err := meshRouter.SetRoutes(canary, 0, c.totalWeight(canary), false); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
 				return
 			}
-			c.recorder.SetWeight(canary, 0, c.fullWeight(canary))
+			c.recorder.SetWeight(canary, 0, c.totalWeight(canary))
 		}
 
 		// increment iterations
@@ -669,7 +666,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	}
 
 	// route all traffic to primary
-	primaryWeight := c.fullWeight(canary)
+	primaryWeight := c.totalWeight(canary)
 	canaryWeight := 0
 	if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
@@ -803,7 +800,7 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	}
 
 	// route all traffic back to primary
-	primaryWeight := c.fullWeight(canary)
+	primaryWeight := c.totalWeight(canary)
 	canaryWeight := 0
 	if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
 		c.recordEventWarningf(canary, "%v", err)

@@ -20,7 +20,6 @@ We would have steps (canary weight : primary weight):
 * promotion
 
 In order to enable non-linear promotion a new parameters were introduced:
-* `fullWeight` - determines the sum of canary and primary weights, i.e. the maximum possible weight which can be set to the split
 * `stepWeights` - determines the ordered array of weights, which shall be used during canary promotion.
 
 Example:
@@ -28,13 +27,12 @@ Example:
 canary:
   analysis:
     promotion:
-      fullWeight: 1000
-      stepWeights: [1, 10, 100, 800]
+      stepWeights: [1, 2, 10, 80]
 ```
 This configuration performs analysis starting from 1, going through `stepWeights` values till 800.  
 We would have steps (canary weight : primary weight):
-* 1   (1 : 999)
-* 10  (10 : 990)
-* 100 (100 : 900)
-* 800 (800 : 200)
+* 1   (1 : 99)
+* 2  (2 : 98)
+* 10 (10 : 90)
+* 80 (80 : 20)
 * promotion
