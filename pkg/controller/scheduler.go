@@ -14,20 +14,27 @@ import (
 	"github.com/weaveworks/flagger/pkg/router"
 )
 
+func (c *Controller) min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func (c *Controller) maxWeight(canary *flaggerv1.Canary) int {
 	var stepWeightsLen = len(canary.GetAnalysis().StepWeights)
 	if stepWeightsLen > 0 {
-		return canary.GetAnalysis().StepWeights[stepWeightsLen-1]
+		return c.min(c.totalWeight(canary), canary.GetAnalysis().StepWeights[stepWeightsLen-1])
 	}
 	if canary.GetAnalysis().MaxWeight > 0 {
 		return canary.GetAnalysis().MaxWeight
 	}
-	// set max weight default value to 100%
-	return 100
+	// set max weight default value to total weight
+	return c.totalWeight(canary)
 }
 
 func (c *Controller) totalWeight(canary *flaggerv1.Canary) int {
-	// set max weight default value to 100%
+	// set total weight default value to 100%
 	return 100
 }
 
@@ -37,17 +44,30 @@ func (c *Controller) nextStepWeight(canary *flaggerv1.Canary, canaryWeight int) 
 		return canary.GetAnalysis().StepWeight
 	}
 
-	if canaryWeight == 0 {
-		return canary.GetAnalysis().StepWeights[0]
+	totalWeight := c.totalWeight(canary)
+	maxStep := totalWeight - canaryWeight
+
+	// If maxStep is zero we need to promote, so any non zero step weight will move the canary to promotion.
+	// This is the same use case as the last step via StepWeight.
+	if maxStep == 0 {
+		return 1
 	}
 
+	// return min of maxStep and the calculated step to avoid going above totalWeight
+
+	// initial step
+	if canaryWeight == 0 {
+		return c.min(maxStep, canary.GetAnalysis().StepWeights[0])
+	}
+
+	// find the current step and return the difference in weight
 	for i := 0; i < stepWeightsLen-1; i++ {
 		if canary.GetAnalysis().StepWeights[i] == canaryWeight {
-			return canary.GetAnalysis().StepWeights[i+1] - canaryWeight
+			return c.min(maxStep, canary.GetAnalysis().StepWeights[i+1]-canaryWeight)
 		}
 	}
 
-	return c.totalWeight(canary) - canaryWeight
+	return maxStep
 }
 
 // scheduleCanaries synchronises the canary map with the jobs map,
