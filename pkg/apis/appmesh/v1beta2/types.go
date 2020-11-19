@@ -57,7 +57,9 @@ type VirtualServiceReference struct {
 	// +optional
 	Namespace *string `json:"namespace,omitempty"`
 	// Name is the name of VirtualService CR
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
+	// ARN of the AWS VirtualService CR
+	ARN string `json:"virtualServiceARN,omitempty"`
 }
 
 // VirtualRouterReference holds a reference to VirtualRouter.appmesh.k8s.aws
