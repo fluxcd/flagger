@@ -52,6 +52,10 @@ spec:
       type: string
       JSONPath: .spec.analysis.stepWeight
       priority: 1
+    - name: StepWeights
+      type: string
+      JSONPath: .spec.analysis.stepWeights
+      priority: 1
     - name: MaxWeight
       type: string
       JSONPath: .spec.analysis.maxWeight
@@ -550,6 +554,7 @@ spec:
               oneOf:
                 - required: ["interval", "threshold", "iterations"]
                 - required: ["interval", "threshold", "stepWeight"]
+                - required: ["interval", "threshold", "stepWeights"]
               properties:
                 interval:
                   description: Schedule interval for this canary
@@ -562,19 +567,24 @@ spec:
                   description: Max number of failed checks before rollback
                   type: number
                 maxWeight:
-                  description: Max traffic percentage routed to canary
+                  description: Max traffic weight routed to canary
                   type: number
                 stepWeight:
-                  description: Incremental traffic percentage step for the analysis phase
+                  description: Incremental traffic step weight for the analysis phase
                   type: number
+                stepWeights:
+                  description: Incremental traffic step weights for the analysis phase
+                  type: array
+                  items:
+                    type: number
                 stepWeightPromotion:
-                  description: Incremental traffic percentage step for the promotion phase
+                  description: Incremental traffic step weight for the promotion phase
                   type: number
                 mirror:
                   description: Mirror traffic to canary
                   type: boolean
                 mirrorWeight:
-                  description: Percentage of traffic to be mirrored
+                  description: Weight of traffic to be mirrored
                   type: number
                 match:
                   description: A/B testing match conditions
@@ -705,7 +715,7 @@ spec:
                 - Terminating
                 - Terminated
             canaryWeight:
-              description: Traffic weight percentage routed to canary
+              description: Traffic weight routed to canary
               type: number
             failedChecks:
               description: Failed check count of the current canary analysis

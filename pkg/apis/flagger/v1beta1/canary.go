@@ -201,19 +201,23 @@ type CanaryAnalysis struct {
 	// +optional
 	Mirror bool `json:"mirror,omitempty"`
 
-	// Percentage of the traffic to be mirrored in the range of [0, 100].
+	// Weight of the traffic to be mirrored in the range of [0, 100].
 	// +optional
 	MirrorWeight int `json:"mirrorWeight,omitempty"`
 
-	// Max traffic percentage routed to canary
+	// Max traffic weight routed to canary
 	// +optional
 	MaxWeight int `json:"maxWeight,omitempty"`
 
-	// Incremental traffic percentage step for analysis phase
+	// Incremental traffic weight step for analysis phase
 	// +optional
 	StepWeight int `json:"stepWeight,omitempty"`
 
-	// Incremental traffic percentage step for promotion phase
+	// Incremental traffic weight steps for analysis phase
+	// +optional
+	StepWeights []int `json:"stepWeights,omitempty"`
+
+	// Incremental traffic weight step for promotion phase
 	// +optional
 	StepWeightPromotion int `json:"stepWeightPromotion,omitempty"`
 
