@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -170,6 +171,13 @@ func alertMetadata(canary *flaggerv1.Canary) []notifier.Field {
 			Name: "Traffic routing",
 			Value: fmt.Sprintf("Weight step: %v max: %v",
 				canary.GetAnalysis().StepWeight,
+				canary.GetAnalysis().MaxWeight),
+		})
+	} else if len(canary.GetAnalysis().StepWeights) > 0 {
+		fields = append(fields, notifier.Field{
+			Name: "Traffic routing",
+			Value: fmt.Sprintf("Weight steps: %s max: %v",
+				strings.Trim(strings.Join(strings.Fields(fmt.Sprint(canary.GetAnalysis().StepWeights)), ","), "[]"),
 				canary.GetAnalysis().MaxWeight),
 		})
 	} else if len(canary.GetAnalysis().Match) > 0 {

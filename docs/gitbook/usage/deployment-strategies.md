@@ -116,6 +116,43 @@ Gated canary promotion stages:
 * send notification with the canary analysis result
 * wait for the canary deployment to be updated and start over
 
+#### Rollout Weights
+
+By default Flagger uses linear weight values for the promotion, with the start value, the step and the maximum weight value in 0 to 100 range.  
+
+Example:
+```yaml
+canary:
+  analysis:
+    promotion:
+      maxWeight: 50
+      stepWeight: 20
+```
+This configuration performs analysis starting from 20, increasing by 20 until weight goes above 50.  
+We would have steps (canary weight : primary weight):
+* 20 (20 : 80)
+* 40 (40 : 60)
+* 60 (60 : 40)
+* promotion
+
+In order to enable non-linear promotion a new parameter was introduced:
+* `stepWeights` - determines the ordered array of weights, which shall be used during canary promotion.
+
+Example:
+```yaml
+canary:
+  analysis:
+    promotion:
+      stepWeights: [1, 2, 10, 80]
+```
+This configuration performs analysis starting from 1, going through `stepWeights` values till 80.  
+We would have steps (canary weight : primary weight):
+* 1 (1 : 99)
+* 2 (2 : 98)
+* 10 (10 : 90)
+* 80 (20 : 60)
+* promotion
+
 ### A/B Testing
 
 For frontend applications that require session affinity you should use HTTP headers or cookies match conditions
