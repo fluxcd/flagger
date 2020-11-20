@@ -287,7 +287,7 @@ sum(
 )
 ```
 
-Envoy query (App Mesh, Contour or Gloo):
+Envoy query (App Mesh):
 
 ```javascript
 sum(
@@ -307,6 +307,27 @@ sum(
           kubernetes_pod_name=~"$workload"
         }[$interval]
     )
+)
+```
+
+Envoy query (Coutour or Gloo):
+
+```javascript
+sum(
+	rate(
+		envoy_cluster_upstream_rq{
+			envoy_cluster_name=~"$namespace-$workload",
+			envoy_response_code!~"5.*"
+		}[$interval]
+	)
+)
+/
+sum(
+	rate(
+		envoy_cluster_upstream_rq{
+			envoy_cluster_name=~"$namespace-$workload",
+		}[$interval]
+	)
 )
 ```
 
