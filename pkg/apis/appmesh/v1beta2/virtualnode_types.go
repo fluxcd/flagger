@@ -1,3 +1,19 @@
+/*
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package v1beta2
 
 import (
@@ -59,8 +75,12 @@ type ClientPolicy struct {
 
 // VirtualServiceBackend refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceBackend.html
 type VirtualServiceBackend struct {
-	// The VirtualService that is acting as a virtual node backend.
-	VirtualServiceRef VirtualServiceReference `json:"virtualServiceRef"`
+	// Reference to Kubernetes VirtualService CR in cluster that is acting as a virtual node backend. Exactly one of 'virtualServiceRef' or 'virtualServiceARN' must be specified.
+	// +optional
+	VirtualServiceRef *VirtualServiceReference `json:"virtualServiceRef,omitempty"`
+	// Amazon Resource Name to AppMesh VirtualService object that is acting as a virtual node backend. Exactly one of 'virtualServiceRef' or 'virtualServiceARN' must be specified.
+	// +optional
+	VirtualServiceARN *string `json:"virtualServiceARN,omitempty"`
 	// A reference to an object that represents the client policy for a backend.
 	// +optional
 	ClientPolicy *ClientPolicy `json:"clientPolicy,omitempty"`
@@ -106,6 +126,25 @@ type HealthCheckPolicy struct {
 	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:validation:Maximum=10
 	UnhealthyThreshold int64 `json:"unhealthyThreshold"`
+}
+
+// OutlierDetection defines the health check policy that temporarily ejects an endpoint/host of a VirtualNode
+// from the load balancing set when it meets failure threshold
+type OutlierDetection struct {
+	// The threshold for the number of server errors returned by a given host during an outlier detection interval.
+	// If the server error count meets/exceeds this threshold the host is ejected.
+	// A server error is defined as any HTTP 5xx response (or the equivalent for gRPC and TCP connections)
+	// +kubebuilder:validation:Minimum=1
+	MaxServerErrors int64 `json:"maxServerErrors"`
+	// The time interval between ejection analysis sweeps. This can result in both new ejections as well as hosts being returned to service
+	Interval Duration `json:"interval"`
+	// The base time that a host is ejected for. The real time is equal to the base time multiplied by the number of times the host has been ejected
+	BaseEjectionDuration Duration `json:"baseEjectionDuration"`
+	// The threshold for the max percentage of outlier hosts that can be ejected from the load balancing set.
+	// maxEjectionPercent=100 means outlier detection can potentially eject all of the hosts from the upstream service if they are all considered outliers, leaving the load balancing set with zero hosts
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=100
+	MaxEjectionPercent int64 `json:"maxEjectionPercent"`
 }
 
 // ListenerTLSACMCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html
@@ -169,6 +208,25 @@ type ListenerTimeout struct {
 	GRPC *GRPCTimeout `json:"grpc,omitempty"`
 }
 
+// VirtualNodeConnectionPool refers to the connection pools settings for Virtual Node.
+// Connection pool limits the number of connections that an Envoy can concurrently establish with
+// all the hosts in the upstream cluster. Currently connection pool is supported only at the listener
+// level and it is intended protect your local application from being overwhelmed with connections.
+type VirtualNodeConnectionPool struct {
+	// Specifies tcp connection pool settings for the virtual node listener
+	// +optional
+	TCP *TCPConnectionPool `json:"tcp,omitempty"`
+	// Specifies http connection pool settings for the virtual node listener
+	// +optional
+	HTTP *HTTPConnectionPool `json:"http,omitempty"`
+	// Specifies http2 connection pool settings for the virtual node listener
+	// +optional
+	HTTP2 *HTTP2ConnectionPool `json:"http2,omitempty"`
+	// Specifies grpc connection pool settings for the virtual node listener
+	// +optional
+	GRPC *GRPCConnectionPool `json:"grpc,omitempty"`
+}
+
 // Listener refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html
 type Listener struct {
 	// The port mapping information for the listener.
@@ -176,6 +234,12 @@ type Listener struct {
 	// The health check information for the listener.
 	// +optional
 	HealthCheck *HealthCheckPolicy `json:"healthCheck,omitempty"`
+	// The outlier detection for the listener
+	// +optional
+	OutlierDetection *OutlierDetection `json:"outlierDetection,omitempty"`
+	// The connection pool settings for the listener
+	// +optional
+	ConnectionPool *VirtualNodeConnectionPool `json:"connectionPool,omitempty"`
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *ListenerTLS `json:"tls,omitempty"`
@@ -273,7 +337,7 @@ type VirtualNodeCondition struct {
 }
 
 // VirtualNodeSpec defines the desired state of VirtualNode
-// refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
+// refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeSpec.html
 type VirtualNodeSpec struct {
 	// AWSName is the AppMesh VirtualNode object's name.
 	// If unspecified or empty, it defaults to be "${name}_${namespace}" of k8s VirtualNode
@@ -290,7 +354,8 @@ type VirtualNodeSpec struct {
 	// +kubebuilder:validation:MaxItems=1
 	// +optional
 	Listeners []Listener `json:"listeners,omitempty"`
-	// The service discovery information for the virtual node.
+	// The service discovery information for the virtual node. Optional if there is no
+	// inbound traffic(no listeners). Mandatory if a listener is specified.
 	// +optional
 	ServiceDiscovery *ServiceDiscovery `json:"serviceDiscovery,omitempty"`
 	// The backends that the virtual node is expected to send outbound traffic to.

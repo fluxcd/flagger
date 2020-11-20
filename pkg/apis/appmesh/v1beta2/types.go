@@ -57,9 +57,7 @@ type VirtualServiceReference struct {
 	// +optional
 	Namespace *string `json:"namespace,omitempty"`
 	// Name is the name of VirtualService CR
-	Name string `json:"name,omitempty"`
-	// ARN of the AWS VirtualService CR
-	ARN string `json:"virtualServiceARN,omitempty"`
+	Name string `json:"name"`
 }
 
 // VirtualRouterReference holds a reference to VirtualRouter.appmesh.k8s.aws
@@ -114,4 +112,37 @@ type TCPTimeout struct {
 	// An object that represents idle timeout duration.
 	// +optional
 	Idle *Duration `json:"idle,omitempty"`
+}
+
+type TCPConnectionPool struct {
+	// Represents the maximum number of outbound TCP connections
+	// the envoy can establish concurrently with all the hosts in the upstream cluster.
+	// +kubebuilder:validation:Minimum=1
+	MaxConnections int64 `json:"maxConnections"`
+}
+
+type HTTPConnectionPool struct {
+	// Represents the maximum number of outbound TCP connections
+	// the envoy can establish concurrently with all the hosts in the upstream cluster.
+	// +kubebuilder:validation:Minimum=1
+	MaxConnections int64 `json:"maxConnections"`
+	// Represents the number of overflowing requests after max_connections
+	// that an envoy will queue to an upstream cluster.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	MaxPendingRequests *int64 `json:"maxPendingRequests,omitempty"`
+}
+
+type HTTP2ConnectionPool struct {
+	// Represents the maximum number of inflight requests that an envoy
+	// can concurrently support across all the hosts in the upstream cluster
+	// +kubebuilder:validation:Minimum=1
+	MaxRequests int64 `json:"maxRequests"`
+}
+
+type GRPCConnectionPool struct {
+	// Represents the maximum number of inflight requests that an envoy
+	// can concurrently support across all the hosts in the upstream cluster
+	// +kubebuilder:validation:Minimum=1
+	MaxRequests int64 `json:"maxRequests"`
 }

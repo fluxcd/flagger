@@ -1,3 +1,19 @@
+/*
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package v1beta2
 
 import (
@@ -13,8 +29,12 @@ type VirtualRouterListener struct {
 
 // WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
 type WeightedTarget struct {
-	// The virtual node to associate with the weighted target.
-	VirtualNodeRef VirtualNodeReference `json:"virtualNodeRef"`
+	// Reference to Kubernetes VirtualNode CR in cluster to associate with the weighted target. Exactly one of 'virtualNodeRef' or 'virtualNodeARN' must be specified.
+	// +optional
+	VirtualNodeRef *VirtualNodeReference `json:"virtualNodeRef,omitempty"`
+	// Amazon Resource Name to AppMesh VirtualNode object to associate with the weighted target. Exactly one of 'virtualNodeRef' or 'virtualNodeARN' must be specified.
+	// +optional
+	VirtualNodeARN *string `json:"virtualNodeARN,omitempty"`
 	// The relative weight of the weighted target.
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=100
