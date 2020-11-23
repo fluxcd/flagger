@@ -310,7 +310,7 @@ sum(
 )
 ```
 
-Envoy query (Coutour or Gloo):
+Envoy query (Contour or Gloo):
 
 ```javascript
 sum(
