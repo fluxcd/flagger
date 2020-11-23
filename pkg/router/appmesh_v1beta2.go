@@ -104,12 +104,21 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 
 	backends := make([]appmeshv1.Backend, 0)
 	for _, b := range canary.Spec.Service.Backends {
-		bk := appmeshv1.Backend{
-			VirtualService: appmeshv1.VirtualServiceBackend{
-				VirtualServiceRef: appmeshv1.VirtualServiceReference{
-					Name: b,
+		var bk appmeshv1.Backend
+		if strings.HasPrefix(b, "arn:aws") {
+			bk = appmeshv1.Backend{
+				VirtualService: appmeshv1.VirtualServiceBackend{
+					VirtualServiceARN: &b,
 				},
-			},
+			}
+		} else {
+			bk = appmeshv1.Backend{
+				VirtualService: appmeshv1.VirtualServiceBackend{
+					VirtualServiceRef: &appmeshv1.VirtualServiceReference{
+						Name: b,
+					},
+				},
+			}
 		}
 		backends = append(backends, bk)
 	}
@@ -200,13 +209,13 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 				Action: appmeshv1.HTTPRouteAction{
 					WeightedTargets: []appmeshv1.WeightedTarget{
 						{
-							VirtualNodeRef: appmeshv1.VirtualNodeReference{
+							VirtualNodeRef: &appmeshv1.VirtualNodeReference{
 								Name: canaryVirtualNode,
 							},
 							Weight: canaryWeight,
 						},
 						{
-							VirtualNodeRef: appmeshv1.VirtualNodeReference{
+							VirtualNodeRef: &appmeshv1.VirtualNodeReference{
 								Name: primaryVirtualNode,
 							},
 							Weight: 100 - canaryWeight,
@@ -233,13 +242,13 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 					Action: appmeshv1.HTTPRouteAction{
 						WeightedTargets: []appmeshv1.WeightedTarget{
 							{
-								VirtualNodeRef: appmeshv1.VirtualNodeReference{
+								VirtualNodeRef: &appmeshv1.VirtualNodeReference{
 									Name: canaryVirtualNode,
 								},
 								Weight: canaryWeight,
 							},
 							{
-								VirtualNodeRef: appmeshv1.VirtualNodeReference{
+								VirtualNodeRef: &appmeshv1.VirtualNodeReference{
 									Name: primaryVirtualNode,
 								},
 								Weight: 100 - canaryWeight,
@@ -260,7 +269,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 					Action: appmeshv1.HTTPRouteAction{
 						WeightedTargets: []appmeshv1.WeightedTarget{
 							{
-								VirtualNodeRef: appmeshv1.VirtualNodeReference{
+								VirtualNodeRef: &appmeshv1.VirtualNodeReference{
 									Name: primaryVirtualNode,
 								},
 								Weight: 100,
@@ -325,7 +334,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 			Spec: appmeshv1.VirtualServiceSpec{
 				Provider: &appmeshv1.VirtualServiceProvider{
 					VirtualRouter: &appmeshv1.VirtualRouterServiceProvider{
-						VirtualRouterRef: appmeshv1.VirtualRouterReference{
+						VirtualRouterRef: &appmeshv1.VirtualRouterReference{
 							Name: name,
 						},
 					},
@@ -431,13 +440,13 @@ func (ar *AppMeshv1beta2Router) SetRoutes(
 	vrClone.Spec.Routes[0].HTTPRoute.Action = appmeshv1.HTTPRouteAction{
 		WeightedTargets: []appmeshv1.WeightedTarget{
 			{
-				VirtualNodeRef: appmeshv1.VirtualNodeReference{
+				VirtualNodeRef: &appmeshv1.VirtualNodeReference{
 					Name: canaryName,
 				},
 				Weight: int64(canaryWeight),
 			},
 			{
-				VirtualNodeRef: appmeshv1.VirtualNodeReference{
+				VirtualNodeRef: &appmeshv1.VirtualNodeReference{
 					Name: primaryName,
 				},
 				Weight: int64(primaryWeight),

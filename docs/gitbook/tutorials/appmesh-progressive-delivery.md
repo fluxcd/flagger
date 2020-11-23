@@ -180,7 +180,7 @@ create an App Mesh virtual service for it and add the virtual service name to th
     port: 9898
     backends:
       - backend1
-      - backend2
+      - arn:aws:appmesh:eu-west-1:12345678910:mesh/my-mesh/virtualService/backend2
 ```
 
 ## Setup App Mesh Gateway (optional)

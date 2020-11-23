@@ -66,7 +66,7 @@ func TestAppmeshv1beta2Router_Reconcile(t *testing.T) {
 
 	cdClone := cd.DeepCopy()
 	backends := cdClone.Spec.Service.Backends
-	backends = append(backends, "test.example.com")
+	backends = append(backends, "test.example.com", "arn:aws:appmesh:eu-west-1:12345678910:mesh/my-mesh/virtualService/mytestservice")
 	cdClone.Spec.Service.Backends = backends
 	canary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), cdClone, metav1.UpdateOptions{})
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestAppmeshv1beta2Router_Reconcile(t *testing.T) {
 	// verify
 	vnPrimary, err = router.appmeshClient.AppmeshV1beta2().VirtualNodes("default").Get(context.TODO(), primaryName, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Len(t, vnPrimary.Spec.Backends, 2)
+	require.Len(t, vnPrimary.Spec.Backends, 3)
 
 	// update URI
 	vrClone := vrApex.DeepCopy()
