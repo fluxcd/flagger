@@ -2,7 +2,7 @@
 
 set -o errexit
 
-ISTIO_VER="1.7.3"
+ISTIO_VER="1.8.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo ">>> Downloading Istio ${ISTIO_VER}"
@@ -10,11 +10,11 @@ cd ${REPO_ROOT}/bin && \
 curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VER} sh -
 
 echo ">>> Installing Istio ${ISTIO_VER}"
-${REPO_ROOT}/bin/istio-${ISTIO_VER}/bin/istioctl manifest install --set profile=default \
+${REPO_ROOT}/bin/istio-${ISTIO_VER}/bin/istioctl manifest install --set profile=default --skip-confirmation \
   --set values.pilot.resources.requests.cpu=100m \
   --set values.pilot.resources.requests.memory=100Mi
 
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.7/samples/addons/prometheus.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/prometheus.yaml
 kubectl -n istio-system rollout status deployment/prometheus
 
 kubectl -n istio-system get all
