@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.0 (2020-11-23) 
+
+Add support for custom weights when configuring traffic shifting
+
+#### Features
+
+- Support AWS App Mesh backends ARN
+    [#715](https://github.com/weaveworks/flagger/pull/715)
+- Add support for Istio VirtualService delegation
+    [#715](https://github.com/weaveworks/flagger/pull/715)
+- Copy labels from canary to primary workloads based on prefix rules
+    [#709](https://github.com/weaveworks/flagger/pull/709)
+
+#### Improvements
+
+- Add QPS and Burst configs for kubernetes client
+    [#725](https://github.com/weaveworks/flagger/pull/725)
+- Update Istio to v1.8.0
+    [#733](https://github.com/weaveworks/flagger/pull/733)
+
 ## 1.2.0 (2020-09-29) 
 
 Add support for New Relic metrics
