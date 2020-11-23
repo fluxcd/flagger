@@ -10,15 +10,17 @@ This is particularly useful for frontend applications that require session affin
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer and Istio **v1.0** or newer.
+Flagger requires a Kubernetes cluster **v1.14** or newer and Istio **v1.0** or newer.
 
 Install Istio with telemetry support and Prometheus:
 
 ```bash
-istioctl manifest apply --set profile=default
+istioctl manifest install --set profile=default
+
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/prometheus.yaml
 ```
 
-Install Flagger using Kustomize (kubectl 1.14) in the `istio-system` namespace:
+Install Flagger in the `istio-system` namespace:
 
 ```bash
 kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
