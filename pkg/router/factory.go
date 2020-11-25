@@ -128,6 +128,11 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			logger:     factory.logger,
 			kubeClient: factory.kubeClient,
 		}
+	case provider == flaggerv1.TraefikProvider:
+		return &TraefikRouter{
+			logger:        factory.logger,
+			traefikClient: factory.meshClient,
+		}
 	case provider == flaggerv1.KubernetesProvider:
 		return &NopRouter{}
 	default:
