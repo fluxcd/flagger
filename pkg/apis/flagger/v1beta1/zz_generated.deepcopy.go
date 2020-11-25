@@ -369,6 +369,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.TraefikService != nil {
+		in, out := &in.TraefikService, &out.TraefikService
+		*out = new(CustomMetadata)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Apex != nil {
 		in, out := &in.Apex, &out.Apex
 		*out = new(CustomMetadata)

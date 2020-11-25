@@ -10,4 +10,5 @@ const (
 	NGINXProvider      string = "nginx"
 	KubernetesProvider string = "kubernetes"
 	SkipperProvider    string = "skipper"
+	TraefikProvider    string = "traefik"
 )
