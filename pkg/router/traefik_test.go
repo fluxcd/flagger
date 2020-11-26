@@ -13,7 +13,7 @@ import (
 
 func TestTraefikRouter_Reconcile(t *testing.T) {
 	mocks := newFixture(nil)
-	mocks.canary.Spec.Service.TraefikService = &flaggerv1.CustomMetadata{
+	mocks.canary.Spec.Service.Apex = &flaggerv1.CustomMetadata{
 		Labels: map[string]string{
 			"test": "label",
 		},
@@ -35,8 +35,8 @@ func TestTraefikRouter_Reconcile(t *testing.T) {
 	assert.Len(t, services, 1)
 	assert.Equal(t, uint(100), services[0].Weight)
 
-	assert.Equal(t, ts.ObjectMeta.Labels, mocks.canary.Spec.Service.TraefikService.Labels)
-	assert.Equal(t, ts.ObjectMeta.Annotations, mocks.canary.Spec.Service.TraefikService.Annotations)
+	assert.Equal(t, ts.ObjectMeta.Labels, mocks.canary.Spec.Service.Apex.Labels)
+	assert.Equal(t, ts.ObjectMeta.Annotations, mocks.canary.Spec.Service.Apex.Annotations)
 
 	for _, tt := range []struct {
 		name        string

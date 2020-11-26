@@ -40,7 +40,7 @@ func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	traefikService, err := tr.traefikClient.TraefikV1alpha1().TraefikServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		tsMetadata := canary.Spec.Service.TraefikService
+		tsMetadata := canary.Spec.Service.Apex
 		if tsMetadata == nil {
 			tsMetadata = &flaggerv1.CustomMetadata{}
 		}

@@ -51,7 +51,7 @@ spec:
   service:
     port: 80
     targetPort: 9898
-    traefikService:
+    apex:
       labels:
         test: test-label
       annotations:

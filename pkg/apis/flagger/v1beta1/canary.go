@@ -175,10 +175,6 @@ type CanaryService struct {
 	// +optional
 	Backends []string `json:"backends,omitempty"`
 
-	// TraefikService is metadata to add to the traefik service
-	// +optional
-	TraefikService *CustomMetadata `json:"traefikService,omitempty"`
-
 	// Apex is metadata to add to the apex service
 	// +optional
 	Apex *CustomMetadata `json:"apex,omitempty"`

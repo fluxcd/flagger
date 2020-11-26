@@ -542,18 +542,6 @@ spec:
                       type: object
                       additionalProperties:
                         type: string
-                traefikService:
-                  description: Metadata to add to the TraefikService
-                  type: object
-                  properties:
-                    labels:
-                      type: object
-                      additionalProperties:
-                        type: string
-                    annotations:
-                      type: object
-                      additionalProperties:
-                        type: string
             skipAnalysis:
               description: Skip analysis and promote canary
               type: boolean
