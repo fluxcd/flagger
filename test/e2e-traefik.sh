@@ -9,7 +9,7 @@ echo '>>> Creating traefik namespace'
 kubectl create ns traefik
 
 echo '>>> Installing Traefik'
-# helm repo add traefik https://helm.traefik.io/traefik
+helm repo add traefik https://helm.traefik.io/traefik
 cat <<EOF | helm upgrade -i traefik traefik/traefik --version=${TRAEFIK_VERSION} --namespace traefik -f -
 additionalArguments:
   - "--metrics.prometheus=true"
