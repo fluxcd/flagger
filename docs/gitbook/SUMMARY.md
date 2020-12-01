@@ -28,6 +28,7 @@
 * [Gloo Canary Deployments](tutorials/gloo-progressive-delivery.md)
 * [NGINX Canary Deployments](tutorials/nginx-progressive-delivery.md)
 * [Skipper Canary Deployments](tutorials/skipper-progressive-delivery.md)
+* [Traefik Canary Deployments](tutorials/traefik-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Crossover Canary Deployments](tutorials/crossover-progressive-delivery.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)

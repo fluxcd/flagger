@@ -69,3 +69,17 @@ The e2e testing infrastructure is powered by CircleCI and [Kubernetes Kind](http
 * test the canary initialization [e2e-skipper-tests.sh](e2e-skipper-tests.sh)
 * test the canary analysis and promotion using weighted traffic and the load testing webhook [e2e-skipper-tests.sh]e2e-skipper-tests.sh)
 * cleanup test environment [e2e-skipper-cleanup.sh](e2e-skipper-cleanup.sh)
+
+### CircleCI e2e Traefik workflow
+
+* install latest stable kubectl [e2e-kind.sh](e2e-kind.sh)
+* install Kubernetes Kind [e2e-kind.sh](e2e-kind.sh)
+* create local Kubernetes cluster with kind [e2e-kind.sh](e2e-kind.sh)
+* install Traeik with Helm [e2e-traefik.sh](e2e-traefik.sh)
+* load Flagger image onto the local cluster [e2e-traefik.sh](e2e-traefik.sh)
+* install Flagger and Prometheus in the traefik namespace [e2e-traefik.sh](e2e-traefik.sh)
+* create a test namespace [e2e-traefik-tests.sh](e2e-traefik-tests.sh)
+* deploy the load tester in the test namespace [e2e-traefik-tests.sh](e2e-traefik-tests.sh)
+* deploy the demo workload (podinfo) and ingress in the test namespace [e2e-traefik-tests.sh](e2e-traefik-tests.sh)
+* test the canary initialization [e2e-traefik-tests.sh](e2e-traefik-tests.sh)
+* test the canary analysis and promotion using weighted traffic and the load testing webhook [e2e-traefik-tests.sh]e2e-traefik-tests.sh)
