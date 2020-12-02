@@ -4,7 +4,7 @@ This guide shows you how to use the [Traefik](https://doc.traefik.io/traefik/) a
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.14** or newer and Traefik **v1.14** or newer.
+Flagger requires a Kubernetes cluster **v1.14** or newer and Traefik **v2.3** or newer.
 
 Install Traefik with Helm v3:
 
@@ -94,11 +94,6 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
-  # ingress reference
-  ingressRef:
-    apiVersion: networking.k8s.io/v1beta1
-    kind: Ingress
-    name: podinfo
   # HPA reference (optional)
   autoscalerRef:
     apiVersion: autoscaling/v2beta1
@@ -138,9 +133,6 @@ spec:
       thresholdRange:
         max: 500
     webhooks:
-      - name: gate
-        type: confirm-rollout
-        url: http://flagger-loadtester.test/gate/approve
       - name: acceptance-test
         type: pre-rollout
         url: http://flagger-loadtester.test/
@@ -308,7 +300,7 @@ spec:
       rate(
         traefik_service_request_duration_seconds_bucket{
           service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
-          code!="403",
+          code!="404",
         }[{{ interval }}]
       )
     )
@@ -322,7 +314,7 @@ spec:
     ) * 100
 ```
 
-Edit the canary analysis and add the latency check:
+Edit the canary analysis and add the not found error rate check:
 
 ```yaml
   analysis:
