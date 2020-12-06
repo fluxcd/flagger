@@ -31,6 +31,7 @@ import (
 	istio "github.com/weaveworks/flagger/pkg/client/informers/externalversions/istio"
 	projectcontour "github.com/weaveworks/flagger/pkg/client/informers/externalversions/projectcontour"
 	smi "github.com/weaveworks/flagger/pkg/client/informers/externalversions/smi"
+	traefik "github.com/weaveworks/flagger/pkg/client/informers/externalversions/traefik"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -183,6 +184,7 @@ type SharedInformerFactory interface {
 	Networking() istio.Interface
 	Projectcontour() projectcontour.Interface
 	Split() smi.Interface
+	Traefik() traefik.Interface
 }
 
 func (f *sharedInformerFactory) Appmesh() appmesh.Interface {
@@ -207,4 +209,8 @@ func (f *sharedInformerFactory) Projectcontour() projectcontour.Interface {
 
 func (f *sharedInformerFactory) Split() smi.Interface {
 	return smi.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Traefik() traefik.Interface {
+	return traefik.New(f, f.namespace, f.tweakListOptions)
 }

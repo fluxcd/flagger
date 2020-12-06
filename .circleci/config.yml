@@ -160,6 +160,18 @@ jobs:
       - run: test/e2e-skipper-tests.sh
       - run: test/e2e-skipper-cleanup.sh
 
+  e2e-traefik-testing:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/bin
+      - run: test/container-build.sh
+      - run: test/e2e-kind.sh
+      - run: test/e2e-traefik.sh
+      - run: test/e2e-traefik-tests.sh
+      - run: test/e2e-skipper-cleanup.sh
+
   push-helm-charts:
     docker:
       - image: circleci/golang:1.14
@@ -232,6 +244,9 @@ workflows:
       - e2e-skipper-testing:
           requires:
             - build-binary
+      - e2e-traefik-testing:
+          requires:
+            - build-binary
       - push-container:
           requires:
             - build-binary
@@ -241,6 +256,7 @@ workflows:
             - e2e-nginx-testing
             - e2e-linkerd-testing
             - e2e-skipper-testing
+            - e2e-traefik-testing
           filters:
             branches:
               only:

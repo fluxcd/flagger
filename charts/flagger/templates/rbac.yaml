@@ -172,6 +172,18 @@ rules:
       - update
       - patch
       - delete
+  - apiGroups:
+    - traefik.containo.us
+    resources:
+    - traefikservices
+    verbs:
+    - get
+    - list
+    - watch
+    - create
+    - update
+    - patch
+    - delete
   - nonResourceURLs:
       - /version
     verbs:

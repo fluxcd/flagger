@@ -12,3 +12,4 @@ redirects:
   usage/nginx-progressive-delivery: tutorials/nginx-progressive-delivery.md
   usage/skipper-progressive-delivery: tutorials/skipper-progressive-delivery.md
   usage/crossover-progressive-delivery: tutorials/crossover-progressive-delivery.md
+  usage/traefik-progressive-delivery: tutorials/traefik-progressive-delivery.md
