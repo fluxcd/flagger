@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav1 "k8s.io/api/autoscaling/v2beta1"
+	hpav2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -292,14 +292,14 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 
 func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	hpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+	hpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("HorizontalPodAutoscaler %s.%s get query error: %w",
 			cd.Spec.AutoscalerRef.Name, cd.Namespace, err)
 	}
 
-	hpaSpec := hpav1.HorizontalPodAutoscalerSpec{
-		ScaleTargetRef: hpav1.CrossVersionObjectReference{
+	hpaSpec := hpav2.HorizontalPodAutoscalerSpec{
+		ScaleTargetRef: hpav2.CrossVersionObjectReference{
 			Name:       primaryName,
 			Kind:       hpa.Spec.ScaleTargetRef.Kind,
 			APIVersion: hpa.Spec.ScaleTargetRef.APIVersion,
@@ -307,14 +307,15 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 		MinReplicas: hpa.Spec.MinReplicas,
 		MaxReplicas: hpa.Spec.MaxReplicas,
 		Metrics:     hpa.Spec.Metrics,
+		Behavior:    hpa.Spec.Behavior,
 	}
 
 	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
-	primaryHpa, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
+	primaryHpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
 
 	// create HPA
 	if errors.IsNotFound(err) {
-		primaryHpa = &hpav1.HorizontalPodAutoscaler{
+		primaryHpa = &hpav2.HorizontalPodAutoscaler{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      primaryHpaName,
 				Namespace: cd.Namespace,
@@ -330,7 +331,7 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 			Spec: hpaSpec,
 		}
 
-		_, err = c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Create(context.TODO(), primaryHpa, metav1.CreateOptions{})
+		_, err = c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Create(context.TODO(), primaryHpa, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("creating HorizontalPodAutoscaler %s.%s failed: %w",
 				primaryHpa.Name, primaryHpa.Namespace, err)
@@ -345,15 +346,17 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 
 	// update HPA
 	if !init && primaryHpa != nil {
-		diff := cmp.Diff(hpaSpec.Metrics, primaryHpa.Spec.Metrics)
-		if diff != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
-			fmt.Println(diff, hpaSpec.MinReplicas, primaryHpa.Spec.MinReplicas, hpaSpec.MaxReplicas, primaryHpa.Spec.MaxReplicas)
+		diffMetrics := cmp.Diff(hpaSpec.Metrics, primaryHpa.Spec.Metrics)
+		diffBehavior := cmp.Diff(hpaSpec.Behavior, primaryHpa.Spec.Behavior)
+		if diffMetrics != "" || diffBehavior != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
+			fmt.Println(diffMetrics, diffBehavior, hpaSpec.MinReplicas, primaryHpa.Spec.MinReplicas, hpaSpec.MaxReplicas, primaryHpa.Spec.MaxReplicas)
 			hpaClone := primaryHpa.DeepCopy()
 			hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
 			hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
 			hpaClone.Spec.Metrics = hpaSpec.Metrics
+			hpaClone.Spec.Behavior = hpaSpec.Behavior
 
-			_, err := c.kubeClient.AutoscalingV2beta1().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
+			_, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("updating HorizontalPodAutoscaler %s.%s failed: %w",
 					hpaClone.Name, hpaClone.Namespace, err)
