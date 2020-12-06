@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav2 "k8s.io/api/autoscaling/v2beta1"
+	hpav2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -280,7 +280,7 @@ func newDeploymentTestCanary() *flaggerv1.Canary {
 			},
 			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
-				APIVersion: "autoscaling/v2beta1",
+				APIVersion: "autoscaling/v2beta2",
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
@@ -342,7 +342,7 @@ func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 			},
 			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
-				APIVersion: "autoscaling/v2beta1",
+				APIVersion: "autoscaling/v2beta2",
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
@@ -694,8 +694,10 @@ func newDeploymentTestHPA() *hpav2.HorizontalPodAutoscaler {
 				{
 					Type: "Resource",
 					Resource: &hpav2.ResourceMetricSource{
-						Name:                     "cpu",
-						TargetAverageUtilization: int32p(99),
+						Name: "cpu",
+						Target: hpav2.MetricTarget{
+							AverageUtilization: int32p(99),
+						},
 					},
 				},
 			},
