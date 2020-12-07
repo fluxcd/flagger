@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.4.0 (2020-12-07) 
+
+Add support for Traefik ingress controller
+
+#### Features
+
+- Add Traefik support for progressive traffic shifting with `TraefikService`
+    [#736](https://github.com/weaveworks/flagger/pull/736)
+- Add support for HPA v2beta2 behaviors
+    [#740](https://github.com/weaveworks/flagger/pull/740)
+
 ## 1.3.0 (2020-11-23) 
 
 Add support for custom weights when configuring traffic shifting
