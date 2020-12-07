@@ -83,6 +83,15 @@ $ helm upgrade -i flagger flagger/flagger \
     --set prometheus.install=true
 ```
 
+To install Flagger and Prometheus for **Traefik**:
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace traefik \
+    --set prometheus.install=true \
+    --set meshProvider=traefik
+```
+
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
 ## Uninstalling the Chart
