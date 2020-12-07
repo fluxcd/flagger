@@ -79,7 +79,7 @@ spec:
     name: podinfo
   # HPA reference
   autoscalerRef:
-    apiVersion: autoscaling/v2beta1
+    apiVersion: autoscaling/v2beta2
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
