@@ -70,7 +70,6 @@ spec:
     targetPort: 9898
     portDiscovery: true
     delegation: true
-  skipAnalysis: true
   analysis:
     interval: 15s
     threshold: 15
