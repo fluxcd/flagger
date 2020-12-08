@@ -215,6 +215,12 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
 
+	if canary.Spec.Service.Delegation {
+		// delegate VirtualService requires the hosts and gateway empty.
+		virtualService.Spec.Gateways = []string{}
+		virtualService.Spec.Hosts = []string{}
+	}
+
 	// update service but keep the original destination weights and mirror
 	if virtualService != nil {
 		if diff := cmp.Diff(
@@ -241,6 +247,9 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 
 				vtClone.ObjectMeta.Annotations[configAnnotation] = string(b)
 			}
+
+			fmt.Printf("Applying : %+v\n", vtClone)
+			fmt.Printf("-------------------------------------------\n")
 
 			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vtClone, metav1.UpdateOptions{})
 			if err != nil {
