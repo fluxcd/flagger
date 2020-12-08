@@ -89,7 +89,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	if err != nil {
 		return fmt.Errorf("GetTargetConfigs failed: %w", err)
 	}
-	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
 		return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
 	}
 
@@ -228,7 +228,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 		if err != nil {
 			return fmt.Errorf("GetTargetConfigs failed: %w", err)
 		}
-		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
 			return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
 		}
 		annotations, err := makeAnnotations(canaryDep.Spec.Template.Annotations)

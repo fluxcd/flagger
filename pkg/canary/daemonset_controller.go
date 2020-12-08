@@ -124,7 +124,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	if err != nil {
 		return fmt.Errorf("GetTargetConfigs failed: %w", err)
 	}
-	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
 		return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
 	}
 
@@ -232,7 +232,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, inclu
 		if err != nil {
 			return fmt.Errorf("GetTargetConfigs failed: %w", err)
 		}
-		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs); err != nil {
+		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
 			return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
 		}
 		annotations, err := makeAnnotations(canaryDae.Spec.Template.Annotations)
