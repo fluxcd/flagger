@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.4.1 (2020-12-08) 
+
+Prevent primary ConfigMaps and Secrets from being pruned by Flux
+
+#### Improvements
+
+- Apply label prefix rules for ConfigMaps and Secrets
+    [#743](https://github.com/weaveworks/flagger/pull/743)
+
 ## 1.4.0 (2020-12-07) 
 
 Add support for Traefik ingress controller
