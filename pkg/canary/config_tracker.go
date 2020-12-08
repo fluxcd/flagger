@@ -263,7 +263,7 @@ func (ct *ConfigTracker) HasConfigChanged(cd *flaggerv1.Canary) (bool, error) {
 
 // CreatePrimaryConfigs syncs the primary Kubernetes ConfigMaps and Secretes
 // with those found in the target deployment
-func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[string]ConfigRef) error {
+func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[string]ConfigRef, includeLabelPrefix []string) error {
 	for _, ref := range refs {
 		switch ref.Type {
 		case ConfigRefMap:
@@ -272,11 +272,12 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 				return fmt.Errorf("configmap %s.%s get query failed : %w", ref.Name, cd.Name, err)
 			}
 			primaryName := fmt.Sprintf("%s-primary", config.GetName())
+			labels := includeLabelsByPrefix(config.Labels, includeLabelPrefix)
 			primaryConfigMap := &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      primaryName,
 					Namespace: cd.Namespace,
-					Labels:    config.Labels,
+					Labels:    labels,
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 							Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -309,11 +310,12 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 				return fmt.Errorf("secret %s.%s get query failed : %w", ref.Name, cd.Name, err)
 			}
 			primaryName := fmt.Sprintf("%s-primary", secret.GetName())
+			labels := includeLabelsByPrefix(secret.Labels, includeLabelPrefix)
 			primarySecret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      primaryName,
 					Namespace: cd.Namespace,
-					Labels:    secret.Labels,
+					Labels:    labels,
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 							Group:   flaggerv1.SchemeGroupVersion.Group,

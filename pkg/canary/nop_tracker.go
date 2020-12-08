@@ -21,7 +21,7 @@ func (nt *NopTracker) HasConfigChanged(*flaggerv1.Canary) (bool, error) {
 	return false, nil
 }
 
-func (nt *NopTracker) CreatePrimaryConfigs(*flaggerv1.Canary, map[string]ConfigRef) error {
+func (nt *NopTracker) CreatePrimaryConfigs(*flaggerv1.Canary, map[string]ConfigRef, []string) error {
 	return nil
 }
 
