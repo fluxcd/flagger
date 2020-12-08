@@ -248,9 +248,6 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				vtClone.ObjectMeta.Annotations[configAnnotation] = string(b)
 			}
 
-			fmt.Printf("Applying : %+v\n", vtClone)
-			fmt.Printf("-------------------------------------------\n")
-
 			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vtClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
