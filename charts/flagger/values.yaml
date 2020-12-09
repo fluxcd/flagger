@@ -124,7 +124,7 @@ tolerations: []
 prometheus:
   # to be used with ingress controllers
   install: false
-  image: docker.io/prom/prometheus:v2.21.0
+  image: docker.io/prom/prometheus:v2.23.0
   retention: 2h
 
 kubeconfigQPS: ""
