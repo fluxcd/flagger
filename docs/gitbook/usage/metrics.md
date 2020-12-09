@@ -172,6 +172,38 @@ spec:
 
 The above template is for gRPC services instrumented with [go-grpc-prometheus](https://github.com/grpc-ecosystem/go-grpc-prometheus).
 
+### Prometheus authentication
+
+If your Prometheus API requires basic authentication, you can create a secret
+in the same namespace as the `MetricTemplate` with the basic-auth credentials:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prom-basic-auth
+  namespace: flagger
+data:
+  username: your-user
+  password: your-password
+```
+
+Then reference the secret in the `MetricTemplate`:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: my-metric
+  namespace: flagger
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.monitoring:9090
+    secretRef:
+      name: prom-basic-auth
+```
+
 ### Datadog
 
 You can create custom metric checks using the Datadog provider.
