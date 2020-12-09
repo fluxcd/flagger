@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.4.2 (2020-12-09) 
+
+Fix Istio virtual service delegation
+
+#### Improvements
+
+- Add Prometheus basic-auth config to docs
+    [#746](https://github.com/weaveworks/flagger/pull/746)
+- Update Prometheus to 2.23.0 and Grafana to 7.3.4
+    [#747](https://github.com/weaveworks/flagger/pull/747)
+
+#### Fixes
+
+- Fix for VirtualService delegation when analysis is enabled
+    [#745](https://github.com/weaveworks/flagger/pull/745)
+
 ## 1.4.1 (2020-12-08) 
 
 Prevent primary ConfigMaps and Secrets from being pruned by Flux
