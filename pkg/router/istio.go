@@ -215,6 +215,12 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
 
+	if canary.Spec.Service.Delegation {
+		// delegate VirtualService requires the hosts and gateway empty.
+		virtualService.Spec.Gateways = []string{}
+		virtualService.Spec.Hosts = []string{}
+	}
+
 	// update service but keep the original destination weights and mirror
 	if virtualService != nil {
 		if diff := cmp.Diff(
