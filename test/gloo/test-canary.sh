@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 
 # This script runs e2e tests for Canary initialization, analysis and promotion
+<<<<<<< HEAD:test/gloo/test-canary.sh
+=======
+# Prerequisites: Kubernetes Kind, Helm and Gloo Edge ingress controller
+>>>>>>> Initial commit:test/e2e-gloo-tests.sh
 
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
+<<<<<<< HEAD:test/gloo/test-canary.sh
+=======
+echo '>>> Creating test namespace'
+kubectl create namespace test
+
+echo '>>> Installing load tester'
+kubectl apply -k ${REPO_ROOT}/kustomize/tester
+kubectl -n test rollout status deployment/flagger-loadtester
+
+echo '>>> Initializing canary'
+kubectl apply -f ${REPO_ROOT}/test/e2e-workload.yaml
+
+>>>>>>> Initial commit:test/e2e-gloo-tests.sh
 cat <<EOF | kubectl apply -f -
 apiVersion: gateway.solo.io/v1
 kind: VirtualService
