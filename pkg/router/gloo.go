@@ -17,7 +17,7 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
-// GlooRouter is managing Istio virtual services
+// GlooRouter is managing Gloo route tables
 type GlooRouter struct {
 	kubeClient          kubernetes.Interface
 	glooClient          clientset.Interface
@@ -26,7 +26,7 @@ type GlooRouter struct {
 	upstreamDiscoveryNs string
 }
 
-// Reconcile creates or updates the Istio virtual service
+// Reconcile creates or updates the Gloo Edge route table
 func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, _, _ := canary.GetServiceNames()
 	canaryName := fmt.Sprintf("%s-%s-canary-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
