@@ -138,3 +138,7 @@ istio:
     secretName: ""
     # istio.kubeconfig.key: The name of secret data key that contains the Istio control plane kubeconfig
     key: "kubeconfig"
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
