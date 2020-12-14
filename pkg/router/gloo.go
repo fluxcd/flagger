@@ -38,9 +38,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 				// eventually inherit from parent, used for A/B rollouts too?
 				Matchers: []gloov1.Matcher{
 					{
-						PathSpecifier: gloov1.Matcher_Prefix{
-							Prefix: "/",
-						},
+						Prefix: "/",
 					},
 				},
 				Action: gloov1.RouteAction{
@@ -180,9 +178,7 @@ func (gr *GlooRouter) SetRoutes(
 				// eventually inherit from parent, used for A/B rollouts too?
 				Matchers: []gloov1.Matcher{
 					{
-						PathSpecifier: gloov1.Matcher_Prefix{
-							Prefix: "/",
-						},
+						Prefix: "/",
 					},
 				},
 				Action: gloov1.RouteAction{
