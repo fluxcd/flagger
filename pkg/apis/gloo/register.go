@@ -1,5 +1,5 @@
 package gloo
 
 const (
-	GroupName = "gloo.solo.io"
+	GroupName = "gateway.solo.io"
 )

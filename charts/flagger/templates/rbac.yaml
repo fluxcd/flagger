@@ -149,8 +149,19 @@ rules:
     resources:
       - upstreams
       - upstreams/finalizers
-      - upstreamgroups
-      - upstreamgroups/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - gateway.solo.io
+    resources:
+      - routetables
+      - routetables/finalizers
     verbs:
       - get
       - list
