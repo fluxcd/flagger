@@ -16,26 +16,20 @@ type RouteTable struct {
 }
 
 type RouteTableSpec struct {
-	Routes []Route `json:"destinations,omitempty"`
+	Routes []Route `json:"routes,omitempty"`
 }
 
 type Route struct {
-	Matchers []Matcher   `json:"destinations,omitempty"`
-	Action   RouteAction `json:"action,omitempty"`
+	Matchers []Matcher   `json:"matchers,omitempty"`
+	Action   RouteAction `json:"route_action,omitempty"`
 }
 
 type Matcher struct {
-	PathSpecifier Matcher_Prefix `json:"path_specifier,omitempty"`
-}
-
-type Matcher_Prefix struct {
-	// If specified, the route is a prefix rule meaning that the prefix must
-	// match the beginning of the *:path* header.
-	Prefix string `prefix:"path_specifier,omitempty"`
+	Prefix string `json:"prefix,omitempty"`
 }
 
 type RouteAction struct {
-	Destination MultiDestination `json:"destination,omitempty"`
+	Destination MultiDestination `json:"multi,omitempty"`
 }
 
 type MultiDestination struct {
