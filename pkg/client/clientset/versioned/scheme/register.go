@@ -42,7 +42,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	appmeshv1beta2.AddToScheme,
 	appmeshv1beta1.AddToScheme,
 	flaggerv1beta1.AddToScheme,
-	gloov1.AddToScheme,
+	gatewayv1.AddToScheme,
 	networkingv1alpha3.AddToScheme,
 	projectcontourv1.AddToScheme,
 	splitv1alpha1.AddToScheme,

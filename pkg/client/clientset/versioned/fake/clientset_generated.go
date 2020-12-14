@@ -107,9 +107,9 @@ func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
 	return &fakeflaggerv1beta1.FakeFlaggerV1beta1{Fake: &c.Fake}
 }
 
-// GlooV1 retrieves the GlooV1Client
-func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
-	return &fakegloov1.FakeGlooV1{Fake: &c.Fake}
+// GatewayV1 retrieves the GatewayV1Client
+func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
+	return &fakegatewayv1.FakeGatewayV1{Fake: &c.Fake}
 }
 
 // NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client

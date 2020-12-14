@@ -7,16 +7,35 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// UpstreamGroup is a specification for a Gloo UpstreamGroup resource
-type UpstreamGroup struct {
+// RouteTable is a specification for a Gloo RouteTable resource
+type RouteTable struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec UpstreamGroupSpec `json:"spec"`
+	Spec RouteTableSpec `json:"spec"`
 }
 
-type UpstreamGroupSpec struct {
-	Destinations []WeightedDestination `json:"destinations,omitempty"`
+type RouteTableSpec struct {
+	Routes []Route `json:"destinations,omitempty"`
+}
+
+type Route struct {
+	Matchers []Matcher `json:"destinations,omitempty"`
+	Action RouteAction `json:"action,omitempty"`
+}
+
+type Matcher struct {
+	PathSpecifier Matcher_Prefix `json:"path_specifier,omitempty"`
+}
+
+type Matcher_Prefix struct {
+	// If specified, the route is a prefix rule meaning that the prefix must
+	// match the beginning of the *:path* header.
+	Prefix string `prefix:"path_specifier,omitempty"`
+}
+
+type RouteAction struct {
+	Destination WeightedDestination `json:"destination,omitempty"`
 }
 
 // WeightedDestination attaches a weight to a single destination.
@@ -40,10 +59,10 @@ type ResourceRef struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// UpstreamGroupList is a list of UpstreamGroup resources
-type UpstreamGroupList struct {
+// RouteTableList is a list of RouteTable resources
+type RouteTableList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []UpstreamGroup `json:"items"`
+	Items []RouteTable `json:"items"`
 }
