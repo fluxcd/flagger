@@ -24,17 +24,17 @@ import (
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeGlooV1 struct {
+type FakeGatewayV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeGlooV1) UpstreamGroups(namespace string) v1.UpstreamGroupInterface {
-	return &FakeUpstreamGroups{c, namespace}
+func (c *FakeGatewayV1) RouteTables(namespace string) v1.RouteTableInterface {
+	return &FakeRouteTables{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeGlooV1) RESTClient() rest.Interface {
+func (c *FakeGatewayV1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

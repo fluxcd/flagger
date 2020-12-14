@@ -180,7 +180,7 @@ type SharedInformerFactory interface {
 
 	Appmesh() appmesh.Interface
 	Flagger() flagger.Interface
-	Gloo() gloo.Interface
+	Gateway() gloo.Interface
 	Networking() istio.Interface
 	Projectcontour() projectcontour.Interface
 	Split() smi.Interface
@@ -195,7 +195,7 @@ func (f *sharedInformerFactory) Flagger() flagger.Interface {
 	return flagger.New(f, f.namespace, f.tweakListOptions)
 }
 
-func (f *sharedInformerFactory) Gloo() gloo.Interface {
+func (f *sharedInformerFactory) Gateway() gloo.Interface {
 	return gloo.New(f, f.namespace, f.tweakListOptions)
 }
 

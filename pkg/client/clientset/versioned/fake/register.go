@@ -22,7 +22,7 @@ import (
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
 	appmeshv1beta2 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
+	gatewayv1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
 	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
@@ -42,7 +42,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	appmeshv1beta2.AddToScheme,
 	appmeshv1beta1.AddToScheme,
 	flaggerv1beta1.AddToScheme,
-	gloov1.AddToScheme,
+	gatewayv1.AddToScheme,
 	networkingv1alpha3.AddToScheme,
 	projectcontourv1.AddToScheme,
 	splitv1alpha1.AddToScheme,
