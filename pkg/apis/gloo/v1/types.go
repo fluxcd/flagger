@@ -20,8 +20,8 @@ type RouteTableSpec struct {
 }
 
 type Route struct {
-	Matchers []Matcher `json:"destinations,omitempty"`
-	Action RouteAction `json:"action,omitempty"`
+	Matchers []Matcher   `json:"destinations,omitempty"`
+	Action   RouteAction `json:"action,omitempty"`
 }
 
 type Matcher struct {
@@ -35,7 +35,11 @@ type Matcher_Prefix struct {
 }
 
 type RouteAction struct {
-	Destination WeightedDestination `json:"destination,omitempty"`
+	Destination MultiDestination `json:"destination,omitempty"`
+}
+
+type MultiDestination struct {
+	Destinations []WeightedDestination `json:"destinations,omitempty"`
 }
 
 // WeightedDestination attaches a weight to a single destination.
