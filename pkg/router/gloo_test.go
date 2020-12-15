@@ -25,9 +25,9 @@ func TestGlooRouter_Sync(t *testing.T) {
 	require.NoError(t, err)
 
 	// test insert
-	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	rt, err := router.glooClient.GatewayV1().RouteTables("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
-	dests := ug.Spec.Destinations
+	dests := rt.Spec.Routes[0].Action.Destination.Destinations
 	assert.Len(t, dests, 2)
 	assert.Equal(t, uint32(100), dests[0].Weight)
 	assert.Equal(t, uint32(0), dests[1].Weight)
@@ -55,7 +55,7 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	err = router.SetRoutes(mocks.canary, p, c, m)
 	require.NoError(t, err)
 
-	ug, err := router.glooClient.GlooV1().UpstreamGroups("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	rt, err := router.glooClient.GatewayV1().RouteTables("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	var pRoute gloov1.WeightedDestination
@@ -63,7 +63,7 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	canaryName := fmt.Sprintf("%s-%s-canary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
 	primaryName := fmt.Sprintf("%s-%s-primary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
 
-	for _, dest := range ug.Spec.Destinations {
+	for _, dest := range rt.Spec.Routes[0].Action.Destination.Destinations {
 		if dest.Destination.Upstream.Name == primaryName {
 			pRoute = dest
 		}
