@@ -25,7 +25,27 @@ type Route struct {
 }
 
 type Matcher struct {
+	// only one of Prefix, Exact, Regex may be nonempty
 	Prefix string `json:"prefix,omitempty"`
+	Exact  string `json:"exact,omitempty"`
+	Regex  string `json:"regex,omitempty"`
+
+	Headers                []HeaderMatcher         `json:"headers,omitempty"`
+	QueryParameterMatchers []QueryParameterMatcher `json:"queryParameters,omitempty"`
+	Methods                []string                `json:"methods,omitempty"`
+}
+
+type HeaderMatcher struct {
+	Name        string `json:"name,omitempty"`
+	Value       string `json:"value,omitempty"`
+	Regex       bool   `json:"regex,omitempty"`
+	InvertMatch bool   `json:"invertMatch,omitempty"`
+}
+
+type QueryParameterMatcher struct {
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
+	Regex bool   `json:"regex,omitempty"`
 }
 
 type RouteAction struct {
