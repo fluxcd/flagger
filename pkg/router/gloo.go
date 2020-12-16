@@ -51,10 +51,11 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	newSpec := gloov1.RouteTableSpec{
 		Routes: []gloov1.Route{
 			{
-				// eventually inherit from parent, used for A/B rollouts too?
 				Matchers: []gloov1.Matcher{
 					{
-						Prefix: "/",
+						Prefix:  "/",
+						Headers: getHeaderMatchers(canary),
+						Methods: getMethods(canary),
 					},
 				},
 				Action: gloov1.RouteAction{
@@ -194,7 +195,9 @@ func (gr *GlooRouter) SetRoutes(
 				// eventually inherit from parent, used for A/B rollouts too?
 				Matchers: []gloov1.Matcher{
 					{
-						Prefix: "/",
+						Prefix:  "/",
+						Headers: getHeaderMatchers(canary),
+						Methods: getMethods(canary),
 					},
 				},
 				Action: gloov1.RouteAction{
@@ -234,4 +237,35 @@ func (gr *GlooRouter) SetRoutes(
 
 func (gr *GlooRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
+}
+
+func getHeaderMatchers(canary *flaggerv1.Canary) []gloov1.HeaderMatcher {
+	var headerMatchers []gloov1.HeaderMatcher
+	for _, match := range canary.GetAnalysis().Match {
+		for s, stringMatch := range match.Headers {
+			h := gloov1.HeaderMatcher{
+				Name:  s,
+				Value: stringMatch.Exact,
+			}
+			if stringMatch.Regex != "" {
+				h = gloov1.HeaderMatcher{
+					Name:  s,
+					Value: stringMatch.Regex,
+					Regex: true,
+				}
+			}
+			headerMatchers = append(headerMatchers, h)
+		}
+	}
+	return headerMatchers
+}
+
+func getMethods(canary *flaggerv1.Canary) []string {
+	var methods []string
+	for _, match := range canary.GetAnalysis().Match {
+		if stringMatch := match.Method; stringMatch != nil {
+			methods = append(methods, stringMatch.Exact)
+		}
+	}
+	return methods
 }
