@@ -21,7 +21,7 @@ type RouteTableSpec struct {
 
 type Route struct {
 	Matchers []Matcher   `json:"matchers,omitempty"`
-	Action   RouteAction `json:"route_action,omitempty"`
+	Action   RouteAction `json:"routeAction,omitempty"`
 }
 
 type Matcher struct {
