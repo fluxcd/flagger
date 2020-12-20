@@ -15,6 +15,7 @@ jobs:
         provider:
           - istio
           - linkerd
+          - contour
     steps:
       - name: Checkout
         uses: actions/checkout@v2
