@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: podinfo-ds
+  namespace: test
+  labels:
+    app.kubernetes.io/name: podinfo-ds
+spec:
+  minReadySeconds: 5
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: podinfo-ds
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9797"
+      labels:
+        app.kubernetes.io/name: podinfo-ds
+    spec:
+      containers:
+      - name: podinfod
+        image: stefanprodan/podinfo:3.1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+          - name: http
+            containerPort: 9898
+            protocol: TCP
+          - name: http-metrics
+            containerPort: 9797
+            protocol: TCP
+          - name: grpc
+            containerPort: 9999
+            protocol: TCP
+        command:
+          - ./podinfo
+          - --port=9898
+          - --port-metrics=9797
+          - --grpc-port=9999
+          - --grpc-service-name=podinfo
+          - --level=info
+          - --random-delay=false
+          - --random-error=false
+        livenessProbe:
+          httpGet:
+            port: 9898
+            path: /healthz
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            port: 9898
+            path: /readyz
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+          requests:
+            cpu: 1m
+            memory: 16Mi
