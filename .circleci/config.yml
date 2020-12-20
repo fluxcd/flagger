@@ -223,6 +223,8 @@ workflows:
               ignore:
                 - gh-pages
                 - /^user-.*/
+                - github-actions
+                - main
       - e2e-kubernetes-testing:
           requires:
             - build-binary
