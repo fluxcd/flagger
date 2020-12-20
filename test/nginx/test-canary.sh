@@ -244,7 +244,7 @@ spec:
         timeout: 5s
         metadata:
           type: bash
-          cmd: "curl -sH 'x-user: insider' -H 'Host: app.example.com' http://ingress-nginx-controller.ingress-nginx | grep '3.1.1'"
+          cmd: "curl -sH 'x-user: insider' -H 'Host: app.example.com' http://ingress-nginx-controller.ingress-nginx"
       - name: load-test
         type: rollout
         url: http://flagger-loadtester.test/
