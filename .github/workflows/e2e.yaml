@@ -16,6 +16,7 @@ jobs:
           - istio
           - linkerd
           - contour
+          - nginx
     steps:
       - name: Checkout
         uses: actions/checkout@v2
