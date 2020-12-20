@@ -68,7 +68,7 @@ type NGrinderTask struct {
 }
 
 func (task *NGrinderTask) Hash() string {
-	return hash(task.canary + string(task.cloneId))
+	return hash(task.canary + fmt.Sprint(task.cloneId))
 }
 
 // nGrinder REST endpoints
