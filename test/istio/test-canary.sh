@@ -91,7 +91,6 @@ count=0
 ok=false
 until ${ok}; do
     kubectl -n test get canary/podinfo | grep 'Initialized' && ok=true || ok=false
-    kubectl -n test get canary/podinfo-service | grep 'Initialized' && ok=true || ok=false
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then

@@ -17,6 +17,8 @@ jobs:
           - linkerd
           - contour
           - nginx
+          - traefik
+          - gloo
     steps:
       - name: Checkout
         uses: actions/checkout@v2

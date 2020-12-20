@@ -12,7 +12,7 @@ kubectl create ns traefik
 
 echo '>>> Installing Traefik'
 helm repo add traefik https://helm.traefik.io/traefik
-cat <<EOF | helm upgrade -i traefik traefik/traefik --version=${TRAEFIK_VERSION} --wait --namespace traefik -f -
+cat <<EOF | helm upgrade -i traefik traefik/traefik --version=${TRAEFIK_VERSION} --namespace traefik -f -
 additionalArguments:
   - "--metrics.prometheus=true"
 deployment:
@@ -21,6 +21,7 @@ deployment:
     "prometheus.io/scrape": "true"
 EOF
 
+kubectl -n traefik rollout status deployment/traefik
 kubectl -n traefik get all
 
 echo '>>> Installing Flagger'
