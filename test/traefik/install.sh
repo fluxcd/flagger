@@ -34,4 +34,4 @@ helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
 --set image.tag=latest \
 
 kubectl -n traefik rollout status deployment/flagger
-kubectl -n projectcontour rollout status deployment/flagger-prometheus
+kubectl -n traefik rollout status deployment/flagger-prometheus

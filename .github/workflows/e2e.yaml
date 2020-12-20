@@ -19,6 +19,7 @@ jobs:
           - nginx
           - traefik
           - gloo
+          - kubernetes
     steps:
       - name: Checkout
         uses: actions/checkout@v2
