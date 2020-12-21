@@ -51,13 +51,8 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	newSpec := gloov1.RouteTableSpec{
 		Routes: []gloov1.Route{
 			{
-				Matchers: []gloov1.Matcher{
-					{
-						Prefix:  "/",
-						Headers: getHeaderMatchers(canary),
-						Methods: getMethods(canary),
-					},
-				},
+				InheritablePathMatchers: true,
+				Matchers:                getMatchers(canary),
 				Action: gloov1.RouteAction{
 					Destination: gloov1.MultiDestination{
 						Destinations: []gloov1.WeightedDestination{
@@ -192,14 +187,9 @@ func (gr *GlooRouter) SetRoutes(
 	routeTable.Spec = gloov1.RouteTableSpec{
 		Routes: []gloov1.Route{
 			{
+				InheritablePathMatchers: true,
 				// eventually inherit from parent, used for A/B rollouts too?
-				Matchers: []gloov1.Matcher{
-					{
-						Prefix:  "/",
-						Headers: getHeaderMatchers(canary),
-						Methods: getMethods(canary),
-					},
-				},
+				Matchers: getMatchers(canary),
 				Action: gloov1.RouteAction{
 					Destination: gloov1.MultiDestination{
 						Destinations: []gloov1.WeightedDestination{
@@ -237,6 +227,23 @@ func (gr *GlooRouter) SetRoutes(
 
 func (gr *GlooRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
+}
+
+func getMatchers(canary *flaggerv1.Canary) []gloov1.Matcher {
+
+	headerMatchers := getHeaderMatchers(canary)
+	methods := getMethods(canary)
+
+	if len(headerMatchers) == 0 && len(methods) == 0 {
+		return nil
+	}
+
+	return []gloov1.Matcher{
+		{
+			Headers: headerMatchers,
+			Methods: methods,
+		},
+	}
 }
 
 func getHeaderMatchers(canary *flaggerv1.Canary) []gloov1.HeaderMatcher {

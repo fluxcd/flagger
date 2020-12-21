@@ -20,16 +20,12 @@ type RouteTableSpec struct {
 }
 
 type Route struct {
-	Matchers []Matcher   `json:"matchers,omitempty"`
-	Action   RouteAction `json:"routeAction,omitempty"`
+	Matchers                []Matcher   `json:"matchers,omitempty"`
+	Action                  RouteAction `json:"routeAction,omitempty"`
+	InheritablePathMatchers bool        `json:"inheritablePathMatchers,omitempty"`
 }
 
 type Matcher struct {
-	// only one of Prefix, Exact, Regex may be nonempty
-	Prefix string `json:"prefix,omitempty"`
-	Exact  string `json:"exact,omitempty"`
-	Regex  string `json:"regex,omitempty"`
-
 	Headers                []HeaderMatcher         `json:"headers,omitempty"`
 	QueryParameterMatchers []QueryParameterMatcher `json:"queryParameters,omitempty"`
 	Methods                []string                `json:"methods,omitempty"`
