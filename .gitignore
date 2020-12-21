@@ -20,3 +20,4 @@ artifacts/gcloud/
 Makefile.dev
 
 vendor
+coverage.txt

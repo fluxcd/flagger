@@ -1,0 +1,47 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - github-actions
+
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Restore Go cache
+        uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15.x
+      - name: Download modules
+        run: |
+          go mod download
+          go install golang.org/x/tools/cmd/goimports
+      - name: Run linters
+        run: make test-fmt test-codegen
+      - name: Run tests
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git diff --stat) != '' ]]; then
+            git --no-pager diff
+            echo 'run make test and commit changes'
+            exit 1
+          fi
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.txt
+      - name: Build container image
+        run: docker build -t test/flagger:latest .

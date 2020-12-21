@@ -1,0 +1,35 @@
+name: e2e
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - github-actions
+
+jobs:
+  kind:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        provider:
+          - istio
+          - linkerd
+          - contour
+          - nginx
+          - traefik
+          - gloo
+          - skipper
+          - kubernetes
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Kubernetes
+        uses: engineerd/setup-kind@v0.5.0
+      - name: Build container image
+        run: |
+          docker build -t test/flagger:latest .
+          kind load docker-image test/flagger:latest
+      - name: Run tests
+        run: |
+          ./test/${{ matrix['provider'] }}/run.sh
