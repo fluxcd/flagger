@@ -188,8 +188,7 @@ func (gr *GlooRouter) SetRoutes(
 		Routes: []gloov1.Route{
 			{
 				InheritablePathMatchers: true,
-				// eventually inherit from parent, used for A/B rollouts too?
-				Matchers: getMatchers(canary),
+				Matchers:                getMatchers(canary),
 				Action: gloov1.RouteAction{
 					Destination: gloov1.MultiDestination{
 						Destinations: []gloov1.WeightedDestination{
