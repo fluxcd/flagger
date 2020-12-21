@@ -348,7 +348,7 @@ podinfod=stefanprodan/podinfo:3.1.3
 Generate 404s:
 
 ```bash
-watch curl -H 'Host: app.example.com' http://gateway-proxy.gloo-system/status/400
+watch curl -H 'Host: app.example.com' http://gateway-proxy.gloo-system/status/404
 ```
 
 Watch Flagger logs:
