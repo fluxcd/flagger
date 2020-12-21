@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/weaveworks/flagger/pkg/apis/appmesh"
+	"github.com/fluxcd/flagger/pkg/apis/appmesh"
 )
 
 // SchemeGroupVersion is group version used to register these objects

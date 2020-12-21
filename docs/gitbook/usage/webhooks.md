@@ -111,12 +111,12 @@ Flagger metric checks will fail with "no values found for metric request-success
 Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) 
 that generates traffic during analysis when configured as a webhook.
 
-![Flagger Load Testing Webhook](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-load-testing.png)
+![Flagger Load Testing Webhook](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-load-testing.png)
 
 First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k github.com/fluxcd/flagger//kustomize/tester
 ```
 
 Or by using Helm:

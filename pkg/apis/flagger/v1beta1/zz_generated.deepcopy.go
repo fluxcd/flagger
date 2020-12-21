@@ -21,7 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )

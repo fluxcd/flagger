@@ -8,8 +8,8 @@ import (
 	"os"
 	"testing"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

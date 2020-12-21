@@ -1,16 +1,16 @@
 # flagger
 
 [![build](https://img.shields.io/circleci/build/github/weaveworks/flagger/master.svg)](https://circleci.com/gh/weaveworks/flagger)
-[![report](https://goreportcard.com/badge/github.com/weaveworks/flagger)](https://goreportcard.com/report/github.com/weaveworks/flagger)
+[![report](https://goreportcard.com/badge/github.com/fluxcd/flagger)](https://goreportcard.com/report/github.com/fluxcd/flagger)
 [![codecov](https://codecov.io/gh/weaveworks/flagger/branch/master/graph/badge.svg)](https://codecov.io/gh/weaveworks/flagger)
-[![license](https://img.shields.io/github/license/weaveworks/flagger.svg)](https://github.com/weaveworks/flagger/blob/master/LICENSE)
-[![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/weaveworks/flagger/releases)
+[![license](https://img.shields.io/github/license/weaveworks/flagger.svg)](https://github.com/fluxcd/flagger/blob/master/LICENSE)
+[![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/fluxcd/flagger/releases)
 
 Flagger is a progressive delivery tool that automates the release process for applications running on Kubernetes. 
 It reduces the risk of introducing a new software version in production
 by gradually shifting traffic to the new version while measuring metrics and running conformance tests.
 
-![flagger-overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-overview.png)
+![flagger-overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-overview.png)
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
 using a service mesh (App Mesh, Istio, Linkerd) or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
@@ -249,6 +249,6 @@ If you have any questions about Flagger and progressive delivery:
   and join the [#flagger](https://weave-community.slack.com/messages/flagger/) channel.
 * Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks,
   hands-on training and meetups in your area.
-* File an [issue](https://github.com/weaveworks/flagger/issues/new).
+* File an [issue](https://github.com/fluxcd/flagger/issues/new).
 
 Your feedback is always welcome!

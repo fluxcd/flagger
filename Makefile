@@ -4,13 +4,13 @@ LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' 
 
 build:
 	GIT_COMMIT=$$(git rev-list -1 HEAD) && CGO_ENABLED=0 GOOS=linux go build  \
-		-ldflags "-s -w -X github.com/weaveworks/flagger/pkg/version.REVISION=$${GIT_COMMIT}" \
+		-ldflags "-s -w -X github.com/fluxcd/flagger/pkg/version.REVISION=$${GIT_COMMIT}" \
 		-a -installsuffix cgo -o ./bin/flagger ./cmd/flagger/*
 	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
 
 push:
-	docker tag weaveworks/flagger:$(TAG) weaveworks/flagger:$(VERSION)
-	docker push weaveworks/flagger:$(VERSION)
+	docker tag fluxcd/flagger:$(TAG) fluxcd/flagger:$(VERSION)
+	docker push fluxcd/flagger:$(VERSION)
 
 fmt:
 	gofmt -l -s -w ./
@@ -54,7 +54,7 @@ release-notes:
 
 loadtester-build:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
-	docker build -t weaveworks/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
+	docker build -t fluxcd/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 
 loadtester-push:
-	docker push weaveworks/flagger-loadtester:$(LT_VERSION)
+	docker push fluxcd/flagger-loadtester:$(LT_VERSION)

@@ -2,7 +2,7 @@
 
 This guide shows you how to use Istio and Flagger to automate canary deployments.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/sampl
 Install Flagger in the `istio-system` namespace:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
+kubectl apply -k github.com/fluxcd/flagger//kustomize/istio?ref=main
 ```
 
 Create an ingress gateway to expose the demo app outside of the mesh:
@@ -59,13 +59,13 @@ kubectl label namespace test istio-injection=enabled
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Create a canary custom resource (replace example.com with your own domain):
@@ -163,7 +163,7 @@ kubectl apply -f ./podinfo-canary.yaml
 When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
 The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
 
-![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
+![Flagger Canary Process](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-hpa.png)
 
 After a couple of seconds Flagger will create the canary objects:
 
@@ -299,7 +299,7 @@ Events:
 
 ## Traffic mirroring
 
-![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-traffic-mirroring.png)
+![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-traffic-mirroring.png)
 
 For applications that perform read operations, Flagger can be configured to drive canary releases with traffic mirroring.
 Istio traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.

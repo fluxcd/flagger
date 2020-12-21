@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/weaveworks/flagger/pkg/metrics/providers"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/metrics/providers"
 )
 
 var nginxQueries = map[string]string{

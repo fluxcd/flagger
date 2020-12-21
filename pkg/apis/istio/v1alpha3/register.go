@@ -1,7 +1,7 @@
 package v1alpha3
 
 import (
-	"github.com/weaveworks/flagger/pkg/apis/istio"
+	"github.com/fluxcd/flagger/pkg/apis/istio"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

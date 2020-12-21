@@ -9,8 +9,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/weaveworks/flagger/pkg/notifier"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/notifier"
 )
 
 func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {

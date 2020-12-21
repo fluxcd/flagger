@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/weaveworks/flagger/pkg/apis/projectcontour"
+	"github.com/fluxcd/flagger/pkg/apis/projectcontour"
 )
 
 // SchemeGroupVersion is the GroupVersion for the Contour API

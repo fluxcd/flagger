@@ -1,6 +1,6 @@
 # Flagger
 
-[Flagger](https://github.com/weaveworks/flagger) is an operator that automates the release process of applications on Kubernetes.
+[Flagger](https://github.com/fluxcd/flagger) is an operator that automates the release process of applications on Kubernetes.
 
 Flagger can run automated application analysis, testing, promotion and rollback for the following deployment strategies:
 * Canary Release (progressive traffic shifting)
@@ -25,7 +25,7 @@ $ helm repo add flagger https://flagger.app
 Install Flagger's custom resource definitions:
 
 ```console
-$ kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/fluxcd/flagger/main/artifacts/flagger/crd.yaml
 ```
 
 To install Flagger for **Istio**:

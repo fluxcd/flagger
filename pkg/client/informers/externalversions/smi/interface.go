@@ -19,9 +19,9 @@ limitations under the License.
 package smi
 
 import (
-	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/weaveworks/flagger/pkg/client/informers/externalversions/smi/v1alpha1"
-	v1alpha2 "github.com/weaveworks/flagger/pkg/client/informers/externalversions/smi/v1alpha2"
+	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/fluxcd/flagger/pkg/client/informers/externalversions/smi/v1alpha1"
+	v1alpha2 "github.com/fluxcd/flagger/pkg/client/informers/externalversions/smi/v1alpha2"
 )
 
 // Interface provides access to each of this group's versions.

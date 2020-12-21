@@ -19,8 +19,8 @@ limitations under the License.
 package v1alpha2
 
 import (
-	v1alpha2 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha2"
-	"github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
+	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
+	"github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

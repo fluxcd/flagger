@@ -30,7 +30,7 @@ You can find the chart source [here](https://github.com/stefanprodan/flagger/tre
 Create a test namespace with Istio sidecar injection enabled:
 
 ```bash
-export REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
+export REPO=https://raw.githubusercontent.com/fluxcd/flagger/main
 
 kubectl apply -f ${REPO}/artifacts/namespaces/test.yaml
 ```
@@ -77,7 +77,7 @@ When the `frontend-primary` deployment comes online, Flagger will route all traf
 
 Open your browser and navigate to the frontend URL:
 
-![Podinfo Frontend](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-frontend.png)
+![Podinfo Frontend](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/demo-frontend.png)
 
 Now let's install the `backend` release without exposing it outside the mesh:
 
@@ -101,7 +101,7 @@ frontend   Initialized   0        2019-02-12T17:50:50Z
 
 Click on the ping button in the `frontend` UI to trigger a HTTP POST request that will reach the `backend` app:
 
-![Jaeger Tracing](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-frontend-jaeger.png)
+![Jaeger Tracing](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/demo-frontend-jaeger.png)
 
 We'll use the `/echo` endpoint \(same as the one the ping button calls\) to generate load on both apps during a canary deployment.
 
@@ -159,7 +159,7 @@ Promotion completed! Scaling down frontend.test
 
 You can monitor the canary deployment with Grafana. Open the Flagger dashboard, select `test` from the namespace dropdown, `frontend-primary` from the primary dropdown and `frontend` from the canary dropdown.
 
-![Flagger Grafana Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-frontend-dashboard.png)
+![Flagger Grafana Dashboard](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/demo-frontend-dashboard.png)
 
 Now trigger a canary deployment for the `backend` app, but this time you'll change a value in the configmap:
 
@@ -217,7 +217,7 @@ Copying backend.test template spec to backend-primary.test
 Promotion completed! Scaling down backend.test
 ```
 
-![Flagger Grafana Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/demo-backend-dashboard.png)
+![Flagger Grafana Dashboard](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/demo-backend-dashboard.png)
 
 If the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
@@ -235,7 +235,7 @@ If you've enabled the Slack notifications, you'll receive an alert with the reas
 
 Instead of using Helm CLI from a CI tool to perform the install and upgrade, you could use a Git based approach. GitOps is a way to do Continuous Delivery, it works by using Git as a source of truth for declarative infrastructure and workloads. In the [GitOps model](https://www.weave.works/technologies/gitops/), any change to production must be committed in source control prior to being applied on the cluster. This way rollback and audit logs are provided by Git.
 
-![Helm GitOps Canary Deployment](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-flux-gitops.png)
+![Helm GitOps Canary Deployment](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-flux-gitops.png)
 
 In order to apply the GitOps pipeline model to Flagger canary deployments you'll need a Git repository with your workloads definitions in YAML format, a container registry where your CI system pushes immutable images and an operator that synchronizes the Git repo with the cluster state.
 

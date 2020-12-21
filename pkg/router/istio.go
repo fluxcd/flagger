@@ -13,9 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	istiov1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
 // IstioRouter is managing Istio virtual services

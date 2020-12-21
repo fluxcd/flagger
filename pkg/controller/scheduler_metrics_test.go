@@ -7,8 +7,8 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/client-go/tools/record"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/weaveworks/flagger/pkg/metrics/observers"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/metrics/observers"
 )
 
 func TestController_checkMetricProviderAvailability(t *testing.T) {

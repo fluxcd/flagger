@@ -22,17 +22,17 @@ import (
 	"k8s.io/client-go/transport"
 	_ "k8s.io/code-generator/cmd/client-gen/generators"
 
-	"github.com/weaveworks/flagger/pkg/canary"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	informers "github.com/weaveworks/flagger/pkg/client/informers/externalversions"
-	"github.com/weaveworks/flagger/pkg/controller"
-	"github.com/weaveworks/flagger/pkg/logger"
-	"github.com/weaveworks/flagger/pkg/metrics/observers"
-	"github.com/weaveworks/flagger/pkg/notifier"
-	"github.com/weaveworks/flagger/pkg/router"
-	"github.com/weaveworks/flagger/pkg/server"
-	"github.com/weaveworks/flagger/pkg/signals"
-	"github.com/weaveworks/flagger/pkg/version"
+	"github.com/fluxcd/flagger/pkg/canary"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
+	informers "github.com/fluxcd/flagger/pkg/client/informers/externalversions"
+	"github.com/fluxcd/flagger/pkg/controller"
+	"github.com/fluxcd/flagger/pkg/logger"
+	"github.com/fluxcd/flagger/pkg/metrics/observers"
+	"github.com/fluxcd/flagger/pkg/notifier"
+	"github.com/fluxcd/flagger/pkg/router"
+	"github.com/fluxcd/flagger/pkg/server"
+	"github.com/fluxcd/flagger/pkg/signals"
+	"github.com/fluxcd/flagger/pkg/version"
 )
 
 var (

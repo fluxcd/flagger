@@ -118,7 +118,7 @@ helm repo add flagger https://flagger.app
 Install Flagger's Canary CRD:
 
 ```yaml
-kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/fluxcd/flagger/main/artifacts/flagger/crd.yaml
 ```
 
 Deploy Flagger in the _**appmesh-system**_ namespace:

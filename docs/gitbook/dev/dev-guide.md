@@ -20,7 +20,7 @@ You'll also need a Kubernetes cluster for testing Flagger.
 You can use Minikube, Kind, Docker desktop or any remote cluster
 (AKS/EKS/GKE/etc) Kubernetes version 1.14 or newer.
 
-To start contributing to Flagger, fork the [repository](https://github.com/weaveworks/flagger) on GitHub.
+To start contributing to Flagger, fork the [repository](https://github.com/fluxcd/flagger) on GitHub.
 
 Create a dir inside your `GOPATH`:
 
@@ -39,7 +39,7 @@ cd flagger
 Set Flagger repository as upstream:
 
 ```bash
-git remote add upstream https://github.com/weaveworks/flagger.git
+git remote add upstream https://github.com/fluxcd/flagger.git
 ```
 
 Sync your fork regularly to keep it up-to-date with upstream:
@@ -205,7 +205,7 @@ Run the Linkerd e2e tests:
 ```
 
 For each service mesh and ingress controller there is a dedicated e2e test suite,
-chose one that matches your changes from this [list](https://github.com/weaveworks/flagger/tree/master/test).
+chose one that matches your changes from this [list](https://github.com/fluxcd/flagger/tree/master/test).
 
 When you open a pull request on Flagger repo, the unit and integration tests will be run in CI.
 
