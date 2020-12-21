@@ -28,8 +28,10 @@ jobs:
         run: |
           go mod download
           go install golang.org/x/tools/cmd/goimports
+      - name: Run linters
+        run: make test-fmt test-codegen
       - name: Run tests
-        run: make test
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
       - name: Check if working tree is dirty
         run: |
           if [[ $(git diff --stat) != '' ]]; then
@@ -37,5 +39,9 @@ jobs:
             echo 'run make test and commit changes'
             exit 1
           fi
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.txt
       - name: Build container image
         run: docker build -t test/flagger:latest .

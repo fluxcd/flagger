@@ -58,6 +58,7 @@ jobs:
         uses: stefanprodan/helm-gh-pages@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          charts_url: https://flagger.app
       - name: Create release
         uses: actions/create-release@latest
         env:
