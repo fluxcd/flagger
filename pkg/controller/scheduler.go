@@ -9,9 +9,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/weaveworks/flagger/pkg/canary"
-	"github.com/weaveworks/flagger/pkg/router"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/canary"
+	"github.com/fluxcd/flagger/pkg/router"
 )
 
 func (c *Controller) min(a int, b int) int {

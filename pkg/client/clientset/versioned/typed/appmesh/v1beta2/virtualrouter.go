@@ -22,8 +22,8 @@ import (
 	"context"
 	"time"
 
-	v1beta2 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta2"
-	scheme "github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
+	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

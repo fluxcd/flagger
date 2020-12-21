@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/weaveworks/flagger/pkg/loadtester"
-	"github.com/weaveworks/flagger/pkg/logger"
-	"github.com/weaveworks/flagger/pkg/signals"
+	"github.com/fluxcd/flagger/pkg/loadtester"
+	"github.com/fluxcd/flagger/pkg/logger"
+	"github.com/fluxcd/flagger/pkg/signals"
 	"go.uber.org/zap"
 )
 

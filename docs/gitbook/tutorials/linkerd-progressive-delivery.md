@@ -2,7 +2,7 @@
 
 This guide shows you how to use Linkerd and Flagger to automate canary deployments.
 
-![Flagger Linkerd Traffic Split](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-linkerd-traffic-split.png)
+![Flagger Linkerd Traffic Split](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-linkerd-traffic-split.png)
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ Flagger requires a Kubernetes cluster **v1.11** or newer and Linkerd **2.4** or 
 Install Flagger in the linkerd namespace:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd
+kubectl apply -k github.com/fluxcd/flagger//kustomize/linkerd?ref=main
 ```
 
 Note that you'll need kubectl 1.14 or newer to run the above command.
@@ -32,13 +32,13 @@ kubectl annotate namespace test linkerd.io/inject=enabled
 Install the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Create a canary custom resource for the podinfo deployment:
@@ -146,7 +146,7 @@ Flagger implements a control loop that gradually shifts traffic to the canary wh
 key performance indicators like HTTP requests success rate, requests average duration and pod health.
 Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 Trigger a canary deployment by updating the container image:
 
@@ -377,7 +377,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
 This is particularly useful for frontend applications that require session affinity.
 
-![Flagger Linkerd Ingress](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-nginx-linkerd.png)
+![Flagger Linkerd Ingress](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-nginx-linkerd.png)
 
 Edit podinfo canary analysis, set the provider to `nginx`, add the ingress reference,
 remove the max/step weight and add the match conditions and iterations:

@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
 // GlooRouter is managing Istio virtual services

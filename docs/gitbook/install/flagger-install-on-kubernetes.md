@@ -17,7 +17,7 @@ helm repo add flagger https://flagger.app
 Install Flagger's Canary CRD:
 
 ```yaml
-kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/fluxcd/flagger/main/artifacts/flagger/crd.yaml
 ```
 
 Deploy Flagger for Istio:
@@ -173,13 +173,13 @@ As an alternative to Helm, Flagger can be installed with Kustomize **3.5.0** or 
 Install Flagger for Istio:
 
 ```bash
-kustomize build https://github.com/weaveworks/flagger/kustomize/istio | kubectl apply -f -
+kustomize build https://github.com/fluxcd/flagger/kustomize/istio?ref=main | kubectl apply -f -
 ```
 
 Install Flagger for AWS App Mesh:
 
 ```bash
-kustomize build https://github.com/weaveworks/flagger/kustomize/appmesh | kubectl apply -f -
+kustomize build https://github.com/fluxcd/flagger/kustomize/appmesh?ref=main | kubectl apply -f -
 ```
 
 This deploys Flagger and sets the metrics server URL to App Mesh's Prometheus instance.
@@ -187,7 +187,7 @@ This deploys Flagger and sets the metrics server URL to App Mesh's Prometheus in
 Install Flagger for Linkerd:
 
 ```bash
-kustomize build https://github.com/weaveworks/flagger/kustomize/linkerd | kubectl apply -f -
+kustomize build https://github.com/fluxcd/flagger/kustomize/linkerd?ref=main | kubectl apply -f -
 ```
 
 This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
@@ -195,7 +195,7 @@ This deploys Flagger in the `linkerd` namespace and sets the metrics server URL 
 If you want to install a specific Flagger release, add the version number to the URL:
 
 ```bash
-kustomize build https://github.com/weaveworks/flagger/kustomize/linkerd?ref=v1.0.0 | kubectl apply -f -
+kustomize build https://github.com/fluxcd/flagger/kustomize/linkerd?ref=v1.0.0 | kubectl apply -f -
 ```
 
 **Generic installer**
@@ -203,7 +203,7 @@ kustomize build https://github.com/weaveworks/flagger/kustomize/linkerd?ref=v1.0
 Install Flagger and Prometheus for Contour, Gloo, NGINX, Skipper, or Traefik ingress:
 
 ```bash
-kustomize build https://github.com/weaveworks/flagger/kustomize/kubernetes | kubectl apply -f -
+kustomize build https://github.com/fluxcd/flagger/kustomize/kubernetes?ref=main | kubectl apply -f -
 ```
 
 This deploys Flagger and Prometheus in the `flagger-system` namespace, sets the metrics server URL
@@ -234,7 +234,7 @@ Create a kustomization file using Flagger as base and patch the container args:
 cat > kustomization.yaml <<EOF
 namespace: istio-system
 bases:
-  - github.com/weaveworks/flagger/kustomize/base/flagger
+  - github.com/fluxcd/flagger/kustomize/base/flagger
 patches:
 - target:
     kind: Deployment

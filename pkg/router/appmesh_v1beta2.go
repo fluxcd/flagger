@@ -15,9 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
-	appmeshv1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta2"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	appmeshv1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
 // AppMeshRouter is managing AppMesh virtual services

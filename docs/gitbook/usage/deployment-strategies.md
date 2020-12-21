@@ -25,7 +25,7 @@ Flagger implements a control loop that gradually shifts traffic to the canary wh
 indicators like HTTP requests success rate, requests average duration and pod health.
 Based on analysis of the KPIs a canary is promoted or aborted.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 The canary analysis runs periodically until it reaches the maximum traffic weight or the failed checks threshold. 
 
@@ -158,7 +158,7 @@ We would have steps (canary weight : primary weight):
 For frontend applications that require session affinity you should use HTTP headers or cookies match conditions
 to ensure a set of users will stay on the same version for the whole duration of the canary analysis.
 
-![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
 
 You can enable A/B testing by specifying the HTTP match conditions and the number of iterations.
 If Flagger finds a HTTP match condition, it will ignore the `maxWeight` and `stepWeight` settings.
@@ -285,7 +285,7 @@ curl -b 'canary=always' http://app.example.com
 For applications that are not deployed on a service mesh, Flagger can orchestrate blue/green style deployments 
 with Kubernetes L4 networking. When using Istio you have the option to mirror traffic between blue and green.
 
-![Flagger Blue/Green Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-bluegreen-steps.png)
+![Flagger Blue/Green Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-bluegreen-steps.png)
 
 You can use the blue/green deployment strategy by replacing `stepWeight/maxWeight` with `iterations` in the `analysis` spec:
 

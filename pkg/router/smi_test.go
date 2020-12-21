@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	smiv1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	smiv1 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha1"
 )
 
 func TestSmiRouter_Sync(t *testing.T) {

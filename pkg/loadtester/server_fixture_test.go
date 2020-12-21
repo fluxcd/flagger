@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"time"
 
-	"github.com/weaveworks/flagger/pkg/logger"
+	"github.com/fluxcd/flagger/pkg/logger"
 	"go.uber.org/zap"
 )
 

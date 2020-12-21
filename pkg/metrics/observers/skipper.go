@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"time"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/weaveworks/flagger/pkg/logger"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/logger"
 
-	"github.com/weaveworks/flagger/pkg/metrics/providers"
+	"github.com/fluxcd/flagger/pkg/metrics/providers"
 )
 
 const routePattern = `{{- $route := printf "kube(ew)?_%s__%s_canary__.*__%s_canary(_[0-9]+)?" namespace ingress service }}`

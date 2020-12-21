@@ -19,8 +19,8 @@ limitations under the License.
 package v1alpha3
 
 import (
-	v1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
-	"github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
+	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	"github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

@@ -8,7 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // IsPrimaryReady checks the primary deployment status and returns an error if

@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/weaveworks/flagger/pkg/logger"
+	"github.com/fluxcd/flagger/pkg/logger"
 )
 
 func TestTaskRunner_Start(t *testing.T) {

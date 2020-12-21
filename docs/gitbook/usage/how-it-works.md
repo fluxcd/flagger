@@ -1,6 +1,6 @@
 # How it works
 
-[Flagger](https://github.com/weaveworks/flagger) can be configured to automate the release process 
+[Flagger](https://github.com/fluxcd/flagger) can be configured to automate the release process 
 for Kubernetes workloads with a custom resource named canary.
 
 ### Canary resource

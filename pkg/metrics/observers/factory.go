@@ -3,8 +3,8 @@ package observers
 import (
 	"strings"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/weaveworks/flagger/pkg/metrics/providers"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/metrics/providers"
 )
 
 type Factory struct {

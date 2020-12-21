@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
 type Factory struct {

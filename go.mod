@@ -1,4 +1,4 @@
-module github.com/weaveworks/flagger
+module github.com/fluxcd/flagger
 
 go 1.14
 

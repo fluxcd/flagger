@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	ts "github.com/weaveworks/flagger/pkg/apis/smi"
+	ts "github.com/fluxcd/flagger/pkg/apis/smi"
 )
 
 // SchemeGroupVersion is the identifier for the API which includes

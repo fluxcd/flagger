@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sTesting "k8s.io/client-go/testing"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	fakeFlagger "github.com/fluxcd/flagger/pkg/client/clientset/versioned/fake"
 )
 
 func TestFinalizer_hasFinalizer(t *testing.T) {

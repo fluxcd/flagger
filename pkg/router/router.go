@@ -1,6 +1,6 @@
 package router
 
-import flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+import flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 
 const configAnnotation = "flagger.kubernetes.io/original-configuration"
 const kubectlAnnotation = "kubectl.kubernetes.io/last-applied-configuration"

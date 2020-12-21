@@ -12,9 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	contourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	contourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
 // ContourRouter is managing HTTPProxy objects

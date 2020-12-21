@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 )
 
 func TestGlooRouter_Sync(t *testing.T) {

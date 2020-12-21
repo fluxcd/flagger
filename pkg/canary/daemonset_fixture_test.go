@@ -9,10 +9,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	fakeFlagger "github.com/weaveworks/flagger/pkg/client/clientset/versioned/fake"
-	"github.com/weaveworks/flagger/pkg/logger"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
+	fakeFlagger "github.com/fluxcd/flagger/pkg/client/clientset/versioned/fake"
+	"github.com/fluxcd/flagger/pkg/logger"
 )
 
 type daemonSetControllerFixture struct {

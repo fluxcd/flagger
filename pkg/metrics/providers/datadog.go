@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // https://docs.datadoghq.com/api/

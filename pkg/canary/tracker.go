@@ -1,7 +1,7 @@
 package canary
 
 import (
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 )
 

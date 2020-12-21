@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/prometheus/client_golang/prometheus"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // Recorder records the canary analysis as Prometheus metrics

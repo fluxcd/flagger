@@ -29,10 +29,10 @@ echo ">> Temporary output directory ${TEMP_DIR}"
 chmod +x ${CODEGEN_PKG}/generate-groups.sh
 
 ${CODEGEN_PKG}/generate-groups.sh all \
-    github.com/weaveworks/flagger/pkg/client github.com/weaveworks/flagger/pkg/apis \
+    github.com/fluxcd/flagger/pkg/client github.com/fluxcd/flagger/pkg/apis \
     "flagger:v1beta1 appmesh:v1beta2 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 smi:v1alpha2 gloo:v1 projectcontour:v1 traefik:v1alpha1" \
     --output-base "${TEMP_DIR}" \
     --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
 
 # Copy everything back.
-cp -r "${TEMP_DIR}/github.com/weaveworks/flagger/." "${SCRIPT_ROOT}/"
+cp -r "${TEMP_DIR}/github.com/fluxcd/flagger/." "${SCRIPT_ROOT}/"

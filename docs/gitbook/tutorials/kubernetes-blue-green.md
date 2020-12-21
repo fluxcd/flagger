@@ -6,7 +6,7 @@ For applications that are not deployed on a service mesh, Flagger can orchestrat
 with Kubernetes L4 networking. When using a service mesh blue/green can be used as
 specified [here](../usage/deployment-strategies.md).
 
-![Flagger Blue/Green Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-bluegreen-steps.png)
+![Flagger Blue/Green Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-bluegreen-steps.png)
 
 ## Prerequisites
 
@@ -57,13 +57,13 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Create a canary custom resource:

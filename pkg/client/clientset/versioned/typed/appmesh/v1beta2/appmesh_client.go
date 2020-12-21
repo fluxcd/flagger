@@ -19,8 +19,8 @@ limitations under the License.
 package v1beta2
 
 import (
-	v1beta2 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta2"
-	"github.com/weaveworks/flagger/pkg/client/clientset/versioned/scheme"
+	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	"github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

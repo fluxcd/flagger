@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/weaveworks/flagger/pkg/apis/traefik"
+	"github.com/fluxcd/flagger/pkg/apis/traefik"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

@@ -6,9 +6,9 @@ kubeVersion: ">=1.11.0-0"
 engine: gotpl
 description: Flagger is a progressive delivery operator for Kubernetes
 home: https://flagger.app
-icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
+icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
 sources:
-  - https://github.com/weaveworks/flagger
+  - https://github.com/fluxcd/flagger
 maintainers:
   - name: stefanprodan
     url: https://github.com/stefanprodan

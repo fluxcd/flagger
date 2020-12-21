@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
+	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

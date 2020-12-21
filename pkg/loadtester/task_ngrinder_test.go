@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	gock "gopkg.in/h2non/gock.v1"
 
-	"github.com/weaveworks/flagger/pkg/logger"
+	"github.com/fluxcd/flagger/pkg/logger"
 )
 
 func TestTaskNGrinder(t *testing.T) {

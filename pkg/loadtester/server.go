@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 	"go.uber.org/zap"
 )
 

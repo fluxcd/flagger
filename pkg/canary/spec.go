@@ -7,7 +7,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"k8s.io/apimachinery/pkg/util/rand"
 
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // hasSpecChanged computes the hash of the spec and compares it with the

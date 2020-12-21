@@ -1,7 +1,7 @@
 package router
 
 import (
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // KubernetesRouter manages Kubernetes services

@@ -19,8 +19,8 @@ limitations under the License.
 package projectcontour
 
 import (
-	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/weaveworks/flagger/pkg/client/informers/externalversions/projectcontour/v1"
+	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	v1 "github.com/fluxcd/flagger/pkg/client/informers/externalversions/projectcontour/v1"
 )
 
 // Interface provides access to each of this group's versions.
