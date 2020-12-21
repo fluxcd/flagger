@@ -19,6 +19,7 @@ jobs:
           - nginx
           - traefik
           - gloo
+          - skipper
           - kubernetes
     steps:
       - name: Checkout
