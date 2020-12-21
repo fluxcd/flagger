@@ -14,10 +14,28 @@ Origin (DCO). This document was created by the Linux Kernel community and is a
 simple statement that you, as a contributor, have the legal right to make the
 contribution.
 
-## Chat
+We require all commits to be signed. By signing off with your signature, you
+certify that you wrote the patch or otherwise have the right to contribute the
+material by the rules of the [DCO](DCO):
+
+`Signed-off-by: Jane Doe <jane.doe@example.com>`
+
+The signature must contain your real name
+(sorry, no pseudonyms or anonymous contributions)
+If your `user.name` and `user.email` are configured in your Git config,
+you can sign your commit automatically with `git commit -s`.
+
+## Communications
 
 The project uses Slack: To join the conversation, simply join the
-[Weave community](https://slack.weave.works/) Slack workspace #flagger channel.
+[CNCF](https://slack.cncf.io/) Slack workspace and use the
+[#flux](https://cloud-native.slack.com/messages/flux/) channel.
+
+The developers use a mailing list to discuss development as well.
+Simply subscribe to [flux-dev on cncf.io](https://lists.cncf.io/g/cncf-flux-dev)
+to join the conversation (this will also add an invitation to your
+Google calendar for our [Flux
+meeting](https://docs.google.com/document/d/1l_M0om0qUEN_NNiGgpqJ2tvsF2iioHkaARDeh6b70B0/edit#)).
 
 ## Getting Started
 
@@ -69,4 +87,3 @@ For Flagger we prefer the following rules for good commit messages:
 The [following article](https://chris.beams.io/posts/git-commit/#seven-rules)
 has some more helpful advice on documenting your work.
 
-This doc is adapted from [FluxCD](https://github.com/fluxcd/flux/blob/master/CONTRIBUTING.md).

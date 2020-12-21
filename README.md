@@ -1,10 +1,9 @@
 # flagger
 
-[![build](https://img.shields.io/circleci/build/github/weaveworks/flagger/master.svg)](https://circleci.com/gh/weaveworks/flagger)
+[![build](https://github.com/fluxcd/flagger/workflows/build/badge.svg)](https://github.com/fluxcd/flagger/actions)
 [![report](https://goreportcard.com/badge/github.com/fluxcd/flagger)](https://goreportcard.com/report/github.com/fluxcd/flagger)
-[![codecov](https://codecov.io/gh/weaveworks/flagger/branch/master/graph/badge.svg)](https://codecov.io/gh/weaveworks/flagger)
-[![license](https://img.shields.io/github/license/weaveworks/flagger.svg)](https://github.com/fluxcd/flagger/blob/master/LICENSE)
-[![release](https://img.shields.io/github/release/weaveworks/flagger/all.svg)](https://github.com/fluxcd/flagger/releases)
+[![license](https://img.shields.io/github/license/fluxcd/flagger.svg)](https://github.com/fluxcd/flagger/blob/main/LICENSE)
+[![release](https://img.shields.io/github/release/fluxcd/flagger/all.svg)](https://github.com/fluxcd/flagger/releases)
 
 Flagger is a progressive delivery tool that automates the release process for applications running on Kubernetes. 
 It reduces the risk of introducing a new software version in production
@@ -212,7 +211,7 @@ For more details on how the canary analysis and promotion works please [read the
 
 ### Roadmap
 
-#### [GitOps Toolkit](https://github.com/fluxcd/toolkit) compatibility
+#### [GitOps Toolkit](https://github.com/fluxcd/flux2) compatibility
 
 * Migrate Flagger to Kubernetes controller-runtime and [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder)
 * Make the Canary status compatible with [kstatus](https://github.com/kubernetes-sigs/cli-utils)
