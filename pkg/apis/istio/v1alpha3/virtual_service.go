@@ -325,20 +325,23 @@ type HTTPRoute struct {
 	// destination.
 	Mirror *Destination `json:"mirror,omitempty"`
 
+	// Percentage of the traffic to be mirrored by the `mirror` field.
+	// If this field is absent, all the traffic (100%) will be mirrored.
+	// Max value is 100.
+	MirrorPercentage *Percent `json:"mirrorPercentage,omitempty"`
+
 	// Cross-Origin Resource Sharing policy (CORS). Refer to
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 	// for further details about cross origin resource sharing.
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 
-	// Additional HTTP headers to add before forwarding a request to the
-	// destination service.
-	AppendHeaders map[string]string `json:"appendHeaders,omitempty"`
-
-	// Http headers to remove before returning the response to the caller
-	RemoveResponseHeaders map[string]string `json:"removeResponseHeaders,omitempty"`
-
 	// Header manipulation rules
 	Headers *Headers `json:"headers,omitempty"`
+}
+
+// Percent specifies a percentage in the range of [0.0, 100.0].
+type Percent struct {
+	Value float64 `json:"value,omitempty"`
 }
 
 // Header manipulation rules
@@ -355,14 +358,14 @@ type Headers struct {
 // HeaderOperations Describes the header manipulations to apply
 type HeaderOperations struct {
 	// Overwrite the headers specified by key with the given values
-	Set map[string]string `json:"set"`
+	Set map[string]string `json:"set,omitempty"`
 
 	// Append the given values to the headers specified by keys
 	// (will create a comma-separated list of values)
-	Add map[string]string `json:"add"`
+	Add map[string]string `json:"add,omitempty"`
 
 	// Remove the specified headers
-	Remove []string `json:"remove"`
+	Remove []string `json:"remove,omitempty"`
 }
 
 // HttpMatchRequest specifies a set of criterion to be met in order for the
@@ -518,7 +521,7 @@ type TCPRoute struct {
 	// activated. All conditions inside a single match block have AND
 	// semantics, while the list of match blocks have OR semantics. The rule
 	// is matched if any one of the match blocks succeed.
-	Match []L4MatchAttributes `json:"match"`
+	Match []L4MatchAttributes `json:"match,omitempty"`
 
 	// The destination to which the connection should be forwarded to.
 	// Currently, only one destination is allowed for TCP services. When TCP
@@ -651,17 +654,17 @@ type HTTPRetry struct {
 	// REQUIRED. Number of retries for a given request. The interval
 	// between retries will be determined automatically (25ms+). Actual
 	// number of retries attempted depends on the httpReqTimeout.
-	Attempts int `json:"attempts"`
+	Attempts int `json:"attempts,omitempty"`
 
 	// Timeout per retry attempt for a given request. format: 1h/1m/1s/1ms. MUST BE >=1ms.
-	PerTryTimeout string `json:"perTryTimeout"`
+	PerTryTimeout string `json:"perTryTimeout,omitempty"`
 
 	// Specifies the conditions under which retry takes place.
 	// One or more policies can be specified using a ‘,’ delimited list.
 	// The supported policies can be found in
 	// <https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#x-envoy-retry-on>
 	// and <https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#x-envoy-retry-grpc-on>
-	RetryOn string `json:"retryOn"`
+	RetryOn string `json:"retryOn,omitempty"`
 }
 
 // Describes the Cross-Origin Resource Sharing (CORS) policy, for a given
@@ -701,6 +704,12 @@ type CorsPolicy struct {
 	// content will be serialized into the Access-Control-Allow-Origin
 	// header. Wildcard * will allow all origins.
 	AllowOrigin []string `json:"allowOrigin,omitempty"`
+
+	// String patterns that match allowed origins. An origin is allowed if
+	// any of the string matchers match. If a match is found, then the
+	// outgoing Access-Control-Allow-Origin would be set to the origin as
+	// provided by the client.
+	AllowOrigins []*v1alpha1.StringMatch `json:"allowOrigins,omitempty"`
 
 	// List of HTTP methods allowed to access the resource. The content will
 	// be serialized into the Access-Control-Allow-Methods header.

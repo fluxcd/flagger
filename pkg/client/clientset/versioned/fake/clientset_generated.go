@@ -22,12 +22,22 @@ import (
 	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	fakeappmeshv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1/fake"
-	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3"
-	fakeflaggerv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1alpha3/fake"
+	appmeshv1beta2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
+	fakeappmeshv1beta2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2/fake"
+	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
+	fakeflaggerv1beta1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1/fake"
+	gloov1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
+	fakegloov1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/gloo/v1/fake"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	fakenetworkingv1alpha3 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
+	projectcontourv1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
+	fakeprojectcontourv1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1/fake"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
 	fakesplitv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1/fake"
+	splitv1alpha2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2"
+	fakesplitv1alpha2 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2/fake"
+	traefikv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/traefik/v1alpha1"
+	faketraefikv1alpha1 "github.com/weaveworks/flagger/pkg/client/clientset/versioned/typed/traefik/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -82,14 +92,24 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
+// AppmeshV1beta2 retrieves the AppmeshV1beta2Client
+func (c *Clientset) AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface {
+	return &fakeappmeshv1beta2.FakeAppmeshV1beta2{Fake: &c.Fake}
+}
+
 // AppmeshV1beta1 retrieves the AppmeshV1beta1Client
 func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
 	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
 }
 
-// FlaggerV1alpha3 retrieves the FlaggerV1alpha3Client
-func (c *Clientset) FlaggerV1alpha3() flaggerv1alpha3.FlaggerV1alpha3Interface {
-	return &fakeflaggerv1alpha3.FakeFlaggerV1alpha3{Fake: &c.Fake}
+// FlaggerV1beta1 retrieves the FlaggerV1beta1Client
+func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
+	return &fakeflaggerv1beta1.FakeFlaggerV1beta1{Fake: &c.Fake}
+}
+
+// GlooV1 retrieves the GlooV1Client
+func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
+	return &fakegloov1.FakeGlooV1{Fake: &c.Fake}
 }
 
 // NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
@@ -97,7 +117,22 @@ func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3In
 	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
 }
 
+// ProjectcontourV1 retrieves the ProjectcontourV1Client
+func (c *Clientset) ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface {
+	return &fakeprojectcontourv1.FakeProjectcontourV1{Fake: &c.Fake}
+}
+
 // SplitV1alpha1 retrieves the SplitV1alpha1Client
 func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
 	return &fakesplitv1alpha1.FakeSplitV1alpha1{Fake: &c.Fake}
+}
+
+// SplitV1alpha2 retrieves the SplitV1alpha2Client
+func (c *Clientset) SplitV1alpha2() splitv1alpha2.SplitV1alpha2Interface {
+	return &fakesplitv1alpha2.FakeSplitV1alpha2{Fake: &c.Fake}
+}
+
+// TraefikV1alpha1 retrieves the TraefikV1alpha1Client
+func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {
+	return &faketraefikv1alpha1.FakeTraefikV1alpha1{Fake: &c.Fake}
 }

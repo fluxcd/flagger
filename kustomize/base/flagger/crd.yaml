@@ -6,16 +6,19 @@ metadata:
     helm.sh/resource-policy: keep
 spec:
   group: flagger.app
-  version: v1alpha3
+  version: v1beta1
   versions:
-    - name: v1alpha3
+    - name: v1beta1
       served: true
       storage: true
-    - name: v1alpha2
+    - name: v1alpha3
       served: true
       storage: false
+    - name: v1alpha2
+      served: false
+      storage: false
     - name: v1alpha1
-      served: true
+      served: false
       storage: false
   names:
     plural: canaries
@@ -33,6 +36,30 @@ spec:
     - name: Weight
       type: string
       JSONPath: .status.canaryWeight
+    - name: FailedChecks
+      type: string
+      JSONPath: .status.failedChecks
+      priority: 1
+    - name: Interval
+      type: string
+      JSONPath: .spec.analysis.interval
+      priority: 1
+    - name: Mirror
+      type: boolean
+      JSONPath: .spec.analysis.mirror
+      priority: 1
+    - name: StepWeight
+      type: string
+      JSONPath: .spec.analysis.stepWeight
+      priority: 1
+    - name: StepWeights
+      type: string
+      JSONPath: .spec.analysis.stepWeights
+      priority: 1
+    - name: MaxWeight
+      type: string
+      JSONPath: .spec.analysis.maxWeight
+      priority: 1
     - name: LastTransitionTime
       type: string
       JSONPath: .status.lastTransitionTime
@@ -43,116 +70,494 @@ spec:
           required:
             - targetRef
             - service
-            - canaryAnalysis
+            - analysis
           properties:
             provider:
               description: Traffic managent provider
+              type: string
+            metricsServer:
+              description: Prometheus URL
               type: string
             progressDeadlineSeconds:
               description: Deployment progress deadline
               type: number
             targetRef:
-              description: Deployment selector
+              description: Target selector
               type: object
-              required: ['apiVersion', 'kind', 'name']
+              required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
                 kind:
                   type: string
+                  enum:
+                    - DaemonSet
+                    - Deployment
+                    - Service
                 name:
                   type: string
             autoscalerRef:
               description: HPA selector
-              anyOf:
-                - type: string
-                - type: object
-              required: ['apiVersion', 'kind', 'name']
+              type: object
+              required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
                 kind:
                   type: string
+                  enum:
+                    - HorizontalPodAutoscaler
                 name:
                   type: string
             ingressRef:
               description: NGINX ingress selector
-              anyOf:
-                - type: string
-                - type: object
-              required: ['apiVersion', 'kind', 'name']
+              type: object
+              required: ["apiVersion", "kind", "name"]
               properties:
                 apiVersion:
                   type: string
                 kind:
                   type: string
+                  enum:
+                    - Ingress
                 name:
                   type: string
             service:
+              description: Kubernetes Service spec
               type: object
-              required: ['port']
+              required: ["port"]
               properties:
+                name:
+                  description: Kubernetes service name
+                  type: string
                 port:
                   description: Container port number
                   type: number
                 portName:
                   description: Container port name
                   type: string
+                targetPort:
+                  description: Container target port name
+                  anyOf:
+                    - type: string
+                    - type: number
                 portDiscovery:
                   description: Enable port dicovery
                   type: boolean
+                timeout:
+                  description: HTTP or gRPC request timeout
+                  type: string
                 meshName:
                   description: AppMesh mesh name
                   type: string
                 backends:
                   description: AppMesh backend array
-                  anyOf:
-                    - type: string
-                    - type: array
-                timeout:
-                  description: Istio HTTP or gRPC request timeout
-                  type: string
+                  type: array
+                  items:
+                    type: string
+                hosts:
+                  description: The list of host names for this service
+                  type: array
+                  items:
+                    type: string
+                delegation:
+                  description: enable behaving as a delegate VirtualService
+                  type: boolean
+                match:
+                  description: URI match conditions
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      uri:
+                        type: object
+                        oneOf:
+                          - required: ["exact"]
+                          - required: ["prefix"]
+                          - required: ["suffix"]
+                          - required: ["regex"]
+                        properties:
+                          exact:
+                            format: string
+                            type: string
+                          prefix:
+                            format: string
+                            type: string
+                          suffix:
+                            format: string
+                            type: string
+                          regex:
+                            format: string
+                            type: string
+                retries:
+                  description: Retry policy for HTTP requests
+                  type: object
+                  properties:
+                    attempts:
+                      description: Number of retries for a given request
+                      format: int32
+                      type: integer
+                    perTryTimeout:
+                      description: Timeout per retry attempt for a given request
+                      type: string
+                    retryOn:
+                      description: Specifies the conditions under which retry takes place
+                      format: string
+                      type: string
+                rewrite:
+                  description: Rewrite HTTP URIs
+                  type: object
+                  properties:
+                    uri:
+                      format: string
+                      type: string
+                headers:
+                  description: Headers operations
+                  type: object
+                  properties:
+                    request:
+                      properties:
+                        add:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                        remove:
+                          items:
+                            format: string
+                            type: string
+                          type: array
+                        set:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                      type: object
+                    response:
+                      properties:
+                        add:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                        remove:
+                          items:
+                            format: string
+                            type: string
+                          type: array
+                        set:
+                          additionalProperties:
+                            format: string
+                            type: string
+                          type: object
+                      type: object
+                gateways:
+                  description: The list of Istio gateway for this virtual service
+                  type: array
+                  items:
+                    type: string
+                corsPolicy:
+                  description: Istio Cross-Origin Resource Sharing policy (CORS)
+                  type: object
+                  properties:
+                    allowCredentials:
+                      type: boolean
+                    allowHeaders:
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    allowMethods:
+                      description: List of HTTP methods allowed to access the resource
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    allowOrigin:
+                      description: The list of origins that are allowed to perform
+                        CORS requests.
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    allowOrigins:
+                      description: String patterns that match allowed origins
+                      type: array
+                      items:
+                        type: object
+                        oneOf:
+                          - required:
+                              - exact
+                          - required:
+                              - prefix
+                          - required:
+                              - regex
+                        properties:
+                          exact:
+                            format: string
+                            type: string
+                          prefix:
+                            format: string
+                            type: string
+                          regex:
+                            format: string
+                            type: string
+                    exposeHeaders:
+                      items:
+                        format: string
+                        type: string
+                      type: array
+                    maxAge:
+                      type: string
                 trafficPolicy:
                   description: Istio traffic policy
-                  anyOf:
-                    - type: string
-                    - type: object
-                match:
-                  description: Istio URL match conditions
-                  anyOf:
-                    - type: string
-                    - type: array
-                rewrite:
-                  description: Istio URL rewrite
-                  anyOf:
-                    - type: string
-                    - type: object
-                headers:
-                  description: Istio headers operations
-                  anyOf:
-                    - type: string
-                    - type: object
-                corsPolicy:
-                  description: Istio CORS policy
-                  anyOf:
-                    - type: string
-                    - type: object
-                gateways:
-                  description: Istio gateways list
-                  anyOf:
-                    - type: string
-                    - type: array
-                hosts:
-                  description: Istio hosts list
-                  anyOf:
-                    - type: string
-                    - type: array
+                  type: object
+                  properties:
+                    connectionPool:
+                      properties:
+                        http:
+                          description: HTTP connection pool settings.
+                          type: object
+                          properties:
+                            h2UpgradePolicy:
+                              description: Specify if http1.1 connection should
+                                be upgraded to http2 for the associated destination.
+                              enum:
+                                - DEFAULT
+                                - DO_NOT_UPGRADE
+                                - UPGRADE
+                              type: string
+                            http1MaxPendingRequests:
+                              description: Maximum number of pending HTTP requests
+                                to a destination.
+                              format: int32
+                              type: integer
+                            http2MaxRequests:
+                              description: Maximum number of requests to a backend.
+                              format: int32
+                              type: integer
+                            idleTimeout:
+                              description: The idle timeout for upstream connection
+                                pool connections.
+                              type: string
+                            maxRequestsPerConnection:
+                              description: Maximum number of requests per connection
+                                to a backend.
+                              format: int32
+                              type: integer
+                            maxRetries:
+                              format: int32
+                              type: integer
+                    loadBalancer:
+                      description: Settings controlling the load balancer algorithms.
+                      type: object
+                      oneOf:
+                        - required:
+                            - simple
+                        - properties:
+                            consistentHash:
+                              oneOf:
+                                - required:
+                                    - httpHeaderName
+                                - required:
+                                    - httpCookie
+                                - required:
+                                    - useSourceIp
+                                - required:
+                                    - httpQueryParameterName
+                          required:
+                            - consistentHash
+                      properties:
+                        consistentHash:
+                          properties:
+                            httpCookie:
+                              description: Hash based on HTTP cookie.
+                              properties:
+                                name:
+                                  description: Name of the cookie.
+                                  format: string
+                                  type: string
+                                path:
+                                  description: Path to set for the cookie.
+                                  format: string
+                                  type: string
+                                ttl:
+                                  description: Lifetime of the cookie.
+                                  type: string
+                              type: object
+                            httpHeaderName:
+                              description: Hash based on a specific HTTP header.
+                              format: string
+                              type: string
+                            httpQueryParameterName:
+                              description: Hash based on a specific HTTP query parameter.
+                              format: string
+                              type: string
+                            minimumRingSize:
+                              type: integer
+                            useSourceIp:
+                              description: Hash based on the source IP address.
+                              type: boolean
+                          type: object
+                        localityLbSetting:
+                          properties:
+                            distribute:
+                              description: 'Optional: only one of distribute or
+                                failover can be set.'
+                              items:
+                                properties:
+                                  from:
+                                    description: Originating locality, '/' separated,
+                                      e.g.
+                                    format: string
+                                    type: string
+                                  to:
+                                    additionalProperties:
+                                      type: integer
+                                    description: Map of upstream localities to traffic
+                                      distribution weights.
+                                    type: object
+                                type: object
+                              type: array
+                            enabled:
+                              description: enable locality load balancing, this
+                                is DestinationRule-level and will override mesh
+                                wide settings in entirety.
+                              type: boolean
+                            failover:
+                              description: 'Optional: only failover or distribute
+                                can be set.'
+                              items:
+                                properties:
+                                  from:
+                                    description: Originating region.
+                                    format: string
+                                    type: string
+                                  to:
+                                    format: string
+                                    type: string
+                                type: object
+                              type: array
+                          type: object
+                        simple:
+                          enum:
+                            - ROUND_ROBIN
+                            - LEAST_CONN
+                            - RANDOM
+                            - PASSTHROUGH
+                          type: string
+                    outlierDetection:
+                      description: Settings controlling eviction of unhealthy hosts from the load balancing pool.
+                      type: object
+                      properties:
+                        baseEjectionTime:
+                          description: Minimum ejection duration.
+                          type: string
+                        consecutive5xxErrors:
+                          description: Number of 5xx errors before a host is ejected
+                            from the connection pool.
+                          type: integer
+                        consecutiveErrors:
+                          format: int32
+                          type: integer
+                        consecutiveGatewayErrors:
+                          description: Number of gateway errors before a host is
+                            ejected from the connection pool.
+                          format: int32
+                          type: integer
+                        interval:
+                          description: Time interval between ejection sweep analysis.
+                          type: string
+                        maxEjectionPercent:
+                          format: int32
+                          type: integer
+                        minHealthPercent:
+                          format: int32
+                          type: integer
+                    tls:
+                      description: Istio TLS related settings for connections to the upstream service
+                      type: object
+                      properties:
+                        caCertificates:
+                          format: string
+                          type: string
+                        clientCertificate:
+                          description: REQUIRED if mode is `MUTUAL`.
+                          format: string
+                          type: string
+                        mode:
+                          enum:
+                            - DISABLE
+                            - SIMPLE
+                            - MUTUAL
+                            - ISTIO_MUTUAL
+                          type: string
+                        privateKey:
+                          description: REQUIRED if mode is `MUTUAL`.
+                          format: string
+                          type: string
+                        sni:
+                          description: SNI string to present to the server
+                            during TLS handshake.
+                          format: string
+                          type: string
+                        subjectAltNames:
+                          items:
+                            format: string
+                            type: string
+                          type: array
+                apex:
+                  description: Metadata to add to the apex service
+                  type: object
+                  properties:
+                    labels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    annotations:
+                      type: object
+                      additionalProperties:
+                        type: string
+                primary:
+                  description: Metadata to add to the primary service
+                  type: object
+                  properties:
+                    labels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    annotations:
+                      type: object
+                      additionalProperties:
+                        type: string
+                canary:
+                  description: Metadata to add to the canary service
+                  type: object
+                  properties:
+                    labels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    annotations:
+                      type: object
+                      additionalProperties:
+                        type: string
             skipAnalysis:
+              description: Skip analysis and promote canary
               type: boolean
-            canaryAnalysis:
+            revertOnDeletion:
+              description: Revert mutated resources to original spec on deletion
+              type: boolean
+            analysis:
+              description: Canary analysis for this canary
+              type: object
+              oneOf:
+                - required: ["interval", "threshold", "iterations"]
+                - required: ["interval", "threshold", "stepWeight"]
+                - required: ["interval", "threshold", "stepWeights"]
               properties:
                 interval:
-                  description: Canary schedule interval
+                  description: Schedule interval for this canary
                   type: string
                   pattern: "^[0-9]+(m|s)"
                 iterations:
@@ -162,70 +567,136 @@ spec:
                   description: Max number of failed checks before rollback
                   type: number
                 maxWeight:
-                  description: Max traffic percentage routed to canary
+                  description: Max traffic weight routed to canary
                   type: number
                 stepWeight:
-                  description: Canary incremental traffic percentage step
+                  description: Incremental traffic step weight for the analysis phase
+                  type: number
+                stepWeights:
+                  description: Incremental traffic step weights for the analysis phase
+                  type: array
+                  items:
+                    type: number
+                stepWeightPromotion:
+                  description: Incremental traffic step weight for the promotion phase
+                  type: number
+                mirror:
+                  description: Mirror traffic to canary
+                  type: boolean
+                mirrorWeight:
+                  description: Weight of traffic to be mirrored
                   type: number
                 match:
                   description: A/B testing match conditions
-                  anyOf:
-                    - type: string
-                    - type: array
-                metrics:
-                  description: Prometheus query list for this canary
                   type: array
-                  properties:
-                    items:
-                      type: object
-                      required: ['name', 'threshold']
-                      properties:
-                        name:
-                          description: Name of the Prometheus metric
+                  items:
+                    type: object
+                    properties:
+                      headers:
+                        type: object
+                        additionalProperties:
+                          oneOf:
+                            - required: ["exact"]
+                            - required: ["prefix"]
+                            - required: ["suffix"]
+                            - required: ["regex"]
+                          type: object
+                          properties:
+                            exact:
+                              format: string
+                              type: string
+                            prefix:
+                              format: string
+                              type: string
+                            suffix:
+                              format: string
+                              type: string
+                            regex:
+                              description: RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)
+                              format: string
+                              type: string
+                      sourceLabels:
+                        description: Applicable only when the 'mesh' gateway is included in the service.gateways list
+                        type: object
+                        additionalProperties:
+                          format: string
                           type: string
-                        interval:
-                          description: Interval of the promql query
-                          type: string
-                          pattern: "^[0-9]+(m|s)"
-                        threshold:
-                          description: Max scalar value accepted for this metric
-                          type: number
-                        query:
-                          description: Prometheus query
-                          type: string
+                metrics:
+                  description: Metric check list for this canary
+                  type: array
+                  items:
+                    type: object
+                    required: ["name"]
+                    properties:
+                      name:
+                        description: Name of the metric
+                        type: string
+                      interval:
+                        description: Interval of the query
+                        type: string
+                        pattern: "^[0-9]+(m|s)"
+                      threshold:
+                        description: Max value accepted for this metric
+                        type: number
+                      thresholdRange:
+                        description: Range accepted for this metric
+                        type: object
+                        properties:
+                          min:
+                            description: Min value accepted for this metric
+                            type: number
+                          max:
+                            description: Max value accepted for this metric
+                            type: number
+                      query:
+                        description: Prometheus query
+                        type: string
+                      templateRef:
+                        description: Metric template reference
+                        type: object
+                        required: ["name"]
+                        properties:
+                          name:
+                            description: Name of this metric template
+                            type: string
+                          namespace:
+                            description: Namespace of this metric template
+                            type: string
                 webhooks:
                   description: Webhook list for this canary
                   type: array
-                  properties:
-                    items:
-                      type: object
-                      required: ['name', 'url', 'timeout']
-                      properties:
-                        name:
-                          description: Name of the webhook
+                  items:
+                    type: object
+                    required: ["name", "url"]
+                    properties:
+                      name:
+                        description: Name of the webhook
+                        type: string
+                      type:
+                        description: Type of the webhook pre, post or during rollout
+                        type: string
+                        enum:
+                          - ""
+                          - confirm-rollout
+                          - pre-rollout
+                          - rollout
+                          - confirm-promotion
+                          - post-rollout
+                          - event
+                          - rollback
+                      url:
+                        description: URL address of this webhook
+                        type: string
+                        format: url
+                      timeout:
+                        description: Request timeout for this webhook
+                        type: string
+                        pattern: "^[0-9]+(m|s)"
+                      metadata:
+                        description: Metadata (key-value pairs) for this webhook
+                        type: object
+                        additionalProperties:
                           type: string
-                        type:
-                          description: Type of the webhook pre, post or during rollout
-                          type: string
-                          enum:
-                            - ""
-                            - confirm-rollout
-                            - pre-rollout
-                            - rollout
-                            - post-rollout
-                        url:
-                          description: URL address of this webhook
-                          type: string
-                          format: url
-                        timeout:
-                          description: Request timeout for this webhook
-                          type: string
-                          pattern: "^[0-9]+(m|s)"
-                        metadata:
-                          description: Metadata (key-value pairs) for this webhook
-                          anyOf:
-                            - type: string
-                            - type: object
         status:
           properties:
             phase:
@@ -237,11 +708,14 @@ spec:
                 - Initialized
                 - Waiting
                 - Progressing
+                - Promoting
                 - Finalising
                 - Succeeded
                 - Failed
+                - Terminating
+                - Terminated
             canaryWeight:
-              description: Traffic weight percentage routed to canary
+              description: Traffic weight routed to canary
               type: number
             failedChecks:
               description: Failed check count of the current canary analysis
@@ -259,28 +733,157 @@ spec:
             conditions:
               description: Status conditions of this canary
               type: array
+              items:
+                type: object
+                required: ["type", "status", "reason"]
+                properties:
+                  lastTransitionTime:
+                    description: LastTransitionTime of this condition
+                    format: date-time
+                    type: string
+                  lastUpdateTime:
+                    description: LastUpdateTime of this condition
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message associated with this condition
+                    type: string
+                  reason:
+                    description: Reason for the current status of this condition
+                    type: string
+                  status:
+                    description: Status of this condition
+                    type: string
+                  type:
+                    description: Type of this condition
+                    type: string
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: metrictemplates.flagger.app
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  group: flagger.app
+  version: v1beta1
+  versions:
+    - name: v1beta1
+      served: true
+      storage: true
+    - name: v1alpha1
+      served: true
+      storage: false
+  names:
+    plural: metrictemplates
+    singular: metrictemplate
+    kind: MetricTemplate
+    categories:
+      - all
+  scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: Provider
+      type: string
+      JSONPath: .spec.provider.type
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          required:
+            - provider
+            - query
+          properties:
+            provider:
+              description: Provider of this metric template
+              type: object
+              required:
+                - type
               properties:
-                items:
+                type:
+                  description: Type of this provider
+                  type: string
+                  enum:
+                    - prometheus
+                    - influxdb
+                    - datadog
+                    - cloudwatch
+                    - newrelic
+                address:
+                  description: API address of this provider
+                  type: string
+                secretRef:
+                  description: Kubernetes secret reference containing the provider credentials
                   type: object
-                  required: ['type', 'status', 'reason']
+                  required:
+                    - name
                   properties:
-                    lastTransitionTime:
-                      description: LastTransitionTime of this condition
-                      format: date-time
+                    name:
+                      description: Name of the Kubernetes secret
                       type: string
-                    lastUpdateTime:
-                      description: LastUpdateTime of this condition
-                      format: date-time
-                      type: string
-                    message:
-                      description: Message associated with this condition
-                      type: string
-                    reason:
-                      description: Reason for the current status of this condition
-                      type: string
-                    status:
-                      description: Status of this condition
-                      type: string
-                    type:
-                      description: Type of this condition
-                      type: string
+                region:
+                  description: Region of the provider
+                  type: string
+            query:
+              description: Query of this metric template
+              type: string
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: alertproviders.flagger.app
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  group: flagger.app
+  version: v1beta1
+  versions:
+    - name: v1beta1
+      served: true
+      storage: true
+  names:
+    plural: alertproviders
+    singular: alertprovider
+    kind: AlertProvider
+    categories:
+      - all
+  scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: Type
+      type: string
+      JSONPath: .spec.type
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          oneOf:
+            - required:
+              - type
+              - address
+            - required:
+              - type
+              - secretRef
+          properties:
+            type:
+              description: Type of this provider
+              type: string
+              enum:
+                - slack
+                - msteams
+                - discord
+                - rocket
+            address:
+              description: Hook URL address of this provider
+              type: string
+            secretRef:
+              description: Kubernetes secret reference containing the provider address
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  description: Name of the Kubernetes secret
+                  type: string

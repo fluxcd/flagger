@@ -1,22 +1,25 @@
 # Default values for podinfo.
 image:
-  repository: stefanprodan/podinfo
-  tag: 2.0.0
+  repository: ghcr.io/stefanprodan/podinfo
+  tag: 5.0.0
   pullPolicy: IfNotPresent
 
+podAnnotations: {}
+
 service:
+  enabled: false
   type: ClusterIP
   port: 9898
 
 hpa:
   enabled: true
   minReplicas: 2
-  maxReplicas: 2
+  maxReplicas: 4
   cpu: 80
   memory: 512Mi
 
 canary:
-  enabled: true
+  enabled: false
   # Istio traffic policy tls can be DISABLE or ISTIO_MUTUAL
   istioTLS: DISABLE
   istioIngress:
@@ -69,6 +72,7 @@ fullnameOverride: ""
 
 logLevel: info
 backend: #http://backend-podinfo:9898/echo
+backends: []
 message: #UI greetings
 
 faults:

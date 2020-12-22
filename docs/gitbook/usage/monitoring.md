@@ -1,6 +1,6 @@
 # Monitoring
 
-### Grafana
+## Grafana
 
 Flagger comes with a Grafana dashboard made for canary analysis. Install Grafana with Helm:
 
@@ -14,7 +14,7 @@ The dashboard shows the RED and USE metrics for the primary and canary workloads
 
 ![Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/grafana-canary-analysis.png)
 
-### Logging
+## Logging
 
 The canary errors and latency spikes have been recorded as Kubernetes events and logged by Flagger in json format:
 
@@ -40,10 +40,60 @@ Scaling down podinfo.test
 Promotion completed! podinfo.test
 ```
 
-### Metrics
+## Event Webhook
 
-Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and 
-the destination weight values:
+Flagger can be configured to send event payloads to a specified webhook:
+
+```bash
+helm upgrade -i flagger flagger/flagger \
+--set eventWebhook=https://example.com/flagger-canary-event-webhook
+```
+
+The environment variable _EVENT\_WEBHOOK\_URL_ can be used for activating the event-webhook, too. This is handy for using a secret to store a sensible value that could contain api keys for example.
+
+When configured, every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST request. The JSON payload has the following schema:
+
+```javascript
+{
+  "name": "string (canary name)",
+  "namespace": "string (canary namespace)",
+  "phase": "string (canary phase)",
+  "metadata": {
+    "eventMessage": "string (canary event message)",
+    "eventType": "string (canary event type)",
+    "timestamp": "string (unix timestamp ms)"
+  }
+}
+```
+
+Example:
+
+```javascript
+{
+  "name": "podinfo",
+  "namespace": "default",
+  "phase": "Progressing",
+  "metadata": {
+    "eventMessage": "New revision detected! Scaling up podinfo.default",
+    "eventType": "Normal",
+    "timestamp": "1578607635167"
+  }
+}
+```
+
+The event webhook can be overwritten at canary level with:
+
+```yaml
+  analysis:
+    webhooks:
+      - name: "send to Slack"
+        type: event
+        url: http://event-recevier.notifications/slack
+```
+
+## Metrics
+
+Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and the destination weight values:
 
 ```bash
 # Flagger version and mesh provider gauge
@@ -66,5 +116,4 @@ flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="+Inf"
 flagger_canary_duration_seconds_sum{name="podinfo",namespace="test"} 17.3561329
 flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
 ```
-
 

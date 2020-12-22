@@ -2,15 +2,16 @@ package main
 
 import (
 	"flag"
+	"log"
+	"time"
+
 	"github.com/weaveworks/flagger/pkg/loadtester"
 	"github.com/weaveworks/flagger/pkg/logger"
 	"github.com/weaveworks/flagger/pkg/signals"
 	"go.uber.org/zap"
-	"log"
-	"time"
 )
 
-var VERSION = "0.7.0"
+var VERSION = "0.18.0"
 var (
 	logLevel          string
 	port              string

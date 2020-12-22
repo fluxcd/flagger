@@ -1,8 +1,9 @@
 # Flagger load testing service
 
 [Flagger's](https://github.com/weaveworks/flagger) load testing service is based on 
-[rakyll/hey](https://github.com/rakyll/hey) 
-and can be used to generates traffic during canary analysis when configured as a webhook.
+[rakyll/hey](https://github.com/rakyll/hey) and 
+[bojand/ghz](https://github.com/bojand/ghz).
+It can be used to generate HTTP and gRPC traffic during canary analysis when configured as a webhook.
 
 ## Prerequisites
 
@@ -22,9 +23,10 @@ To install the chart with the release name `flagger-loadtester`:
 helm upgrade -i flagger-loadtester flagger/loadtester
 ```
 
-The command deploys Grafana on the Kubernetes cluster in the default namespace.
+The command deploys loadtester on the Kubernetes cluster in the default namespace.
 
-> **Tip**: Note that the namespace where you deploy the load tester should have the Istio or App Mesh sidecar injection enabled
+> **Tip**: Note that the namespace where you deploy the load tester should
+> have the Istio, App Mesh or Linkerd sidecar injection enabled
 
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
@@ -33,7 +35,7 @@ The [configuration](#configuration) section lists the parameters that can be con
 To uninstall/delete the `flagger-loadtester` deployment:
 
 ```console
-helm delete --purge flagger-loadtester
+helm delete flagger-loadtester
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -58,13 +60,24 @@ Parameter | Description | Default
 `service.port` | ClusterIP port | `80`
 `cmd.timeout` | Command execution timeout | `1h`
 `logLevel` | Log level can be debug, info, warning, error or panic | `info`
-`meshName` | AWS App Mesh name | `none`
-`backends` | AWS App Mesh virtual services | `none`
+`appmesh.enabled` | Create AWS App Mesh v1beta2 virtual node | `false`
+`appmesh.backends` | AWS App Mesh virtual services | `none`
+`istio.enabled` | Create Istio virtual service | `false`
+`istio.host` | Loadtester hostname  | `flagger-loadtester.flagger`
+`istio.gateway.enabled` | Create Istio gateway in namespace | `false`
+`istio.tls.enabled` | Enable TLS in gateway ( TLS secrets should be in namespace ) | `false`
+`istio.tls.httpsRedirect` | Redirect traffic to TLS port | `false`
+`podPriorityClassName` | PriorityClass name for pod priority configuration | ""
+`securityContext.enabled` | Add securityContext to container | ""
+`securityContext.context` | securityContext to add | ""
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
 ```console
-helm install flagger/loadtester --name flagger-loadtester
+helm upgrade -i flagger-loadtester flagger/loadtester \
+--set "appmesh.enabled=true" \
+--set "appmesh.backends[0]=podinfo" \
+--set "appmesh.backends[1]=podinfo-canary"
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,

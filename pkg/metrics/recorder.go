@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // Recorder records the canary analysis as Prometheus metrics
@@ -85,7 +85,7 @@ func (cr *Recorder) SetTotal(namespace string, total int) {
 
 // SetStatus sets the last known canary analysis status
 func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) {
-	status := 1
+	var status int
 	switch phase {
 	case flaggerv1.CanaryPhaseProgressing:
 		status = 0

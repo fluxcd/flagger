@@ -1,68 +1,95 @@
 package router
 
 import (
-	"context"
 	"strings"
 
-	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
 type Factory struct {
-	kubeConfig    *restclient.Config
-	kubeClient    kubernetes.Interface
-	meshClient    clientset.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
+	kubeConfig               *restclient.Config
+	kubeClient               kubernetes.Interface
+	meshClient               clientset.Interface
+	flaggerClient            clientset.Interface
+	ingressAnnotationsPrefix string
+	ingressClass             string
+	logger                   *zap.SugaredLogger
 }
 
 func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
+	ingressAnnotationsPrefix string,
+	ingressClass string,
 	logger *zap.SugaredLogger,
 	meshClient clientset.Interface) *Factory {
 	return &Factory{
-		kubeConfig:    kubeConfig,
-		meshClient:    meshClient,
-		kubeClient:    kubeClient,
-		flaggerClient: flaggerClient,
-		logger:        logger,
+		kubeConfig:               kubeConfig,
+		meshClient:               meshClient,
+		kubeClient:               kubeClient,
+		flaggerClient:            flaggerClient,
+		ingressAnnotationsPrefix: ingressAnnotationsPrefix,
+		ingressClass:             ingressClass,
+		logger:                   logger,
 	}
 }
 
-// KubernetesRouter returns a ClusterIP service router
-func (factory *Factory) KubernetesRouter(label string, ports *map[string]int32) *KubernetesRouter {
-	return &KubernetesRouter{
-		logger:        factory.logger,
-		flaggerClient: factory.flaggerClient,
-		kubeClient:    factory.kubeClient,
-		label:         label,
-		ports:         ports,
+// KubernetesRouter returns a KubernetesRouter interface implementation
+func (factory *Factory) KubernetesRouter(kind string, labelSelector string, labelValue string, ports map[string]int32) KubernetesRouter {
+	switch kind {
+	case "Service":
+		return &KubernetesNoopRouter{}
+	default: // Daemonset or Deployment
+		return &KubernetesDefaultRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			labelSelector: labelSelector,
+			labelValue:    labelValue,
+			ports:         ports,
+		}
 	}
 }
 
 // MeshRouter returns a service mesh router
-func (factory *Factory) MeshRouter(provider string) Interface {
+func (factory *Factory) MeshRouter(provider string, labelSelector string) Interface {
 	switch {
-	case provider == "none":
-		return &NopRouter{}
-	case provider == "kubernetes":
-		return &NopRouter{}
-	case provider == "nginx":
-		return &IngressRouter{
-			logger:     factory.logger,
-			kubeClient: factory.kubeClient,
+	case strings.HasPrefix(provider, flaggerv1.AppMeshProvider+":v1beta2"):
+		return &AppMeshv1beta2Router{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			appmeshClient: factory.meshClient,
+			labelSelector: labelSelector,
 		}
-	case provider == "appmesh":
+	case provider == flaggerv1.AppMeshProvider:
 		return &AppMeshRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			appmeshClient: factory.meshClient,
 		}
-	case strings.HasPrefix(provider, "smi:"):
-		mesh := strings.TrimPrefix(provider, "smi:")
+	case provider == flaggerv1.LinkerdProvider:
+		return &SmiRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    flaggerv1.LinkerdProvider,
+		}
+	case provider == flaggerv1.IstioProvider:
+		return &IstioRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			istioClient:   factory.meshClient,
+		}
+	case strings.HasPrefix(provider, flaggerv1.SMIProvider):
+		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":")
 		return &SmiRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
@@ -70,26 +97,44 @@ func (factory *Factory) MeshRouter(provider string) Interface {
 			smiClient:     factory.meshClient,
 			targetMesh:    mesh,
 		}
-	case provider == "linkerd":
-		return &SmiRouter{
+	case provider == flaggerv1.ContourProvider:
+		return &ContourRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
-			smiClient:     factory.meshClient,
-			targetMesh:    "linkerd",
+			contourClient: factory.meshClient,
+			ingressClass:  factory.ingressClass,
 		}
-	case strings.HasPrefix(provider, "supergloo"):
-		supergloo, err := NewSuperglooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
-		if err != nil {
-			panic("failed creating supergloo client")
+	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
+		upstreamDiscoveryNs := flaggerv1.GlooProvider + "-system"
+		if strings.HasPrefix(provider, flaggerv1.GlooProvider+":") {
+			upstreamDiscoveryNs = strings.TrimPrefix(provider, flaggerv1.GlooProvider+":")
 		}
-		return supergloo
-	case strings.HasPrefix(provider, "gloo"):
-		gloo, err := NewGlooRouter(context.TODO(), provider, factory.flaggerClient, factory.logger, factory.kubeConfig)
-		if err != nil {
-			panic("failed creating gloo client")
+		return &GlooRouter{
+			logger:              factory.logger,
+			flaggerClient:       factory.flaggerClient,
+			kubeClient:          factory.kubeClient,
+			glooClient:          factory.meshClient,
+			upstreamDiscoveryNs: upstreamDiscoveryNs,
 		}
-		return gloo
+	case provider == flaggerv1.NGINXProvider:
+		return &IngressRouter{
+			logger:            factory.logger,
+			kubeClient:        factory.kubeClient,
+			annotationsPrefix: factory.ingressAnnotationsPrefix,
+		}
+	case provider == flaggerv1.SkipperProvider:
+		return &SkipperRouter{
+			logger:     factory.logger,
+			kubeClient: factory.kubeClient,
+		}
+	case provider == flaggerv1.TraefikProvider:
+		return &TraefikRouter{
+			logger:        factory.logger,
+			traefikClient: factory.meshClient,
+		}
+	case provider == flaggerv1.KubernetesProvider:
+		return &NopRouter{}
 	default:
 		return &IstioRouter{
 			logger:        factory.logger,

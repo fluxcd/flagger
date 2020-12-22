@@ -2,11 +2,19 @@ package loadtester
 
 import (
 	"context"
-	"go.uber.org/zap"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
+
+type TaskRunnerInterface interface {
+	Add(task Task)
+	GetTotalExecs() uint64
+	Start(interval time.Duration, stopCh <-chan struct{})
+	Timeout() time.Duration
+}
 
 type TaskRunner struct {
 	logger       *zap.SugaredLogger
@@ -14,7 +22,6 @@ type TaskRunner struct {
 	todoTasks    *sync.Map
 	runningTasks *sync.Map
 	totalExecs   uint64
-	logCmdOutput bool
 }
 
 func NewTaskRunner(logger *zap.SugaredLogger, timeout time.Duration) *TaskRunner {
@@ -79,4 +86,8 @@ func (tr *TaskRunner) Start(interval time.Duration, stopCh <-chan struct{}) {
 			return
 		}
 	}
+}
+
+func (tr *TaskRunner) Timeout() time.Duration {
+	return tr.timeout
 }

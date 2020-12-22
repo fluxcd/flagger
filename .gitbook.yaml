@@ -1,1 +1,15 @@
 root: ./docs/gitbook
+
+redirects:
+  how-it-works: usage/how-it-works.md
+  usage/progressive-delivery: tutorials/istio-progressive-delivery.md
+  usage/ab-testing: tutorials/istio-ab-testing.md
+  usage/blue-green: tutorials/kubernetes-blue-green.md
+  usage/appmesh-progressive-delivery: tutorials/appmesh-progressive-delivery.md
+  usage/linkerd-progressive-delivery: tutorials/linkerd-progressive-delivery.md
+  usage/contour-progressive-delivery: tutorials/contour-progressive-delivery.md
+  usage/gloo-progressive-delivery: tutorials/gloo-progressive-delivery.md
+  usage/nginx-progressive-delivery: tutorials/nginx-progressive-delivery.md
+  usage/skipper-progressive-delivery: tutorials/skipper-progressive-delivery.md
+  usage/crossover-progressive-delivery: tutorials/crossover-progressive-delivery.md
+  usage/traefik-progressive-delivery: tutorials/traefik-progressive-delivery.md

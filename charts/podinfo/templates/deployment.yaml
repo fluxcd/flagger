@@ -21,6 +21,9 @@ spec:
         app: {{ template "podinfo.fullname" . }}
       annotations:
         prometheus.io/scrape: 'true'
+        {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: 30
       containers:
@@ -34,7 +37,12 @@ spec:
             - --random-delay={{ .Values.faults.delay }}
             - --random-error={{ .Values.faults.error }}
             - --config-path=/podinfo/config
+            {{- range .Values.backends }}
+            - --backend-url={{ . }}
+            {{- end }}
           env:
+          - name: PODINFO_UI_COLOR
+            value: "#34577c"
           {{- if .Values.message }}
           - name: PODINFO_UI_MESSAGE
             value: {{ .Values.message }}

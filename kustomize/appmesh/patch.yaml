@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger
+spec:
+  template:
+    spec:
+      containers:
+        - name: flagger
+          args:
+            - -log-level=info
+            - -mesh-provider=appmesh
+            - -metrics-server=http://appmesh-prometheus:9090
+            - -slack-user=flagger
+            - -slack-channel=
+            - -slack-url=
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: flagger
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flagger
+subjects:
+  - kind: ServiceAccount
+    name: flagger
+    namespace: appmesh-system

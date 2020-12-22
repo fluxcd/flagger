@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const TaskTypeNGrinder = "ngrinder"
@@ -28,16 +29,16 @@ func init() {
 		}
 		baseUrl, err := url.Parse(server)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("invalid url: %s", server))
+			return nil, fmt.Errorf("invalid url: %s: %w", server, err)
 		}
 		cloneId, err := strconv.Atoi(clone)
 		if err != nil {
-			return nil, errors.New("metadata clone must be integer")
+			return nil, fmt.Errorf("metadata clone must be integer: %w", err)
 		}
 
 		passwdDecoded, err := base64.StdEncoding.DecodeString(passwd)
 		if err != nil {
-			return nil, errors.New("metadata auth provided is invalid, base64 encoded username:password required")
+			return nil, fmt.Errorf("metadata password is invalid: %w", err)
 		}
 		interval, err := time.ParseDuration(pollInterval)
 		if err != nil {
@@ -67,7 +68,7 @@ type NGrinderTask struct {
 }
 
 func (task *NGrinderTask) Hash() string {
-	return hash(task.canary + string(task.cloneId))
+	return hash(task.canary + fmt.Sprint(task.cloneId))
 }
 
 // nGrinder REST endpoints
@@ -85,16 +86,17 @@ func (task *NGrinderTask) StopEndpoint() *url.URL {
 }
 
 // initiate a clone_and_start request and get new test id from response
-func (task *NGrinderTask) Run(ctx context.Context) bool {
+func (task *NGrinderTask) Run(ctx context.Context) *TaskRunResult {
 	url := task.CloneAndStartEndpoint().String()
 	result, err := task.request("POST", url, ctx)
 	if err != nil {
-		task.logger.With("canary", task.canary).Errorf("failed to clone and start ngrinder test %s: %s", url, err.Error())
-		return false
+		task.logger.With("canary", task.canary).
+			Errorf("failed to clone and start ngrinder test %s: %s", url, err.Error())
+		return &TaskRunResult{false, nil}
 	}
 	id := result["id"]
 	task.testId = int(id.(float64))
-	return task.PollStatus(ctx)
+	return &TaskRunResult{task.PollStatus(ctx), nil}
 }
 
 func (task *NGrinderTask) String() string {
@@ -133,26 +135,35 @@ func (task *NGrinderTask) PollStatus(ctx context.Context) bool {
 // send request, handle error, and eavl response json
 func (task *NGrinderTask) request(method, url string, ctx context.Context) (map[string]interface{}, error) {
 	task.logger.Debugf("send %s request to %s", method, url)
-	req, _ := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("http.NewRequest failed: %w", err)
+	}
+
 	req.SetBasicAuth(task.username, task.passwd)
 	if ctx != nil {
 		req = req.WithContext(ctx)
 	}
 	resp, err := http.DefaultClient.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
 	if err != nil {
-		task.logger.Errorf("bad request: %s", err.Error())
-		return nil, err
+		task.logger.Errorf("request failed: %s", err.Error())
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
+	defer resp.Body.Close()
+
 	respBytes, err := ioutil.ReadAll(resp.Body)
-	res := make(map[string]interface{})
-	err = json.Unmarshal(respBytes, &res)
 	if err != nil {
-		task.logger.Errorf("bad response, %s ,json expected:\n %s", err.Error(), string(respBytes))
-	} else if success, ok := res["success"]; ok && success == false {
-		err = errors.New(res["message"].(string))
+		return nil, fmt.Errorf("reading response body failed: %w", err)
 	}
-	return res, err
+
+	res := make(map[string]interface{})
+	if err := json.Unmarshal(respBytes, &res); err != nil {
+		task.logger.Errorf("json unmarshalling failed: %s \n %s", err.Error(), string(respBytes))
+		return nil, fmt.Errorf("json unmarshalling failed: %w for %s", err, string(respBytes))
+	}
+
+	if success, ok := res["success"]; ok && success == false {
+		return nil, fmt.Errorf("request failed: %s", string(respBytes))
+	}
+	return res, nil
 }

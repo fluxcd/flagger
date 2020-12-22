@@ -133,38 +133,22 @@ data:
       scheme: https
       tls_config:
         ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        insecure_skip_verify: true
       bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       relabel_configs:
       - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
         action: keep
         regex: kubernetes;https
 
-    # Scrape config for nodes
-    - job_name: 'kubernetes-nodes'
-      scheme: https
-      tls_config:
-        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-      kubernetes_sd_configs:
-      - role: node
-      relabel_configs:
-      - action: labelmap
-        regex: __meta_kubernetes_node_label_(.+)
-      - target_label: __address__
-        replacement: kubernetes.default.svc:443
-      - source_labels: [__meta_kubernetes_node_name]
-        regex: (.+)
-        target_label: __metrics_path__
-        replacement: /api/v1/nodes/${1}/proxy/metrics
-
     # scrape config for cAdvisor
     - job_name: 'kubernetes-cadvisor'
       scheme: https
       tls_config:
         ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        insecure_skip_verify: true
       bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       kubernetes_sd_configs:
-      - role: node
+        - role: node
       relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
@@ -174,6 +158,14 @@ data:
         regex: (.+)
         target_label: __metrics_path__
         replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+      # exclude high cardinality metrics
+      metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: (container|machine)_(cpu|memory|network|fs)_(.+)
+        action: keep
+      - source_labels: [__name__]
+        regex: container_memory_failures_total
+        action: drop
 
     # scrape config for pods
     - job_name: kubernetes-pods
@@ -238,10 +230,10 @@ spec:
       serviceAccountName: {{ template "flagger.serviceAccountName" . }}-prometheus
       containers:
         - name: prometheus
-          image: "docker.io/prom/prometheus:v2.10.0"
+          image: {{ .Values.prometheus.image }}
           imagePullPolicy: IfNotPresent
           args:
-            - '--storage.tsdb.retention=2h'
+            - '--storage.tsdb.retention={{ .Values.prometheus.retention }}'
             - '--config.file=/etc/prometheus/prometheus.yml'
           ports:
             - containerPort: 9090

@@ -17,3 +17,7 @@ _tmp/
 
 artifacts/gcloud/
 .idea
+Makefile.dev
+
+vendor
+coverage.txt

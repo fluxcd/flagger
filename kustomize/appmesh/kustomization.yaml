@@ -1,0 +1,5 @@
+namespace: appmesh-system
+bases:
+  - ../base/flagger
+patchesStrategicMerge:
+  - patch.yaml

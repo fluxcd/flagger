@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"os/exec"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
 const TaskTypeShell = "cmd"
@@ -32,7 +33,7 @@ func (task *CmdTask) Hash() string {
 	return hash(task.canary + task.command)
 }
 
-func (task *CmdTask) Run(ctx context.Context) bool {
+func (task *CmdTask) Run(ctx context.Context) *TaskRunResult {
 	cmd := exec.CommandContext(ctx, "sh", "-c", task.command)
 	out, err := cmd.CombinedOutput()
 
@@ -44,7 +45,7 @@ func (task *CmdTask) Run(ctx context.Context) bool {
 		}
 		task.logger.With("canary", task.canary).Infof("command finished %s", task.command)
 	}
-	return err == nil
+	return &TaskRunResult{err == nil, out}
 }
 
 func (task *CmdTask) String() string {

@@ -6,8 +6,10 @@ replicaCount: 1
 
 image:
   repository: grafana/grafana
-  tag: 6.2.5
+  tag: 7.3.4
   pullPolicy: IfNotPresent
+
+podAnnotations: {}
 
 service:
   type: ClusterIP
@@ -30,7 +32,7 @@ affinity: {}
 user: admin
 password:
 
-# Istio Prometheus instance
+# Prometheus instance
 url: http://prometheus:9090
 
 # Weave Cloud instance token

@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	time "time"
 
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
@@ -60,13 +61,13 @@ func NewFilteredMeshInformer(client versioned.Interface, resyncPeriod time.Durat
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta1().Meshes().List(options)
+				return client.AppmeshV1beta1().Meshes().List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta1().Meshes().Watch(options)
+				return client.AppmeshV1beta1().Meshes().Watch(context.TODO(), options)
 			},
 		},
 		&appmeshv1beta1.Mesh{},

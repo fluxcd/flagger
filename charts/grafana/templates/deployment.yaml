@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "grafana.fullname" . }}
@@ -20,6 +20,9 @@ spec:
         release: {{ .Release.Name }}
       annotations:
         prometheus.io/scrape: 'false'
+        {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: {{ .Chart.Name }}

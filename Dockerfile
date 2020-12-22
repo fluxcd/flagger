@@ -1,16 +1,29 @@
-FROM alpine:3.9
+FROM golang:1.15-alpine as builder
 
-RUN addgroup -S flagger \
-    && adduser -S -g flagger flagger \
-    && apk --no-cache add ca-certificates
+ARG TARGETPLATFORM
 
-WORKDIR /home/flagger
+WORKDIR /workspace
 
-COPY /bin/flagger .
+# copy modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
 
-RUN chown -R flagger:flagger ./
+# cache modules
+RUN go mod download
 
-USER flagger
+# copy source code
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+
+# build
+RUN CGO_ENABLED=0 go build -a -o flagger ./cmd/flagger
+
+FROM alpine:3.12
+
+RUN apk --no-cache add ca-certificates
+
+USER nobody
+
+COPY --from=builder --chown=nobody:nobody /workspace/flagger .
 
 ENTRYPOINT ["./flagger"]
-

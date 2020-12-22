@@ -9,8 +9,10 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.leaderElection.replicaCount }}
+  {{- if eq .Values.leaderElection.enabled false }}
   strategy:
     type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ template "flagger.name" . }}
@@ -20,6 +22,10 @@ spec:
       labels:
         app.kubernetes.io/name: {{ template "flagger.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ template "flagger.serviceAccountName" . }}
       affinity:
@@ -36,11 +42,26 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}
       {{- end }}
+      volumes:
+        {{- if .Values.istio.kubeconfig.secretName }}
+        - name: kubeconfig
+          secret:
+            secretName: "{{ .Values.istio.kubeconfig.secretName }}"
+        {{- end }}
+      {{- if .Values.podPriorityClassName }}
+      priorityClassName: {{ .Values.podPriorityClassName }}
+      {{- end }}                  
       containers:
         - name: flagger
+          {{- if .Values.securityContext.enabled }}
           securityContext:
-            readOnlyRootFilesystem: true
-            runAsUser: 10001
+{{ toYaml .Values.securityContext.context | indent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.istio.kubeconfig.secretName }}
+            - name: kubeconfig
+              mountPath: "/tmp/istio-host"
+            {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -48,7 +69,7 @@ spec:
             containerPort: 8080
           command:
           - ./flagger
-          - -log-level=info
+          - -log-level={{ .Values.logLevel }}
           {{- if .Values.meshProvider }}
           - -mesh-provider={{ .Values.meshProvider }}
           {{- end }}
@@ -57,12 +78,22 @@ spec:
           {{- else }}
           - -metrics-server={{ .Values.metricsServer }}
           {{- end }}
+          {{- if .Values.selectorLabels }}
+          - -selector-labels={{ .Values.selectorLabels }}
+          {{- end }}
+          {{- if .Values.configTracking }}
+          - -enable-config-tracking={{ .Values.configTracking.enabled }}
+          {{- end }}
           {{- if .Values.namespace }}
           - -namespace={{ .Values.namespace }}
           {{- end }}
           {{- if .Values.slack.url }}
           - -slack-url={{ .Values.slack.url }}
+          {{- end }}
+          {{- if .Values.slack.user }}
           - -slack-user={{ .Values.slack.user }}
+          {{- end }}
+          {{- if .Values.slack.channel }}
           - -slack-channel={{ .Values.slack.channel }}
           {{- end }}
           {{- if .Values.msteams.url }}
@@ -71,6 +102,30 @@ spec:
           {{- if .Values.leaderElection.enabled }}
           - -enable-leader-election=true
           - -leader-election-namespace={{ .Release.Namespace }}
+          {{- end }}
+          {{- if .Values.ingressAnnotationsPrefix }}
+          - -ingress-annotations-prefix={{ .Values.ingressAnnotationsPrefix }}
+          {{- end }}
+          {{- if .Values.includeLabelPrefix }}
+          - -include-label-prefix={{ .Values.includeLabelPrefix }}
+          {{- end }}
+          {{- if .Values.ingressClass }}
+          - -ingress-class={{ .Values.ingressClass }}
+          {{- end }}
+          {{- if .Values.eventWebhook }}
+          - -event-webhook={{ .Values.eventWebhook }}
+          {{- end }}
+          {{- if .Values.kubeconfigQPS }}
+          - -kubeconfig-qps={{ .Values.kubeconfigQPS }}
+          {{- end }}
+          {{- if .Values.kubeconfigBurst }}
+          - -kubeconfig-burst={{ .Values.kubeconfigBurst }}
+          {{- end }}
+          {{- if .Values.istio.kubeconfig.secretName }}
+          - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
+          {{- end }}
+          {{- if .Values.threadiness }}
+          - -threadiness={{ .Values.threadiness }}
           {{- end }}
           livenessProbe:
             exec:
@@ -92,6 +147,10 @@ spec:
               - --spider
               - http://localhost:8080/healthz
             timeoutSeconds: 5
+          {{- if .Values.env }}
+          env:
+{{ toYaml .Values.env | indent 12 }}
+          {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}

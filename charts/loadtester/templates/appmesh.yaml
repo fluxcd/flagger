@@ -1,0 +1,27 @@
+{{- if .Values.appmesh.enabled }}
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualNode
+metadata:
+  name: {{ include "loadtester.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "loadtester.name" . }}
+    helm.sh/chart: {{ include "loadtester.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ include "loadtester.name" . }}
+  logging:
+    accessLog:
+      file:
+        path: /dev/stdout
+  {{- if .Values.appmesh.backends }}
+  backends:
+    {{- range .Values.appmesh.backends }}
+    - virtualService:
+        virtualServiceRef:
+          name: {{ . }}
+    {{- end }}
+  {{- end }}
+{{- end }}

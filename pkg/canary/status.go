@@ -1,128 +1,111 @@
 package canary
 
 import (
+	"context"
 	"fmt"
+	"strings"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
-	"github.com/mitchellh/hashstructure"
-	ex "github.com/pkg/errors"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	clientset "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
 )
 
-// SyncStatus encodes the canary pod spec and updates the canary status
-func (c *Deployer) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
-	dep, err := c.KubeClient.AppsV1().Deployments(cd.Namespace).Get(cd.Spec.TargetRef.Name, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return fmt.Errorf("deployment %s.%s not found", cd.Spec.TargetRef.Name, cd.Namespace)
-		}
-		return ex.Wrap(err, "SyncStatus deployment query error")
-	}
-
-	configs, err := c.ConfigTracker.GetConfigRefs(cd)
-	if err != nil {
-		return ex.Wrap(err, "SyncStatus configs query error")
-	}
-
-	hash, err := hashstructure.Hash(dep.Spec.Template, nil)
-	if err != nil {
-		return ex.Wrap(err, "SyncStatus hash error")
-	}
+func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, status flaggerv1.CanaryStatus, canaryResource interface{}, setAll func(cdCopy *flaggerv1.Canary)) error {
+	hash := computeHash(canaryResource)
 
 	firstTry := true
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
+	name, ns := cd.GetName(), cd.GetNamespace()
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if !firstTry {
-			cd, selErr = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
+
 		cdCopy := cd.DeepCopy()
 		cdCopy.Status.Phase = status.Phase
 		cdCopy.Status.CanaryWeight = status.CanaryWeight
 		cdCopy.Status.FailedChecks = status.FailedChecks
 		cdCopy.Status.Iterations = status.Iterations
-		cdCopy.Status.LastAppliedSpec = fmt.Sprintf("%d", hash)
+		cdCopy.Status.LastAppliedSpec = hash
 		cdCopy.Status.LastTransitionTime = metav1.Now()
-		cdCopy.Status.TrackedConfigs = configs
+		setAll(cdCopy)
 
-		if ok, conditions := c.MakeStatusConditions(cd.Status, status.Phase); ok {
+		if ok, conditions := MakeStatusConditions(cd, status.Phase); ok {
 			cdCopy.Status.Conditions = conditions
 		}
 
-		_, err = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
+
 	if err != nil {
-		return ex.Wrap(err, "SyncStatus")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
-// SetStatusFailedChecks updates the canary failed checks counter
-func (c *Deployer) SetStatusFailedChecks(cd *flaggerv1.Canary, val int) error {
+func setStatusFailedChecks(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 		cdCopy := cd.DeepCopy()
 		cdCopy.Status.FailedChecks = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		_, err = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
 	if err != nil {
-		return ex.Wrap(err, "SetStatusFailedChecks")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
-// SetStatusWeight updates the canary status weight value
-func (c *Deployer) SetStatusWeight(cd *flaggerv1.Canary, val int) error {
+func setStatusWeight(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 		cdCopy := cd.DeepCopy()
 		cdCopy.Status.CanaryWeight = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		_, err = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
 	if err != nil {
-		return ex.Wrap(err, "SetStatusWeight")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
-// SetStatusIterations updates the canary status iterations value
-func (c *Deployer) SetStatusIterations(cd *flaggerv1.Canary, val int) error {
+func setStatusIterations(flaggerClient clientset.Interface, cd *flaggerv1.Canary, val int) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
 
@@ -130,28 +113,28 @@ func (c *Deployer) SetStatusIterations(cd *flaggerv1.Canary, val int) error {
 		cdCopy.Status.Iterations = val
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		_, err = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
 
 	if err != nil {
-		return ex.Wrap(err, "SetStatusIterations")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
-// SetStatusPhase updates the canary status phase
-func (c *Deployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
+func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
 	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		var selErr error
 		if !firstTry {
-			cd, selErr = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).Get(cd.GetName(), metav1.GetOptions{})
-			if selErr != nil {
-				return selErr
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
+
 		cdCopy := cd.DeepCopy()
 		cdCopy.Status.Phase = phase
 		cdCopy.Status.LastTransitionTime = metav1.Now()
@@ -166,22 +149,22 @@ func (c *Deployer) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPh
 			cdCopy.Status.LastPromotedSpec = cd.Status.LastAppliedSpec
 		}
 
-		if ok, conditions := c.MakeStatusConditions(cdCopy.Status, phase); ok {
+		if ok, conditions := MakeStatusConditions(cdCopy, phase); ok {
 			cdCopy.Status.Conditions = conditions
 		}
 
-		_, err = c.FlaggerClient.FlaggerV1alpha3().Canaries(cd.Namespace).UpdateStatus(cdCopy)
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
 		firstTry = false
 		return
 	})
 	if err != nil {
-		return ex.Wrap(err, "SetStatusPhase")
+		return fmt.Errorf("failed after retries: %w", err)
 	}
 	return nil
 }
 
-// GetStatusCondition returns a condition based on type
-func (c *Deployer) getStatusCondition(status flaggerv1.CanaryStatus, conditionType flaggerv1.CanaryConditionType) *flaggerv1.CanaryCondition {
+// getStatusCondition returns a condition based on type
+func getStatusCondition(status flaggerv1.CanaryStatus, conditionType flaggerv1.CanaryConditionType) *flaggerv1.CanaryCondition {
 	for i := range status.Conditions {
 		c := status.Conditions[i]
 		if c.Type == conditionType {
@@ -192,25 +175,28 @@ func (c *Deployer) getStatusCondition(status flaggerv1.CanaryStatus, conditionTy
 }
 
 // MakeStatusCondition updates the canary status conditions based on canary phase
-func (c *Deployer) MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
+func MakeStatusConditions(cd *flaggerv1.Canary,
 	phase flaggerv1.CanaryPhase) (bool, []flaggerv1.CanaryCondition) {
-	currentCondition := c.getStatusCondition(canaryStatus, flaggerv1.PromotedType)
+	currentCondition := getStatusCondition(cd.Status, flaggerv1.PromotedType)
 
-	message := "New deployment detected, starting initialization."
+	message := fmt.Sprintf("New %s detected, starting initialization.", cd.Spec.TargetRef.Kind)
 	status := corev1.ConditionUnknown
 	switch phase {
 	case flaggerv1.CanaryPhaseInitializing:
 		status = corev1.ConditionUnknown
-		message = "New deployment detected, starting initialization."
+		message = fmt.Sprintf("New %s detected, starting initialization.", cd.Spec.TargetRef.Kind)
 	case flaggerv1.CanaryPhaseInitialized:
 		status = corev1.ConditionTrue
-		message = "Deployment initialization completed."
+		message = fmt.Sprintf("%s initialization completed.", cd.Spec.TargetRef.Kind)
 	case flaggerv1.CanaryPhaseWaiting:
 		status = corev1.ConditionUnknown
 		message = "Waiting for approval."
 	case flaggerv1.CanaryPhaseProgressing:
 		status = corev1.ConditionUnknown
-		message = "New revision detected, starting canary analysis."
+		message = "New revision detected, progressing canary analysis."
+	case flaggerv1.CanaryPhasePromoting:
+		status = corev1.ConditionUnknown
+		message = "Canary analysis completed, starting primary rolling update."
 	case flaggerv1.CanaryPhaseFinalising:
 		status = corev1.ConditionUnknown
 		message = "Canary analysis completed, routing all traffic to primary."
@@ -219,7 +205,7 @@ func (c *Deployer) MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
 		message = "Canary analysis completed successfully, promotion finished."
 	case flaggerv1.CanaryPhaseFailed:
 		status = corev1.ConditionFalse
-		message = "Canary analysis failed, deployment scaled to zero."
+		message = fmt.Sprintf("Canary analysis failed, %s scaled to zero.", cd.Spec.TargetRef.Kind)
 	}
 
 	newCondition := &flaggerv1.CanaryCondition{
@@ -242,4 +228,25 @@ func (c *Deployer) MakeStatusConditions(canaryStatus flaggerv1.CanaryStatus,
 	}
 
 	return true, []flaggerv1.CanaryCondition{*newCondition}
+}
+
+// updateStatusWithUpgrade tries to update the status sub-resource
+// if the status update fails with:
+// Canary.flagger.app is invalid: apiVersion: Invalid value: flagger.app/v1alpha3: must be flagger.app/v1beta1
+// then the canary object will be updated to the latest API version
+func updateStatusWithUpgrade(flaggerClient clientset.Interface, cd *flaggerv1.Canary) error {
+	_, err := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(context.TODO(), cd, metav1.UpdateOptions{})
+	if err != nil && strings.Contains(err.Error(), "flagger.app/v1alpha") {
+		// upgrade alpha resource
+		if _, updateErr := flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Update(context.TODO(), cd, metav1.UpdateOptions{}); updateErr != nil {
+			return fmt.Errorf("updating canary %s.%s from v1alpha to v1beta failed: %w", cd.Name, cd.Namespace, updateErr)
+		}
+		// retry status update
+		_, err = flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).UpdateStatus(context.TODO(), cd, metav1.UpdateOptions{})
+	}
+
+	if err != nil {
+		return fmt.Errorf("updating canary %s.%s status failed: %w", cd.Name, cd.Namespace, err)
+	}
+	return err
 }

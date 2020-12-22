@@ -3,15 +3,16 @@ package loadtester
 import (
 	"context"
 	"encoding/hex"
-	"go.uber.org/zap"
 	"hash/fnv"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 // Modeling a loadtester task
 type Task interface {
 	Hash() string
-	Run(ctx context.Context) bool
+	Run(ctx context.Context) *TaskRunResult
 	String() string
 	Canary() string
 }
@@ -38,4 +39,9 @@ type TaskFactory = func(metadata map[string]string, canary string, logger *zap.S
 func GetTaskFactory(typ string) (TaskFactory, bool) {
 	factory, ok := taskFactories.Load(typ)
 	return factory.(TaskFactory), ok
+}
+
+type TaskRunResult struct {
+	ok  bool
+	out []byte
 }

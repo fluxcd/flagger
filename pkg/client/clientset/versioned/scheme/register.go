@@ -20,9 +20,14 @@ package scheme
 
 import (
 	appmeshv1beta1 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta1"
-	flaggerv1alpha3 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
+	appmeshv1beta2 "github.com/weaveworks/flagger/pkg/apis/appmesh/v1beta2"
+	flaggerv1beta1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
+	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
 	networkingv1alpha3 "github.com/weaveworks/flagger/pkg/apis/istio/v1alpha3"
+	projectcontourv1 "github.com/weaveworks/flagger/pkg/apis/projectcontour/v1"
 	splitv1alpha1 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha1"
+	splitv1alpha2 "github.com/weaveworks/flagger/pkg/apis/smi/v1alpha2"
+	traefikv1alpha1 "github.com/weaveworks/flagger/pkg/apis/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,10 +39,15 @@ var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
+	appmeshv1beta2.AddToScheme,
 	appmeshv1beta1.AddToScheme,
-	flaggerv1alpha3.AddToScheme,
+	flaggerv1beta1.AddToScheme,
+	gloov1.AddToScheme,
 	networkingv1alpha3.AddToScheme,
+	projectcontourv1.AddToScheme,
 	splitv1alpha1.AddToScheme,
+	splitv1alpha2.AddToScheme,
+	traefikv1alpha1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

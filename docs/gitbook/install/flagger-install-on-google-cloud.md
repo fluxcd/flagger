@@ -1,13 +1,12 @@
-# Flagger install on Google Cloud
+# Flagger Install on GKE Istio
 
 This guide walks you through setting up Flagger and Istio on Google Kubernetes Engine.
 
 ![GKE Cluster Overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-gke-istio.png)
 
-### Prerequisites
+## Prerequisites
 
-You will be creating a cluster on Google’s Kubernetes Engine \(GKE\), 
-if you don’t have an account you can sign up [here](https://cloud.google.com/free/) for free credits.
+You will be creating a cluster on Google’s Kubernetes Engine \(GKE\), if you don’t have an account you can sign up [here](https://cloud.google.com/free/) for free credits.
 
 Login into Google Cloud, create a project and enable billing for it.
 
@@ -39,7 +38,7 @@ Install the kubectl command-line tool:
 gcloud components install kubectl
 ```
 
-### GKE cluster setup
+## GKE cluster setup
 
 Create a cluster with the Istio add-on:
 
@@ -61,9 +60,7 @@ gcloud beta container clusters create istio \
 --istio-config=auth=MTLS_PERMISSIVE
 ```
 
-The above command will create a default node pool consisting of two `n1-highcpu-4` \(vCPU: 4, RAM 3.60GB, DISK: 30GB\) 
-preemptible VMs. Preemptible VMs are up to 80% cheaper than regular instances and are terminated and replaced 
-after a maximum of 24 hours.
+The above command will create a default node pool consisting of two `n1-highcpu-4` \(vCPU: 4, RAM 3.60GB, DISK: 30GB\) preemptible VMs. Preemptible VMs are up to 80% cheaper than regular instances and are terminated and replaced after a maximum of 24 hours.
 
 Set up credentials for `kubectl`:
 
@@ -85,9 +82,9 @@ Validate your setup with:
 kubectl -n istio-system get svc
 ```
 
-In a couple of seconds GCP should allocate an external IP to the `istio-ingressgateway` service. 
+In a couple of seconds GCP should allocate an external IP to the `istio-ingressgateway` service.
 
-### Cloud DNS setup
+## Cloud DNS setup
 
 You will need an internet domain and access to the registrar to change the name servers to Google Cloud DNS.
 
@@ -147,7 +144,7 @@ Verify that the wildcard DNS is working \(replace `example.com` with your domain
 watch host test.example.com
 ```
 
-### Install Helm
+## Install Helm
 
 Install the [Helm](https://docs.helm.sh/using_helm/#installing-helm) command-line tool:
 
@@ -162,7 +159,7 @@ kubectl -n kube-system create sa tiller
 
 kubectl create clusterrolebinding tiller-cluster-rule \
 --clusterrole=cluster-admin \
---serviceaccount=kube-system:tiller 
+--serviceaccount=kube-system:tiller
 ```
 
 Deploy Tiller in the `kube-system` namespace:
@@ -171,22 +168,20 @@ Deploy Tiller in the `kube-system` namespace:
 helm init --service-account tiller
 ```
 
-You should consider using SSL between Helm and Tiller, for more information on securing your Helm 
-installation see [docs.helm.sh](https://docs.helm.sh/using_helm/#securing-your-helm-installation).
+You should consider using SSL between Helm and Tiller, for more information on securing your Helm installation see [docs.helm.sh](https://docs.helm.sh/using_helm/#securing-your-helm-installation).
 
-### Install cert-manager
+## Install cert-manager
 
-Jetstack's [cert-manager](https://github.com/jetstack/cert-manager) 
-is a Kubernetes operator that automatically creates and manages TLS certs issued by Let’s Encrypt.
+Jetstack's [cert-manager](https://github.com/jetstack/cert-manager) is a Kubernetes operator that automatically creates and manages TLS certs issued by Let’s Encrypt.
 
-You'll be using cert-manager to provision a wildcard certificate for the Istio ingress gateway. 
+You'll be using cert-manager to provision a wildcard certificate for the Istio ingress gateway.
 
 Install cert-manager's CRDs:
 
 ```bash
 CERT_REPO=https://raw.githubusercontent.com/jetstack/cert-manager
 
-kubectl apply -f ${CERT_REPO}/release-0.7/deploy/manifests/00-crds.yaml
+kubectl apply -f ${CERT_REPO}/release-0.10/deploy/manifests/00-crds.yaml
 ```
 
 Create the cert-manager namespace and disable resource validation:
@@ -204,11 +199,11 @@ helm repo add jetstack https://charts.jetstack.io && \
 helm repo update && \
 helm upgrade -i cert-manager \
 --namespace cert-manager \
---version v0.7.0 \
+--version v0.10.0 \
 jetstack/cert-manager
 ```
 
-### Istio Gateway TLS setup
+## Istio Gateway TLS setup
 
 ![Istio Let&apos;s Encrypt](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/istio-cert-manager-gke.png)
 
@@ -246,8 +241,7 @@ kubectl create secret generic cert-manager-credentials \
 --namespace=istio-system
 ```
 
-Create a letsencrypt issuer for CloudDNS \(replace `email@example.com` with a valid email address and 
-`my-gcp-project`with your project ID\):
+Create a letsencrypt issuer for CloudDNS \(replace `email@example.com` with a valid email address and `my-gcp-project`with your project ID\):
 
 ```yaml
 apiVersion: certmanager.k8s.io/v1alpha1
@@ -322,16 +316,11 @@ Recreate Istio ingress gateway pods:
 kubectl -n istio-system get pods -l istio=ingressgateway
 ```
 
-Note that Istio gateway doesn't reload the certificates from the TLS secret on cert-manager renewal. 
-Since the GKE cluster is made out of preemptible VMs the gateway pods will be replaced once every 24h, 
-if your not using preemptible nodes then you need to manually delete the gateway pods every two months 
-before the certificate expires.
+Note that Istio gateway doesn't reload the certificates from the TLS secret on cert-manager renewal. Since the GKE cluster is made out of preemptible VMs the gateway pods will be replaced once every 24h, if your not using preemptible nodes then you need to manually delete the gateway pods every two months before the certificate expires.
 
-### Install Prometheus
+## Install Prometheus
 
-The GKE Istio add-on does not include a Prometheus instance that scrapes the Istio telemetry service. 
-Because Flagger uses the Istio HTTP metrics to run the canary analysis you have to deploy the following 
-Prometheus configuration that's similar to the one that comes with the official Istio Helm chart.
+The GKE Istio add-on does not include a Prometheus instance that scrapes the Istio telemetry service. Because Flagger uses the Istio HTTP metrics to run the canary analysis you have to deploy the following Prometheus configuration that's similar to the one that comes with the official Istio Helm chart.
 
 Find the GKE Istio version with:
 
@@ -339,14 +328,14 @@ Find the GKE Istio version with:
 kubectl -n istio-system get deploy istio-pilot -oyaml | grep image:
 ```
 
-Install Prometheus in istio-system namespace (replace `1.0.6-gke.3` with your version):
+Install Prometheus in istio-system namespace:
 
 ```bash
 kubectl -n istio-system apply -f \
 https://storage.googleapis.com/gke-release/istio/release/1.0.6-gke.3/patches/install-prometheus.yaml
 ```
 
-### Install Flagger and Grafana
+## Install Flagger and Grafana
 
 Add Flagger Helm repository:
 
@@ -408,3 +397,4 @@ kubectl apply -f ./grafana-virtual-service.yaml
 ```
 
 Navigate to `http://grafana.example.com` in your browser and you should be redirected to the HTTPS version.
+

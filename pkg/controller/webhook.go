@@ -6,32 +6,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1alpha3"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
+
+	flaggerv1 "github.com/weaveworks/flagger/pkg/apis/flagger/v1beta1"
 )
 
-// CallWebhook does a HTTP POST to an external service and
-// returns an error if the response status code is non-2xx
-func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w flaggerv1.CanaryWebhook) error {
-	payload := flaggerv1.CanaryWebhookPayload{
-		Name:      name,
-		Namespace: namespace,
-		Phase:     phase,
-	}
-
-	if w.Metadata != nil {
-		payload.Metadata = *w.Metadata
-	}
-
+func callWebhook(webhook string, payload interface{}, timeout string) error {
 	payloadBin, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	hook, err := url.Parse(w.URL)
+	hook, err := url.Parse(webhook)
 	if err != nil {
 		return err
 	}
@@ -43,16 +33,16 @@ func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w f
 
 	req.Header.Set("Content-Type", "application/json")
 
-	if len(w.Timeout) < 2 {
-		w.Timeout = "10s"
+	if timeout == "" {
+		timeout = "10s"
 	}
 
-	timeout, err := time.ParseDuration(w.Timeout)
+	t, err := time.ParseDuration(timeout)
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), timeout)
+	ctx, cancel := context.WithTimeout(req.Context(), t)
 	defer cancel()
 
 	r, err := http.DefaultClient.Do(req.WithContext(ctx))
@@ -71,4 +61,41 @@ func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w f
 	}
 
 	return nil
+}
+
+// CallWebhook does a HTTP POST to an external service and
+// returns an error if the response status code is non-2xx
+func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w flaggerv1.CanaryWebhook) error {
+	payload := flaggerv1.CanaryWebhookPayload{
+		Name:      name,
+		Namespace: namespace,
+		Phase:     phase,
+	}
+
+	if w.Metadata != nil {
+		payload.Metadata = *w.Metadata
+	}
+
+	if len(w.Timeout) < 2 {
+		w.Timeout = "10s"
+	}
+
+	return callWebhook(w.URL, payload, w.Timeout)
+}
+
+func CallEventWebhook(r *flaggerv1.Canary, webhook, message, eventtype string) error {
+	t := time.Now()
+
+	payload := flaggerv1.CanaryWebhookPayload{
+		Name:      r.Name,
+		Namespace: r.Namespace,
+		Phase:     r.Status.Phase,
+		Metadata: map[string]string{
+			"eventMessage": message,
+			"eventType":    eventtype,
+			"timestamp":    strconv.FormatInt(t.UnixNano()/1000000, 10),
+		},
+	}
+
+	return callWebhook(webhook, payload, "5s")
 }
