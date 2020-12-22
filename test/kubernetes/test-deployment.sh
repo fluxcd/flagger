@@ -72,6 +72,17 @@ until ${ok}; do
     fi
 done
 
+passed=$(kubectl -n test get deploy/podinfo-primary -oyaml 2>&1 | { grep test-label-prefix || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 primary copy labels by prefix test failed'
+  exit 1
+fi
+passed=$(kubectl -n test get deploy/podinfo-primary -oyaml 2>&1 | { grep test-annotation-prefix || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 primary copy annotations by prefix test failed'
+  exit 1
+fi
+
 echo '✔ Canary initialization test passed'
 
 echo '>>> Triggering canary deployment'

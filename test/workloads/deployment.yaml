@@ -4,7 +4,10 @@ metadata:
   name: podinfo
   namespace: test
   labels:
-    app: podinfo
+    app.kubernetes.io/name: podinfo
+    app.kubernetes.io/managed-by: test-label-prefix
+  annotations:
+    app.kubernetes.io/instance: test-annotation-prefix
 spec:
   minReadySeconds: 5
   revisionHistoryLimit: 5
