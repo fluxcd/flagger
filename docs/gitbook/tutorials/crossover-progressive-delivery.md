@@ -53,15 +53,12 @@ helm upgrade -i flagger flagger/flagger \
 
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services, SMI traffic splits).
-These objects expose the application on the mesh and drive the canary analysis and promotion.
-There's no SMI object you need to create by yourself.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services, SMI traffic splits\). These objects expose the application on the mesh and drive the canary analysis and promotion. There's no SMI object you need to create by yourself.
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
@@ -210,21 +207,17 @@ service/podinfo-primary
 trafficsplits.split.smi-spec.io/podinfo
 ```
 
-After the boostrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test`
-will be routed to the primary pods. During the canary analysis,
-the `podinfo-canary.test` address can be used to target directly the canary pods.
+After the boostrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test` will be routed to the primary pods. During the canary analysis, the `podinfo-canary.test` address can be used to target directly the canary pods.
 
 ## Automated canary promotion
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring
-key performance indicators like HTTP requests success rate, requests average duration and pod health.
-Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
 A canary deployment is triggered by changes in any of the following objects:
 
-* Deployment PodSpec (container image, command, ports, env, resources, etc)
+* Deployment PodSpec \(container image, command, ports, env, resources, etc\)
 * ConfigMaps and Secrets mounted as volumes or mapped to environment variables
 
 Trigger a canary deployment by updating the container image:
@@ -285,7 +278,7 @@ kubectl port-forward --namespace test svc/flagger-grafana 3000:80
 
 The Envoy dashboard URL is [http://localhost:3000/d/flagger-envoy/envoy-canary?refresh=10s&orgId=1&var-namespace=test&var-target=podinfo](http://localhost:3000/d/flagger-envoy/envoy-canary?refresh=10s&orgId=1&var-namespace=test&var-target=podinfo)
 
-![Envoy Canary Dashboard](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/flagger-grafana-appmesh.png)
+![Envoy Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-grafana-appmesh.png)
 
 You can monitor all canaries with:
 
@@ -300,7 +293,7 @@ prod        backend   Failed        0        2019-10-02T17:05:07Z
 
 If you’ve enabled the Slack notifications, you should receive the following messages:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-notifications.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
 
 ## Automated rollback
 
@@ -331,8 +324,7 @@ Generate latency:
 watch -n 1 curl -H 'Host: podinfo.test' http://envoy.test:10000/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test logs deploy/flagger -f | jq .msg
@@ -351,8 +343,7 @@ Rolling back podinfo.test failed checks threshold reached 5
 Canary failed! Scaling down podinfo.test
 ```
 
-If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded,
-or if the analysis reached the maximum number of failed checks:
+If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, or if the analysis reached the maximum number of failed checks:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-failed.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
 

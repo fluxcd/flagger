@@ -16,8 +16,7 @@ helm upgrade -i prometheus stable/prometheus-operator \
 --set fullnameOverride=prometheus
 ```
 
-The `prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false`
-option allows Prometheus operator to watch serviceMonitors outside of his namespace.
+The `prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false` option allows Prometheus operator to watch serviceMonitors outside of his namespace.
 
 Install Flagger by setting the metrics server to Prometheus:
 
@@ -85,8 +84,7 @@ spec:
       app: podinfo-canary
 ```
 
-We are setting `interval: 5s` to have a more aggressive scraping.
-If you do not define it, you must to use a longer interval in the Canary object.
+We are setting `interval: 5s` to have a more aggressive scraping. If you do not define it, you must to use a longer interval in the Canary object.
 
 ## Metric templates
 
@@ -191,7 +189,7 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test/"
 ```
 
-Based on the above specification, Flagger creates the primary and canary Kubernetes ClusterIP service. 
+Based on the above specification, Flagger creates the primary and canary Kubernetes ClusterIP service.
 
-During the canary analysis, Prometheus will scrape the canary service and Flagger will use the HTTP error rate and 
-latency queries to determine if the release should be promoted or rolled back.
+During the canary analysis, Prometheus will scrape the canary service and Flagger will use the HTTP error rate and latency queries to determine if the release should be promoted or rolled back.
+

@@ -2,11 +2,9 @@
 
 This guide shows you how to automate A/B testing with Istio and Flagger.
 
-Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
-In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
-This is particularly useful for frontend applications that require session affinity.
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
 
-![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
 
 ## Prerequisites
 
@@ -23,7 +21,7 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/sampl
 Install Flagger in the `istio-system` namespace:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/istio?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
 ```
 
 Create an ingress gateway to expose the demo app outside of the mesh:
@@ -58,16 +56,16 @@ kubectl label namespace test istio-injection=enabled
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/tester?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
-Create a canary custom resource (replace example.com with your own domain):
+Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -140,8 +138,7 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 -H 'Cookie: type=insider' http://podinfo.test:9898/"
 ```
 
-**Note** that when using Istio 1.5 you have to replace the `request-duration`
-with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
+**Note** that when using Istio 1.5 you have to replace the `request-duration` with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
 
 The above configuration will run an analysis for ten minutes targeting Firefox users and those that have an insider cookie.
 
@@ -237,8 +234,7 @@ Generate latency:
 watch curl -b 'type=insider' http://app.example.com/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo
@@ -259,7 +255,5 @@ Events:
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
-The above procedure can be extended with [custom metrics](../usage/metrics.md) checks,
-[webhooks](../usage/webhooks.md),
-[manual promotion](../usage/webhooks.md#manual-gating) approval and
-[Slack or MS Teams](../usage/alerting.md) notifications.
+The above procedure can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
+

@@ -2,7 +2,7 @@
 
 This guide shows you how to use the [Skipper ingress controller](https://opensource.zalando.com/skipper/kubernetes/ingress-controller/) and Flagger to automate canary deployments.
 
-![Flagger Skipper Ingress Controller](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-skipper-overview.png)
+![Flagger Skipper Ingress Controller](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-skipper-overview.png)
 
 ## Prerequisites
 
@@ -31,14 +31,12 @@ Certain arguments are relevant:
 Install Flagger using kustomize:
 
 ```bash
-kustomize build https://github.com/fluxcd/flagger/kustomize/kubernetes?ref=main | kubectl apply -f -
+kustomize build https://github.com/weaveworks/flagger/kustomize/kubernetes | kubectl apply -f -
 ```
 
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services and canary ingress).
-These objects expose the application outside the cluster and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services and canary ingress\). These objects expose the application outside the cluster and drive the canary analysis and promotion.
 
 Create a test namespace:
 
@@ -49,7 +47,7 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
@@ -192,11 +190,9 @@ ingress.networking.k8s.io/podinfo-canary
 
 ## Automated canary promotion
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring
-key performance indicators like HTTP requests success rate, requests average duration and pod health.
-Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
 Trigger a canary deployment by updating the container image:
 
@@ -275,8 +271,7 @@ Generate latency:
 watch -n 1 curl http://app.example.com/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n flagger-system logs deploy/flagger -f | jq .msg
@@ -338,8 +333,7 @@ Edit the canary analysis and add the latency check:
       interval: 1m
 ```
 
-The threshold is set to 500ms so if the average request duration in the last minute goes over half a second
-then the analysis will fail and the canary will not be promoted.
+The threshold is set to 500ms so if the average request duration in the last minute goes over half a second then the analysis will fail and the canary will not be promoted.
 
 Trigger a canary deployment by updating the container image:
 
@@ -373,3 +367,4 @@ Canary failed! Scaling down podinfo.test
 ```
 
 If you have alerting configured, Flagger will send a notification with the reason why the canary failed.
+

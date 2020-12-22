@@ -1,10 +1,11 @@
-# Frequently asked questions
+# FAQ
 
-### Deployment Strategies
+## Deployment Strategies
 
 **Which deployment strategies are supported by Flagger?**
 
 Flagger implements the following deployment strategies:
+
 * [Canary Release](usage/deployment-strategies.md#canary-release)
 * [A/B Testing](usage/deployment-strategies.md#a-b-testing)
 * [Blue/Green](usage/deployment-strategies.md#blue-green-deployments)
@@ -12,25 +13,21 @@ Flagger implements the following deployment strategies:
 
 **When should I use A/B testing instead of progressive traffic shifting?**
 
-For frontend applications that require session affinity you should use HTTP headers or cookies match conditions
-to ensure a set of users will stay on the same version for the whole duration of the canary analysis.
+For frontend applications that require session affinity you should use HTTP headers or cookies match conditions to ensure a set of users will stay on the same version for the whole duration of the canary analysis.
 
 **Can I use Flagger to manage applications that live outside of a service mesh?**
 
-For applications that are not deployed on a service mesh, Flagger can orchestrate Blue/Green style deployments 
-with Kubernetes L4 networking. 
+For applications that are not deployed on a service mesh, Flagger can orchestrate Blue/Green style deployments with Kubernetes L4 networking.
 
 **When can I use traffic mirroring?**
 
-Traffic mirroring can be used for Blue/Green deployment strategy or a pre-stage in a Canary release.
-Traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.
-Mirroring should be used for requests that are **idempotent** or capable of being processed twice (once by the primary and once by the canary).
+Traffic mirroring can be used for Blue/Green deployment strategy or a pre-stage in a Canary release. Traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service. Mirroring should be used for requests that are **idempotent** or capable of being processed twice \(once by the primary and once by the canary\).
 
 **How to retry a failed release?**
 
 A canary analysis is triggered by changes in any of the following objects:
 
-* Deployment/DaemonSet PodSpec (metadata, container image, command, ports, env, resources, etc)
+* Deployment/DaemonSet PodSpec \(metadata, container image, command, ports, env, resources, etc\)
 * ConfigMaps mounted as volumes or mapped to environment variables
 * Secrets mounted as volumes or mapped to environment variables
 
@@ -46,7 +43,7 @@ spec:
         timestamp: "2020-03-10T14:24:48+0000"
 ```
 
-### Kubernetes services
+## Kubernetes services
 
 **How is an application exposed inside the cluster?**
 
@@ -74,20 +71,23 @@ spec:
     portName: http
 ```
 
-If the `service.name` is not specified, then `targetRef.name` is used for the apex domain and canary/primary services name prefix.
-You should treat the service name as an immutable field, changing it could result in routing conflicts.
+If the `service.name` is not specified, then `targetRef.name` is used for the apex domain and canary/primary services name prefix. You should treat the service name as an immutable field, changing it could result in routing conflicts.
 
 Based on the canary spec service, Flagger generates the following Kubernetes ClusterIP service:
 
 * `<service.name>.<namespace>.svc.cluster.local`  
+
     selector `app=<name>-primary`
+
 * `<service.name>-primary.<namespace>.svc.cluster.local`  
+
     selector `app=<name>-primary`
+
 * `<service.name>-canary.<namespace>.svc.cluster.local`  
+
     selector `app=<name>`
 
-This ensures that traffic coming from a namespace outside the mesh to `podinfo.test:9898`
-will be routed to the latest stable release of your app. 
+This ensures that traffic coming from a namespace outside the mesh to `podinfo.test:9898` will be routed to the latest stable release of your app.
 
 ```yaml
 apiVersion: v1
@@ -133,16 +133,13 @@ spec:
     targetPort: http
 ```
 
-The `podinfo-canary.test:9898` address is available only during the 
-canary analysis and can be used for conformance testing or load testing.
+The `podinfo-canary.test:9898` address is available only during the canary analysis and can be used for conformance testing or load testing.
 
-### Multiple ports
+## Multiple ports
 
 **My application listens on multiple ports, how can I expose them inside the cluster?**
 
-If port discovery is enabled, Flagger scans the deployment spec and extracts the containers 
-ports excluding the port specified in the canary service and Envoy sidecar ports. 
-These ports will be used when generating the ClusterIP services.
+If port discovery is enabled, Flagger scans the deployment spec and extracts the containers ports excluding the port specified in the canary service and Envoy sidecar ports. These ports will be used when generating the ClusterIP services.
 
 For a deployment that exposes two ports:
 
@@ -184,7 +181,7 @@ spec:
 
 Both port `8080` and `9090` will be added to the ClusterIP services.
 
-### Label selectors
+## Label selectors
 
 **What labels selectors are supported by Flagger?**
 
@@ -205,8 +202,7 @@ spec:
         app: podinfo
 ```
 
-Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If you use a different 
-convention you can specify your label with the `-selector-labels` flag.
+Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors. If you use a different convention you can specify your label with the `-selector-labels` flag.
 
 **Is pod affinity and anti affinity supported?**
 
@@ -241,7 +237,7 @@ spec:
               topologyKey: kubernetes.io/hostname
 ```
 
-### Metrics
+## Metrics
 
 **How does Flagger measures the request success rate and duration?**
 
@@ -287,7 +283,7 @@ sum(
 )
 ```
 
-Envoy query (App Mesh):
+Envoy query \(App Mesh\):
 
 ```javascript
 sum(
@@ -310,24 +306,24 @@ sum(
 )
 ```
 
-Envoy query (Contour or Gloo):
+Envoy query \(Contour or Gloo\):
 
 ```javascript
 sum(
-	rate(
-		envoy_cluster_upstream_rq{
-			envoy_cluster_name=~"$namespace-$workload",
-			envoy_response_code!~"5.*"
-		}[$interval]
-	)
+    rate(
+        envoy_cluster_upstream_rq{
+            envoy_cluster_name=~"$namespace-$workload",
+            envoy_response_code!~"5.*"
+        }[$interval]
+    )
 )
 /
 sum(
-	rate(
-		envoy_cluster_upstream_rq{
-			envoy_cluster_name=~"$namespace-$workload",
-		}[$interval]
-	)
+    rate(
+        envoy_cluster_upstream_rq{
+            envoy_cluster_name=~"$namespace-$workload",
+        }[$interval]
+    )
 )
 ```
 
@@ -362,7 +358,7 @@ histogram_quantile(0.99,
 )
 ```
 
-Envoy query (App Mesh, Contour or Gloo):
+Envoy query \(App Mesh, Contour or Gloo\):
 
 ```javascript
 histogram_quantile(0.99, 
@@ -381,19 +377,15 @@ histogram_quantile(0.99,
 
 **Can I use custom metrics?**
 
-The analysis can be extended with metrics provided by Prometheus, Datadog and AWS CloudWatch. For more details 
-on how custom metrics can be used please read the [metrics docs](usage/metrics.md).
+The analysis can be extended with metrics provided by Prometheus, Datadog and AWS CloudWatch. For more details on how custom metrics can be used please read the [metrics docs](usage/metrics.md).
 
-### Istio routing
+## Istio routing
 
 **How does Flagger interact with Istio?**
 
-Flagger creates an Istio Virtual Service and Destination Rules based on the Canary service spec. 
-The service configuration lets you expose an app inside or outside the mesh.
-You can also define traffic policies, HTTP match conditions, URI rewrite rules, CORS policies, timeout and retries.
+Flagger creates an Istio Virtual Service and Destination Rules based on the Canary service spec. The service configuration lets you expose an app inside or outside the mesh. You can also define traffic policies, HTTP match conditions, URI rewrite rules, CORS policies, timeout and retries.
 
-The following spec exposes the `frontend` workload inside the mesh on `frontend.test.svc.cluster.local:9898` 
-and outside the mesh on `frontend.example.com`. You'll have to specify an Istio ingress gateway for external hosts.
+The following spec exposes the `frontend` workload inside the mesh on `frontend.test.svc.cluster.local:9898` and outside the mesh on `frontend.example.com`. You'll have to specify an Istio ingress gateway for external hosts.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -527,11 +519,9 @@ spec:
       mode: DISABLE
 ```
 
-Flagger keeps in sync the virtual service and destination rules with the canary service spec.
-Any direct modification to the virtual service spec will be overwritten.
+Flagger keeps in sync the virtual service and destination rules with the canary service spec. Any direct modification to the virtual service spec will be overwritten.
 
-To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9898`,
-the service spec can contain only the container port and the traffic policy:
+To expose a workload inside the mesh on `http://backend.test.svc.cluster.local:9898`, the service spec can contain only the container port and the traffic policy:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -572,11 +562,9 @@ spec:
     app: backend-primary
 ```
 
-Flagger works for user facing apps exposed outside the cluster via an ingress gateway
-and for backend HTTP APIs that are accessible only from inside the mesh.
+Flagger works for user facing apps exposed outside the cluster via an ingress gateway and for backend HTTP APIs that are accessible only from inside the mesh.
 
-If `Delegation` is enabled, Flagger would generate Istio VirtualService without hosts and gateway,
-making the service compatible with Istio delegation.
+If `Delegation` is enabled, Flagger would generate Istio VirtualService without hosts and gateway, making the service compatible with Istio delegation.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -651,15 +639,13 @@ spec:
       namespace: test
 ```
 
-Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
-(For the use of Istio Delegation, you can refer to the documentation of [Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Delegate) and [pilot environment variables](https://istio.io/latest/docs/reference/commands/pilot-discovery/#envvars).)
+Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set. \(For the use of Istio Delegation, you can refer to the documentation of [Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Delegate) and [pilot environment variables](https://istio.io/latest/docs/reference/commands/pilot-discovery/#envvars).\)
 
-### Istio Ingress Gateway
+## Istio Ingress Gateway
 
 **How can I expose multiple canaries on the same external domain?**
 
-Assuming you have two apps, one that servers the main website and one that serves the REST API.
-For each app you can define a canary object as:
+Assuming you have two apps, one that servers the main website and one that serves the REST API. For each app you can define a canary object as:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -697,13 +683,11 @@ spec:
       uri: /
 ```
 
-Based on the above configuration, Flagger will create two virtual services bounded to the same ingress gateway and external host.
-Istio Pilot will [merge](https://istio.io/help/ops/traffic-management/deploy-guidelines/#multiple-virtual-services-and-destination-rules-for-the-same-host)
-the two services and the website rule will be moved to the end of the list in the merged configuration. 
+Based on the above configuration, Flagger will create two virtual services bounded to the same ingress gateway and external host. Istio Pilot will [merge](https://istio.io/help/ops/traffic-management/deploy-guidelines/#multiple-virtual-services-and-destination-rules-for-the-same-host) the two services and the website rule will be moved to the end of the list in the merged configuration.
 
 Note that host merging only works if the canaries are bounded to a ingress gateway other than the `mesh` gateway.
 
-### Istio Mutual TLS
+## Istio Mutual TLS
 
 **How can I enable mTLS for a canary?**
 
@@ -758,3 +742,4 @@ spec:
     ports:
     - number: 80
 ```
+

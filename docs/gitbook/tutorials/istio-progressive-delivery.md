@@ -2,7 +2,7 @@
 
 This guide shows you how to use Istio and Flagger to automate canary deployments.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/sampl
 Install Flagger in the `istio-system` namespace:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/istio?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
 ```
 
 Create an ingress gateway to expose the demo app outside of the mesh:
@@ -44,10 +44,7 @@ spec:
 
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services,
-Istio destination rules and virtual services).
-These objects expose the application inside the mesh and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services, Istio destination rules and virtual services\). These objects expose the application inside the mesh and drive the canary analysis and promotion.
 
 Create a test namespace with Istio sidecar injection enabled:
 
@@ -59,16 +56,16 @@ kubectl label namespace test istio-injection=enabled
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/tester?ref=main
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
-Create a canary custom resource (replace example.com with your own domain):
+Create a canary custom resource \(replace example.com with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -151,8 +148,7 @@ spec:
           cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"
 ```
 
-**Note** that when using Istio 1.4 you have to replace the `request-duration`
-with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
+**Note** that when using Istio 1.4 you have to replace the `request-duration` with a [metric template](https://docs.flagger.app/dev/upgrade-guide#istio-telemetry-v2).
 
 Save the above resource as podinfo-canary.yaml and then apply it:
 
@@ -160,10 +156,9 @@ Save the above resource as podinfo-canary.yaml and then apply it:
 kubectl apply -f ./podinfo-canary.yaml
 ```
 
-When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
-The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
+When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary. The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
 
-![Flagger Canary Process](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-hpa.png)
+![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
 
 After a couple of seconds Flagger will create the canary objects:
 
@@ -271,8 +266,7 @@ Generate latency:
 watch curl http://podinfo-canary:9898/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
-the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n test describe canary/podinfo
@@ -299,14 +293,11 @@ Events:
 
 ## Traffic mirroring
 
-![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-traffic-mirroring.png)
+![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-traffic-mirroring.png)
 
-For applications that perform read operations, Flagger can be configured to drive canary releases with traffic mirroring.
-Istio traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.
-The response from the primary is sent back to the user and the response from the canary is discarded.
-Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are within the threshold values.
+For applications that perform read operations, Flagger can be configured to drive canary releases with traffic mirroring. Istio traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service. The response from the primary is sent back to the user and the response from the canary is discarded. Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are within the threshold values.
 
-Note that mirroring should be used for requests that are **idempotent** or capable of being processed twice (once by the primary and once by the canary).
+Note that mirroring should be used for requests that are **idempotent** or capable of being processed twice \(once by the primary and once by the canary\).
 
 You can enable mirroring by replacing `stepWeight/maxWeight` with `iterations` and by setting `analysis.mirror` to `true`:
 
@@ -354,7 +345,7 @@ spec:
 
 With the above configuration, Flagger will run a canary release with the following steps:
 
-* detect new revision (deployment spec, secrets or configmaps changes)
+* detect new revision \(deployment spec, secrets or configmaps changes\)
 * scale from zero the canary deployment
 * wait for the HPA to set the canary minimum replicas
 * check canary pods health
@@ -366,7 +357,7 @@ With the above configuration, Flagger will run a canary release with the followi
 * abort the canary release if the metrics check failure threshold is reached
 * stop traffic mirroring after the number of iterations is reached
 * route live traffic to the canary pods
-* promote the canary (update the primary secrets, configmaps and deployment spec)
+* promote the canary \(update the primary secrets, configmaps and deployment spec\)
 * wait for the primary deployment rollout to finish
 * wait for the HPA to set the primary minimum replicas
 * check primary pods health
@@ -374,7 +365,5 @@ With the above configuration, Flagger will run a canary release with the followi
 * scale to zero the canary
 * send notification with the canary analysis result
 
-The above procedure can be extended with [custom metrics](../usage/metrics.md) checks,
-[webhooks](../usage/webhooks.md),
-[manual promotion](../usage/webhooks.md#manual-gating) approval and
-[Slack or MS Teams](../usage/alerting.md) notifications.
+The above procedure can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
+

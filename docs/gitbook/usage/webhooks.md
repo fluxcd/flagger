@@ -1,26 +1,42 @@
 # Webhooks
 
-The canary analysis can be extended with webhooks. Flagger will call each webhook URL and
-determine from the response status code (HTTP 2xx) if the canary is failing or not.
+The canary analysis can be extended with webhooks. Flagger will call each webhook URL and determine from the response status code \(HTTP 2xx\) if the canary is failing or not.
 
 There are several types of hooks:
+
 * **confirm-rollout** hooks are executed before scaling up the canary deployment and can be used for manual approval.
-The rollout is paused until the hook returns a successful HTTP status code.
+
+  The rollout is paused until the hook returns a successful HTTP status code.
+
 * **pre-rollout** hooks are executed before routing traffic to canary. 
-The canary advancement is paused if a pre-rollout hook fails and if the number of failures reach the 
-threshold the canary will be rollback.
+
+  The canary advancement is paused if a pre-rollout hook fails and if the number of failures reach the 
+
+  threshold the canary will be rollback.
+
 * **rollout** hooks are executed during the analysis on each iteration before the metric checks. 
-If a rollout hook call fails the canary advancement is paused and eventfully rolled back.
+
+  If a rollout hook call fails the canary advancement is paused and eventfully rolled back.
+
 * **confirm-promotion** hooks are executed before the promotion step.
-The canary promotion is paused until the hooks return HTTP 200.
-While the promotion is paused, Flagger will continue to run the metrics checks and rollout hooks.
+
+  The canary promotion is paused until the hooks return HTTP 200.
+
+  While the promotion is paused, Flagger will continue to run the metrics checks and rollout hooks.
+
 * **post-rollout** hooks are executed after the canary has been promoted or rolled back. 
-If a post rollout hook fails the error is logged.
+
+  If a post rollout hook fails the error is logged.
+
 * **rollback** hooks are executed while a canary deployment is in either Progressing or Waiting status.
-This provides the ability to rollback during analysis or while waiting for a confirmation. If a rollback hook
-returns a successful HTTP status code, Flagger will stop the analysis and mark the canary release as failed.
+
+  This provides the ability to rollback during analysis or while waiting for a confirmation. If a rollback hook
+
+  returns a successful HTTP status code, Flagger will stop the analysis and mark the canary release as failed.
+
 * **event** hooks are executed every time Flagger emits a Kubernetes event. When configured,
-every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST request.
+
+  every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST request.
 
 Spec:
 
@@ -60,11 +76,11 @@ Spec:
         url: http://event-recevier.notifications/slack
 ```
 
-> **Note** that the sum of all rollout webhooks timeouts should be lower than the analysis interval. 
+> **Note** that the sum of all rollout webhooks timeouts should be lower than the analysis interval.
 
-Webhook payload (HTTP POST):
+Webhook payload \(HTTP POST\):
 
-```json
+```javascript
 {
     "name": "podinfo",
     "namespace": "test",
@@ -81,11 +97,11 @@ Response status codes:
 * 200-202 - advance canary by increasing the traffic weight
 * timeout or non-2xx - halt advancement and increment failed checks
 
-On a non-2xx response Flagger will include the response body (if any) in the failed checks log and Kubernetes events.
+On a non-2xx response Flagger will include the response body \(if any\) in the failed checks log and Kubernetes events.
 
-Event payload (HTTP POST):
+Event payload \(HTTP POST\):
 
-```json
+```javascript
 {
   "name": "string (canary name)",
   "namespace": "string (canary namespace)",
@@ -98,25 +114,20 @@ Event payload (HTTP POST):
 }
 ```
 
-The event receiver can create alerts based on the received phase
-(possible values: ` Initialized`, `Waiting`, `Progressing`, `Promoting`, `Finalising`, `Succeeded` or `Failed`).
+The event receiver can create alerts based on the received phase \(possible values: `Initialized`, `Waiting`, `Progressing`, `Promoting`, `Finalising`, `Succeeded` or `Failed`\).
 
-### Load Testing
+## Load Testing
 
-For workloads that are not receiving constant traffic Flagger can be configured with a webhook, 
-that when called, will start a load test for the target workload.
-If the target workload doesn't receive any traffic during the canary analysis, 
-Flagger metric checks will fail with "no values found for metric request-success-rate".
+For workloads that are not receiving constant traffic Flagger can be configured with a webhook, that when called, will start a load test for the target workload. If the target workload doesn't receive any traffic during the canary analysis, Flagger metric checks will fail with "no values found for metric request-success-rate".
 
-Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) 
-that generates traffic during analysis when configured as a webhook.
+Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) that generates traffic during analysis when configured as a webhook.
 
-![Flagger Load Testing Webhook](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-load-testing.png)
+![Flagger Load Testing Webhook](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-load-testing.png)
 
 First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/tester
+kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
 ```
 
 Or by using Helm:
@@ -129,7 +140,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 --set cmd.timeout=1h
 ```
 
-When deployed the load tester API will be available at `http://flagger-loadtester.test/`. 
+When deployed the load tester API will be available at `http://flagger-loadtester.test/`.
 
 Now you can add webhooks to the canary analysis spec:
 
@@ -149,12 +160,9 @@ webhooks:
       cmd: "hey -z 1m -q 10 -c 2 -m POST -d '{test: 2}' http://podinfo-canary.test:9898/echo"
 ```
 
-When the canary analysis starts, Flagger will call the webhooks and the load tester will run the `hey` commands 
-in the background, if they are not already running. This will ensure that during the 
-analysis, the `podinfo-canary.test` service will receive a steady stream of GET and POST requests.
+When the canary analysis starts, Flagger will call the webhooks and the load tester will run the `hey` commands in the background, if they are not already running. This will ensure that during the analysis, the `podinfo-canary.test` service will receive a steady stream of GET and POST requests.
 
-If your workload is exposed outside the mesh you can point `hey` to the 
-public URL and use HTTP2.
+If your workload is exposed outside the mesh you can point `hey` to the public URL and use HTTP2.
 
 ```yaml
 webhooks:
@@ -190,20 +198,18 @@ webhooks:
       cmd: "ghz --insecure --proto=/tmp/ghz/health.proto --call=grpc.health.v1.Health/Check podinfo.test:9898"
 ```
 
-The load tester can run arbitrary commands as long as the binary is present in the container image.
-For example if you you want to replace `hey` with another CLI, you can create your own Docker image:
+The load tester can run arbitrary commands as long as the binary is present in the container image. For example if you you want to replace `hey` with another CLI, you can create your own Docker image:
 
-```dockerfile
+```text
 FROM weaveworks/flagger-loadtester:<VER>
 
 RUN curl -Lo /usr/local/bin/my-cli https://github.com/user/repo/releases/download/ver/my-cli \
     && chmod +x /usr/local/bin/my-cli
 ```
 
-### Load Testing Delegation
+## Load Testing Delegation
 
-The load tester can also forward testing tasks to external tools, by now [nGrinder](https://github.com/naver/ngrinder)
-is supported.
+The load tester can also forward testing tasks to external tools, by now [nGrinder](https://github.com/naver/ngrinder) is supported.
 
 To use this feature, add a load test task of type 'ngrinder' to the canary analysis spec:
 
@@ -225,11 +231,10 @@ webhooks:
       # the interval between between nGrinder test status polling, default to 1s
       pollInterval: 5s
 ```
-When the canary analysis starts, the load tester will initiate a [clone_and_start request](https://github.com/naver/ngrinder/wiki/REST-API-PerfTest)
-to the nGrinder server and start a new performance test. the load tester will periodically poll the nGrinder server
-for the status of the test, and prevent duplicate requests from being sent in subsequent analysis loops.
 
-### Integration Testing
+When the canary analysis starts, the load tester will initiate a [clone\_and\_start request](https://github.com/naver/ngrinder/wiki/REST-API-PerfTest) to the nGrinder server and start a new performance test. the load tester will periodically poll the nGrinder server for the status of the test, and prevent duplicate requests from being sent in subsequent analysis loops.
+
+## Integration Testing
 
 Flagger comes with a testing service that can run Helm tests, Bats tests or Concord tests when configured as a webhook.
 
@@ -243,7 +248,7 @@ helm upgrade -i flagger-helmtester flagger/loadtester \
 --set serviceAccountName=tiller
 ```
 
-When deployed the Helm tester API will be available at `http://flagger-helmtester.kube-system/`. 
+When deployed the Helm tester API will be available at `http://flagger-helmtester.kube-system/`.
 
 Now you can add pre-rollout webhooks to the canary analysis spec:
 
@@ -259,8 +264,7 @@ Now you can add pre-rollout webhooks to the canary analysis spec:
           cmd: "test {{ .Release.Name }} --cleanup"
 ```
 
-When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary.
-If the helm test fails, Flagger will retry until the analysis threshold is reached and the canary is rolled back.
+When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary. If the helm test fails, Flagger will retry until the analysis threshold is reached and the canary is rolled back.
 
 If you are using Helm v3, you'll have to create a dedicated service account and add the release namespace to the test command:
 
@@ -276,10 +280,9 @@ If you are using Helm v3, you'll have to create a dedicated service account and 
           cmd: "test {{ .Release.Name }} --timeout 3m -n {{ .Release.Namespace }}"
 ```
 
-If the test hangs or logs error messages hinting to insufficient permissions it can be related to RBAC,
-check the [Troubleshooting](#Troubleshooting) section for an example configuration.
+If the test hangs or logs error messages hinting to insufficient permissions it can be related to RBAC, check the [Troubleshooting](webhooks.md#Troubleshooting) section for an example configuration.
 
-As an alternative to Helm you can use the [Bash Automated Testing System](https://github.com/bats-core/bats-core) to run your tests. 
+As an alternative to Helm you can use the [Bash Automated Testing System](https://github.com/bats-core/bats-core) to run your tests.
 
 ```yaml
   analysis:
@@ -316,21 +319,13 @@ You can also configure the test runner to start a [Concord](https://concord.walm
           pollTimeout: "60"
 ```
 
-`org`, `project`, `repo` and `entrypoint` represents where your test process runs in Concord. 
-In order to authenticate to Concord, you need to set `apiKeyPath` to a path of a file containing a valid Concord API key
- on the `flagger-helmtester` container. This can be done via mounting a Kubernetes secret in the tester's Deployment. 
-`pollInterval` represents the interval in seconds the web-hook will call Concord to see if the process has finished (Default is 5s). 
-`pollTimeout` represents the time in seconds the web-hook will try to call Concord before timing out (Default is 30s). 
+`org`, `project`, `repo` and `entrypoint` represents where your test process runs in Concord. In order to authenticate to Concord, you need to set `apiKeyPath` to a path of a file containing a valid Concord API key on the `flagger-helmtester` container. This can be done via mounting a Kubernetes secret in the tester's Deployment. `pollInterval` represents the interval in seconds the web-hook will call Concord to see if the process has finished \(Default is 5s\). `pollTimeout` represents the time in seconds the web-hook will try to call Concord before timing out \(Default is 30s\).
 
-### Manual Gating
+## Manual Gating
 
-For manual approval of a canary deployment you can use the `confirm-rollout` and `confirm-promotion` webhooks. 
-The confirmation rollout hooks are executed before the pre-rollout hooks. 
-Flagger will halt the canary traffic shifting and analysis until the confirm webhook returns HTTP status 200.
+For manual approval of a canary deployment you can use the `confirm-rollout` and `confirm-promotion` webhooks. The confirmation rollout hooks are executed before the pre-rollout hooks. Flagger will halt the canary traffic shifting and analysis until the confirm webhook returns HTTP status 200.
 
-For manual rollback of a canary deployment you can use the `rollback` webhook.  The rollback hook will be called 
-during the analysis and confirmation states.  If a rollback webhook returns a successful HTTP status code, Flagger 
-will shift all traffic back to the primary instance and fail the canary. 
+For manual rollback of a canary deployment you can use the `rollback` webhook. The rollback hook will be called during the analysis and confirmation states. If a rollback webhook returns a successful HTTP status code, Flagger will shift all traffic back to the primary instance and fail the canary.
 
 Manual gating with Flagger's tester:
 
@@ -342,7 +337,7 @@ Manual gating with Flagger's tester:
         url: http://flagger-loadtester.test/gate/halt
 ```
 
-The `/gate/halt` returns HTTP 403 thus blocking the rollout. 
+The `/gate/halt` returns HTTP 403 thus blocking the rollout.
 
 If you have notifications enabled, Flagger will post a message to Slack or MS Teams if a canary rollout is waiting for approval.
 
@@ -371,13 +366,13 @@ By default the gate is closed, you can start or resume the canary rollout with:
 ```bash
 kubectl -n test exec -it flagger-loadtester-xxxx-xxxx sh
 
-curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/gate/open 
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/gate/open
 ```
 
 You can pause the rollout at any time with:
 
 ```bash
-curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/gate/close 
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/gate/close
 ```
 
 If a canary analysis is paused the status will change to waiting:
@@ -389,8 +384,7 @@ NAME      STATUS        WEIGHT
 podinfo   Waiting       0
 ```
 
-The `confirm-promotion` hook type can be used to manually approve the canary promotion.
-While the promotion is paused, Flagger will continue to run the metrics checks and load tests.
+The `confirm-promotion` hook type can be used to manually approve the canary promotion. While the promotion is paused, Flagger will continue to run the metrics checks and load tests.
 
 ```yaml
   analysis:
@@ -400,8 +394,7 @@ While the promotion is paused, Flagger will continue to run the metrics checks a
         url: http://flagger-loadtester.test/gate/halt
 ```
 
-The `rollback` hook type can be used to manually rollback the canary promotion.  As with gating, rollbacks can be driven 
-with Flagger's tester API by setting the rollback URL to `/rollback/check`  
+The `rollback` hook type can be used to manually rollback the canary promotion. As with gating, rollbacks can be driven with Flagger's tester API by setting the rollback URL to `/rollback/check`
 
 ```yaml
   analysis:
@@ -409,35 +402,36 @@ with Flagger's tester API by setting the rollback URL to `/rollback/check`
       - name: "rollback"
         type: rollback
         url: http://flagger-loadtester.test/rollback/check
-```     
+```
 
 By default rollback is closed, you can rollback a canary rollout with:
 
 ```bash
 kubectl -n test exec -it flagger-loadtester-xxxx-xxxx sh
 
-curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/rollback/open 
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/rollback/open
 ```
 
 You can close the rollback with:
 
 ```bash
-curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/rollback/close 
+curl -d '{"name": "podinfo","namespace":"test"}' http://localhost:8080/rollback/close
 ```
 
 If you have notifications enabled, Flagger will post a message to Slack or MS Teams if a canary has been rolled back.
 
-### Troubleshooting 
+## Troubleshooting
 
-#### Manually check if helm test is running
+### Manually check if helm test is running
 
 To debug in depth any issues with helm tests, you can execute commands on the flagger-loadtester pod.
+
 ```bash
 kubectl  exec -it deploy/flagger-loadtester -- bash
 helmv3 test <release> -n <namespace> --debug
 ```
 
-#### Helm tests hang during canary deployment
+### Helm tests hang during canary deployment
 
 If test execution hangs or displays insufficient permissions, check your RBAC settings.
 
@@ -474,3 +468,4 @@ roleRef:
   name: helm-smoke-tester
   apiGroup: rbac.authorization.k8s.io
 ```
+

@@ -2,36 +2,35 @@
 
 This document describes how to build, test and run Flagger from source.
 
-### Setup dev environment
+## Setup dev environment
 
 Flagger is written in Go and uses Go modules for dependency management.
 
 On your dev machine install the following tools:
-* go >= 1.14
-* git >= 2.20
-* bash >= 5.0
-* make >= 3.81
-* kubectl >= 1.16
-* kustomize >= 3.5
-* helm >= 3.0
-* docker >= 19.03
 
-You'll also need a Kubernetes cluster for testing Flagger.
-You can use Minikube, Kind, Docker desktop or any remote cluster
-(AKS/EKS/GKE/etc) Kubernetes version 1.14 or newer.
+* go &gt;= 1.14
+* git &gt;= 2.20
+* bash &gt;= 5.0
+* make &gt;= 3.81
+* kubectl &gt;= 1.16
+* kustomize &gt;= 3.5
+* helm &gt;= 3.0
+* docker &gt;= 19.03
+
+You'll also need a Kubernetes cluster for testing Flagger. You can use Minikube, Kind, Docker desktop or any remote cluster \(AKS/EKS/GKE/etc\) Kubernetes version 1.14 or newer.
 
 To start contributing to Flagger, fork the [repository](https://github.com/fluxcd/flagger) on GitHub.
 
 Create a dir inside your `GOPATH`:
 
 ```bash
-mkdir -p $GOPATH/src/github.com/weaveworks
+mkdir -p $GOPATH/src/github.com/fluxcd
 ```
 
 Clone your fork:
 
 ```bash
-cd $GOPATH/src/github.com/weaveworks
+cd $GOPATH/src/github.com/fluxcd
 git clone https://github.com/YOUR_USERNAME/flagger
 cd flagger
 ```
@@ -46,11 +45,11 @@ Sync your fork regularly to keep it up-to-date with upstream:
 
 ```bash
 git fetch upstream
-git checkout master
-git merge upstream/master
+git checkout main
+git merge upstream/main
 ```
 
-### Build
+## Build
 
 Download Go modules:
 
@@ -58,19 +57,30 @@ Download Go modules:
 go mod download
 ```
 
-Build Flagger binary and container image:
+Build Flagger binary:
 
 ```bash
 make build
 ```
 
-Build load tester binary and container image:
+Build load tester binary:
 
 ```bash
 make loadtester-build
 ```
 
-### Code changes
+## Code changes
+
+We require all commits to be signed. By signing off with your signature, you
+certify that you wrote the patch or otherwise have the right to contribute the
+material by the rules of the [DCO](https://raw.githubusercontent.com/fluxcd/flagger/main/DCO).
+
+If your `user.name` and `user.email` are configured in your Git config,
+you can sign your commit automatically with:
+
+```bash
+git commit -s
+```
 
 Before submitting a PR, make sure your changes are covered by unit tests.
 
@@ -98,7 +108,7 @@ Run unit tests:
 make test
 ```
 
-### API changes
+## API changes
 
 If you made changes to `pkg/apis` regenerate the Kubernetes client sets with:
 
@@ -114,10 +124,9 @@ make crd
 
 Note that any change to the CRDs must be accompanied by an update to the Open API schema.
 
-### Manual testing
+## Manual testing
 
-Install a service mesh and/or an ingress controller on your cluster and deploy Flagger
-using one of the install options [listed here](https://docs.flagger.app/install/flagger-install-on-kubernetes).
+Install a service mesh and/or an ingress controller on your cluster and deploy Flagger using one of the install options [listed here](https://docs.flagger.app/install/flagger-install-on-kubernetes).
 
 If you made changes to the CRDs, apply your local copy with:
 
@@ -150,7 +159,7 @@ Another option to manually test your changes is to build and push the image to y
 
 ```bash
 make build
-docker tag weaveworks/flagger:latest <YOUR-DOCKERHUB-USERNAME>/flagger:<YOUR-TAG>
+docker build -t <YOUR-DOCKERHUB-USERNAME>/flagger:<YOUR-TAG> .
 docker push <YOUR-DOCKERHUB-USERNAME>/flagger:<YOUR-TAG>
 ```
 
@@ -163,7 +172,7 @@ kubectl -n istio-system scale deployment/flagger --replicas=1
 
 Now you can use one of the [tutorials](https://docs.flagger.app/) to manually test your changes.
 
-### Integration testing
+## Integration testing
 
 Flagger end-to-end tests can be run locally with [Kubernetes Kind](https://github.com/kubernetes-sigs/kind).
 
@@ -173,39 +182,23 @@ Create a Kind cluster:
 kind create cluster
 ```
 
-Install a service mesh and/or an ingress controller in Kind.
-
-Linkerd example:
-
-```bash
-linkerd install | kubectl apply -f -
-linkerd check
-```
-
 Build Flagger container image and load it on the cluster:
 
 ```bash
 make build
-docker tag weaveworks/flagger:latest test/flagger:latest
+docker build -t test/flagger:latest .
 kind load docker-image test/flagger:latest
 ```
 
-Install Flagger on the cluster and set the test image:
+
+Run the Istio e2e tests:
 
 ```bash
-kubectl apply -k ./kustomize/linkerd
-kubectl -n linkerd set image deployment/flagger flagger=test/flagger:latest
-kubectl -n linkerd rollout status deployment/flagger
-```
-
-Run the Linkerd e2e tests:
-
-```bash
-./test/e2e-linkerd-tests.sh
+./test/istio/run.sh
 ```
 
 For each service mesh and ingress controller there is a dedicated e2e test suite,
-chose one that matches your changes from this [list](https://github.com/fluxcd/flagger/tree/master/test).
+chose one that matches your changes from this [list](https://github.com/fluxcd/flagger/tree/main/test).
 
 When you open a pull request on Flagger repo, the unit and integration tests will be run in CI.
 
