@@ -9,9 +9,7 @@ spec:
         - name: flagger
           args:
             - -log-level=info
+            - -include-label-prefix=app.kubernetes.io
             - -mesh-provider=contour
             - -ingress-class=contour
             - -metrics-server=http://flagger-prometheus:9090
-            - -slack-user=flagger
-            - -slack-channel=
-            - -slack-url=
