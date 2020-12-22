@@ -2,7 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
-## 1.4.2 (2020-12-09) 
+## 1.5.0
+
+**Release date:** 2020-12-22
+
+This is the first release of Flagger under [fluxcd](https://github.com/fluxcd) organization (CNCF sandbox).
+Starting with this version, Flagger can be installed on multi-arch Kubernetes clusters (Linux AMD64/ARM64/ARM).
+The multi-arch image is available on GitHub Container Registry
+at [ghcr.io/fluxcd/flagger](https://github.com/orgs/fluxcd/packages/container/package/flagger).
+
+#### Improvements
+
+- Publish multi-arch image to GitHub Container Registry
+  [#763](https://github.com/fluxcd/flagger/pull/763)
+- Migrate CI to GitHub Actions
+  [#754](https://github.com/fluxcd/flagger/pull/754)
+- Add e2e tests for label prefix inclusion
+  [#762](https://github.com/fluxcd/flagger/pull/762)  
+- Added PodDisruptionBudget to the Flagger Helm chart
+  [#749](https://github.com/fluxcd/flagger/pull/749)
+
+## v1.4.2
+
+**Release date:** 2020-12-09
 
 Fix Istio virtual service delegation
 

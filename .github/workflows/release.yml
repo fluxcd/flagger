@@ -12,12 +12,11 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          VERSION=sha-${GITHUB_SHA::8}
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF/refs\/tags\//}
-          fi
+          VERSION=$(grep 'VERSION' pkg/version/version.go | awk '{ print $4 }' | tr -d '"')
+          CHANGELOG="https://github.com/fluxcd/flagger/blob/main/CHANGELOG.md#$(echo $VERSION | tr -d '.')"
           echo ::set-output name=BUILD_DATE::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
           echo ::set-output name=VERSION::${VERSION}
+          echo ::set-output name=CHANGELOG::${CHANGELOG}
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v1
         with:
@@ -71,4 +70,4 @@ jobs:
           draft: false
           prerelease: false
           body: |
-            [CHANGELOG](https://github.com/fluxcd/flagger/blob/main/CHANGELOG.md#${{ steps.prep.outputs.VERSION }})
+            [CHANGELOG](${{ steps.prep.outputs.CHANGELOG }})
