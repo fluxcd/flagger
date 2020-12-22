@@ -24,7 +24,7 @@ import (
 	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
-	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
 	splitv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"

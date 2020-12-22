@@ -1,5 +1,5 @@
 /*
-Copyright The Flagger Authors.
+Copyright 2020 The Flux authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import (
 	"context"
 	time "time"
 
-	gloov1 "github.com/weaveworks/flagger/pkg/apis/gloo/v1"
-	versioned "github.com/weaveworks/flagger/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/weaveworks/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/weaveworks/flagger/pkg/client/listers/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
+	v1 "github.com/fluxcd/flagger/pkg/client/listers/gloo/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
