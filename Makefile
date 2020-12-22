@@ -3,14 +3,7 @@ VERSION?=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | t
 LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' | tr -d '"' | head -n1)
 
 build:
-	GIT_COMMIT=$$(git rev-list -1 HEAD) && CGO_ENABLED=0 GOOS=linux go build  \
-		-ldflags "-s -w -X github.com/fluxcd/flagger/pkg/version.REVISION=$${GIT_COMMIT}" \
-		-a -installsuffix cgo -o ./bin/flagger ./cmd/flagger/*
-	docker build -t weaveworks/flagger:$(TAG) . -f Dockerfile
-
-push:
-	docker tag fluxcd/flagger:$(TAG) fluxcd/flagger:$(VERSION)
-	docker push fluxcd/flagger:$(VERSION)
+	CGO_ENABLED=0 go build -a -o ./bin/flagger ./cmd/flagger
 
 fmt:
 	gofmt -l -s -w ./
@@ -48,13 +41,9 @@ release:
 	git tag "v$(VERSION)"
 	git push origin "v$(VERSION)"
 
-release-notes:
-	cd /tmp && GH_REL_URL="https://github.com/buchanae/github-release-notes/releases/download/0.2.0/github-release-notes-linux-amd64-0.2.0.tar.gz" && \
-    curl -sSL $${GH_REL_URL} | tar xz && sudo mv github-release-notes /usr/local/bin/
-
 loadtester-build:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
-	docker build -t fluxcd/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
+	docker build -t ghcr.io/fluxcd/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 
 loadtester-push:
-	docker push fluxcd/flagger-loadtester:$(LT_VERSION)
+	docker push ghcr.io/fluxcd/flagger-loadtester:$(LT_VERSION)
