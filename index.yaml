@@ -3,7 +3,7 @@ entries:
   appmesh-gateway:
   - apiVersion: v1
     appVersion: 1.1.0
-    created: "2020-12-09T13:07:16.170177597Z"
+    created: "2020-12-22T16:34:23.861280523Z"
     description: Flagger Gateway for AWS App Mesh is an edge L7 load balancer that
       exposes applications outside the mesh.
     digest: d234708e0bf731d8789891d926be713c6792ec4d2ef6e6d42879cfc648e71815
@@ -27,7 +27,7 @@ entries:
     version: 1.1.1
   - apiVersion: v1
     appVersion: 1.0.0
-    created: "2020-12-09T13:07:16.169756916Z"
+    created: "2020-12-22T16:34:23.860644813Z"
     description: Flagger Gateway for AWS App Mesh is an edge L7 load balancer that
       exposes applications outside the mesh.
     digest: 8fcca5745671c3bc6bd6bbfc2516eb6fa96d66c32a4bde0674f34002ab27b84a
@@ -51,7 +51,7 @@ entries:
     version: 1.1.0
   - apiVersion: v1
     appVersion: 1.0.0
-    created: "2020-12-09T13:07:16.169300805Z"
+    created: "2020-12-22T16:34:23.859939902Z"
     description: Flagger Gateway for AWS App Mesh is an edge L7 load balancer that
       exposes applications outside the mesh.
     digest: 7c0f43f99ff933a1d88a74aa6f422bec7f7dd9a60080c591018f3719478dba4f
@@ -75,11 +75,38 @@ entries:
     version: 1.0.0
   flagger:
   - apiVersion: v1
+    appVersion: 1.5.0
+    created: "2020-12-22T16:34:23.903560783Z"
+    description: Flagger is a progressive delivery operator for Kubernetes
+    digest: 7cb6ac3eb6fd8c13cba969df3f770461945363b9aea78dde3048e61010048ed6
+    home: https://flagger.app
+    icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
+    keywords:
+    - flagger
+    - istio
+    - appmesh
+    - linkerd
+    - gloo
+    - contour
+    - nginx
+    - gitops
+    - canary
+    kubeVersion: '>=1.11.0-0'
+    maintainers:
+    - email: stefanprodan@users.noreply.github.com
+      name: stefanprodan
+      url: https://github.com/stefanprodan
+    name: flagger
+    sources:
+    - https://github.com/fluxcd/flagger
+    urls:
+    - https://flagger.app/flagger-1.5.0.tgz
+    version: 1.5.0
+  - apiVersion: v1
     appVersion: 1.4.2
-    created: "2020-12-09T13:07:16.204275647Z"
+    created: "2020-12-22T16:34:23.902332664Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 35414f0e784f0dd16dc83c9b0989dc54b621aa2df7f3779f45cd351f9b14714d
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -105,10 +132,9 @@ entries:
     version: 1.4.2
   - apiVersion: v1
     appVersion: 1.4.1
-    created: "2020-12-09T13:07:16.203473472Z"
+    created: "2020-12-22T16:34:23.901157646Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 4e68f0c7aea839ccd03d5c31ea4587fce9f70f665572a5dc634ce4777eb3c21c
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -134,10 +160,9 @@ entries:
     version: 1.4.1
   - apiVersion: v1
     appVersion: 1.4.0
-    created: "2020-12-09T13:07:16.202655625Z"
+    created: "2020-12-22T16:34:23.899979528Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 7fbb59859a3c840d9b58cd5017db3f1d6f61d27ab7c6dbc617a077651108ce58
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -163,10 +188,9 @@ entries:
     version: 1.4.0
   - apiVersion: v1
     appVersion: 1.3.0
-    created: "2020-12-09T13:07:16.201853794Z"
+    created: "2020-12-22T16:34:23.898799709Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 7b3b3a13d06ad943e93b71abcf0b453cdde39272440188b58a1bbd74fa65ce5d
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -192,10 +216,9 @@ entries:
     version: 1.3.0
   - apiVersion: v1
     appVersion: 1.2.0
-    created: "2020-12-09T13:07:16.201020771Z"
+    created: "2020-12-22T16:34:23.89759099Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 3e6f92d176dca04ad578dd285d379c1c0f55563f085a88bbcefb598954966316
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -221,10 +244,9 @@ entries:
     version: 1.2.0
   - apiVersion: v1
     appVersion: 1.1.0
-    created: "2020-12-09T13:07:16.200181375Z"
+    created: "2020-12-22T16:34:23.896430272Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 0207a320d9a1a7aa29075932dda15bf90c1320609f10eb3a83f3c6390def095b
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -250,10 +272,9 @@ entries:
     version: 1.1.0
   - apiVersion: v1
     appVersion: 1.0.1
-    created: "2020-12-09T13:07:16.199369861Z"
+    created: "2020-12-22T16:34:23.895294854Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 00ba418840e78a09c4b6dea0c4cdcc7e0f625e1502948ba3979d4a976f82870e
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -279,10 +300,9 @@ entries:
     version: 1.0.1
   - apiVersion: v1
     appVersion: 1.0.0
-    created: "2020-12-09T13:07:16.19806298Z"
+    created: "2020-12-22T16:34:23.894236138Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 8e374ed6622d475d8fa8cca399903caeb089ceb964cd7de67931989e1272c324
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -308,10 +328,9 @@ entries:
     version: 1.0.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.5
-    created: "2020-12-09T13:07:16.19412453Z"
+    created: "2020-12-22T16:34:23.887671635Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: c0446cc338ae0e1e08b31de4b08e68d2e88b8148f30cdc0cca1ffe4535901831
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -337,10 +356,9 @@ entries:
     version: 0.27.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.3
-    created: "2020-12-09T13:07:16.193438548Z"
+    created: "2020-12-22T16:34:23.88667372Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: b06b6451b7f5732f8abc8cefedf57cae547ed5d2a2d6a16985625ddcdae444c1
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -364,10 +382,9 @@ entries:
     version: 0.26.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.2
-    created: "2020-12-09T13:07:16.192762147Z"
+    created: "2020-12-22T16:34:23.885755405Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 0082147adef36764df23577b28fc4e98bde64ef80816fd64d90f3c95ea7b607c
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -391,10 +408,9 @@ entries:
     version: 0.25.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.1
-    created: "2020-12-09T13:07:16.19206929Z"
+    created: "2020-12-22T16:34:23.884833491Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: b9a163a61f9fbddfa15680fc2c5bd74e9450faaea30754cb46442e55797e79c1
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -418,10 +434,9 @@ entries:
     version: 0.24.0
   - apiVersion: v1
     appVersion: 0.23.0
-    created: "2020-12-09T13:07:16.191352579Z"
+    created: "2020-12-22T16:34:23.883906776Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: d5e88e29946cb1e962ed6da05989c9330d3a2124758dbdfab5dc86e8d00cab93
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -445,10 +460,9 @@ entries:
     version: 0.23.0
   - apiVersion: v1
     appVersion: 0.22.0
-    created: "2020-12-09T13:07:16.190244958Z"
+    created: "2020-12-22T16:34:23.883144465Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 57ddb52d947d2d6e62c46483952566e4d03ba31588aba98a47b6de83b4c7725f
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -472,10 +486,9 @@ entries:
     version: 0.22.0
   - apiVersion: v1
     appVersion: 0.21.0
-    created: "2020-12-09T13:07:16.189684443Z"
+    created: "2020-12-22T16:34:23.882402453Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 54e28d148f14c6a0b7409d666e9c8d4858a09cee84e3e68d461ae3ba67fb70df
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -499,10 +512,9 @@ entries:
     version: 0.21.0
   - apiVersion: v1
     appVersion: 0.20.4
-    created: "2020-12-09T13:07:16.18915161Z"
+    created: "2020-12-22T16:34:23.881642141Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: a0f6f59d6e3fc4321ff0e99f4b4438185292550c6cec15e9792dfe72b2c4d901
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -526,10 +538,9 @@ entries:
     version: 0.20.4
   - apiVersion: v1
     appVersion: 0.20.3
-    created: "2020-12-09T13:07:16.18850807Z"
+    created: "2020-12-22T16:34:23.880586625Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: ffcf38c3bff399e58c70348b8d7e697331c5f058c0b95cafc91b92c0e945339e
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -553,12 +564,11 @@ entries:
     version: 0.20.3
   - apiVersion: v1
     appVersion: 0.20.2
-    created: "2020-12-09T13:07:16.187920644Z"
+    created: "2020-12-22T16:34:23.879084801Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 2af9250a4c1347dafe1ee200bf9277b5ba6a8073a9f4ddb1cc8d3e82684ee3b9
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -580,12 +590,11 @@ entries:
     version: 0.20.2
   - apiVersion: v1
     appVersion: 0.20.1
-    created: "2020-12-09T13:07:16.187378713Z"
+    created: "2020-12-22T16:34:23.877891682Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 1413a199bf282078fb9cb7f9b154b97c72366bbc50dc32505e440169ad529b4f
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -607,12 +616,11 @@ entries:
     version: 0.20.1
   - apiVersion: v1
     appVersion: 0.20.0
-    created: "2020-12-09T13:07:16.186854864Z"
+    created: "2020-12-22T16:34:23.877175871Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: d97fa1c0b380a61cbf33e10a4d36de154c82fe226d72df450d122ff71d2e19c5
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -634,12 +642,11 @@ entries:
     version: 0.20.0
   - apiVersion: v1
     appVersion: 0.19.0
-    created: "2020-12-09T13:07:16.185954783Z"
+    created: "2020-12-22T16:34:23.875936652Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 525438e24c6680255e7dac16cb3a9ec982ad40a3d45d1badcc2df0b7dd3d2fa0
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -661,12 +668,11 @@ entries:
     version: 0.19.0
   - apiVersion: v1
     appVersion: 0.18.6
-    created: "2020-12-09T13:07:16.185432625Z"
+    created: "2020-12-22T16:34:23.87515804Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 977bcc7ad656f07a346418052f30a341cd601649a768f05dff748419f974e726
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -688,12 +694,11 @@ entries:
     version: 0.18.6
   - apiVersion: v1
     appVersion: 0.18.5
-    created: "2020-12-09T13:07:16.184929636Z"
+    created: "2020-12-22T16:34:23.874450029Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 89a5dd914cdcf33c038f0a683093079f427881c8d730bd3a01bef632abae0a37
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -715,12 +720,11 @@ entries:
     version: 0.18.5
   - apiVersion: v1
     appVersion: 0.18.4
-    created: "2020-12-09T13:07:16.184370679Z"
+    created: "2020-12-22T16:34:23.873763618Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: a131dae0a0d190df86a4d32123ebd510f5554ef62b2bf59854e9f80ae6d5ff02
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -742,12 +746,11 @@ entries:
     version: 0.18.4
   - apiVersion: v1
     appVersion: 0.18.2
-    created: "2020-12-09T13:07:16.183857944Z"
+    created: "2020-12-22T16:34:23.873083107Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 8a25b3b56bbf296d98f07904d01f76e1d23e97e7c47db4329712f5fbb3c394b2
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -769,12 +772,11 @@ entries:
     version: 0.18.2
   - apiVersion: v1
     appVersion: 0.18.1
-    created: "2020-12-09T13:07:16.182750493Z"
+    created: "2020-12-22T16:34:23.872394697Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 07abf112df2f51f97e0435faecbb1e28bd14a846a54148e5e43d15a94632368f
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -796,12 +798,11 @@ entries:
     version: 0.18.1
   - apiVersion: v1
     appVersion: 0.18.0
-    created: "2020-12-09T13:07:16.181909475Z"
+    created: "2020-12-22T16:34:23.871730086Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
     digest: 3e9cb05f59b1298ced25e57cc2aef863fe304572a168a5278f74b3972b93e211
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -823,12 +824,11 @@ entries:
     version: 0.18.0
   - apiVersion: v1
     appVersion: 0.17.0
-    created: "2020-12-09T13:07:16.181052239Z"
+    created: "2020-12-22T16:34:23.871062376Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: 7523e652365f3b71a0691c16e6f82c8e76d42ba1182573fe55c11c9572edb832
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -849,12 +849,11 @@ entries:
     version: 0.17.0
   - apiVersion: v1
     appVersion: 0.16.0
-    created: "2020-12-09T13:07:16.180208245Z"
+    created: "2020-12-22T16:34:23.870418866Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: 17757362a872557fd77ca49db9d10e9fb3665f0d0e8da68f3a2a4aba0720f0e2
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -875,12 +874,11 @@ entries:
     version: 0.16.0
   - apiVersion: v1
     appVersion: 0.15.0
-    created: "2020-12-09T13:07:16.179440366Z"
+    created: "2020-12-22T16:34:23.869813956Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: 137d31a3b8724834920e573e828904720e7bc84025f8a68e4845d425c44541a9
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -901,12 +899,11 @@ entries:
     version: 0.15.0
   - apiVersion: v1
     appVersion: 0.14.1
-    created: "2020-12-09T13:07:16.178665509Z"
+    created: "2020-12-22T16:34:23.869218147Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: 8fdd543b633ef3fe023c95cdec74f02dea539eb9e87c7cf8f5b491153ed07894
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -927,12 +924,11 @@ entries:
     version: 0.14.1
   - apiVersion: v1
     appVersion: 0.14.0
-    created: "2020-12-09T13:07:16.177869034Z"
+    created: "2020-12-22T16:34:23.86811513Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: 8eaf52dc7fda7a984e0424eaf7c729c6d017363c9f2e022fda7da2043194e799
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -953,12 +949,11 @@ entries:
     version: 0.14.0
   - apiVersion: v1
     appVersion: 0.13.2
-    created: "2020-12-09T13:07:16.177158958Z"
+    created: "2020-12-22T16:34:23.867367618Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: d02c13748506bdaad2f901788d8bd3c06eafdc62a68c169f126c47ba77c7757d
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -979,12 +974,11 @@ entries:
     version: 0.13.2
   - apiVersion: v1
     appVersion: 0.13.1
-    created: "2020-12-09T13:07:16.176265899Z"
+    created: "2020-12-22T16:34:23.866341902Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: 7e8a73df0758a8d1ffc447771c8c73468a7ee1ab79cb52e9ae9f5287e2ccdf6a
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1005,12 +999,11 @@ entries:
     version: 0.13.1
   - apiVersion: v1
     appVersion: 0.13.0
-    created: "2020-12-09T13:07:16.17557188Z"
+    created: "2020-12-22T16:34:23.865777393Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
     digest: 02f583c266c868f4132d869505575f3e75726ac35e6cd030a05626c170aaa139
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1031,12 +1024,11 @@ entries:
     version: 0.13.0
   - apiVersion: v1
     appVersion: 0.12.0
-    created: "2020-12-09T13:07:16.174841192Z"
+    created: "2020-12-22T16:34:23.865186184Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 3477959bede593f236d70b66dc68359c7029e1b611ca773c97f2a378f9350a3e
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1057,12 +1049,11 @@ entries:
     version: 0.12.0
   - apiVersion: v1
     appVersion: 0.11.1
-    created: "2020-12-09T13:07:16.174236138Z"
+    created: "2020-12-22T16:34:23.864657476Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: f0c46cf42dcb485cf30d3806628e01934993b59a671bb1a6e2528ae69411edbf
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1083,12 +1074,11 @@ entries:
     version: 0.11.1
   - apiVersion: v1
     appVersion: 0.11.0
-    created: "2020-12-09T13:07:16.173632293Z"
+    created: "2020-12-22T16:34:23.864127767Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 32a28327571056852fd5864cca8db205cc88cfe3fb073e05fe0e236ed1f70dac
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1109,12 +1099,11 @@ entries:
     version: 0.11.0
   - apiVersion: v1
     appVersion: 0.10.0
-    created: "2020-12-09T13:07:16.173028461Z"
+    created: "2020-12-22T16:34:23.863089651Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: ff0923d7cb27b4fa1d8072a17088570fe3000f44261385ab612f50e5af8786b0
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1135,12 +1124,11 @@ entries:
     version: 0.10.0
   - apiVersion: v1
     appVersion: 0.9.0
-    created: "2020-12-09T13:07:16.197371986Z"
+    created: "2020-12-22T16:34:23.892692014Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 75d9895c52e2b733712c59eebefdd8fbd72621dc9d8c3650f1184cef0e3a0e08
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1160,12 +1148,11 @@ entries:
     version: 0.9.0
   - apiVersion: v1
     appVersion: 0.8.0
-    created: "2020-12-09T13:07:16.196995364Z"
+    created: "2020-12-22T16:34:23.892003103Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: a905f43aa02ac31d06b17fc4115ba80e786929112fb129daa1151a73c6b1a5f4
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1185,12 +1172,11 @@ entries:
     version: 0.8.0
   - apiVersion: v1
     appVersion: 0.7.0
-    created: "2020-12-09T13:07:16.196595386Z"
+    created: "2020-12-22T16:34:23.891084989Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 6cd14e185ecc6181e7cfd28f084fadf038e9292d027a538e7efe57b3f89d4918
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1210,12 +1196,11 @@ entries:
     version: 0.7.0
   - apiVersion: v1
     appVersion: 0.6.0
-    created: "2020-12-09T13:07:16.196247537Z"
+    created: "2020-12-22T16:34:23.890610281Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 21fff1c8e2ca4f9864cdcfbe92051481b21e5e68fe8d8c812b36ce544d3d34bf
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1235,12 +1220,11 @@ entries:
     version: 0.6.0
   - apiVersion: v1
     appVersion: 0.5.1
-    created: "2020-12-09T13:07:16.195902639Z"
+    created: "2020-12-22T16:34:23.890126474Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 4f8ae76ec98e9668ab2eb76cca7ecec94efcd5681cf3d074483526f1473fad50
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1260,12 +1244,11 @@ entries:
     version: 0.5.1
   - apiVersion: v1
     appVersion: 0.5.0
-    created: "2020-12-09T13:07:16.19555247Z"
+    created: "2020-12-22T16:34:23.889644166Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 3ae9b51160f6fa9cb95a7a1b79fc7d00146a9d4df2d00e2145915b15b7af7253
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1285,12 +1268,11 @@ entries:
     version: 0.5.0
   - apiVersion: v1
     appVersion: 0.4.1
-    created: "2020-12-09T13:07:16.195199756Z"
+    created: "2020-12-22T16:34:23.889156358Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 8adb057e25ebc875fc2264f86c46bfdf01651addacdaa5a0747b572c567c5f79
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1310,12 +1292,11 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: 0.4.0
-    created: "2020-12-09T13:07:16.194841941Z"
+    created: "2020-12-22T16:34:23.888655551Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: fe06de1c68c6cc414440ef681cde67ae02c771de9b1e4d2d264c38a7a9c37b3d
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1335,12 +1316,11 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.0
-    created: "2020-12-09T13:07:16.194480883Z"
+    created: "2020-12-22T16:34:23.888160643Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 8baa478cc802f4e6b7593934483359b8f70ec34413ca3b8de3a692e347a9bda4
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1360,12 +1340,11 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: 0.2.0
-    created: "2020-12-09T13:07:16.186305317Z"
+    created: "2020-12-22T16:34:23.87642136Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 800b5fd1a0b2854ee8412b3170c36ecda3d382f209e18b475ee1d5e3c7fa2f83
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1385,12 +1364,11 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: 0.1.2
-    created: "2020-12-09T13:07:16.1724104Z"
+    created: "2020-12-22T16:34:23.862575043Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
     digest: 0029ef8dd20ebead3d84638eaa4b44d60b3e2bd953b4b7a1169963ce93a4e87c
-    engine: gotpl
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1410,7 +1388,7 @@ entries:
     version: 0.1.2
   - apiVersion: v1
     appVersion: 0.1.1
-    created: "2020-12-09T13:07:16.171823366Z"
+    created: "2020-12-22T16:34:23.862088836Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1422,7 +1400,7 @@ entries:
     version: 0.1.1
   - apiVersion: v1
     appVersion: 0.1.0
-    created: "2020-12-09T13:07:16.171336227Z"
+    created: "2020-12-22T16:34:23.861694629Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1435,11 +1413,11 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 7.2.0
-    created: "2020-12-09T13:07:16.2086245Z"
+    created: "2020-12-22T16:34:23.908945668Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
-    digest: 1eaa6e7f72e6ca5ebac5c657778386de78dac2993dbdb949bf244bf7cf1f2f21
+    digest: 99ac2ba72f364314eadc521e71918a5387e760e0ef134306d640405f60e24813
     home: https://flagger.app
-    icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
+    icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
     keywords:
     - flagger
     - grafana
@@ -1452,13 +1430,13 @@ entries:
       url: https://github.com/stefanprodan
     name: grafana
     sources:
-    - https://github.com/weaveworks/flagger
+    - https://github.com/fluxcd/flagger
     urls:
     - https://flagger.app/grafana-1.5.0.tgz
     version: 1.5.0
   - apiVersion: v1
     appVersion: 6.5.1
-    created: "2020-12-09T13:07:16.20805383Z"
+    created: "2020-12-22T16:34:23.908254957Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: 04a5ae2cdaa21c1e739ba3457aa0548d77af3f8185d6d5ccb46913ab1eee0efd
     home: https://flagger.app
@@ -1481,7 +1459,7 @@ entries:
     version: 1.4.0
   - apiVersion: v1
     appVersion: 6.2.5
-    created: "2020-12-09T13:07:16.207496905Z"
+    created: "2020-12-22T16:34:23.907584646Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: 11cf0ad69e80d1f2fcd7400c6fb5cd3305bd3703ceeecb0e608b6e063bab792c
     home: https://flagger.app
@@ -1504,7 +1482,7 @@ entries:
     version: 1.3.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: "2020-12-09T13:07:16.206990553Z"
+    created: "2020-12-22T16:34:23.906941736Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: c606069b2cba30ea678c7307b8f2b2ac519dd7703c60b7bbe8ebab5c9ace85a2
     home: https://flagger.app
@@ -1521,7 +1499,7 @@ entries:
     version: 1.2.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: "2020-12-09T13:07:16.206480896Z"
+    created: "2020-12-22T16:34:23.906098923Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: eda4890ea293bfb3eb7518e43ce18ed43cfaec2fd69271e08f9d3bcf13317b17
     home: https://flagger.app
@@ -1538,7 +1516,7 @@ entries:
     version: 1.1.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: "2020-12-09T13:07:16.205231631Z"
+    created: "2020-12-22T16:34:23.905326511Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: a8621dfffcc7ca4c6b9d3f05f61ae3ef79c98f32178f6ceb49a43f0b6e80394f
     home: https://flagger.app
@@ -1555,7 +1533,7 @@ entries:
     version: 1.0.0
   - apiVersion: v1
     appVersion: 5.4.2
-    created: "2020-12-09T13:07:16.20479032Z"
+    created: "2020-12-22T16:34:23.9046022Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: 289790edf70df4c430e76bda76ad981586a40868131e88e057f37ace4986fe3a
     home: https://flagger.app
@@ -1573,13 +1551,12 @@ entries:
   loadtester:
   - apiVersion: v1
     appVersion: 0.18.0
-    created: "2020-12-09T13:07:16.211823441Z"
+    created: "2020-12-22T16:34:23.91359784Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
-    digest: 81f699fec781fc4efc7d1df28c0e4841c89fe7cd683ac9a73e89346955b15b95
-    engine: gotpl
+    digest: a54c15cc1885db5d40fd53199746c18dcab889d8db2b7996cc05c02eb63250fc
     home: https://docs.flagger.app
-    icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
+    icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
     keywords:
     - flagger
     - istio
@@ -1595,17 +1572,16 @@ entries:
       url: https://github.com/stefanprodan
     name: loadtester
     sources:
-    - https://github.com/weaveworks/flagger
+    - https://github.com/fluxcd/flagger
     urls:
     - https://flagger.app/loadtester-0.18.0.tgz
     version: 0.18.0
   - apiVersion: v1
     appVersion: 0.17.0
-    created: "2020-12-09T13:07:16.21142067Z"
+    created: "2020-12-22T16:34:23.912973131Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 456adf150205134d915f4bd94d81911fc4026e68b3cc3ee2b3b55d07d6b6f2ec
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -1629,11 +1605,10 @@ entries:
     version: 0.17.0
   - apiVersion: v1
     appVersion: 0.16.0
-    created: "2020-12-09T13:07:16.21106769Z"
+    created: "2020-12-22T16:34:23.912413822Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: ef113343d033338854bc7b972f3b5de42b3675633ea0f6cdfe550cf89ca40cd6
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -1657,11 +1632,10 @@ entries:
     version: 0.16.0
   - apiVersion: v1
     appVersion: 0.14.0
-    created: "2020-12-09T13:07:16.210724357Z"
+    created: "2020-12-22T16:34:23.911901614Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: da52d2fa1b99d1dd7d20262e5b17092e9156475bb76e6461c5c92b37b40c8af4
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -1685,11 +1659,10 @@ entries:
     version: 0.14.0
   - apiVersion: v1
     appVersion: 0.13.0
-    created: "2020-12-09T13:07:16.210385008Z"
+    created: "2020-12-22T16:34:23.911395906Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 38bc18cee3762fd3af9ac6bd642b78b6a639fd279a388198582852c3e424a9a9
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -1713,11 +1686,10 @@ entries:
     version: 0.13.0
   - apiVersion: v1
     appVersion: 0.12.1
-    created: "2020-12-09T13:07:16.210043173Z"
+    created: "2020-12-22T16:34:23.910871798Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 2ec31300bf36e169322a3271202ebbf3f97d727efbcaf5d6c36468274e7b96f6
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -1741,11 +1713,10 @@ entries:
     version: 0.12.1
   - apiVersion: v1
     appVersion: 0.12.0
-    created: "2020-12-09T13:07:16.209690389Z"
+    created: "2020-12-22T16:34:23.91037829Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: cb4a13a336a86ddc3faf08a2c2640b0f30eb8b9050262386307d24d5904d503d
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -1769,11 +1740,10 @@ entries:
     version: 0.12.0
   - apiVersion: v1
     appVersion: 0.11.0
-    created: "2020-12-09T13:07:16.209349399Z"
+    created: "2020-12-22T16:34:23.909846582Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 18d856d8ce2574ddb715bd22edfd509bd993588532ca622e13da44a808b60bd9
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     keywords:
@@ -1797,11 +1767,10 @@ entries:
     version: 0.11.0
   - apiVersion: v1
     appVersion: 0.9.0
-    created: "2020-12-09T13:07:16.215121254Z"
+    created: "2020-12-22T16:34:23.917896307Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 715169e00ded0de94f2c6a55700a635d513047a195e426e70b1dbe64791dc098
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1823,11 +1792,10 @@ entries:
     version: 0.9.0
   - apiVersion: v1
     appVersion: 0.8.0
-    created: "2020-12-09T13:07:16.214785904Z"
+    created: "2020-12-22T16:34:23.917222097Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 40e76d76baf7ef8e8cdfa2d72224520af4e6df6231ecfe7552bbbdb94e55d7f3
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1849,11 +1817,10 @@ entries:
     version: 0.8.0
   - apiVersion: v1
     appVersion: 0.7.0
-    created: "2020-12-09T13:07:16.214442444Z"
+    created: "2020-12-22T16:34:23.916479785Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 255ea5d49954a5a188b9a52c642bb4fda5191b70592562079c5d2b4bfd6c2f1b
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1875,11 +1842,10 @@ entries:
     version: 0.7.0
   - apiVersion: v1
     appVersion: 0.6.1
-    created: "2020-12-09T13:07:16.21411258Z"
+    created: "2020-12-22T16:34:23.915725474Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: fc7e74c96e4fdb3d187cc7bb746f87ed71813c93894d3c14d7c3b814bf58faaf
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1901,11 +1867,10 @@ entries:
     version: 0.6.0
   - apiVersion: v1
     appVersion: 0.4.0
-    created: "2020-12-09T13:07:16.213784505Z"
+    created: "2020-12-22T16:34:23.915292167Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: e095da590d5eac6c451a0317229cd14b276d200cb4f9aa4f6148c7f3806243a4
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1927,11 +1892,10 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: 0.3.0
-    created: "2020-12-09T13:07:16.213469888Z"
+    created: "2020-12-22T16:34:23.91486206Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: c8610a6711fe76ac5d432899dbe1ab1d3663d6ba11954db556b13256cbff1bad
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1953,11 +1917,10 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.0
-    created: "2020-12-09T13:07:16.213086643Z"
+    created: "2020-12-22T16:34:23.914443454Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: 332815fa9fdbae111a07ef5681fef53d156d3a84a35df7a924b2584e9efbc626
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -1979,11 +1942,10 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: 0.2.0
-    created: "2020-12-09T13:07:16.212131285Z"
+    created: "2020-12-22T16:34:23.914023747Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: d63c6e7a2d97bd6f2601386f4c0d9b266c01ac33a8a662079cb02fb14565821d
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -2005,11 +1967,10 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: 0.1.0
-    created: "2020-12-09T13:07:16.209002617Z"
+    created: "2020-12-22T16:34:23.909358474Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: 0399b3841c7db1aefd77f3f31aa4a5a6c020869fff45b31d0f49023b6b267272
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/stefanprodan/flagger/master/docs/logo/flagger-icon.png
     keywords:
@@ -2031,12 +1992,11 @@ entries:
   podinfo:
   - apiVersion: v1
     appVersion: 5.0.0
-    created: "2020-12-09T13:07:16.218413307Z"
+    created: "2020-12-22T16:34:23.9238466Z"
     description: Flagger canary deployment demo application
-    digest: fd6b3aa56a088778d578a3666ad670b0377342dea77d5e710498934c1ba875bf
-    engine: gotpl
+    digest: 41b406857669725484e5d916bafc9f09305eb9898797d24aebef5092ac7acb3f
     home: https://docs.flagger.app
-    icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
+    icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
     maintainers:
     - email: stefanprodan@users.noreply.github.com
       name: stefanprodan
@@ -2049,10 +2009,9 @@ entries:
     version: 5.0.0
   - apiVersion: v1
     appVersion: 3.1.0
-    created: "2020-12-09T13:07:16.21805094Z"
+    created: "2020-12-22T16:34:23.923248391Z"
     description: Flagger canary deployment demo application
     digest: 683370b1dfa81bc32fd2cd7f6d7f8729a0aaf8fada3f6a5ae784be50ce0b486c
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     maintainers:
@@ -2067,10 +2026,9 @@ entries:
     version: 3.1.1
   - apiVersion: v1
     appVersion: 3.1.0
-    created: "2020-12-09T13:07:16.217700862Z"
+    created: "2020-12-22T16:34:23.922639582Z"
     description: Flagger canary deployment demo application
     digest: 59ae70a269b6d955e56c719c8808fc47576c5fac4e054c9ce512e956419ac110
-    engine: gotpl
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/weaveworks/flagger/master/docs/logo/weaveworks.png
     maintainers:
@@ -2085,10 +2043,9 @@ entries:
     version: 3.1.0
   - apiVersion: v1
     appVersion: 2.0.0
-    created: "2020-12-09T13:07:16.2173211Z"
+    created: "2020-12-22T16:34:23.922032572Z"
     description: Flagger canary deployment demo chart
     digest: 25d9a18b2b1cb2457283a1bd14d6faa3e9da14225f963470849f21264917e41e
-    engine: gotpl
     home: https://github.com/weaveworks/flagger
     maintainers:
     - email: stefanprodan@users.noreply.github.com
@@ -2101,10 +2058,9 @@ entries:
     version: 3.0.0
   - apiVersion: v1
     appVersion: 1.7.0
-    created: "2020-12-09T13:07:16.216951498Z"
+    created: "2020-12-22T16:34:23.921441163Z"
     description: Flagger canary deployment demo chart
     digest: 8874e3fa3301416a49e6a10f16664915db80d5c6bd4cb380520697828d9464a1
-    engine: gotpl
     home: https://github.com/weaveworks/flagger
     maintainers:
     - email: stefanprodan@users.noreply.github.com
@@ -2117,10 +2073,9 @@ entries:
     version: 2.3.0
   - apiVersion: v1
     appVersion: 1.4.0
-    created: "2020-12-09T13:07:16.216541893Z"
+    created: "2020-12-22T16:34:23.920848154Z"
     description: Flagger canary deployment demo chart
     digest: fc2f4a6f00f9b822ac5108b91fb54abbb4ded6cf998486750da0bbef14288f51
-    engine: gotpl
     home: https://github.com/weaveworks/flagger
     maintainers:
     - email: stefanprodan@users.noreply.github.com
@@ -2133,10 +2088,9 @@ entries:
     version: 2.2.0
   - apiVersion: v1
     appVersion: 1.4.0
-    created: "2020-12-09T13:07:16.216190326Z"
+    created: "2020-12-22T16:34:23.920216544Z"
     description: Flagger canary deployment demo chart
     digest: 36a8fee862ce8e831aa715132ba25a632c834e4683e184cd6230c880c226d48b
-    engine: gotpl
     home: https://github.com/weaveworks/flagger
     maintainers:
     - email: stefanprodan@users.noreply.github.com
@@ -2149,10 +2103,9 @@ entries:
     version: 2.1.0
   - apiVersion: v1
     appVersion: 1.4.0
-    created: "2020-12-09T13:07:16.215839608Z"
+    created: "2020-12-22T16:34:23.919596234Z"
     description: Flagger canary deployment demo chart
     digest: 2bfbdd205ccd042a1e24f934908b9204b4cf787f7da9dcbd351d2a2a00c6d57e
-    engine: gotpl
     home: https://github.com/weaveworks/flagger
     maintainers:
     - email: stefanprodan@users.noreply.github.com
@@ -2165,10 +2118,9 @@ entries:
     version: 2.0.1
   - apiVersion: v1
     appVersion: 1.4.0
-    created: "2020-12-09T13:07:16.215485842Z"
+    created: "2020-12-22T16:34:23.91871282Z"
     description: Flagger canary deployment demo chart
     digest: 56b1ca6a1991c290f2c9c0138a901bcbd664bd46e0e48043961b7cfb2a6ecf76
-    engine: gotpl
     home: https://github.com/weaveworks/flagger
     maintainers:
     - email: stefanprodan@users.noreply.github.com
@@ -2179,4 +2131,4 @@ entries:
     urls:
     - https://flagger.app/podinfo-2.0.0.tgz
     version: 2.0.0
-generated: "2020-12-09T13:07:16.168638006Z"
+generated: "2020-12-22T16:34:23.859110989Z"
