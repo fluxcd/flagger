@@ -56,10 +56,11 @@ jobs:
         run: |
           docker buildx imagetools inspect ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
       - name: Publish Helm charts
-        uses: stefanprodan/helm-gh-pages@master
+        uses: stefanprodan/helm-gh-pages@v1.3.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_url: https://flagger.app
+          linting: off
       - name: Create release
         uses: actions/create-release@latest
         env:
