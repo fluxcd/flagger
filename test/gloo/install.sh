@@ -2,7 +2,7 @@
 
 set -o errexit
 
-GLOO_VER="1.6.0-beta22" # this can be replaced with 1.6.0 when it's released in two weeks
+GLOO_VER="1.6.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin
