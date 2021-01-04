@@ -26,8 +26,10 @@ import (
 )
 
 // HTTPProxyLister helps list HTTPProxies.
+// All objects returned here must be treated as read-only.
 type HTTPProxyLister interface {
 	// List lists all HTTPProxies in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.HTTPProxy, err error)
 	// HTTPProxies returns an object that can list and get HTTPProxies.
 	HTTPProxies(namespace string) HTTPProxyNamespaceLister
@@ -58,10 +60,13 @@ func (s *hTTPProxyLister) HTTPProxies(namespace string) HTTPProxyNamespaceLister
 }
 
 // HTTPProxyNamespaceLister helps list and get HTTPProxies.
+// All objects returned here must be treated as read-only.
 type HTTPProxyNamespaceLister interface {
 	// List lists all HTTPProxies in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.HTTPProxy, err error)
 	// Get retrieves the HTTPProxy from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.HTTPProxy, error)
 	HTTPProxyNamespaceListerExpansion
 }

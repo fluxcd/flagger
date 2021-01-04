@@ -26,8 +26,10 @@ import (
 )
 
 // CanaryLister helps list Canaries.
+// All objects returned here must be treated as read-only.
 type CanaryLister interface {
 	// List lists all Canaries in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.Canary, err error)
 	// Canaries returns an object that can list and get Canaries.
 	Canaries(namespace string) CanaryNamespaceLister
@@ -58,10 +60,13 @@ func (s *canaryLister) Canaries(namespace string) CanaryNamespaceLister {
 }
 
 // CanaryNamespaceLister helps list and get Canaries.
+// All objects returned here must be treated as read-only.
 type CanaryNamespaceLister interface {
 	// List lists all Canaries in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.Canary, err error)
 	// Get retrieves the Canary from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta1.Canary, error)
 	CanaryNamespaceListerExpansion
 }

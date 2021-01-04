@@ -26,8 +26,10 @@ import (
 )
 
 // VirtualNodeLister helps list VirtualNodes.
+// All objects returned here must be treated as read-only.
 type VirtualNodeLister interface {
 	// List lists all VirtualNodes in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta2.VirtualNode, err error)
 	// VirtualNodes returns an object that can list and get VirtualNodes.
 	VirtualNodes(namespace string) VirtualNodeNamespaceLister
@@ -58,10 +60,13 @@ func (s *virtualNodeLister) VirtualNodes(namespace string) VirtualNodeNamespaceL
 }
 
 // VirtualNodeNamespaceLister helps list and get VirtualNodes.
+// All objects returned here must be treated as read-only.
 type VirtualNodeNamespaceLister interface {
 	// List lists all VirtualNodes in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta2.VirtualNode, err error)
 	// Get retrieves the VirtualNode from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta2.VirtualNode, error)
 	VirtualNodeNamespaceListerExpansion
 }

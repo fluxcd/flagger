@@ -26,8 +26,10 @@ import (
 )
 
 // AlertProviderLister helps list AlertProviders.
+// All objects returned here must be treated as read-only.
 type AlertProviderLister interface {
 	// List lists all AlertProviders in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.AlertProvider, err error)
 	// AlertProviders returns an object that can list and get AlertProviders.
 	AlertProviders(namespace string) AlertProviderNamespaceLister
@@ -58,10 +60,13 @@ func (s *alertProviderLister) AlertProviders(namespace string) AlertProviderName
 }
 
 // AlertProviderNamespaceLister helps list and get AlertProviders.
+// All objects returned here must be treated as read-only.
 type AlertProviderNamespaceLister interface {
 	// List lists all AlertProviders in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.AlertProvider, err error)
 	// Get retrieves the AlertProvider from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta1.AlertProvider, error)
 	AlertProviderNamespaceListerExpansion
 }
