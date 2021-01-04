@@ -2,7 +2,7 @@
 
 This guide shows you how to use the NGINX ingress controller and Flagger to automate canary deployments and A/B testing.
 
-![Flagger NGINX Ingress Controller](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-nginx-overview.png)
+![Flagger NGINX Ingress Controller](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-nginx-overview.png)
 
 ## Prerequisites
 
@@ -182,7 +182,7 @@ Flagger implements a control loop that gradually shifts traffic to the canary wh
 indicators like HTTP requests success rate, requests average duration and pod health.
 Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 Trigger a canary deployment by updating the container image:
 
@@ -365,7 +365,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
 This is particularly useful for frontend applications that require session affinity.
 
-![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
 
 Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
 

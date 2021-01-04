@@ -4,7 +4,7 @@ This guide shows you how to automate Blue/Green deployments with Flagger and Kub
 
 For applications that are not deployed on a service mesh, Flagger can orchestrate Blue/Green style deployments with Kubernetes L4 networking. When using a service mesh blue/green can be used as specified [here](../usage/deployment-strategies.md).
 
-![Flagger Blue/Green Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-bluegreen-steps.png)
+![Flagger Blue/Green Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-bluegreen-steps.png)
 
 ## Prerequisites
 

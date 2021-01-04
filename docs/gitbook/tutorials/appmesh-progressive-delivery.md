@@ -270,7 +270,7 @@ When the canary analysis starts, Flagger will call the pre-rollout webhooks befo
 
 During the analysis the canary’s progress can be monitored with Grafana. The App Mesh dashboard URL is [http://localhost:3000/d/flagger-appmesh/appmesh-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo](http://localhost:3000/d/flagger-appmesh/appmesh-canary?refresh=10s&orgId=1&var-namespace=test&var-primary=podinfo-primary&var-canary=podinfo).
 
-![App Mesh Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-grafana-appmesh.png)
+![App Mesh Canary Dashboard](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/flagger-grafana-appmesh.png)
 
 You can monitor all canaries with:
 
@@ -285,7 +285,7 @@ prod        backend   Failed        0
 
 If you’ve enabled the Slack notifications, you should receive the following messages:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-notifications.png)
 
 ## Automated rollback
 
@@ -337,13 +337,13 @@ Canary failed! Scaling down podinfo.test
 
 If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, or if the analysis reached the maximum number of failed checks:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-failed.png)
 
 ## A/B Testing
 
 Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
 
-![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
 
 Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
 
