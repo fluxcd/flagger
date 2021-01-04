@@ -7,15 +7,48 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// UpstreamGroup is a specification for a Gloo UpstreamGroup resource
-type UpstreamGroup struct {
+// RouteTable is a specification for a Gloo RouteTable resource
+type RouteTable struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec UpstreamGroupSpec `json:"spec"`
+	Spec RouteTableSpec `json:"spec"`
 }
 
-type UpstreamGroupSpec struct {
+type RouteTableSpec struct {
+	Routes []Route `json:"routes,omitempty"`
+}
+
+type Route struct {
+	Matchers                []Matcher   `json:"matchers,omitempty"`
+	Action                  RouteAction `json:"routeAction,omitempty"`
+	InheritablePathMatchers bool        `json:"inheritablePathMatchers,omitempty"`
+}
+
+type Matcher struct {
+	Headers                []HeaderMatcher         `json:"headers,omitempty"`
+	QueryParameterMatchers []QueryParameterMatcher `json:"queryParameters,omitempty"`
+	Methods                []string                `json:"methods,omitempty"`
+}
+
+type HeaderMatcher struct {
+	Name        string `json:"name,omitempty"`
+	Value       string `json:"value,omitempty"`
+	Regex       bool   `json:"regex,omitempty"`
+	InvertMatch bool   `json:"invertMatch,omitempty"`
+}
+
+type QueryParameterMatcher struct {
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
+	Regex bool   `json:"regex,omitempty"`
+}
+
+type RouteAction struct {
+	Destination MultiDestination `json:"multi,omitempty"`
+}
+
+type MultiDestination struct {
 	Destinations []WeightedDestination `json:"destinations,omitempty"`
 }
 
@@ -40,10 +73,10 @@ type ResourceRef struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// UpstreamGroupList is a list of UpstreamGroup resources
-type UpstreamGroupList struct {
+// RouteTableList is a list of RouteTable resources
+type RouteTableList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []UpstreamGroup `json:"items"`
+	Items []RouteTable `json:"items"`
 }

@@ -32,59 +32,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// UpstreamGroupInformer provides access to a shared informer and lister for
-// UpstreamGroups.
-type UpstreamGroupInformer interface {
+// RouteTableInformer provides access to a shared informer and lister for
+// RouteTables.
+type RouteTableInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.UpstreamGroupLister
+	Lister() v1.RouteTableLister
 }
 
-type upstreamGroupInformer struct {
+type routeTableInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewUpstreamGroupInformer constructs a new informer for UpstreamGroup type.
+// NewRouteTableInformer constructs a new informer for RouteTable type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewUpstreamGroupInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredUpstreamGroupInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewRouteTableInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredRouteTableInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredUpstreamGroupInformer constructs a new informer for UpstreamGroup type.
+// NewFilteredRouteTableInformer constructs a new informer for RouteTable type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredUpstreamGroupInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredRouteTableInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GlooV1().UpstreamGroups(namespace).List(context.TODO(), options)
+				return client.GatewayV1().RouteTables(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GlooV1().UpstreamGroups(namespace).Watch(context.TODO(), options)
+				return client.GatewayV1().RouteTables(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&gloov1.UpstreamGroup{},
+		&gloov1.RouteTable{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *upstreamGroupInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredUpstreamGroupInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *routeTableInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredRouteTableInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *upstreamGroupInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&gloov1.UpstreamGroup{}, f.defaultInformer)
+func (f *routeTableInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&gloov1.RouteTable{}, f.defaultInformer)
 }
 
-func (f *upstreamGroupInformer) Lister() v1.UpstreamGroupLister {
-	return v1.NewUpstreamGroupLister(f.Informer().GetIndexer())
+func (f *routeTableInformer) Lister() v1.RouteTableLister {
+	return v1.NewRouteTableLister(f.Informer().GetIndexer())
 }
