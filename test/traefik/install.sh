@@ -19,6 +19,9 @@ deployment:
   podAnnotations:
     "prometheus.io/port": "9000"
     "prometheus.io/scrape": "true"
+service:
+  enabled: true
+  type: NodePort
 EOF
 
 kubectl -n traefik rollout status deployment/traefik

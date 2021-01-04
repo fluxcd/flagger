@@ -17,7 +17,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`app.example.com`)
+    - match: Host(\`app.example.com\`)
       kind: Rule
       services:
         - name: podinfo
@@ -47,7 +47,7 @@ spec:
       annotations:
         test: test-annotation
   analysis:
-    interval: 60s
+    interval: 15s
     threshold: 15
     maxWeight: 60
     stepWeight: 10
@@ -76,6 +76,7 @@ spec:
         metadata:
           type: bash
           cmd: "curl -sd 'test' -H 'Host: app.example.com' http://traefik.traefik/token | grep token"
+          logCmdOutput: "true"
       - name: load-test
         url: http://flagger-loadtester.test/
         timeout: 5s

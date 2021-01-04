@@ -7,5 +7,5 @@ resources:
   - crd.yaml
   - deployment.yaml
 images:
-  - name: weaveworks/flagger
+  - name: fluxcd/flagger
     newTag: 1.5.0
