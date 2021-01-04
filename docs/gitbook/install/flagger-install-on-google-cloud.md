@@ -2,7 +2,7 @@
 
 This guide walks you through setting up Flagger and Istio on Google Kubernetes Engine.
 
-![GKE Cluster Overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-gke-istio.png)
+![GKE Cluster Overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-gke-istio.png)
 
 ## Prerequisites
 
@@ -205,12 +205,12 @@ jetstack/cert-manager
 
 ## Istio Gateway TLS setup
 
-![Istio Let&apos;s Encrypt](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/istio-cert-manager-gke.png)
+![Istio Let&apos;s Encrypt](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/istio-cert-manager-gke.png)
 
 Create a generic Istio Gateway to expose services outside the mesh on HTTPS:
 
 ```bash
-REPO=https://raw.githubusercontent.com/weaveworks/flagger/master
+REPO=https://raw.githubusercontent.com/fluxcd/flagger/main
 
 kubectl apply -f ${REPO}/artifacts/gke/istio-gateway.yaml
 ```
@@ -346,7 +346,7 @@ helm repo add flagger https://flagger.app
 Install Flagger's Canary CRD:
 
 ```yaml
-kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/fluxcd/flagger/main/artifacts/flagger/crd.yaml
 ```
 
 Deploy Flagger in the `istio-system` namespace with Slack notifications enabled:

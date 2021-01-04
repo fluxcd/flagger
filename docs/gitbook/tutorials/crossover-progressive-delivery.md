@@ -213,7 +213,7 @@ After the boostrap, the podinfo deployment will be scaled to zero and the traffi
 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 A canary deployment is triggered by changes in any of the following objects:
 
@@ -278,7 +278,7 @@ kubectl port-forward --namespace test svc/flagger-grafana 3000:80
 
 The Envoy dashboard URL is [http://localhost:3000/d/flagger-envoy/envoy-canary?refresh=10s&orgId=1&var-namespace=test&var-target=podinfo](http://localhost:3000/d/flagger-envoy/envoy-canary?refresh=10s&orgId=1&var-namespace=test&var-target=podinfo)
 
-![Envoy Canary Dashboard](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-grafana-appmesh.png)
+![Envoy Canary Dashboard](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/flagger-grafana-appmesh.png)
 
 You can monitor all canaries with:
 
@@ -293,7 +293,7 @@ prod        backend   Failed        0        2019-10-02T17:05:07Z
 
 If you’ve enabled the Slack notifications, you should receive the following messages:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-notifications.png)
 
 ## Automated rollback
 
@@ -345,5 +345,5 @@ Canary failed! Scaling down podinfo.test
 
 If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, or if the analysis reached the maximum number of failed checks:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-failed.png)
 

@@ -2,7 +2,7 @@
 
 This guide shows you how to use Istio and Flagger to automate canary deployments.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 ## Prerequisites
 
@@ -158,7 +158,7 @@ kubectl apply -f ./podinfo-canary.yaml
 
 When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary. The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
 
-![Flagger Canary Process](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-hpa.png)
+![Flagger Canary Process](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-hpa.png)
 
 After a couple of seconds Flagger will create the canary objects:
 
@@ -293,7 +293,7 @@ Events:
 
 ## Traffic mirroring
 
-![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-traffic-mirroring.png)
+![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-traffic-mirroring.png)
 
 For applications that perform read operations, Flagger can be configured to drive canary releases with traffic mirroring. Istio traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service. The response from the primary is sent back to the user and the response from the canary is discarded. Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are within the threshold values.
 

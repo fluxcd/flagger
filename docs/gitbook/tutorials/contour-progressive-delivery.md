@@ -2,7 +2,7 @@
 
 This guide shows you how to use [Contour](https://projectcontour.io/) ingress controller and Flagger to automate canary releases and A/B testing.
 
-![Flagger Contour Overview](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-contour-overview.png)
+![Flagger Contour Overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-contour-overview.png)
 
 ## Prerequisites
 
@@ -213,7 +213,7 @@ Note that you should be using HTTPS when exposing production workloads on intern
 
 Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-canary-steps.png)
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 A canary deployment is triggered by changes in any of the following objects:
 
@@ -271,7 +271,7 @@ test        podinfo   Progressing   15       2019-12-20T14:05:07Z
 
 If you’ve enabled the Slack notifications, you should receive the following messages:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-notifications.png)
 
 ## Automated rollback
 
@@ -323,13 +323,13 @@ Canary failed! Scaling down podinfo.test
 
 If you’ve enabled the Slack notifications, you’ll receive a message if the progress deadline is exceeded, or if the analysis reached the maximum number of failed checks:
 
-![Flagger Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+![Flagger Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-failed.png)
 
 ## A/B Testing
 
 Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
 
-![Flagger A/B Testing Stages](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-abtest-steps.png)
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
 
 Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
 

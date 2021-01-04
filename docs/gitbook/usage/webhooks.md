@@ -122,7 +122,7 @@ For workloads that are not receiving constant traffic Flagger can be configured 
 
 Flagger comes with a load testing service based on [rakyll/hey](https://github.com/rakyll/hey) that generates traffic during analysis when configured as a webhook.
 
-![Flagger Load Testing Webhook](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/diagrams/flagger-load-testing.png)
+![Flagger Load Testing Webhook](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-load-testing.png)
 
 First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 

@@ -15,11 +15,11 @@ helm upgrade -i flagger flagger/flagger \
 
 Once configured with a Slack incoming **webhook**, Flagger will post messages when a canary deployment has been initialised, when a new revision has been detected and if the canary analysis failed or succeeded.
 
-![Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-notifications.png)
+![Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-notifications.png)
 
 A canary deployment will be rolled back if the progress deadline exceeded or if the analysis reached the maximum number of failed checks:
 
-![Slack Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/slack-canary-failed.png)
+![Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-failed.png)
 
 Flagger can be configured to send notifications to Microsoft Teams:
 
@@ -30,9 +30,9 @@ helm upgrade -i flagger flagger/flagger \
 
 Similar to Slack, Flagger alerts on canary analysis events:
 
-![MS Teams Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-ms-teams-notifications.png)
+![MS Teams Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/flagger-ms-teams-notifications.png)
 
-![MS Teams Notifications](https://raw.githubusercontent.com/weaveworks/flagger/master/docs/screens/flagger-ms-teams-failed.png)
+![MS Teams Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/flagger-ms-teams-failed.png)
 
 ## Canary configuration
 
