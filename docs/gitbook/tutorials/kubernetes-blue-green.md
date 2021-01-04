@@ -8,7 +8,7 @@ For applications that are not deployed on a service mesh, Flagger can orchestrat
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer.
 
 Install Flagger and the Prometheus add-on:
 
@@ -53,13 +53,13 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Create a canary custom resource:

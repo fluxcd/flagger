@@ -7,7 +7,7 @@ set -o errexit
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1alpha1
+apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
   name: latency

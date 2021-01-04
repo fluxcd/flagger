@@ -6,12 +6,12 @@ This guide shows you how to use Linkerd and Flagger to automate canary deploymen
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer and Linkerd **2.4** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer and Linkerd **2.4** or newer.
 
 Install Flagger in the linkerd namespace:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/linkerd
+kubectl apply -k github.com/fluxcd/flagger//kustomize/linkerd
 ```
 
 Note that you'll need kubectl 1.14 or newer to run the above command.
@@ -30,13 +30,13 @@ kubectl annotate namespace test linkerd.io/inject=enabled
 Install the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Create a canary custom resource for the podinfo deployment:

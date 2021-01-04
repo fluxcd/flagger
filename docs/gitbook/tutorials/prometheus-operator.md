@@ -4,19 +4,22 @@ This guide show you how to use Prometheus Operator for canary analysis.
 
 ## Prerequisites
 
+Flagger requires a Kubernetes cluster **v1.16** or newer.
+
 Install Prometheus Operator with Helm v3:
 
 ```bash
-helm repo add stable https://kubernetes-charts.storage.googleapis.com
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
 kubectl create ns monitoring
-helm upgrade -i prometheus stable/prometheus-operator \
+helm upgrade -i prometheus prometheus-community/kube-prometheus-stack \
 --namespace monitoring \
 --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
 --set fullnameOverride=prometheus
 ```
 
-The `prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false` option allows Prometheus operator to watch serviceMonitors outside of his namespace.
+The `prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false`
+option allows Prometheus operator to watch serviceMonitors outside of his namespace.
 
 Install Flagger by setting the metrics server to Prometheus:
 
@@ -84,7 +87,8 @@ spec:
       app: podinfo-canary
 ```
 
-We are setting `interval: 5s` to have a more aggressive scraping. If you do not define it, you must to use a longer interval in the Canary object.
+We are setting `interval: 5s` to have a more aggressive scraping.
+If you do not define it, you must to use a longer interval in the Canary object.
 
 ## Metric templates
 
@@ -191,5 +195,6 @@ spec:
 
 Based on the above specification, Flagger creates the primary and canary Kubernetes ClusterIP service.
 
-During the canary analysis, Prometheus will scrape the canary service and Flagger will use the HTTP error rate and latency queries to determine if the release should be promoted or rolled back.
+During the canary analysis, Prometheus will scrape the canary service and Flagger will use the HTTP error rate
+and latency queries to determine if the release should be promoted or rolled back.
 

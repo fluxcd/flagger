@@ -6,7 +6,7 @@ This guide shows you how to use Istio and Flagger to automate canary deployments
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.14** or newer and Istio **v1.5** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer and Istio **v1.5** or newer.
 
 Install Istio with telemetry support and Prometheus:
 
@@ -19,7 +19,7 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/sampl
 Install Flagger in the `istio-system` namespace:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/istio
+kubectl apply -k github.com/fluxcd/flagger//kustomize/istio
 ```
 
 Create an ingress gateway to expose the demo app outside of the mesh:
@@ -56,13 +56,13 @@ kubectl label namespace test istio-injection=enabled
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Create a canary custom resource \(replace example.com with your own domain\):

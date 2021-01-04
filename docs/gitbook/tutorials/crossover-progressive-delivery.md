@@ -6,7 +6,7 @@ Crossover is a minimal Envoy xDS implementation supports [Service Mesh Interface
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer and Envoy paired with [Crossover](https://github.com/mumoshu/crossover) sidecar.
+Flagger requires a Kubernetes cluster **v1.16** or newer and Envoy paired with [Crossover](https://github.com/mumoshu/crossover) sidecar.
 
 Create a test namespace:
 
@@ -58,7 +58,7 @@ Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:

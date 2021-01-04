@@ -127,7 +127,7 @@ Flagger comes with a load testing service based on [rakyll/hey](https://github.c
 First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Or by using Helm:
