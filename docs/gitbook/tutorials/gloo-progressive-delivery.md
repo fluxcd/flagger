@@ -383,5 +383,90 @@ Canary failed! Scaling down podinfo.test
 If you have [alerting](../usage/alerting.md) configured,
 Flagger will send a notification with the reason why the canary failed.
 
-For an in-depth look at the analysis process read the [usage docs](../usage/how-it-works.md).
+## A/B Testing
 
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions.
+In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users.
+This is particularly useful for frontend applications that require session affinity.
+
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
+
+Edit the canary analysis, remove the max/step weight and add the match conditions and iterations:
+
+```yaml
+analysis:
+  interval: 1m
+  threshold: 5
+  iterations: 10
+  match:
+  - headers:
+      x-canary:
+        exact: "insider"
+  webhooks:
+  - name: load-test
+    url: http://flagger-loadtester.test/
+    metadata:
+      cmd: "hey -z 1m -q 5 -c 5 -H 'X-Canary: insider' -host app.example.com http://gateway-proxy.gloo-system"
+```
+
+The above configuration will run an analysis for ten minutes targeting users that have a `X-Canary: insider` header.
+
+Trigger a canary deployment by updating the container image:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=stefanprodan/podinfo:3.1.4
+```
+
+Flagger detects that the deployment revision changed and starts the A/B test:
+
+```text
+kubectl -n gloo-system logs deploy/flagger -f | jq .msg
+
+New revision detected! Progressing canary analysis for podinfo.test
+Advance podinfo.test canary iteration 1/10
+Advance podinfo.test canary iteration 2/10
+Advance podinfo.test canary iteration 3/10
+Advance podinfo.test canary iteration 4/10
+Advance podinfo.test canary iteration 5/10
+Advance podinfo.test canary iteration 6/10
+Advance podinfo.test canary iteration 7/10
+Advance podinfo.test canary iteration 8/10
+Advance podinfo.test canary iteration 9/10
+Advance podinfo.test canary iteration 10/10
+Copying podinfo.test template spec to podinfo-primary.test
+Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
+Routing all traffic to primary
+Promotion completed! Scaling down podinfo.test
+```
+
+The web browser user agent header allows user segmentation based on device or OS.
+
+For example, if you want to route all mobile users to the canary instance:
+
+```yaml
+match:
+- headers:
+    user-agent:
+      regex: ".*Mobile.*"
+```
+
+Or if you want to target only Android users:
+
+```yaml
+match:
+- headers:
+    user-agent:
+      regex: ".*Android.*"
+```
+
+Or a specific browser version:
+
+```yaml
+match:
+- headers:
+    user-agent:
+      regex: ".*Firefox.*"
+```
+
+For an in-depth look at the analysis process read the [usage docs](../usage/how-it-works.md).

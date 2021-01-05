@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.6.0
+
+**Release date:** 2021-01-05
+
+**Breaking change:** the minimum supported version of Kubernetes is v1.16.0.
+
+This release comes with support for A/B testing using [Gloo Edge](https://docs.flagger.app/tutorials/gloo-progressive-delivery) 
+HTTP headers based routing.
+
+#### Features
+
+- A/B testing support for Gloo Edge ingress controller
+  [#765](https://github.com/fluxcd/flagger/pull/765)
+
+#### Improvements
+
+- Upgrade the Kubernetes packages to `v1.20.1` and Flagger's CRDs to `apiextensions.k8s.io/v1` 
+  [#772](https://github.com/fluxcd/flagger/pull/772)
+  
 ## 1.5.0
 
 **Release date:** 2020-12-22
