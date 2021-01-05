@@ -216,7 +216,6 @@ For more details on how the canary analysis and promotion works please [read the
 * Migrate Flagger to Kubernetes controller-runtime and [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder)
 * Make the Canary status compatible with [kstatus](https://github.com/kubernetes-sigs/cli-utils)
 * Make Flagger emit Kubernetes events compatible with Flux v2 notification API
-* Migrate CI to GitHub Actions and publish AMD64, ARM64 and ARMv7 container images
 * Integrate Flagger into Flux v2 as the progressive delivery component
 
 #### Integrations
