@@ -17,7 +17,8 @@ On your dev machine install the following tools:
 * helm &gt;= 3.0
 * docker &gt;= 19.03
 
-You'll also need a Kubernetes cluster for testing Flagger. You can use Minikube, Kind, Docker desktop or any remote cluster \(AKS/EKS/GKE/etc\) Kubernetes version 1.14 or newer.
+You'll also need a Kubernetes cluster for testing Flagger.
+You can use Minikube, Kind, Docker desktop or any remote cluster (AKS/EKS/GKE/etc) Kubernetes version 1.16 or newer.
 
 To start contributing to Flagger, fork the [repository](https://github.com/fluxcd/flagger) on GitHub.
 
@@ -126,7 +127,9 @@ Note that any change to the CRDs must be accompanied by an update to the Open AP
 
 ## Manual testing
 
-Install a service mesh and/or an ingress controller on your cluster and deploy Flagger using one of the install options [listed here](https://docs.flagger.app/install/flagger-install-on-kubernetes).
+Install a service mesh and/or an ingress controller on your cluster
+and deploy Flagger using one of the install options
+[listed here](https://docs.flagger.app/install/flagger-install-on-kubernetes).
 
 If you made changes to the CRDs, apply your local copy with:
 
@@ -201,4 +204,3 @@ For each service mesh and ingress controller there is a dedicated e2e test suite
 chose one that matches your changes from this [list](https://github.com/fluxcd/flagger/tree/main/test).
 
 When you open a pull request on Flagger repo, the unit and integration tests will be run in CI.
-

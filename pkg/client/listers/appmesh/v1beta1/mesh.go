@@ -26,10 +26,13 @@ import (
 )
 
 // MeshLister helps list Meshes.
+// All objects returned here must be treated as read-only.
 type MeshLister interface {
 	// List lists all Meshes in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.Mesh, err error)
 	// Get retrieves the Mesh from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta1.Mesh, error)
 	MeshListerExpansion
 }

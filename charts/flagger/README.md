@@ -7,12 +7,13 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 * A/B Testing (HTTP headers and cookies traffic routing)
 * Blue/Green (traffic switching and mirroring)
 
-Flagger works with service mesh solutions (Istio, Linkerd, AWS App Mesh) and with Kubernetes ingress controllers (NGINX, Skipper, Gloo, Contour, Traefik).
+Flagger works with service mesh solutions (Istio, Linkerd, AWS App Mesh) and with Kubernetes ingress controllers
+(NGINX, Skipper, Gloo, Contour, Traefik).
 Flagger can be configured to send alerts to various chat platforms such as Slack, Microsoft Teams, Discord and Rocket.
 
 ## Prerequisites
 
-* Kubernetes >= 1.14
+* Kubernetes >= 1.16
 
 ## Installing the Chart
 
@@ -87,7 +88,7 @@ To install Flagger and Prometheus for **Traefik**:
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \
-    --namespace traefik \
+    --namespace=traefik \
     --set prometheus.install=true \
     --set meshProvider=traefik
 ```

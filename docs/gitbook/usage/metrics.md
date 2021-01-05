@@ -1,6 +1,10 @@
 # Metrics Analysis
 
-As part of the analysis process, Flagger can validate service level objectives \(SLOs\) like availability, error rate percentage, average response time and any other objective based on app specific metrics. If a drop in performance is noticed during the SLOs analysis, the release will be automatically rolled back with minimum impact to end-users.
+As part of the analysis process, Flagger can validate service level objectives
+(SLOs) like availability, error rate percentage, average response time and any other objective
+based on app specific metrics.
+If a drop in performance is noticed during the SLOs analysis,
+the release will be automatically rolled back with minimum impact to end-users.
 
 ## Builtin metrics
 
@@ -23,11 +27,17 @@ Flagger comes with two builtin metric checks: HTTP request success rate and dura
         max: 500
 ```
 
-For each metric you can specify a range of accepted values with `thresholdRange` and the window size or the time series with `interval`. The builtin checks are available for every service mesh / ingress controller and are implemented with [Prometheus queries](../faq.md#metrics).
+For each metric you can specify a range of accepted values with `thresholdRange` and
+the window size or the time series with `interval`.
+The builtin checks are available for every service mesh / ingress controlle
+and are implemented with [Prometheus queries](../faq.md#metrics).
 
 ## Custom metrics
 
-The canary analysis can be extended with custom metric checks. Using a `MetricTemplate` custom resource, you configure Flagger to connect to a metric provider and run a query that returns a `float64` value. The query result is used to validate the canary based on the specified threshold range.
+The canary analysis can be extended with custom metric checks.
+Using a `MetricTemplate` custom resource,
+you configure Flagger to connect to a metric provider and run a query that returns a `float64` value.
+The query result is used to validate the canary based on the specified threshold range.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -45,12 +55,12 @@ spec:
 
 The following variables are available in query templates:
 
-* `name` \(canary.metadata.name\)
-* `namespace` \(canary.metadata.namespace\)
-* `target` \(canary.spec.targetRef.name\)
-* `service` \(canary.spec.service.name\)
-* `ingress` \(canary.spec.ingresRef.name\)
-* `interval` \(canary.spec.analysis.metrics\[\].interval\)
+* `name` (canary.metadata.name)
+* `namespace` (canary.metadata.namespace)
+* `target` (canary.spec.targetRef.name)
+* `service` (canary.spec.service.name)
+* `ingress` (canary.spec.ingresRef.name)
+* `interval` (canary.spec.analysis.metrics[].interval)
 
 A canary analysis metric can reference a template with `templateRef`:
 
@@ -73,7 +83,8 @@ A canary analysis metric can reference a template with `templateRef`:
 
 ## Prometheus
 
-You can create custom metric checks targeting a Prometheus server by setting the provider type to `prometheus` and writing the query in PromQL.
+You can create custom metric checks targeting a Prometheus server by
+setting the provider type to `prometheus` and writing the query in PromQL.
 
 Prometheus template example:
 
@@ -124,7 +135,8 @@ Reference the template in the canary analysis:
         interval: 1m
 ```
 
-The above configuration validates the canary by checking if the HTTP 404 req/sec percentage is below 5 percent of the total traffic. If the 404s rate reaches the 5% threshold, then the canary fails.
+The above configuration validates the canary by checking if the HTTP 404 req/sec percentage
+is below 5 percent of the total traffic. If the 404s rate reaches the 5% threshold, then the canary fails.
 
 Prometheus gRPC error rate example:
 
@@ -159,11 +171,13 @@ spec:
     ) * 100
 ```
 
-The above template is for gRPC services instrumented with [go-grpc-prometheus](https://github.com/grpc-ecosystem/go-grpc-prometheus).
+The above template is for gRPC services instrumented with
+[go-grpc-prometheus](https://github.com/grpc-ecosystem/go-grpc-prometheus).
 
 ## Prometheus authentication
 
-If your Prometheus API requires basic authentication, you can create a secret in the same namespace as the `MetricTemplate` with the basic-auth credentials:
+If your Prometheus API requires basic authentication, you can create a secret in the same namespace
+as the `MetricTemplate` with the basic-auth credentials:
 
 ```yaml
 apiVersion: v1
@@ -317,7 +331,8 @@ spec:
     ]
 ```
 
-The query format documentation can be found [here](https://aws.amazon.com/premiumsupport/knowledge-center/cloudwatch-getmetricdata-api/).
+The query format documentation can be found
+[here](https://aws.amazon.com/premiumsupport/knowledge-center/cloudwatch-getmetricdata-api/).
 
 Reference the template in the canary analysis:
 
@@ -386,4 +401,3 @@ Reference the template in the canary analysis:
           max: 5
         interval: 1m
 ```
-

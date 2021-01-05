@@ -4,7 +4,7 @@ This guide shows you how to use the [Traefik](https://doc.traefik.io/traefik/) a
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.14** or newer and Traefik **v2.3** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer and Traefik **v2.3** or newer.
 
 Install Traefik with Helm v3:
 
@@ -40,7 +40,7 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:

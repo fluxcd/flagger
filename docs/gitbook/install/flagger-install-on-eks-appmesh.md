@@ -16,7 +16,8 @@ The App Mesh integration with EKS is made out of the following components:
 
 ## Create a Kubernetes cluster
 
-In order to create an EKS cluster you can use [eksctl](https://eksctl.io). Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon.
+In order to create an EKS cluster you can use [eksctl](https://eksctl.io).
+Eksctl is an open source command-line utility made by Weaveworks in collaboration with Amazon.
 
 On MacOS you can install eksctl with Homebrew:
 
@@ -35,7 +36,9 @@ eksctl create cluster --name=appmesh \
 --appmesh-access
 ```
 
-The above command will create a two nodes cluster with App Mesh [IAM policy](https://docs.aws.amazon.com/app-mesh/latest/userguide/MESH_IAM_user_policies.html) attached to the EKS node instance role.
+The above command will create a two nodes cluster with
+App Mesh [IAM policy](https://docs.aws.amazon.com/app-mesh/latest/userguide/MESH_IAM_user_policies.html)
+attached to the EKS node instance role.
 
 Verify the install with:
 
@@ -59,7 +62,7 @@ helm repo add eks https://aws.github.io/eks-charts
 
 ## Enable horizontal pod auto-scaling
 
-Install the Horizontal Pod Autoscaler \(HPA\) metrics provider:
+Install the Horizontal Pod Autoscaler (HPA) metrics provider:
 
 ```bash
 helm upgrade -i metrics-server stable/metrics-server \
@@ -94,7 +97,8 @@ helm upgrade -i appmesh-controller eks/appmesh-controller \
 --wait --namespace appmesh-system
 ```
 
-In order to collect the App Mesh metrics that Flagger needs to run the canary analysis, you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
+In order to collect the App Mesh metrics that Flagger needs to run the canary analysis,
+you'll need to setup a Prometheus instance to scrape the Envoy sidecars.
 
 Install the App Mesh Prometheus:
 
@@ -142,5 +146,6 @@ You can access Grafana using port forwarding:
 kubectl -n appmesh-system port-forward svc/appmesh-grafana 3000:3000
 ```
 
-Now that you have Flagger running, you can try the [App Mesh canary deployments tutorial](https://docs.flagger.app/usage/appmesh-progressive-delivery).
+Now that you have Flagger running, you can try the
+[App Mesh canary deployments tutorial](https://docs.flagger.app/usage/appmesh-progressive-delivery).
 

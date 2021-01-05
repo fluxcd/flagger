@@ -30,9 +30,7 @@
 * [Skipper Canary Deployments](tutorials/skipper-progressive-delivery.md)
 * [Traefik Canary Deployments](tutorials/traefik-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
-* [Crossover Canary Deployments](tutorials/crossover-progressive-delivery.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
-* [Canaries with Helm charts and GitOps](tutorials/canary-helm-gitops.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
 * [Rollout Weights](tutorials/rollout-weights.md)
 

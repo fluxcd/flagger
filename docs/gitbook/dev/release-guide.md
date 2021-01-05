@@ -4,12 +4,12 @@ This document describes how to release Flagger.
 
 ## Release
 
-To release a new Flagger version \(e.g. `2.0.0`\) follow these steps:
+To release a new Flagger version (e.g. `2.0.0`) follow these steps:
 
 * create a branch `git checkout -b prep-2.0.0`
 * set the version in code and manifests `TAG=2.0.0 make version-set`
 * commit changes and merge PR
-* checkout master `git checkout master && git pull`
+* checkout master `git checkout main && git pull`
 * tag master `make release`
 
 ## CI
@@ -28,8 +28,7 @@ The documentation [website](https://docs.flagger.app) is built from the `docs` b
 
 After a Flagger release, publish the docs with:
 
-* `git checkout master && git pull`
+* `git checkout main && git pull`
 * `git checkout docs`
-* `git rebase master`
+* `git rebase main`
 * `git push origin docs`
-

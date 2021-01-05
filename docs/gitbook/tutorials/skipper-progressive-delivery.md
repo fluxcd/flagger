@@ -6,7 +6,7 @@ This guide shows you how to use the [Skipper ingress controller](https://opensou
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.14** or newer and Skipper ingress **0.11.40** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer and Skipper ingress **0.11.40** or newer.
 
 Install Skipper ingress-controller using [upstream definition](https://opensource.zalando.com/skipper/kubernetes/ingress-controller/#install-skipper-as-ingress-controller).
 
@@ -31,7 +31,7 @@ Certain arguments are relevant:
 Install Flagger using kustomize:
 
 ```bash
-kustomize build https://github.com/weaveworks/flagger/kustomize/kubernetes | kubectl apply -f -
+kustomize build https://github.com/fluxcd/flagger/kustomize/kubernetes | kubectl apply -f -
 ```
 
 ## Bootstrap
@@ -47,7 +47,7 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:

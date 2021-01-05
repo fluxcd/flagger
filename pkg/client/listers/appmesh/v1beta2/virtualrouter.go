@@ -26,8 +26,10 @@ import (
 )
 
 // VirtualRouterLister helps list VirtualRouters.
+// All objects returned here must be treated as read-only.
 type VirtualRouterLister interface {
 	// List lists all VirtualRouters in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta2.VirtualRouter, err error)
 	// VirtualRouters returns an object that can list and get VirtualRouters.
 	VirtualRouters(namespace string) VirtualRouterNamespaceLister
@@ -58,10 +60,13 @@ func (s *virtualRouterLister) VirtualRouters(namespace string) VirtualRouterName
 }
 
 // VirtualRouterNamespaceLister helps list and get VirtualRouters.
+// All objects returned here must be treated as read-only.
 type VirtualRouterNamespaceLister interface {
 	// List lists all VirtualRouters in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta2.VirtualRouter, err error)
 	// Get retrieves the VirtualRouter from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta2.VirtualRouter, error)
 	VirtualRouterNamespaceListerExpansion
 }

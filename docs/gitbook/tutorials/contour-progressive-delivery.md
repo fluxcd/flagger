@@ -6,7 +6,7 @@ This guide shows you how to use [Contour](https://projectcontour.io/) ingress co
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.11** or newer and Contour **v1.0** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer and Contour **v1.0** or newer.
 
 Install Contour on a cluster with LoadBalancer support:
 
@@ -16,10 +16,10 @@ kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 
 The above command will deploy Contour and an Envoy daemonset in the `projectcontour` namespace.
 
-Install Flagger using Kustomize \(kubectl 1.14\) in the `projectcontour` namespace:
+Install Flagger using Kustomize (kubectl 1.14) in the `projectcontour` namespace:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/contour
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/contour?ref=main
 ```
 
 The above command will deploy Flagger and Prometheus configured to scrape the Contour's Envoy instances.
@@ -51,13 +51,13 @@ kubectl create ns test
 Install the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/tester
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k github.com/weaveworks/flagger//kustomize/podinfo
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
 Create a canary custom resource \(replace `app.example.com` with your own domain\):

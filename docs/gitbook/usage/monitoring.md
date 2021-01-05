@@ -6,7 +6,6 @@ Flagger comes with a Grafana dashboard made for canary analysis. Install Grafana
 
 ```bash
 helm upgrade -i flagger-grafana flagger/grafana \
---namespace=istio-system \ # or appmesh-system
 --set url=http://prometheus:9090
 ```
 
@@ -49,9 +48,11 @@ helm upgrade -i flagger flagger/flagger \
 --set eventWebhook=https://example.com/flagger-canary-event-webhook
 ```
 
-The environment variable _EVENT\_WEBHOOK\_URL_ can be used for activating the event-webhook, too. This is handy for using a secret to store a sensible value that could contain api keys for example.
+The environment variable _EVENT\_WEBHOOK\_URL_ can be used for activating the event-webhook, too.
+This is handy for using a secret to store a sensible value that could contain api keys for example.
 
-When configured, every action that Flagger takes during a canary deployment will be sent as JSON via an HTTP POST request. The JSON payload has the following schema:
+When configured, every action that Flagger takes during a canary deployment
+will be sent as JSON via an HTTP POST request. The JSON payload has the following schema:
 
 ```javascript
 {
@@ -93,7 +94,8 @@ The event webhook can be overwritten at canary level with:
 
 ## Metrics
 
-Flagger exposes Prometheus metrics that can be used to determine the canary analysis status and the destination weight values:
+Flagger exposes Prometheus metrics that can be used to determine
+the canary analysis status and the destination weight values:
 
 ```bash
 # Flagger version and mesh provider gauge
@@ -116,4 +118,3 @@ flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="+Inf"
 flagger_canary_duration_seconds_sum{name="podinfo",namespace="test"} 17.3561329
 flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
 ```
-
