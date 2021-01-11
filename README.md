@@ -3,7 +3,7 @@
 [![build](https://github.com/fluxcd/flagger/workflows/build/badge.svg)](https://github.com/fluxcd/flagger/actions)
 [![report](https://goreportcard.com/badge/github.com/fluxcd/flagger)](https://goreportcard.com/report/github.com/fluxcd/flagger)
 [![license](https://img.shields.io/github/license/fluxcd/flagger.svg)](https://github.com/fluxcd/flagger/blob/main/LICENSE)
-[![release](https://img.shields.io/github/release/fluxcd/flagger/all.svg)](https://github.com/fluxcd/flagger/releases)
+[![release](https://img.shields.io/github/release/fluxcd/flagger/all.svg)](https://github.com/fluxcd/flagger/releases) [![Meercode CI Score](https://meercode.io/badge/fluxcd/flagger?type=ci-score&branch=main)](https://meercode.io/fluxcd/flagger)
 
 Flagger is a progressive delivery tool that automates the release process for applications running on Kubernetes. 
 It reduces the risk of introducing a new software version in production
