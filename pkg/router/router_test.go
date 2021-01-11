@@ -116,9 +116,16 @@ func newTestCanary() *flaggerv1.Canary {
 					},
 				},
 				Match: []istiov1alpha3.HTTPMatchRequest{
-					{Uri: &istiov1alpha1.StringMatch{
-						Prefix: "/podinfo",
-					}},
+					{
+						Name: "podinfo",
+						Uri: &istiov1alpha1.StringMatch{
+							Prefix: "/podinfo",
+						},
+						Method: &istiov1alpha1.StringMatch{
+							Exact: "GET",
+						},
+						IgnoreUriCase: true,
+					},
 				},
 				Retries: &istiov1alpha3.HTTPRetry{
 					Attempts:      10,
