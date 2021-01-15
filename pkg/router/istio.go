@@ -440,15 +440,26 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 
 // mergeMatchConditions appends the URI match rules to canary conditions
 func mergeMatchConditions(canary, defaults []istiov1alpha3.HTTPMatchRequest) []istiov1alpha3.HTTPMatchRequest {
-	for i := range canary {
+	if len(defaults) == 0 {
+		return canary
+	}
+
+	merged := make([]istiov1alpha3.HTTPMatchRequest, len(canary)*len(defaults))
+	num := 0
+	for _, c := range canary {
 		for _, d := range defaults {
-			if d.Uri != nil {
-				canary[i].Uri = d.Uri
+			merged[num] = *d.DeepCopy()
+			if c.Headers != nil {
+				merged[num].Headers = c.Headers
 			}
+			if c.SourceLabels != nil {
+				merged[num].SourceLabels = c.SourceLabels
+			}
+			num++
 		}
 	}
 
-	return canary
+	return merged
 }
 
 // makeDestination returns a an destination weight for the specified host

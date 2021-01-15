@@ -394,6 +394,11 @@ type HeaderOperations struct {
 //
 // HTTPMatchRequest CANNOT be empty.
 type HTTPMatchRequest struct {
+	// The name assigned to a match. The match's name will be
+	// concatenated with the parent route's name and will be logged in
+	// the access logs for requests matching this route.
+	Name string `json:"name,omitempty"`
+
 	// URI to match
 	// values are case-sensitive and formatted as follows:
 	//
@@ -467,6 +472,35 @@ type HTTPMatchRequest struct {
 	// at the top of the VirtualService (if any) are overridden. The gateway match is
 	// independent of sourceLabels.
 	Gateways []string `json:"gateways,omitempty"`
+
+	// Query parameters for matching.
+	//
+	// Ex:
+	// - For a query parameter like "?key=true", the map key would be "key" and
+	//   the string match could be defined as `exact: "true"`.
+	// - For a query parameter like "?key", the map key would be "key" and the
+	//   string match could be defined as `exact: ""`.
+	// - For a query parameter like "?key=123", the map key would be "key" and the
+	//   string match could be defined as `regex: "\d+$"`. Note that this
+	//   configuration will only match values like "123" but not "a123" or "123a".
+	//
+	// **Note:** `prefix` matching is currently not supported.
+	QueryParams map[string]v1alpha1.StringMatch `json:"queryParams,omitempty"`
+
+	// Flag to specify whether the URI matching should be case-insensitive.
+	//
+	// **Note:** The case will be ignored only in the case of `exact` and `prefix`
+	// URI matches.
+	IgnoreUriCase bool `json:"ignoreUriCase,omitempty"`
+
+	// withoutHeader has the same syntax with the header, but has opposite meaning.
+	// If a header is matched with a matching rule among withoutHeader, the traffic becomes not matched one.
+	WithoutHeaders map[string]v1alpha1.StringMatch `json:"withoutHeaders,omitempty"`
+
+	// Source namespace constraining the applicability of a rule to workloads in that namespace.
+	// If the VirtualService has a list of gateways specified in the top-level `gateways` field,
+	// it must include the reserved gateway `mesh` for this field to be applicable.
+	SourceNamespace string `json:"sourceNamespace,omitempty"`
 }
 
 type DestinationWeight struct {
