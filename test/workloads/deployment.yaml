@@ -31,6 +31,12 @@ spec:
       - name: podinfod
         image: stefanprodan/podinfo:3.1.0
         imagePullPolicy: IfNotPresent
+        env:
+          - name: PODINFO_SECRET_VALUE
+            valueFrom:
+              secretKeyRef:
+                name: podinfo-secret
+                key: value
         ports:
           - name: http
             containerPort: 9898
