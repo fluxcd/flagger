@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.6.1
+
+**Release date:** 2021-01-19
+
+This release extends the support for Istio's `HTTPMatchRequest` and
+comes with a regression bug fix to secrets and configmaps tracking.
+
+#### Improvements
+
+- Update HTTPMatchRequest to match Istio's definitions
+  [#777](https://github.com/fluxcd/flagger/pull/777)
+- e2e: Update Istio to v1.8.2 and Contour to v1.11.0
+  [#778](https://github.com/fluxcd/flagger/pull/778)
+
+#### Fixes
+
+- Add missing TrackedConfig field to Canary status CRD
+  [#781](https://github.com/fluxcd/flagger/pull/781)
+  
 ## 1.6.0
 
 **Release date:** 2021-01-05
