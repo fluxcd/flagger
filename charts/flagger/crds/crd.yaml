@@ -941,6 +941,11 @@ spec:
                     - Failed
                     - Terminating
                     - Terminated
+                trackedConfigs:
+                  description: TrackedConfig of this canary
+                  additionalProperties:
+                    type: string
+                  type: object
                 canaryWeight:
                   description: Traffic weight routed to canary
                   type: number
