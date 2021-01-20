@@ -243,10 +243,10 @@ When submitting bug reports please include as much details as possible:
 If you have any questions about Flagger and progressive delivery:
 
 * Read the Flagger [docs](https://docs.flagger.app).
-* Invite yourself to the [Weave community slack](https://slack.weave.works/)
-  and join the [#flagger](https://weave-community.slack.com/messages/flagger/) channel.
-* Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks,
-  hands-on training and meetups in your area.
+* Invite yourself to the [CNCF community slack](https://slack.cncf.io/)
+  and join the [#flagger](https://cloud-native.slack.com/messages/flagger/) channel.
+* Check out the [Flux talks section](https://fluxcd.io/community/#talks) and to see a list of online talks,
+  hands-on training and meetups.
 * File an [issue](https://github.com/fluxcd/flagger/issues/new).
 
 Your feedback is always welcome!

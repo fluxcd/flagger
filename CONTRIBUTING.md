@@ -29,7 +29,7 @@ you can sign your commit automatically with `git commit -s`.
 
 The project uses Slack: To join the conversation, simply join the
 [CNCF](https://slack.cncf.io/) Slack workspace and use the
-[#flux](https://cloud-native.slack.com/messages/flux/) channel.
+[#flagger](https://cloud-native.slack.com/messages/flagger/) channel.
 
 The developers use a mailing list to discuss development as well.
 Simply subscribe to [flux-dev on cncf.io](https://lists.cncf.io/g/cncf-flux-dev)
