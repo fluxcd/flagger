@@ -556,6 +556,36 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 							},
 						},
 					},
+					Affinity: &corev1.Affinity{
+						PodAntiAffinity: &corev1.PodAntiAffinity{
+							PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
+								{
+									PodAffinityTerm: corev1.PodAffinityTerm{
+										TopologyKey: "failure-domain.beta.kubernetes.io/zone",
+										LabelSelector: &metav1.LabelSelector{
+											MatchExpressions: []metav1.LabelSelectorRequirement{
+												{
+													Values: []string{"podinfo"},
+												},
+											},
+										},
+									},
+								},
+							},
+							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+								{
+									TopologyKey: "failure-domain.beta.kubernetes.io/zone",
+									LabelSelector: &metav1.LabelSelector{
+										MatchExpressions: []metav1.LabelSelectorRequirement{
+											{
+												Values: []string{"podinfo"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
