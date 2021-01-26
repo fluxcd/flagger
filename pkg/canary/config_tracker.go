@@ -438,29 +438,5 @@ func (ct *ConfigTracker) ApplyPrimaryConfigs(spec corev1.PodSpec, refs map[strin
 		}
 	}
 
-	// update affinity
-	if affinity := spec.Affinity; affinity != nil {
-		if podAntiAffinity := affinity.PodAntiAffinity; podAntiAffinity != nil {
-			for _, preferredAntiAffinity := range podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution {
-				term := preferredAntiAffinity.PodAffinityTerm
-				appendPrimarySuffixToValuesIfNeeded(term.TopologyKey, term.LabelSelector)
-			}
-
-			for _, requiredAntiAffinity := range podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
-				appendPrimarySuffixToValuesIfNeeded(requiredAntiAffinity.TopologyKey, requiredAntiAffinity.LabelSelector)
-			}
-		}
-	}
-
 	return spec
-}
-
-func appendPrimarySuffixToValuesIfNeeded(topologyKey string, labelSelector *metav1.LabelSelector) {
-	if labelSelector != nil && topologyKey == "failure-domain.beta.kubernetes.io/zone" {
-		for _, matchExpression := range labelSelector.MatchExpressions {
-			for i := range matchExpression.Values {
-				matchExpression.Values[i] += "-primary"
-			}
-		}
-	}
 }

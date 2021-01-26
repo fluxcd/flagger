@@ -39,23 +39,6 @@ func TestConfigIsDisabled(t *testing.T) {
 	}
 }
 
-func TestConfigTracker_AntiAffinity(t *testing.T) {
-	t.Run("deployment", func(t *testing.T) {
-		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
-		mocks := newDeploymentFixture(dc)
-		mocks.initializeCanary(t)
-
-		depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
-		require.NoError(t, err)
-
-		value := depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[0].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
-		assert.Equal(t, "podinfo-primary", value)
-
-		value = depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution[0].LabelSelector.MatchExpressions[0].Values[0]
-		assert.Equal(t, "podinfo-primary", value)
-	})
-}
-
 func TestConfigTracker_ConfigMaps(t *testing.T) {
 	t.Run("deployment", func(t *testing.T) {
 		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}

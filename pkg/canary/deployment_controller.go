@@ -116,7 +116,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	primaryCopy.Spec.Strategy = canary.Spec.Strategy
 
 	// update spec with primary secrets and config maps
-	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
+	primaryCopy.Spec.Template.Spec = c.getPrimaryDeploymentTemplateSpec(canary, configRefs)
 
 	// update pod annotations to ensure a rolling update
 	annotations, err := makeAnnotations(canary.Spec.Template.Annotations)
@@ -289,7 +289,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
-					Spec: c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, configRefs),
+					Spec: c.getPrimaryDeploymentTemplateSpec(canaryDep, configRefs),
 				},
 			},
 		}
@@ -451,4 +451,44 @@ func (c *DeploymentController) scale(cd *flaggerv1.Canary, replicas int32) error
 		return fmt.Errorf("scaling %s.%s to %v failed: %w", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}
 	return nil
+}
+
+func (c *DeploymentController) getPrimaryDeploymentTemplateSpec(canaryDep *appsv1.Deployment, refs map[string]ConfigRef) corev1.PodSpec {
+	spec := c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, refs)
+
+	// update affinity
+	if affinity := spec.Affinity; affinity != nil {
+		if podAntiAffinity := affinity.PodAntiAffinity; podAntiAffinity != nil {
+			for _, preferredAntiAffinity := range podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution {
+				c.appendPrimarySuffixToValuesIfNeeded(preferredAntiAffinity.PodAffinityTerm.LabelSelector)
+			}
+
+			for _, requiredAntiAffinity := range podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
+				c.appendPrimarySuffixToValuesIfNeeded(requiredAntiAffinity.LabelSelector)
+			}
+		}
+	}
+
+	return spec
+}
+
+func (c *DeploymentController) appendPrimarySuffixToValuesIfNeeded(labelSelector *metav1.LabelSelector) {
+	if labelSelector != nil {
+		for _, matchExpression := range labelSelector.MatchExpressions {
+			if contains(c.labels, matchExpression.Key) {
+				for i := range matchExpression.Values {
+					matchExpression.Values[i] += "-primary"
+				}
+			}
+		}
+	}
+}
+
+func contains(slice []string, val string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }
