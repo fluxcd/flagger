@@ -11,6 +11,7 @@ require (
 	github.com/prometheus/client_golang v1.5.1
 	github.com/stretchr/testify v1.6.1
 	go.uber.org/zap v1.14.1
+	golang.org/x/tools v0.1.0 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.15
 	k8s.io/api v0.20.1
 	k8s.io/apimachinery v0.20.1

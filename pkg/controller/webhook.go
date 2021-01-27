@@ -115,9 +115,9 @@ func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, e
 
 	if w.Metadata != nil {
 		for key, value := range *w.Metadata {
-                        if _, ok := payload.Metadata[key]; ok {
-                            continue
-                        }
+			if _, ok := payload.Metadata[key]; ok {
+				continue
+			}
 			payload.Metadata[key] = value
 		}
 	}
