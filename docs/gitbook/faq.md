@@ -2,7 +2,7 @@
 
 ## Deployment Strategies
 
-**Which deployment strategies are supported by Flagger?**
+#### Which deployment strategies are supported by Flagger?
 
 Flagger implements the following deployment strategies:
 
@@ -11,25 +11,25 @@ Flagger implements the following deployment strategies:
 * [Blue/Green](usage/deployment-strategies.md#bluegreen-deployments)
 * [Blue/Green Mirroring](usage/deployment-strategies.md#bluegreen-with-traffic-mirroring)
 
-**When should I use A/B testing instead of progressive traffic shifting?**
+#### When should I use A/B testing instead of progressive traffic shifting?
 
 For frontend applications that require session affinity you should use HTTP headers or
 cookies match conditions to ensure a set of users will stay on the same version for
 the whole duration of the canary analysis.
 
-**Can I use Flagger to manage applications that live outside of a service mesh?**
+#### Can I use Flagger to manage applications that live outside of a service mesh?
 
 For applications that are not deployed on a service mesh,
 Flagger can orchestrate Blue/Green style deployments with Kubernetes L4 networking.
 
-**When can I use traffic mirroring?**
+#### When can I use traffic mirroring?
 
 Traffic mirroring can be used for Blue/Green deployment strategy or a pre-stage in a Canary release.
 Traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.
 Mirroring should be used for requests that are **idempotent**
 or capable of being processed twice (once by the primary and once by the canary).
 
-**How to retry a failed release?**
+#### How to retry a failed release?
 
 A canary analysis is triggered by changes in any of the following objects:
 
@@ -49,9 +49,14 @@ spec:
         timestamp: "2020-03-10T14:24:48+0000"
 ```
 
+#### Why is there a downtime during the canary initializing process when analysis is disabled?
+
+It is the intended behavior when the analysis is disabled, this allows instant rollback and also mimics the way a Kubernetes deployment initialization works.  
+To avoid this: enable the analysis (`skipAnalysis: true`), wait for the initialization to finish, and disable it afterward (`skipAnalysis: false`).
+
 ## Kubernetes services
 
-**How is an application exposed inside the cluster?**
+#### How is an application exposed inside the cluster?
 
 Assuming the app name is podinfo you can define a canary like:
 
@@ -147,7 +152,7 @@ and can be used for conformance testing or load testing.
 
 ## Multiple ports
 
-**My application listens on multiple ports, how can I expose them inside the cluster?**
+#### My application listens on multiple ports, how can I expose them inside the cluster?
 
 If port discovery is enabled, Flagger scans the deployment spec and extracts the containers ports excluding
 the port specified in the canary service and Envoy sidecar ports.
@@ -195,7 +200,7 @@ Both port `8080` and `9090` will be added to the ClusterIP services.
 
 ## Label selectors
 
-**What labels selectors are supported by Flagger?**
+#### What labels selectors are supported by Flagger?
 
 The target deployment must have a single label selector in the format `app: <DEPLOYMENT-NAME>`:
 
@@ -217,7 +222,7 @@ spec:
 Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors.
 If you use a different convention you can specify your label with the `-selector-labels` flag.
 
-**Is pod affinity and anti affinity supported?**
+#### Is pod affinity and anti affinity supported?
 
 For pod affinity to work you need to use a different label than the `app`, `name` or `app.kubernetes.io/name`.
 
@@ -252,11 +257,11 @@ spec:
 
 ## Metrics
 
-**How does Flagger measure the request success rate and duration?**
+#### How does Flagger measure the request success rate and duration?
 
 Flagger measures the request success rate and duration using Prometheus queries.
 
-**HTTP requests success rate percentage**
+#### HTTP requests success rate percentage
 
 Spec:
 
@@ -340,7 +345,7 @@ sum(
 )
 ```
 
-**HTTP requests milliseconds duration P99**
+#### HTTP requests milliseconds duration P99
 
 Spec:
 
@@ -388,14 +393,14 @@ histogram_quantile(0.99,
 
 > **Note** that the metric interval should be lower or equal to the control loop interval.
 
-**Can I use custom metrics?**
+#### Can I use custom metrics?
 
 The analysis can be extended with metrics provided by Prometheus, Datadog and AWS CloudWatch.
 For more details on how custom metrics can be used please read the [metrics docs](usage/metrics.md).
 
 ## Istio routing
 
-**How does Flagger interact with Istio?**
+#### How does Flagger interact with Istio?
 
 Flagger creates an Istio Virtual Service and Destination Rules based on the Canary service spec.
 The service configuration lets you expose an app inside or outside the mesh. You can also define traffic policies,
@@ -667,7 +672,7 @@ and [pilot environment variables](https://istio.io/latest/docs/reference/command
 
 ## Istio Ingress Gateway
 
-**How can I expose multiple canaries on the same external domain?**
+#### How can I expose multiple canaries on the same external domain?
 
 Assuming you have two apps, one that servers the main website and one that serves the REST API.
 For each app you can define a canary object as:
@@ -718,7 +723,7 @@ Note that host merging only works if the canaries are bounded to a ingress gatew
 
 ## Istio Mutual TLS
 
-**How can I enable mTLS for a canary?**
+#### How can I enable mTLS for a canary?
 
 When deploying Istio with global mTLS enabled, you have to set the TLS mode to `ISTIO_MUTUAL`:
 
@@ -744,7 +749,7 @@ spec:
         mode: DISABLE
 ```
 
-**If Flagger is outside of the mesh, how can it start the load test?**
+#### If Flagger is outside of the mesh, how can it start the load test?
 
 In order for Flagger to be able to call the load tester service from outside the mesh,
 you need to disable mTLS on port 80:
