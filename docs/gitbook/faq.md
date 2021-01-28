@@ -49,6 +49,11 @@ spec:
         timestamp: "2020-03-10T14:24:48+0000"
 ```
 
+#### Why is there a downtime during the canary initializing process when analysis is disabled?
+
+It is the intended behavior when the analysis is disabled, this allows instant rollback and also mimics the way a Kubernetes deployment initialization works.  
+To avoid this: enable the analysis (`skipAnalysis: true`), wait for the initialization to finish, and disable it afterward (`skipAnalysis: false`).
+
 ## Kubernetes services
 
 #### How is an application exposed inside the cluster?
