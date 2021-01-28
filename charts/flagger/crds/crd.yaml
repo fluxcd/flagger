@@ -1167,6 +1167,12 @@ spec:
                     - msteams
                     - discord
                     - rocket
+                channel:
+                  description: Alert channel for this provider
+                  type: string
+                username:
+                  description: Bot username for this provider
+                  type: string
                 address:
                   description: Hook URL address of this provider
                   type: string
