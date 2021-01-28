@@ -887,6 +887,37 @@ spec:
                               namespace:
                                 description: Namespace of this metric template
                                 type: string
+                    alerts:
+                      description: Alert list for this canary analysis
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - providerRef
+                          - name
+                        properties:
+                          name:
+                            description: Name of the this alert
+                            type: string
+                          severity:
+                            description: Severity level can be info, warn, error (default info)
+                            type: string
+                            enum:
+                              - ""
+                              - info
+                              - warn
+                              - error
+                          providerRef:
+                            description: Alert provider reference
+                            type: object
+                            required: ["name"]
+                            properties:
+                              name:
+                                description: Name of the alert provider
+                                type: string
+                              namespace:
+                                description: Namespace of the alert provider
+                                type: string
                     webhooks:
                       description: Webhook list for this canary
                       type: array
@@ -1136,6 +1167,12 @@ spec:
                     - msteams
                     - discord
                     - rocket
+                channel:
+                  description: Alert channel for this provider
+                  type: string
+                username:
+                  description: Bot username for this provider
+                  type: string
                 address:
                   description: Hook URL address of this provider
                   type: string
