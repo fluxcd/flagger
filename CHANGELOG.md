@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.6.2
+
+**Release date:** 2021-01-28
+
+This release comes with support for Kubernetes anti-affinity rules.
+
+#### Improvements
+
+- Support for adding `-primary` suffix to Anti-Affinity values
+  [#788](https://github.com/fluxcd/flagger/pull/788)
+
+#### Fixes
+
+- Add missing alerts section to Canary CRD schema
+  [#794](https://github.com/fluxcd/flagger/pull/794)
+  
 ## 1.6.1
 
 **Release date:** 2021-01-19
