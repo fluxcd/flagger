@@ -52,7 +52,7 @@ func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template
 	for _, canaryWebhook := range r.GetAnalysis().Webhooks {
 		if canaryWebhook.Type == flaggerv1.EventHook {
 			webhookOverride = true
-			err := CallEventWebhook(r, canaryWebhook.URL, fmt.Sprintf(template, args...), eventType)
+			err := CallEventWebhook(r, canaryWebhook, fmt.Sprintf(template, args...), eventType)
 			if err != nil {
 				c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
 			}
@@ -60,7 +60,11 @@ func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template
 	}
 
 	if c.eventWebhook != "" && !webhookOverride {
-		err := CallEventWebhook(r, c.eventWebhook, fmt.Sprintf(template, args...), eventType)
+		hook := flaggerv1.CanaryWebhook{
+			Name: "events",
+			URL:  c.eventWebhook,
+		}
+		err := CallEventWebhook(r, hook, fmt.Sprintf(template, args...), eventType)
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf("error sending event to webhook: %s", err)
 		}

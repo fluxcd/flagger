@@ -101,7 +101,10 @@ func TestCallEventWebhook(t *testing.T) {
 		w.WriteHeader(http.StatusAccepted)
 	}))
 	defer ts.Close()
-
+	hook := flaggerv1.CanaryWebhook{
+		Name: "event",
+		URL:  ts.URL,
+	}
 	canary := &flaggerv1.Canary{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      canaryName,
@@ -112,7 +115,7 @@ func TestCallEventWebhook(t *testing.T) {
 		},
 	}
 
-	err := CallEventWebhook(canary, ts.URL, canaryMessage, canaryEventType)
+	err := CallEventWebhook(canary, hook, canaryMessage, canaryEventType)
 	require.NoError(t, err)
 }
 
@@ -126,7 +129,10 @@ func TestCallEventWebhookStatusCode(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer ts.Close()
-
+	hook := flaggerv1.CanaryWebhook{
+		Name: "event",
+		URL:  ts.URL,
+	}
 	canary := &flaggerv1.Canary{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      canaryName,
@@ -137,6 +143,6 @@ func TestCallEventWebhookStatusCode(t *testing.T) {
 		},
 	}
 
-	err := CallEventWebhook(canary, ts.URL, canaryMessage, canaryEventType)
+	err := CallEventWebhook(canary, hook, canaryMessage, canaryEventType)
 	assert.Error(t, err)
 }

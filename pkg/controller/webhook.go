@@ -99,7 +99,7 @@ func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w f
 	return callWebhook(w.URL, payload, w.Timeout)
 }
 
-func CallEventWebhook(r *flaggerv1.Canary, webhook, message, eventtype string) error {
+func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, eventtype string) error {
 	t := time.Now()
 
 	payload := flaggerv1.CanaryWebhookPayload{
@@ -113,5 +113,13 @@ func CallEventWebhook(r *flaggerv1.Canary, webhook, message, eventtype string) e
 		},
 	}
 
-	return callWebhook(webhook, payload, "5s")
+	if w.Metadata != nil {
+		for key, value := range *w.Metadata {
+			if _, ok := payload.Metadata[key]; ok {
+				continue
+			}
+			payload.Metadata[key] = value
+		}
+	}
+	return callWebhook(w.URL, payload, "5s")
 }

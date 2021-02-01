@@ -66,6 +66,9 @@ Spec:
       - name: "send to Slack"
         type: event
         url: http://event-recevier.notifications/slack
+        metadata:
+          environment: "test"
+          cluster: "flagger-test"
 ```
 
 > **Note** that the sum of all rollout webhooks timeouts should be lower than the analysis interval.
