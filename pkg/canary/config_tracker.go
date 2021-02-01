@@ -208,18 +208,17 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 	for configMapName := range configMapNames {
 		config, err := ct.getRefFromConfigMap(configMapName, cd.Namespace)
 		if err != nil {
-			ct.Logger.Errorf("getRefFromConfigMap failed: %v", err)
-			continue
+			return nil, fmt.Errorf("configmap %s.%s get query error: %w", configMapName, cd.Namespace, err)
 		}
 		if config != nil {
 			res[config.GetName()] = *config
 		}
 	}
+
 	for secretName := range secretNames {
 		secret, err := ct.getRefFromSecret(secretName, cd.Namespace)
 		if err != nil {
-			ct.Logger.Errorf("getRefFromSecret failed: %v", err)
-			continue
+			return nil, fmt.Errorf("secret %s.%s get query error: %w", secretName, cd.Namespace, err)
 		}
 		if secret != nil {
 			res[secret.GetName()] = *secret

@@ -78,6 +78,11 @@ func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
 }
 
 func newDeploymentFixture(dc deploymentConfigs) deploymentControllerFixture {
+	fixture, _ := newCustomizableFixture(dc)
+	return fixture
+}
+
+func newCustomizableFixture(dc deploymentConfigs) (deploymentControllerFixture, *fake.Clientset) {
 	// init canary
 	cc := canaryConfigs{targetName: dc.name}
 	canary := newDeploymentControllerTestCanary(cc)
@@ -121,7 +126,7 @@ func newDeploymentFixture(dc deploymentConfigs) deploymentControllerFixture {
 		logger:        logger,
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
-	}
+	}, kubeClient
 }
 
 func newDeploymentControllerTestConfigMap() *corev1.ConfigMap {
