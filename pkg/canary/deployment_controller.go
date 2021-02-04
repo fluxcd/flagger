@@ -460,11 +460,11 @@ func (c *DeploymentController) getPrimaryDeploymentTemplateSpec(canaryDep *appsv
 	if affinity := spec.Affinity; affinity != nil {
 		if podAntiAffinity := affinity.PodAntiAffinity; podAntiAffinity != nil {
 			for _, preferredAntiAffinity := range podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution {
-				c.appendPrimarySuffixToValuesIfNeeded(preferredAntiAffinity.PodAffinityTerm.LabelSelector)
+				c.appendPrimarySuffixToValuesIfNeeded(preferredAntiAffinity.PodAffinityTerm.LabelSelector, canaryDep)
 			}
 
 			for _, requiredAntiAffinity := range podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
-				c.appendPrimarySuffixToValuesIfNeeded(requiredAntiAffinity.LabelSelector)
+				c.appendPrimarySuffixToValuesIfNeeded(requiredAntiAffinity.LabelSelector, canaryDep)
 			}
 		}
 	}
@@ -472,12 +472,15 @@ func (c *DeploymentController) getPrimaryDeploymentTemplateSpec(canaryDep *appsv
 	return spec
 }
 
-func (c *DeploymentController) appendPrimarySuffixToValuesIfNeeded(labelSelector *metav1.LabelSelector) {
+func (c *DeploymentController) appendPrimarySuffixToValuesIfNeeded(labelSelector *metav1.LabelSelector, canaryDep *appsv1.Deployment) {
 	if labelSelector != nil {
 		for _, matchExpression := range labelSelector.MatchExpressions {
 			if contains(c.labels, matchExpression.Key) {
 				for i := range matchExpression.Values {
-					matchExpression.Values[i] += "-primary"
+					if matchExpression.Values[i] == canaryDep.Name {
+						matchExpression.Values[i] += "-primary"
+						break
+					}
 				}
 			}
 		}

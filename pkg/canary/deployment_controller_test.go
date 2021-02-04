@@ -19,6 +19,7 @@ package canary
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -274,8 +275,12 @@ func TestDeploymentController_AntiAffinity(t *testing.T) {
 
 		value := depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[0].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
 		assert.Equal(t, "podinfo-primary", value)
+		value = depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[1].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
+		assert.False(t, strings.HasSuffix(value, "-primary"))
 
 		value = depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution[0].LabelSelector.MatchExpressions[0].Values[0]
 		assert.Equal(t, "podinfo-primary", value)
+		value = depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution[1].LabelSelector.MatchExpressions[0].Values[0]
+		assert.False(t, strings.HasSuffix(value, "-primary"))
 	})
 }
