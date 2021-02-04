@@ -12,7 +12,7 @@ by gradually shifting traffic to the new version while measuring metrics and run
 ![flagger-overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-overview.png)
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
-using a service mesh (App Mesh, Istio, Linkerd) or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
+using a service mesh (App Mesh, Alibaba Cloud Service Mesh, Istio, Linkerd) or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
 For release analysis, Flagger can query Prometheus, Datadog or CloudWatch
 and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
@@ -31,6 +31,7 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Monitoring](https://docs.flagger.app/usage/monitoring)
 * Tutorials
   * [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery)
+  * [Alibaba Cloud Service Mesh](https://docs.flagger.app/tutorials/alibabacloud-servicemesh-progressive-delivery/)
   * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery)
   * [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery)
   * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery)

@@ -6,7 +6,7 @@ description: Flagger is a progressive delivery Kubernetes operator
 
 [Flagger](https://github.com/fluxcd/flagger) is a **Kubernetes** operator
 that automates the promotion of canary deployments using
-**Istio**, **Linkerd**, **App Mesh**, **NGINX**, **Skipper**, **Contour**, **Gloo** or **Traefik**
+**Istio**, **Linkerd**, **App Mesh**, **Alibaba Cloud Service Mesh(ASM)**, **NGINX**, **Skipper**, **Contour**, **Gloo** or **Traefik**
 routing for traffic shifting and **Prometheus** metrics for canary analysis.
 The canary analysis can be extended with webhooks for running
 system integration/acceptance tests, load tests, or any other custom validation.
@@ -37,6 +37,7 @@ After install Flagger, you can follow one of these tutorials to get started:
 * [Istio](tutorials/istio-progressive-delivery.md)
 * [Linkerd](tutorials/linkerd-progressive-delivery.md)
 * [AWS App Mesh](tutorials/appmesh-progressive-delivery.md)
+* [Alibaba Cloud Service Mesh(ASM)](tutorials/alibabacloud-servicemesh-progressive-delivery.md)
 
 **Ingress controller tutorials**
 

@@ -1,10 +1,10 @@
-# Flagger Install on Alibaba ServiceMesh
+# Flagger Install on Alibaba Cloud Service Mesh
 
-This guide walks you through setting up Flagger on Alibaba ServiceMesh.
+This guide walks you through setting up Flagger on Alibaba Cloud Service Mesh.
 
 ## Prerequisites
 - Created an ACK([Alibabacloud Container Service for Kubernetes](https://cs.console.aliyun.com)) cluster instance.
-- Created an ASM([Alibaba ServiceMesh](https://servicemesh.console.aliyun.com)) instance, and added ACK cluster.
+- Created an ASM([Alibaba Cloud Service Mesh](https://servicemesh.console.aliyun.com)) instance, and added ACK cluster.
 
 ### Variables declaration
 - `$ACK_CONFIG`: the kubeconfig file path of ACK, which be treated as`$HOME/.kube/config` in the rest of guide.
@@ -120,7 +120,7 @@ Install Flagger's Canary CRD:
 kubectl apply -f $FLAGGER_SRC/artifacts/flagger/crd.yaml
 ```
 
-Deploy Flagger for Alibaba ServiceMesh:
+Deploy Flagger for Alibaba Cloud Service Mesh:
 
 ```bash
 cp $MESH_CONFIG kubeconfig
