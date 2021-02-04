@@ -18,12 +18,15 @@ package canary
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8sTesting "k8s.io/client-go/testing"
 )
 
 func TestConfigIsDisabled(t *testing.T) {
@@ -301,5 +304,31 @@ func TestConfigTracker_Secrets(t *testing.T) {
 		}
 		assert.True(t, trackedVolPresent, "Volume for primary copy of config-tracked secret should be present")
 		assert.True(t, originalVolPresent, "Volume for original secret with disabled tracking should be present")
+	})
+}
+
+func TestConfigTracker_HasConfigChanged_ShouldReturnErrorWhenAPIServerIsDown(t *testing.T) {
+	t.Run("secret", func(t *testing.T) {
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks, kubeClient := newCustomizableFixture(dc)
+
+		kubeClient.PrependReactor("get", "secrets", func(action k8sTesting.Action) (bool, runtime.Object, error) {
+			return true, nil, errors.New("server error")
+		})
+
+		_, err := mocks.controller.configTracker.HasConfigChanged(mocks.canary)
+		assert.Error(t, err)
+	})
+
+	t.Run("configmap", func(t *testing.T) {
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks, kubeClient := newCustomizableFixture(dc)
+
+		kubeClient.PrependReactor("get", "configmaps", func(action k8sTesting.Action) (bool, runtime.Object, error) {
+			return true, nil, errors.New("server error")
+		})
+
+		_, err := mocks.controller.configTracker.HasConfigChanged(mocks.canary)
+		assert.Error(t, err)
 	})
 }

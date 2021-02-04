@@ -78,6 +78,11 @@ func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
 }
 
 func newDeploymentFixture(dc deploymentConfigs) deploymentControllerFixture {
+	fixture, _ := newCustomizableFixture(dc)
+	return fixture
+}
+
+func newCustomizableFixture(dc deploymentConfigs) (deploymentControllerFixture, *fake.Clientset) {
 	// init canary
 	cc := canaryConfigs{targetName: dc.name}
 	canary := newDeploymentControllerTestCanary(cc)
@@ -121,7 +126,7 @@ func newDeploymentFixture(dc deploymentConfigs) deploymentControllerFixture {
 		logger:        logger,
 		flaggerClient: flaggerClient,
 		kubeClient:    kubeClient,
-	}
+	}, kubeClient
 }
 
 func newDeploymentControllerTestConfigMap() *corev1.ConfigMap {
@@ -350,6 +355,7 @@ func newDeploymentControllerTestCanary(cc canaryConfigs) *flaggerv1.Canary {
 }
 
 func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
+	var optional bool = false
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -473,6 +479,7 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 									LocalObjectReference: corev1.LocalObjectReference{
 										Name: "podinfo-config-vol",
 									},
+									Optional: &optional,
 								},
 							},
 						},
@@ -481,6 +488,7 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName: "podinfo-secret-vol",
+									Optional:   &optional,
 								},
 							},
 						},

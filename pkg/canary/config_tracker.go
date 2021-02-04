@@ -146,31 +146,29 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		return nil, fmt.Errorf("TargetRef.Kind invalid: %s", cd.Spec.TargetRef.Kind)
 	}
 
-	type void struct{}
-	var member void
-	secretNames := map[string]void{}
-	configMapNames := map[string]void{}
+	secretNames := make(map[string]bool)
+	configMapNames := make(map[string]bool)
 
 	// scan volumes
 	for _, volume := range vs {
 		if cmv := volume.ConfigMap; cmv != nil {
 			name := cmv.Name
-			configMapNames[name] = member
+			configMapNames[name] = fieldIsMandatory(cmv.Optional)
 		}
 		if sv := volume.Secret; sv != nil {
 			name := sv.SecretName
-			secretNames[name] = member
+			secretNames[name] = fieldIsMandatory(sv.Optional)
 		}
 
 		if projected := volume.Projected; projected != nil {
 			for _, source := range projected.Sources {
 				if cmv := source.ConfigMap; cmv != nil {
 					name := cmv.Name
-					configMapNames[name] = member
+					configMapNames[name] = fieldIsMandatory(cmv.Optional)
 				}
 				if sv := source.Secret; sv != nil {
 					name := sv.Name
-					secretNames[name] = member
+					secretNames[name] = fieldIsMandatory(sv.Optional)
 				}
 			}
 		}
@@ -183,10 +181,10 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 				switch {
 				case env.ValueFrom.ConfigMapKeyRef != nil:
 					name := env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name
-					configMapNames[name] = member
+					configMapNames[name] = fieldIsMandatory(env.ValueFrom.ConfigMapKeyRef.Optional)
 				case env.ValueFrom.SecretKeyRef != nil:
 					name := env.ValueFrom.SecretKeyRef.LocalObjectReference.Name
-					secretNames[name] = member
+					secretNames[name] = fieldIsMandatory(env.ValueFrom.SecretKeyRef.Optional)
 				}
 			}
 		}
@@ -195,30 +193,37 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 			switch {
 			case envFrom.ConfigMapRef != nil:
 				name := envFrom.ConfigMapRef.LocalObjectReference.Name
-				configMapNames[name] = member
+				configMapNames[name] = fieldIsMandatory(envFrom.ConfigMapRef.Optional)
 			case envFrom.SecretRef != nil:
 				name := envFrom.SecretRef.LocalObjectReference.Name
-				secretNames[name] = member
+				secretNames[name] = fieldIsMandatory(envFrom.SecretRef.Optional)
 			}
 		}
 	}
 
 	res := make(map[string]ConfigRef)
 
-	for configMapName := range configMapNames {
+	for configMapName, required := range configMapNames {
 		config, err := ct.getRefFromConfigMap(configMapName, cd.Namespace)
 		if err != nil {
-			ct.Logger.Errorf("getRefFromConfigMap failed: %v", err)
+			if required {
+				return nil, fmt.Errorf("configmap %s.%s get query error: %w", configMapName, cd.Namespace, err)
+			}
+			ct.Logger.Errorf("configmap %s.%s get query failed: %w", configMapName, cd.Namespace, err)
 			continue
 		}
 		if config != nil {
 			res[config.GetName()] = *config
 		}
 	}
-	for secretName := range secretNames {
+
+	for secretName, required := range secretNames {
 		secret, err := ct.getRefFromSecret(secretName, cd.Namespace)
 		if err != nil {
-			ct.Logger.Errorf("getRefFromSecret failed: %v", err)
+			if required {
+				return nil, fmt.Errorf("secret %s.%s get query error: %v", secretName, cd.Namespace, err)
+			}
+			ct.Logger.Errorf("secret %s.%s get query failed: %v", secretName, cd.Namespace, err)
 			continue
 		}
 		if secret != nil {
@@ -227,6 +232,13 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 	}
 
 	return res, nil
+}
+
+func fieldIsMandatory(p *bool) bool {
+	if p == nil {
+		return false
+	}
+	return !*p
 }
 
 // GetConfigRefs returns a map of configs and their checksum
