@@ -571,6 +571,18 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 										},
 									},
 								},
+								{
+									PodAffinityTerm: corev1.PodAffinityTerm{
+										LabelSelector: &metav1.LabelSelector{
+											MatchExpressions: []metav1.LabelSelectorRequirement{
+												{
+													Key:    "app",
+													Values: []string{"arbitrary-app"},
+												},
+											},
+										},
+									},
+								},
 							},
 							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
 								{
@@ -579,6 +591,16 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 											{
 												Key:    "app",
 												Values: []string{"podinfo"},
+											},
+										},
+									},
+								},
+								{
+									LabelSelector: &metav1.LabelSelector{
+										MatchExpressions: []metav1.LabelSelectorRequirement{
+											{
+												Key:    "app",
+												Values: []string{"arbitrary-app"},
 											},
 										},
 									},
