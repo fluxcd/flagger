@@ -317,6 +317,8 @@ spec:
                 matchLabels:
                   affinity: podinfo
               topologyKey: topology.kubernetes.io/zone
+```
+
 ## Metrics
 
 #### How does Flagger measure the request success rate and duration?
