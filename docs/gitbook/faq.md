@@ -224,10 +224,74 @@ If you use a different convention you can specify your label with the `-selector
 
 #### Is pod affinity and anti affinity supported?
 
-For pod affinity to work you need to use a different label than the `app`, `name` or `app.kubernetes.io/name`.
+Flagger will rewrite the first value in each match expression, defined in the target deployment's pod anti-affinity and topology spread constraints, satisfying the following two requirements when creating, or updating, the primary deployment:
 
-Anti affinity example:
+* The key in the match expression must be one of the labels specified by the parameter selector-labels. The default labels are `app`,`name`,`app.kubernetes.io/name`.
+* The value must match the name of the target deployment.
 
+The rewrite done by Flagger in these cases is to suffix the value with "-primary". This rewrite can be used to spread the pods created by the canary and primary deployments across different availability zones.
+
+Example target deployment:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - podinfo
+              topologyKey: topology.kubernetes.io/zone
+```
+
+Example of generated primary deployment:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo-primary
+spec:
+  selector:
+    matchLabels:
+      app: podinfo-primary
+  template:
+    metadata:
+      labels:
+        app: podinfo-primary
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - podinfo-primary
+              topologyKey: topology.kubernetes.io/zone
+```
+
+It is also possible to use a different label than the `app`, `name` or `app.kubernetes.io/name`.
+
+Anti affinity example(using a different label):
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -252,9 +316,7 @@ spec:
               labelSelector:
                 matchLabels:
                   affinity: podinfo
-              topologyKey: kubernetes.io/hostname
-```
-
+              topologyKey: topology.kubernetes.io/zone
 ## Metrics
 
 #### How does Flagger measure the request success rate and duration?
