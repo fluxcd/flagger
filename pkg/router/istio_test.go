@@ -33,6 +33,15 @@ import (
 
 func TestIstioRouter_Sync(t *testing.T) {
 	mocks := newFixture(nil)
+	mocks.canary.Spec.Service.Apex = &v1beta1.CustomMetadata{
+		Labels: map[string]string{
+			"test": "label",
+		},
+		Annotations: map[string]string{
+			"test": "annotation",
+		},
+	}
+
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
@@ -44,16 +53,22 @@ func TestIstioRouter_Sync(t *testing.T) {
 	require.NoError(t, err)
 
 	// test insert
-	_, err = mocks.meshClient.NetworkingV1alpha3().DestinationRules("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
+	dr, err := mocks.meshClient.NetworkingV1alpha3().DestinationRules("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
+	assert.Equal(t, mocks.canary.Spec.Service.Apex.Labels, dr.ObjectMeta.Labels)
+	assert.Equal(t, mocks.canary.Spec.Service.Apex.Annotations, dr.ObjectMeta.Annotations)
 
-	_, err = mocks.meshClient.NetworkingV1alpha3().DestinationRules("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	dr, err = mocks.meshClient.NetworkingV1alpha3().DestinationRules("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
+	assert.Equal(t, mocks.canary.Spec.Service.Apex.Labels, dr.ObjectMeta.Labels)
+	assert.Equal(t, mocks.canary.Spec.Service.Apex.Annotations, dr.ObjectMeta.Annotations)
 
 	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Len(t, vs.Spec.Http, 1)
 	require.Len(t, vs.Spec.Http[0].Route, 2)
+	assert.Equal(t, mocks.canary.Spec.Service.Apex.Labels, vs.ObjectMeta.Labels)
+	assert.Equal(t, mocks.canary.Spec.Service.Apex.Annotations, vs.ObjectMeta.Annotations)
 
 	// test update
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})

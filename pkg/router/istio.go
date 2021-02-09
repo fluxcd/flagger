@@ -69,10 +69,23 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
+		customMetadata := canary.Spec.Service.Apex
+		if customMetadata == nil {
+			customMetadata = &flaggerv1.CustomMetadata{}
+		}
+		if customMetadata.Labels == nil {
+			customMetadata.Labels = make(map[string]string)
+		}
+		if customMetadata.Annotations == nil {
+			customMetadata.Annotations = make(map[string]string)
+		}
+
 		destinationRule = &istiov1alpha3.DestinationRule{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: canary.Namespace,
+				Name:        name,
+				Namespace:   canary.Namespace,
+				Labels:      customMetadata.Labels,
+				Annotations: customMetadata.Annotations,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -206,10 +219,23 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
+		customMetadata := canary.Spec.Service.Apex
+		if customMetadata == nil {
+			customMetadata = &flaggerv1.CustomMetadata{}
+		}
+		if customMetadata.Labels == nil {
+			customMetadata.Labels = make(map[string]string)
+		}
+		if customMetadata.Annotations == nil {
+			customMetadata.Annotations = make(map[string]string)
+		}
+
 		virtualService = &istiov1alpha3.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      apexName,
-				Namespace: canary.Namespace,
+				Name:        apexName,
+				Namespace:   canary.Namespace,
+				Labels:      customMetadata.Labels,
+				Annotations: customMetadata.Annotations,
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
