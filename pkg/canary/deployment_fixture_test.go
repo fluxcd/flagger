@@ -616,6 +616,28 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 							},
 						},
 					},
+					TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
+						{
+							LabelSelector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:    "app",
+										Values: []string{"podinfo"},
+									},
+								},
+							},
+						},
+						{
+							LabelSelector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:    "app",
+										Values: []string{"arbitrary-app"},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},

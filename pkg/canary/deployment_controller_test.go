@@ -264,7 +264,7 @@ func TestDeploymentController_Finalize(t *testing.T) {
 	}
 }
 
-func TestDeploymentController_AntiAffinity(t *testing.T) {
+func TestDeploymentController_AntiAffinityAndTopologySpreadConstraints(t *testing.T) {
 	t.Run("deployment", func(t *testing.T) {
 		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
 		mocks := newDeploymentFixture(dc)
@@ -273,14 +273,24 @@ func TestDeploymentController_AntiAffinity(t *testing.T) {
 		depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		value := depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[0].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
+		spec := depPrimary.Spec.Template.Spec
+
+		preferredConstraints := spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution
+		value := preferredConstraints[0].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
 		assert.Equal(t, "podinfo-primary", value)
-		value = depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[1].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
+		value = preferredConstraints[1].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
 		assert.False(t, strings.HasSuffix(value, "-primary"))
 
-		value = depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution[0].LabelSelector.MatchExpressions[0].Values[0]
+		requiredConstraints := spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+		value = requiredConstraints[0].LabelSelector.MatchExpressions[0].Values[0]
 		assert.Equal(t, "podinfo-primary", value)
-		value = depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution[1].LabelSelector.MatchExpressions[0].Values[0]
+		value = requiredConstraints[1].LabelSelector.MatchExpressions[0].Values[0]
+		assert.False(t, strings.HasSuffix(value, "-primary"))
+
+		topologySpreadConstraints := spec.TopologySpreadConstraints
+		value = topologySpreadConstraints[0].LabelSelector.MatchExpressions[0].Values[0]
+		assert.Equal(t, "podinfo-primary", value)
+		value = topologySpreadConstraints[1].LabelSelector.MatchExpressions[0].Values[0]
 		assert.False(t, strings.HasSuffix(value, "-primary"))
 	})
 }

@@ -456,6 +456,11 @@ func (c *DeploymentController) scale(cd *flaggerv1.Canary, replicas int32) error
 func (c *DeploymentController) getPrimaryDeploymentTemplateSpec(canaryDep *appsv1.Deployment, refs map[string]ConfigRef) corev1.PodSpec {
 	spec := c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, refs)
 
+	// update TopologySpreadConstraints
+	for _, topologySpreadConstraint := range spec.TopologySpreadConstraints {
+		c.appendPrimarySuffixToValuesIfNeeded(topologySpreadConstraint.LabelSelector, canaryDep)
+	}
+
 	// update affinity
 	if affinity := spec.Affinity; affinity != nil {
 		if podAntiAffinity := affinity.PodAntiAffinity; podAntiAffinity != nil {
