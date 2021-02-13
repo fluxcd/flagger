@@ -5,7 +5,7 @@ name: podinfo
 engine: gotpl
 description: Flagger canary deployment demo application
 home: https://docs.flagger.app
-icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
+icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
 sources:
   - https://github.com/stefanprodan/podinfo
 maintainers:
