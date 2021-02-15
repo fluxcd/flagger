@@ -8,6 +8,7 @@
 * [Flagger Install on Kubernetes](install/flagger-install-on-kubernetes.md)
 * [Flagger Install on GKE Istio](install/flagger-install-on-google-cloud.md)
 * [Flagger Install on EKS App Mesh](install/flagger-install-on-eks-appmesh.md)
+* [Flagger Install on Alibaba ServiceMesh](install/flagger-install-on-alibaba-servicemesh.md)
 
 ## Usage
 
@@ -32,7 +33,6 @@
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
-* [Rollout Weights](tutorials/rollout-weights.md)
 
 ## Dev
 
