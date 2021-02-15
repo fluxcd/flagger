@@ -224,14 +224,20 @@ If you use a different convention you can specify your label with the `-selector
 
 #### Is pod affinity and anti affinity supported?
 
-Flagger will rewrite the first value in each match expression, defined in the target deployment's pod anti-affinity and topology spread constraints, satisfying the following two requirements when creating, or updating, the primary deployment:
+Flagger will rewrite the first value in each match expression,
+defined in the target deployment's pod anti-affinity and topology spread constraints,
+satisfying the following two requirements when creating, or updating, the primary deployment:
 
-* The key in the match expression must be one of the labels specified by the parameter selector-labels. The default labels are `app`,`name`,`app.kubernetes.io/name`.
+* The key in the match expression must be one of the labels specified by the parameter selector-labels.
+  The default labels are `app`,`name`,`app.kubernetes.io/name`.
 * The value must match the name of the target deployment.
 
-The rewrite done by Flagger in these cases is to suffix the value with "-primary". This rewrite can be used to spread the pods created by the canary and primary deployments across different availability zones.
+The rewrite done by Flagger in these cases is to suffix the value with `-primary`.
+This rewrite can be used to spread the pods created by the canary
+and primary deployments across different availability zones.
 
 Example target deployment:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -261,6 +267,7 @@ spec:
 ```
 
 Example of generated primary deployment:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -292,6 +299,7 @@ spec:
 It is also possible to use a different label than the `app`, `name` or `app.kubernetes.io/name`.
 
 Anti affinity example(using a different label):
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment

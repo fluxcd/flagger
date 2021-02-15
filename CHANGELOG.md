@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.6.3
+
+**Release date:** 2021-02-15
+
+This release comes with support for Kubernetes pod topology spread constraints.
+
+Flagger has a new [logo](https://github.com/fluxcd/flagger/pull/812),
+many thanks to [Bianca](https://github.com/bia) for designed it.
+
+#### Improvements
+
+- Rewrite the primary Pod Topology Spread Constraints based on label selector
+  [#806](https://github.com/fluxcd/flagger/pull/806)
+
+#### Fixes
+
+- Suffix only the podAntiAffinity values that match the deployment name
+  [#805](https://github.com/fluxcd/flagger/pull/805)
+- Check if mandatory secrets/configmaps exist
+  [#799](https://github.com/fluxcd/flagger/pull/799)
+
 ## 1.6.2
 
 **Release date:** 2021-01-28
