@@ -2,6 +2,8 @@
 
 This guide shows you how to use the [Traefik](https://doc.traefik.io/traefik/) and Flagger to automate canary deployments.
 
+![Flagger Traefik Overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-traefik-overview.png)
+
 ## Prerequisites
 
 Flagger requires a Kubernetes cluster **v1.16** or newer and Traefik **v2.3** or newer.
