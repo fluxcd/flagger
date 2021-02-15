@@ -3,7 +3,7 @@ name: grafana
 version: 1.5.0
 appVersion: 7.2.0
 description: Grafana dashboards for monitoring Flagger canary deployments
-icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
+icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
 home: https://flagger.app
 sources:
   - https://github.com/fluxcd/flagger

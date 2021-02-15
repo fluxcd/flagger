@@ -9,12 +9,16 @@ Flagger is a progressive delivery tool that automates the release process for ap
 It reduces the risk of introducing a new software version in production
 by gradually shifting traffic to the new version while measuring metrics and running conformance tests.
 
-![flagger-overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-overview.png)
+![flagger-overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-overview.png)
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
-using a service mesh (App Mesh, Istio, Linkerd) or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
-For release analysis, Flagger can query Prometheus, Datadog or CloudWatch
+using a service mesh (App Mesh, Istio, Linkerd)
+or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
+For release analysis, Flagger can query Prometheus, Datadog, New Relic or CloudWatch
 and for alerting it uses Slack, MS Teams, Discord and Rocket.
+
+Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
+and part of [Flux](https://fluxcd.io) family of GitOps tools.
 
 ### Documentation
 

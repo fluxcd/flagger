@@ -6,7 +6,7 @@ kubeVersion: ">=1.11.0-0"
 engine: gotpl
 description: Flagger's load testing services based on rakyll/hey and bojand/ghz that generates traffic during canary analysis when configured as a webhook.
 home: https://docs.flagger.app
-icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/weaveworks.png
+icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
 sources:
   - https://github.com/fluxcd/flagger
 maintainers:
