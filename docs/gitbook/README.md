@@ -4,26 +4,25 @@ description: Flagger is a progressive delivery Kubernetes operator
 
 # Introduction
 
-[Flagger](https://github.com/fluxcd/flagger) is a **Kubernetes** operator
-that automates the promotion of canary deployments using
-**Istio**, **Linkerd**, **App Mesh**, **NGINX**, **Skipper**, **Contour**, **Gloo** or **Traefik**
-routing for traffic shifting and **Prometheus** metrics for canary analysis.
-The canary analysis can be extended with webhooks for running
-system integration/acceptance tests, load tests, or any other custom validation.
+[Flagger](https://github.com/fluxcd/flagger) is a progressive delivery tool that automates the release
+process for applications running on Kubernetes. It reduces the risk of introducing a new software
+version in production by gradually shifting traffic to the new version while measuring metrics
+and running conformance tests.
 
-Flagger implements a control loop that gradually shifts traffic to the canary
-while measuring key performance indicators like HTTP requests success rate,
-requests average duration and pods health.
-Based on analysis of the **KPIs** a canary is promoted or aborted,
-and the analysis result is published to **Slack** or **MS Teams**.
+Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
+using a service mesh (App Mesh, Istio, Linkerd)
+or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
+For release analysis, Flagger can query Prometheus, Datadog, New Relic or CloudWatch
+and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
-![Flagger overview diagram](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-overview.png)
+![Flagger overview diagram](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-overview.png)
 
-Flagger can be configured with Kubernetes custom resources and is compatible with any CI/CD solutions made for Kubernetes.
-Since Flagger is declarative and reacts to Kubernetes events,
-it can be used in **GitOps** pipelines together with Flux CD or JenkinsX.
+Flagger can be configured with Kubernetes custom resources and is compatible with
+any CI/CD solutions made for Kubernetes. Since Flagger is declarative and reacts to Kubernetes events,
+it can be used in **GitOps** pipelines together with tools like Flux, JenkinsX, Carvel, Argo, etc.
 
-Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project.
+Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
+and part of [Flux](https://fluxcd.io) family of GitOps tools.
 
 ## Getting started
 
