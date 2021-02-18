@@ -9,7 +9,7 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
 
-podPriorityClassName: ""  
+podPriorityClassName: ""
 
 logLevel: info
 cmd:
@@ -62,15 +62,15 @@ appmesh:
   - podinfo
   - podinfo-canary
 
-#Istio virtual service and gatway settings. TLS secrets should be in namespace before enbaled it. ( secret format loadtester.fullname ) 
+#Istio virtual service and gatway settings. TLS secrets should be in namespace before enbaled it. ( secret format loadtester.fullname )
 istio:
   enabled: false
   host: flagger-loadtester.flagger
   gateway:
-    enabled: false  
+    enabled: false
   tls:
     enabled: false
-    httpsRedirect: false 
+    httpsRedirect: false
 
 # when enabled, it will add a security context for the loadtester pod
 securityContext:
@@ -79,3 +79,7 @@ securityContext:
     readOnlyRootFilesystem: true
     runAsUser: 100
     runAsGroup: 101
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
