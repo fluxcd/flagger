@@ -18,6 +18,8 @@ cmd:
 nameOverride: ""
 fullnameOverride: ""
 
+env: []
+
 service:
   type: ClusterIP
   port: 80
