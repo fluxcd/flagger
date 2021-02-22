@@ -1,7 +1,7 @@
 # Flagger load testing service
 
-[Flagger's](https://github.com/fluxcd/flagger) load testing service is based on 
-[rakyll/hey](https://github.com/rakyll/hey) and 
+[Flagger's](https://github.com/fluxcd/flagger) load testing service is based on
+[rakyll/hey](https://github.com/rakyll/hey) and
 [bojand/ghz](https://github.com/bojand/ghz).
 It can be used to generate HTTP and gRPC traffic during canary analysis when configured as a webhook.
 
@@ -50,7 +50,7 @@ Parameter | Description | Default
 `image.pullPolicy` | Image pull policy | `IfNotPresent`
 `image.tag` | Image tag | `<VERSION>`
 `replicaCount` | Desired number of pods | `1`
-`serviceAccountName` | Kubernetes service account name | `none` 
+`serviceAccountName` | Kubernetes service account name | `none`
 `resources.requests.cpu` | CPU requests | `10m`
 `resources.requests.memory` | Memory requests | `64Mi`
 `tolerations` | List of node taints to tolerate | `[]`
@@ -70,6 +70,8 @@ Parameter | Description | Default
 `podPriorityClassName` | PriorityClass name for pod priority configuration | ""
 `securityContext.enabled` | Add securityContext to container | ""
 `securityContext.context` | securityContext to add | ""
+`podDisruptionBudget.enabled` | A PodDisruptionBudget will be created if `true` | `false`
+`podDisruptionBudget.minAvailable` | The minimal number of available replicas that will be set in the PodDisruptionBudget | `1`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
@@ -87,5 +89,3 @@ helm install flagger/loadtester --name flagger-loadtester -f values.yaml
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
-
-
