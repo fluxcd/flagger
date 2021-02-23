@@ -55,6 +55,7 @@ List of organizations using Flagger:
 * [Weaveworks](https://weave.works)
 * [Jumia Group](https://group.jumia.com)
 * [eLife](https://elifesciences.org/)
+* [Trendhim](https://www.trendhim.com)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
