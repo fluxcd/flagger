@@ -119,24 +119,22 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 	}
 
 	backends := make([]appmeshv1.Backend, 0)
-	for _, b := range canary.Spec.Service.Backends {
-		var bk appmeshv1.Backend
-		if strings.HasPrefix(b, "arn:aws") {
-			bk = appmeshv1.Backend{
+	for i := range canary.Spec.Service.Backends {
+		if strings.HasPrefix(canary.Spec.Service.Backends[i], "arn:aws") {
+			backends = append(backends, appmeshv1.Backend{
 				VirtualService: appmeshv1.VirtualServiceBackend{
-					VirtualServiceARN: &b,
+					VirtualServiceARN: &canary.Spec.Service.Backends[i],
 				},
-			}
+			})
 		} else {
-			bk = appmeshv1.Backend{
+			backends = append(backends, appmeshv1.Backend{
 				VirtualService: appmeshv1.VirtualServiceBackend{
 					VirtualServiceRef: &appmeshv1.VirtualServiceReference{
-						Name: b,
+						Name: canary.Spec.Service.Backends[i],
 					},
 				},
-			}
+			})
 		}
-		backends = append(backends, bk)
 	}
 
 	if len(backends) > 0 {
