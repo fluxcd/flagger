@@ -1,0 +1,53 @@
+name: website
+
+on:
+  push:
+    branches:
+      - website
+
+jobs:
+  vuepress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12.x'
+      - id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Build
+        run: |
+          yarn add -D vuepress
+          yarn docs:build
+          mkdir $HOME/site
+          rsync -avzh docs/.vuepress/dist/ $HOME/site
+      - name: Publish
+        env:
+          REPOSITORY: "https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/fluxcd/flagger.git"
+        run: |
+          tmpDir=$(mktemp -d)
+          pushd $tmpDir >& /dev/null
+
+          git clone ${REPOSITORY}
+          cd flagger
+          git config user.name ${{ github.actor }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git remote set-url origin ${REPOSITORY}
+          git checkout gh-pages
+          rm -rf assets
+          rsync -avzh $HOME/site/ .
+          rm -rf node_modules
+          git add .
+          git commit -m "Publish website"
+          git push origin gh-pages
+
+          popd >& /dev/null
+          rm -rf $tmpDir

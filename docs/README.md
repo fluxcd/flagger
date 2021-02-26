@@ -12,7 +12,7 @@ features:
   details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
 - title:  Extensible Validation
   details: Besides the builtin metrics checks, you can extend your application analysis with custom Prometheus, Datadog, CloudWatch metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
-footer: Apache License 2.0 | Copyright © 2018-2020 Weaveworks
+footer: Apache License 2.0 | Copyright © 2018-2021 The Flux authors
 ---
 
 ## Progressive Delivery
@@ -56,10 +56,10 @@ when a new revision has been detected and if the canary analysis failed or succe
 
 ## GitOps
 
-![GtiOps with Flagger and FluxCD](/flagger-gitops.png)
+![GitOps with Flagger and Flux](/flagger-gitops.png)
 
 You can build fully automated GitOps pipelines for canary deployments with Flagger and
-[FluxCD](https://github.com/fluxcd/flux) (CNCF sandbox project).
+[Flux](https://github.com/fluxcd/flux2).
 
 ::: tip GitOps
 
@@ -81,10 +81,21 @@ GitOps tutorials:
 If you have any questions about Flagger and progressive delivery:
 
 * Read the Flagger [docs](https://docs.flagger.app).
-* Invite yourself to the [Weave community slack](https://slack.weave.works/)
-  and join the [#flagger](https://weave-community.slack.com/messages/flagger/) channel.
-* Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks,
-  hands-on training and meetups in your area.
-* File an [issue](https://github.com/weaveworks/flagger/issues/new).
+* Invite yourself to the [CNCF community slack](https://slack.cncf.io/)
+  and join the [#flagger](https://cloud-native.slack.com/messages/flagger/) channel.
+* Check out the [Flux talks section](https://fluxcd.io/community/#talks) and to see a list of online talks,
+  hands-on training and meetups.
+* File an [issue](https://github.com/fluxcd/flagger/issues/new).
 
 Your feedback is always welcome!
+
+## License
+
+Flagger is [Apache 2.0](https://raw.githubusercontent.com/fluxcd/flagger/main/LICENSE)
+licensed and accepts contributions via GitHub pull requests.
+
+Flagger was initially developed in 2018 at Weaveworks by Stefan Prodan.
+In 2020 Flagger became a [Cloud Native Computing Foundation](https://cncf.io/) project,
+part of [Flux](https://fluxcd.io) family of GitOps tools.
+
+[![CNCF](/cncf.png)](https://cncf.io/)
