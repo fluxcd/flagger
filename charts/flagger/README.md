@@ -11,6 +11,9 @@ Flagger works with service mesh solutions (Istio, Linkerd, AWS App Mesh) and wit
 (NGINX, Skipper, Gloo, Contour, Traefik).
 Flagger can be configured to send alerts to various chat platforms such as Slack, Microsoft Teams, Discord and Rocket.
 
+Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
+and part of [Flux](https://fluxcd.io) family of GitOps tools.
+
 ## Prerequisites
 
 * Kubernetes >= 1.16

@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.6.4
+
+**Release date:** 2021-02-26
+
+This release comes with a bug fix to the AppMesh integration
+when using multiple backends.
+
+#### Improvements
+
+- Consolidate logos and add project name logos
+  [#829](https://github.com/fluxcd/flagger/pull/829)
+- chart: add env option to loadtester
+  [#821](https://github.com/fluxcd/flagger/pull/821)
+- chart: Added PodDisruptionBudget for the loadtester
+  [#819](https://github.com/fluxcd/flagger/pull/819)
+
+#### Fixes
+
+- Fix AWS AppMesh issue when providing multiple backends
+  [#831](https://github.com/fluxcd/flagger/pull/831)
+
 ## 1.6.3
 
 **Release date:** 2021-02-15
