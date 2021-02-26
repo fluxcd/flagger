@@ -66,6 +66,10 @@ spec:
                 - --spider
                 - http://localhost:8080/healthz
             timeoutSeconds: 5
+          {{- if .Values.env }}
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+          {{- end }} 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
