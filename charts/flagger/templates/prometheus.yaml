@@ -255,7 +255,10 @@ spec:
               mountPath: /etc/prometheus
             - name: data-volume
               mountPath: /prometheus/data
-
+      {{- if .Values.prometheus.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.prometheus.pullSecret }}
+      {{- end }}
       volumes:
         - name: config-volume
           configMap:
