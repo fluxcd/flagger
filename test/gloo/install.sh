@@ -2,7 +2,7 @@
 
 set -o errexit
 
-GLOO_VER="1.6.0"
+GLOO_VER="1.6.13"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin
