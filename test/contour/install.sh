@@ -2,13 +2,13 @@
 
 set -o errexit
 
-CONTOUR_VER="v1.11.0"
+CONTOUR_VER="release-1.13"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin
 
 echo '>>> Installing Contour'
-kubectl apply -f https://projectcontour.io/quickstart/${CONTOUR_VER}/contour.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour.yaml
 
 kubectl -n projectcontour rollout status deployment/contour
 kubectl -n projectcontour get all
