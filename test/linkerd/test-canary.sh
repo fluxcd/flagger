@@ -15,7 +15,7 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://linkerd-prometheus.linkerd:9090
+    address: http://prometheus.linkerd-viz:9090
   query: |
     histogram_quantile(
         0.99,
