@@ -412,6 +412,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// strategy: Canary progressive traffic increase
 	if c.nextStepWeight(cd, canaryWeight) > 0 {
+		// run hook only if traffic is not mirrored
+		if !mirrored {
+			if promote := c.runConfirmTrafficIncreaseHooks(cd); !promote {
+				return
+			}
+		}
 		c.runCanary(cd, canaryController, meshRouter, mirrored, canaryWeight, primaryWeight, maxWeight)
 	}
 
