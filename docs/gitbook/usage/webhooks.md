@@ -16,6 +16,9 @@ There are several types of hooks:
 * **rollout** hooks are executed during the analysis on each iteration before the metric checks.
   If a rollout hook call fails the canary advancement is paused and eventfully rolled back.
 
+* **confirm-traffic-increase** hooks are executed right before the weight on the canary is increased. The canary
+  advancement is paused until this hook returns HTTP 200.
+
 * **confirm-promotion** hooks are executed before the promotion step.
   The canary promotion is paused until the hooks return HTTP 200.
   While the promotion is paused, Flagger will continue to run the metrics checks and rollout hooks.
@@ -51,6 +54,9 @@ Spec:
         timeout: 15s
         metadata:
           cmd: "hey -z 1m -q 5 -c 2 http://podinfo-canary.test:9898/"
+      - name: "traffic increase gate"
+        type: confirm-traffic-increase
+        url: http://flagger-loadtester.test/gate/approve
       - name: "promotion gate"
         type: confirm-promotion
         url: http://flagger-loadtester.test/gate/approve
@@ -347,7 +353,8 @@ the web-hook will try to call Concord before timing out (Default is 30s).
 ## Manual Gating
 
 For manual approval of a canary deployment you can use the `confirm-rollout` and `confirm-promotion` webhooks.
-The confirmation rollout hooks are executed before the pre-rollout hooks.
+The confirmation rollout hooks are executed before the pre-rollout hooks. For manually approving traffic weight increase,
+you can use the `confirm-traffic-increase` webhook.
 Flagger will halt the canary traffic shifting and analysis until the confirm webhook returns HTTP status 200.
 
 For manual rollback of a canary deployment you can use the `rollback` webhook.
