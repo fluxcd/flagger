@@ -940,6 +940,7 @@ spec:
                               - post-rollout
                               - event
                               - rollback
+                              - confirm-traffic-increase
                           url:
                             description: URL address of this webhook
                             type: string
