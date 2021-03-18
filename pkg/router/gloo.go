@@ -47,6 +47,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, _, _ := canary.GetServiceNames()
 	canaryName := fmt.Sprintf("%s-%s-canary-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
 	primaryName := fmt.Sprintf("%s-%s-primary-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
+	upstreamDiscoveryNs := getUpstreamNamespace(canary, gr.upstreamDiscoveryNs)
 
 	newSpec := gloov1.RouteTableSpec{
 		Routes: []gloov1.Route{
@@ -60,7 +61,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
 										Name:      primaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Namespace: upstreamDiscoveryNs,
 									},
 								},
 								Weight: 100,
@@ -69,7 +70,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
 										Name:      canaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Namespace: upstreamDiscoveryNs,
 									},
 								},
 								Weight: 0,
@@ -184,6 +185,8 @@ func (gr *GlooRouter) SetRoutes(
 		return fmt.Errorf("RouteTable %s.%s query error: %w", apexName, canary.Namespace, err)
 	}
 
+	upstreamDiscoveryNs := getUpstreamNamespace(canary, gr.upstreamDiscoveryNs)
+
 	routeTable.Spec = gloov1.RouteTableSpec{
 		Routes: []gloov1.Route{
 			{
@@ -196,7 +199,7 @@ func (gr *GlooRouter) SetRoutes(
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
 										Name:      primaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Namespace: upstreamDiscoveryNs,
 									},
 								},
 								Weight: uint32(primaryWeight),
@@ -205,7 +208,7 @@ func (gr *GlooRouter) SetRoutes(
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
 										Name:      canaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Namespace: upstreamDiscoveryNs,
 									},
 								},
 								Weight: uint32(canaryWeight),
@@ -274,4 +277,11 @@ func getMethods(canary *flaggerv1.Canary) []string {
 		}
 	}
 	return methods
+}
+
+func getUpstreamNamespace(canary *flaggerv1.Canary, defaultNs string) string {
+	if canary.Spec.GlooUpstreamDiscoveryNs == "" {
+		return defaultNs
+	}
+	return canary.Spec.GlooUpstreamDiscoveryNs
 }

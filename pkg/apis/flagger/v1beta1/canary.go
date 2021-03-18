@@ -66,6 +66,10 @@ type CanarySpec struct {
 	// +optional
 	MetricsServer string `json:"metricsServer,omitempty"`
 
+	// GlooUpstreamDiscoveryNs is the namespace where Gloo Upstreams are created
+	// +optional
+	GlooUpstreamDiscoveryNs string `json:"glooUpstreamDiscoveryNs,omitempty"`
+
 	// TargetRef references a target resource
 	TargetRef CrossNamespaceObjectReference `json:"targetRef"`
 
