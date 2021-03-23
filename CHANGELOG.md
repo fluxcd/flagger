@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.7.0
+
+**Release date:** 2021-03-23
+
+This release comes with support for manually approving
+the traffic weight increase.
+
+#### Features
+
+- Add webhook for manually approving traffic weight increase
+  [#849](https://github.com/fluxcd/flagger/pull/849)
+- Add WaitingPromotion phase to canary status
+  [#859](https://github.com/fluxcd/flagger/pull/859)
+
+#### Improvements
+
+- linkerd: update prometheus URL based on the latest 2.10 changes
+  [#845](https://github.com/fluxcd/flagger/pull/845)
+- docs: update resources to disable mTLS in Istio
+  [#843](https://github.com/fluxcd/flagger/pull/843)
+- docs: updating slack alerting docs to point to legacy slack webhooks
+  [#833](https://github.com/fluxcd/flagger/pull/833)
+- chart: Add pull secret for Prometheus deployment
+  [#842](https://github.com/fluxcd/flagger/pull/842)
+- Update Kubernetes packages to v1.20.4
+  [#857](https://github.com/fluxcd/flagger/pull/857)
+
 ## 1.6.4
 
 **Release date:** 2021-02-26
