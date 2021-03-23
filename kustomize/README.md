@@ -31,7 +31,8 @@ Install Flagger for Linkerd:
 kustomize build https://github.com/fluxcd/flagger/kustomize/linkerd?ref=main | kubectl apply -f -
 ```
 
-This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
+This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to linkerd-viz extension's Prometheus instance
+which lives under `linkerd-viz` namespace by default.
 
 If you want to install a specific Flagger release, add the version number to the URL:
 
