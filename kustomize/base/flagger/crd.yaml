@@ -966,6 +966,7 @@ spec:
                     - Initialized
                     - Waiting
                     - Progressing
+                    - WaitingPromotion
                     - Promoting
                     - Finalising
                     - Succeeded
