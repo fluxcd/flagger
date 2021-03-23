@@ -6,7 +6,14 @@ This guide shows you how to use Linkerd and Flagger to automate canary deploymen
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.16** or newer and Linkerd **2.4** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer and Linkerd **2.10** or newer.
+
+Install Linkerd the Promethues (part of Linkerd Viz):
+
+```bash
+linkerd install | kubectl apply -f -
+linkerd viz install | kubectl apply -f -
+```
 
 Install Flagger in the linkerd namespace:
 
@@ -14,11 +21,11 @@ Install Flagger in the linkerd namespace:
 kubectl apply -k github.com/fluxcd/flagger//kustomize/linkerd
 ```
 
-Note that you'll need kubectl 1.14 or newer to run the above command.
-
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services and SMI traffic split\). These objects expose the application inside the mesh and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
+then creates a series of objects (Kubernetes deployments, ClusterIP services and SMI traffic split).
+These objects expose the application inside the mesh and drive the canary analysis and promotion.
 
 Create a test namespace and enable Linkerd proxy injection:
 

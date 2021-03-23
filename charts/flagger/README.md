@@ -41,13 +41,13 @@ $ helm upgrade -i flagger flagger/flagger \
     --set metricsServer=http://prometheus:9090
 ```
 
-To install Flagger for **Linkerd**:
+To install Flagger for **Linkerd** (requires Linkerd Viz extension):
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \
     --namespace=linkerd \
     --set meshProvider=linkerd \
-    --set metricsServer=http://linkerd-prometheus:9090
+    --set metricsServer=http://prometheus.linkerd-viz:9090
 ```
 
 To install Flagger for **AWS App Mesh**:
