@@ -15,7 +15,7 @@ helm repo add traefik https://helm.traefik.io/traefik
 kubectl create ns traefik
 helm upgrade -i traefik traefik/traefik \
 --namespace traefik \
---set additionalArguments="--metrics.prometheus=true"
+--set additionalArguments="{--metrics.prometheus=true}"
 ```
 
 Install Flagger and the Prometheus add-on in the same namespace as Traefik:
