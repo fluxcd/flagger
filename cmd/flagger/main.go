@@ -63,8 +63,10 @@ var (
 	logLevel                 string
 	port                     string
 	msteamsURL               string
+	msteamsProxyURL          string
 	includeLabelPrefix       string
 	slackURL                 string
+	slackProxyURL            string
 	slackUser                string
 	slackChannel             string
 	eventWebhook             string
@@ -93,10 +95,12 @@ func init() {
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
+	flag.StringVar(&slackProxyURL, "slack-proxy-url", "", "Slack proxy URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
 	flag.StringVar(&eventWebhook, "event-webhook", "", "Webhook for publishing flagger events")
 	flag.StringVar(&msteamsURL, "msteams-url", "", "MS Teams incoming webhook URL.")
+	flag.StringVar(&msteamsProxyURL, "msteams-proxy-url", "", "MS Teams proxy URL.")
 	flag.StringVar(&includeLabelPrefix, "include-label-prefix", "", "List of prefixes of labels that are copied when creating primary deployments or daemonsets. Use * to include all.")
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
@@ -349,11 +353,13 @@ func startLeaderElection(ctx context.Context, run func(), ns string, kubeClient 
 func initNotifier(logger *zap.SugaredLogger) (client notifier.Interface) {
 	provider := "slack"
 	notifierURL := fromEnv("SLACK_URL", slackURL)
+	notifierProxyURL := fromEnv("SLACK_PROXY_URL", slackProxyURL)
 	if msteamsURL != "" || os.Getenv("MSTEAMS_URL") != "" {
 		provider = "msteams"
 		notifierURL = fromEnv("MSTEAMS_URL", msteamsURL)
+		notifierProxyURL = fromEnv("MSTEAMS_PROXY_URL", msteamsProxyURL)
 	}
-	notifierFactory := notifier.NewFactory(notifierURL, slackUser, slackChannel)
+	notifierFactory := notifier.NewFactory(notifierURL, notifierProxyURL, slackUser, slackChannel)
 
 	var err error
 	client, err = notifierFactory.Notifier(provider)

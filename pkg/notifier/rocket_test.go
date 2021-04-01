@@ -44,7 +44,7 @@ func TestRocket_Post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	rocket, err := NewRocket(ts.URL, "test", "test")
+	rocket, err := NewRocket(ts.URL, "", "test", "test")
 	require.NoError(t, err)
 
 	err = rocket.Post("podinfo", "test", "test", fields, "error")

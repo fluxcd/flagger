@@ -45,7 +45,7 @@ func TestDiscord_Post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	discord, err := NewDiscord(ts.URL, "test", "test")
+	discord, err := NewDiscord(ts.URL, "", "test", "test")
 	require.NoError(t, err)
 	assert.True(t, strings.HasSuffix(discord.URL, "/slack"))
 

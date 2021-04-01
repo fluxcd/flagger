@@ -25,12 +25,13 @@ import (
 // Rocket holds the hook URL
 type Rocket struct {
 	URL      string
+	ProxyURL string
 	Username string
 	Channel  string
 }
 
 // NewRocket validates the Rocket URL and returns a Rocket object
-func NewRocket(hookURL string, username string, channel string) (*Rocket, error) {
+func NewRocket(hookURL string, proxyUrl string, username string, channel string) (*Rocket, error) {
 	_, err := url.ParseRequestURI(hookURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid Rocket hook URL %s", hookURL)
@@ -47,6 +48,7 @@ func NewRocket(hookURL string, username string, channel string) (*Rocket, error)
 	return &Rocket{
 		Channel:  channel,
 		URL:      hookURL,
+		ProxyURL: proxyUrl,
 		Username: username,
 	}, nil
 }
@@ -79,7 +81,7 @@ func (s *Rocket) Post(workload string, namespace string, message string, fields 
 
 	payload.Attachments = []SlackAttachment{a}
 
-	err := postMessage(s.URL, payload)
+	err := postMessage(s.URL, s.ProxyURL, payload)
 	if err != nil {
 		return fmt.Errorf("postMessage failed: %w", err)
 	}

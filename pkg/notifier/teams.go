@@ -23,7 +23,8 @@ import (
 
 // MS Teams holds the incoming webhook URL
 type MSTeams struct {
-	URL string
+	URL      string
+	ProxyURL string
 }
 
 // MSTeamsPayload holds the message card data
@@ -48,14 +49,15 @@ type MSTeamsField struct {
 }
 
 // NewMSTeams validates the MS Teams URL and returns a MSTeams object
-func NewMSTeams(hookURL string) (*MSTeams, error) {
+func NewMSTeams(hookURL string, proxyURL string) (*MSTeams, error) {
 	_, err := url.ParseRequestURI(hookURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid MS Teams webhook URL %s", hookURL)
 	}
 
 	return &MSTeams{
-		URL: hookURL,
+		URL:      hookURL,
+		ProxyURL: proxyURL,
 	}, nil
 }
 
@@ -84,7 +86,7 @@ func (s *MSTeams) Post(workload string, namespace string, message string, fields
 		payload.ThemeColor = "FF0000"
 	}
 
-	err := postMessage(s.URL, payload)
+	err := postMessage(s.URL, s.ProxyURL, payload)
 	if err != nil {
 		return fmt.Errorf("postMessage failed: %w", err)
 	}

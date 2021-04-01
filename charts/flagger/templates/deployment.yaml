@@ -90,6 +90,9 @@ spec:
           {{- if .Values.slack.url }}
           - -slack-url={{ .Values.slack.url }}
           {{- end }}
+          {{- if .Values.slack.proxyUrl }}
+          - -slack-proxy-url={{ .Values.slack.proxyUrl }}
+          {{- end }}
           {{- if .Values.slack.user }}
           - -slack-user={{ .Values.slack.user }}
           {{- end }}
@@ -98,6 +101,9 @@ spec:
           {{- end }}
           {{- if .Values.msteams.url }}
           - -msteams-url={{ .Values.msteams.url }}
+          {{- end }}
+          {{- if .Values.msteams.proxyUrl }}
+          - -msteams-proxy-url={{ .Values.msteams.proxyUrl }}
           {{- end }}
           {{- if .Values.leaderElection.enabled }}
           - -enable-leader-election=true

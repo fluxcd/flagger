@@ -22,11 +22,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/url"
+	"runtime"
 	"time"
 )
 
-func postMessage(address string, payload interface{}) error {
+func postMessage(address string, proxy string, payload interface{}) error {
+	httpClient := http.DefaultClient
+
+	if proxy != "" {
+		proxyURL, err := url.Parse(proxy)
+		if err != nil {
+			return fmt.Errorf("unable to parse proxy URL '%s', error: %w", proxy, err)
+		}
+		httpClient.Transport = &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+			DialContext: (&net.Dialer{
+				Timeout:   15 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			MaxIdleConnsPerHost:   runtime.GOMAXPROCS(0) + 1,
+		}
+	}
+
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("marshalling notification payload failed: %w", err)
@@ -43,7 +67,7 @@ func postMessage(address string, payload interface{}) error {
 	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
 	defer cancel()
 
-	res, err := http.DefaultClient.Do(req.WithContext(ctx))
+	res, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return fmt.Errorf("sending notification failed: %w", err)
 	}

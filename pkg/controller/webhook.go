@@ -61,7 +61,10 @@ func callWebhook(webhook string, payload interface{}, timeout string) error {
 	ctx, cancel := context.WithTimeout(req.Context(), t)
 	defer cancel()
 
-	r, err := http.DefaultClient.Do(req.WithContext(ctx))
+	httpClient := http.DefaultClient
+	httpClient.Transport = http.DefaultTransport
+
+	r, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
