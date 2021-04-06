@@ -56,6 +56,7 @@ List of organizations using Flagger:
 * [Jumia Group](https://group.jumia.com)
 * [eLife](https://elifesciences.org/)
 * [Trendhim](https://www.trendhim.com)
+* [Sinch](https://www.sinch.com)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
