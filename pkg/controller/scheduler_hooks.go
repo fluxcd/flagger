@@ -63,6 +63,10 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary, canaryCont
 						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 						return false
 					}
+					if err := canaryController.ScaleFromZero(canary); err != nil {
+						c.recordEventErrorf(canary, "%v", err)
+						return false
+					}
 					c.recordEventInfof(canary, "Confirm-rollout check %s passed", webhook.Name)
 					return false
 				}
