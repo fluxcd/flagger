@@ -127,6 +127,12 @@ prometheus:
   image: docker.io/prom/prometheus:v2.23.0
   pullSecret:
   retention: 2h
+  # when enabled, it will add a security context for the prometheus pod
+  securityContext:
+    enabled: false
+    context:
+      readOnlyRootFilesystem: true
+      runAsUser: 10001
 
 kubeconfigQPS: ""
 kubeconfigBurst: ""
