@@ -58,6 +58,7 @@ List of organizations using Flagger:
 * [eLife](https://elifesciences.org/)
 * [Trendhim](https://www.trendhim.com)
 * [Sinch](https://www.sinch.com)
+* [OfferUp](https://www.offerup.com)
 
 If you are using Flagger, please submit a PR to add your organization to the list!
 
