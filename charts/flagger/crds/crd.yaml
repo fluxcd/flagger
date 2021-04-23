@@ -941,6 +941,9 @@ spec:
                               - event
                               - rollback
                               - confirm-traffic-increase
+                          muteAlert:
+                            description: Mute all alerts for the webhook
+                            type: boolean
                           url:
                             description: URL address of this webhook
                             type: string

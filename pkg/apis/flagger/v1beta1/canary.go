@@ -329,6 +329,9 @@ type CanaryWebhook struct {
 	// URL address of this webhook
 	URL string `json:"url"`
 
+	// MuteAlert mutes all alerts generated from this webhook, if any
+	MuteAlert bool `json:"muteAlert"`
+
 	// Request timeout for this webhook
 	Timeout string `json:"timeout,omitempty"`
 
