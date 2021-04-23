@@ -30,7 +30,6 @@ func (c *Controller) runConfirmTrafficIncreaseHooks(canary *flaggerv1.Canary) bo
 			if err != nil {
 				c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for traffic increase approval %s",
 					canary.Name, canary.Namespace, webhook.Name)
-				c.alert(canary, "Canary traffic increase is waiting for approval.", false, flaggerv1.SeverityWarn)
 				return false
 			}
 			c.recordEventInfof(canary, "Confirm-traffic-increase check %s passed", webhook.Name)
