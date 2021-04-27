@@ -12,7 +12,6 @@ kubectl create ns gloo-system
 helm repo add gloo https://storage.googleapis.com/solo-public-helm
 helm upgrade -i gloo gloo/gloo --version ${GLOO_VER} \
 --namespace gloo-system \
---set discovery.enabled=true
 
 kubectl -n gloo-system rollout status deployment/gloo
 kubectl -n gloo-system rollout status deployment/gateway
