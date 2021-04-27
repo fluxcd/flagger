@@ -25,3 +25,11 @@ type RouteTableListerExpansion interface{}
 // RouteTableNamespaceListerExpansion allows custom methods to be added to
 // RouteTableNamespaceLister.
 type RouteTableNamespaceListerExpansion interface{}
+
+// UpstreamListerExpansion allows custom methods to be added to
+// UpstreamLister.
+type UpstreamListerExpansion interface{}
+
+// UpstreamNamespaceListerExpansion allows custom methods to be added to
+// UpstreamNamespaceLister.
+type UpstreamNamespaceListerExpansion interface{}

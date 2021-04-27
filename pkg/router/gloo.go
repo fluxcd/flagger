@@ -39,15 +39,23 @@ type GlooRouter struct {
 	glooClient          clientset.Interface
 	flaggerClient       clientset.Interface
 	logger              *zap.SugaredLogger
-	upstreamDiscoveryNs string
 }
 
 // Reconcile creates or updates the Gloo Edge route table
 func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
-	apexName, _, _ := canary.GetServiceNames()
-	canaryName := fmt.Sprintf("%s-%s-canary-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
-	primaryName := fmt.Sprintf("%s-%s-primary-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
-
+	apexName, primaryName, canaryName := canary.GetServiceNames()
+	canaryUpstreamName := fmt.Sprintf("%s-%s-canaryUpstream-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
+	primaryUpstreamName := fmt.Sprintf("%s-%s-primaryUpstream-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
+	canaryUs := getGlooUpstreamForKubeService(canary, canaryUpstreamName, canaryName)
+	primaryUs := getGlooUpstreamForKubeService(canary, primaryUpstreamName, primaryName)
+	_, err := gr.glooClient.GatewayV1().Upstreams(canary.Namespace).Create(context.TODO(), canaryUs, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+	_, err = gr.glooClient.GatewayV1().Upstreams(canary.Namespace).Create(context.TODO(), primaryUs, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
 	newSpec := gloov1.RouteTableSpec{
 		Routes: []gloov1.Route{
 			{
@@ -59,8 +67,8 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 							{
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
-										Name:      primaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Name:      primaryUpstreamName,
+										Namespace: canary.Namespace,
 									},
 								},
 								Weight: 100,
@@ -68,8 +76,8 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 							{
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
-										Name:      canaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Name:      canaryUpstreamName,
+										Namespace: canary.Namespace,
 									},
 								},
 								Weight: 0,
@@ -196,7 +204,7 @@ func (gr *GlooRouter) SetRoutes(
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
 										Name:      primaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Namespace: canary.Namespace,
 									},
 								},
 								Weight: uint32(primaryWeight),
@@ -205,7 +213,7 @@ func (gr *GlooRouter) SetRoutes(
 								Destination: gloov1.Destination{
 									Upstream: gloov1.ResourceRef{
 										Name:      canaryName,
-										Namespace: gr.upstreamDiscoveryNs,
+										Namespace: canary.Namespace,
 									},
 								},
 								Weight: uint32(canaryWeight),
@@ -274,4 +282,23 @@ func getMethods(canary *flaggerv1.Canary) []string {
 		}
 	}
 	return methods
+}
+
+func getGlooUpstreamForKubeService(canary *flaggerv1.Canary, upstreamName, svcName string) *gloov1.Upstream{
+	 return &gloov1.Upstream{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        upstreamName,
+			Namespace:   canary.Namespace,
+			Labels:      canary.Spec.Service.Apex.Labels,
+			Annotations: canary.Spec.Service.Apex.Annotations,
+		},
+		UpstreamType:       gloov1.UpstreamType{
+			Kube: gloov1.KubeUpstream{
+				ServiceName:      svcName,
+				ServiceNamespace: canary.Namespace,
+				ServicePort:      canary.Spec.Service.Port,
+				Selector:         nil,
+			},
+		},
+	}
 }

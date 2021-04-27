@@ -87,6 +87,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=gateway.solo.io, Version=v1
 	case v1.SchemeGroupVersion.WithResource("routetables"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gateway().V1().RouteTables().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("upstreams"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gateway().V1().Upstreams().Informer()}, nil
 
 		// Group=networking.istio.io, Version=v1alpha3
 	case v1alpha3.SchemeGroupVersion.WithResource("destinationrules"):

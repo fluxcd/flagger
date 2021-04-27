@@ -19,3 +19,5 @@ limitations under the License.
 package v1
 
 type RouteTableExpansion interface{}
+
+type UpstreamExpansion interface{}
