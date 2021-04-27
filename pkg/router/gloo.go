@@ -46,6 +46,11 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 	canaryUpstreamName := fmt.Sprintf("%s-%s-canaryUpstream-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
 	primaryUpstreamName := fmt.Sprintf("%s-%s-primaryUpstream-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
+
+	// Create upstreams for the canary/primary services created by flagger.
+	// Previously, we relied on gloo discovery to automaticallycreate these upstreams, but this would no longer work if
+	// discovery was turned off.
+	// KubeServiceDestinations can be disabled in gloo configuration, so we don't use those either.
 	canaryUs := getGlooUpstreamForKubeService(canary, canaryUpstreamName, canaryName)
 	primaryUs := getGlooUpstreamForKubeService(canary, primaryUpstreamName, primaryName)
 	_, err := gr.glooClient.GatewayV1().Upstreams(canary.Namespace).Create(context.TODO(), canaryUs, metav1.CreateOptions{})
@@ -285,7 +290,7 @@ func getMethods(canary *flaggerv1.Canary) []string {
 }
 
 func getGlooUpstreamForKubeService(canary *flaggerv1.Canary, upstreamName, svcName string) *gloov1.Upstream{
-	 return &gloov1.Upstream{
+	return &gloov1.Upstream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        upstreamName,
 			Namespace:   canary.Namespace,
