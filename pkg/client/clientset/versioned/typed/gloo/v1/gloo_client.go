@@ -27,6 +27,7 @@ import (
 type GatewayV1Interface interface {
 	RESTClient() rest.Interface
 	RouteTablesGetter
+	UpstreamsGetter
 }
 
 // GatewayV1Client is used to interact with features provided by the gateway.solo.io group.
@@ -36,6 +37,10 @@ type GatewayV1Client struct {
 
 func (c *GatewayV1Client) RouteTables(namespace string) RouteTableInterface {
 	return newRouteTables(c, namespace)
+}
+
+func (c *GatewayV1Client) Upstreams(namespace string) UpstreamInterface {
+	return newUpstreams(c, namespace)
 }
 
 // NewForConfig creates a new GatewayV1Client for the given config.

@@ -19,6 +19,28 @@ type RouteTableSpec struct {
 	Routes []Route `json:"routes,omitempty"`
 }
 
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Upstream is a specification for a Gloo Upstream resource
+type Upstream struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	UpstreamType UpstreamType `json:"upstream_type,omitempty"`
+}
+
+type UpstreamType struct {
+	Kube KubeUpstream `json:"kube,omitempty"`
+}
+
+type KubeUpstream struct {
+	ServiceName      string            `json:"service_name,omitempty""`
+	ServiceNamespace string            `json:"service_namespace,omitempty"`
+	ServicePort      int32            `json:"service_port,omitempty"`
+	Selector         map[string]string `json:"selector,omitempty"`
+}
+
 type Route struct {
 	Matchers                []Matcher   `json:"matchers,omitempty"`
 	Action                  RouteAction `json:"routeAction,omitempty"`
@@ -79,4 +101,14 @@ type RouteTableList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []RouteTable `json:"items"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpstreamList is a list of Upstream resources
+type UpstreamList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []Upstream `json:"items"`
 }

@@ -32,6 +32,10 @@ func (c *FakeGatewayV1) RouteTables(namespace string) v1.RouteTableInterface {
 	return &FakeRouteTables{c, namespace}
 }
 
+func (c *FakeGatewayV1) Upstreams(namespace string) v1.UpstreamInterface {
+	return &FakeUpstreams{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeGatewayV1) RESTClient() rest.Interface {

@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// RouteTables returns a RouteTableInformer.
 	RouteTables() RouteTableInformer
+	// Upstreams returns a UpstreamInformer.
+	Upstreams() UpstreamInformer
 }
 
 type version struct {
@@ -42,4 +44,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // RouteTables returns a RouteTableInformer.
 func (v *version) RouteTables() RouteTableInformer {
 	return &routeTableInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// Upstreams returns a UpstreamInformer.
+func (v *version) Upstreams() UpstreamInformer {
+	return &upstreamInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
