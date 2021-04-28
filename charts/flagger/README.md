@@ -125,9 +125,11 @@ Parameter | Description | Default
 `configTracking.enabled` | If `true`, flagger will track changes in Secrets and ConfigMaps referenced in the target deployment | `true`
 `eventWebhook` | If set, Flagger will publish events to the given webhook | None
 `slack.url` | Slack incoming webhook | None
+`slack.proxyUrl` | Slack proxy url | None
 `slack.channel` | Slack channel | None
 `slack.user` | Slack username | `flagger`
 `msteams.url` | Microsoft Teams incoming webhook | None
+`msteams.proxyUrl` | Microsoft Teams proxy url | None
 `podMonitor.enabled` | If `true`, create a PodMonitor for [monitoring the metrics](https://docs.flagger.app/usage/monitoring#metrics) | `false`
 `podMonitor.namespace` | Namespace where the PodMonitor is created | the same namespace
 `podMonitor.interval` | Interval at which metrics should be scraped | `15s`

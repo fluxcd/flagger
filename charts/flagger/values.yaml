@@ -55,6 +55,7 @@ slack:
   channel:
   # incoming webhook https://api.slack.com/incoming-webhooks
   url:
+  proxy:
 
 msteams:
   # MS Teams incoming webhook URL
@@ -72,11 +73,21 @@ podMonitor:
 #    secretKeyRef:
 #      name: slack
 #      key: url
+#- name: SLACK_PROXY_URL
+#  valueFrom:
+#    secretKeyRef:
+#      name: slack
+#      key: proxy-url
 #- name: MSTEAMS_URL
 #  valueFrom:
 #    secretKeyRef:
 #      name: msteams
 #      key: url
+#- name: MSTEAMS_PROXY_URL
+#  valueFrom:
+#    secretKeyRef:
+#      name: msteams
+#      key: proxy-url
 #- name: EVENT_WEBHOOK_URL
 #  valueFrom:
 #    secretKeyRef:

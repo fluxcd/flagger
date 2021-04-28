@@ -22,13 +22,15 @@ import (
 
 type Factory struct {
 	URL      string
+	ProxyURL string
 	Username string
 	Channel  string
 }
 
-func NewFactory(url string, username string, channel string) *Factory {
+func NewFactory(url string, proxy string, username string, channel string) *Factory {
 	return &Factory{
 		URL:      url,
+		ProxyURL: proxy,
 		Channel:  channel,
 		Username: username,
 	}
@@ -43,13 +45,13 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 	var err error
 	switch provider {
 	case "slack":
-		n, err = NewSlack(f.URL, f.Username, f.Channel)
+		n, err = NewSlack(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "discord":
-		n, err = NewDiscord(f.URL, f.Username, f.Channel)
+		n, err = NewDiscord(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "rocket":
-		n, err = NewRocket(f.URL, f.Username, f.Channel)
+		n, err = NewRocket(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "msteams":
-		n, err = NewMSTeams(f.URL)
+		n, err = NewMSTeams(f.URL, f.ProxyURL)
 	default:
 		err = fmt.Errorf("provider %s not supported", provider)
 	}

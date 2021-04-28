@@ -149,9 +149,13 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 		if provider.Spec.Channel != "" {
 			channel = provider.Spec.Channel
 		}
+		proxy := ""
+		if provider.Spec.Proxy != "" {
+			proxy = provider.Spec.Proxy
+		}
 
 		// create notifier based on provider type
-		f := notifier.NewFactory(url, username, channel)
+		f := notifier.NewFactory(url, proxy, username, channel)
 		n, err := f.Notifier(provider.Spec.Type)
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
