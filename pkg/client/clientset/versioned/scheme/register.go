@@ -27,6 +27,7 @@ import (
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	splitv1alpha1 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha1"
 	splitv1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
+	splitv1alpha3 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha3"
 	traefikv1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -47,6 +48,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	projectcontourv1.AddToScheme,
 	splitv1alpha1.AddToScheme,
 	splitv1alpha2.AddToScheme,
+	splitv1alpha3.AddToScheme,
 	traefikv1alpha1.AddToScheme,
 }
 

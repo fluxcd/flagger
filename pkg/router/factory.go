@@ -122,6 +122,15 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			smiClient:     factory.meshClient,
 			targetMesh:    mesh,
 		}
+	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha3"):
+		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha3:")
+		return &Smiv1alpha3Router{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    mesh,
+		}
 	case provider == flaggerv1.ContourProvider:
 		return &ContourRouter{
 			logger:        factory.logger,
