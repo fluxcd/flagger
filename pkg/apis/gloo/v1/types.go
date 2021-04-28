@@ -37,7 +37,7 @@ type UpstreamType struct {
 type KubeUpstream struct {
 	ServiceName      string            `json:"service_name,omitempty""`
 	ServiceNamespace string            `json:"service_namespace,omitempty"`
-	ServicePort      int32            `json:"service_port,omitempty"`
+	ServicePort      int32             `json:"service_port,omitempty"`
 	Selector         map[string]string `json:"selector,omitempty"`
 }
 

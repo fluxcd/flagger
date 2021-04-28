@@ -35,10 +35,10 @@ import (
 
 // GlooRouter is managing Gloo route tables
 type GlooRouter struct {
-	kubeClient          kubernetes.Interface
-	glooClient          clientset.Interface
-	flaggerClient       clientset.Interface
-	logger              *zap.SugaredLogger
+	kubeClient    kubernetes.Interface
+	glooClient    clientset.Interface
+	flaggerClient clientset.Interface
+	logger        *zap.SugaredLogger
 }
 
 // Reconcile creates or updates the Gloo Edge route table
@@ -289,7 +289,7 @@ func getMethods(canary *flaggerv1.Canary) []string {
 	return methods
 }
 
-func getGlooUpstreamForKubeService(canary *flaggerv1.Canary, upstreamName, svcName string) *gloov1.Upstream{
+func getGlooUpstreamForKubeService(canary *flaggerv1.Canary, upstreamName, svcName string) *gloov1.Upstream {
 	return &gloov1.Upstream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        upstreamName,
@@ -297,7 +297,7 @@ func getGlooUpstreamForKubeService(canary *flaggerv1.Canary, upstreamName, svcNa
 			Labels:      canary.Spec.Service.Apex.Labels,
 			Annotations: canary.Spec.Service.Apex.Annotations,
 		},
-		UpstreamType:       gloov1.UpstreamType{
+		UpstreamType: gloov1.UpstreamType{
 			Kube: gloov1.KubeUpstream{
 				ServiceName:      svcName,
 				ServiceNamespace: canary.Namespace,
