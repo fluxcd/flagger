@@ -23,14 +23,6 @@ type TrafficSplit struct {
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
 	// +optional
 	Spec TrafficSplitSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
-
-	// Most recently observed status of the pod.
-	// This data may not be up to date.
-	// Populated by the system.
-	// Read-only.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
-	// +optional
-	//Status Status `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
 // TrafficSplitSpec is the specification for a TrafficSplit
