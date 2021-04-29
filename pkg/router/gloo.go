@@ -19,6 +19,7 @@ package router
 import (
 	"context"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
 
 	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
@@ -44,36 +45,23 @@ type GlooRouter struct {
 
 // Reconcile creates or updates the Gloo Edge route table
 func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
-	apexName, primaryName, canaryName := canary.GetServiceNames()
+	apexName, _, _ := canary.GetServiceNames()
 	canaryUpstreamName := fmt.Sprintf("%s-%s-canaryupstream-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
 	primaryUpstreamName := fmt.Sprintf("%s-%s-primaryupstream-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
-	upstreamClient := gr.glooClient.GlooV1().Upstreams(canary.Namespace)
 
 	// Create upstreams for the canary/primary services created by flagger.
 	// Previously, we relied on gloo discovery to automaticallycreate these upstreams, but this would no longer work if
 	// discovery was turned off.
 	// KubeServiceDestinations can be disabled in gloo configuration, so we don't use those either.
-	_, err := upstreamClient.Get(context.TODO(), canaryUpstreamName, metav1.GetOptions{})
-	if errors.IsNotFound(err){
-		canaryUs := getGlooUpstreamForKubeService(canary, canaryUpstreamName, canaryName)
-		_, err := gr.glooClient.GlooV1().Upstreams(canary.Namespace).Create(context.TODO(), canaryUs, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("upstream %s.%s create query error: %w", canaryUpstreamName, canary.Namespace, err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("upstream %s.%s get query error: %w", canaryUpstreamName, canary.Namespace, err)
+	err := gr.createFlaggerUpstream(canary, primaryUpstreamName, false)
+	if err != nil {
+		return fmt.Errorf("error creating flagger primary upstream: %w", err)
+	}
+	err = gr.createFlaggerUpstream(canary, canaryUpstreamName, true)
+	if err != nil {
+		return fmt.Errorf("error creating flagger canary upstream: %w", err)
 	}
 
-	_, err = upstreamClient.Get(context.TODO(), primaryUpstreamName, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
-		primaryUs := getGlooUpstreamForKubeService(canary, primaryUpstreamName, primaryName)
-		_, err := gr.glooClient.GlooV1().Upstreams(canary.Namespace).Create(context.TODO(), primaryUs, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("upstream %s.%s create query error: %w", primaryUpstreamName, canary.Namespace, err)
-		}
-	}else if err != nil {
-		return fmt.Errorf("upstream %s.%s get query error: %w", primaryUpstreamName, canary.Namespace, err)
-	}
 
 	newSpec := gatewayv1.RouteTableSpec{
 		Routes: []gatewayv1.Route{
@@ -254,6 +242,54 @@ func (gr *GlooRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
 }
 
+func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamName string, isCanary bool) error{
+	_, primaryName, canaryName := canary.GetServiceNames()
+	upstreamClient := gr.glooClient.GlooV1().Upstreams(canary.Namespace)
+	svcName := primaryName
+	if isCanary{
+		svcName = canaryName
+	}
+	svc, err := gr.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
+	if err != nil{
+		return fmt.Errorf("service %s.%s get query error: %w", svcName, canary.Namespace, err)
+	}
+	_, err = upstreamClient.Get(context.TODO(), upstreamName, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		canaryUs := gr.getGlooUpstreamKubeService(canary, svc, upstreamName)
+		_, err := gr.glooClient.GlooV1().Upstreams(canary.Namespace).Create(context.TODO(), canaryUs, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("upstream %s.%s create query error: %w", upstreamName, canary.Namespace, err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("upstream %s.%s get query error: %w", upstreamName, canary.Namespace, err)
+	}
+	return nil
+}
+
+func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *corev1.Service, upstreamName string) *gloov1.Upstream {
+	return &gloov1.Upstream{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      upstreamName,
+			Namespace: canary.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			},
+		},
+		Spec: gloov1.UpstreamSpec{
+			Kube: gloov1.KubeUpstream{
+				ServiceName:      svc.GetName(),
+				ServiceNamespace: canary.Namespace,
+				ServicePort:      canary.Spec.Service.Port,
+				Selector:         svc.Spec.Selector,
+			},
+		},
+	}
+}
+
 func getMatchers(canary *flaggerv1.Canary) []gatewayv1.Matcher {
 
 	headerMatchers := getHeaderMatchers(canary)
@@ -302,19 +338,4 @@ func getMethods(canary *flaggerv1.Canary) []string {
 	return methods
 }
 
-func getGlooUpstreamForKubeService(canary *flaggerv1.Canary, upstreamName, svcName string) *gloov1.Upstream {
-	return &gloov1.Upstream{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      upstreamName,
-			Namespace: canary.Namespace,
-		},
-		Spec: gloov1.UpstreamSpec{
-				Kube: gloov1.KubeUpstream{
-					ServiceName:      svcName,
-					ServiceNamespace: canary.Namespace,
-					ServicePort:      canary.Spec.Service.Port,
-					Selector:         nil,
-				},
-			},
-	}
-}
+

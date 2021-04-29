@@ -31,7 +31,7 @@ var glooQueries = map[string]string{
 	sum(
 		rate(
 			envoy_cluster_upstream_rq{
-				envoy_cluster_name=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
+				envoy_cluster_name=~"{{ namespace }}-{{ target }}-canaryupstream-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
 				envoy_response_code!~"5.*"
 			}[{{ interval }}]
 		)
@@ -40,7 +40,7 @@ var glooQueries = map[string]string{
 	sum(
 		rate(
 			envoy_cluster_upstream_rq{
-				envoy_cluster_name=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
+				envoy_cluster_name=~"{{ namespace }}-{{ target }}-canaryupstream-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
 			}[{{ interval }}]
 		)
 	) 
@@ -51,7 +51,7 @@ var glooQueries = map[string]string{
 		sum(
 			rate(
 				envoy_cluster_upstream_rq_time_bucket{
-					envoy_cluster_name=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
+					envoy_cluster_name=~"{{ namespace }}-{{ target }}-canaryupstream-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+",
 				}[{{ interval }}]
 			)
 		) by (le)
