@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,13 +32,13 @@ import (
 
 // FakeUpstreams implements UpstreamInterface
 type FakeUpstreams struct {
-	Fake *FakeGatewayV1
+	Fake *FakeGlooV1
 	ns   string
 }
 
-var upstreamsResource = schema.GroupVersionResource{Group: "gateway.solo.io", Version: "v1", Resource: "upstreams"}
+var upstreamsResource = schema.GroupVersionResource{Group: "gloo.solo.io", Version: "v1", Resource: "upstreams"}
 
-var upstreamsKind = schema.GroupVersionKind{Group: "gateway.solo.io", Version: "v1", Kind: "Upstream"}
+var upstreamsKind = schema.GroupVersionKind{Group: "gloo.solo.io", Version: "v1", Kind: "Upstream"}
 
 // Get takes name of the upstream, and returns the corresponding upstream object, and an error if there is any.
 func (c *FakeUpstreams) Get(ctx context.Context, name string, options v1.GetOptions) (result *gloov1.Upstream, err error) {

@@ -19,27 +19,27 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	"github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
-type GlooV1Interface interface {
+type GatewayV1Interface interface {
 	RESTClient() rest.Interface
-	UpstreamsGetter
+	RouteTablesGetter
 }
 
-// GlooV1Client is used to interact with features provided by the gloo.solo.io group.
-type GlooV1Client struct {
+// GatewayV1Client is used to interact with features provided by the gateway.solo.io group.
+type GatewayV1Client struct {
 	restClient rest.Interface
 }
 
-func (c *GlooV1Client) Upstreams(namespace string) UpstreamInterface {
-	return newUpstreams(c, namespace)
+func (c *GatewayV1Client) RouteTables(namespace string) RouteTableInterface {
+	return newRouteTables(c, namespace)
 }
 
-// NewForConfig creates a new GlooV1Client for the given config.
-func NewForConfig(c *rest.Config) (*GlooV1Client, error) {
+// NewForConfig creates a new GatewayV1Client for the given config.
+func NewForConfig(c *rest.Config) (*GatewayV1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
@@ -48,12 +48,12 @@ func NewForConfig(c *rest.Config) (*GlooV1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GlooV1Client{client}, nil
+	return &GatewayV1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new GlooV1Client for the given config and
+// NewForConfigOrDie creates a new GatewayV1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *GlooV1Client {
+func NewForConfigOrDie(c *rest.Config) *GatewayV1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -61,9 +61,9 @@ func NewForConfigOrDie(c *rest.Config) *GlooV1Client {
 	return client
 }
 
-// New creates a new GlooV1Client for the given RESTClient.
-func New(c rest.Interface) *GlooV1Client {
-	return &GlooV1Client{c}
+// New creates a new GatewayV1Client for the given RESTClient.
+func New(c rest.Interface) *GatewayV1Client {
+	return &GatewayV1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -81,7 +81,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *GlooV1Client) RESTClient() rest.Interface {
+func (c *GatewayV1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

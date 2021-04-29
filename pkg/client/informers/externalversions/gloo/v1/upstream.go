@@ -22,7 +22,7 @@ import (
 	"context"
 	time "time"
 
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "github.com/fluxcd/flagger/pkg/client/listers/gloo/v1"
@@ -62,13 +62,13 @@ func NewFilteredUpstreamInformer(client versioned.Interface, namespace string, r
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayV1().Upstreams(namespace).List(context.TODO(), options)
+				return client.GlooV1().Upstreams(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayV1().Upstreams(namespace).Watch(context.TODO(), options)
+				return client.GlooV1().Upstreams(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&gloov1.Upstream{},

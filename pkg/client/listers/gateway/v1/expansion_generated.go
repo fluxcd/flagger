@@ -18,10 +18,10 @@ limitations under the License.
 
 package v1
 
-// UpstreamListerExpansion allows custom methods to be added to
-// UpstreamLister.
-type UpstreamListerExpansion interface{}
+// RouteTableListerExpansion allows custom methods to be added to
+// RouteTableLister.
+type RouteTableListerExpansion interface{}
 
-// UpstreamNamespaceListerExpansion allows custom methods to be added to
-// UpstreamNamespaceLister.
-type UpstreamNamespaceListerExpansion interface{}
+// RouteTableNamespaceListerExpansion allows custom methods to be added to
+// RouteTableNamespaceLister.
+type RouteTableNamespaceListerExpansion interface{}

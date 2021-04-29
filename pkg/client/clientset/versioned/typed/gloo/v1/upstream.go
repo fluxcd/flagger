@@ -22,7 +22,7 @@ import (
 	"context"
 	"time"
 
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -56,7 +56,7 @@ type upstreams struct {
 }
 
 // newUpstreams returns a Upstreams
-func newUpstreams(c *GatewayV1Client, namespace string) *upstreams {
+func newUpstreams(c *GlooV1Client, namespace string) *upstreams {
 	return &upstreams{
 		client: c.RESTClient(),
 		ns:     namespace,

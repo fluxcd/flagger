@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/fluxcd/flagger/pkg/apis/gloo"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 )
 
 func TestGlooRouter_Sync(t *testing.T) {
@@ -94,8 +94,8 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	rt, err := router.glooClient.GatewayV1().RouteTables("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	var pRoute gloov1.WeightedDestination
-	var cRoute gloov1.WeightedDestination
+	var pRoute gloo.WeightedDestination
+	var cRoute gloo.WeightedDestination
 	canaryName := fmt.Sprintf("%s-%s-canary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
 	primaryName := fmt.Sprintf("%s-%s-primary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
 
