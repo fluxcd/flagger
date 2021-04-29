@@ -2,6 +2,42 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.8.0
+
+**Release date:** 2021-03-23
+
+This release comes with support for the SMI `v1alpha2` and `v1alpha3` TrafficSplit APIs.
+
+For SMI compatible service mesh solutions like Open Service Mesh, Consul Connect or Nginx Service Mesh,
+[Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus) can be used to implement
+the request success rate and request duration checks.
+
+The desired SMI version can be set in the Canary object:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: my-canary
+spec:
+  provider: "smi:v1alpha3" # or "smi:v1alpha2"
+```
+
+#### Features
+
+- Implement SMI v1alpha2 and v1alpha3 routers
+  [#896](https://github.com/fluxcd/flagger/pull/896)
+  [#879](https://github.com/fluxcd/flagger/pull/879)
+- Add alerting HTTP/S proxy option
+  [#872](https://github.com/fluxcd/flagger/pull/872)
+- Add option to mute alerts generated from webhooks
+  [#887](https://github.com/fluxcd/flagger/pull/887)
+
+#### Fixes
+
+- Scale up canary on confirm rollout
+  [#878](https://github.com/fluxcd/flagger/pull/878)
+
 ## 1.7.0
 
 **Release date:** 2021-03-23

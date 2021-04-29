@@ -82,6 +82,7 @@ metadata:
 spec:
   # service mesh provider (optional)
   # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, contour, gloo, supergloo, traefik
+  # for SMI TrafficSplit can be: smi:v1alpha1, smi:v1alpha2, smi:v1alpha3
   provider: istio
   # deployment reference
   targetRef:
@@ -192,17 +193,21 @@ For more details on how the canary analysis and promotion works please [read the
 
 **Service Mesh**
 
-| Feature                                    | App Mesh           | Istio              | Linkerd            |  Kubernetes CNI    |
-| ------------------------------------------ | ------------------ | ------------------ | ------------------ |  ----------------- |
-| Canary deployments (weighted traffic)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| A/B testing (headers and cookies routing)  | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Blue/Green deployments (traffic switch)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Blue/Green deployments (traffic mirroring) | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Webhooks (acceptance/load testing)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Manual gating (approve/pause/resume)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| Request duration check (L7 metric)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| Custom metric checks                       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Feature                                    | App Mesh           | Istio              | Linkerd            |  SMI               |  Kubernetes CNI    |
+| ------------------------------------------ | ------------------ | ------------------ | ------------------ |  ----------------- |  ----------------- |
+| Canary deployments (weighted traffic)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| A/B testing (headers and cookies routing)  | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Blue/Green deployments (traffic mirroring) | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Webhooks (acceptance/load testing)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Request duration check (L7 metric)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Custom metric checks                       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+
+For SMI compatible service mesh solutions like Open Service Mesh, Consul Connect or Nginx Service Mesh,
+[Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus) can be used to implement
+the request success rate and request duration checks.
 
 **Ingress**
 
@@ -229,7 +234,6 @@ For more details on how the canary analysis and promotion works please [read the
 #### Integrations
 
 * Add support for Kubernetes [Ingress v2](https://github.com/kubernetes-sigs/service-apis)
-* Add support for SMI compatible service mesh solutions like Open Service Mesh and Consul Connect
 * Add support for ingress controllers like HAProxy and ALB
 * Add support for metrics providers like InfluxDB, Stackdriver, SignalFX
 

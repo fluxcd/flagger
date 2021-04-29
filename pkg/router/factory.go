@@ -104,9 +104,27 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			istioClient:   factory.meshClient,
 		}
-	case strings.HasPrefix(provider, flaggerv1.SMIProvider):
-		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":")
+	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha1"):
+		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha1:")
 		return &SmiRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    mesh,
+		}
+	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha2"):
+		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha2:")
+		return &Smiv1alpha2Router{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			smiClient:     factory.meshClient,
+			targetMesh:    mesh,
+		}
+	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha3"):
+		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha3:")
+		return &Smiv1alpha3Router{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,

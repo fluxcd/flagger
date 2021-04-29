@@ -44,7 +44,7 @@ func TestSlack_Post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	slack, err := NewSlack(ts.URL, "test", "test")
+	slack, err := NewSlack(ts.URL, "", "test", "test")
 	require.NoError(t, err)
 
 	err = slack.Post("podinfo", "test", "test", fields, "error")

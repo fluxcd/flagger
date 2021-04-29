@@ -940,6 +940,10 @@ spec:
                               - post-rollout
                               - event
                               - rollback
+                              - confirm-traffic-increase
+                          muteAlert:
+                            description: Mute all alerts for the webhook
+                            type: boolean
                           url:
                             description: URL address of this webhook
                             type: string
@@ -1176,6 +1180,9 @@ spec:
                   type: string
                 address:
                   description: Hook URL address of this provider
+                  type: string
+                proxy:
+                  description: Http/s proxy of this provider
                   type: string
                 secretRef:
                   description: Kubernetes secret reference containing the provider address

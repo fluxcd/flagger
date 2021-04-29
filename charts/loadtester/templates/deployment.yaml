@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: {{ include "loadtester.name" . }}
+        app.kubernetes.io/name: {{ include "loadtester.name" . }}
       annotations:
         appmesh.k8s.aws/ports: "444"
         {{- if .Values.podAnnotations }}
@@ -29,7 +30,7 @@ spec:
       {{- end }}
       {{- if .Values.podPriorityClassName }}
       priorityClassName: {{ .Values.podPriorityClassName }}
-      {{- end }}           
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- if .Values.securityContext.enabled }}
@@ -69,7 +70,7 @@ spec:
           {{- if .Values.env }}
           env:
             {{- toYaml .Values.env | nindent 12 }}
-          {{- end }} 
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

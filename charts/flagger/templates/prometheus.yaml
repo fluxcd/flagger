@@ -255,6 +255,10 @@ spec:
               mountPath: /etc/prometheus
             - name: data-volume
               mountPath: /prometheus/data
+          {{- if .Values.prometheus.securityContext.enabled }}
+          securityContext:
+{{ toYaml .Values.prometheus.securityContext.context | indent 12 }}
+          {{- end }}
       {{- if .Values.prometheus.pullSecret }}
       imagePullSecrets:
         - name: {{ .Values.prometheus.pullSecret }}

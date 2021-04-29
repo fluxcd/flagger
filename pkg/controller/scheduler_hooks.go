@@ -30,7 +30,9 @@ func (c *Controller) runConfirmTrafficIncreaseHooks(canary *flaggerv1.Canary) bo
 			if err != nil {
 				c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for traffic increase approval %s",
 					canary.Name, canary.Namespace, webhook.Name)
-				c.alert(canary, "Canary traffic increase is waiting for approval.", false, flaggerv1.SeverityWarn)
+				if !webhook.MuteAlert {
+					c.alert(canary, "Canary traffic increase is waiting for approval.", false, flaggerv1.SeverityWarn)
+				}
 				return false
 			}
 			c.recordEventInfof(canary, "Confirm-traffic-increase check %s passed", webhook.Name)
@@ -50,13 +52,19 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary, canaryCont
 					}
 					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for approval %s",
 						canary.Name, canary.Namespace, webhook.Name)
-					c.alert(canary, "Canary is waiting for approval.", false, flaggerv1.SeverityWarn)
+					if !webhook.MuteAlert {
+						c.alert(canary, "Canary is waiting for approval.", false, flaggerv1.SeverityWarn)
+					}
 				}
 				return false
 			} else {
 				if canary.Status.Phase == flaggerv1.CanaryPhaseWaiting {
 					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseProgressing); err != nil {
 						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+						return false
+					}
+					if err := canaryController.ScaleFromZero(canary); err != nil {
+						c.recordEventErrorf(canary, "%v", err)
 						return false
 					}
 					c.recordEventInfof(canary, "Confirm-rollout check %s passed", webhook.Name)
@@ -79,7 +87,9 @@ func (c *Controller) runConfirmPromotionHooks(canary *flaggerv1.Canary, canaryCo
 					}
 					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for promotion approval %s",
 						canary.Name, canary.Namespace, webhook.Name)
-					c.alert(canary, "Canary promotion is waiting for approval.", false, flaggerv1.SeverityWarn)
+					if !webhook.MuteAlert {
+						c.alert(canary, "Canary promotion is waiting for approval.", false, flaggerv1.SeverityWarn)
+					}
 				}
 				return false
 			} else {

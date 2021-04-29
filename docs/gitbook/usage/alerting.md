@@ -20,6 +20,7 @@ Once the webhook has been generated. Flagger can be configured to send Slack not
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
+--set slack.proxy-url=my-http-proxy.com \ # optional http/s proxy
 --set slack.channel=general \
 --set slack.user=flagger
 ```
@@ -41,7 +42,8 @@ Flagger can be configured to send notifications to Microsoft Teams:
 
 ```bash
 helm upgrade -i flagger flagger/flagger \
---set msteams.url=https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK
+--set msteams.url=https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK \
+--set msteams.proxy-url=my-http-proxy.com # optional http/s proxy
 ```
 
 Similar to Slack, Flagger alerts on canary analysis events:
@@ -71,6 +73,8 @@ spec:
   username: flagger
   # webhook address (ignored if secretRef is specified)
   address: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+  # optional http/s proxy
+  proxy: http://my-http-proxy.com
   # secret containing the webhook address (optional)
   secretRef:
     name: on-call-url
