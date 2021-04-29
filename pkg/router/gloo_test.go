@@ -19,9 +19,8 @@ package router
 import (
 	"context"
 	"fmt"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	"testing"
-
-	"github.com/fluxcd/flagger/pkg/apis/gloo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -94,10 +93,10 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	rt, err := router.glooClient.GatewayV1().RouteTables("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	var pRoute gloo.WeightedDestination
-	var cRoute gloo.WeightedDestination
-	canaryName := fmt.Sprintf("%s-%s-canary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
-	primaryName := fmt.Sprintf("%s-%s-primary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
+	var pRoute gatewayv1.WeightedDestination
+	var cRoute gatewayv1.WeightedDestination
+	canaryName := fmt.Sprintf("%s-%s-canaryupstream-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
+	primaryName := fmt.Sprintf("%s-%s-primaryupstream-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
 
 	for _, dest := range rt.Spec.Routes[0].Action.Destination.Destinations {
 		if dest.Destination.Upstream.Name == primaryName {

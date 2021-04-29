@@ -166,7 +166,7 @@ func (gr *GlooRouter) GetRoutes(canary *flaggerv1.Canary) (
 	err error,
 ) {
 	apexName := canary.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-%s-primary-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
+	primaryName := fmt.Sprintf("%s-%s-primaryupstream-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
 
 	routeTable, err := gr.glooClient.GatewayV1().RouteTables(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
