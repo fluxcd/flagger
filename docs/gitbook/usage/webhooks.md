@@ -377,6 +377,17 @@ The `/gate/halt` returns HTTP 403 thus blocking the rollout.
 If you have notifications enabled, Flagger will post a message to
 Slack or MS Teams if a canary rollout is waiting for approval.
 
+The notifications can be disabled with:
+
+```yaml
+  analysis:
+    webhooks:
+      - name: "gate"
+        type: confirm-rollout
+        url: http://flagger-loadtester.test/gate/halt
+        muteAlert: true
+```
+
 Change the URL to `/gate/approve` to start the canary analysis:
 
 ```yaml
