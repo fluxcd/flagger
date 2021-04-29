@@ -36,6 +36,8 @@ import (
 	fakesplitv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1/fake"
 	splitv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2"
 	fakesplitv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2/fake"
+	splitv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha3"
+	fakesplitv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha3/fake"
 	traefikv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/traefik/v1alpha1"
 	faketraefikv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/traefik/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -130,6 +132,11 @@ func (c *Clientset) SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface {
 // SplitV1alpha2 retrieves the SplitV1alpha2Client
 func (c *Clientset) SplitV1alpha2() splitv1alpha2.SplitV1alpha2Interface {
 	return &fakesplitv1alpha2.FakeSplitV1alpha2{Fake: &c.Fake}
+}
+
+// SplitV1alpha3 retrieves the SplitV1alpha3Client
+func (c *Clientset) SplitV1alpha3() splitv1alpha3.SplitV1alpha3Interface {
+	return &fakesplitv1alpha3.FakeSplitV1alpha3{Fake: &c.Fake}
 }
 
 // TraefikV1alpha1 retrieves the TraefikV1alpha1Client
