@@ -81,8 +81,8 @@ func (c *Controller) runConfirmPromotionHooks(canary *flaggerv1.Canary, canaryCo
 		if webhook.Type == flaggerv1.ConfirmPromotionHook {
 			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
-				if canary.Status.Phase != flaggerv1.CanaryWaitingPromotion {
-					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryWaitingPromotion); err != nil {
+				if canary.Status.Phase != flaggerv1.CanaryPhaseWaitingPromotion {
+					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingPromotion); err != nil {
 						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 					}
 					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for promotion approval %s",

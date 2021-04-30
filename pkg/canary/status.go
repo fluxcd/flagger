@@ -207,7 +207,7 @@ func MakeStatusConditions(cd *flaggerv1.Canary,
 	case flaggerv1.CanaryPhaseWaiting:
 		status = corev1.ConditionUnknown
 		message = "Waiting for approval."
-	case flaggerv1.CanaryWaitingPromotion:
+	case flaggerv1.CanaryPhaseWaitingPromotion:
 		status = corev1.ConditionUnknown
 		message = "Waiting for approval."
 	case flaggerv1.CanaryPhaseProgressing:
