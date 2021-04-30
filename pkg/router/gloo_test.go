@@ -19,8 +19,9 @@ package router
 import (
 	"context"
 	"fmt"
-	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	"testing"
+
+	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

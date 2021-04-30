@@ -19,6 +19,7 @@ package router
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 
 	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
@@ -61,7 +62,6 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if err != nil {
 		return fmt.Errorf("error creating flagger canary upstream: %w", err)
 	}
-
 
 	newSpec := gatewayv1.RouteTableSpec{
 		Routes: []gatewayv1.Route{
@@ -242,15 +242,15 @@ func (gr *GlooRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
 }
 
-func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamName string, isCanary bool) error{
+func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamName string, isCanary bool) error {
 	_, primaryName, canaryName := canary.GetServiceNames()
 	upstreamClient := gr.glooClient.GlooV1().Upstreams(canary.Namespace)
 	svcName := primaryName
-	if isCanary{
+	if isCanary {
 		svcName = canaryName
 	}
 	svc, err := gr.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
-	if err != nil{
+	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", svcName, canary.Namespace, err)
 	}
 	_, err = upstreamClient.Get(context.TODO(), upstreamName, metav1.GetOptions{})
@@ -337,5 +337,3 @@ func getMethods(canary *flaggerv1.Canary) []string {
 	}
 	return methods
 }
-
-
