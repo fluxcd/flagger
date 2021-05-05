@@ -36,9 +36,17 @@ func TestGlooRouter_Sync(t *testing.T) {
 		glooClient:    mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
-
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
 	// init
-	err := router.Reconcile(mocks.canary)
+	err = router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
 	// test insert
