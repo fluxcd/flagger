@@ -85,8 +85,17 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 		glooClient:    mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
 
-	err := router.Reconcile(mocks.canary)
+	err = router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
 	_, _, _, err = router.GetRoutes(mocks.canary)
@@ -147,8 +156,17 @@ func TestGlooRouter_GetRoutes(t *testing.T) {
 		glooClient:    mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
 
-	err := router.Reconcile(mocks.canary)
+	err = router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
 	p, c, m, err := router.GetRoutes(mocks.canary)
