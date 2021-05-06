@@ -47,20 +47,9 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
 
 ### Who is using Flagger
 
-List of organizations using Flagger:
+**Our list of production users has moved to <https://fluxcd.io/adopters/#flagger>**.
 
-* [Chick-fil-A](https://www.chick-fil-a.com)
-* [Capra Consulting](https://www.capraconsulting.no)
-* [DMM.com](https://dmm-corp.com)
-* [MediaMarktSaturn](https://www.mediamarktsaturn.com)
-* [Weaveworks](https://weave.works)
-* [Jumia Group](https://group.jumia.com)
-* [eLife](https://elifesciences.org/)
-* [Trendhim](https://www.trendhim.com)
-* [Sinch](https://www.sinch.com)
-* [OfferUp](https://www.offerup.com)
-
-If you are using Flagger, please submit a PR to add your organization to the list!
+If you are using Flagger, please [submit a PR to add your organization](https://github.com/fluxcd/website/tree/main/adopters#readme) to the list!
 
 ### Canary CRD
 
