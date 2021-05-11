@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,20 +41,20 @@ var routetablesResource = schema.GroupVersionResource{Group: "gateway.solo.io", 
 var routetablesKind = schema.GroupVersionKind{Group: "gateway.solo.io", Version: "v1", Kind: "RouteTable"}
 
 // Get takes name of the routeTable, and returns the corresponding routeTable object, and an error if there is any.
-func (c *FakeRouteTables) Get(ctx context.Context, name string, options v1.GetOptions) (result *gloov1.RouteTable, err error) {
+func (c *FakeRouteTables) Get(ctx context.Context, name string, options v1.GetOptions) (result *gatewayv1.RouteTable, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(routetablesResource, c.ns, name), &gloov1.RouteTable{})
+		Invokes(testing.NewGetAction(routetablesResource, c.ns, name), &gatewayv1.RouteTable{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*gloov1.RouteTable), err
+	return obj.(*gatewayv1.RouteTable), err
 }
 
 // List takes label and field selectors, and returns the list of RouteTables that match those selectors.
-func (c *FakeRouteTables) List(ctx context.Context, opts v1.ListOptions) (result *gloov1.RouteTableList, err error) {
+func (c *FakeRouteTables) List(ctx context.Context, opts v1.ListOptions) (result *gatewayv1.RouteTableList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(routetablesResource, routetablesKind, c.ns, opts), &gloov1.RouteTableList{})
+		Invokes(testing.NewListAction(routetablesResource, routetablesKind, c.ns, opts), &gatewayv1.RouteTableList{})
 
 	if obj == nil {
 		return nil, err
@@ -64,8 +64,8 @@ func (c *FakeRouteTables) List(ctx context.Context, opts v1.ListOptions) (result
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &gloov1.RouteTableList{ListMeta: obj.(*gloov1.RouteTableList).ListMeta}
-	for _, item := range obj.(*gloov1.RouteTableList).Items {
+	list := &gatewayv1.RouteTableList{ListMeta: obj.(*gatewayv1.RouteTableList).ListMeta}
+	for _, item := range obj.(*gatewayv1.RouteTableList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -81,31 +81,31 @@ func (c *FakeRouteTables) Watch(ctx context.Context, opts v1.ListOptions) (watch
 }
 
 // Create takes the representation of a routeTable and creates it.  Returns the server's representation of the routeTable, and an error, if there is any.
-func (c *FakeRouteTables) Create(ctx context.Context, routeTable *gloov1.RouteTable, opts v1.CreateOptions) (result *gloov1.RouteTable, err error) {
+func (c *FakeRouteTables) Create(ctx context.Context, routeTable *gatewayv1.RouteTable, opts v1.CreateOptions) (result *gatewayv1.RouteTable, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(routetablesResource, c.ns, routeTable), &gloov1.RouteTable{})
+		Invokes(testing.NewCreateAction(routetablesResource, c.ns, routeTable), &gatewayv1.RouteTable{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*gloov1.RouteTable), err
+	return obj.(*gatewayv1.RouteTable), err
 }
 
 // Update takes the representation of a routeTable and updates it. Returns the server's representation of the routeTable, and an error, if there is any.
-func (c *FakeRouteTables) Update(ctx context.Context, routeTable *gloov1.RouteTable, opts v1.UpdateOptions) (result *gloov1.RouteTable, err error) {
+func (c *FakeRouteTables) Update(ctx context.Context, routeTable *gatewayv1.RouteTable, opts v1.UpdateOptions) (result *gatewayv1.RouteTable, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(routetablesResource, c.ns, routeTable), &gloov1.RouteTable{})
+		Invokes(testing.NewUpdateAction(routetablesResource, c.ns, routeTable), &gatewayv1.RouteTable{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*gloov1.RouteTable), err
+	return obj.(*gatewayv1.RouteTable), err
 }
 
 // Delete takes name of the routeTable and deletes it. Returns an error if one occurs.
 func (c *FakeRouteTables) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(routetablesResource, c.ns, name), &gloov1.RouteTable{})
+		Invokes(testing.NewDeleteAction(routetablesResource, c.ns, name), &gatewayv1.RouteTable{})
 
 	return err
 }
@@ -114,17 +114,17 @@ func (c *FakeRouteTables) Delete(ctx context.Context, name string, opts v1.Delet
 func (c *FakeRouteTables) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(routetablesResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &gloov1.RouteTableList{})
+	_, err := c.Fake.Invokes(action, &gatewayv1.RouteTableList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched routeTable.
-func (c *FakeRouteTables) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *gloov1.RouteTable, err error) {
+func (c *FakeRouteTables) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *gatewayv1.RouteTable, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(routetablesResource, c.ns, name, pt, data, subresources...), &gloov1.RouteTable{})
+		Invokes(testing.NewPatchSubresourceAction(routetablesResource, c.ns, name, pt, data, subresources...), &gatewayv1.RouteTable{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*gloov1.RouteTable), err
+	return obj.(*gatewayv1.RouteTable), err
 }

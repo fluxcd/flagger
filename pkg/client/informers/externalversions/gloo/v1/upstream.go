@@ -22,7 +22,7 @@ import (
 	"context"
 	time "time"
 
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "github.com/fluxcd/flagger/pkg/client/listers/gloo/v1"
@@ -32,59 +32,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// RouteTableInformer provides access to a shared informer and lister for
-// RouteTables.
-type RouteTableInformer interface {
+// UpstreamInformer provides access to a shared informer and lister for
+// Upstreams.
+type UpstreamInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.RouteTableLister
+	Lister() v1.UpstreamLister
 }
 
-type routeTableInformer struct {
+type upstreamInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewRouteTableInformer constructs a new informer for RouteTable type.
+// NewUpstreamInformer constructs a new informer for Upstream type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewRouteTableInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredRouteTableInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewUpstreamInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredUpstreamInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredRouteTableInformer constructs a new informer for RouteTable type.
+// NewFilteredUpstreamInformer constructs a new informer for Upstream type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredRouteTableInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredUpstreamInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayV1().RouteTables(namespace).List(context.TODO(), options)
+				return client.GlooV1().Upstreams(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayV1().RouteTables(namespace).Watch(context.TODO(), options)
+				return client.GlooV1().Upstreams(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&gloov1.RouteTable{},
+		&gloov1.Upstream{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *routeTableInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredRouteTableInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *upstreamInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredUpstreamInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *routeTableInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&gloov1.RouteTable{}, f.defaultInformer)
+func (f *upstreamInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&gloov1.Upstream{}, f.defaultInformer)
 }
 
-func (f *routeTableInformer) Lister() v1.RouteTableLister {
-	return v1.NewRouteTableLister(f.Informer().GetIndexer())
+func (f *upstreamInformer) Lister() v1.UpstreamLister {
+	return v1.NewUpstreamLister(f.Informer().GetIndexer())
 }

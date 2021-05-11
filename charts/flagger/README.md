@@ -68,7 +68,7 @@ $ helm upgrade -i flagger flagger/flagger \
     --set prometheus.install=true
 ```
 
-To install Flagger and Prometheus for **Gloo** (requires Gloo discovery enabled):
+To install Flagger and Prometheus for **Gloo** (no longer requires Gloo discovery):
 
 ```console
 $ helm upgrade -i flagger flagger/flagger \

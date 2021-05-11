@@ -26,8 +26,10 @@ import (
 	fakeappmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2/fake"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	fakeflaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1/fake"
-	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
-	fakegatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1/fake"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
+	fakegatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1/fake"
+	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
+	fakegloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1/fake"
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	fakenetworkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
@@ -112,6 +114,11 @@ func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
 // GatewayV1 retrieves the GatewayV1Client
 func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
 	return &fakegatewayv1.FakeGatewayV1{Fake: &c.Fake}
+}
+
+// GlooV1 retrieves the GlooV1Client
+func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
+	return &fakegloov1.FakeGlooV1{Fake: &c.Fake}
 }
 
 // NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client

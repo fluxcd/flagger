@@ -30,7 +30,7 @@ import (
 )
 
 func TestGlooObserver_GetRequestSuccessRate(t *testing.T) {
-	expected := ` sum( rate( envoy_cluster_upstream_rq{ envoy_cluster_name=~"default-podinfo-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+", envoy_response_code!~"5.*" }[1m] ) ) / sum( rate( envoy_cluster_upstream_rq{ envoy_cluster_name=~"default-podinfo-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+", }[1m] ) ) * 100`
+	expected := ` sum( rate( envoy_cluster_upstream_rq{ envoy_cluster_name=~"default-podinfo-canaryupstream-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+", envoy_response_code!~"5.*" }[1m] ) ) / sum( rate( envoy_cluster_upstream_rq{ envoy_cluster_name=~"default-podinfo-canaryupstream-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+", }[1m] ) ) * 100`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
@@ -64,7 +64,7 @@ func TestGlooObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestGlooObserver_GetRequestDuration(t *testing.T) {
-	expected := ` histogram_quantile( 0.99, sum( rate( envoy_cluster_upstream_rq_time_bucket{ envoy_cluster_name=~"default-podinfo-canary-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+", }[1m] ) ) by (le) )`
+	expected := ` histogram_quantile( 0.99, sum( rate( envoy_cluster_upstream_rq_time_bucket{ envoy_cluster_name=~"default-podinfo-canaryupstream-[0-9a-zA-Z-]+_[0-9a-zA-Z-]+", }[1m] ) ) by (le) )`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]

@@ -24,7 +24,8 @@ import (
 	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
-	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
 	splitv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
@@ -42,6 +43,7 @@ type Interface interface {
 	AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface
 	FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface
 	GatewayV1() gatewayv1.GatewayV1Interface
+	GlooV1() gloov1.GlooV1Interface
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
 	ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface
 	SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface
@@ -58,6 +60,7 @@ type Clientset struct {
 	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
 	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
 	gatewayV1          *gatewayv1.GatewayV1Client
+	glooV1             *gloov1.GlooV1Client
 	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
 	projectcontourV1   *projectcontourv1.ProjectcontourV1Client
 	splitV1alpha1      *splitv1alpha1.SplitV1alpha1Client
@@ -84,6 +87,11 @@ func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
 // GatewayV1 retrieves the GatewayV1Client
 func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
 	return c.gatewayV1
+}
+
+// GlooV1 retrieves the GlooV1Client
+func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
+	return c.glooV1
 }
 
 // NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
@@ -153,6 +161,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.glooV1, err = gloov1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.networkingV1alpha3, err = networkingv1alpha3.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -193,6 +205,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.appmeshV1beta1 = appmeshv1beta1.NewForConfigOrDie(c)
 	cs.flaggerV1beta1 = flaggerv1beta1.NewForConfigOrDie(c)
 	cs.gatewayV1 = gatewayv1.NewForConfigOrDie(c)
+	cs.glooV1 = gloov1.NewForConfigOrDie(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.NewForConfigOrDie(c)
 	cs.projectcontourV1 = projectcontourv1.NewForConfigOrDie(c)
 	cs.splitV1alpha1 = splitv1alpha1.NewForConfigOrDie(c)
@@ -211,6 +224,7 @@ func New(c rest.Interface) *Clientset {
 	cs.appmeshV1beta1 = appmeshv1beta1.New(c)
 	cs.flaggerV1beta1 = flaggerv1beta1.New(c)
 	cs.gatewayV1 = gatewayv1.New(c)
+	cs.glooV1 = gloov1.New(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
 	cs.projectcontourV1 = projectcontourv1.New(c)
 	cs.splitV1alpha1 = splitv1alpha1.New(c)

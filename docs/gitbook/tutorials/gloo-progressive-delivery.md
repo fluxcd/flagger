@@ -174,6 +174,8 @@ service/podinfo
 service/podinfo-canary
 service/podinfo-primary
 routetables.gateway.solo.io/podinfo
+upstreams.gloo.solo.io/test-podinfo-canaryupstream-9898
+upstreams.gloo.solo.io/test-podinfo-primaryupstream-9898
 ```
 
 When the bootstrap finishes Flagger will set the canary status to initialized:

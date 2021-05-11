@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"testing"
 
+	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 )
 
 func TestGlooRouter_Sync(t *testing.T) {
@@ -36,9 +36,17 @@ func TestGlooRouter_Sync(t *testing.T) {
 		glooClient:    mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
-
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
 	// init
-	err := router.Reconcile(mocks.canary)
+	err = router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
 	// test insert
@@ -77,8 +85,17 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 		glooClient:    mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
 
-	err := router.Reconcile(mocks.canary)
+	err = router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
 	_, _, _, err = router.GetRoutes(mocks.canary)
@@ -94,10 +111,10 @@ func TestGlooRouter_SetRoutes(t *testing.T) {
 	rt, err := router.glooClient.GatewayV1().RouteTables("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	var pRoute gloov1.WeightedDestination
-	var cRoute gloov1.WeightedDestination
-	canaryName := fmt.Sprintf("%s-%s-canary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
-	primaryName := fmt.Sprintf("%s-%s-primary-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
+	var pRoute gatewayv1.WeightedDestination
+	var cRoute gatewayv1.WeightedDestination
+	canaryName := fmt.Sprintf("%s-%s-canaryupstream-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
+	primaryName := fmt.Sprintf("%s-%s-primaryupstream-%v", mocks.canary.Namespace, mocks.canary.Spec.TargetRef.Name, mocks.canary.Spec.Service.Port)
 
 	for _, dest := range rt.Spec.Routes[0].Action.Destination.Destinations {
 		if dest.Destination.Upstream.Name == primaryName {
@@ -139,8 +156,17 @@ func TestGlooRouter_GetRoutes(t *testing.T) {
 		glooClient:    mocks.meshClient,
 		kubeClient:    mocks.kubeClient,
 	}
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
 
-	err := router.Reconcile(mocks.canary)
+	err = router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
 	p, c, m, err := router.GetRoutes(mocks.canary)
