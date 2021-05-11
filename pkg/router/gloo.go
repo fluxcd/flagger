@@ -19,6 +19,8 @@ package router
 import (
 	"context"
 	"fmt"
+	v1 "github.com/solo-io/solo-apis/pkg/api/gloo.solo.io/v1"
+	kubeoptions "github.com/solo-io/solo-apis/pkg/api/gloo.solo.io/v1/options/kubernetes"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -279,12 +281,14 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 				}),
 			},
 		},
-		Spec: gloov1.UpstreamSpec{
-			Kube: gloov1.KubeUpstream{
-				ServiceName:      svc.GetName(),
-				ServiceNamespace: canary.Namespace,
-				ServicePort:      canary.Spec.Service.Port,
-				Selector:         svc.Spec.Selector,
+		Spec: v1.UpstreamSpec{
+			UpstreamType: &v1.UpstreamSpec_Kube{
+				Kube: &kubeoptions.UpstreamSpec{
+					ServiceName:      svc.GetName(),
+					ServiceNamespace: canary.Namespace,
+					ServicePort:      uint32(canary.Spec.Service.Port),
+					Selector:         svc.Spec.Selector,
+				},
 			},
 		},
 	}
