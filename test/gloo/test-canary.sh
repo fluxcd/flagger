@@ -25,6 +25,23 @@ spec:
             namespace: test
 EOF
 
+# Create upstream that will have config that will be applied to generated flagger upstreams
+# but will be used for no other reason
+cat <<EOF | kubectl apply -f -
+apiVersion: gloo.solo.io/v1
+kind: Upstream
+metadata:
+  name: config-upstream
+  namespace: gloo-system
+spec:
+  static:
+    hosts:
+    - addr: "example.com"
+      port: 80
+  connectionConfig:
+    maxRequestsPerConnection: 51
+EOF
+
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: Canary
@@ -32,6 +49,11 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  upstreamRef:
+    apiVersion: gloo.solo.io/v1
+    kind: Upstream
+    name: config-upstream
+    namespace: gloo-system
   provider: gloo
   targetRef:
     apiVersion: apps/v1
@@ -75,6 +97,9 @@ count=0
 ok=false
 until ${ok}; do
     kubectl -n test get canary/podinfo | grep 'Initialized' && ok=true || ok=false
+    if $ok ; then
+      kubectl -n test get upstream/test-podinfo-canaryupstream-80 -ojson | jq 'any(.spec.connectionConfig.maxRequestsPerConnection; contains(51))' && ok=true || ok=false
+    fi
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then

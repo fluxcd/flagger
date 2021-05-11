@@ -10,8 +10,8 @@ and Flagger to automate canary releases and A/B testing.
 Flagger requires a Kubernetes cluster **v1.16** or newer and Gloo Edge ingress **1.6.0** or newer.
 
 This guide was written for Flagger version **1.6.0** or higher. Prior versions of Flagger
-used Gloo upstream groups to handle canaries, but newer versions of Flagger use Gloo
-route tables to handle canaries as well as A/B testing.
+used Gloo `UpstreamGroup`s to handle canaries, but newer versions of Flagger use Gloo
+`RouteTable`s to handle canaries as well as A/B testing.
 
 Install Gloo with Helm v3:
 
@@ -36,7 +36,7 @@ helm upgrade -i flagger flagger/flagger \
 ## Bootstrap
 
 Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services and Gloo route tables groups).
+then creates a series of objects (Kubernetes deployments, ClusterIP services, Gloo route tables and upstreams).
 These objects expose the application outside the cluster and drive the canary analysis and promotion.
 
 Create a test namespace:
@@ -94,6 +94,14 @@ metadata:
   name: podinfo
   namespace: test
 spec:
+  # upstreamRef (optional)
+  # defines an upstream to copy the spec from when flagger generates new upstreams.
+  # necessary to copy over TLS config, circuit breakers, etc. (anything nonstandard)
+#  upstreamRef:
+#    apiVersion: gloo.solo.io/v1
+#    kind: Upstream
+#    name: podinfo-upstream
+#    namespace: gloo-system
   provider: gloo
   # deployment reference
   targetRef:
