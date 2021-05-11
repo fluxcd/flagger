@@ -411,6 +411,11 @@ func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 		*out = new(CrossNamespaceObjectReference)
 		**out = **in
 	}
+	if in.UpstreamRef != nil {
+		in, out := &in.UpstreamRef, &out.UpstreamRef
+		*out = new(CrossNamespaceObjectReference)
+		**out = **in
+	}
 	in.Service.DeepCopyInto(&out.Service)
 	if in.Analysis != nil {
 		in, out := &in.Analysis, &out.Analysis
