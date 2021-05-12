@@ -129,6 +129,21 @@ spec:
                         - Ingress
                     name:
                       type: string
+                upstreamRef:
+                  description: Gloo Upstream selector
+                  type: object
+                  required: [ "apiVersion", "kind", "name" ]
+                  properties:
+                    apiVersion:
+                      type: string
+                    kind:
+                      type: string
+                      enum:
+                        - Upstream
+                    name:
+                      type: string
+                    namespace:
+                      type: string
                 service:
                   description: Kubernetes Service spec
                   type: object
