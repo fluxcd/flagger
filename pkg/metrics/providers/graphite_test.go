@@ -17,6 +17,7 @@ limitations under the License.
 package providers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,10 +27,22 @@ import (
 )
 
 func TestNewGraphiteProvider(t *testing.T) {
+	addr := "http://graphite:8080"
 	graph, err := NewGraphiteProvider(flaggerv1.MetricTemplateProvider{
-		Address: "http://graphite:9090",
+		Address: addr,
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, "http://graphite:9090", graph.url.String())
+	assert.Equal(t, addr, graph.url.String())
+}
+
+func TestNewGraphiteProvider_InvalidURL(t *testing.T) {
+	addr := ":::"
+	_, err := NewGraphiteProvider(flaggerv1.MetricTemplateProvider{
+		Address: addr,
+		Type:    "graphite",
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, err.Error(), fmt.Sprintf("graphite address %s is not a valid URL", addr))
 }
