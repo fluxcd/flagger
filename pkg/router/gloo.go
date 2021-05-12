@@ -19,6 +19,7 @@ package router
 import (
 	"context"
 	"fmt"
+
 	v1 "github.com/solo-io/solo-apis/pkg/api/gloo.solo.io/v1"
 	kubeoptions "github.com/solo-io/solo-apis/pkg/api/gloo.solo.io/v1/options/kubernetes"
 
@@ -322,7 +323,7 @@ func (gr *GlooRouter) getGlooConfigUpstream(canary *flaggerv1.Canary) (*gloov1.U
 	if configUpstreamRef == nil {
 		return nil, nil
 	}
-	configUpstream, err := gr.glooClient.GlooV1().Upstreams(configUpstreamRef.Namespace).Get(context.TODO(),configUpstreamRef.Name, metav1.GetOptions{})
+	configUpstream, err := gr.glooClient.GlooV1().Upstreams(configUpstreamRef.Namespace).Get(context.TODO(), configUpstreamRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("config upstream %s.%s get query error: %w", configUpstreamRef.Name, canary.Namespace, err)
 	}
