@@ -20,9 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	v1 "github.com/solo-io/solo-apis/pkg/api/gloo.solo.io/v1"
-	kubeoptions "github.com/solo-io/solo-apis/pkg/api/gloo.solo.io/v1/options/kubernetes"
-
 	corev1 "k8s.io/api/core/v1"
 
 	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
@@ -275,33 +272,27 @@ func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamNa
 
 func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *corev1.Service, upstreamName string, glooUpstreamWithConfig *gloov1.Upstream) *gloov1.Upstream {
 
-	upstreamSpec := v1.UpstreamSpec{}
+	upstreamSpec := gloov1.UpstreamSpec{}
 	if glooUpstreamWithConfig != nil {
 		configSpec := glooUpstreamWithConfig.Spec
-		upstreamSpec = v1.UpstreamSpec{
-			DiscoveryMetadata:           configSpec.GetDiscoveryMetadata(),
-			SslConfig:                   configSpec.GetSslConfig(),
-			CircuitBreakers:             configSpec.GetCircuitBreakers(),
-			LoadBalancerConfig:          configSpec.GetLoadBalancerConfig(),
-			ConnectionConfig:            configSpec.GetConnectionConfig(),
-			HealthChecks:                configSpec.GetHealthChecks(),
-			OutlierDetection:            configSpec.GetOutlierDetection(),
-			UseHttp2:                    configSpec.GetUseHttp2(),
-			Failover:                    configSpec.GetFailover(),
-			InitialStreamWindowSize:     configSpec.GetInitialStreamWindowSize(),
-			InitialConnectionWindowSize: configSpec.GetInitialConnectionWindowSize(),
-			HttpProxyHostname:           configSpec.GetHttpProxyHostname(),
+		upstreamSpec = gloov1.UpstreamSpec{
+			SslConfig:                   configSpec.SslConfig,
+			CircuitBreakers:             configSpec.CircuitBreakers,
+			ConnectionConfig:            configSpec.ConnectionConfig,
+			UseHttp2:                    configSpec.UseHttp2,
+			InitialStreamWindowSize:     configSpec.InitialStreamWindowSize,
+			InitialConnectionWindowSize: configSpec.InitialConnectionWindowSize,
+			HttpProxyHostname:           configSpec.HttpProxyHostname,
 		}
 
 	}
-	upstreamSpec.UpstreamType = &v1.UpstreamSpec_Kube{
-		Kube: &kubeoptions.UpstreamSpec{
-			ServiceName:      svc.GetName(),
-			ServiceNamespace: canary.Namespace,
-			ServicePort:      uint32(canary.Spec.Service.Port),
-			Selector:         svc.Spec.Selector,
-		},
+	upstreamSpec.Kube = &gloov1.KubeUpstream{
+		ServiceName:      svc.GetName(),
+		ServiceNamespace: canary.Namespace,
+		ServicePort:      canary.Spec.Service.Port,
+		Selector:         svc.Spec.Selector,
 	}
+
 	return &gloov1.Upstream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      upstreamName,
