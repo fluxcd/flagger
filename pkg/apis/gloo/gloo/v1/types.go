@@ -59,12 +59,13 @@ type UpstreamSslConfig_Sds struct {
 	CertificatesSecretName string `json:"certificates_secret_name,omitempty"`
 	ValidationContextName  string `json:"validation_context_name,omitempty"`
 
+	/** SDSBuilder -- onle one of the following can be set */
 	CallCredentials *CallCredentials `json:"call_credentials,omitempty"`
+	ClusterName     string           `json:"cluster_name,omitempty"`
 }
 
 type CallCredentials struct {
 	FileCredentialSource *CallCredentials_FileCredentialSource `json:"file_credential_source,omitempty"`
-	ClusterName          string                                `json:"cluster_name,omitempty"`
 }
 
 type CallCredentials_FileCredentialSource struct {
