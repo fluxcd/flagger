@@ -21,4 +21,7 @@ require (
 	k8s.io/klog/v2 v2.5.0
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.20.4
+replace (
+	k8s.io/client-go => k8s.io/client-go v0.20.4
+	k8s.io/code-generator => k8s.io/code-generator v0.20.4
+)
