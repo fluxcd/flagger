@@ -213,12 +213,18 @@ func (i *IngressRouter) makeAnnotations(annotations map[string]string) map[strin
 	res := make(map[string]string)
 	for k, v := range annotations {
 		if !strings.Contains(k, i.GetAnnotationWithPrefix("canary")) &&
-			!strings.Contains(k, "kubectl.kubernetes.io/last-applied-configuration") {
+			!strings.Contains(k, "kubectl.kubernetes.io/last-applied-configuration") &&
+			!strings.Contains(k, i.GetAnnotationWithPrefix("canary-weight")) &&
+			!strings.Contains(k, i.GetAnnotationWithPrefix("canary-by-cookie")) &&
+			!strings.Contains(k, i.GetAnnotationWithPrefix("canary-by-header")) &&
+			!strings.Contains(k, i.GetAnnotationWithPrefix("canary-by-header-value")) &&
+			!strings.Contains(k, i.GetAnnotationWithPrefix("canary-by-header-pattern")) {
 			res[k] = v
 		}
 	}
 
-	res[i.GetAnnotationWithPrefix("canary")] = "false"
+	res[i.GetAnnotationWithPrefix("canary")] = "true"
+	res[i.GetAnnotationWithPrefix("canary-weight")] = "0"
 
 	return res
 }
