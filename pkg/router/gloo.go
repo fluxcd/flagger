@@ -255,8 +255,12 @@ func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamNa
 	}
 	_, err = upstreamClient.Get(context.TODO(), upstreamName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		canaryUs := gr.getGlooUpstreamKubeService(canary, svc, upstreamName)
-		_, err := gr.glooClient.GlooV1().Upstreams(canary.Namespace).Create(context.TODO(), canaryUs, metav1.CreateOptions{})
+		glooUpstreamWithConfig, err := gr.getGlooConfigUpstream(canary)
+		if err != nil {
+			return err
+		}
+		canaryUs := gr.getGlooUpstreamKubeService(canary, svc, upstreamName, glooUpstreamWithConfig)
+		_, err = gr.glooClient.GlooV1().Upstreams(canary.Namespace).Create(context.TODO(), canaryUs, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("upstream %s.%s create query error: %w", upstreamName, canary.Namespace, err)
 		}
@@ -266,7 +270,29 @@ func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamNa
 	return nil
 }
 
-func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *corev1.Service, upstreamName string) *gloov1.Upstream {
+func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *corev1.Service, upstreamName string, glooUpstreamWithConfig *gloov1.Upstream) *gloov1.Upstream {
+
+	upstreamSpec := gloov1.UpstreamSpec{}
+	if glooUpstreamWithConfig != nil {
+		configSpec := glooUpstreamWithConfig.Spec
+		upstreamSpec = gloov1.UpstreamSpec{
+			SslConfig:                   configSpec.SslConfig,
+			CircuitBreakers:             configSpec.CircuitBreakers,
+			ConnectionConfig:            configSpec.ConnectionConfig,
+			UseHttp2:                    configSpec.UseHttp2,
+			InitialStreamWindowSize:     configSpec.InitialStreamWindowSize,
+			InitialConnectionWindowSize: configSpec.InitialConnectionWindowSize,
+			HttpProxyHostname:           configSpec.HttpProxyHostname,
+		}
+
+	}
+	upstreamSpec.Kube = &gloov1.KubeUpstream{
+		ServiceName:      svc.GetName(),
+		ServiceNamespace: canary.Namespace,
+		ServicePort:      canary.Spec.Service.Port,
+		Selector:         svc.Spec.Selector,
+	}
+
 	return &gloov1.Upstream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      upstreamName,
@@ -279,15 +305,20 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 				}),
 			},
 		},
-		Spec: gloov1.UpstreamSpec{
-			Kube: gloov1.KubeUpstream{
-				ServiceName:      svc.GetName(),
-				ServiceNamespace: canary.Namespace,
-				ServicePort:      canary.Spec.Service.Port,
-				Selector:         svc.Spec.Selector,
-			},
-		},
+		Spec: upstreamSpec,
 	}
+}
+
+func (gr *GlooRouter) getGlooConfigUpstream(canary *flaggerv1.Canary) (*gloov1.Upstream, error) {
+	configUpstreamRef := canary.Spec.UpstreamRef
+	if configUpstreamRef == nil {
+		return nil, nil
+	}
+	configUpstream, err := gr.glooClient.GlooV1().Upstreams(configUpstreamRef.Namespace).Get(context.TODO(), configUpstreamRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("config upstream %s.%s get query error: %w", configUpstreamRef.Name, canary.Namespace, err)
+	}
+	return configUpstream, nil
 }
 
 func getMatchers(canary *flaggerv1.Canary) []gatewayv1.Matcher {
