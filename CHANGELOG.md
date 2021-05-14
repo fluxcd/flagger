@@ -2,9 +2,31 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.9.0
+
+**Release date:** 2021-05-14
+
+This release comes with improvements to the [Gloo Edge](https://docs.flagger.app/tutorials/gloo-progressive-delivery) integration.
+
+Starting with this version, Flagger no longer requires Gloo discovery to be enabled.
+Flagger generated the Gloo upstream objects on its own and optionally it can use an
+existing upstream (specified with `.spec.upstreamRef`) as a template. 
+
+#### Features
+
+- Gloo: Create gloo upstreams from non-discovered services
+  [#894](https://github.com/fluxcd/flagger/pull/894)
+- Gloo Upstream Ref for Upstream Config
+  [#908](https://github.com/fluxcd/flagger/pull/908)
+
+#### Improvements
+
+- Adjusted Nginx ingress canary headers on init and promotion
+  [#907](https://github.com/fluxcd/flagger/pull/907)
+
 ## 1.8.0
 
-**Release date:** 2021-03-23
+**Release date:** 2021-04-29
 
 This release comes with support for the SMI `v1alpha2` and `v1alpha3` TrafficSplit APIs.
 
