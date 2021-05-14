@@ -195,6 +195,30 @@ done
 
 echo '✔ Canary promotion test passed'
 
+echo 'Testing original ingress update after canary promotion to pass validation webhook'
+
+cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: podinfo
+  namespace: test
+  labels:
+    app: podinfo
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - backend:
+              serviceName: podinfo
+              servicePort: 80
+EOF
+
+echo '✔ Original ingress update with validation webhook passed'
+
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: Canary

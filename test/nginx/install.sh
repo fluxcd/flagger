@@ -14,6 +14,7 @@ helm upgrade -i ingress-nginx ingress-nginx/ingress-nginx --version=${NGINX_HELM
 --wait \
 --namespace ingress-nginx \
 --set controller.metrics.enabled=true \
+--set controller.admissionWebhooks.enabled=true \
 --set controller.podAnnotations."prometheus\.io/scrape"=true \
 --set controller.podAnnotations."prometheus\.io/port"=10254 \
 --set controller.service.type=NodePort
