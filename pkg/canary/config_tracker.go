@@ -135,6 +135,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		}
 		vs = targetDep.Spec.Template.Spec.Volumes
 		cs = targetDep.Spec.Template.Spec.Containers
+		cs = append(cs, targetDep.Spec.Template.Spec.InitContainers...)
 	case "DaemonSet":
 		targetDae, err := ct.KubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 		if err != nil {
@@ -142,6 +143,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		}
 		vs = targetDae.Spec.Template.Spec.Volumes
 		cs = targetDae.Spec.Template.Spec.Containers
+		cs = append(cs, targetDae.Spec.Template.Spec.InitContainers...)
 	default:
 		return nil, fmt.Errorf("TargetRef.Kind invalid: %s", cd.Spec.TargetRef.Kind)
 	}
