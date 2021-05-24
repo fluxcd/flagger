@@ -337,7 +337,7 @@ A canary deployment can fail due to any of the following reasons:
 
 * the container image can't be downloaded 
 * the deployment replica set is stuck for more then ten minutes \(eg. due to a container crash loop\)
-* the webooks \(acceptance tests, helm tests, load tests, etc\) are returning a non 2xx response
+* the webhooks \(acceptance tests, helm tests, load tests, etc\) are returning a non 2xx response
 * the HTTP success rate \(non 5xx responses\) metric drops under the threshold
 * the HTTP average duration metric goes over the threshold
 * the Istio telemetry service is unable to collect traffic metrics
