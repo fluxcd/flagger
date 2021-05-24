@@ -401,3 +401,78 @@ Reference the template in the canary analysis:
           max: 5
         interval: 1m
 ```
+
+## Graphite
+
+You can create custom metric checks using the Graphite provider.
+
+Graphite template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: graphite-request-success-rate
+spec:
+  provider:
+    type: graphite
+    address: http://graphite.monitoring
+  query: |
+    target=summarize(
+      asPercent(
+        sumSeries(
+          stats.timers.httpServerRequests.exception.*.method.*.outcome.{CLIENT_ERROR,INFORMATIONAL,REDIRECTION,SUCCESS}.status.*.uri.*.count
+        ),
+        sumSeries(
+          stats.timers.httpServerRequests.exception.*.method.*.outcome.*.status.*.uri.*.count
+        )
+      ),
+      {{interval}},
+      'avg'
+    )
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "success rate"
+        templateRef:
+          name: graphite-request-success-rate
+        thresholdRange:
+          min: 90
+        interval: 1min
+```
+
+## Graphite authentication
+
+If your Graphite API requires basic authentication, you can create a secret in the same namespace
+as the `MetricTemplate` with the basic-auth credentials:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: graphite-basic-auth
+  namespace: flagger
+data:
+  username: your-user
+  password: your-password
+```
+
+Then, reference the secret in the `MetricTemplate`:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: my-metric
+  namespace: flagger
+spec:
+  provider:
+    type: graphite
+    address: http://graphite.monitoring
+    secretRef:
+      name: graphite-basic-auth
+```
