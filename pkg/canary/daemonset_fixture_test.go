@@ -59,12 +59,16 @@ func newDaemonSetFixture(dc daemonsetConfigs) daemonSetControllerFixture {
 		newDaemonSetControllerTestConfigProjected(),
 		newDaemonSetControllerTestConfigMapTrackerEnabled(),
 		newDaemonSetControllerTestConfigMapTrackerDisabled(),
+		newDaemonSetControllerTestConfigMapInit(),
+		newDaemonSetControllerTestConfigMapInitEnv(),
 		newDaemonSetControllerTestSecret(),
 		newDaemonSetControllerTestSecretEnv(),
 		newDaemonSetControllerTestSecretVol(),
 		newDaemonSetControllerTestSecretProjected(),
 		newDaemonSetControllerTestSecretTrackerEnabled(),
 		newDaemonSetControllerTestSecretTrackerDisabled(),
+		newDaemonSetControllerTestSecretInit(),
+		newDaemonSetControllerTestSecretInitEnv(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
@@ -136,6 +140,32 @@ func newDaemonSetControllerTestConfigMapEnv() *corev1.ConfigMap {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo-config-all-env",
+		},
+		Data: map[string]string{
+			"color": "red",
+		},
+	}
+}
+
+func newDaemonSetControllerTestConfigMapInit() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-init-env",
+		},
+		Data: map[string]string{
+			"color": "red",
+		},
+	}
+}
+
+func newDaemonSetControllerTestConfigMapInitEnv() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-init-all-env",
 		},
 		Data: map[string]string{
 			"color": "red",
@@ -286,6 +316,34 @@ func newDaemonSetControllerTestSecretTrackerDisabled() *corev1.Secret {
 	}
 }
 
+func newDaemonSetControllerTestSecretInit() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-init-env",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
+func newDaemonSetControllerTestSecretInitEnv() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-init-all-env",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
 func newDaemonSetControllerTestCanary(dc daemonsetConfigs) *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
@@ -324,6 +382,50 @@ func newDaemonSetControllerTestPodInfo(dc daemonsetConfigs) *appsv1.DaemonSet {
 					},
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Env: []corev1.EnvVar{
+								{
+									Name: "PODINFO_UI_COLOR",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "podinfo-config-init-env",
+											},
+											Key: "color",
+										},
+									},
+								},
+								{
+									Name: "API_KEY",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "podinfo-secret-init-env",
+											},
+											Key: "apiKey",
+										},
+									},
+								},
+							},
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									ConfigMapRef: &corev1.ConfigMapEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "podinfo-config-init-all-env",
+										},
+									},
+								},
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "podinfo-secret-init-all-env",
+										},
+									},
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:  "podinfo",

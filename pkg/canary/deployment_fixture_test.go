@@ -98,12 +98,16 @@ func newCustomizableFixture(dc deploymentConfigs) (deploymentControllerFixture, 
 		newDeploymentControllerTestConfigProjected(),
 		newDeploymentControllerTestConfigMapTrackerEnabled(),
 		newDeploymentControllerTestConfigMapTrackerDisabled(),
+		newDeploymentControllerTestConfigMapInit(),
+		newDeploymentControllerTestConfigMapInitEnv(),
 		newDeploymentControllerTestSecret(),
 		newDeploymentControllerTestSecretEnv(),
 		newDeploymentControllerTestSecretVol(),
 		newDeploymentControllerTestSecretProjected(),
 		newDeploymentControllerTestSecretTrackerEnabled(),
 		newDeploymentControllerTestSecretTrackerDisabled(),
+		newDeploymentControllerTestSecretInit(),
+		newDeploymentControllerTestSecretInitEnv(),
 	)
 
 	logger, _ := logger.NewLogger("debug")
@@ -152,6 +156,32 @@ func newDeploymentControllerTestConfigMapV2() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color":  "blue",
 			"output": "console",
+		},
+	}
+}
+
+func newDeploymentControllerTestConfigMapInit() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-init-env",
+		},
+		Data: map[string]string{
+			"color": "red",
+		},
+	}
+}
+
+func newDeploymentControllerTestConfigMapInitEnv() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-config-init-all-env",
+		},
+		Data: map[string]string{
+			"color": "red",
 		},
 	}
 }
@@ -325,6 +355,34 @@ func newDeploymentControllerTestSecretTrackerDisabled() *corev1.Secret {
 	}
 }
 
+func newDeploymentControllerTestSecretInit() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-init-env",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
+func newDeploymentControllerTestSecretInitEnv() *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo-secret-init-all-env",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"apiKey": []byte("test"),
+		},
+	}
+}
+
 func newDeploymentControllerTestCanary(cc canaryConfigs) *flaggerv1.Canary {
 	cd := &flaggerv1.Canary{
 		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
@@ -355,7 +413,7 @@ func newDeploymentControllerTestCanary(cc canaryConfigs) *flaggerv1.Canary {
 }
 
 func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
-	var optional bool = false
+	optional := false
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
@@ -375,6 +433,50 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 					},
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Env: []corev1.EnvVar{
+								{
+									Name: "PODINFO_UI_COLOR",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "podinfo-config-init-env",
+											},
+											Key: "color",
+										},
+									},
+								},
+								{
+									Name: "API_KEY",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "podinfo-secret-init-env",
+											},
+											Key: "apiKey",
+										},
+									},
+								},
+							},
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									ConfigMapRef: &corev1.ConfigMapEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "podinfo-config-init-all-env",
+										},
+									},
+								},
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "podinfo-secret-init-all-env",
+										},
+									},
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:  "podinfo",
