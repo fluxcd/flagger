@@ -57,6 +57,16 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 		configPrimaryVolName := depPrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
 		assert.Equal(t, "podinfo-config-vol-primary", configPrimaryVolName)
 
+		configPrimaryInit, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-init-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, configMap.Data["color"], configPrimaryInit.Data["color"])
+		}
+
+		configPrimaryInitEnv, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-init-all-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, configMap.Data["color"], configPrimaryInitEnv.Data["color"])
+		}
+
 		configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMap.Data["color"], configPrimary.Data["color"])
@@ -122,6 +132,16 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 
 		configPrimaryVolName := daePrimary.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name
 		assert.Equal(t, "podinfo-config-vol-primary", configPrimaryVolName)
+
+		configPrimaryInit, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-init-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, configMap.Data["color"], configPrimaryInit.Data["color"])
+		}
+
+		configPrimaryInitEnv, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-init-all-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, configMap.Data["color"], configPrimaryInitEnv.Data["color"])
+		}
 
 		configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
@@ -190,6 +210,16 @@ func TestConfigTracker_Secrets(t *testing.T) {
 				depPrimary.Spec.Template.Spec.Volumes[1].VolumeSource.Secret.SecretName)
 		}
 
+		secretPrimaryInit, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-init-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, string(secret.Data["apiKey"]), string(secretPrimaryInit.Data["apiKey"]))
+		}
+
+		secretPrimaryInitEnv, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-init-all-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, string(secret.Data["apiKey"]), string(secretPrimaryInitEnv.Data["apiKey"]))
+		}
+
 		secretPrimary, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-env-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, string(secret.Data["apiKey"]), string(secretPrimary.Data["apiKey"]))
@@ -253,6 +283,16 @@ func TestConfigTracker_Secrets(t *testing.T) {
 		if assert.NoError(t, err) {
 			assert.Equal(t, "podinfo-secret-vol-primary",
 				daePrimary.Spec.Template.Spec.Volumes[1].VolumeSource.Secret.SecretName)
+		}
+
+		secretPrimaryInit, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-init-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, string(secret.Data["apiKey"]), string(secretPrimaryInit.Data["apiKey"]))
+		}
+
+		secretPrimaryInitEnv, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-init-all-env-primary", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, string(secret.Data["apiKey"]), string(secretPrimaryInitEnv.Data["apiKey"]))
 		}
 
 		secretPrimary, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-env-primary", metav1.GetOptions{})
