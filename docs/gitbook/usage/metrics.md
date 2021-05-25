@@ -421,10 +421,10 @@ spec:
     target=summarize(
       asPercent(
         sumSeries(
-          stats.timers.httpServerRequests.exception.*.method.*.outcome.{CLIENT_ERROR,INFORMATIONAL,REDIRECTION,SUCCESS}.status.*.uri.*.count
+          stats.timers.httpServerRequests.app.{{target}}.exception.*.method.*.outcome.{CLIENT_ERROR,INFORMATIONAL,REDIRECTION,SUCCESS}.status.*.uri.*.count
         ),
         sumSeries(
-          stats.timers.httpServerRequests.exception.*.method.*.outcome.*.status.*.uri.*.count
+          stats.timers.httpServerRequests.app.{{target}}.exception.*.method.*.outcome.*.status.*.uri.*.count
         )
       ),
       {{interval}},
