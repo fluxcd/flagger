@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
@@ -415,7 +415,7 @@ func newTestCanaryIngress() *flaggerv1.Canary {
 			},
 			IngressRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
-				APIVersion: "extensions/v1beta1",
+				APIVersion: "networking.k8s.io/v1",
 				Kind:       "Ingress",
 			},
 			Service: flaggerv1.CanaryService{
@@ -437,9 +437,9 @@ func newTestCanaryIngress() *flaggerv1.Canary {
 	return cd
 }
 
-func newTestIngress() *v1beta1.Ingress {
-	return &v1beta1.Ingress{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String()},
+func newTestIngress() *netv1.Ingress {
+	return &netv1.Ingress{
+		TypeMeta: metav1.TypeMeta{APIVersion: netv1.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
@@ -447,18 +447,22 @@ func newTestIngress() *v1beta1.Ingress {
 				"kubernetes.io/ingress.class": "nginx",
 			},
 		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
+		Spec: netv1.IngressSpec{
+			Rules: []netv1.IngressRule{
 				{
 					Host: "app.example.com",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
 								{
 									Path: "/",
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "podinfo",
-										ServicePort: intstr.FromInt(9898),
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: "podinfo",
+											Port: netv1.ServiceBackendPort{
+												Number: 9898,
+											},
+										},
 									},
 								},
 							},

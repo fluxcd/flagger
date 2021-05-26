@@ -8,7 +8,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo '>>> Creating ingress'
 cat <<EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: podinfo-ingress
@@ -16,15 +16,19 @@ metadata:
   labels:
     app: podinfo
   annotations:
-    kubernetes.io/ingress.class: skipper
+    kubernetes.io/ingress.class: "skipper"
 spec:
   rules:
-    - host: app.example.com
-      http:
-        paths:
-          - backend:
-              serviceName: podinfo-service
-              servicePort: 80
+  - host: "app.example.com"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: podinfo-service
+            port:
+              number: 80
 EOF
 
 echo '>>> Creating canary'
@@ -41,7 +45,7 @@ spec:
     kind: Deployment
     name: podinfo
   ingressRef:
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     name: podinfo-ingress
   service:

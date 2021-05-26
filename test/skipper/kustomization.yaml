@@ -3,9 +3,9 @@ kind: Kustomization
 resources:
   - ../../kustomize/base/prometheus/
   - ../../kustomize/base/flagger/
-  - https://raw.githubusercontent.com/zalando/skipper/v0.11.140/docs/kubernetes/deploy/deployment/rbac.yaml
-  - https://raw.githubusercontent.com/zalando/skipper/v0.11.140/docs/kubernetes/deploy/deployment/service.yaml
-  - https://raw.githubusercontent.com/zalando/skipper/v0.11.140/docs/kubernetes/deploy/deployment/deployment.yaml
+  - https://raw.githubusercontent.com/zalando/skipper/v0.13.61/docs/kubernetes/deploy/deployment/rbac.yaml
+  - https://raw.githubusercontent.com/zalando/skipper/v0.13.61/docs/kubernetes/deploy/deployment/service.yaml
+  - https://raw.githubusercontent.com/zalando/skipper/v0.13.61/docs/kubernetes/deploy/deployment/deployment.yaml
   - namespace.yaml
 patchesStrategicMerge:
   - patch.yaml
@@ -32,7 +32,7 @@ patches:
               $patch: delete
             containers:
               - name: skipper-ingress
-                image: registry.opensource.zalan.do/pathfinder/skipper:v0.11.141
+                image: registry.opensource.zalan.do/pathfinder/skipper:v0.13.61
                 ports:
                   - name: metrics-port
                     containerPort: 9911

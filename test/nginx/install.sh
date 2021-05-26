@@ -2,7 +2,7 @@
 
 set -o errexit
 
-NGINX_HELM_VERSION=3.15.2 # ingress v0.41.2
+NGINX_HELM_VERSION=3.31.0 # ingress v0.46.0
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin

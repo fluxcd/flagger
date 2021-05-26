@@ -69,7 +69,7 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexIngressName, canaryIngressName := skp.getIngressNames(canary.Spec.IngressRef.Name)
 
 	// retrieving apex ingress
-	apexIngress, err := skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(
+	apexIngress, err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Get(
 		context.TODO(), apexIngressName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("apexIngress %s.%s get query error: %w", apexIngressName, canary.Namespace, err)
@@ -81,12 +81,12 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 		rule := &iClone.Spec.Rules[x] // ref not value
 		for y := range rule.HTTP.Paths {
 			path := &rule.HTTP.Paths[y] // ref not value
-			if path.Backend.ServiceName == apexSvcName {
+			if path.Backend.Service != nil && path.Backend.Service.Name == apexSvcName {
 				// flipping to primary service
-				path.Backend.ServiceName = primarySvcName
+				path.Backend.Service.Name = primarySvcName
 				// adding second canary service
 				canaryBackend := path.DeepCopy()
-				canaryBackend.Backend.ServiceName = canarySvcName
+				canaryBackend.Backend.Service.Name = canarySvcName
 				rule.HTTP.Paths = append(rule.HTTP.Paths, *canaryBackend)
 			}
 		}
@@ -107,14 +107,14 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	// search for existence
-	canaryIngress, err := skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(
+	canaryIngress, err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Get(
 		context.TODO(), canaryIngressName, metav1.GetOptions{})
 
 	// new ingress
 	if errors.IsNotFound(err) {
 		// Let K8s set this. Otherwise K8s API complains with "resourceVersion should not be set on objects to be created"
 		iClone.ObjectMeta.ResourceVersion = ""
-		_, err := skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Create(context.TODO(), iClone, metav1.CreateOptions{})
+		_, err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Create(context.TODO(), iClone, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("ingress %s.%s create error: %w", iClone.Name, iClone.Namespace, err)
 		}
@@ -131,7 +131,7 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 		ingressClone.Spec = iClone.Spec
 		ingressClone.Annotations = iClone.Annotations
 
-		_, err := skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Update(context.TODO(), ingressClone, metav1.UpdateOptions{})
+		_, err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Update(context.TODO(), ingressClone, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("ingress %s.%s update error: %w", canaryIngressName, ingressClone.Namespace, err)
 		}
@@ -145,7 +145,7 @@ func (skp *SkipperRouter) GetRoutes(canary *flaggerv1.Canary) (primaryWeight, ca
 	_, primarySvcName, canarySvcName := canary.GetServiceNames()
 
 	_, canaryIngressName := skp.getIngressNames(canary.Spec.IngressRef.Name)
-	canaryIngress, err := skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(context.TODO(), canaryIngressName, metav1.GetOptions{})
+	canaryIngress, err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Get(context.TODO(), canaryIngressName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("ingress %s.%s get query error: %w", canaryIngressName, canary.Namespace, err)
 		return
@@ -176,7 +176,7 @@ func (skp *SkipperRouter) GetRoutes(canary *flaggerv1.Canary) (primaryWeight, ca
 func (skp *SkipperRouter) SetRoutes(canary *flaggerv1.Canary, primaryWeight, canaryWeight int, _ bool) (err error) {
 	_, primarySvcName, canarySvcName := canary.GetServiceNames()
 	_, canaryIngressName := skp.getIngressNames(canary.Spec.IngressRef.Name)
-	canaryIngress, err := skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Get(context.TODO(), canaryIngressName, metav1.GetOptions{})
+	canaryIngress, err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Get(context.TODO(), canaryIngressName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("ingress %s.%s get query error: %w", canaryIngressName, canary.Namespace, err)
 	}
@@ -197,7 +197,7 @@ func (skp *SkipperRouter) SetRoutes(canary *flaggerv1.Canary, primaryWeight, can
 		iClone.Annotations[skipperpredicateAnnotationKey] = insertPredicate(iClone.Annotations[skipperpredicateAnnotationKey], canaryRouteDisable)
 	}
 
-	_, err = skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Update(
+	_, err = skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Update(
 		context.TODO(), iClone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("ingress %s.%s update error %w", iClone.Name, iClone.Namespace, err)
@@ -214,7 +214,7 @@ func (skp *SkipperRouter) Finalize(canary *flaggerv1.Canary) error {
 	skp.logger.With("deleteCanaryIngress", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 		Debugf("Deleting Canary Ingress: %s", canaryIngressName)
 
-	err := skp.kubeClient.NetworkingV1beta1().Ingresses(canary.Namespace).Delete(
+	err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Delete(
 		context.TODO(), canaryIngressName, metav1.DeleteOptions{GracePeriodSeconds: &gracePeriodSeconds})
 	if err != nil {
 		return fmt.Errorf("ingress %s.%s unable to remove canary ingress: %w", canaryIngressName, canary.Namespace, err)
