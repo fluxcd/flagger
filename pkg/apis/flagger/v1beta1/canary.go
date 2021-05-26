@@ -21,6 +21,7 @@ import (
 	"time"
 
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -164,6 +165,14 @@ type CanaryService struct {
 	// +optional
 	Retries *istiov1alpha3.HTTPRetry `json:"retries,omitempty"`
 
+	// Outlier detection for the generated virtual service
+	// +optional
+	OutlierDetection *istiov1alpha3.OutlierDetection `json:"outlierDetection,omitempty"`
+
+	// Connection pool settings for the generated virtual service
+	// +optional
+	ConnectionPool *istiov1alpha3.ConnectionPoolSettings `json:"connectionPool,omitempty"`
+
 	// Headers operations for the generated Istio virtual service
 	// +optional
 	Headers *istiov1alpha3.Headers `json:"headers,omitempty"`
@@ -171,6 +180,26 @@ type CanaryService struct {
 	// Cross-Origin Resource Sharing policy for the generated Istio virtual service
 	// +optional
 	CorsPolicy *istiov1alpha3.CorsPolicy `json:"corsPolicy,omitempty"`
+
+	// Service discovery settings for the generate App Mesh virtual nodes
+	// +optional
+	ServiceDiscovery *appmeshv1beta2.ServiceDiscovery `json:"serviceDiscovery,omitempty"`
+
+	// VirtualNodeRef references an existing virtualnode to deep copy for canary/primary
+	// +optional
+	// VirtualNodeRef *CrossNamespaceObjectReference `json:"virtualNodeRef,omitemtpy"`
+
+	// VirtualRouterRef references an existing virtualrouter to mutate for canary rollout
+	// +optional
+	VirtualRouterRef *CrossNamespaceObjectReference `json:"virtualRouterRef,omitempty"`
+
+	// VirtualRouterRef referenced route name used for canary process
+	// +optional
+	RouteName string `json:"routeName,omitempty"`
+
+	// Base priority to assign route used for canary process
+	// +optional
+	BaseRoutePriority int64 `json:"baseRoutePriority,omitempty"`
 
 	// Mesh name of the generated App Mesh virtual nodes and virtual service
 	// +optional

@@ -21,6 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -354,6 +355,16 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(v1alpha3.HTTPRetry)
 		**out = **in
 	}
+	if in.OutlierDetection != nil {
+		in, out := &in.OutlierDetection, &out.OutlierDetection
+		*out = new(v1alpha3.OutlierDetection)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ConnectionPool != nil {
+		in, out := &in.ConnectionPool, &out.ConnectionPool
+		*out = new(v1alpha3.ConnectionPoolSettings)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Headers != nil {
 		in, out := &in.Headers, &out.Headers
 		*out = new(v1alpha3.Headers)
@@ -363,6 +374,16 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		in, out := &in.CorsPolicy, &out.CorsPolicy
 		*out = new(v1alpha3.CorsPolicy)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.ServiceDiscovery != nil {
+		in, out := &in.ServiceDiscovery, &out.ServiceDiscovery
+		*out = new(v1beta2.ServiceDiscovery)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.VirtualRouterRef != nil {
+		in, out := &in.VirtualRouterRef, &out.VirtualRouterRef
+		*out = new(CrossNamespaceObjectReference)
+		**out = **in
 	}
 	if in.Backends != nil {
 		in, out := &in.Backends, &out.Backends

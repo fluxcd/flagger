@@ -68,7 +68,7 @@ func (ar *AppMeshv1beta2Router) Reconcile(canary *flaggerv1.Canary) error {
 
 	// sync virtual node e.g. app-canary-namespace
 	// DNS app-canary.namespace
-	err = ar.reconcileVirtualNode(canary, canaryName, canary.Spec.TargetRef.Name, canaryHost)
+	err = ar.reconcileVirtualNode(canary, apexName, canary.Spec.TargetRef.Name, canaryHost)
 	if err != nil {
 		return fmt.Errorf("reconcileVirtualNode failed: %w", err)
 	}
@@ -82,10 +82,10 @@ func (ar *AppMeshv1beta2Router) Reconcile(canary *flaggerv1.Canary) error {
 
 	// sync canary virtual router
 	// DNS app-canary.namespace
-	err = ar.reconcileVirtualRouter(canary, canaryName, 100)
-	if err != nil {
-		return fmt.Errorf("reconcileVirtualRouter failed: %w", err)
-	}
+	// err = ar.reconcileVirtualRouter(canary, canaryName, 100)
+	// if err != nil {
+	// 	return fmt.Errorf("reconcileVirtualRouter failed: %w", err)
+	// }
 
 	return nil
 }
@@ -96,6 +96,18 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 	protocol := ar.getProtocol(canary)
 	timeout := ar.makeListenerTimeout(canary)
 
+	serviceDiscovery := &appmeshv1.ServiceDiscovery{
+		DNS: &appmeshv1.DNSServiceDiscovery{
+			Hostname: host,
+		},
+	}
+	if canary.Spec.Service.ServiceDiscovery != nil {
+		serviceDiscovery = canary.Spec.Service.ServiceDiscovery
+		if serviceDiscovery.AWSCloudMap.ServiceName != "" {
+			serviceDiscovery.AWSCloudMap.Attributes = append(serviceDiscovery.AWSCloudMap.Attributes, appmeshv1.AWSCloudMapInstanceAttribute{Key: "flagger", Value: name})
+		}
+	}
+
 	vnSpec := appmeshv1.VirtualNodeSpec{
 		Listeners: []appmeshv1.Listener{
 			{
@@ -103,14 +115,11 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 					Port:     ar.getContainerPort(canary),
 					Protocol: protocol,
 				},
-				Timeout: timeout,
+				Timeout:          timeout,
+				OutlierDetection: ar.makeOutlierDetection(canary),
 			},
 		},
-		ServiceDiscovery: &appmeshv1.ServiceDiscovery{
-			DNS: &appmeshv1.DNSServiceDiscovery{
-				Hostname: host,
-			},
-		},
+		ServiceDiscovery: serviceDiscovery,
 		PodSelector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				ar.labelSelector: podSelector,
@@ -127,6 +136,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 				},
 			})
 		} else {
+			// TODO virtualServiceRef does not permit cross namespace object references
 			backends = append(backends, appmeshv1.Backend{
 				VirtualService: appmeshv1.VirtualServiceBackend{
 					VirtualServiceRef: &appmeshv1.VirtualServiceReference{
@@ -176,6 +186,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 			cmpopts.IgnoreFields(appmeshv1.VirtualNodeSpec{}, "AWSName", "MeshRef")); diff != "" {
 			vnClone := virtualnode.DeepCopy()
 			vnClone.Spec = vnSpec
+			vnClone.Spec.ServiceDiscovery = virtualnode.Spec.ServiceDiscovery
 			vnClone.Spec.AWSName = virtualnode.Spec.AWSName
 			vnClone.Spec.MeshRef = virtualnode.Spec.MeshRef
 			_, err = ar.appmeshClient.AppmeshV1beta2().VirtualNodes(canary.Namespace).Update(context.TODO(), vnClone, metav1.UpdateOptions{})
@@ -190,33 +201,68 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 	return nil
 }
 
-// reconcileVirtualRouter creates or updates a virtual router
-func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary, name string, canaryWeight int64) error {
+func (ar *AppMeshv1beta2Router) makeProgressiveTrafficShiftRoutes(canary *flaggerv1.Canary, routePrefix string, canaryWeight int64) []appmeshv1.Route {
 	apexName, _, _ := canary.GetServiceNames()
-	canaryVirtualNode := fmt.Sprintf("%s-canary", apexName)
+	canaryVirtualNode := fmt.Sprintf("%s", apexName)
 	primaryVirtualNode := fmt.Sprintf("%s-primary", apexName)
-	protocol := ar.getProtocol(canary)
-	timeout := ar.makeRouteTimeout(canary)
-
-	routerName := apexName
-	if canaryWeight > 0 {
-		routerName = fmt.Sprintf("%s-canary", apexName)
+	routeName := apexName
+	if canary.Spec.Service.RouteName != "" {
+		routeName = canary.Spec.Service.RouteName
 	}
-	// App Mesh supports only URI prefix
-	routePrefix := "/"
-	if len(canary.Spec.Service.Match) > 0 &&
-		canary.Spec.Service.Match[0].Uri != nil &&
-		canary.Spec.Service.Match[0].Uri.Prefix != "" {
-		routePrefix = canary.Spec.Service.Match[0].Uri.Prefix
+	priority := int64p(1000)
+	if canary.Spec.Service.BaseRoutePriority > 0 {
+		priority = int64p(canary.Spec.Service.BaseRoutePriority)
 	}
 
-	// Canary progressive traffic shift
-	routes := []appmeshv1.Route{
+	return []appmeshv1.Route{
 		{
-			Name: routerName,
+			Name:     routeName,
+			Priority: priority,
 			HTTPRoute: &appmeshv1.HTTPRoute{
 				Match: appmeshv1.HTTPRouteMatch{
 					Prefix: routePrefix,
+				},
+				Timeout:     ar.makeRouteTimeout(canary),
+				RetryPolicy: ar.makeRetryPolicy(canary),
+				Action: appmeshv1.HTTPRouteAction{
+					WeightedTargets: []appmeshv1.WeightedTarget{
+						{
+							VirtualNodeRef: &appmeshv1.VirtualNodeReference{
+								Name: canaryVirtualNode,
+							},
+							Weight: canaryWeight,
+						},
+						{
+							VirtualNodeRef: &appmeshv1.VirtualNodeReference{
+								Name: primaryVirtualNode,
+							},
+							Weight: 100 - canaryWeight,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (ar *AppMeshv1beta2Router) makeABTrafficShiftRoutes(canary *flaggerv1.Canary, routePrefix string, canaryWeight int64) []appmeshv1.Route {
+	apexName, _, _ := canary.GetServiceNames()
+	canaryVirtualNode := fmt.Sprintf("%s", apexName)
+	primaryVirtualNode := fmt.Sprintf("%s-primary", apexName)
+	timeout := ar.makeRouteTimeout(canary)
+	priority := int64p(1000)
+	if canary.Spec.Service.BaseRoutePriority > 0 {
+		priority = int64p(canary.Spec.Service.BaseRoutePriority)
+	}
+
+	return []appmeshv1.Route{
+		{
+			Name:     fmt.Sprintf("%s-a", apexName),
+			Priority: int64p(*int64p(10) + *priority),
+			HTTPRoute: &appmeshv1.HTTPRoute{
+				Match: appmeshv1.HTTPRouteMatch{
+					Prefix:  routePrefix,
+					Headers: ar.makeHeaders(canary),
 				},
 				Timeout:     timeout,
 				RetryPolicy: ar.makeRetryPolicy(canary),
@@ -238,61 +284,62 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 				},
 			},
 		},
+		{
+			Name:     fmt.Sprintf("%s-b", apexName),
+			Priority: int64p(*int64p(20) + *priority),
+			HTTPRoute: &appmeshv1.HTTPRoute{
+				Match: appmeshv1.HTTPRouteMatch{
+					Prefix: routePrefix,
+				},
+				Timeout:     timeout,
+				RetryPolicy: ar.makeRetryPolicy(canary),
+				Action: appmeshv1.HTTPRouteAction{
+					WeightedTargets: []appmeshv1.WeightedTarget{
+						{
+							VirtualNodeRef: &appmeshv1.VirtualNodeReference{
+								Name: primaryVirtualNode,
+							},
+							Weight: 100,
+						},
+					},
+				},
+			},
+		},
 	}
+}
+
+// reconcileVirtualRouter creates or updates a virtual router
+func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary, name string, canaryWeight int64) error {
+	apexName, _, _ := canary.GetServiceNames()
+	// canaryVirtualNode := fmt.Sprintf("%s-canary", apexName)
+	// primaryVirtualNode := fmt.Sprintf("%s-primary", apexName)
+	protocol := ar.getProtocol(canary)
+	// timeout := ar.makeRouteTimeout(canary)
+	mutateExistingVirtualRouter := false
+	if canary.Spec.Service.VirtualRouterRef != nil {
+		ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Infof("Reconciling canary route on existing virtualRouter, %s.%s", canary.Spec.Service.VirtualRouterRef.Name, canary.Spec.Service.VirtualRouterRef.Namespace)
+		mutateExistingVirtualRouter = true
+	}
+
+	routerName := apexName
+	if canaryWeight > 0 {
+		routerName = fmt.Sprintf("%s-canary", apexName)
+	}
+	// App Mesh supports only URI prefix
+	routePrefix := "/"
+	if len(canary.Spec.Service.Match) > 0 &&
+		canary.Spec.Service.Match[0].Uri != nil &&
+		canary.Spec.Service.Match[0].Uri.Prefix != "" {
+		routePrefix = canary.Spec.Service.Match[0].Uri.Prefix
+	}
+
+	// Canary progressive traffic shift
+	routes := ar.makeProgressiveTrafficShiftRoutes(canary, routePrefix, canaryWeight)
 
 	// A/B testing - header based routing
 	if len(canary.GetAnalysis().Match) > 0 && canaryWeight == 0 {
-		routes = []appmeshv1.Route{
-			{
-				Name:     fmt.Sprintf("%s-a", apexName),
-				Priority: int64p(10),
-				HTTPRoute: &appmeshv1.HTTPRoute{
-					Match: appmeshv1.HTTPRouteMatch{
-						Prefix:  routePrefix,
-						Headers: ar.makeHeaders(canary),
-					},
-					Timeout:     timeout,
-					RetryPolicy: ar.makeRetryPolicy(canary),
-					Action: appmeshv1.HTTPRouteAction{
-						WeightedTargets: []appmeshv1.WeightedTarget{
-							{
-								VirtualNodeRef: &appmeshv1.VirtualNodeReference{
-									Name: canaryVirtualNode,
-								},
-								Weight: canaryWeight,
-							},
-							{
-								VirtualNodeRef: &appmeshv1.VirtualNodeReference{
-									Name: primaryVirtualNode,
-								},
-								Weight: 100 - canaryWeight,
-							},
-						},
-					},
-				},
-			},
-			{
-				Name:     fmt.Sprintf("%s-b", apexName),
-				Priority: int64p(20),
-				HTTPRoute: &appmeshv1.HTTPRoute{
-					Match: appmeshv1.HTTPRouteMatch{
-						Prefix: routePrefix,
-					},
-					Timeout:     timeout,
-					RetryPolicy: ar.makeRetryPolicy(canary),
-					Action: appmeshv1.HTTPRouteAction{
-						WeightedTargets: []appmeshv1.WeightedTarget{
-							{
-								VirtualNodeRef: &appmeshv1.VirtualNodeReference{
-									Name: primaryVirtualNode,
-								},
-								Weight: 100,
-							},
-						},
-					},
-				},
-			},
-		}
+		routes = ar.makeABTrafficShiftRoutes(canary, routePrefix, canaryWeight)
 	}
 
 	vrSpec := appmeshv1.VirtualRouterSpec{
@@ -307,10 +354,25 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 		Routes: routes,
 	}
 
-	virtualRouter, err := ar.appmeshClient.AppmeshV1beta2().VirtualRouters(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	// TODO come up with way to use canary.Spec.Service.VirtualRouterRef to discover virtual router
+	vrName := routerName
+	vrNamespace := canary.Namespace
+	if mutateExistingVirtualRouter {
+		vrName = canary.Spec.Service.VirtualRouterRef.Name
+		vrNamespace = canary.Spec.Service.VirtualRouterRef.Namespace
+	}
+	ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+		Infof("Searching for existing virtualrouter, %s.%s", vrName, vrNamespace)
+	virtualRouter, err := ar.appmeshClient.AppmeshV1beta2().VirtualRouters(vrNamespace).Get(context.TODO(), vrName, metav1.GetOptions{})
 
 	// create virtual router
 	if errors.IsNotFound(err) {
+		if mutateExistingVirtualRouter {
+			return fmt.Errorf("VirtualRouter %s in namespace %s was specificied in `service` spec. error %w", vrName, vrNamespace, err)
+		}
+		ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Infof("No existing virtualRouter found. Creating virtualrouter %s.%s", vrName, vrNamespace)
+
 		virtualRouter = &appmeshv1.VirtualRouter{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
@@ -379,11 +441,40 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 	// update virtual router but keep the original target weights
 	if virtualRouter != nil {
 		if diff := cmp.Diff(vrSpec, virtualRouter.Spec,
-			cmpopts.IgnoreFields(appmeshv1.VirtualRouterSpec{}, "AWSName", "MeshRef"),
-			cmpopts.IgnoreTypes(appmeshv1.WeightedTarget{}, appmeshv1.MeshReference{})); diff != "" {
+			cmpopts.IgnoreFields(appmeshv1.VirtualRouterSpec{}, "AWSName", "MeshRef")); diff != "" {
 			vrClone := virtualRouter.DeepCopy()
 			vrClone.Spec = vrSpec
-			vrClone.Spec.Routes[0].HTTPRoute.Action = virtualRouter.Spec.Routes[0].HTTPRoute.Action
+
+			// Identify canary route and update matcher action
+			canaryRouteSpec := routes[0] // TODO brittle way of matching canary route from made set
+			var canaryRouteIdx int = 0
+			canaryRouteFound := false
+
+			for idx, route := range virtualRouter.Spec.Routes {
+				ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+					Infof("VirtualRouter %s has route with name %s, evaluating whether it is canary route, %s", vrName, route.Name, canaryRouteSpec.Name)
+				if route.Name == canaryRouteSpec.Name {
+					ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+						Infof("Found canary route, setting canaryRouteFound to true")
+					canaryRouteIdx = idx
+					canaryRouteFound = true
+				}
+			}
+			if canaryRouteFound {
+				ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+					Infof("Found canary route at index %d of %d routes", canaryRouteIdx, len(virtualRouter.Spec.Routes))
+				if (len(vrClone.Spec.Routes) != len(virtualRouter.Spec.Routes)) {
+					ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+						Infof("Deep cloned virtual router routes does not match. Bailing...")
+					return nil
+				}
+				vrClone.Spec.Routes[canaryRouteIdx].HTTPRoute.Action = virtualRouter.Spec.Routes[canaryRouteIdx].HTTPRoute.Action
+			} else {
+				ar.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+					Infof("Failed to identify canary route, %s, in returned set of routes (ReconcileVirtualRouter) from existing VirtualRouter, %s. Appending.", canaryRouteSpec.Name, vrName)
+				vrClone.Spec.Routes = append(virtualRouter.Spec.Routes, routes...)
+			}
+
 			vrClone.Spec.AWSName = virtualRouter.Spec.AWSName
 			vrClone.Spec.MeshRef = virtualRouter.Spec.MeshRef
 			_, err = ar.appmeshClient.AppmeshV1beta2().VirtualRouters(canary.Namespace).Update(context.TODO(), vrClone, metav1.UpdateOptions{})
@@ -405,31 +496,57 @@ func (ar *AppMeshv1beta2Router) GetRoutes(canary *flaggerv1.Canary) (
 	mirrored bool,
 	err error,
 ) {
-	apexName, primaryName, canaryName := canary.GetServiceNames()
-	virtualRouter, err := ar.appmeshClient.AppmeshV1beta2().VirtualRouters(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	apexName, primaryName, _ := canary.GetServiceNames()
+	vrName := apexName
+	vrNamespace := canary.Namespace
+	if canary.Spec.Service.VirtualRouterRef != nil {
+		vrName = canary.Spec.Service.VirtualRouterRef.Name
+		vrNamespace = canary.Spec.Service.VirtualRouterRef.Namespace
+	}
+	virtualRouter, err := ar.appmeshClient.AppmeshV1beta2().VirtualRouters(vrNamespace).Get(context.TODO(), vrName, metav1.GetOptions{})
 	if err != nil {
-		err = fmt.Errorf("VirtualRouter %s get query error: %w", apexName, err)
+		err = fmt.Errorf("VirtualRouter %s get query error: %w", vrName, err)
 		return
 	}
 
-	if len(virtualRouter.Spec.Routes) < 1 || len(virtualRouter.Spec.Routes[0].HTTPRoute.Action.WeightedTargets) != 2 {
-		err = fmt.Errorf("VirtualRouter routes %s not found", apexName)
-		return
+	routePrefix := "/"
+	if len(canary.Spec.Service.Match) > 0 &&
+		canary.Spec.Service.Match[0].Uri != nil &&
+		canary.Spec.Service.Match[0].Uri.Prefix != "" {
+		routePrefix = canary.Spec.Service.Match[0].Uri.Prefix
 	}
 
-	targets := virtualRouter.Spec.Routes[0].HTTPRoute.Action.WeightedTargets
-	for _, t := range targets {
-		if t.VirtualNodeRef.Name == canaryName {
-			canaryWeight = int(t.Weight)
-		}
-		if t.VirtualNodeRef.Name == primaryName {
-			primaryWeight = int(t.Weight)
+	vrRoutes := ar.makeProgressiveTrafficShiftRoutes(canary, routePrefix, 0)
+	// A/B testing - header based routing
+	if len(canary.GetAnalysis().Match) > 0 && canaryWeight == 0 {
+		vrRoutes = ar.makeABTrafficShiftRoutes(canary, routePrefix, 0)
+	}
+	canaryRoute := vrRoutes[0]
+
+	if len(virtualRouter.Spec.Routes) < 1 {
+		err = fmt.Errorf("VirtualRouter routes %s not found. No routes present.", apexName)
+	}
+
+	canaryRouteFound := false
+	for _, existingRoute := range virtualRouter.Spec.Routes {
+		if existingRoute.Name == canaryRoute.Name {
+			for _, target := range existingRoute.HTTPRoute.Action.WeightedTargets {
+				if target.VirtualNodeRef.Name == apexName {
+					canaryWeight = int(target.Weight)
+				}
+				if target.VirtualNodeRef.Name == primaryName {
+					primaryWeight = int(target.Weight)
+				}
+			}
+			canaryRouteFound = true
 		}
 	}
 
-	if primaryWeight == 0 && canaryWeight == 0 {
-		err = fmt.Errorf("VirtualRouter %s does not contain routes for %s-primary and %s-canary",
-			apexName, apexName, apexName)
+	if !canaryRouteFound {
+		err = fmt.Errorf("No flagger managed routes present in %s virtualrouter", vrName)
+	} else if primaryWeight == 0 && canaryWeight == 0 {
+		err = fmt.Errorf("VirtualRouter %s does not contain routes for %s and %s",
+			vrName, apexName, primaryName)
 	}
 
 	mirrored = false
@@ -444,18 +561,49 @@ func (ar *AppMeshv1beta2Router) SetRoutes(
 	canaryWeight int,
 	_ bool,
 ) error {
-	apexName, primaryName, canaryName := canary.GetServiceNames()
-	virtualRouter, err := ar.appmeshClient.AppmeshV1beta2().VirtualRouters(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	apexName, primaryName, _ := canary.GetServiceNames()
+	vrName := apexName
+	vrNamespace := canary.Namespace
+	if canary.Spec.Service.VirtualRouterRef != nil {
+		vrName = canary.Spec.Service.VirtualRouterRef.Name
+		vrNamespace = canary.Spec.Service.VirtualRouterRef.Namespace
+	}
+	virtualRouter, err := ar.appmeshClient.AppmeshV1beta2().VirtualRouters(vrNamespace).Get(context.TODO(), vrName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("VirtualRouter %s get query error: %w", apexName, err)
+		return fmt.Errorf("VirtualRouter %s get query error: %w", vrName, err)
+	}
+	routePrefix := "/"
+	if len(canary.Spec.Service.Match) > 0 &&
+		canary.Spec.Service.Match[0].Uri != nil &&
+		canary.Spec.Service.Match[0].Uri.Prefix != "" {
+		routePrefix = canary.Spec.Service.Match[0].Uri.Prefix
+	}
+
+	vrRoutes := ar.makeProgressiveTrafficShiftRoutes(canary, routePrefix, 0)
+	// A/B testing - header based routing
+	if len(canary.GetAnalysis().Match) > 0 && canaryWeight == 0 {
+		vrRoutes = ar.makeABTrafficShiftRoutes(canary, routePrefix, 0)
+	}
+
+	canaryRouteSpec := vrRoutes[0] // TODO brittle way of matching canary route from made set
+	var canaryRouteIdx int
+	canaryRouteMatched := false
+	for idx, route := range virtualRouter.Spec.Routes {
+		if route.Name == canaryRouteSpec.Name {
+			canaryRouteIdx = idx
+			canaryRouteMatched = true
+		}
+	}
+	if !canaryRouteMatched {
+		return fmt.Errorf("Failed to identify canary route, %s, in returned set of routes (SetRoutes) from existing VirtualRouter, %s", canaryRouteSpec.Name, vrName)
 	}
 
 	vrClone := virtualRouter.DeepCopy()
-	vrClone.Spec.Routes[0].HTTPRoute.Action = appmeshv1.HTTPRouteAction{
+	vrClone.Spec.Routes[canaryRouteIdx].HTTPRoute.Action = appmeshv1.HTTPRouteAction{
 		WeightedTargets: []appmeshv1.WeightedTarget{
 			{
 				VirtualNodeRef: &appmeshv1.VirtualNodeReference{
-					Name: canaryName,
+					Name: apexName,
 				},
 				Weight: int64(canaryWeight),
 			},
@@ -539,6 +687,46 @@ func (ar *AppMeshv1beta2Router) makeRetryPolicy(canary *flaggerv1.Canary) *appme
 		return retryPolicy
 	}
 
+	return nil
+}
+
+// makeOutlierDetectionPolicy creates an AppMesh OutlierDetection from Canary.Service.OutlierDetection
+// default: nil
+func (ar *AppMeshv1beta2Router) makeOutlierDetection(canary *flaggerv1.Canary) *appmeshv1.OutlierDetection {
+	if canary.Spec.Service.OutlierDetection != nil {
+		interval, _ := time.ParseDuration("10s")
+		if d, err := time.ParseDuration(canary.Spec.Service.OutlierDetection.Interval); err == nil {
+			interval = d
+		}
+
+		baseEjectionDuration, _ := time.ParseDuration("30s")
+		if d, err := time.ParseDuration(canary.Spec.Service.OutlierDetection.BaseEjectionTime); err == nil {
+			baseEjectionDuration = d
+		}
+
+		maxServerErrors := int64(1)
+		if canary.Spec.Service.OutlierDetection.ConsecutiveErrors > 0 {
+			maxServerErrors = int64(canary.Spec.Service.OutlierDetection.ConsecutiveErrors)
+		}
+
+		maxEjectionPercent := int64(0)
+		if canary.Spec.Service.OutlierDetection.MinHealthPercent < 100 {
+			maxEjectionPercent = int64(100 - int(canary.Spec.Service.OutlierDetection.MinHealthPercent))
+		}
+
+		return &appmeshv1.OutlierDetection{
+			MaxServerErrors: maxServerErrors,
+			Interval: appmeshv1.Duration{
+				Unit:  appmeshv1.DurationUnitMS,
+				Value: interval.Milliseconds(),
+			},
+			BaseEjectionDuration: appmeshv1.Duration{
+				Unit:  appmeshv1.DurationUnitMS,
+				Value: baseEjectionDuration.Milliseconds(),
+			},
+			MaxEjectionPercent: maxEjectionPercent,
+		}
+	}
 	return nil
 }
 
