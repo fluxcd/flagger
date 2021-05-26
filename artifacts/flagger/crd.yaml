@@ -1106,6 +1106,7 @@ spec:
                         - datadog
                         - cloudwatch
                         - newrelic
+                        - graphite
                     address:
                       description: API address of this provider
                       type: string
