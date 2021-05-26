@@ -32,7 +32,7 @@ patches:
               $patch: delete
             containers:
               - name: skipper-ingress
-                image: registry.opensource.zalan.do/pathfinder/skipper:v0.13.61
+                image: registry.opensource.zalan.do/teapot/skipper:v0.13.61
                 ports:
                   - name: metrics-port
                     containerPort: 9911
