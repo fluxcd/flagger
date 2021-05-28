@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.10.0
+
+**Release date:** 2021-05-28
+
+This release comes with support for [Graphite](https://docs.flagger.app/usage/metrics#graphite) metric templates.
+
+#### Features
+
+- Add Graphite metrics provider
+  [#915](https://github.com/fluxcd/flagger/pull/915)
+
+#### Improvements
+
+- ConfigTracker: Scan envFrom in init-containers
+  [#914](https://github.com/fluxcd/flagger/pull/914)
+- e2e: Update Istio to v1.10 and Contour to v1.15
+  [#914](https://github.com/fluxcd/flagger/pull/914)
+
 ## 1.9.0
 
 **Release date:** 2021-05-14
