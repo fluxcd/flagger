@@ -220,7 +220,7 @@ spec:
         app: podinfo
 ```
 
-Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors.
+Besides `app`, Flagger supports `name` and `app.kubernetes.io/name` selectors.
 If you use a different convention you can specify your label with the `-selector-labels` flag.
 
 #### Is pod affinity and anti affinity supported?
