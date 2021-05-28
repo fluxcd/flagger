@@ -13,7 +13,7 @@ Flagger implements the following deployment strategies:
 
 #### When should I use A/B testing instead of progressive traffic shifting?
 
-For frontend applications that require session affinity you should use HTTP headers or
+For frontend applications that require session affinity, you should use HTTP headers or
 cookies match conditions to ensure a set of users will stay on the same version for
 the whole duration of the canary analysis.
 
