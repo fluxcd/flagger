@@ -153,7 +153,7 @@ and can be used for conformance testing or load testing.
 
 ## Multiple ports
 
-#### My application listens on multiple ports, how can I expose them inside the cluster?
+#### My application listens on multiple ports. How can I expose them inside the cluster?
 
 If port discovery is enabled, Flagger scans the deployment spec and extracts the containers ports excluding
 the port specified in the canary service and Envoy sidecar ports.
