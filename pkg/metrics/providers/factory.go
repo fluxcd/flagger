@@ -36,6 +36,8 @@ func (factory Factory) Provider(
 		return NewCloudWatchProvider(metricInterval, provider)
 	case "newrelic":
 		return NewNewRelicProvider(metricInterval, provider, credentials)
+	case "graphite":
+		return NewGraphiteProvider(provider, credentials)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}
