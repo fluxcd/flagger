@@ -59,7 +59,7 @@ to finish, and disable it afterward (`skipAnalysis: false`).
 
 #### How is an application exposed inside the cluster?
 
-Assuming the app name is podinfo you can define a canary like:
+Assuming the app name is `podinfo`, you can define a canary like:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
