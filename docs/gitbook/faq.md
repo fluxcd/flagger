@@ -51,8 +51,9 @@ spec:
 
 #### Why is there a window of downtime during the canary initializing process when analysis is disabled?
 
-It is the intended behavior when the analysis is disabled, this allows instant rollback and also mimics the way a Kubernetes deployment initialization works.  
-To avoid this: enable the analysis (`skipAnalysis: true`), wait for the initialization to finish, and disable it afterward (`skipAnalysis: false`).
+A window of downtime is the intended behavior when the analysis is disabled. This allows instant rollback and also mimics the way
+a Kubernetes deployment initialization works. To avoid this, enable the analysis (`skipAnalysis: true`), wait for the initialization
+to finish, and disable it afterward (`skipAnalysis: false`).
 
 ## Kubernetes services
 
