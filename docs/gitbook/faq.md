@@ -467,7 +467,7 @@ histogram_quantile(0.99,
 
 #### Can I use custom metrics?
 
-The analysis can be extended with metrics provided by Prometheus, Datadog and AWS CloudWatch.
+The analysis can be extended with metrics provided by Prometheus, Datadog, AWS CloudWatch, New Relic and Graphite.
 For more details on how custom metrics can be used please read the [metrics docs](usage/metrics.md).
 
 ## Istio routing
