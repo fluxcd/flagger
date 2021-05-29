@@ -26,10 +26,10 @@ and part of [Flux](https://fluxcd.io) family of GitOps tools.
 
 ## Getting started
 
-To get started with Flagger, chose one of the supported routing providers and
+To get started with Flagger, choose one of the supported routing providers and
 [install](install/flagger-install-on-kubernetes.md) Flagger with Helm or Kustomize.
 
-After install Flagger, you can follow one of these tutorials to get started:
+After installing Flagger, you can follow one of these tutorials to get started:
 
 **Service mesh tutorials**
 

@@ -200,7 +200,7 @@ Run the Istio e2e tests:
 ./test/istio/run.sh
 ```
 
-For each service mesh and ingress controller there is a dedicated e2e test suite,
-chose one that matches your changes from this [list](https://github.com/fluxcd/flagger/tree/main/test).
+For each service mesh and ingress controller, there is a dedicated e2e test suite,
+choose one that matches your changes from this [list](https://github.com/fluxcd/flagger/tree/main/test).
 
 When you open a pull request on Flagger repo, the unit and integration tests will be run in CI.

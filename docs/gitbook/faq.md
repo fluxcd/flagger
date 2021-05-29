@@ -13,8 +13,8 @@ Flagger implements the following deployment strategies:
 
 #### When should I use A/B testing instead of progressive traffic shifting?
 
-For frontend applications that require session affinity you should use HTTP headers or
-cookies match conditions to ensure a set of users will stay on the same version for
+For frontend applications that require session affinity, you should use HTTP headers or
+cookie match conditions to ensure a set of users will stay on the same version for
 the whole duration of the canary analysis.
 
 #### Can I use Flagger to manage applications that live outside of a service mesh?
@@ -49,16 +49,17 @@ spec:
         timestamp: "2020-03-10T14:24:48+0000"
 ```
 
-#### Why is there a downtime during the canary initializing process when analysis is disabled?
+#### Why is there a window of downtime during the canary initializing process when analysis is disabled?
 
-It is the intended behavior when the analysis is disabled, this allows instant rollback and also mimics the way a Kubernetes deployment initialization works.  
-To avoid this: enable the analysis (`skipAnalysis: true`), wait for the initialization to finish, and disable it afterward (`skipAnalysis: false`).
+A window of downtime is the intended behavior when the analysis is disabled. This allows instant rollback and also mimics the way
+a Kubernetes deployment initialization works. To avoid this, enable the analysis (`skipAnalysis: true`), wait for the initialization
+to finish, and disable it afterward (`skipAnalysis: false`).
 
 ## Kubernetes services
 
 #### How is an application exposed inside the cluster?
 
-Assuming the app name is podinfo you can define a canary like:
+Assuming the app name is `podinfo`, you can define a canary like:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -152,7 +153,7 @@ and can be used for conformance testing or load testing.
 
 ## Multiple ports
 
-#### My application listens on multiple ports, how can I expose them inside the cluster?
+#### My application listens on multiple ports. How can I expose them inside the cluster?
 
 If port discovery is enabled, Flagger scans the deployment spec and extracts the containers ports excluding
 the port specified in the canary service and Envoy sidecar ports.
@@ -219,7 +220,7 @@ spec:
         app: podinfo
 ```
 
-Besides `app` Flagger supports `name` and `app.kubernetes.io/name` selectors.
+Besides `app`, Flagger supports `name` and `app.kubernetes.io/name` selectors.
 If you use a different convention you can specify your label with the `-selector-labels` flag.
 
 #### Is pod affinity and anti affinity supported?
