@@ -8,7 +8,7 @@ set -o errexit
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 cat <<EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: podinfo
@@ -19,12 +19,16 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-    - host: app.example.com
-      http:
-        paths:
-          - backend:
-              serviceName: podinfo
-              servicePort: 80
+  - host: "app.example.com"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: podinfo
+            port:
+              number: 80
 EOF
 
 echo '>>> Create metric templates'
@@ -98,7 +102,7 @@ spec:
     kind: Deployment
     name: podinfo
   ingressRef:
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     name: podinfo
   progressDeadlineSeconds: 60
@@ -198,7 +202,7 @@ echo '✔ Canary promotion test passed'
 echo 'Testing original ingress update after canary promotion to pass validation webhook'
 
 cat <<EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: podinfo
@@ -209,12 +213,16 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-    - host: app.example.com
-      http:
-        paths:
-          - backend:
-              serviceName: podinfo
-              servicePort: 80
+  - host: "app.example.com"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: podinfo
+            port:
+              number: 80
 EOF
 
 echo '✔ Original ingress update with validation webhook passed'
@@ -231,7 +239,7 @@ spec:
     kind: Deployment
     name: podinfo
   ingressRef:
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     name: podinfo
   progressDeadlineSeconds: 60

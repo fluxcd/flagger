@@ -6,7 +6,7 @@ This guide shows you how to use the [Skipper ingress controller](https://opensou
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.16** or newer and Skipper ingress **0.11.40** or newer.
+Flagger requires a Kubernetes cluster **v1.19** or newer and Skipper ingress **v0.13** or newer.
 
 Install Skipper ingress-controller using [upstream definition](https://opensource.zalando.com/skipper/kubernetes/ingress-controller/#install-skipper-as-ingress-controller).
 
@@ -36,7 +36,9 @@ kustomize build https://github.com/fluxcd/flagger/kustomize/kubernetes | kubectl
 
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler \(HPA\), then creates a series of objects \(Kubernetes deployments, ClusterIP services and canary ingress\). These objects expose the application outside the cluster and drive the canary analysis and promotion.
+Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
+then creates a series of objects (Kubernetes deployments, ClusterIP services and canary ingress).
+These objects expose the application outside the cluster and drive the canary analysis and promotion.
 
 Create a test namespace:
 
@@ -60,7 +62,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester \
 Create an ingress definition \(replace `app.example.com` with your own domain\):
 
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: podinfo
@@ -71,12 +73,16 @@ metadata:
     kubernetes.io/ingress.class: "skipper"
 spec:
   rules:
-    - host: app.example.com
+    - host: "app.example.com"
       http:
         paths:
-          - backend:
-              serviceName: podinfo
-              servicePort: 80
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: podinfo
+                port:
+                  number: 80
 ```
 
 Save the above resource as podinfo-ingress.yaml and then apply it:
@@ -85,7 +91,7 @@ Save the above resource as podinfo-ingress.yaml and then apply it:
 kubectl apply -f ./podinfo-ingress.yaml
 ```
 
-Create a canary custom resource \(replace `app.example.com` with your own domain\):
+Create a canary custom resource (replace `app.example.com` with your own domain):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -102,7 +108,7 @@ spec:
     name: podinfo
   # ingress reference
   ingressRef:
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     name: podinfo
   # HPA reference (optional)
@@ -190,7 +196,9 @@ ingress.networking.k8s.io/podinfo-canary
 
 ## Automated canary promotion
 
-Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators like HTTP requests success rate, requests average duration and pod health. Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
+Flagger implements a control loop that gradually shifts traffic to the canary while measuring
+key performance indicators like HTTP requests success rate, requests average duration and pod health.
+Based on analysis of the KPIs a canary is promoted or aborted, and the analysis result is published to Slack or MS Teams.
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
@@ -271,7 +279,8 @@ Generate latency:
 watch -n 1 curl http://app.example.com/delay/1
 ```
 
-When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
+When the number of failed checks reaches the canary analysis threshold, the traffic is routed back to the primary,
+the canary is scaled to zero and the rollout is marked as failed.
 
 ```text
 kubectl -n flagger-system logs deploy/flagger -f | jq .msg
@@ -333,7 +342,8 @@ Edit the canary analysis and add the latency check:
       interval: 1m
 ```
 
-The threshold is set to 500ms so if the average request duration in the last minute goes over half a second then the analysis will fail and the canary will not be promoted.
+The threshold is set to 500ms so if the average request duration in the last minute goes over half a second
+then the analysis will fail and the canary will not be promoted.
 
 Trigger a canary deployment by updating the container image:
 
@@ -367,4 +377,3 @@ Canary failed! Scaling down podinfo.test
 ```
 
 If you have alerting configured, Flagger will send a notification with the reason why the canary failed.
-
