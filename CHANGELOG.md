@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.11.0
+
+**Release date:** 2021-06-01
+
+**Breaking change:** the minimum supported version of Kubernetes is v1.19.0.
+
+This release comes with support for Kubernetes Ingress `networking.k8s.io/v1`.
+The Ingress from `networking.k8s.io/v1beta1` is no longer supported,
+affected integrations: **NGINX** and **Skipper** ingress controllers.
+
+#### Improvements
+
+- Upgrade Ingress to networking.k8s.io/v1
+  [#917](https://github.com/fluxcd/flagger/pull/917)
+- Update Kubernetes manifests to rbac.authorization.k8s.io/v1
+  [#920](https://github.com/fluxcd/flagger/pull/920)
+
 ## 1.10.0
 
 **Release date:** 2021-05-28
