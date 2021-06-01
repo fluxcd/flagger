@@ -13,7 +13,7 @@ spec:
             - -mesh-provider=appmesh
             - -metrics-server=http://appmesh-prometheus:9090
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: flagger
