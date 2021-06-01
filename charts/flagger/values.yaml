@@ -2,7 +2,7 @@
 
 image:
   repository: ghcr.io/fluxcd/flagger
-  tag: 1.10.0
+  tag: 1.11.0
   pullPolicy: IfNotPresent
   pullSecret:
 
