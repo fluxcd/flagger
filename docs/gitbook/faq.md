@@ -719,7 +719,7 @@ spec:
       weight: 0
 ```
 
-Therefore, the following virtual service forward the traffic to `/podinfo` by the above delegate VirtualService.
+Therefore, the following virtual service forwards the traffic to `/podinfo` by the above delegate VirtualService.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
