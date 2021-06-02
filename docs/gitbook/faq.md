@@ -221,7 +221,14 @@ spec:
 ```
 
 Besides `app`, Flagger supports `name` and `app.kubernetes.io/name` selectors.
-If you use a different convention you can specify your label with the `-selector-labels` flag.
+If you use a different convention, you can specify your label with the `-selector-labels` flag.
+For example:
+
+```
+flagger \
+  -selector-labels=service,name,app.kubernetes.io/name \
+  ...
+```
 
 #### Is pod affinity and anti affinity supported?
 
