@@ -745,7 +745,7 @@ spec:
       namespace: test
 ```
 
-Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set. 
+Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
 For the use of Istio Delegation, you can refer to the documentation of
 [Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Delegate)
 and [pilot environment variables](https://istio.io/latest/docs/reference/commands/pilot-discovery/#envvars).
@@ -754,8 +754,8 @@ and [pilot environment variables](https://istio.io/latest/docs/reference/command
 
 #### How can I expose multiple canaries on the same external domain?
 
-Assuming you have two apps, one that servers the main website and one that serves the REST API.
-For each app you can define a canary object as:
+Assuming you have two apps -- one that serves the main website and one that serves its REST API --
+you can define a canary object for each app as:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
