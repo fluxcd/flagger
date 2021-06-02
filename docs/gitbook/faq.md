@@ -85,19 +85,19 @@ spec:
 
 If the `service.name` is not specified, then `targetRef.name` is used for
 the apex domain and canary/primary services name prefix.
-You should treat the service name as an immutable field, changing it could result in routing conflicts.
+You should treat the service name as an immutable field; changing its could result in routing conflicts.
 
 Based on the canary spec service, Flagger generates the following Kubernetes ClusterIP service:
 
-* `<service.name>.<namespace>.svc.cluster.local`  
+* `<service.name>.<namespace>.svc.cluster.local`
 
     selector `app=<name>-primary`
 
-* `<service.name>-primary.<namespace>.svc.cluster.local`  
+* `<service.name>-primary.<namespace>.svc.cluster.local`
 
     selector `app=<name>-primary`
 
-* `<service.name>-canary.<namespace>.svc.cluster.local`  
+* `<service.name>-canary.<namespace>.svc.cluster.local`
 
     selector `app=<name>`
 
