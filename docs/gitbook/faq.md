@@ -368,8 +368,8 @@ sum(
           response_code!~"5.*"
         }[$interval]
     )
-) 
-/ 
+)
+/
 sum(
     rate(
         istio_requests_total{
@@ -392,8 +392,8 @@ sum(
           envoy_response_code!~"5.*"
         }[$interval]
     )
-) 
-/ 
+)
+/
 sum(
     rate(
         envoy_cluster_upstream_rq{
@@ -443,7 +443,7 @@ Spec:
 Istio query:
 
 ```javascript
-histogram_quantile(0.99, 
+histogram_quantile(0.99,
   sum(
     irate(
       istio_request_duration_seconds_bucket{
@@ -459,7 +459,7 @@ histogram_quantile(0.99,
 Envoy query (App Mesh, Contour and Gloo):
 
 ```javascript
-histogram_quantile(0.99, 
+histogram_quantile(0.99,
   sum(
     irate(
       envoy_cluster_upstream_rq_time_bucket{
@@ -476,7 +476,7 @@ histogram_quantile(0.99,
 #### Can I use custom metrics?
 
 The analysis can be extended with metrics provided by Prometheus, Datadog, AWS CloudWatch, New Relic and Graphite.
-For more details on how custom metrics can be used please read the [metrics docs](usage/metrics.md).
+For more details on how custom metrics can be used, please read the [metrics docs](usage/metrics.md).
 
 ## Istio routing
 
