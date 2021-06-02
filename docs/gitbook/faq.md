@@ -339,7 +339,7 @@ spec:
 
 #### How does Flagger measure the request success rate and duration?
 
-Flagger measures the request success rate and duration using Prometheus queries.
+By default, Flagger measures the request success rate and duration using Prometheus queries.
 
 #### HTTP requests success rate percentage
 
