@@ -817,7 +817,7 @@ spec:
         mode: ISTIO_MUTUAL
 ```
 
-If you run Istio in permissive mode you can disable TLS:
+If you run Istio in permissive mode, you can disable TLS:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
