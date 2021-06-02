@@ -799,7 +799,7 @@ Istio Pilot will
 [merge](https://istio.io/help/ops/traffic-management/deploy-guidelines/#multiple-virtual-services-and-destination-rules-for-the-same-host)
 the two services and the website rule will be moved to the end of the list in the merged configuration.
 
-Note that host merging only works if the canaries are bounded to a ingress gateway other than the `mesh` gateway.
+Note that host merging only works if the canaries are bounded to an ingress gateway other than the `mesh` gateway.
 
 ## Istio Mutual TLS
 
