@@ -85,19 +85,19 @@ spec:
 
 If the `service.name` is not specified, then `targetRef.name` is used for
 the apex domain and canary/primary services name prefix.
-You should treat the service name as an immutable field, changing it could result in routing conflicts.
+You should treat the service name as an immutable field; changing its could result in routing conflicts.
 
 Based on the canary spec service, Flagger generates the following Kubernetes ClusterIP service:
 
-* `<service.name>.<namespace>.svc.cluster.local`  
+* `<service.name>.<namespace>.svc.cluster.local`
 
     selector `app=<name>-primary`
 
-* `<service.name>-primary.<namespace>.svc.cluster.local`  
+* `<service.name>-primary.<namespace>.svc.cluster.local`
 
     selector `app=<name>-primary`
 
-* `<service.name>-canary.<namespace>.svc.cluster.local`  
+* `<service.name>-canary.<namespace>.svc.cluster.local`
 
     selector `app=<name>`
 
@@ -221,7 +221,14 @@ spec:
 ```
 
 Besides `app`, Flagger supports `name` and `app.kubernetes.io/name` selectors.
-If you use a different convention you can specify your label with the `-selector-labels` flag.
+If you use a different convention, you can specify your label with the `-selector-labels` flag.
+For example:
+
+```
+flagger \
+  -selector-labels=service,name,app.kubernetes.io/name \
+  ...
+```
 
 #### Is pod affinity and anti affinity supported?
 
@@ -332,7 +339,7 @@ spec:
 
 #### How does Flagger measure the request success rate and duration?
 
-Flagger measures the request success rate and duration using Prometheus queries.
+By default, Flagger measures the request success rate and duration using Prometheus queries.
 
 #### HTTP requests success rate percentage
 
@@ -361,8 +368,8 @@ sum(
           response_code!~"5.*"
         }[$interval]
     )
-) 
-/ 
+)
+/
 sum(
     rate(
         istio_requests_total{
@@ -385,8 +392,8 @@ sum(
           envoy_response_code!~"5.*"
         }[$interval]
     )
-) 
-/ 
+)
+/
 sum(
     rate(
         envoy_cluster_upstream_rq{
@@ -436,7 +443,7 @@ Spec:
 Istio query:
 
 ```javascript
-histogram_quantile(0.99, 
+histogram_quantile(0.99,
   sum(
     irate(
       istio_request_duration_seconds_bucket{
@@ -452,7 +459,7 @@ histogram_quantile(0.99,
 Envoy query (App Mesh, Contour and Gloo):
 
 ```javascript
-histogram_quantile(0.99, 
+histogram_quantile(0.99,
   sum(
     irate(
       envoy_cluster_upstream_rq_time_bucket{
@@ -469,7 +476,7 @@ histogram_quantile(0.99,
 #### Can I use custom metrics?
 
 The analysis can be extended with metrics provided by Prometheus, Datadog, AWS CloudWatch, New Relic and Graphite.
-For more details on how custom metrics can be used please read the [metrics docs](usage/metrics.md).
+For more details on how custom metrics can be used, please read the [metrics docs](usage/metrics.md).
 
 ## Istio routing
 
@@ -712,7 +719,7 @@ spec:
       weight: 0
 ```
 
-Therefore, The following virtual service forward the traffic to `/podinfo` by the above delegate VirtualService.
+Therefore, the following virtual service forwards the traffic to `/podinfo` by the above delegate VirtualService.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -738,7 +745,7 @@ spec:
       namespace: test
 ```
 
-Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set. 
+Note that pilot env `PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE` must also be set.
 For the use of Istio Delegation, you can refer to the documentation of
 [Virtual Service](https://istio.io/latest/docs/reference/config/networking/virtual-service/#Delegate)
 and [pilot environment variables](https://istio.io/latest/docs/reference/commands/pilot-discovery/#envvars).
@@ -747,8 +754,8 @@ and [pilot environment variables](https://istio.io/latest/docs/reference/command
 
 #### How can I expose multiple canaries on the same external domain?
 
-Assuming you have two apps, one that servers the main website and one that serves the REST API.
-For each app you can define a canary object as:
+Assuming you have two apps -- one that serves the main website and one that serves its REST API --
+you can define a canary object for each app as:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -792,7 +799,7 @@ Istio Pilot will
 [merge](https://istio.io/help/ops/traffic-management/deploy-guidelines/#multiple-virtual-services-and-destination-rules-for-the-same-host)
 the two services and the website rule will be moved to the end of the list in the merged configuration.
 
-Note that host merging only works if the canaries are bounded to a ingress gateway other than the `mesh` gateway.
+Note that host merging only works if the canaries are bounded to an ingress gateway other than the `mesh` gateway.
 
 ## Istio Mutual TLS
 
@@ -810,7 +817,7 @@ spec:
         mode: ISTIO_MUTUAL
 ```
 
-If you run Istio in permissive mode you can disable TLS:
+If you run Istio in permissive mode, you can disable TLS:
 
 ```yaml
 apiVersion: flagger.app/v1beta1
