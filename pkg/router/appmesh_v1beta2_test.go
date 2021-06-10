@@ -23,6 +23,9 @@ import (
 	"strings"
 	"testing"
 
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -155,6 +158,28 @@ func TestAppmesv1beta2hRouter_ABTest(t *testing.T) {
 	assert.GreaterOrEqual(t, len(vrApex.Spec.Routes[0].HTTPRoute.Match.Headers), 1, "Got no http match headers")
 	assert.Equal(t, "x-user-type", vrApex.Spec.Routes[0].HTTPRoute.Match.Headers[0].Name)
 	assert.Equal(t, "test", *vrApex.Spec.Routes[0].HTTPRoute.Match.Headers[0].Match.Exact)
+}
+
+func TestAppmeshv1beta2Router_ServiceDiscovery(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &AppMeshv1beta2Router{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	_, primaryName, _ := mocks.appmeshCanaryWithCloudMapServiceDiscovery.GetServiceNames()
+
+	err := router.Reconcile(mocks.appmeshCanaryWithCloudMapServiceDiscovery)
+	require.NoError(t, err)
+
+	vn, err := router.appmeshClient.AppmeshV1beta2().VirtualNodes("default").Get(context.TODO(), primaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	diff := cmp.Diff(mocks.appmeshCanaryWithCloudMapServiceDiscovery.Spec.Service.ServiceDiscovery, vn.Spec.ServiceDiscovery, cmpopts.IgnoreFields(appmeshv1beta2.ServiceDiscovery{}, "AWSCloudMap.ServiceName"))
+	assert.Equal(t, diff, "")
+	assert.Equal(t, primaryName, vn.Spec.ServiceDiscovery.AWSCloudMap.ServiceName)
 }
 
 func TestAppmeshv1beta2Router_Gateway(t *testing.T) {

@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
@@ -35,14 +36,15 @@ import (
 )
 
 type fixture struct {
-	canary        *flaggerv1.Canary
-	abtest        *flaggerv1.Canary
-	appmeshCanary *flaggerv1.Canary
-	ingressCanary *flaggerv1.Canary
-	kubeClient    kubernetes.Interface
-	meshClient    clientset.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
+	canary                                    *flaggerv1.Canary
+	abtest                                    *flaggerv1.Canary
+	appmeshCanary                             *flaggerv1.Canary
+	appmeshCanaryWithCloudMapServiceDiscovery *flaggerv1.Canary
+	ingressCanary                             *flaggerv1.Canary
+	kubeClient                                kubernetes.Interface
+	meshClient                                clientset.Interface
+	flaggerClient                             clientset.Interface
+	logger                                    *zap.SugaredLogger
 }
 
 func newFixture(c *flaggerv1.Canary) fixture {
@@ -52,6 +54,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	}
 	abtest := newTestABTest()
 	appmeshCanary := newTestCanaryAppMesh()
+	appmeshCanaryWithCloudMapServiceDiscovery := newTestCanaryAppMeshWithCloudMapServiceDiscovery()
 	ingressCanary := newTestCanaryIngress()
 
 	flaggerClient := fakeFlagger.NewSimpleClientset(
@@ -74,6 +77,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 		canary:        canary,
 		abtest:        abtest,
 		appmeshCanary: appmeshCanary,
+		appmeshCanaryWithCloudMapServiceDiscovery: appmeshCanaryWithCloudMapServiceDiscovery,
 		ingressCanary: ingressCanary,
 		kubeClient:    kubeClient,
 		meshClient:    meshClient,
@@ -180,6 +184,58 @@ func newTestCanaryAppMesh() *flaggerv1.Canary {
 					Attempts:      5,
 					PerTryTimeout: "gateway-error",
 					RetryOn:       "5s",
+				},
+			}, Analysis: &flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newTestCanaryAppMeshWithCloudMapServiceDiscovery() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "appmesh",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Port:     9898,
+				MeshName: "global",
+				Hosts:    []string{"*"},
+				Backends: []string{"backend.default"},
+				Timeout:  "30s",
+				Retries: &istiov1alpha3.HTTPRetry{
+					Attempts:      5,
+					PerTryTimeout: "gateway-error",
+					RetryOn:       "5s",
+				},
+				ServiceDiscovery: &appmeshv1beta2.ServiceDiscovery{
+					AWSCloudMap: &appmeshv1beta2.AWSCloudMapServiceDiscovery{
+						NamespaceName: "testing",
+						ServiceName:   "podinfo",
+					},
 				},
 			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,

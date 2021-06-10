@@ -175,6 +175,57 @@ spec:
                       type: array
                       items:
                         type: string
+                    serviceDiscovery:
+                      type: object
+                      description: The service discovery information for the virtual node. Optional if there is no inbound traffic(no listeners). Mandatory if a listener is specified.
+                      properties:
+                        awsCloudMap:
+                          description: Specifies any AWS Cloud Map information for the virtual node.
+                          properties:
+                            attributes:
+                              description: A string map that contains attributes with values that you can use to filter instances by any custom attribute that you specified when you registered the instance
+                              items:
+                                description: AWSCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
+                                properties:
+                                  key:
+                                    description: The name of an AWS Cloud Map service instance attribute key.
+                                    maxLength: 255
+                                    minLength: 1
+                                    type: string
+                                  value:
+                                    description: The value of an AWS Cloud Map service instance attribute key.
+                                    maxLength: 1024
+                                    minLength: 1
+                                    type: string
+                                required:
+                                - key
+                                - value
+                                type: object
+                              type: array
+                            namespaceName:
+                              description: The name of the AWS Cloud Map namespace to use.
+                              maxLength: 1024
+                              minLength: 1
+                              type: string
+                            serviceName:
+                              description: The name of the AWS Cloud Map service to use.
+                              maxLength: 1024
+                              minLength: 1
+                              type: string
+                          required:
+                          - namespaceName
+                          - serviceName
+                          type: object
+                        dns:
+                          description: Specifies the DNS information for the virtual node.
+                          properties:
+                            hostname:
+                              description: Specifies the DNS service discovery hostname for the virtual node.
+                              type: string
+                          required:
+                          - hostname
+                          type: object
+                      type: object
                     hosts:
                       description: The list of host names for this service
                       type: array

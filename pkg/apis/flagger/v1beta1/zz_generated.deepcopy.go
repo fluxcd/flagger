@@ -21,6 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -368,6 +369,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		in, out := &in.Backends, &out.Backends
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.ServiceDiscovery != nil {
+		in, out := &in.ServiceDiscovery, &out.ServiceDiscovery
+		*out = new(v1beta2.ServiceDiscovery)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Apex != nil {
 		in, out := &in.Apex, &out.Apex

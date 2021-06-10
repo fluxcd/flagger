@@ -96,6 +96,21 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 	protocol := ar.getProtocol(canary)
 	timeout := ar.makeListenerTimeout(canary)
 
+	serviceDiscovery := &appmeshv1.ServiceDiscovery{
+		DNS: &appmeshv1.DNSServiceDiscovery{
+			Hostname: host,
+		},
+	}
+
+	if canary.Spec.Service.ServiceDiscovery != nil {
+		serviceDiscovery = canary.Spec.Service.ServiceDiscovery
+		if serviceDiscovery.AWSCloudMap.ServiceName != "" {
+			serviceDiscovery.AWSCloudMap.ServiceName = name
+		} else if serviceDiscovery.DNS.Hostname != "" {
+			serviceDiscovery.DNS.Hostname = host
+		}
+	}
+
 	vnSpec := appmeshv1.VirtualNodeSpec{
 		Listeners: []appmeshv1.Listener{
 			{
@@ -106,11 +121,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 				Timeout: timeout,
 			},
 		},
-		ServiceDiscovery: &appmeshv1.ServiceDiscovery{
-			DNS: &appmeshv1.DNSServiceDiscovery{
-				Hostname: host,
-			},
-		},
+		ServiceDiscovery: serviceDiscovery,
 		PodSelector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				ar.labelSelector: podSelector,
