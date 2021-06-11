@@ -18,6 +18,7 @@ type Upstream struct {
 
 type UpstreamSpec struct {
 	Kube                        *KubeUpstream         `json:"kube,omitempty"`
+	Labels                      map[string]string     `json:"Labels,omitempty"`
 	SslConfig                   *UpstreamSslConfig    `json:"sslConfig,omitempty"`
 	CircuitBreakers             *CircuitBreakerConfig `json:"circuitBreakers,omitempty"`
 	ConnectionConfig            *ConnectionConfig     `json:"connectionConfig,omitempty"`

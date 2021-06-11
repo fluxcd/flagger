@@ -276,6 +276,7 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 	if glooUpstreamWithConfig != nil {
 		configSpec := glooUpstreamWithConfig.Spec
 		upstreamSpec = gloov1.UpstreamSpec{
+			Labels:                      configSpec.Labels,
 			SslConfig:                   configSpec.SslConfig,
 			CircuitBreakers:             configSpec.CircuitBreakers,
 			ConnectionConfig:            configSpec.ConnectionConfig,
@@ -293,10 +294,20 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 		Selector:         svc.Spec.Selector,
 	}
 
+	upstreamLabels := make(map[string]string)
+	if upstreamSpec.Labels != nil {
+		for k, v := range upstreamSpec.Labels { // Order not specified
+			if _, ok := upstreamLabels[k]; !ok {
+				upstreamLabels[k] = v
+			}
+		}
+	}
+
 	return &gloov1.Upstream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      upstreamName,
 			Namespace: canary.Namespace,
+			Labels:    upstreamLabels,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 					Group:   flaggerv1.SchemeGroupVersion.Group,
