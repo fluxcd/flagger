@@ -33,8 +33,8 @@ type TrafficSplitSpec struct {
 
 // TrafficSplitBackend defines a backend
 type TrafficSplitBackend struct {
-	Service string `json:"service,omitempty"`
-	Weight  int    `json:"weight,omitempty"`
+	Service string `json:"service"`
+	Weight  int    `json:"weight"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
