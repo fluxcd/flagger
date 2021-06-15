@@ -190,7 +190,7 @@ func main() {
 		logger.Infof("Watching namespace %s", namespace)
 	}
 
-	observerFactory, err := observers.NewFactory(metricsServer, false)
+	observerFactory, err := observers.NewFactory(metricsServer)
 	if err != nil {
 		logger.Fatalf("Error building prometheus client: %s", err.Error())
 	}
