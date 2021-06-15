@@ -41,7 +41,7 @@ func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) e
 			observerFactory := c.observerFactory
 			if canary.Spec.MetricsServer != "" {
 				var err error
-				observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer, canary.Spec.InsecureSkipVerify)
+				observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer, false)
 				if err != nil {
 					return fmt.Errorf("error building Prometheus client for %s %v", canary.Spec.MetricsServer, err)
 				}
