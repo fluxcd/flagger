@@ -1122,6 +1122,9 @@ spec:
                     region:
                       description: Region of the provider
                       type: string
+                    insecureSkipVerify:
+                      description: Disable SSL certificate validation for the provider address
+                      type: boolean
                 query:
                   description: Query of this metric template
                   type: string

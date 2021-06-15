@@ -18,6 +18,7 @@ package providers
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -39,6 +40,7 @@ type PrometheusProvider struct {
 	url      url.URL
 	username string
 	password string
+	client   *http.Client
 }
 
 type prometheusResponse struct {
@@ -64,6 +66,13 @@ func NewPrometheusProvider(provider flaggerv1.MetricTemplateProvider, credential
 	prom := PrometheusProvider{
 		timeout: 5 * time.Second,
 		url:     *promURL,
+		client:  http.DefaultClient,
+	}
+
+	if provider.InsecureSkipVerify {
+		t := http.DefaultTransport.(*http.Transport).Clone()
+		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		prom.client = &http.Client{Transport: t}
 	}
 
 	if provider.SecretRef != nil {
@@ -106,7 +115,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
 	defer cancel()
 
-	r, err := http.DefaultClient.Do(req.WithContext(ctx))
+	r, err := p.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("request failed: %w", err)
 	}

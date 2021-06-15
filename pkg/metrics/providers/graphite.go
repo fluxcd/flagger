@@ -18,6 +18,7 @@ package providers
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -104,6 +105,7 @@ type GraphiteProvider struct {
 	username string
 	password string
 	timeout  time.Duration
+	client   *http.Client
 }
 
 // NewGraphiteProvider takes a provider spec and credentials map,
@@ -119,6 +121,13 @@ func NewGraphiteProvider(provider flaggerv1.MetricTemplateProvider, credentials 
 	graph := GraphiteProvider{
 		url:     *graphiteURL,
 		timeout: 5 * time.Second,
+		client:  http.DefaultClient,
+	}
+
+	if provider.InsecureSkipVerify {
+		t := http.DefaultTransport.(*http.Transport).Clone()
+		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		graph.client = &http.Client{Transport: t}
 	}
 
 	if provider.SecretRef == nil {
@@ -168,7 +177,7 @@ func (g *GraphiteProvider) RunQuery(query string) (float64, error) {
 	ctx, cancel := context.WithTimeout(req.Context(), g.timeout)
 	defer cancel()
 
-	r, err := http.DefaultClient.Do(req.WithContext(ctx))
+	r, err := g.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("request failed: %w", err)
 	}

@@ -74,6 +74,10 @@ type MetricTemplateProvider struct {
 	// Region of the provider
 	// +optional
 	Region string `json:"region,omitempty"`
+
+	// InsecureSkipVerify disables certificate verification for the provider
+	// +optional
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // MetricTemplateModel is the query template model
