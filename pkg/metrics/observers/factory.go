@@ -27,11 +27,12 @@ type Factory struct {
 	Client providers.Interface
 }
 
-func NewFactory(metricsServer string) (*Factory, error) {
+func NewFactory(metricsServer string, insecureSkipVerify bool) (*Factory, error) {
 	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
-		Type:      "prometheus",
-		Address:   metricsServer,
-		SecretRef: nil,
+		Type:               "prometheus",
+		Address:            metricsServer,
+		SecretRef:          nil,
+		InsecureSkipVerify: insecureSkipVerify,
 	}, nil)
 	if err != nil {
 		return nil, err

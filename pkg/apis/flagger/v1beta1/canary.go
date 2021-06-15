@@ -66,6 +66,10 @@ type CanarySpec struct {
 	// +optional
 	MetricsServer string `json:"metricsServer,omitempty"`
 
+	// InsecureSkipVerify disables certificate verification for the provider
+	// +optional
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+
 	// TargetRef references a target resource
 	TargetRef CrossNamespaceObjectReference `json:"targetRef"`
 

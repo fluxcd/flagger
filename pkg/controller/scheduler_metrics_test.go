@@ -32,13 +32,13 @@ func TestController_checkMetricProviderAvailability(t *testing.T) {
 		// ok
 		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{Name: "request-success-rate"}}}
 		canary := &flaggerv1.Canary{Spec: flaggerv1.CanarySpec{Analysis: analysis}}
-		obs, err := observers.NewFactory(testMetricsServerURL)
+		obs, err := observers.NewFactory(testMetricsServerURL, false)
 		require.NoError(t, err)
 		ctrl := Controller{observerFactory: obs, logger: zap.S(), eventRecorder: &record.FakeRecorder{}}
 		require.NoError(t, ctrl.checkMetricProviderAvailability(canary))
 
 		// error
-		ctrl.observerFactory, err = observers.NewFactory("http://non-exist")
+		ctrl.observerFactory, err = observers.NewFactory("http://non-exist", false)
 		require.NoError(t, err)
 		require.Error(t, ctrl.checkMetricProviderAvailability(canary))
 

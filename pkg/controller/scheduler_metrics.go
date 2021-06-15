@@ -41,7 +41,7 @@ func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) e
 			observerFactory := c.observerFactory
 			if canary.Spec.MetricsServer != "" {
 				var err error
-				observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer)
+				observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer, canary.Spec.InsecureSkipVerify)
 				if err != nil {
 					return fmt.Errorf("error building Prometheus client for %s %v", canary.Spec.MetricsServer, err)
 				}
@@ -120,7 +120,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 	// override the global metrics server if one is specified in the canary spec
 	if canary.Spec.MetricsServer != "" {
 		var err error
-		observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer)
+		observerFactory, err = observers.NewFactory(canary.Spec.MetricsServer, canary.Spec.InsecureSkipVerify)
 		if err != nil {
 			c.recordEventErrorf(canary, "Error building Prometheus client for %s %v", canary.Spec.MetricsServer, err)
 			return false
