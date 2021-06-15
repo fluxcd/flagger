@@ -294,6 +294,13 @@ func (in *UpstreamSpec) DeepCopyInto(out *UpstreamSpec) {
 		*out = new(KubeUpstream)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Labels != nil {
+		in, out := &in.Labels, &out.Labels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.SslConfig != nil {
 		in, out := &in.SslConfig, &out.SslConfig
 		*out = new(UpstreamSslConfig)

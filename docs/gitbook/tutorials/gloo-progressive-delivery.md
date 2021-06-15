@@ -160,6 +160,8 @@ spec:
           cmd: "hey -z 2m -q 5 -c 2 -host app.example.com http://gateway-proxy.gloo-system"
 ```
 
+*Note: when using upstreamRef the following fields are copied over from the original upstream: `Labels, SslConfig, CircuitBreakers, ConnectionConfig, UseHttp2, InitialStreamWindowSize`*
+
 Save the above resource as podinfo-canary.yaml and then apply it:
 
 ```bash

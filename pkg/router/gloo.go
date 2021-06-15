@@ -38,10 +38,11 @@ import (
 
 // GlooRouter is managing Gloo route tables
 type GlooRouter struct {
-	kubeClient    kubernetes.Interface
-	glooClient    clientset.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
+	kubeClient         kubernetes.Interface
+	glooClient         clientset.Interface
+	flaggerClient      clientset.Interface
+	logger             *zap.SugaredLogger
+	includeLabelPrefix []string
 }
 
 // Reconcile creates or updates the Gloo Edge route table
@@ -276,6 +277,7 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 	if glooUpstreamWithConfig != nil {
 		configSpec := glooUpstreamWithConfig.Spec
 		upstreamSpec = gloov1.UpstreamSpec{
+			Labels:                      configSpec.Labels,
 			SslConfig:                   configSpec.SslConfig,
 			CircuitBreakers:             configSpec.CircuitBreakers,
 			ConnectionConfig:            configSpec.ConnectionConfig,
@@ -293,10 +295,13 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 		Selector:         svc.Spec.Selector,
 	}
 
+	upstreamLabels := includeLabelsByPrefix(upstreamSpec.Labels, gr.includeLabelPrefix)
+
 	return &gloov1.Upstream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      upstreamName,
 			Namespace: canary.Namespace,
+			Labels:    upstreamLabels,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 					Group:   flaggerv1.SchemeGroupVersion.Group,
