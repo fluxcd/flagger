@@ -17,3 +17,15 @@ func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []stri
 
 	return filteredLabels
 }
+
+func makeAnnotations(in map[string]string) map[string]string {
+	out := make(map[string]string)
+	for key, value := range in {
+		// skip Flux GC markers
+		if strings.Contains(key, "/checksum") {
+			continue
+		}
+		out[key] = value
+	}
+	return out
+}

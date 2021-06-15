@@ -259,6 +259,8 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 
 				if vtClone.ObjectMeta.Annotations == nil {
 					vtClone.ObjectMeta.Annotations = make(map[string]string)
+				} else {
+					vtClone.ObjectMeta.Annotations = makeAnnotations(vtClone.ObjectMeta.Annotations)
 				}
 
 				vtClone.ObjectMeta.Annotations[configAnnotation] = string(b)

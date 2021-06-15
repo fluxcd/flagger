@@ -206,8 +206,8 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			if svc.ObjectMeta.Annotations == nil {
 				svc.ObjectMeta.Annotations = make(map[string]string)
 			}
-			if diff := cmp.Diff(metadata.Annotations, svc.ObjectMeta.Annotations); diff != "" {
-				svcClone.ObjectMeta.Annotations = metadata.Annotations
+			if diff := cmp.Diff(makeAnnotations(metadata.Annotations), svc.ObjectMeta.Annotations); diff != "" {
+				svcClone.ObjectMeta.Annotations = makeAnnotations(metadata.Annotations)
 				updateService = true
 			}
 			if diff := cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels); diff != "" {
