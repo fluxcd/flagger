@@ -46,8 +46,9 @@ metadata:
   name: my-metric
 spec:
   provider:
-    type: # can be prometheus or datadog
+    type: # can be prometheus, datadog, etc
     address: # API URL
+    insecureSkipVerify: # if set to true, disables the TLS cert validation
     secretRef:
       name: # name of the secret containing the API credentials
   query: # metric query
