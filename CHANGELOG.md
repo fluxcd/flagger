@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.12.0
+
+**Release date:** 2021-06-16
+
+This release comes with support for disabling the SSL certificate verification
+for the Prometheus and Graphite metric providers.
+
+#### Improvements
+ 
+- Add `insecureSkipVerify` option for Prometheus and Graphite
+  [#935](https://github.com/fluxcd/flagger/pull/935)
+- Copy labels from Gloo upstreams
+  [#932](https://github.com/fluxcd/flagger/pull/932)
+- Improve language and correct typos in FAQs docs
+  [#925](https://github.com/fluxcd/flagger/pull/925)
+- Remove Flux GC markers from generated objects
+  [#936](https://github.com/fluxcd/flagger/pull/936)
+
+#### Fixes
+
+- Require SMI TrafficSplit Service and Weight
+  [#878](https://github.com/fluxcd/flagger/pull/878)
+ 
 ## 1.11.0
 
 **Release date:** 2021-06-01
