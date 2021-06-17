@@ -72,7 +72,7 @@ func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Name:        apexName,
 				Namespace:   canary.Namespace,
 				Labels:      tsMetadata.Labels,
-				Annotations: makeAnnotations(tsMetadata.Annotations),
+				Annotations: filterMetadata(tsMetadata.Annotations),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,

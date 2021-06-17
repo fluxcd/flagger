@@ -69,6 +69,8 @@ func getPorts(cd *flaggerv1.Canary, cs []corev1.Container) map[string]int32 {
 	return ports
 }
 
+const toolkitMarker = "toolkit.fluxcd.io"
+
 // makeAnnotations appends an unique ID to annotations map
 func makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	idKey := "flagger-id"
@@ -83,8 +85,7 @@ func makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	id := fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
 
 	for k, v := range annotations {
-		// skip Flux GC markers
-		if strings.Contains(k, "/checksum") {
+		if strings.Contains(k, toolkitMarker) {
 			continue
 		}
 		if k != idKey {
@@ -96,9 +97,23 @@ func makeAnnotations(annotations map[string]string) (map[string]string, error) {
 	return res, nil
 }
 
+func filterMetadata(meta map[string]string) map[string]string {
+	res := make(map[string]string)
+	for k, v := range meta {
+		if strings.Contains(k, toolkitMarker) {
+			continue
+		}
+		res[k] = v
+	}
+	return res
+}
+
 func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []string) map[string]string {
 	filteredLabels := make(map[string]string)
 	for key, value := range labels {
+		if strings.Contains(key, toolkitMarker) {
+			continue
+		}
 		for _, includeLabelPrefix := range includeLabelPrefixes {
 			if includeLabelPrefix == "*" || strings.HasPrefix(key, includeLabelPrefix) {
 				filteredLabels[key] = value
@@ -113,6 +128,9 @@ func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []stri
 func makePrimaryLabels(labels map[string]string, labelValue string, label string) map[string]string {
 	res := make(map[string]string)
 	for k, v := range labels {
+		if strings.Contains(k, toolkitMarker) {
+			continue
+		}
 		if k != label {
 			res[k] = v
 		}

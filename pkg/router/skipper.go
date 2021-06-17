@@ -129,7 +129,7 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if cmp.Diff(iClone.Spec, canaryIngress.Spec) != "" {
 		ingressClone := canaryIngress.DeepCopy()
 		ingressClone.Spec = iClone.Spec
-		ingressClone.Annotations = makeAnnotations(iClone.Annotations)
+		ingressClone.Annotations = filterMetadata(iClone.Annotations)
 
 		_, err := skp.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Update(context.TODO(), ingressClone, metav1.UpdateOptions{})
 		if err != nil {

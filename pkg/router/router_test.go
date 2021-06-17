@@ -406,6 +406,9 @@ func newTestCanaryIngress() *flaggerv1.Canary {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "nginx",
+			Annotations: map[string]string{
+				"kustomize.toolkit.fluxcd.io/checksum": "0a40893bfdc545d62125bd3e74eeb2ebaa7097c2",
+			},
 		},
 		Spec: flaggerv1.CanarySpec{
 			TargetRef: flaggerv1.CrossNamespaceObjectReference{
@@ -444,7 +447,8 @@ func newTestIngress() *netv1.Ingress {
 			Namespace: "default",
 			Name:      "podinfo",
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class": "nginx",
+				"kubernetes.io/ingress.class":          "nginx",
+				"kustomize.toolkit.fluxcd.io/checksum": "0a40893bfdc545d62125bd3e74eeb2ebaa7097c2",
 			},
 		},
 		Spec: netv1.IngressSpec{
