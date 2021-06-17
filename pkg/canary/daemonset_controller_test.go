@@ -48,6 +48,9 @@ func TestDaemonSetController_Sync_ConsistentNaming(t *testing.T) {
 	primarySelectorValue := daePrimary.Spec.Selector.MatchLabels[dc.label]
 	sourceSelectorValue := dae.Spec.Selector.MatchLabels[dc.label]
 	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
+
+	annotation := daePrimary.Annotations["kustomize.toolkit.fluxcd.io/checksum"]
+	assert.Equal(t, "", annotation)
 }
 
 func TestDaemonSetController_Sync_InconsistentNaming(t *testing.T) {

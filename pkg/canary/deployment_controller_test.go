@@ -48,6 +48,9 @@ func TestDeploymentController_Sync_ConsistentNaming(t *testing.T) {
 	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
 	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", dc.labelValue))
 
+	annotation := depPrimary.Annotations["kustomize.toolkit.fluxcd.io/checksum"]
+	assert.Equal(t, "", annotation)
+
 	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, depPrimary.Name, hpaPrimary.Spec.ScaleTargetRef.Name)

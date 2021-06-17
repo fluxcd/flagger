@@ -41,9 +41,10 @@ func TestIncludeLabelsByPrefix(t *testing.T) {
 
 func TestIncludeLabelsByPrefixWithWildcard(t *testing.T) {
 	labels := map[string]string{
-		"foo":   "foo-value",
-		"bar":   "bar-value",
-		"lorem": "ipsum",
+		"foo":                                  "foo-value",
+		"bar":                                  "bar-value",
+		"lorem":                                "ipsum",
+		"kustomize.toolkit.fluxcd.io/checksum": "some",
 	}
 	includeLabelPrefix := []string{"*"}
 

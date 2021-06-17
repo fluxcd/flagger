@@ -419,6 +419,9 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      dc.name,
+			Annotations: map[string]string{
+				"kustomize.toolkit.fluxcd.io/checksum": "0a40893bfdc545d62125bd3e74eeb2ebaa7097c2",
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{

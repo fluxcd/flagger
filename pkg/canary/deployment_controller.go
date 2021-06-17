@@ -263,7 +263,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 				Name:        primaryName,
 				Namespace:   cd.Namespace,
 				Labels:      makePrimaryLabels(labels, primaryLabelValue, label),
-				Annotations: canaryDep.Annotations,
+				Annotations: filterMetadata(canaryDep.Annotations),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -335,7 +335,7 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      primaryHpaName,
 				Namespace: cd.Namespace,
-				Labels:    hpa.Labels,
+				Labels:    filterMetadata(hpa.Labels),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,

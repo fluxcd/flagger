@@ -262,7 +262,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, inclu
 				Name:        primaryName,
 				Namespace:   cd.Namespace,
 				Labels:      makePrimaryLabels(labels, primaryLabelValue, label),
-				Annotations: canaryDae.Annotations,
+				Annotations: filterMetadata(canaryDae.Annotations),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
