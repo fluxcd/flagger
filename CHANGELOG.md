@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.12.1
+
+**Release date:** 2021-06-17
+
+This release comes with a fix to Flagger when used with Flux v2.
+
+#### Improvements
+
+- Update Go to v1.16 and Kubernetes packages to v1.21.1
+  [#940](https://github.com/fluxcd/flagger/pull/940)
+
+#### Fixes
+
+- Remove the GitOps Toolkit metadata from generated objects
+  [#939](https://github.com/fluxcd/flagger/pull/939)
+
 ## 1.12.0
 
 **Release date:** 2021-06-16
