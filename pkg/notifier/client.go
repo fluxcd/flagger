@@ -30,7 +30,7 @@ import (
 )
 
 func postMessage(address string, proxy string, payload interface{}) error {
-	httpClient := http.DefaultClient
+	var httpClient = &http.Client{}
 
 	if proxy != "" {
 		proxyURL, err := url.Parse(proxy)
