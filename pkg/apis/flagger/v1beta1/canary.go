@@ -185,6 +185,10 @@ type CanaryService struct {
 	// +optional
 	OutlierDetection *appmeshv1beta2.OutlierDetection `json:"outlierDetection,omitempty"`
 
+	// Connection pooling for generated App Mesh virtual nodes
+	// +optional
+	ConnectionPool *appmeshv1beta2.VirtualNodeConnectionPool `json:"connectionPool,omitempty"`
+
 	// Apex is metadata to add to the apex service
 	// +optional
 	Apex *CustomMetadata `json:"apex,omitempty"`

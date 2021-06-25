@@ -40,6 +40,7 @@ type fixture struct {
 	abtest                            *flaggerv1.Canary
 	appmeshCanary                     *flaggerv1.Canary
 	appmeshCanaryWithOutlierDetection *flaggerv1.Canary
+	appmeshCanaryWithConnectionPool   *flaggerv1.Canary
 	ingressCanary                     *flaggerv1.Canary
 	kubeClient                        kubernetes.Interface
 	meshClient                        clientset.Interface
@@ -55,6 +56,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	abtest := newTestABTest()
 	appmeshCanary := newTestCanaryAppMesh()
 	appmeshCanaryWithOutlierDetection := newTestCanaryAppMeshWithOutlierDetection()
+	appmeshCanaryWithConnectionPool := newTestCanaryAppMeshWithConnectionPool()
 	ingressCanary := newTestCanaryIngress()
 
 	flaggerClient := fakeFlagger.NewSimpleClientset(
@@ -78,6 +80,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 		abtest:                            abtest,
 		appmeshCanary:                     appmeshCanary,
 		appmeshCanaryWithOutlierDetection: appmeshCanaryWithOutlierDetection,
+		appmeshCanaryWithConnectionPool:   appmeshCanaryWithConnectionPool,
 		ingressCanary:                     ingressCanary,
 		kubeClient:                        kubeClient,
 		meshClient:                        meshClient,
@@ -242,6 +245,59 @@ func newTestCanaryAppMeshWithOutlierDetection() *flaggerv1.Canary {
 						Value: 1000,
 					},
 					MaxEjectionPercent: int64(80),
+				},
+			}, Analysis: &flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newTestCanaryAppMeshWithConnectionPool() *flaggerv1.Canary {
+	maxPendingRequests := int64(5)
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "appmesh",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Port:     9898,
+				MeshName: "global",
+				Hosts:    []string{"*"},
+				Backends: []string{"backend.default"},
+				Timeout:  "30s",
+				Retries: &istiov1alpha3.HTTPRetry{
+					Attempts:      5,
+					PerTryTimeout: "gateway-error",
+					RetryOn:       "5s",
+				},
+				ConnectionPool: &appmeshv1beta2.VirtualNodeConnectionPool{
+					HTTP: &appmeshv1beta2.HTTPConnectionPool{
+						MaxConnections:     int64(25),
+						MaxPendingRequests: &maxPendingRequests,
+					},
 				},
 			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,

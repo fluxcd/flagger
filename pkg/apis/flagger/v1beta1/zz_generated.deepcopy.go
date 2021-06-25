@@ -375,6 +375,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(v1beta2.OutlierDetection)
 		**out = **in
 	}
+	if in.ConnectionPool != nil {
+		in, out := &in.ConnectionPool, &out.ConnectionPool
+		*out = new(v1beta2.VirtualNodeConnectionPool)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Apex != nil {
 		in, out := &in.Apex, &out.Apex
 		*out = new(CustomMetadata)
