@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -179,6 +180,10 @@ type CanaryService struct {
 	// Backends of the generated App Mesh virtual nodes
 	// +optional
 	Backends []string `json:"backends,omitempty"`
+
+	// Outlier detection for generated App Mesh virtual nodes
+	// +optional
+	OutlierDetection *appmeshv1beta2.OutlierDetection `json:"outlierDetection,omitempty"`
 
 	// Apex is metadata to add to the apex service
 	// +optional

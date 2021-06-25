@@ -95,6 +95,7 @@ func (ar *AppMeshv1beta2Router) Reconcile(canary *flaggerv1.Canary) error {
 func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, name string, podSelector string, host string) error {
 	protocol := ar.getProtocol(canary)
 	timeout := ar.makeListenerTimeout(canary)
+	outlierDetection := ar.getOutlierDetectionPolicy(canary)
 
 	vnSpec := appmeshv1.VirtualNodeSpec{
 		Listeners: []appmeshv1.Listener{
@@ -103,7 +104,8 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 					Port:     ar.getContainerPort(canary),
 					Protocol: protocol,
 				},
-				Timeout: timeout,
+				Timeout:          timeout,
+				OutlierDetection: outlierDetection,
 			},
 		},
 		ServiceDiscovery: &appmeshv1.ServiceDiscovery{
@@ -596,6 +598,13 @@ func (ar *AppMeshv1beta2Router) gatewayAnnotations(canary *flaggerv1.Canary) map
 		}
 	}
 	return a
+}
+
+func (ar *AppMeshv1beta2Router) getOutlierDetectionPolicy(canary *flaggerv1.Canary) *appmeshv1.OutlierDetection {
+	if canary.Spec.Service.OutlierDetection != nil {
+		return canary.Spec.Service.OutlierDetection
+	}
+	return nil
 }
 
 func (ar *AppMeshv1beta2Router) Finalize(_ *flaggerv1.Canary) error {
