@@ -61,8 +61,6 @@ type GChatText struct {
 	Text string `json:"text"`
 }
 
-// End - GChatCards holds the canary analysis result
-
 // NewGChat validates the GChat URL and returns a GChat object
 func NewGChat(hookURL string, proxyURL string) (*GChat, error) {
 	_, err := url.ParseRequestURI(hookURL)
