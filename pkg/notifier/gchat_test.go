@@ -36,11 +36,12 @@ func TestGChat_Post(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		require.NoError(t, err)
+
 		var payload = GChatPayload{}
 		err = json.Unmarshal(b, &payload)
 		require.NoError(t, err)
 		require.Equal(t, "podinfo.test", payload.Cards[0].Header.SubTitle)
-		require.Equal(t, len(fields), len(payload.Cards[0].Sections))
+		require.Equal(t, len(fields), len(payload.Cards[0].Sections)-1)
 	}))
 	defer ts.Close()
 
