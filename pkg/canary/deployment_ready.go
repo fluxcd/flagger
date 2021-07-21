@@ -100,7 +100,7 @@ func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, 
 		}
 	} else {
 		return true, fmt.Errorf(
-			"waiting for rollout to finish: observed deployment generation less then desired generation")
+			"waiting for rollout to finish: observed deployment generation less than desired generation")
 	}
 	return true, nil
 }
