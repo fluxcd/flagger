@@ -120,7 +120,7 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 	}, nil
 }
 
-// GetTargetConfigs scans the target deployment for Kubernetes ConfigMaps and Secretes
+// GetTargetConfigs scans the target deployment for Kubernetes ConfigMaps and Secrets
 // and returns a list of config references
 func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]ConfigRef, error) {
 	targetName := cd.Spec.TargetRef.Name
@@ -258,7 +258,7 @@ func (ct *ConfigTracker) GetConfigRefs(cd *flaggerv1.Canary) (*map[string]string
 	return &res, nil
 }
 
-// HasConfigChanged checks for changes in ConfigMaps and Secretes by comparing
+// HasConfigChanged checks for changes in ConfigMaps and Secrets by comparing
 // the checksum for each ConfigRef stored in Canary.Status.TrackedConfigs
 func (ct *ConfigTracker) HasConfigChanged(cd *flaggerv1.Canary) (bool, error) {
 	configs, err := ct.GetTargetConfigs(cd)
@@ -291,7 +291,7 @@ func (ct *ConfigTracker) HasConfigChanged(cd *flaggerv1.Canary) (bool, error) {
 	return false, nil
 }
 
-// CreatePrimaryConfigs syncs the primary Kubernetes ConfigMaps and Secretes
+// CreatePrimaryConfigs syncs the primary Kubernetes ConfigMaps and Secrets
 // with those found in the target deployment
 func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[string]ConfigRef, includeLabelPrefix []string) error {
 	for _, ref := range refs {
@@ -379,7 +379,7 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 	return nil
 }
 
-// ApplyPrimaryConfigs appends the primary suffix to all ConfigMaps and Secretes found in the PodSpec
+// ApplyPrimaryConfigs appends the primary suffix to all ConfigMaps and Secrets found in the PodSpec
 func (ct *ConfigTracker) ApplyPrimaryConfigs(spec corev1.PodSpec, refs map[string]ConfigRef) corev1.PodSpec {
 	// update volumes
 	for i, volume := range spec.Volumes {
