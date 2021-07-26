@@ -87,5 +87,5 @@ func (c *DaemonSetController) isDaemonSetReady(cd *flaggerv1.Canary, daemonSet *
 				daemonSet.Status.NumberAvailable, daemonSet.Status.DesiredNumberScheduled)
 		}
 	}
-	return true, fmt.Errorf("waiting for rollout to finish: observed daemonset generation less then desired generation")
+	return true, fmt.Errorf("waiting for rollout to finish: observed daemonset generation less than desired generation")
 }
