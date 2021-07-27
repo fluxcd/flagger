@@ -13,9 +13,17 @@ Install Traefik with Helm v3:
 ```bash
 helm repo add traefik https://helm.traefik.io/traefik
 kubectl create ns traefik
-helm upgrade -i traefik traefik/traefik \
---namespace traefik \
---set additionalArguments="{--metrics.prometheus=true}"
+
+cat <<EOF | helm upgrade -i traefik traefik/traefik --namespace traefik -f -
+deployment:
+  podAnnotations:
+    prometheus.io/port: "9100"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+metrics:
+  prometheus:
+    entryPoint: metrics
+EOF
 ```
 
 Install Flagger and the Prometheus add-on in the same namespace as Traefik:
