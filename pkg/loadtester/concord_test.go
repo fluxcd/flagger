@@ -19,7 +19,7 @@ package loadtester
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"testing"
 
@@ -94,7 +94,7 @@ func assertNextPartHasKeyAndValue(t *testing.T, r *multipart.Reader, key string,
 	}
 	// assert.Equal(t, 1, part)
 
-	slurp, err := ioutil.ReadAll(part)
+	slurp, err := io.ReadAll(part)
 	if err != nil {
 		fmt.Printf("Part: %+v", part)
 		t.Fatalf("Couldn't read part: %v", err)

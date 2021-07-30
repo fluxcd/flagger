@@ -20,7 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -445,7 +445,7 @@ func TestScheduler_DaemonSetTargetPortName(t *testing.T) {
 
 func TestScheduler_DaemonSetAlerts(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 		var payload = notifier.SlackPayload{}
 		err = json.Unmarshal(b, &payload)

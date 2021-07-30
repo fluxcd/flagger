@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -189,7 +188,7 @@ func (task *ConcordTask) newRequest(method, path string, contentType string, bod
 	}
 
 	apiKey := ""
-	dat, err := ioutil.ReadFile(task.APIKeyPath)
+	dat, err := os.ReadFile(task.APIKeyPath)
 	if err != nil {
 		return req, err
 	}
