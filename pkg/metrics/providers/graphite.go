@@ -21,7 +21,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -183,7 +183,7 @@ func (g *GraphiteProvider) RunQuery(query string) (float64, error) {
 	}
 	defer r.Body.Close()
 
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		return 0, fmt.Errorf("error reading body: %w", err)
 	}

@@ -20,7 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -44,7 +44,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		w.Write([]byte("Forbidden"))
 	})
 	mux.HandleFunc("/gate/check", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("reading the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
@@ -74,7 +74,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 	})
 
 	mux.HandleFunc("/gate/open", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("reading the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
@@ -99,7 +99,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 	})
 
 	mux.HandleFunc("/gate/close", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("reading the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
@@ -124,7 +124,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 	})
 
 	mux.HandleFunc("/rollback/check", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("reading the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
@@ -153,7 +153,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		logger.Infof("%s rollback check: approved %v", canaryName, approved)
 	})
 	mux.HandleFunc("/rollback/open", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("reading the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
@@ -177,7 +177,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		logger.Infof("%s rollback opened", canaryName)
 	})
 	mux.HandleFunc("/rollback/close", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("reading the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
@@ -235,7 +235,7 @@ func HandleHealthz(w http.ResponseWriter, r *http.Request) {
 // HandleNewTask handles task creation requests
 func HandleNewTask(logger *zap.SugaredLogger, taskRunner TaskRunnerInterface) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("reading the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)

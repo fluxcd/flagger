@@ -20,7 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -125,7 +125,7 @@ func (p *DatadogProvider) RunQuery(query string) (float64, error) {
 	}
 
 	defer r.Body.Close()
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		return 0, fmt.Errorf("error reading body: %w", err)
 	}
@@ -176,7 +176,7 @@ func (p *DatadogProvider) IsOnline() (bool, error) {
 
 	defer r.Body.Close()
 
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		return false, fmt.Errorf("error reading body: %w", err)
 	}

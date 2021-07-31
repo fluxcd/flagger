@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -67,7 +67,7 @@ func callWebhook(webhook string, payload interface{}, timeout string) error {
 	}
 	defer r.Body.Close()
 
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading body: %s", err.Error())
 	}

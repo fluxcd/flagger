@@ -18,7 +18,7 @@ package notifier
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,7 +28,7 @@ import (
 
 func Test_postMessage(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 
 		var payload = make(map[string]string)

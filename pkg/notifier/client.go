@@ -21,7 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -75,7 +75,7 @@ func postMessage(address string, proxy string, payload interface{}) error {
 	defer res.Body.Close()
 	statusCode := res.StatusCode
 	if statusCode != 200 {
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		return fmt.Errorf("sending notification failed: %s", string(body))
 	}
 

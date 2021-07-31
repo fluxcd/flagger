@@ -18,7 +18,7 @@ package notifier
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -35,7 +35,7 @@ func TestDiscord_Post(t *testing.T) {
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 		var payload = SlackPayload{}
 		err = json.Unmarshal(b, &payload)
