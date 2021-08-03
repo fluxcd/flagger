@@ -20,6 +20,10 @@ fullnameOverride: ""
 
 env: []
 
+envFrom:
+  # - name: secret-name
+  # - name: another-secret
+
 service:
   type: ClusterIP
   port: 80
