@@ -67,9 +67,9 @@ spec:
                 - --spider
                 - http://localhost:8080/healthz
             timeoutSeconds: 5
-          {{- if .Values.envFrom }}
+          {{- if .Values.secrets }}
           envFrom:
-          {{- range $secret := .Values.envFrom }}
+          {{- range $secret := .Values.secrets }}
             - secretRef:
                 name: {{ $secret.name }}
           {{- end }}

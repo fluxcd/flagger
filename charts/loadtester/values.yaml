@@ -20,7 +20,8 @@ fullnameOverride: ""
 
 env: []
 
-envFrom:
+# Maps to envFrom in the deployment
+secrets:
   # - name: secret-name
   # - name: another-secret
 
