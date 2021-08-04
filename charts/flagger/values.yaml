@@ -160,3 +160,5 @@ istio:
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
+
+podLabels: {}

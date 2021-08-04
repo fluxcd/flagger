@@ -22,6 +22,11 @@ spec:
       labels:
         app.kubernetes.io/name: {{ template "flagger.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- if .Values.podLabels }}
+      {{- range $key, $value := .Values.podLabels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      {{- end }}
       annotations:
         {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8 }}
