@@ -21,6 +21,7 @@ import (
 	"time"
 
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -151,6 +152,10 @@ type CanaryService struct {
 	// EnableWebsockets attached to the generated Contour HTTPProxy routes
 	// +optional
 	EnableWebsockets bool `json:"enableWebsockets,omitempty"`
+
+	// ResponseHeadersPolicy for the genrated Contour HTTPProxy routes
+	// +optional
+	ResponseHeadersPolicy *projectcontourv1.HeadersPolicy `json:"responseHeadersPolicy,omitempty"`
 
 	// TrafficPolicy attached to the generated Istio destination rules
 	// +optional

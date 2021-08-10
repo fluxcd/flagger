@@ -22,6 +22,7 @@ package v1beta1
 
 import (
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -331,6 +332,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		in, out := &in.Hosts, &out.Hosts
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.ResponseHeadersPolicy != nil {
+		in, out := &in.ResponseHeadersPolicy, &out.ResponseHeadersPolicy
+		*out = new(projectcontourv1.HeadersPolicy)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.TrafficPolicy != nil {
 		in, out := &in.TrafficPolicy, &out.TrafficPolicy
