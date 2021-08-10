@@ -180,6 +180,9 @@ spec:
                       type: array
                       items:
                         type: string
+                    enableWebsockets:
+                      description: Allow websocket connections to be used with Contour route
+                      type: boolean
                     delegation:
                       description: enable behaving as a delegate VirtualService
                       type: boolean

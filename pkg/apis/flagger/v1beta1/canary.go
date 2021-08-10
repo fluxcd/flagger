@@ -148,6 +148,10 @@ type CanaryService struct {
 	// +optional
 	Delegation bool `json:"delegation,omitempty"`
 
+	// EnableWebsockets attached to the generated Contour HTTPProxy routes
+	// +optional
+	EnableWebsockets bool `json:"enableWebsockets,omitempty"`
+
 	// TrafficPolicy attached to the generated Istio destination rules
 	// +optional
 	TrafficPolicy *istiov1alpha3.TrafficPolicy `json:"trafficPolicy,omitempty"`

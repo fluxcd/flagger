@@ -56,8 +56,9 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						Prefix: cr.makePrefix(canary),
 					},
 				},
-				TimeoutPolicy: cr.makeTimeoutPolicy(canary),
-				RetryPolicy:   cr.makeRetryPolicy(canary),
+				EnableWebsockets: canary.Spec.Service.EnableWebsockets,
+				TimeoutPolicy:    cr.makeTimeoutPolicy(canary),
+				RetryPolicy:      cr.makeRetryPolicy(canary),
 				Services: []contourv1.Service{
 					{
 						Name:   primaryName,
