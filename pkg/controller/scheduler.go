@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -670,9 +671,21 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 
 func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	// run external checks
+	var err error
+	targetIterations := strconv.Itoa(canary.GetAnalysis().Iterations)
+	currentIterations := strconv.Itoa(canary.Status.Iterations)
+
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
-			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			c.recordEventInfof(canary, "running rollout webhooks targetIterations: %s , currentIterations: %s", targetIterations, currentIterations)
+			if canary.Status.Iterations == canary.GetAnalysis().Iterations || len(canary.GetAnalysis().Match) > 0 {
+				err = CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+				c.recordEventInfof(canary, "calling rollout webhook %s for blue/green", webhook.Name)
+			}
+			if canary.GetAnalysis().StepWeight > 0 || len(canary.GetAnalysis().StepWeights) > 0 {
+				err = CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+				c.recordEventInfof(canary, "calling rollout webhook %s for canary", webhook.Name)
+			}
 			if err != nil {
 				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
 					canary.Name, canary.Namespace, webhook.Name, err)
