@@ -678,19 +678,18 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
 			c.recordEventInfof(canary, "running rollout webhooks targetIterations: %s , currentIterations: %s", targetIterations, currentIterations)
-			if canary.Status.Iterations == canary.GetAnalysis().Iterations || len(canary.GetAnalysis().Match) > 0 {
-				err = CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
-				c.recordEventInfof(canary, "calling rollout webhook %s for blue/green", webhook.Name)
-			}
 			if canary.GetAnalysis().StepWeight > 0 || len(canary.GetAnalysis().StepWeights) > 0 {
 				err = CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 				c.recordEventInfof(canary, "calling rollout webhook %s for canary", webhook.Name)
+			} else if canary.Status.Iterations == canary.GetAnalysis().Iterations || len(canary.GetAnalysis().Match) > 0 {
+				err = CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+				c.recordEventInfof(canary, "calling rollout webhook %s for blue/green", webhook.Name)
 			}
-			if err != nil {
-				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
-					canary.Name, canary.Namespace, webhook.Name, err)
-				return false
-			}
+		}
+		if err != nil {
+			c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
+				canary.Name, canary.Namespace, webhook.Name, err)
+			return false
 		}
 	}
 
