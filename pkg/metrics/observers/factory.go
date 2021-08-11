@@ -80,6 +80,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &TraefikObserver{
 			client: factory.Client,
 		}
+	case provider == flaggerv1.OsmProvider:
+		return &OsmObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,

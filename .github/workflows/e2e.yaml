@@ -22,6 +22,7 @@ jobs:
           - traefik
           - gloo
           - skipper
+          - osm
           - kubernetes
     steps:
       - name: Checkout
