@@ -32,7 +32,7 @@ import (
 
 func TestTraefikObserver_GetRequestSuccessRate(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		expected := ` sum( rate( traefik_service_request_duration_seconds_bucket{ service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd", code!~"5..", le="+Inf" }[1m] ) ) / sum( rate( traefik_service_request_duration_seconds_bucket{ service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd", le="+Inf" }[1m] ) ) * 100`
+		expected := ` sum( rate( traefik_service_request_duration_seconds_bucket{ exported_service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd", code!~"5..", le="+Inf" }[1m] ) ) / sum( rate( traefik_service_request_duration_seconds_bucket{ exported_service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd", le="+Inf" }[1m] ) ) * 100`
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			promql := r.URL.Query()["query"][0]
@@ -85,7 +85,7 @@ func TestTraefikObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestTraefikObserver_GetRequestDuration(t *testing.T) {
-	expected := ` histogram_quantile( 0.99, sum( rate( traefik_service_request_duration_seconds_bucket{ service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd" }[1m] ) ) by (le) )`
+	expected := ` histogram_quantile( 0.99, sum( rate( traefik_service_request_duration_seconds_bucket{ exported_service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd" }[1m] ) ) by (le) )`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]

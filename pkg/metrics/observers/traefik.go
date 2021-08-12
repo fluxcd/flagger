@@ -29,7 +29,7 @@ var traefikQueries = map[string]string{
 	sum(
 		rate(
 			traefik_service_request_duration_seconds_bucket{
-				service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
+				exported_service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
 				code!~"5..",
 				le="+Inf"
 			}[{{ interval }}]
@@ -39,7 +39,7 @@ var traefikQueries = map[string]string{
 	sum(
 		rate(
 			traefik_service_request_duration_seconds_bucket{
-				service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
+				exported_service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
 				le="+Inf"
 			}[{{ interval }}]
 		)
@@ -50,7 +50,7 @@ var traefikQueries = map[string]string{
 		sum(
 			rate(
 				traefik_service_request_duration_seconds_bucket{
-					service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd"
+					exported_service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd"
 				}[{{ interval }}]
 			)
 		) by (le)

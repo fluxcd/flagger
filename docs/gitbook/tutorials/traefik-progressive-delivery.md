@@ -303,7 +303,7 @@ spec:
     sum(
       rate(
         traefik_service_request_duration_seconds_bucket{
-          service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
+          exported_service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
           code!="404",
         }[{{ interval }}]
       )
@@ -312,7 +312,7 @@ spec:
     sum(
       rate(
         traefik_service_request_duration_seconds_bucket{
-          service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
+          exported_service=~"{{ namespace }}-{{ target }}-canary-[0-9a-zA-Z-]+@kubernetescrd",
         }[{{ interval }}]
       )
     ) * 100
