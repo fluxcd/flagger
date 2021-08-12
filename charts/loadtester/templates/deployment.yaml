@@ -19,6 +19,7 @@ spec:
         app.kubernetes.io/name: {{ include "loadtester.name" . }}
       annotations:
         appmesh.k8s.aws/ports: "444"
+        openservicemesh.io/inbound-port-exclusion-list: "80, 8080"
         {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}

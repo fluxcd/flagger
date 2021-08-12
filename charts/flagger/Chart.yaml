@@ -22,5 +22,7 @@ keywords:
   - contour
   - nginx
   - traefik
+  - osm
+  - smi
   - gitops
   - canary

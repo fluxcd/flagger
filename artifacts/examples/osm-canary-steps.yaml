@@ -1,0 +1,42 @@
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  provider: osm
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  progressDeadlineSeconds: 600
+  service:
+    port: 9898
+    targetPort: 9898
+  analysis:
+    interval: 15s
+    threshold: 10
+    stepWeights: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+    metrics:
+    - name: request-success-rate
+      thresholdRange:
+        min: 99
+      interval: 1m
+    - name: request-duration
+      thresholdRange:
+        max: 500
+      interval: 30s
+    webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 15s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary.test:9898/token | grep token"
+      - name: load-test
+        type: rollout
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 1m -q 10 -c 2 http://podinfo-canary.test:9898/"

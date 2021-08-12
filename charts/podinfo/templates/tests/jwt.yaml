@@ -12,6 +12,7 @@ metadata:
     sidecar.istio.io/inject: "false"
     linkerd.io/inject: disabled
     appmesh.k8s.aws/sidecarInjectorWebhook: disabled
+    openservicemesh.io/sidecar-injection: disabled
 spec:
   containers:
     - name: tools
