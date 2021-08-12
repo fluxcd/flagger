@@ -681,7 +681,7 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 			if canary.GetAnalysis().StepWeight > 0 || len(canary.GetAnalysis().StepWeights) > 0 {
 				err = CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 				c.recordEventInfof(canary, "calling rollout webhook %s for canary", webhook.Name)
-			} else if canary.Status.Iterations == canary.GetAnalysis().Iterations || len(canary.GetAnalysis().Match) > 0 {
+			} else if canary.Status.Iterations > canary.GetAnalysis().Iterations || len(canary.GetAnalysis().Match) > 0 {
 				err = CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 				c.recordEventInfof(canary, "calling rollout webhook %s for blue/green", webhook.Name)
 			}
