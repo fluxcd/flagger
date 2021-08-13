@@ -7,7 +7,7 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 * A/B Testing (HTTP headers and cookies traffic routing)
 * Blue/Green (traffic switching and mirroring)
 
-Flagger works with service mesh solutions (Istio, Linkerd, AWS App Mesh) and with Kubernetes ingress controllers
+Flagger works with service mesh solutions (Istio, Linkerd, AWS App Mesh, Open Service Mesh) and with Kubernetes ingress controllers
 (NGINX, Skipper, Gloo, Contour, Traefik).
 Flagger can be configured to send alerts to various chat platforms such as Slack, Microsoft Teams, Discord and Rocket.
 
@@ -94,6 +94,15 @@ $ helm upgrade -i flagger flagger/flagger \
     --namespace=traefik \
     --set prometheus.install=true \
     --set meshProvider=traefik
+```
+
+To install Flagger for **Open Service Mesh (OSM)** (requires OSM to have been installed with Prometheus):
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+    --namespace=osm-system \
+    --set meshProvider=osm \
+    --set metricsServer=http://osm-prometheus.osm-system.svc:7070
 ```
 
 The [configuration](#configuration) section lists the parameters that can be configured during installation.

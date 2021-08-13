@@ -13,3 +13,4 @@ redirects:
   usage/skipper-progressive-delivery: tutorials/skipper-progressive-delivery.md
   usage/crossover-progressive-delivery: tutorials/crossover-progressive-delivery.md
   usage/traefik-progressive-delivery: tutorials/traefik-progressive-delivery.md
+  usage/osm-progressive-delivery: tutorials/osm-progressive-delivery.md
