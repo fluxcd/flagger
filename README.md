@@ -246,8 +246,8 @@ If you have any questions about Flagger and progressive delivery:
 * Read the Flagger [docs](https://docs.flagger.app).
 * Invite yourself to the [CNCF community slack](https://slack.cncf.io/)
   and join the [#flagger](https://cloud-native.slack.com/messages/flagger/) channel.
-* Check out the [Flux talks section](https://fluxcd.io/community/#talks) and to see a list of online talks,
-  hands-on training and meetups.
+* Check out the **[Flux events calendar](https://fluxcd.io/#calendar)**, both with upcoming talks, events and meetings you can attend.
+* Or view the **[Flux resources section](https://fluxcd.io/resources)** with past events videos you can watch.
 * File an [issue](https://github.com/fluxcd/flagger/issues/new).
 
 Your feedback is always welcome!
