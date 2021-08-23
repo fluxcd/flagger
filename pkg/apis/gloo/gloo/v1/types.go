@@ -29,9 +29,9 @@ type UpstreamSpec struct {
 }
 
 type KubeUpstream struct {
-	ServiceName      string            `json:"service_name,omitempty"`
-	ServiceNamespace string            `json:"service_namespace,omitempty"`
-	ServicePort      int32             `json:"service_port,omitempty"`
+	ServiceName      string            `json:"serviceName,omitempty"`
+	ServiceNamespace string            `json:"serviceNamespace,omitempty"`
+	ServicePort      int32             `json:"servicePort,omitempty"`
 	Selector         map[string]string `json:"selector,omitempty"`
 }
 
