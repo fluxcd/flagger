@@ -34,6 +34,14 @@ kustomize build https://github.com/fluxcd/flagger/kustomize/linkerd?ref=main | k
 This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to linkerd-viz extension's Prometheus instance
 which lives under `linkerd-viz` namespace by default.
 
+Install Flagger for Open Service Mesh:
+
+```bash
+kustomize build https://github.com/fluxcd/flagger/kustomize/osm?ref=main | kubectl apply -f -
+```
+
+This deploys Flagger in the `osm-system` namespace and sets the metrics server URL to OSM's Prometheus instance.
+
 If you want to install a specific Flagger release, add the version number to the URL:
 
 ```bash
@@ -68,7 +76,7 @@ metadata:
   name: app
   namespace: test
 spec:
-  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, gloo
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, gloo, osm
   # use the kubernetes provider for Blue/Green style deployments
   provider: nginx
 ```

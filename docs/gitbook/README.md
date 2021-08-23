@@ -10,7 +10,7 @@ version in production by gradually shifting traffic to the new version while mea
 and running conformance tests.
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
-using a service mesh (App Mesh, Istio, Linkerd)
+using a service mesh (App Mesh, Istio, Linkerd, Open Service Mesh)
 or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
 For release analysis, Flagger can query Prometheus, Datadog, New Relic, CloudWatch or Graphite
 and for alerting it uses Slack, MS Teams, Discord and Rocket.
@@ -36,6 +36,7 @@ After installing Flagger, you can follow one of these tutorials to get started:
 * [Istio](tutorials/istio-progressive-delivery.md)
 * [Linkerd](tutorials/linkerd-progressive-delivery.md)
 * [AWS App Mesh](tutorials/appmesh-progressive-delivery.md)
+* [Open Service Mesh](tutorials/osm-progressive-delivery.md)
 
 **Ingress controller tutorials**
 

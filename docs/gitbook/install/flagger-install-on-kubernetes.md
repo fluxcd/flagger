@@ -71,6 +71,16 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://appmesh-prometheus:9090
 ```
 
+Deploy Flagger for **Open Service Mesh (OSM)** (requires OSM to have been installed with Prometheus):
+
+```console
+$ helm upgrade -i flagger flagger/flagger \
+--namespace=osm-system \
+--set crd.create=false \
+--set meshProvider=osm \
+--set metricsServer=http://osm-prometheus.osm-system.svc:7070
+```
+
 You can install Flagger in any namespace as long as it can talk to the Prometheus service on port 9090.
 
 For ingress controllers, the install instructions are:
@@ -173,6 +183,14 @@ kustomize build https://github.com/fluxcd/flagger/kustomize/linkerd?ref=main | k
 
 This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
 
+Install Flagger for Open Service Mesh:
+
+```bash
+kustomize build https://github.com/fluxcd/flagger/kustomize/osm?ref=main | kubectl apply -f -
+```
+
+This deploys Flagger in the `osm-system` namespace and sets the metrics server URL to OSM's Prometheus instance.
+
 If you want to install a specific Flagger release, add the version number to the URL:
 
 ```bash
@@ -202,7 +220,7 @@ metadata:
   name: app
   namespace: test
 spec:
-  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, gloo, traefik
+  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, gloo, traefik, osm
   # use the kubernetes provider for Blue/Green style deployments
   provider: nginx
 ```

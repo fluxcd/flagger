@@ -26,7 +26,7 @@ helm upgrade -i flagger-loadtester flagger/loadtester
 The command deploys loadtester on the Kubernetes cluster in the default namespace.
 
 > **Tip**: Note that the namespace where you deploy the load tester should
-> have the Istio, App Mesh or Linkerd sidecar injection enabled
+> have the Istio, App Mesh, Linkerd or Open Service Mesh sidecar injection enabled
 
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
