@@ -53,7 +53,7 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 	case "msteams":
 		n, err = NewMSTeams(f.URL, f.ProxyURL)
 	case "gchat":
-		n, err = NewMSTeams(f.URL, f.ProxyURL)
+		n, err = NewGChat(f.URL, f.ProxyURL)
 	default:
 		err = fmt.Errorf("provider %s not supported", provider)
 	}
