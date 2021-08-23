@@ -5,9 +5,9 @@
 
 set -o errexit
 
-echo '>>> Set pilot env to enable virtual service delegate'
-kubectl -n istio-system set env deploy istiod PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE=true
-kubectl -n istio-system rollout status deploy istiod
+#echo '>>> Set pilot env to enable virtual service delegate'
+#kubectl -n istio-system set env deploy istiod PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE=true
+#kubectl -n istio-system rollout status deploy istiod
 
 echo '>>> Initialising Gateway'
 cat <<EOF | kubectl apply -f -
@@ -138,12 +138,4 @@ until ${ok}; do
     fi
 done
 
-echo '>>> Set pilot env to disable virtual service delegate'
-kubectl -n istio-system set env deploy istiod PILOT_ENABLE_VIRTUAL_SERVICE_DELEGATE=false
-kubectl -n istio-system rollout status deploy istiod
-
 echo '✔ Canary promotion test passed'
-
-if [[ "$1" = "canary" ]]; then
-  exit 0
-fi
