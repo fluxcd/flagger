@@ -9,9 +9,9 @@ features:
 - title: Safer Releases
   details: Reduce the risk of introducing a new software version in production by gradually shifting traffic to the new version while measuring metrics like HTTP/gRPC request success rate and latency.
 - title: Flexible Traffic Routing
-  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
+  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd, OSM or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
 - title:  Extensible Validation
-  details: Besides the builtin metrics checks, you can extend your application analysis with custom Prometheus, Datadog, CloudWatch metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
+  details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics (Prometheus, Datadog, CloudWatch, New Relic, Graphite) and webooks for running acceptance tests, load tests, or any other custom validation. 
 footer: Apache License 2.0 | Copyright © 2018-2021 The Flux authors
 ---
 
@@ -33,6 +33,7 @@ Flagger can run automated application analysis, testing, promotion and rollback 
     * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery),
       [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery),
       [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery),
+    * [Open Service Mesh](https://docs.flagger.app/tutorials/osm-progressive-delivery),
       [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery),
       [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery),
       [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery),
@@ -47,10 +48,10 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 * **Blue/Green** (traffic switching and mirroring)
     * [Kubernetes CNI](https://docs.flagger.app/tutorials/kubernetes-blue-green),
       [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery#traffic-mirroring),
-      Linkerd, App Mesh, Contour, Gloo, NGINX, Skipper, Traefik 
+      Linkerd, App Mesh, OSM, Contour, Gloo, NGINX, Skipper, Traefik 
 
 Flagger can be configured to [send notifications](https://docs.flagger.app/usage/alerting) to
-Slack, Microsoft Teams, Discord or Rocket.
+Slack, Microsoft Teams, Discord and Rocket.
 It will post messages when a deployment has been initialised,
 when a new revision has been detected and if the canary analysis failed or succeeded.
 
