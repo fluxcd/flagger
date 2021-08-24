@@ -1191,6 +1191,7 @@ spec:
                     - msteams
                     - discord
                     - rocket
+                    - gchat
                 channel:
                   description: Alert channel for this provider
                   type: string
