@@ -2,8 +2,39 @@ apiVersion: v1
 entries:
   flagger:
   - apiVersion: v1
+    appVersion: 1.13.0
+    created: "2021-08-25T10:34:21.984560446Z"
+    description: Flagger is a progressive delivery operator for Kubernetes
+    digest: a7dee206debaf5fc01c1401c1bd55ef7e6aafa10f8c3f422ef8888a264e85ae0
+    home: https://flagger.app
+    icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
+    keywords:
+    - flagger
+    - istio
+    - appmesh
+    - linkerd
+    - gloo
+    - contour
+    - nginx
+    - traefik
+    - osm
+    - smi
+    - gitops
+    - canary
+    kubeVersion: '>=1.16.0-0'
+    maintainers:
+    - email: stefanprodan@users.noreply.github.com
+      name: stefanprodan
+      url: https://github.com/stefanprodan
+    name: flagger
+    sources:
+    - https://github.com/fluxcd/flagger
+    urls:
+    - https://flagger.app/flagger-1.13.0.tgz
+    version: 1.13.0
+  - apiVersion: v1
     appVersion: 1.12.1
-    created: "2021-06-24T10:07:20.216642457Z"
+    created: "2021-08-25T10:34:21.982149917Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 7874676dd1414c4774c722dce50240149a8fb12710764dfb580f24eea9dc73b7
     home: https://flagger.app
@@ -32,7 +63,7 @@ entries:
     version: 1.12.1
   - apiVersion: v1
     appVersion: 1.12.0
-    created: "2021-06-24T10:07:20.215168439Z"
+    created: "2021-08-25T10:34:21.980467697Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: a5740f8585b6a58d7ed26c1ae895ddf43b58a2a23c919d555b2c97d46c15e449
     home: https://flagger.app
@@ -61,7 +92,7 @@ entries:
     version: 1.12.0
   - apiVersion: v1
     appVersion: 1.11.0
-    created: "2021-06-24T10:07:20.21365232Z"
+    created: "2021-08-25T10:34:21.97904018Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 8ed85417e6cb8677d0bca79ab98bafc106210b6fae99a19764c1effe2e883e20
     home: https://flagger.app
@@ -90,7 +121,7 @@ entries:
     version: 1.11.0
   - apiVersion: v1
     appVersion: 1.10.0
-    created: "2021-06-24T10:07:20.2121288Z"
+    created: "2021-08-25T10:34:21.977573862Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: d3180c7970c7cdc4ed034384f08df221ae984ac0d3289ec655dbd8919f1926a6
     home: https://flagger.app
@@ -119,7 +150,7 @@ entries:
     version: 1.10.0
   - apiVersion: v1
     appVersion: 1.9.0
-    created: "2021-06-24T10:07:20.240744662Z"
+    created: "2021-08-25T10:34:22.005881602Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 28db868926bba7f68dafa3011309b935c6a168d845ac460c4cf32b4572ab6b32
     home: https://flagger.app
@@ -148,7 +179,7 @@ entries:
     version: 1.9.0
   - apiVersion: v1
     appVersion: 1.8.0
-    created: "2021-06-24T10:07:20.238407233Z"
+    created: "2021-08-25T10:34:22.004381684Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 421644236af3f24fd6b2c2b50fbfae787c8b0fd4e2562cbd8f82f680c0fa3444
     home: https://flagger.app
@@ -177,7 +208,7 @@ entries:
     version: 1.8.0
   - apiVersion: v1
     appVersion: 1.7.0
-    created: "2021-06-24T10:07:20.236248605Z"
+    created: "2021-08-25T10:34:22.002816765Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 6108f3a7e78b6967acb0cccfa539ed3d476ece7184e07676431a03cbd4971c5d
     home: https://flagger.app
@@ -206,7 +237,7 @@ entries:
     version: 1.7.0
   - apiVersion: v1
     appVersion: 1.6.4
-    created: "2021-06-24T10:07:20.234735786Z"
+    created: "2021-08-25T10:34:22.001416548Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: f57ab0ce06aeef33e48d152e1bbd7a87c48ab1a7dae93c9b0e855925e367087c
     home: https://flagger.app
@@ -235,7 +266,7 @@ entries:
     version: 1.6.4
   - apiVersion: v1
     appVersion: 1.6.3
-    created: "2021-06-24T10:07:20.233247868Z"
+    created: "2021-08-25T10:34:21.999977531Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 6c6d098555f8b2cdd5a227736ebb02ccae88dafeacd8a4ec6ff720f5d20d1f4a
     home: https://flagger.app
@@ -263,7 +294,7 @@ entries:
     version: 1.6.3
   - apiVersion: v1
     appVersion: 1.6.2
-    created: "2021-06-24T10:07:20.231809649Z"
+    created: "2021-08-25T10:34:21.998183209Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 72fea8e36a1fb4e06ad7f36ab09209ce118ff2b28b1a1273241f810bad78283e
     home: https://flagger.app
@@ -291,7 +322,7 @@ entries:
     version: 1.6.2
   - apiVersion: v1
     appVersion: 1.6.1
-    created: "2021-06-24T10:07:20.23025323Z"
+    created: "2021-08-25T10:34:21.996039684Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: d925d8bf42e019b500a17fabf9a3e2b56aa15d7cda87a32c4ed56d4e6c0f5fd0
     home: https://flagger.app
@@ -319,7 +350,7 @@ entries:
     version: 1.6.1
   - apiVersion: v1
     appVersion: 1.6.0
-    created: "2021-06-24T10:07:20.228419506Z"
+    created: "2021-08-25T10:34:21.994578666Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 1f422e7305a2f560f4d3e1efbc71c8d018f7adbcd02f47085e51225fc65d566c
     home: https://flagger.app
@@ -347,7 +378,7 @@ entries:
     version: 1.6.0
   - apiVersion: v1
     appVersion: 1.5.0
-    created: "2021-06-24T10:07:20.226648584Z"
+    created: "2021-08-25T10:34:21.992676543Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 7cb6ac3eb6fd8c13cba969df3f770461945363b9aea78dde3048e61010048ed6
     home: https://flagger.app
@@ -375,7 +406,7 @@ entries:
     version: 1.5.0
   - apiVersion: v1
     appVersion: 1.4.2
-    created: "2021-06-24T10:07:20.224876862Z"
+    created: "2021-08-25T10:34:21.991338727Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 35414f0e784f0dd16dc83c9b0989dc54b621aa2df7f3779f45cd351f9b14714d
     home: https://flagger.app
@@ -403,7 +434,7 @@ entries:
     version: 1.4.2
   - apiVersion: v1
     appVersion: 1.4.1
-    created: "2021-06-24T10:07:20.222866036Z"
+    created: "2021-08-25T10:34:21.990061512Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 4e68f0c7aea839ccd03d5c31ea4587fce9f70f665572a5dc634ce4777eb3c21c
     home: https://flagger.app
@@ -431,7 +462,7 @@ entries:
     version: 1.4.1
   - apiVersion: v1
     appVersion: 1.4.0
-    created: "2021-06-24T10:07:20.221239616Z"
+    created: "2021-08-25T10:34:21.988761096Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 7fbb59859a3c840d9b58cd5017db3f1d6f61d27ab7c6dbc617a077651108ce58
     home: https://flagger.app
@@ -459,7 +490,7 @@ entries:
     version: 1.4.0
   - apiVersion: v1
     appVersion: 1.3.0
-    created: "2021-06-24T10:07:20.219373892Z"
+    created: "2021-08-25T10:34:21.987511581Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 7b3b3a13d06ad943e93b71abcf0b453cdde39272440188b58a1bbd74fa65ce5d
     home: https://flagger.app
@@ -487,7 +518,7 @@ entries:
     version: 1.3.0
   - apiVersion: v1
     appVersion: 1.2.0
-    created: "2021-06-24T10:07:20.218049675Z"
+    created: "2021-08-25T10:34:21.986199666Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 3e6f92d176dca04ad578dd285d379c1c0f55563f085a88bbcefb598954966316
     home: https://flagger.app
@@ -515,7 +546,7 @@ entries:
     version: 1.2.0
   - apiVersion: v1
     appVersion: 1.1.0
-    created: "2021-06-24T10:07:20.210747883Z"
+    created: "2021-08-25T10:34:21.976131445Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 0207a320d9a1a7aa29075932dda15bf90c1320609f10eb3a83f3c6390def095b
     home: https://flagger.app
@@ -543,7 +574,7 @@ entries:
     version: 1.1.0
   - apiVersion: v1
     appVersion: 1.0.1
-    created: "2021-06-24T10:07:20.209424266Z"
+    created: "2021-08-25T10:34:21.974810129Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 00ba418840e78a09c4b6dea0c4cdcc7e0f625e1502948ba3979d4a976f82870e
     home: https://flagger.app
@@ -571,7 +602,7 @@ entries:
     version: 1.0.1
   - apiVersion: v1
     appVersion: 1.0.0
-    created: "2021-06-24T10:07:20.207997248Z"
+    created: "2021-08-25T10:34:21.973581314Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 8e374ed6622d475d8fa8cca399903caeb089ceb964cd7de67931989e1272c324
     home: https://flagger.app
@@ -599,7 +630,7 @@ entries:
     version: 1.0.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.5
-    created: "2021-06-24T10:07:20.200791557Z"
+    created: "2021-08-25T10:34:21.966366828Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: c0446cc338ae0e1e08b31de4b08e68d2e88b8148f30cdc0cca1ffe4535901831
     home: https://flagger.app
@@ -627,7 +658,7 @@ entries:
     version: 0.27.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.3
-    created: "2021-06-24T10:07:20.199575942Z"
+    created: "2021-08-25T10:34:21.965178714Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: b06b6451b7f5732f8abc8cefedf57cae547ed5d2a2d6a16985625ddcdae444c1
     home: https://flagger.app
@@ -653,7 +684,7 @@ entries:
     version: 0.26.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.2
-    created: "2021-06-24T10:07:20.198348326Z"
+    created: "2021-08-25T10:34:21.964002399Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 0082147adef36764df23577b28fc4e98bde64ef80816fd64d90f3c95ea7b607c
     home: https://flagger.app
@@ -679,7 +710,7 @@ entries:
     version: 0.25.0
   - apiVersion: v1
     appVersion: 1.0.0-rc.1
-    created: "2021-06-24T10:07:20.197151311Z"
+    created: "2021-08-25T10:34:21.962845386Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: b9a163a61f9fbddfa15680fc2c5bd74e9450faaea30754cb46442e55797e79c1
     home: https://flagger.app
@@ -705,7 +736,7 @@ entries:
     version: 0.24.0
   - apiVersion: v1
     appVersion: 0.23.0
-    created: "2021-06-24T10:07:20.196015397Z"
+    created: "2021-08-25T10:34:21.961791673Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: d5e88e29946cb1e962ed6da05989c9330d3a2124758dbdfab5dc86e8d00cab93
     home: https://flagger.app
@@ -731,7 +762,7 @@ entries:
     version: 0.23.0
   - apiVersion: v1
     appVersion: 0.22.0
-    created: "2021-06-24T10:07:20.195029384Z"
+    created: "2021-08-25T10:34:21.960901262Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 57ddb52d947d2d6e62c46483952566e4d03ba31588aba98a47b6de83b4c7725f
     home: https://flagger.app
@@ -757,7 +788,7 @@ entries:
     version: 0.22.0
   - apiVersion: v1
     appVersion: 0.21.0
-    created: "2021-06-24T10:07:20.193967771Z"
+    created: "2021-08-25T10:34:21.960002352Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: 54e28d148f14c6a0b7409d666e9c8d4858a09cee84e3e68d461ae3ba67fb70df
     home: https://flagger.app
@@ -783,7 +814,7 @@ entries:
     version: 0.21.0
   - apiVersion: v1
     appVersion: 0.20.4
-    created: "2021-06-24T10:07:20.192591653Z"
+    created: "2021-08-25T10:34:21.959109841Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: a0f6f59d6e3fc4321ff0e99f4b4438185292550c6cec15e9792dfe72b2c4d901
     home: https://flagger.app
@@ -809,7 +840,7 @@ entries:
     version: 0.20.4
   - apiVersion: v1
     appVersion: 0.20.3
-    created: "2021-06-24T10:07:20.19075003Z"
+    created: "2021-08-25T10:34:21.95821993Z"
     description: Flagger is a progressive delivery operator for Kubernetes
     digest: ffcf38c3bff399e58c70348b8d7e697331c5f058c0b95cafc91b92c0e945339e
     home: https://flagger.app
@@ -835,7 +866,7 @@ entries:
     version: 0.20.3
   - apiVersion: v1
     appVersion: 0.20.2
-    created: "2021-06-24T10:07:20.189327812Z"
+    created: "2021-08-25T10:34:21.95740052Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -861,7 +892,7 @@ entries:
     version: 0.20.2
   - apiVersion: v1
     appVersion: 0.20.1
-    created: "2021-06-24T10:07:20.1883453Z"
+    created: "2021-08-25T10:34:21.956244406Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -887,7 +918,7 @@ entries:
     version: 0.20.1
   - apiVersion: v1
     appVersion: 0.20.0
-    created: "2021-06-24T10:07:20.187460488Z"
+    created: "2021-08-25T10:34:21.95483149Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -913,7 +944,7 @@ entries:
     version: 0.20.0
   - apiVersion: v1
     appVersion: 0.19.0
-    created: "2021-06-24T10:07:20.185843268Z"
+    created: "2021-08-25T10:34:21.952793865Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -939,7 +970,7 @@ entries:
     version: 0.19.0
   - apiVersion: v1
     appVersion: 0.18.6
-    created: "2021-06-24T10:07:20.185067158Z"
+    created: "2021-08-25T10:34:21.952113657Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -965,7 +996,7 @@ entries:
     version: 0.18.6
   - apiVersion: v1
     appVersion: 0.18.5
-    created: "2021-06-24T10:07:20.184302648Z"
+    created: "2021-08-25T10:34:21.95149305Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -991,7 +1022,7 @@ entries:
     version: 0.18.5
   - apiVersion: v1
     appVersion: 0.18.4
-    created: "2021-06-24T10:07:20.183459238Z"
+    created: "2021-08-25T10:34:21.950912043Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -1017,7 +1048,7 @@ entries:
     version: 0.18.4
   - apiVersion: v1
     appVersion: 0.18.2
-    created: "2021-06-24T10:07:20.182595727Z"
+    created: "2021-08-25T10:34:21.950291835Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -1043,7 +1074,7 @@ entries:
     version: 0.18.2
   - apiVersion: v1
     appVersion: 0.18.1
-    created: "2021-06-24T10:07:20.181778117Z"
+    created: "2021-08-25T10:34:21.949697528Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -1069,7 +1100,7 @@ entries:
     version: 0.18.1
   - apiVersion: v1
     appVersion: 0.18.0
-    created: "2021-06-24T10:07:20.181018907Z"
+    created: "2021-08-25T10:34:21.949077121Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, Linkerd, App Mesh, Gloo or NGINX routing for
       traffic shifting and Prometheus metrics for canary analysis.
@@ -1095,7 +1126,7 @@ entries:
     version: 0.18.0
   - apiVersion: v1
     appVersion: 0.17.0
-    created: "2021-06-24T10:07:20.180225897Z"
+    created: "2021-08-25T10:34:21.947914807Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1120,7 +1151,7 @@ entries:
     version: 0.17.0
   - apiVersion: v1
     appVersion: 0.16.0
-    created: "2021-06-24T10:07:20.179501988Z"
+    created: "2021-08-25T10:34:21.947274999Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1145,7 +1176,7 @@ entries:
     version: 0.16.0
   - apiVersion: v1
     appVersion: 0.15.0
-    created: "2021-06-24T10:07:20.178567476Z"
+    created: "2021-08-25T10:34:21.946698192Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1170,7 +1201,7 @@ entries:
     version: 0.15.0
   - apiVersion: v1
     appVersion: 0.14.1
-    created: "2021-06-24T10:07:20.17733106Z"
+    created: "2021-08-25T10:34:21.946142085Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1195,7 +1226,7 @@ entries:
     version: 0.14.1
   - apiVersion: v1
     appVersion: 0.14.0
-    created: "2021-06-24T10:07:20.175648739Z"
+    created: "2021-08-25T10:34:21.94565698Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1220,7 +1251,7 @@ entries:
     version: 0.14.0
   - apiVersion: v1
     appVersion: 0.13.2
-    created: "2021-06-24T10:07:20.174700827Z"
+    created: "2021-08-25T10:34:21.945079973Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1245,7 +1276,7 @@ entries:
     version: 0.13.2
   - apiVersion: v1
     appVersion: 0.13.1
-    created: "2021-06-24T10:07:20.173831016Z"
+    created: "2021-08-25T10:34:21.944458565Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1270,7 +1301,7 @@ entries:
     version: 0.13.1
   - apiVersion: v1
     appVersion: 0.13.0
-    created: "2021-06-24T10:07:20.173122107Z"
+    created: "2021-08-25T10:34:21.943407153Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio, App Mesh or NGINX routing for traffic shifting
       and Prometheus metrics for canary analysis.
@@ -1295,7 +1326,7 @@ entries:
     version: 0.13.0
   - apiVersion: v1
     appVersion: 0.12.0
-    created: "2021-06-24T10:07:20.172436098Z"
+    created: "2021-08-25T10:34:21.942402841Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1320,7 +1351,7 @@ entries:
     version: 0.12.0
   - apiVersion: v1
     appVersion: 0.11.1
-    created: "2021-06-24T10:07:20.171831091Z"
+    created: "2021-08-25T10:34:21.941643931Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1345,7 +1376,7 @@ entries:
     version: 0.11.1
   - apiVersion: v1
     appVersion: 0.11.0
-    created: "2021-06-24T10:07:20.171220383Z"
+    created: "2021-08-25T10:34:21.940823622Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1370,7 +1401,7 @@ entries:
     version: 0.11.0
   - apiVersion: v1
     appVersion: 0.10.0
-    created: "2021-06-24T10:07:20.170597775Z"
+    created: "2021-08-25T10:34:21.940239015Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1395,7 +1426,7 @@ entries:
     version: 0.10.0
   - apiVersion: v1
     appVersion: 0.9.0
-    created: "2021-06-24T10:07:20.206418128Z"
+    created: "2021-08-25T10:34:21.9724244Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1419,7 +1450,7 @@ entries:
     version: 0.9.0
   - apiVersion: v1
     appVersion: 0.8.0
-    created: "2021-06-24T10:07:20.205359315Z"
+    created: "2021-08-25T10:34:21.971942195Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1443,7 +1474,7 @@ entries:
     version: 0.8.0
   - apiVersion: v1
     appVersion: 0.7.0
-    created: "2021-06-24T10:07:20.204763107Z"
+    created: "2021-08-25T10:34:21.971488189Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1467,7 +1498,7 @@ entries:
     version: 0.7.0
   - apiVersion: v1
     appVersion: 0.6.0
-    created: "2021-06-24T10:07:20.2041854Z"
+    created: "2021-08-25T10:34:21.970867682Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1491,7 +1522,7 @@ entries:
     version: 0.6.0
   - apiVersion: v1
     appVersion: 0.5.1
-    created: "2021-06-24T10:07:20.203640293Z"
+    created: "2021-08-25T10:34:21.96987067Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1515,7 +1546,7 @@ entries:
     version: 0.5.1
   - apiVersion: v1
     appVersion: 0.5.0
-    created: "2021-06-24T10:07:20.203061786Z"
+    created: "2021-08-25T10:34:21.969111961Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1539,7 +1570,7 @@ entries:
     version: 0.5.0
   - apiVersion: v1
     appVersion: 0.4.1
-    created: "2021-06-24T10:07:20.202496879Z"
+    created: "2021-08-25T10:34:21.968343452Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1563,7 +1594,7 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: 0.4.0
-    created: "2021-06-24T10:07:20.201919171Z"
+    created: "2021-08-25T10:34:21.967439741Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1587,7 +1618,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.0
-    created: "2021-06-24T10:07:20.201357764Z"
+    created: "2021-08-25T10:34:21.966918434Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1611,7 +1642,7 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: 0.2.0
-    created: "2021-06-24T10:07:20.186530677Z"
+    created: "2021-08-25T10:34:21.953534974Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1635,7 +1666,7 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: 0.1.2
-    created: "2021-06-24T10:07:20.169965167Z"
+    created: "2021-08-25T10:34:21.939652808Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1659,7 +1690,7 @@ entries:
     version: 0.1.2
   - apiVersion: v1
     appVersion: 0.1.1
-    created: "2021-06-24T10:07:20.169359459Z"
+    created: "2021-08-25T10:34:21.939066801Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1671,7 +1702,7 @@ entries:
     version: 0.1.1
   - apiVersion: v1
     appVersion: 0.1.0
-    created: "2021-06-24T10:07:20.168878353Z"
+    created: "2021-08-25T10:34:21.938574195Z"
     description: Flagger is a Kubernetes operator that automates the promotion of
       canary deployments using Istio routing for traffic shifting and Prometheus metrics
       for canary analysis.
@@ -1684,7 +1715,30 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 7.2.0
-    created: "2021-06-24T10:07:20.245453222Z"
+    created: "2021-08-25T10:34:22.011940374Z"
+    description: Grafana dashboards for monitoring Flagger canary deployments
+    digest: c6ca44482205ed84745bed02efac45ddd6503dac722c14d9b1c9dc987085cacc
+    home: https://flagger.app
+    icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
+    keywords:
+    - flagger
+    - grafana
+    - canary
+    - istio
+    - appmesh
+    maintainers:
+    - email: stefanprodan@users.noreply.github.com
+      name: stefanprodan
+      url: https://github.com/stefanprodan
+    name: grafana
+    sources:
+    - https://github.com/fluxcd/flagger
+    urls:
+    - https://flagger.app/grafana-1.6.0.tgz
+    version: 1.6.0
+  - apiVersion: v1
+    appVersion: 7.2.0
+    created: "2021-08-25T10:34:22.010841161Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: d6d28a841698d06f7b6909d75df4048cbcd8186fe93bb03ff3341de5799522bb
     home: https://flagger.app
@@ -1707,7 +1761,7 @@ entries:
     version: 1.5.0
   - apiVersion: v1
     appVersion: 6.5.1
-    created: "2021-06-24T10:07:20.244770513Z"
+    created: "2021-08-25T10:34:22.010017751Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: 04a5ae2cdaa21c1e739ba3457aa0548d77af3f8185d6d5ccb46913ab1eee0efd
     home: https://flagger.app
@@ -1730,7 +1784,7 @@ entries:
     version: 1.4.0
   - apiVersion: v1
     appVersion: 6.2.5
-    created: "2021-06-24T10:07:20.244045004Z"
+    created: "2021-08-25T10:34:22.008860237Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: 11cf0ad69e80d1f2fcd7400c6fb5cd3305bd3703ceeecb0e608b6e063bab792c
     home: https://flagger.app
@@ -1753,7 +1807,7 @@ entries:
     version: 1.3.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: "2021-06-24T10:07:20.243319095Z"
+    created: "2021-08-25T10:34:22.00826813Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: c606069b2cba30ea678c7307b8f2b2ac519dd7703c60b7bbe8ebab5c9ace85a2
     home: https://flagger.app
@@ -1770,7 +1824,7 @@ entries:
     version: 1.2.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: "2021-06-24T10:07:20.242652686Z"
+    created: "2021-08-25T10:34:22.007686123Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: eda4890ea293bfb3eb7518e43ce18ed43cfaec2fd69271e08f9d3bcf13317b17
     home: https://flagger.app
@@ -1787,7 +1841,7 @@ entries:
     version: 1.1.0
   - apiVersion: v1
     appVersion: 5.4.3
-    created: "2021-06-24T10:07:20.242054379Z"
+    created: "2021-08-25T10:34:22.007112316Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: a8621dfffcc7ca4c6b9d3f05f61ae3ef79c98f32178f6ceb49a43f0b6e80394f
     home: https://flagger.app
@@ -1804,7 +1858,7 @@ entries:
     version: 1.0.0
   - apiVersion: v1
     appVersion: 5.4.2
-    created: "2021-06-24T10:07:20.241396171Z"
+    created: "2021-08-25T10:34:22.006508009Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
     digest: 289790edf70df4c430e76bda76ad981586a40868131e88e057f37ace4986fe3a
     home: https://flagger.app
@@ -1822,7 +1876,36 @@ entries:
   loadtester:
   - apiVersion: v1
     appVersion: 0.18.0
-    created: "2021-06-24T10:07:20.252223808Z"
+    created: "2021-08-25T10:34:22.019459564Z"
+    description: Flagger's load testing services based on rakyll/hey and bojand/ghz
+      that generates traffic during canary analysis when configured as a webhook.
+    digest: ea291da78d5539b555ef4e5c4693091852f0ae7167e9e308ef97a87fe609063b
+    home: https://docs.flagger.app
+    icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
+    keywords:
+    - flagger
+    - istio
+    - appmesh
+    - linkerd
+    - gloo
+    - osm
+    - smi
+    - gitops
+    - load testing
+    kubeVersion: '>=1.11.0-0'
+    maintainers:
+    - email: stefanprodan@users.noreply.github.com
+      name: stefanprodan
+      url: https://github.com/stefanprodan
+    name: loadtester
+    sources:
+    - https://github.com/fluxcd/flagger
+    urls:
+    - https://flagger.app/loadtester-0.19.1.tgz
+    version: 0.19.1
+  - apiVersion: v1
+    appVersion: 0.18.0
+    created: "2021-08-25T10:34:22.018650955Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 60f466c920be7c2cff29755017ee0bab4439e6995e0fca66466cceecb7a72f27
@@ -1849,7 +1932,7 @@ entries:
     version: 0.19.0
   - apiVersion: v1
     appVersion: 0.18.0
-    created: "2021-06-24T10:07:20.251268195Z"
+    created: "2021-08-25T10:34:22.017879645Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: e34d05f9a0fb6841a0e79e8906690f3d3978e3f907df4c05b8dbeb9cb2048796
@@ -1876,7 +1959,7 @@ entries:
     version: 0.18.0
   - apiVersion: v1
     appVersion: 0.17.0
-    created: "2021-06-24T10:07:20.250287383Z"
+    created: "2021-08-25T10:34:22.017122436Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 456adf150205134d915f4bd94d81911fc4026e68b3cc3ee2b3b55d07d6b6f2ec
@@ -1903,7 +1986,7 @@ entries:
     version: 0.17.0
   - apiVersion: v1
     appVersion: 0.16.0
-    created: "2021-06-24T10:07:20.249343071Z"
+    created: "2021-08-25T10:34:22.016498629Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: ef113343d033338854bc7b972f3b5de42b3675633ea0f6cdfe550cf89ca40cd6
@@ -1930,7 +2013,7 @@ entries:
     version: 0.16.0
   - apiVersion: v1
     appVersion: 0.14.0
-    created: "2021-06-24T10:07:20.248723663Z"
+    created: "2021-08-25T10:34:22.015881522Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: da52d2fa1b99d1dd7d20262e5b17092e9156475bb76e6461c5c92b37b40c8af4
@@ -1957,7 +2040,7 @@ entries:
     version: 0.14.0
   - apiVersion: v1
     appVersion: 0.13.0
-    created: "2021-06-24T10:07:20.248134456Z"
+    created: "2021-08-25T10:34:22.015260514Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 38bc18cee3762fd3af9ac6bd642b78b6a639fd279a388198582852c3e424a9a9
@@ -1984,7 +2067,7 @@ entries:
     version: 0.13.0
   - apiVersion: v1
     appVersion: 0.12.1
-    created: "2021-06-24T10:07:20.247568949Z"
+    created: "2021-08-25T10:34:22.014656607Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 2ec31300bf36e169322a3271202ebbf3f97d727efbcaf5d6c36468274e7b96f6
@@ -2011,7 +2094,7 @@ entries:
     version: 0.12.1
   - apiVersion: v1
     appVersion: 0.12.0
-    created: "2021-06-24T10:07:20.246989141Z"
+    created: "2021-08-25T10:34:22.013671695Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: cb4a13a336a86ddc3faf08a2c2640b0f30eb8b9050262386307d24d5904d503d
@@ -2038,7 +2121,7 @@ entries:
     version: 0.12.0
   - apiVersion: v1
     appVersion: 0.11.0
-    created: "2021-06-24T10:07:20.246453635Z"
+    created: "2021-08-25T10:34:22.013081788Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 18d856d8ce2574ddb715bd22edfd509bd993588532ca622e13da44a808b60bd9
@@ -2065,7 +2148,7 @@ entries:
     version: 0.11.0
   - apiVersion: v1
     appVersion: 0.9.0
-    created: "2021-06-24T10:07:20.256568962Z"
+    created: "2021-08-25T10:34:22.023779916Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 715169e00ded0de94f2c6a55700a635d513047a195e426e70b1dbe64791dc098
@@ -2090,7 +2173,7 @@ entries:
     version: 0.9.0
   - apiVersion: v1
     appVersion: 0.8.0
-    created: "2021-06-24T10:07:20.255993955Z"
+    created: "2021-08-25T10:34:22.023196609Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 40e76d76baf7ef8e8cdfa2d72224520af4e6df6231ecfe7552bbbdb94e55d7f3
@@ -2115,7 +2198,7 @@ entries:
     version: 0.8.0
   - apiVersion: v1
     appVersion: 0.7.0
-    created: "2021-06-24T10:07:20.255399548Z"
+    created: "2021-08-25T10:34:22.022588302Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: 255ea5d49954a5a188b9a52c642bb4fda5191b70592562079c5d2b4bfd6c2f1b
@@ -2140,7 +2223,7 @@ entries:
     version: 0.7.0
   - apiVersion: v1
     appVersion: 0.6.1
-    created: "2021-06-24T10:07:20.25481784Z"
+    created: "2021-08-25T10:34:22.021999795Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
     digest: fc7e74c96e4fdb3d187cc7bb746f87ed71813c93894d3c14d7c3b814bf58faaf
@@ -2165,7 +2248,7 @@ entries:
     version: 0.6.0
   - apiVersion: v1
     appVersion: 0.4.0
-    created: "2021-06-24T10:07:20.254312834Z"
+    created: "2021-08-25T10:34:22.021494189Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: e095da590d5eac6c451a0317229cd14b276d200cb4f9aa4f6148c7f3806243a4
@@ -2190,7 +2273,7 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: 0.3.0
-    created: "2021-06-24T10:07:20.253792027Z"
+    created: "2021-08-25T10:34:22.020994583Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: c8610a6711fe76ac5d432899dbe1ab1d3663d6ba11954db556b13256cbff1bad
@@ -2215,7 +2298,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.0
-    created: "2021-06-24T10:07:20.253284521Z"
+    created: "2021-08-25T10:34:22.020497977Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: 332815fa9fdbae111a07ef5681fef53d156d3a84a35df7a924b2584e9efbc626
@@ -2240,7 +2323,7 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: 0.2.0
-    created: "2021-06-24T10:07:20.252811715Z"
+    created: "2021-08-25T10:34:22.019996371Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: d63c6e7a2d97bd6f2601386f4c0d9b266c01ac33a8a662079cb02fb14565821d
@@ -2265,7 +2348,7 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: 0.1.0
-    created: "2021-06-24T10:07:20.245893327Z"
+    created: "2021-08-25T10:34:22.012460381Z"
     description: Flagger's load testing services based on rakyll/hey that generates
       traffic during canary analysis when configured as a webhook.
     digest: 0399b3841c7db1aefd77f3f31aa4a5a6c020869fff45b31d0f49023b6b267272
@@ -2290,9 +2373,9 @@ entries:
   podinfo:
   - apiVersion: v1
     appVersion: 5.0.0
-    created: "2021-06-24T10:07:20.257258071Z"
+    created: "2021-08-25T10:34:22.024621926Z"
     description: Flagger canary deployment demo application
-    digest: 07cdd582985e020a5b0fcb01106ee9925bb67baf11c66b512137b98da2765116
+    digest: ab2487abf48becf877dbe3eaea440d85f0f2b6d31d1234b2e9c2e2e7727b35f3
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
     maintainers:
@@ -2305,4 +2388,4 @@ entries:
     urls:
     - https://flagger.app/podinfo-5.0.0.tgz
     version: 5.0.0
-generated: "2021-06-24T10:07:20.168209045Z"
+generated: "2021-08-25T10:34:21.937898187Z"
