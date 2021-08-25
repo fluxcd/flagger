@@ -56,14 +56,14 @@ jobs:
       - name: Sign image
         run: |
           echo -n "${{secrets.COSIGN_PASSWORD}}" | \
-          cosign sign -key ./cosign/cosign.key -a git_sha=$GITHUB_SHA \
+          cosign sign -key ./.cosign/cosign.key -a git_sha=$GITHUB_SHA \
           ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
       - name: Check images
         run: |
           docker buildx imagetools inspect ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
       - name: Verifiy image signature
         run: |
-          cosign verify -key ./cosign/cosign.pub \
+          cosign verify -key ./.cosign/cosign.pub \
           ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
       - name: Publish Helm charts
         uses: stefanprodan/helm-gh-pages@v1.3.0
