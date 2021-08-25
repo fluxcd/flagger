@@ -11,7 +11,7 @@ For more details see the [OSM Progressive Delivery tutorial](https://docs.flagge
 
 Starting with this version, Flagger container images are signed with
 [sigstore/cosign](https://github.com/sigstore/cosign), for more details see the
-[Flagger cosign docs](https://github.com/fluxcd/flagger/blob/main/cosign/README.md).
+[Flagger cosign docs](https://github.com/fluxcd/flagger/blob/main/.cosign/README.md).
 
 #### Features
 
