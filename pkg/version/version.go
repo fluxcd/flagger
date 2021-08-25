@@ -16,5 +16,5 @@ limitations under the License.
 
 package version
 
-var VERSION = "1.12.1"
+var VERSION = "1.13.0"
 var REVISION = "unknown"
