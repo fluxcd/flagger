@@ -2,6 +2,49 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.13.0
+
+**Release date:** 2021-08-25
+
+This release comes with support for [Open Service Mesh](https://openservicemesh.io).
+For more details see the [OSM Progressive Delivery tutorial](https://docs.flagger.app/tutorials/osm-progressive-delivery).
+
+Starting with this version, Flagger container images are signed with
+[sigstore/cosign](https://github.com/sigstore/cosign), for more details see the
+[Flagger cosign docs](https://github.com/fluxcd/flagger/blob/main/cosign/README.md).
+
+#### Features
+
+- Support OSM progressive traffic shifting in Flagger
+  [#955](https://github.com/fluxcd/flagger/pull/955)
+  [#977](https://github.com/fluxcd/flagger/pull/977)
+- Add support for Google Chat alerts
+  [#953](https://github.com/fluxcd/flagger/pull/953)
+
+#### Improvements
+
+- Sign Flagger container images with cosign
+  [#983](https://github.com/fluxcd/flagger/pull/983)
+- Update Gloo APIs and e2e tests to Gloo v1.8.9
+  [#982](https://github.com/fluxcd/flagger/pull/982)
+- Update e2e tests to Istio v1.11, Contour v1.18, Linkerd v2.10.2 and NGINX v0.49.0
+  [#979](https://github.com/fluxcd/flagger/pull/979)
+- Update e2e tests to Traefik to 2.4.9
+  [#960](https://github.com/fluxcd/flagger/pull/960)
+- Add support for volumes/volumeMounts in loadtester Helm chart
+  [#975](https://github.com/fluxcd/flagger/pull/975)
+- Add extra podLabels options to Flagger Helm Chart
+  [#966](https://github.com/fluxcd/flagger/pull/966)
+
+#### Fixes
+
+- Fix for the http client proxy overriding the default client
+  [#943](https://github.com/fluxcd/flagger/pull/943)
+- Drop deprecated io/ioutil
+  [#964](https://github.com/fluxcd/flagger/pull/964)
+- Remove problematic nulls from Grafana dashboard
+  [#952](https://github.com/fluxcd/flagger/pull/952)
+
 ## 1.12.1
 
 **Release date:** 2021-06-17
