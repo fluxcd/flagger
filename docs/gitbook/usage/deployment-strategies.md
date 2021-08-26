@@ -326,7 +326,7 @@ Blue/Green rollout steps for service mesh:
 * run conformance tests for the canary pods
 * run load tests and metric checks for the canary pods every minute
 * abort the canary release if the failure threshold is reached
-* route traffic to canary
+* route traffic to canary (This doesn't happen when using the kubernetes provider)
 * promote canary spec over primary (blue)
 * wait for primary rollout
 * route traffic to primary
