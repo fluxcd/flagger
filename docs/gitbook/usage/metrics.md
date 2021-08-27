@@ -477,3 +477,53 @@ spec:
     secretRef:
       name: graphite-basic-auth
 ```
+
+## Google CLoud Monitoring (Stackdriver)
+
+Enable Workload Identity on your cluster, create a service account key that has read access to the
+Cloud Monitoring API and then create an IAM policy binding between the GCP service account and the Flagger 
+service account on Kubernetes. You can take a look at this [guide](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity)
+
+Annotate the flagger service account
+```shell script
+kubectl annotate serviceaccount flagger \
+    --namespace <namespace> \
+    iam.gke.io/gcp-service-account=<gcp-serviceaccount-name>@<project-id>.iam.gserviceaccount.com
+```
+
+Alternatively, you can download the json keys and add it to your secret with the key `serviceAccountKey` (This method is not recommended).
+
+Create a secret that contains your project-id (and, if workload identity is not enabled on your cluster,
+your [service account json](https://cloud.google.com/docs/authentication/production#create_service_account)).
+
+```
+ kubectl create secret generic gcloud-sa --from-literal=project=<project-id>
+```
+
+Then reference the secret in the metric template. 
+Note: The particular MQL query used here works if [Istio is installed on GKE](https://cloud.google.com/istio/docs/istio-on-gke/installing).
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: bytes-sent
+  namespace: test
+spec:
+  provider:
+    type: stackdriver
+    secretRef: 
+      name: gcloud-sa
+  query: |
+    fetch k8s_container
+    | metric 'istio.io/service/server/response_latencies'
+    | filter
+        (metric.destination_service_name == '{{ service }}-canary'
+        && metric.destination_service_namespace == '{{ namespace }}')
+    | align delta(1m)
+    | every 1m
+    | group_by [],
+        [value_response_latencies_percentile:
+          percentile(value.response_latencies, 99)]
+```
+
+The reference for the query language can be found [here](https://cloud.google.com/monitoring/mql/reference)

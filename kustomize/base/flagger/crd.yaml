@@ -1104,6 +1104,7 @@ spec:
                         - prometheus
                         - influxdb
                         - datadog
+                        - stackdriver
                         - cloudwatch
                         - newrelic
                         - graphite

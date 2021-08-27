@@ -38,6 +38,8 @@ func (factory Factory) Provider(
 		return NewNewRelicProvider(metricInterval, provider, credentials)
 	case "graphite":
 		return NewGraphiteProvider(provider, credentials)
+	case "stackdriver":
+		return NewStackDriverProvider(provider, credentials)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}
