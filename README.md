@@ -1,5 +1,7 @@
 # flagger
 
+this is dummy file
+
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4783/badge)](https://bestpractices.coreinfrastructure.org/projects/4783)
 [![build](https://github.com/fluxcd/flagger/workflows/build/badge.svg)](https://github.com/fluxcd/flagger/actions)
 [![report](https://goreportcard.com/badge/github.com/fluxcd/flagger)](https://goreportcard.com/report/github.com/fluxcd/flagger)
