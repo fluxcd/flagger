@@ -40,6 +40,8 @@ func (factory Factory) Provider(
 		return NewGraphiteProvider(provider, credentials)
 	case "stackdriver":
 		return NewStackDriverProvider(provider, credentials)
+	case "influxdb":
+		return NewInfluxdbProvider(provider, credentials)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}

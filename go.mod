@@ -10,6 +10,7 @@ require (
 	github.com/go-logr/zapr v0.3.0
 	github.com/google/go-cmp v0.5.6
 	github.com/googleapis/gax-go/v2 v2.0.5
+	github.com/influxdata/influxdb-client-go/v2 v2.5.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.14.1
