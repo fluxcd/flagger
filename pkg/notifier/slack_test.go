@@ -51,3 +51,29 @@ func TestSlack_Post(t *testing.T) {
 	require.NoError(t, err)
 
 }
+func TestSlack_APIPost(t *testing.T) {
+	fields := []Field{
+		{Name: "name1", Value: "value1"},
+		{Name: "name2", Value: "value2"},
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+
+		var payload = SlackPayload{}
+		err = json.Unmarshal(b, &payload)
+		require.NoError(t, err)
+		require.Equal(t, r.Header.Get("Authorization"), "Bearer api-token")
+		require.Equal(t, "podinfo.test", payload.Attachments[0].AuthorName)
+		require.Equal(t, len(fields), len(payload.Attachments[0].Fields))
+	}))
+	defer ts.Close()
+
+	slack, err := NewSlackAPIToken(ts.URL, "api-token", "", "test", "test")
+	require.NoError(t, err)
+
+	err = slack.Post("podinfo", "test", "test", fields, "error")
+	require.NoError(t, err)
+
+}

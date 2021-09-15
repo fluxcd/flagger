@@ -79,8 +79,9 @@ func NewSlack(hookURL string, proxyURL string, username string, channel string) 
 	}, nil
 }
 
-func NewSlackAPIToken(apiToken string, proxyURL string, username string, channel string) (*Slack, error) {
-	if slack, err := NewSlack("https://slack.com/api/chat.postMessage", proxyURL, username, channel); err != nil {
+// NewSlackAPIToken returns a Slack object to be used with api to post message
+func NewSlackAPIToken(apiURL string, apiToken string, proxyURL string, username string, channel string) (*Slack, error) {
+	if slack, err := NewSlack(apiURL, proxyURL, username, channel); err != nil {
 		return nil, err
 	} else {
 		slack.APIToken = apiToken

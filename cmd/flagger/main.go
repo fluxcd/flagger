@@ -66,6 +66,7 @@ var (
 	msteamsProxyURL          string
 	includeLabelPrefix       string
 	slackURL                 string
+	slackAPIToken            string
 	slackProxyURL            string
 	slackUser                string
 	slackChannel             string
@@ -95,6 +96,7 @@ func init() {
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
 	flag.StringVar(&slackURL, "slack-url", "", "Slack hook URL.")
+	flag.StringVar(&slackAPIToken, "slack-api-token", "", "Slack API token.")
 	flag.StringVar(&slackProxyURL, "slack-proxy-url", "", "Slack proxy URL.")
 	flag.StringVar(&slackUser, "slack-user", "flagger", "Slack user name.")
 	flag.StringVar(&slackChannel, "slack-channel", "", "Slack channel.")
@@ -353,13 +355,21 @@ func startLeaderElection(ctx context.Context, run func(), ns string, kubeClient 
 func initNotifier(logger *zap.SugaredLogger) (client notifier.Interface) {
 	provider := "slack"
 	notifierURL := fromEnv("SLACK_URL", slackURL)
+	slackAPIToken := fromEnv("SLACK_API_TOKEN", slackAPIToken)
 	notifierProxyURL := fromEnv("SLACK_PROXY_URL", slackProxyURL)
 	if msteamsURL != "" || os.Getenv("MSTEAMS_URL") != "" {
 		provider = "msteams"
 		notifierURL = fromEnv("MSTEAMS_URL", msteamsURL)
 		notifierProxyURL = fromEnv("MSTEAMS_PROXY_URL", msteamsProxyURL)
 	}
-	notifierFactory := notifier.NewFactory(notifierURL, notifierProxyURL, slackUser, slackChannel)
+
+	var notifierFactory *notifier.Factory
+	if slackAPIToken != "" {
+		provider = "slack-api"
+		notifierFactory = notifier.NewAPITokenFactory(slackAPIToken, notifierProxyURL, slackUser, slackChannel)
+	} else {
+		notifierFactory = notifier.NewFactory(notifierURL, notifierProxyURL, slackUser, slackChannel)
+	}
 
 	var err error
 	client, err = notifierFactory.Notifier(provider)

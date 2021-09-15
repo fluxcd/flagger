@@ -56,7 +56,8 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 	case "slack":
 		n, err = NewSlack(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "slack-api":
-		n, err = NewSlackAPIToken(f.APIToken, f.ProxyURL, f.Username, f.Channel)
+		apiURL := "https://slack.com/api/chat.postMessage"
+		n, err = NewSlackAPIToken(apiURL, f.APIToken, f.ProxyURL, f.Username, f.Channel)
 	case "discord":
 		n, err = NewDiscord(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "rocket":
