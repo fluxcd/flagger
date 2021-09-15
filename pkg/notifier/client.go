@@ -30,6 +30,10 @@ import (
 )
 
 func postMessage(address string, proxy string, payload interface{}) error {
+	return postMessageWithHeaders(address, proxy, payload, nil)
+}
+
+func postMessageWithHeaders(address string, proxy string, payload interface{}, headers map[string]string) error {
 	var httpClient = &http.Client{}
 
 	if proxy != "" {
@@ -63,6 +67,9 @@ func postMessage(address string, proxy string, payload interface{}) error {
 		return fmt.Errorf("http.NewRequest failed: %w", err)
 	}
 	req.Header.Set("Content-type", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
 	defer cancel()

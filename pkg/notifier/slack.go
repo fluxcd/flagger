@@ -25,6 +25,7 @@ import (
 // Slack holds the hook URL
 type Slack struct {
 	URL      string
+	APIToken string
 	ProxyURL string
 	Username string
 	Channel  string
@@ -78,6 +79,15 @@ func NewSlack(hookURL string, proxyURL string, username string, channel string) 
 	}, nil
 }
 
+func NewSlackAPIToken(apiToken string, proxyURL string, username string, channel string) (*Slack, error) {
+	if slack, err := NewSlack("https://slack.com/api/chat.postMessage", proxyURL, username, channel); err != nil {
+		return nil, err
+	} else {
+		slack.APIToken = apiToken
+		return slack, nil
+	}
+}
+
 // Post Slack message
 func (s *Slack) Post(workload string, namespace string, message string, fields []Field, severity string) error {
 	payload := SlackPayload{
@@ -105,8 +115,13 @@ func (s *Slack) Post(workload string, namespace string, message string, fields [
 	}
 
 	payload.Attachments = []SlackAttachment{a}
-
-	err := postMessage(s.URL, s.ProxyURL, payload)
+	var err error
+	if s.APIToken != "" {
+		authHeaders := map[string]string{"Authorization": fmt.Sprintf("Bearer %s", s.APIToken)}
+		err = postMessageWithHeaders(s.URL, s.ProxyURL, payload, authHeaders)
+	} else {
+		err = postMessage(s.URL, s.ProxyURL, payload)
+	}
 	if err != nil {
 		return fmt.Errorf("postMessage failed: %w", err)
 	}
