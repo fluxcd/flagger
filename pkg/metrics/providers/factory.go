@@ -42,6 +42,8 @@ func (factory Factory) Provider(
 		return NewStackDriverProvider(provider, credentials)
 	case "influxdb":
 		return NewInfluxdbProvider(provider, credentials)
+	case "dynatrace":
+		return NewDynatraceProvider(metricInterval, provider, credentials)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}

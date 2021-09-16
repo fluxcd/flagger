@@ -1108,6 +1108,7 @@ spec:
                         - cloudwatch
                         - newrelic
                         - graphite
+                        - dynatrace
                     address:
                       description: API address of this provider
                       type: string
