@@ -527,3 +527,37 @@ spec:
 ```
 
 The reference for the query language can be found [here](https://cloud.google.com/monitoring/mql/reference)
+
+## Influxdb
+
+The influxdb provider uses the [flux](https://docs.influxdata.com/influxdb/v2.0/query-data/get-started/) scripting language.
+
+Create a secret that contains your authentication token that can be gotthen from the InfluxDB UI.
+
+```
+ kubectl create secret generic gcloud-sa --from-literal=token=<token>
+```
+
+Then reference the secret in the metric template.qq
+Note: The particular MQL query used here works if [Istio is installed on GKE](https://cloud.google.com/istio/docs/istio-on-gke/installing).
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: not-found
+  namespace: test
+spec:
+  provider:
+    type: influxdb
+    secretRef:
+      name: influx-token
+  query: |
+    from(bucket: "default")
+    |> range(start: -2h)
+    |> filter(fn: (r) => r["_measurement"] == "istio_requests_total")
+    |> filter(fn: (r) => r[" destination_workload_namespace"] == "{{ namespace }}")
+    |> filter(fn: (r) => r["destination_workload"] == "{{ target }}")
+    |> filter(fn: (r) => r["response_code"] == "500")
+    |> count()
+    |> yield(name: "count")
+```
