@@ -243,6 +243,144 @@ type LoadBalancerSettings struct {
 	// Simple or ConsistentHash
 	Simple         SimpleLB          `json:"simple,omitempty"`
 	ConsistentHash *ConsistentHashLB `json:"consistentHash,omitempty"`
+	// Locality load balancer settings, this will override mesh wide settings in entirety, meaning no merging would be performed
+	// between this object and the object one in MeshConfig
+	LocalityLbSetting *LocalityLbSetting `json:"localityLbSetting,omitempty"`
+}
+
+// Locality-weighted load balancing allows administrators to control the
+// distribution of traffic to endpoints based on the localities of where the
+// traffic originates and where it will terminate. These localities are
+// specified using arbitrary labels that designate a hierarchy of localities in
+// {region}/{zone}/{sub-zone} form. For additional detail refer to
+// [Locality Weight](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/locality_weight)
+// The following example shows how to setup locality weights mesh-wide.
+//
+// Given a mesh with workloads and their service deployed to "us-west/zone1/*"
+// and "us-west/zone2/*". This example specifies that when traffic accessing a
+// service originates from workloads in "us-west/zone1/*", 80% of the traffic
+// will be sent to endpoints in "us-west/zone1/*", i.e the same zone, and the
+// remaining 20% will go to endpoints in "us-west/zone2/*". This setup is
+// intended to favor routing traffic to endpoints in the same locality.
+// A similar setting is specified for traffic originating in "us-west/zone2/*".
+//
+// ```yaml
+//   distribute:
+//     - from: us-west/zone1/*
+//       to:
+//         "us-west/zone1/*": 80
+//         "us-west/zone2/*": 20
+//     - from: us-west/zone2/*
+//       to:
+//         "us-west/zone1/*": 20
+//         "us-west/zone2/*": 80
+// ```
+//
+// If the goal of the operator is not to distribute load across zones and
+// regions but rather to restrict the regionality of failover to meet other
+// operational requirements an operator can set a 'failover' policy instead of
+// a 'distribute' policy.
+//
+// The following example sets up a locality failover policy for regions.
+// Assume a service resides in zones within us-east, us-west & eu-west
+// this example specifies that when endpoints within us-east become unhealthy
+// traffic should failover to endpoints in any zone or sub-zone within eu-west
+// and similarly us-west should failover to us-east.
+//
+// ```yaml
+//  failover:
+//    - from: us-east
+//      to: eu-west
+//    - from: us-west
+//      to: us-east
+// ```
+// Locality load balancing settings.
+type LocalityLbSetting struct {
+	// Explicitly specify loadbalancing weight across different zones and geographical locations.
+	// Refer to [Locality weighted load balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/locality_weight)
+	// If empty, the locality weight is set according to the endpoints number within it.
+	Distribute []Distribute `json:"distribute,omitempty"`
+	// Optional: only one of distribute, failover or failoverPriority can be set.
+	// Explicitly specify the region traffic will land on when endpoints in local region becomes unhealthy.
+	// Should be used together with OutlierDetection to detect unhealthy endpoints.
+	// Note: if no OutlierDetection specified, this will not take effect.
+	Failover []Failover `json:"failover,omitempty"`
+	// failoverPriority is an ordered list of labels used to sort endpoints to do priority based load balancing.
+	// This is to support traffic failover across different groups of endpoints.
+	// Suppose there are total N labels specified:
+	//
+	// 1. Endpoints matching all N labels with the client proxy have priority P(0) i.e. the highest priority.
+	// 2. Endpoints matching the first N-1 labels with the client proxy have priority P(1) i.e. second highest priority.
+	// 3. By extension of this logic, endpoints matching only the first label with the client proxy has priority P(N-1) i.e. second lowest priority.
+	// 4. All the other endpoints have priority P(N) i.e. lowest priority.
+	//
+	// Note: For a label to be considered for match, the previous labels must match, i.e. nth label would be considered matched only if first n-1 labels match.
+	//
+	// It can be any label specified on both client and server workloads.
+	// The following labels which have special semantic meaning are also supported:
+	//
+	//   - `topology.istio.io/network` is used to match the network metadata of an endpoint, which can be specified by pod/namespace label `topology.istio.io/network`, sidecar env `ISTIO_META_NETWORK` or MeshNetworks.
+	//   - `topology.istio.io/cluster` is used to match the clusterID of an endpoint, which can be specified by pod label `topology.istio.io/cluster` or pod env `ISTIO_META_CLUSTER_ID`.
+	//   - `topology.kubernetes.io/region` is used to match the region metadata of an endpoint, which maps to Kubernetes node label `topology.kubernetes.io/region` or the deprecated label `failure-domain.beta.kubernetes.io/region`.
+	//   - `topology.kubernetes.io/zone` is used to match the zone metadata of an endpoint, which maps to Kubernetes node label `topology.kubernetes.io/zone` or the deprecated label `failure-domain.beta.kubernetes.io/zone`.
+	//   - `topology.istio.io/subzone` is used to match the subzone metadata of an endpoint, which maps to Istio node label `topology.istio.io/subzone`.
+	//
+	// The below topology config indicates the following priority levels:
+	//
+	// ```yaml
+	// failoverPriority:
+	// - "topology.istio.io/network"
+	// - "topology.kubernetes.io/region"
+	// - "topology.kubernetes.io/zone"
+	// - "topology.istio.io/subzone"
+	// ```
+	//
+	// 1. endpoints match same [network, region, zone, subzone] label with the client proxy have the highest priority.
+	// 2. endpoints have same [network, region, zone] label but different [subzone] label with the client proxy have the second highest priority.
+	// 3. endpoints have same [network, region] label but different [zone] label with the client proxy have the third highest priority.
+	// 4. endpoints have same [network] but different [region] labels with the client proxy have the fourth highest priority.
+	// 5. all the other endpoints have the same lowest priority.
+	//
+	// Optional: only one of distribute, failover or failoverPriority can be set.
+	// And it should be used together with `OutlierDetection` to detect unhealthy endpoints, otherwise has no effect.
+	FailoverPriority []string `json:"failover_priority,omitempty"`
+	// enable locality load balancing, this is DestinationRule-level and will override mesh wide settings in entirety.
+	// e.g. true means that turn on locality load balancing for this DestinationRule no matter what mesh wide settings is.
+	Enabled bool `json:"enabled,omitempty"`
+}
+
+// Describes how traffic originating in the 'from' zone or sub-zone is
+// distributed over a set of 'to' zones. Syntax for specifying a zone is
+// {region}/{zone}/{sub-zone} and terminal wildcards are allowed on any
+// segment of the specification. Examples:
+//
+// `*` - matches all localities
+//
+// `us-west/*` - all zones and sub-zones within the us-west region
+//
+// `us-west/zone-1/*` - all sub-zones within us-west/zone-1
+type Distribute struct {
+	// Originating locality, '/' separated, e.g. 'region/zone/sub_zone'.
+	From string `json:"from,omitempty"`
+	// Map of upstream localities to traffic distribution weights. The sum of
+	// all weights should be 100. Any locality not present will
+	// receive no traffic.
+	To map[string]uint32 `json:"to,omitempty"`
+}
+
+// Specify the traffic failover policy across regions. Since zone and sub-zone
+// failover is supported by default this only needs to be specified for
+// regions when the operator needs to constrain traffic failover so that
+// the default behavior of failing over to any endpoint globally does not
+// apply. This is useful when failing over traffic across regions would not
+// improve service health or may need to be restricted for other reasons
+// like regulatory controls.
+type Failover struct {
+	// Originating region.
+	From string `json:"from,omitempty"`
+	// Destination region the traffic will fail over to when endpoints in
+	// the 'from' region becomes unhealthy.
+	To string `json:"to,omitempty"`
 }
 
 // Standard load balancing algorithms that require no tuning.
