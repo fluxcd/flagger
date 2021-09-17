@@ -561,3 +561,51 @@ spec:
     |> count()
     |> yield(name: "count")
 ```
+
+## Dynatrace
+
+You can create custom metric checks using the Dynatrace provider.
+
+Create a secret with your Dynatrace token:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dynatrace
+  namespace: istio-system
+data:
+  dynatrace_token: ZHQwYz...
+```
+
+Dynatrace metric template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: response-time-95pct
+  namespace: istio-system
+spec:
+  provider:
+    type: dynatrace
+    address: https://xxxxxxxx.live.dynatrace.com
+    secretRef:
+      name: dynatrace
+  query: |
+    builtin:service.response.time:filter(eq(dt.entity.service,SERVICE-ABCDEFG0123456789)):percentile(95)
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "response-time-95pct"
+        templateRef:
+          name: response-time-95pct
+          namespace: istio-system
+        thresholdRange:
+          max: 1000
+        interval: 1m
+```
