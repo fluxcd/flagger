@@ -198,7 +198,8 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 
 		// in-line PromQL
 		if metric.Query != "" {
-			val, err := observerFactory.Client.RunQuery(metric.Query)
+			query, err := observers.RenderQuery(metric.Query, toMetricModel(canary, metric.Interval))
+			val, err := observerFactory.Client.RunQuery(query)
 			if err != nil {
 				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary, "Halt advancement no values found for metric: %s",
