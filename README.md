@@ -1,4 +1,4 @@
-# flagger
+  # flagger
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4783/badge)](https://bestpractices.coreinfrastructure.org/projects/4783)
 [![build](https://github.com/fluxcd/flagger/workflows/build/badge.svg)](https://github.com/fluxcd/flagger/actions)
@@ -15,8 +15,8 @@ by gradually shifting traffic to the new version while measuring metrics and run
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
 using a service mesh (App Mesh, Istio, Linkerd, Open Service Mesh)
 or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
-For release analysis, Flagger can query Prometheus, Datadog, New Relic or CloudWatch
-and for alerting it uses Slack, MS Teams, Discord, Rocket and Google Chat.
+For release analysis, Flagger can query Prometheus, Datadog, New Relic, CloudWatch, Dynatrace,
+InfluxDB and Stackdriver and for alerting it uses Slack, MS Teams, Discord, Rocket and Google Chat.
 
 Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
 and part of [Flux](https://fluxcd.io) family of GitOps tools.

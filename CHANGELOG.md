@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.14.0
+
+**Release date:** 2021-09-20
+
+This release comes with support for extending the canary analysis with
+Dynatrace, InfluxDB and Google Cloud Monitoring (Stackdriver) metrics.
+
+#### Features
+
+- Add Stackdriver metric provider
+  [#991](https://github.com/fluxcd/flagger/pull/991)
+- Add Influxdb metric provider
+  [#1012](https://github.com/fluxcd/flagger/pull/1012)
+- Add Dynatrace metric provider
+  [#1013](https://github.com/fluxcd/flagger/pull/1013)
+
+#### Fixes
+
+- Fix inline promql query
+  [#1015](https://github.com/fluxcd/flagger/pull/1015)
+- Fix Istio load balancer settings mapping
+  [#1016](https://github.com/fluxcd/flagger/pull/1016)
+
 ## 1.13.0
 
 **Release date:** 2021-08-25
