@@ -11,7 +11,7 @@ features:
 - title: Flexible Traffic Routing
   details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd, OSM or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
 - title:  Extensible Validation
-  details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics (Prometheus, Datadog, CloudWatch, New Relic, Graphite) and webooks for running acceptance tests, load tests, or any other custom validation. 
+  details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
 footer: Apache License 2.0 | Copyright © 2018-2021 The Flux authors
 ---
 
@@ -49,6 +49,9 @@ Flagger can run automated application analysis, testing, promotion and rollback 
     * [Kubernetes CNI](https://docs.flagger.app/tutorials/kubernetes-blue-green),
       [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery#traffic-mirroring),
       Linkerd, App Mesh, OSM, Contour, Gloo, NGINX, Skipper, Traefik 
+
+Flagger's application analysis can be extended with metric queries targeting Prometheus, Datadog,
+CloudWatch, New Relic, Graphite, Dynatrace, InfluxDB and Google Cloud Monitoring (Stackdriver).
 
 Flagger can be configured to [send notifications](https://docs.flagger.app/usage/alerting) to
 Slack, Microsoft Teams, Discord and Rocket.
