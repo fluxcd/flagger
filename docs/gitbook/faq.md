@@ -446,7 +446,7 @@ Istio query:
 histogram_quantile(0.99,
   sum(
     irate(
-      istio_request_duration_seconds_bucket{
+      istio_request_duration_milliseconds_bucket{
         reporter="destination",
         destination_workload=~"$workload",
         destination_workload_namespace=~"$namespace"
