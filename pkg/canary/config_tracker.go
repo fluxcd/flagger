@@ -238,7 +238,7 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 
 func fieldIsMandatory(p *bool) bool {
 	if p == nil {
-		return false
+		return true
 	}
 	return !*p
 }
