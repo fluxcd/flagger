@@ -31,6 +31,7 @@ var nginxQueries = map[string]string{
 			nginx_ingress_controller_requests{
 				namespace="{{ namespace }}",
 				ingress="{{ ingress }}",
+				canary!="",
 				status!~"5.*"
 			}[{{ interval }}]
 		)
@@ -40,7 +41,8 @@ var nginxQueries = map[string]string{
 		rate(
 			nginx_ingress_controller_requests{
 				namespace="{{ namespace }}",
-				ingress="{{ ingress }}"
+				ingress="{{ ingress }}",
+				canary!=""
 			}[{{ interval }}]
 		)
 	) 
@@ -50,7 +52,8 @@ var nginxQueries = map[string]string{
 		rate(
 			nginx_ingress_controller_ingress_upstream_latency_seconds_sum{
 				namespace="{{ namespace }}",
-				ingress="{{ ingress }}"
+				ingress="{{ ingress }}",
+				canary!=""
 			}[{{ interval }}]
 		)
 	) 
@@ -59,7 +62,8 @@ var nginxQueries = map[string]string{
 		rate(
 			nginx_ingress_controller_ingress_upstream_latency_seconds_count{
 				namespace="{{ namespace }}",
-				ingress="{{ ingress }}"
+				ingress="{{ ingress }}",
+				canary!=""
 			}[{{ interval }}]
 		)
 	) 

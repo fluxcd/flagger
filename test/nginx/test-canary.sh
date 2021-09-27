@@ -36,40 +36,6 @@ cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: error-rate
-  namespace: ingress-nginx
-spec:
-  provider:
-    type: prometheus
-    address: http://flagger-prometheus.ingress-nginx:9090
-  query: |
-    100 - sum(
-            rate(
-                http_request_duration_seconds_count{
-                    kubernetes_namespace="{{ namespace }}",
-                    kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-                    path="root",
-                    status!~"5.*"
-                }[{{ interval }}]
-            )
-        )
-        /
-        sum(
-            rate(
-                http_request_duration_seconds_count{
-                    kubernetes_namespace="{{ namespace }}",
-                    kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-                    path="root"
-                }[{{ interval }}]
-            )
-        )
-        * 100
-EOF
-
-cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1beta1
-kind: MetricTemplate
-metadata:
   name: latency
   namespace: ingress-nginx
 spec:
@@ -115,12 +81,9 @@ spec:
     maxWeight: 40
     stepWeight: 20
     metrics:
-    - name: error-rate
-      templateRef:
-        name: error-rate
-        namespace: ingress-nginx
+    - name: request-success-rate
       thresholdRange:
-        max: 1
+        min: 1
       interval: 30s
     - name: latency
       templateRef:
@@ -255,12 +218,9 @@ spec:
         x-user:
           exact: "insider"
     metrics:
-    - name: error-rate
-      templateRef:
-        name: error-rate
-        namespace: ingress-nginx
+    - name: request-success-rate
       thresholdRange:
-        max: 1
+        min: 1
       interval: 30s
     - name: latency
       templateRef:
