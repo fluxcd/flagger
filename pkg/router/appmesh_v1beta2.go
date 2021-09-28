@@ -104,9 +104,9 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 
 	if canary.Spec.Service.ServiceDiscovery != nil {
 		serviceDiscovery = canary.Spec.Service.ServiceDiscovery
-		if serviceDiscovery.AWSCloudMap.ServiceName != "" {
+		if (serviceDiscovery.AWSCloudMap != nil) {
 			serviceDiscovery.AWSCloudMap.ServiceName = name
-		} else if serviceDiscovery.DNS.Hostname != "" {
+		} else if (serviceDiscovery.DNS != nil) {
 			serviceDiscovery.DNS.Hostname = host
 		}
 	}
@@ -227,7 +227,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 			Name: routerName,
 			HTTPRoute: &appmeshv1.HTTPRoute{
 				Match: appmeshv1.HTTPRouteMatch{
-					Prefix: routePrefix,
+					Prefix: &routePrefix,
 				},
 				Timeout:     timeout,
 				RetryPolicy: ar.makeRetryPolicy(canary),
@@ -259,7 +259,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 				Priority: int64p(10),
 				HTTPRoute: &appmeshv1.HTTPRoute{
 					Match: appmeshv1.HTTPRouteMatch{
-						Prefix:  routePrefix,
+						Prefix:  &routePrefix,
 						Headers: ar.makeHeaders(canary),
 					},
 					Timeout:     timeout,
@@ -287,7 +287,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 				Priority: int64p(20),
 				HTTPRoute: &appmeshv1.HTTPRoute{
 					Match: appmeshv1.HTTPRouteMatch{
-						Prefix: routePrefix,
+						Prefix: &routePrefix,
 					},
 					Timeout:     timeout,
 					RetryPolicy: ar.makeRetryPolicy(canary),

@@ -41,42 +41,6 @@ type WeightedTarget struct {
 	Weight int64 `json:"weight"`
 }
 
-type MatchRange struct {
-	// The start of the range.
-	// +optional
-	Start int64 `json:"start"`
-	// The end of the range.
-	// +optional
-	End int64 `json:"end"`
-}
-
-// HeaderMatchMethod refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HeaderMatchMethod.html
-type HeaderMatchMethod struct {
-	// The value sent by the client must match the specified value exactly.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Exact *string `json:"exact,omitempty"`
-	// The value sent by the client must begin with the specified characters.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Prefix *string `json:"prefix,omitempty"`
-	// An object that represents the range of values to match on.
-	// +optional
-	Range *MatchRange `json:"range,omitempty"`
-	// The value sent by the client must include the specified characters.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Regex *string `json:"regex,omitempty"`
-	// The value sent by the client must end with the specified characters.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Suffix *string `json:"suffix,omitempty"`
-}
-
 // HTTPRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
 type HTTPRouteHeader struct {
 	// A name for the HTTP header in the client request that will be matched on.
@@ -102,12 +66,21 @@ type HTTPRouteMatch struct {
 	// +kubebuilder:validation:Enum=CONNECT;DELETE;GET;HEAD;OPTIONS;PATCH;POST;PUT;TRACE
 	// +optional
 	Method *string `json:"method,omitempty"`
-	// Specifies the path to match requests with
-	Prefix string `json:"prefix"`
+	// Specifies the prefix to match requests with
+	// +optional
+	Prefix *string `json:"prefix,omitempty"`
 	// The client request scheme to match on
 	// +kubebuilder:validation:Enum=http;https
 	// +optional
 	Scheme *string `json:"scheme,omitempty"`
+	// The client specified Path to match on.
+	// +optional
+	Path *HTTPPathMatch `json:"path,omitempty"`
+	// The client specified queryParameters to match on
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=10
+	// +optional
+	QueryParameters []HTTPQueryParameters `json:"queryParameters,omitempty"`
 }
 
 // HTTPRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteAction.html
@@ -173,33 +146,6 @@ type TCPRoute struct {
 	// An object that represents a tcp timeout.
 	// +optional
 	Timeout *TCPTimeout `json:"timeout,omitempty"`
-}
-
-// GRPCRouteMetadataMatchMethod refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadataMatchMethod.html
-type GRPCRouteMetadataMatchMethod struct {
-	// The value sent by the client must match the specified value exactly.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Exact *string `json:"exact,omitempty"`
-	// The value sent by the client must begin with the specified characters.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Prefix *string `json:"prefix,omitempty"`
-	// An object that represents the range of values to match on
-	// +optional
-	Range *MatchRange `json:"range,omitempty"`
-	// The value sent by the client must include the specified characters.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Regex *string `json:"regex,omitempty"`
-	// The value sent by the client must end with the specified characters.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
-	// +optional
-	Suffix *string `json:"suffix,omitempty"`
 }
 
 // GRPCRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
@@ -364,9 +310,13 @@ type VirtualRouterStatus struct {
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:categories=all
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.virtualRouterARN",description="The AppMesh VirtualRouter object's Amazon Resource Name"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // VirtualRouter is the Schema for the virtualrouters API
 type VirtualRouter struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -376,11 +326,15 @@ type VirtualRouter struct {
 	Status VirtualRouterStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:object:root=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // VirtualRouterList contains a list of VirtualRouter
 type VirtualRouterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []VirtualRouter `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&VirtualRouter{}, &VirtualRouterList{})
 }

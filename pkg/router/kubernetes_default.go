@@ -102,8 +102,9 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 
 	// set pod selector and apex port
 	svcSpec := corev1.ServiceSpec{
-		Type:     corev1.ServiceTypeClusterIP,
-		Selector: map[string]string{c.labelSelector: podSelector},
+		Type:      corev1.ServiceTypeClusterIP,
+		ClusterIP: "None",
+		Selector:  map[string]string{c.labelSelector: podSelector},
 		Ports: []corev1.ServicePort{
 			{
 				Name:       portName,

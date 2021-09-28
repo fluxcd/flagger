@@ -101,7 +101,8 @@ func TestAppmeshv1beta2Router_Reconcile(t *testing.T) {
 
 	// update URI
 	vrClone := vrApex.DeepCopy()
-	vrClone.Spec.Routes[0].HTTPRoute.Match.Prefix = "api"
+	updatePrefix := "api"
+	vrClone.Spec.Routes[0].HTTPRoute.Match.Prefix = &updatePrefix
 	vrApex, err = mocks.meshClient.AppmeshV1beta2().VirtualRouters("default").Update(context.TODO(), vrClone, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
@@ -110,7 +111,8 @@ func TestAppmeshv1beta2Router_Reconcile(t *testing.T) {
 	require.NoError(t, err)
 	vrApex, err = router.appmeshClient.AppmeshV1beta2().VirtualRouters("default").Get(context.TODO(), apexName, metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, "/", vrApex.Spec.Routes[0].HTTPRoute.Match.Prefix)
+	originalPrefix := "/"
+	assert.Equal(t, &originalPrefix, vrApex.Spec.Routes[0].HTTPRoute.Match.Prefix)
 }
 
 func TestAppmeshv1beta2Router_GetSetRoutes(t *testing.T) {

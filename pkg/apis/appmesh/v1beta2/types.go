@@ -18,6 +18,67 @@ type Duration struct {
 	Value int64 `json:"value"`
 }
 
+type MatchRange struct {
+	// The start of the range.
+	Start int64 `json:"start"`
+	// The end of the range.
+	End int64 `json:"end"`
+}
+
+// HeaderMatchMethod refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HeaderMatchMethod.html
+type HeaderMatchMethod struct {
+	// The value sent by the client must match the specified value exactly.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Exact *string `json:"exact,omitempty"`
+	// The value sent by the client must begin with the specified characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Prefix *string `json:"prefix,omitempty"`
+	// An object that represents the range of values to match on.
+	// +optional
+	Range *MatchRange `json:"range,omitempty"`
+	// The value sent by the client must include the specified characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Regex *string `json:"regex,omitempty"`
+	// The value sent by the client must end with the specified characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Suffix *string `json:"suffix,omitempty"`
+}
+
+// GRPCRouteMetadataMatchMethod refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadataMatchMethod.html
+type GRPCRouteMetadataMatchMethod struct {
+	// The value sent by the client must match the specified value exactly.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Exact *string `json:"exact,omitempty"`
+	// The value sent by the client must begin with the specified characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Prefix *string `json:"prefix,omitempty"`
+	// An object that represents the range of values to match on
+	// +optional
+	Range *MatchRange `json:"range,omitempty"`
+	// The value sent by the client must include the specified characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Regex *string `json:"regex,omitempty"`
+	// The value sent by the client must end with the specified characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Suffix *string `json:"suffix,omitempty"`
+}
+
 // +kubebuilder:validation:Minimum=1
 // +kubebuilder:validation:Maximum=65535
 type PortNumber int64
@@ -90,6 +151,32 @@ type VirtualGatewayReference struct {
 	UID types.UID `json:"uid"`
 }
 
+type HTTPPathMatch struct {
+	// The value sent by the client must match the specified value exactly.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Exact *string `json:"exact,omitempty"`
+	// The value sent by the client must end with the specified characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Regex *string `json:"regex,omitempty"`
+}
+type HTTPQueryParameters struct {
+	Name *string `json:"name"`
+	// The HeaderMatchMethod object.
+	// +optional
+	Match *QueryMatchMethod `json:"match,omitempty"`
+}
+
+type QueryMatchMethod struct {
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Exact *string `json:"exact,omitempty"`
+}
+
 type HTTPTimeout struct {
 	// An object that represents per request timeout duration.
 	// +optional
@@ -145,4 +232,14 @@ type GRPCConnectionPool struct {
 	// can concurrently support across all the hosts in the upstream cluster
 	// +kubebuilder:validation:Minimum=1
 	MaxRequests int64 `json:"maxRequests"`
+}
+
+type SubjectAlternativeNameMatchers struct {
+	// Exact is a required field
+	Exact []*string `json:"exact"`
+}
+
+type SubjectAlternativeNames struct {
+	// Match is a required field
+	Match *SubjectAlternativeNameMatchers `json:"match"`
 }

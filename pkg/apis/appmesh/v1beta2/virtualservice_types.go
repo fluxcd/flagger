@@ -109,9 +109,13 @@ type VirtualServiceStatus struct {
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:categories=all
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.virtualServiceARN",description="The AppMesh VirtualService object's Amazon Resource Name"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // VirtualService is the Schema for the virtualservices API
 type VirtualService struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -121,11 +125,15 @@ type VirtualService struct {
 	Status VirtualServiceStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:object:root=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // VirtualServiceList contains a list of VirtualService
 type VirtualServiceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []VirtualService `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&VirtualService{}, &VirtualServiceList{})
 }

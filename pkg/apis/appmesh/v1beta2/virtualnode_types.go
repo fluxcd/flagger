@@ -37,6 +37,12 @@ type TLSValidationContextFileTrust struct {
 	CertificateChain string `json:"certificateChain"`
 }
 
+// TLSValidationContextSDSTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html
+type TLSValidationContextSDSTrust struct {
+	// The certificate trust chain for a certificate obtained via SDS
+	SecretName *string `json:"secretName"`
+}
+
 // TLSValidationContextTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextTrust.html
 type TLSValidationContextTrust struct {
 	// A reference to an object that represents a TLS validation context trust for an AWS Certicate Manager (ACM) certificate.
@@ -45,12 +51,27 @@ type TLSValidationContextTrust struct {
 	// An object that represents a TLS validation context trust for a local file.
 	// +optional
 	File *TLSValidationContextFileTrust `json:"file,omitempty"`
+	// An object that represents a TLS validation context trust for a SDS.
+	// +optional
+	SDS *TLSValidationContextSDSTrust `json:"sds,omitempty"`
 }
 
 // TLSValidationContext refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContext.html
 type TLSValidationContext struct {
 	// A reference to an object that represents a TLS validation context trust
 	Trust TLSValidationContextTrust `json:"trust"`
+	// Possible Alternative names to consider
+	// +optional
+	SubjectAlternativeNames *SubjectAlternativeNames `json:"subjectAlternativeNames,omitempty"`
+}
+
+type ClientTLSCertificate struct {
+	// An object that represents a TLS cert via a local file
+	// +optional
+	File *ListenerTLSFileCertificate `json:"file,omitempty"`
+	// An object that represents a TLS cert via SDS entry
+	// +optional
+	SDS *ListenerTLSSDSCertificate `json:"sds,omitempty"`
 }
 
 // ClientPolicyTLS refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicyTls.html
@@ -64,6 +85,9 @@ type ClientPolicyTLS struct {
 	Ports []PortNumber `json:"ports,omitempty"`
 	// A reference to an object that represents a TLS validation context.
 	Validation TLSValidationContext `json:"validation"`
+	// A reference to an object that represents TLS certificate.
+	//+optional
+	Certificate *ClientTLSCertificate `json:"certificate,omitempty"`
 }
 
 // ClientPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicy.html
@@ -165,6 +189,12 @@ type ListenerTLSFileCertificate struct {
 	PrivateKey string `json:"privateKey"`
 }
 
+// ListenerTLSSDSCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html
+type ListenerTLSSDSCertificate struct {
+	// The certificate trust chain for a certificate issued via SDS cluster
+	SecretName *string `json:"secretName"`
+}
+
 // ListenerTLSCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsCertificate.html
 type ListenerTLSCertificate struct {
 	// A reference to an object that represents an AWS Certificate Manager (ACM) certificate.
@@ -173,6 +203,9 @@ type ListenerTLSCertificate struct {
 	// A reference to an object that represents a local file certificate.
 	// +optional
 	File *ListenerTLSFileCertificate `json:"file,omitempty"`
+	// A reference to an object that represents an SDS certificate.
+	// +optional
+	SDS *ListenerTLSSDSCertificate `json:"sds,omitempty"`
 }
 
 const (
@@ -184,12 +217,31 @@ const (
 // +kubebuilder:validation:Enum=DISABLED;PERMISSIVE;STRICT
 type ListenerTLSMode string
 
+type ListenerTLSValidationContextTrust struct {
+	// An object that represents a TLS validation context trust for a local file.
+	// +optional
+	File *TLSValidationContextFileTrust `json:"file,omitempty"`
+	// An object that represents a TLS validation context trust for an SDS server
+	// +optional
+	SDS *TLSValidationContextSDSTrust `json:"sds,omitempty"`
+}
+
+type ListenerTLSValidationContext struct {
+	Trust ListenerTLSValidationContextTrust `json:"trust"`
+	// Possible alternative names to consider
+	// +optional
+	SubjectAlternativeNames *SubjectAlternativeNames `json:"subjectAlternativeNames,omitempty"`
+}
+
 // ListenerTLS refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTls.html
 type ListenerTLS struct {
 	// A reference to an object that represents a listener's TLS certificate.
 	Certificate ListenerTLSCertificate `json:"certificate"`
 	// ListenerTLS mode
 	Mode ListenerTLSMode `json:"mode"`
+	// A reference to an object that represents an SDS Trust Domain
+	// +optional
+	Validation *ListenerTLSValidationContext `json:"validation,omitempty"`
 }
 
 // ListenerTimeout refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTimeout.html
@@ -279,6 +331,10 @@ type AWSCloudMapServiceDiscovery struct {
 type DNSServiceDiscovery struct {
 	// Specifies the DNS service discovery hostname for the virtual node.
 	Hostname string `json:"hostname"`
+	// Choose between ENDPOINTS (strict DNS) and LOADBALANCER (logical DNS) mode in Envoy sidecar
+	// +kubebuilder:validation:Enum=ENDPOINTS;LOADBALANCER
+	// +optional
+	ResponseType *string `json:"responseType,omitempty"`
 }
 
 // ServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ServiceDiscovery.html
@@ -391,9 +447,13 @@ type VirtualNodeStatus struct {
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:categories=all
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.virtualNodeARN",description="The AppMesh VirtualNode object's Amazon Resource Name"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // VirtualNode is the Schema for the virtualnodes API
 type VirtualNode struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -403,11 +463,15 @@ type VirtualNode struct {
 	Status VirtualNodeStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:object:root=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // VirtualNodeList contains a list of VirtualNode
 type VirtualNodeList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []VirtualNode `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&VirtualNode{}, &VirtualNodeList{})
 }
