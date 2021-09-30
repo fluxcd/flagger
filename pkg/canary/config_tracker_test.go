@@ -372,3 +372,30 @@ func TestConfigTracker_HasConfigChanged_ShouldReturnErrorWhenAPIServerIsDown(t *
 		assert.Error(t, err)
 	})
 }
+
+func Test_fieldIsMandatory(t *testing.T) {
+	falsy := false
+	truthy := true
+	tests := []struct {
+		optional *bool
+		expected bool
+	}{
+		{
+			optional: nil,
+			expected: true,
+		},
+		{
+			optional: &falsy,
+			expected: true,
+		},
+		{
+			optional: &truthy,
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		actual := fieldIsMandatory(tt.optional)
+		assert.Equal(t, tt.expected, actual)
+	}
+}
