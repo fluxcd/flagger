@@ -32,7 +32,7 @@ import (
 
 func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		expected := ` sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo", status!~"5.*" }[1m] ) ) / sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo" }[1m] ) ) * 100`
+		expected := ` sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo", canary!="", status!~"5.*" }[1m] ) ) / sum( rate( nginx_ingress_controller_requests{ namespace="nginx", ingress="podinfo", canary!="" }[1m] ) ) * 100`
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			promql := r.URL.Query()["query"][0]
 			assert.Equal(t, expected, promql)
@@ -89,7 +89,7 @@ func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestNginxObserver_GetRequestDuration(t *testing.T) {
-	expected := ` sum( rate( nginx_ingress_controller_ingress_upstream_latency_seconds_sum{ namespace="nginx", ingress="podinfo" }[1m] ) ) / sum( rate( nginx_ingress_controller_ingress_upstream_latency_seconds_count{ namespace="nginx", ingress="podinfo" }[1m] ) ) * 1000`
+	expected := ` sum( rate( nginx_ingress_controller_ingress_upstream_latency_seconds_sum{ namespace="nginx", ingress="podinfo", canary!="" }[1m] ) ) / sum( rate( nginx_ingress_controller_ingress_upstream_latency_seconds_count{ namespace="nginx", ingress="podinfo", canary!="" }[1m] ) ) * 1000`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]

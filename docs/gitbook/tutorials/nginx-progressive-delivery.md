@@ -6,7 +6,7 @@ This guide shows you how to use the NGINX ingress controller and Flagger to auto
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.19** or newer and NGINX ingress **v0.46** or newer.
+Flagger requires a Kubernetes cluster **v1.19** or newer and NGINX ingress **v1.0.2** or newer.
 
 Install the NGINX ingress controller with Helm v3:
 
