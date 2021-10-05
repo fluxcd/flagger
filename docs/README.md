@@ -37,7 +37,7 @@ Flagger can run automated application analysis, testing, promotion and rollback 
       [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery),
       [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery),
       [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery),
-      [Skipper](https://docs.flagger.app/tutorials/skipper-progressive-delivery)
+      [Skipper](https://docs.flagger.app/tutorials/skipper-progressive-delivery),
       [Traefik](https://docs.flagger.app/tutorials/traefik-progressive-delivery)
       
 * **A/B Testing** (HTTP headers and cookies traffic routing)
