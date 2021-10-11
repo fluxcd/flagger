@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -121,5 +122,14 @@ func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, e
 			payload.Metadata[key] = value
 		}
 	}
+	//Text field is the required one for slack payload
+	if strings.Contains(w.URL, "slack") {
+		var metadata string
+		for key, value := range payload.Metadata {
+			metadata += fmt.Sprintf("\n%10s%s=%s", "", key, value)
+		}
+		payload.Text = fmt.Sprintf("Name=%s\nNamespace=%s\nPhase=%s\nMetadata:%s\n", r.Name, r.Namespace, r.Status.Phase, metadata)
+	}
+
 	return callWebhook(w.URL, payload, "5s")
 }

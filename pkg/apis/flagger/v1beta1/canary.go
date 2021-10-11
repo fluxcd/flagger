@@ -358,6 +358,9 @@ type CanaryWebhookPayload struct {
 
 	// Metadata (key-value pairs) for this webhook
 	Metadata map[string]string `json:"metadata,omitempty"`
+
+	// Text contains the payload of webhook
+	Text string `json:"text",omitempty`
 }
 
 // CrossNamespaceObjectReference contains enough information to let you locate the
