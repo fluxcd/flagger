@@ -5,7 +5,7 @@ RUN apk --no-cache add alpine-sdk perl curl
 RUN curl -sSLo hey "https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64" && \
 chmod +x hey && mv hey /usr/local/bin/hey
 
-RUN curl -L https://github.com/fortio/fortio/releases/download/v1.17.1/fortio-linux_x64-1.17.1.tgz \
+RUN curl -L https://github.com/fortio/fortio/releases/download/v1.18.0/fortio-linux_x64-1.18.0.tgz \
  | tar -C / -xvzpf -
 
 RUN HELM2_VERSION=2.16.8 && \
