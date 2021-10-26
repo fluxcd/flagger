@@ -79,6 +79,9 @@ spec:
                 - service
                 - analysis
               properties:
+                summary:
+                  description: Optional msg to add to each notification
+                  type: string
                 provider:
                   description: Traffic managent provider
                   type: string

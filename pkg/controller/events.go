@@ -175,6 +175,16 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 
 func alertMetadata(canary *flaggerv1.Canary) []notifier.Field {
 	var fields []notifier.Field
+
+	if canary.Spec.Summary != "" {
+		fields = append(fields,
+			notifier.Field{
+				Name:  "Summary",
+				Value: canary.Spec.Summary,
+			},
+		)
+	}
+
 	fields = append(fields,
 		notifier.Field{
 			Name:  "Target",
