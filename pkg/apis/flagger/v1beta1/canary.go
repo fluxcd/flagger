@@ -309,7 +309,7 @@ const (
 	RolloutHook HookType = "rollout"
 	// PreRolloutHook execute webhook before routing traffic to canary
 	PreRolloutHook HookType = "pre-rollout"
-	// PreRolloutHook execute webhook after the canary analysis
+	// PostRolloutHook execute webhook after the canary analysis
 	PostRolloutHook HookType = "post-rollout"
 	// ConfirmRolloutHook halt canary analysis until webhook returns HTTP 200
 	ConfirmRolloutHook HookType = "confirm-rollout"
