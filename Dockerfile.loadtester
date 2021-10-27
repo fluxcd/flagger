@@ -1,8 +1,8 @@
-FROM alpine:3.11 as build
+FROM alpine:3.14.2 as build
 
 RUN apk --no-cache add alpine-sdk perl curl
 
-RUN curl -sSLo hey "https://storage.googleapis.com/hey-release/hey_linux_amd64" && \
+RUN curl -sSLo hey "https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64" && \
 chmod +x hey && mv hey /usr/local/bin/hey
 
 RUN HELM2_VERSION=2.16.8 && \
@@ -10,7 +10,7 @@ curl -sSL "https://get.helm.sh/helm-v${HELM2_VERSION}-linux-amd64.tar.gz" | tar 
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helm && \
 chmod +x linux-amd64/tiller && mv linux-amd64/tiller /usr/local/bin/tiller
 
-RUN HELM3_VERSION=3.2.3 && \
+RUN HELM3_VERSION=3.7.1 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-amd64.tar.gz" | tar xvz && \
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helmv3
 
@@ -64,6 +64,6 @@ RUN hey -n 1 -c 1 https://flagger.app > /dev/null && echo $? | grep 0
 RUN wrk -d 1s -c 1 -t 1 https://flagger.app > /dev/null && echo $? | grep 0
 
 # install Helm v2 plugins
-RUN helm init --client-only && helm plugin install /tmp/helm-tiller
+RUN helm init --stable-repo-url=https://charts.helm.sh/stable --client-only && helm plugin install /tmp/helm-tiller
 
 ENTRYPOINT ["./loadtester"]

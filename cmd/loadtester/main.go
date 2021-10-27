@@ -27,7 +27,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var VERSION = "0.18.0"
+var VERSION = "0.18.1"
 var (
 	logLevel          string
 	port              string
