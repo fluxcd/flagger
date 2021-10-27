@@ -17,6 +17,9 @@ spec:
       labels:
         app: {{ include "loadtester.name" . }}
         app.kubernetes.io/name: {{ include "loadtester.name" . }}
+      {{- range $key, $value := .Values.podLabels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
       annotations:
         appmesh.k8s.aws/ports: "444"
         openservicemesh.io/inbound-port-exclusion-list: "80, 8080"

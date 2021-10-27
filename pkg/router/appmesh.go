@@ -131,10 +131,23 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 
 	// create virtual node
 	if errors.IsNotFound(err) {
+		metadata := canary.Spec.Service.Apex
+		if metadata == nil {
+			metadata = &flaggerv1.CustomMetadata{}
+		}
+		if metadata.Labels == nil {
+			metadata.Labels = make(map[string]string)
+		}
+		if metadata.Annotations == nil {
+			metadata.Annotations = make(map[string]string)
+		}
+
 		virtualnode = &appmeshv1.VirtualNode{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: canary.Namespace,
+				Name:        name,
+				Namespace:   canary.Namespace,
+				Labels:      metadata.Labels,
+				Annotations: filterMetadata(metadata.Annotations),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,

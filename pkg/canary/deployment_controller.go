@@ -159,7 +159,7 @@ func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, err
 	return hasSpecChanged(cd, canary.Spec.Template)
 }
 
-// Scale sets the canary deployment replicas
+// ScaleToZero Scale sets the canary deployment replicas
 func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})

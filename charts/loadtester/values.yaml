@@ -5,6 +5,8 @@ image:
   tag: 0.18.0
   pullPolicy: IfNotPresent
 
+podLabels: {}
+
 podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
