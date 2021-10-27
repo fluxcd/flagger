@@ -206,10 +206,23 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
+		metadata := canary.Spec.Service.Apex
+		if metadata == nil {
+			metadata = &flaggerv1.CustomMetadata{}
+		}
+		if metadata.Labels == nil {
+			metadata.Labels = make(map[string]string)
+		}
+		if metadata.Annotations == nil {
+			metadata.Annotations = make(map[string]string)
+		}
+
 		virtualService = &istiov1alpha3.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      apexName,
-				Namespace: canary.Namespace,
+				Name:        apexName,
+				Namespace:   canary.Namespace,
+				Labels:      metadata.Labels,
+				Annotations: filterMetadata(metadata.Annotations),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
