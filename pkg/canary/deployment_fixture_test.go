@@ -396,6 +396,26 @@ func newDeploymentControllerTestCanary(cc canaryConfigs) *flaggerv1.Canary {
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
+			Deployment: flaggerv1.CanaryDeployment{
+				Primary: &flaggerv1.CustomMetadata{
+					Annotations: map[string]string{
+						"unrelated-annotation-1": "somevalue1",
+					},
+					Labels: map[string]string{
+						"unrelated-label-1": "somevalue1",
+					},
+				},
+			},
+			Autoscaler: flaggerv1.CanaryAutoscaler{
+				Primary: &flaggerv1.CustomMetadata{
+					Annotations: map[string]string{
+						"unrelated-annotation-1": "somevalue1",
+					},
+					Labels: map[string]string{
+						"unrelated-label-1": "somevalue1",
+					},
+				},
+			},
 			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta2",

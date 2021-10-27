@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -84,54 +85,72 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
-	}
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		}
 
-	label, labelValue, err := c.getSelectorLabel(canary)
-	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
-	if err != nil {
-		return fmt.Errorf("getSelectorLabel failed: %w", err)
-	}
+		label, labelValue, err := c.getSelectorLabel(canary)
+		primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
+		if err != nil {
+			return fmt.Errorf("getSelectorLabel failed: %w", err)
+		}
 
-	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
-	}
+		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
 
-	// promote secrets and config maps
-	configRefs, err := c.configTracker.GetTargetConfigs(cd)
-	if err != nil {
-		return fmt.Errorf("GetTargetConfigs failed: %w", err)
-	}
-	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
-		return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
-	}
+		// promote secrets and config maps
+		configRefs, err := c.configTracker.GetTargetConfigs(cd)
+		if err != nil {
+			return fmt.Errorf("GetTargetConfigs failed: %w", err)
+		}
+		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
+			return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
+		}
 
-	primaryCopy := primary.DeepCopy()
-	primaryCopy.Spec.ProgressDeadlineSeconds = canary.Spec.ProgressDeadlineSeconds
-	primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
-	primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
-	primaryCopy.Spec.Strategy = canary.Spec.Strategy
+		primaryCopy := primary.DeepCopy()
+		primaryCopy.Spec.ProgressDeadlineSeconds = canary.Spec.ProgressDeadlineSeconds
+		primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
+		primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
+		primaryCopy.Spec.Strategy = canary.Spec.Strategy
 
-	// update spec with primary secrets and config maps
-	primaryCopy.Spec.Template.Spec = c.getPrimaryDeploymentTemplateSpec(canary, configRefs)
+		// update spec with primary secrets and config maps
+		primaryCopy.Spec.Template.Spec = c.getPrimaryDeploymentTemplateSpec(canary, configRefs)
 
-	// update pod annotations to ensure a rolling update
-	annotations, err := makeAnnotations(canary.Spec.Template.Annotations)
-	if err != nil {
-		return fmt.Errorf("makeAnnotations failed: %w", err)
-	}
+		// update pod annotations to ensure a rolling update
+		annotations, err := makeAnnotations(canary.Spec.Template.Annotations)
+		if err != nil {
+			return fmt.Errorf("makeAnnotations failed: %w", err)
+		}
 
-	primaryCopy.Spec.Template.Annotations = annotations
-	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryLabelValue, label)
+		primaryCopy.Spec.Template.Annotations = annotations
+		primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryLabelValue, label)
 
-	// apply update
-	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		if cd.Spec.Deployment.Primary != nil {
+			if len(primaryCopy.ObjectMeta.Annotations) == 0 {
+				primaryCopy.ObjectMeta.Annotations = make(map[string]string)
+			}
+			for k, v := range cd.Spec.Deployment.Primary.Annotations {
+				primaryCopy.ObjectMeta.Annotations[k] = v
+			}
+			if len(primaryCopy.ObjectMeta.Labels) == 0 {
+				primaryCopy.ObjectMeta.Labels = make(map[string]string)
+			}
+			for k, v := range cd.Spec.Deployment.Primary.Labels {
+				primaryCopy.ObjectMeta.Labels[k] = v
+			}
+		}
+
+		// apply update
+		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("updating deployment %s.%s template spec failed: %w",
-			primaryCopy.GetName(), primaryCopy.Namespace, err)
+			primaryName, cd.Namespace, err)
 	}
 
 	// update HPA
@@ -364,18 +383,45 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 	if !init && primaryHpa != nil {
 		diffMetrics := cmp.Diff(hpaSpec.Metrics, primaryHpa.Spec.Metrics)
 		diffBehavior := cmp.Diff(hpaSpec.Behavior, primaryHpa.Spec.Behavior)
-		if diffMetrics != "" || diffBehavior != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
+		diffLabels := cmp.Diff(hpa.ObjectMeta.Labels, primaryHpa.ObjectMeta.Labels)
+		diffAnnotations := cmp.Diff(hpa.ObjectMeta.Annotations, primaryHpa.ObjectMeta.Annotations)
+		if diffMetrics != "" || diffBehavior != "" || diffLabels != "" || diffAnnotations != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
 			fmt.Println(diffMetrics, diffBehavior, hpaSpec.MinReplicas, primaryHpa.Spec.MinReplicas, hpaSpec.MaxReplicas, primaryHpa.Spec.MaxReplicas)
-			hpaClone := primaryHpa.DeepCopy()
-			hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
-			hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
-			hpaClone.Spec.Metrics = hpaSpec.Metrics
-			hpaClone.Spec.Behavior = hpaSpec.Behavior
 
-			_, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
+			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				primaryHpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+
+				hpaClone := primaryHpa.DeepCopy()
+				hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
+				hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
+				hpaClone.Spec.Metrics = hpaSpec.Metrics
+				hpaClone.Spec.Behavior = hpaSpec.Behavior
+
+				if cd.Spec.Autoscaler.Primary != nil {
+					if len(hpaClone.ObjectMeta.Annotations) == 0 {
+						hpaClone.ObjectMeta.Annotations = make(map[string]string)
+					}
+					for k, v := range cd.Spec.Autoscaler.Primary.Annotations {
+						hpaClone.ObjectMeta.Annotations[k] = v
+					}
+					if len(hpaClone.ObjectMeta.Labels) == 0 {
+						hpaClone.ObjectMeta.Labels = make(map[string]string)
+					}
+					for k, v := range cd.Spec.Autoscaler.Primary.Labels {
+						hpaClone.ObjectMeta.Labels[k] = v
+					}
+				}
+
+				_, err = c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
+				return err
+			})
+
 			if err != nil {
 				return fmt.Errorf("updating HorizontalPodAutoscaler %s.%s failed: %w",
-					hpaClone.Name, hpaClone.Namespace, err)
+					primaryHpa.Name, primaryHpa.Namespace, err)
 			}
 			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
 				Infof("HorizontalPodAutoscaler %s.%s updated", primaryHpa.GetName(), cd.Namespace)

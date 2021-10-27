@@ -85,6 +85,12 @@ type CanarySpec struct {
 	// Service defines how ClusterIP services, service mesh or ingress routing objects are generated
 	Service CanaryService `json:"service"`
 
+	// Service defines how deployments are generated
+	Deployment CanaryDeployment `json:"deployment"`
+
+	// Service defines how autoscaler are generated
+	Autoscaler CanaryAutoscaler `json:"autoscaler"`
+
 	// Analysis defines the validation process of a release
 	Analysis *CanaryAnalysis `json:"analysis,omitempty"`
 
@@ -191,6 +197,22 @@ type CanaryService struct {
 	// Canary is the metadata to add to the canary service
 	// +optional
 	Canary *CustomMetadata `json:"canary,omitempty"`
+}
+
+// CanaryDeployment defines how deployments are generated
+type CanaryDeployment struct {
+
+	// Primary is the metadata to add to the primary deployment
+	// +optional
+	Primary *CustomMetadata `json:"primary,omitempty"`
+}
+
+// CanaryDeployment defines how deployments are generated
+type CanaryAutoscaler struct {
+
+	// Primary is the metadata to add to the primary autoscaler
+	// +optional
+	Primary *CustomMetadata `json:"primary,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done

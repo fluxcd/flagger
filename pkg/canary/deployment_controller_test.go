@@ -109,6 +109,10 @@ func TestDeploymentController_Promote(t *testing.T) {
 	sourceImage := dep2.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, sourceImage, primaryImage)
 
+	depPrimaryLabels := depPrimary.ObjectMeta.Labels
+	depSourceLabels := dep2.ObjectMeta.Labels
+	assert.Equal(t, depSourceLabels["unrelated-annotation-1"], depPrimaryLabels["unrelated-annotation-1"])
+
 	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, config2.Data["color"], configPrimary.Data["color"])
@@ -116,6 +120,10 @@ func TestDeploymentController_Promote(t *testing.T) {
 	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), hpaPrimary.Spec.MaxReplicas)
+
+	hpaPrimaryLabels := hpaPrimary.ObjectMeta.Labels
+	hpaSourceLabels := hpa.ObjectMeta.Labels
+	assert.Equal(t, hpaSourceLabels["unrelated-annotation-1"], hpaPrimaryLabels["unrelated-annotation-1"])
 
 	value := depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[0].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
 	assert.Equal(t, "podinfo-primary", value)

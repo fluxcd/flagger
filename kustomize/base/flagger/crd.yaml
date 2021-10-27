@@ -782,6 +782,38 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
+                deployment:
+                  description: Kubernetes Deployment spec
+                  type: object
+                  properties:
+                    primary:
+                      description: Metadata to add to the primary deployment
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                autoscaler:
+                  description: Kubernetes Autoscaler spec
+                  type: object
+                  properties:
+                    primary:
+                      description: Metadata to add to the primary autoscaler
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
                 skipAnalysis:
                   description: Skip analysis and promote canary
                   type: boolean
