@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.15.0
+
+**Release date:** 2021-10-28
+
+This release comes with support for NGINX ingress canary metrics.
+The nginx-ingress minimum supported version is now v1.0.2.
+
+Starting with version, Flagger will use the `spec.service.apex.annotations`
+to annotate the generated apex VirtualService, TrafficSplit or HTTPProxy.
+
+#### Features
+
+- Use nginx controller canary metrics
+  [#1023](https://github.com/fluxcd/flagger/pull/1023)
+- Add metadata annotations to generated apex objects
+  [#1034](https://github.com/fluxcd/flagger/pull/1034)
+
+#### Improvements
+
+- Update load tester binaries (CVEs fix)
+  [#1038](https://github.com/fluxcd/flagger/pull/1038)
+- Add podLabels to load tester Helm chart
+  [#1036](https://github.com/fluxcd/flagger/pull/1036)
+
 ## 1.14.0
 
 **Release date:** 2021-09-20
