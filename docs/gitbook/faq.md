@@ -884,7 +884,7 @@ spec:
 
 ### Multiple sources and Istio
 
-:warning: The apex annotations are added to both the generated Kubernetes Services and the generated Istio
+**/!\\** The apex annotations are added to both the generated Kubernetes Services and the generated Istio
 VirtualServices objects. If you have configured external-dns to use both sources,
 this will create conflicts!
 
