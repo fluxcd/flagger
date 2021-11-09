@@ -858,3 +858,42 @@ spec:
   mtls:
     mode: DISABLE
 ```
+
+## ExternalDNS
+
+### Can I use annotations?
+
+Flagger propagates annotations (and labels) to all the generated apex,
+primary and canary objects. This allows using external-dns annotations.
+
+You can configure Flagger to set annotations with:
+
+```yaml
+spec:
+  service:
+    apex:
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "mydomain.com"
+    primary:
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "primary.mydomain.com"
+    canary:
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "canary.mydomain.com"
+```
+
+### Multiple sources and Istio
+
+**/!\\** The apex annotations are added to both the generated Kubernetes Services and the generated Istio
+VirtualServices objects. If you have configured external-dns to use both sources,
+this will create conflicts!
+
+```yaml
+    spec:
+      containers:
+        args:
+        - --source=service              # choose only one
+        - --source=istio-virtualservice # of these two
+```
+
+[Checkout ExeternalDNS documentation](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/istio.md)
