@@ -254,7 +254,7 @@ type CanaryMetric struct {
 	Interval string `json:"interval,omitempty"`
 
 	// Deprecated: Max value accepted for this metric (replaced by ThresholdRange)
-	Threshold float64 `json:"threshold"`
+	Threshold float64 `json:"threshold,omitempty"`
 
 	// Range value accepted for this metric
 	// +optional
