@@ -150,7 +150,7 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 				Name:        name,
 				Namespace:   canary.Namespace,
 				Labels:      metadata.Labels,
-				Annotations: metadata.Annotations,
+				Annotations: filterMetadata(metadata.Annotations),
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
 						Group:   flaggerv1.SchemeGroupVersion.Group,
@@ -217,6 +217,10 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		}
 
 		if updateService {
+			if svcClone.ObjectMeta.Annotations == nil {
+				svcClone.ObjectMeta.Annotations = make(map[string]string)
+			}
+			svcClone.ObjectMeta.Annotations = filterMetadata(svcClone.ObjectMeta.Annotations)
 			_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), svcClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("service %s update error: %w", name, err)

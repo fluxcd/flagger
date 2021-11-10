@@ -8,6 +8,21 @@ set -o errexit
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo-svc
+  namespace: test
+spec:
+  type: ClusterIP
+  selector:
+    app: podinfo
+  ports:
+    - name: http
+      port: 9898
+      protocol: TCP
+      targetPort: http
+---
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
@@ -72,6 +87,12 @@ until ${ok}; do
     fi
 done
 
+passed=$(kubectl -n test get svc/podinfo-svc -oyaml 2>&1 | { grep 'kustomize.toolkit.fluxcd.io/reconcile' || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 toolkit annotation test failed'
+  kubectl -n test get svc/podinfo-svc -oyaml
+  exit 1
+fi
 passed=$(kubectl -n test get deploy/podinfo-primary -oyaml 2>&1 | { grep test-label-prefix || true; })
 if [ -z "$passed" ]; then
   echo -e '\u2716 primary copy labels by prefix test failed'
