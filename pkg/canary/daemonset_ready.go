@@ -36,7 +36,7 @@ func (c *DaemonSetController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
-	_, err = c.isDaemonSetReady(cd, primary)
+	_, err = c.isDaemonSetReady(cd, primary, cd.GetAnalysisPrimaryReadyThreshold())
 	if err != nil {
 		return fmt.Errorf("primary daemonset %s.%s not ready: %w", primaryName, cd.Namespace, err)
 	}
@@ -52,7 +52,7 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 		return true, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	retryable, err := c.isDaemonSetReady(cd, canary)
+	retryable, err := c.isDaemonSetReady(cd, canary, 100)
 	if err != nil {
 		return retryable, fmt.Errorf("canary damonset %s.%s not ready with retryable %v: %w",
 			targetName, cd.Namespace, retryable, err)
@@ -62,11 +62,14 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 
 // isDaemonSetReady determines if a daemonset is ready by checking the number of old version daemons
 // reference: https://github.com/kubernetes/kubernetes/blob/5232ad4a00ec93942d0b2c6359ee6cd1201b46bc/pkg/kubectl/rollout_status.go#L110
-func (c *DaemonSetController) isDaemonSetReady(cd *flaggerv1.Canary, daemonSet *appsv1.DaemonSet) (bool, error) {
+func (c *DaemonSetController) isDaemonSetReady(cd *flaggerv1.Canary, daemonSet *appsv1.DaemonSet, readyThreshold int) (bool, error) {
 	if daemonSet.Generation <= daemonSet.Status.ObservedGeneration {
+		readyThresholdRatio := float32(readyThreshold) / float32(100)
+
 		// calculate conditions
 		newCond := daemonSet.Status.UpdatedNumberScheduled < daemonSet.Status.DesiredNumberScheduled
-		availableCond := daemonSet.Status.NumberAvailable < daemonSet.Status.DesiredNumberScheduled
+		readyThresholdDesiredReplicas := int32(float32(daemonSet.Status.DesiredNumberScheduled) * readyThresholdRatio)
+		availableCond := daemonSet.Status.NumberAvailable < readyThresholdDesiredReplicas
 		if !newCond && !availableCond {
 			return true, nil
 		}
@@ -83,8 +86,8 @@ func (c *DaemonSetController) isDaemonSetReady(cd *flaggerv1.Canary, daemonSet *
 			return true, fmt.Errorf("waiting for rollout to finish: %d out of %d new pods have been updated",
 				daemonSet.Status.UpdatedNumberScheduled, daemonSet.Status.DesiredNumberScheduled)
 		} else if availableCond {
-			return true, fmt.Errorf("waiting for rollout to finish: %d of %d updated pods are available",
-				daemonSet.Status.NumberAvailable, daemonSet.Status.DesiredNumberScheduled)
+			return true, fmt.Errorf("waiting for rollout to finish: %d of %d (readyThreshold %d%%) updated pods are available",
+				daemonSet.Status.NumberAvailable, readyThresholdDesiredReplicas, readyThreshold)
 		}
 	}
 	return true, fmt.Errorf("waiting for rollout to finish: observed daemonset generation less than desired generation")

@@ -357,6 +357,7 @@ func newDaemonSetControllerTestCanary(dc daemonsetConfigs) *flaggerv1.Canary {
 				APIVersion: "apps/v1",
 				Kind:       "DaemonSet",
 			},
+			Analysis: &flaggerv1.CanaryAnalysis{},
 		},
 	}
 	return cd

@@ -45,7 +45,7 @@ func TestDeploymentController_isDeploymentReady(t *testing.T) {
 
 	// observed generation is less than desired generation
 	dp := &appsv1.Deployment{Status: appsv1.DeploymentStatus{ObservedGeneration: -1}}
-	retryable, err := mocks.controller.isDeploymentReady(dp, 0)
+	retryable, err := mocks.controller.isDeploymentReady(dp, 0, 100)
 	assert.Error(t, err)
 	assert.True(t, retryable)
 	assert.True(t, strings.Contains(err.Error(), "generation"))
@@ -57,7 +57,7 @@ func TestDeploymentController_isDeploymentReady(t *testing.T) {
 		ReadyReplicas:     1,
 		AvailableReplicas: 1,
 	}}
-	retryable, err = mocks.controller.isDeploymentReady(dp, 0)
+	retryable, err = mocks.controller.isDeploymentReady(dp, 0, 100)
 	assert.NoError(t, err)
 	assert.True(t, retryable)
 
@@ -67,7 +67,7 @@ func TestDeploymentController_isDeploymentReady(t *testing.T) {
 	}, Spec: appsv1.DeploymentSpec{
 		Replicas: int32p(2),
 	}}
-	_, err = mocks.controller.isDeploymentReady(dp, 0)
+	_, err = mocks.controller.isDeploymentReady(dp, 0, 100)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "new replicas"))
 
@@ -76,7 +76,7 @@ func TestDeploymentController_isDeploymentReady(t *testing.T) {
 		UpdatedReplicas: 1,
 		Replicas:        2,
 	}}
-	_, err = mocks.controller.isDeploymentReady(dp, 0)
+	_, err = mocks.controller.isDeploymentReady(dp, 0, 100)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "termination"))
 
@@ -85,7 +85,7 @@ func TestDeploymentController_isDeploymentReady(t *testing.T) {
 		UpdatedReplicas:   2,
 		AvailableReplicas: 1,
 	}}
-	_, err = mocks.controller.isDeploymentReady(dp, 0)
+	_, err = mocks.controller.isDeploymentReady(dp, 0, 100)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "available"))
 
@@ -94,7 +94,7 @@ func TestDeploymentController_isDeploymentReady(t *testing.T) {
 		Conditions: []appsv1.DeploymentCondition{
 			{Type: appsv1.DeploymentProgressing, Reason: "ProgressDeadlineExceeded"}},
 	}}
-	retryable, err = mocks.controller.isDeploymentReady(dp, 0)
+	retryable, err = mocks.controller.isDeploymentReady(dp, 0, 100)
 	assert.Error(t, err)
 	assert.False(t, retryable)
 	assert.True(t, strings.Contains(err.Error(), "exceeded"))
@@ -113,7 +113,48 @@ func TestDeploymentController_isDeploymentReady(t *testing.T) {
 		UpdatedReplicas:   2,
 		AvailableReplicas: 1,
 	}}
-	retryable, err = mocks.controller.isDeploymentReady(dp, 5)
+	retryable, err = mocks.controller.isDeploymentReady(dp, 5, 100)
 	assert.Error(t, err)
 	assert.False(t, retryable)
+}
+
+func TestDeploymentController_isDeploymentReady_readyThreshold(t *testing.T) {
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
+
+	// observed generation is less than desired generation
+	dp := &appsv1.Deployment{Status: appsv1.DeploymentStatus{ObservedGeneration: -1}}
+	retryable, err := mocks.controller.isDeploymentReady(dp, 0, 50)
+	assert.Error(t, err)
+	assert.True(t, retryable)
+	assert.True(t, strings.Contains(err.Error(), "generation"))
+
+	// ok
+	dp = &appsv1.Deployment{Status: appsv1.DeploymentStatus{
+		Replicas:          1,
+		UpdatedReplicas:   1,
+		ReadyReplicas:     1,
+		AvailableReplicas: 1,
+	}}
+	retryable, err = mocks.controller.isDeploymentReady(dp, 0, 50)
+	assert.NoError(t, err)
+	assert.True(t, retryable)
+
+	// waiting for updated ones to be available, 50% is available, ok
+	dp = &appsv1.Deployment{Status: appsv1.DeploymentStatus{
+		UpdatedReplicas:   4,
+		AvailableReplicas: 2,
+	}}
+	retryable, err = mocks.controller.isDeploymentReady(dp, 0, 50)
+	assert.NoError(t, err)
+	assert.True(t, retryable)
+
+	// waiting for updated ones to be available, less than 50% available
+	dp = &appsv1.Deployment{Status: appsv1.DeploymentStatus{
+		UpdatedReplicas:   4,
+		AvailableReplicas: 1,
+	}}
+	retryable, err = mocks.controller.isDeploymentReady(dp, 0, 50)
+	assert.Error(t, err)
+	assert.True(t, strings.Contains(err.Error(), "available"))
 }

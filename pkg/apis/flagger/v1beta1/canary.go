@@ -29,6 +29,7 @@ const (
 	CanaryKind              = "Canary"
 	ProgressDeadlineSeconds = 600
 	AnalysisInterval        = 60 * time.Second
+	PrimaryReadyThreshold   = 100
 	MetricInterval          = "1m"
 )
 
@@ -228,6 +229,9 @@ type CanaryAnalysis struct {
 
 	// Max number of failed checks before the canary is terminated
 	Threshold int `json:"threshold"`
+
+	// Percentage of pods that need to be available to consider primary as ready
+	PrimaryReadyThreshold *int `json:"primaryReadyThreshold,omitempty"`
 
 	// Alert list for this canary analysis
 	Alerts []CanaryAlert `json:"alerts,omitempty"`
@@ -438,6 +442,14 @@ func (c *Canary) GetAnalysisThreshold() int {
 		return c.GetAnalysis().Threshold
 	}
 	return 1
+}
+
+// GetAnalysisPrimaryReadyThreshold returns the canary primaryReadyThreshold (default 100)
+func (c *Canary) GetAnalysisPrimaryReadyThreshold() int {
+	if c.GetAnalysis().PrimaryReadyThreshold != nil {
+		return *c.GetAnalysis().PrimaryReadyThreshold
+	}
+	return PrimaryReadyThreshold
 }
 
 // GetMetricInterval returns the metric interval default value (1m)
