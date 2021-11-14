@@ -399,3 +399,27 @@ func Test_fieldIsMandatory(t *testing.T) {
 		assert.Equal(t, tt.expected, actual)
 	}
 }
+
+func TestConfigTracker_ConfigOwnerMultiDeployment(t *testing.T) {
+	t.Run("deployment", func(t *testing.T) {
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDeploymentFixture(dc)
+		mocks.initializeCanary(t)
+
+		dep := newDeploymentControllerTest(dc)
+		dep.Name = "podinfo2"
+		canary := newDeploymentControllerTestCanary(canaryConfigs{targetName: "podinfo2"})
+		canary.Name = "podinfo2"
+		canary.Spec.TargetRef.Name = dep.Name
+		mocks.kubeClient.AppsV1().Deployments("default").Create(context.TODO(), dep, metav1.CreateOptions{})
+		mocks.controller.Initialize(canary)
+
+		configMapPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Len(t, configMapPrimary.OwnerReferences, 2)
+
+		secretPrimary, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-env-primary", metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Len(t, secretPrimary.OwnerReferences, 2)
+	})
+}

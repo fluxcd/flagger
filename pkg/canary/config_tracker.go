@@ -299,22 +299,38 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 		case ConfigRefMap:
 			config, err := ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Get(context.TODO(), ref.Name, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("configmap %s.%s get query failed : %w", ref.Name, cd.Name, err)
+				return fmt.Errorf("configmap %s.%s get query failed : %w", ref.Name, cd.Namespace, err)
 			}
 			primaryName := fmt.Sprintf("%s-primary", config.GetName())
+			ownerReferences := []metav1.OwnerReference{
+				*metav1.NewControllerRef(cd, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
+
+			oldPrimary, err := ct.KubeClient.CoreV1().ConfigMaps(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+			if err != nil {
+				if !errors.IsNotFound(err) {
+					return fmt.Errorf("configmap %s.%s get query failed : %w", primaryName, cd.Namespace, err)
+				}
+			} else {
+				for _, ownerRef := range oldPrimary.OwnerReferences {
+					if ownerRef.Kind != flaggerv1.CanaryKind || ownerRef.Name != cd.Name {
+						ownerRef.Controller = new(bool)
+						ownerReferences = append(ownerReferences, ownerRef)
+					}
+				}
+			}
+
 			labels := includeLabelsByPrefix(config.Labels, includeLabelPrefix)
 			primaryConfigMap := &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      primaryName,
-					Namespace: cd.Namespace,
-					Labels:    labels,
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(cd, schema.GroupVersionKind{
-							Group:   flaggerv1.SchemeGroupVersion.Group,
-							Version: flaggerv1.SchemeGroupVersion.Version,
-							Kind:    flaggerv1.CanaryKind,
-						}),
-					},
+					Name:            primaryName,
+					Namespace:       cd.Namespace,
+					Labels:          labels,
+					OwnerReferences: ownerReferences,
 				},
 				Data: config.Data,
 			}
@@ -337,22 +353,37 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 		case ConfigRefSecret:
 			secret, err := ct.KubeClient.CoreV1().Secrets(cd.Namespace).Get(context.TODO(), ref.Name, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("secret %s.%s get query failed : %w", ref.Name, cd.Name, err)
+				return fmt.Errorf("secret %s.%s get query failed : %w", ref.Name, cd.Namespace, err)
 			}
 			primaryName := fmt.Sprintf("%s-primary", secret.GetName())
+			ownerReferences := []metav1.OwnerReference{
+				*metav1.NewControllerRef(cd, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
+
+			oldPrimary, err := ct.KubeClient.CoreV1().Secrets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+			if err != nil {
+				if !errors.IsNotFound(err) {
+					return fmt.Errorf("secret %s.%s get query failed : %w", primaryName, cd.Namespace, err)
+				}
+			} else {
+				for _, ownerRef := range oldPrimary.OwnerReferences {
+					if ownerRef.Kind != flaggerv1.CanaryKind || ownerRef.Name != cd.Name {
+						ownerRef.Controller = new(bool)
+						ownerReferences = append(ownerReferences, ownerRef)
+					}
+				}
+			}
 			labels := includeLabelsByPrefix(secret.Labels, includeLabelPrefix)
 			primarySecret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      primaryName,
-					Namespace: cd.Namespace,
-					Labels:    labels,
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(cd, schema.GroupVersionKind{
-							Group:   flaggerv1.SchemeGroupVersion.Group,
-							Version: flaggerv1.SchemeGroupVersion.Version,
-							Kind:    flaggerv1.CanaryKind,
-						}),
-					},
+					Name:            primaryName,
+					Namespace:       cd.Namespace,
+					Labels:          labels,
+					OwnerReferences: ownerReferences,
 				},
 				Type: secret.Type,
 				Data: secret.Data,
