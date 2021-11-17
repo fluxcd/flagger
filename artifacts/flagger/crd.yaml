@@ -826,6 +826,9 @@ spec:
                     mirrorWeight:
                       description: Weight of traffic to be mirrored
                       type: number
+                    primaryReadyThreshold:
+                      description: Percentage of pods that need to be available to consider primary as ready
+                      type: number
                     match:
                       description: A/B testing match conditions
                       type: array

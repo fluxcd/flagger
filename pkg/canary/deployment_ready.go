@@ -37,7 +37,7 @@ func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
-	_, err = c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds())
+	_, err = c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds(), cd.GetAnalysisPrimaryReadyThreshold())
 	if err != nil {
 		return fmt.Errorf("%s.%s not ready: %w", primaryName, cd.Namespace, err)
 	}
@@ -59,7 +59,7 @@ func (c *DeploymentController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error)
 		return true, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	retryable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds())
+	retryable, err := c.isDeploymentReady(canary, cd.GetProgressDeadlineSeconds(), 100)
 	if err != nil {
 		return retryable, fmt.Errorf(
 			"canary deployment %s.%s not ready: %w",
@@ -71,7 +71,7 @@ func (c *DeploymentController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error)
 
 // isDeploymentReady determines if a deployment is ready by checking the status conditions
 // if a deployment has exceeded the progress deadline it returns a non retriable error
-func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, deadline int) (bool, error) {
+func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, deadline int, readyThreshold int) (bool, error) {
 	retriable := true
 	if deployment.Generation <= deployment.Status.ObservedGeneration {
 		progress := c.getDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
@@ -86,6 +86,9 @@ func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, 
 			}
 		}
 
+		readyThresholdRatio := float32(readyThreshold) / float32(100)
+		readyThresholdUpdatedReplicas := int32(float32(deployment.Status.UpdatedReplicas) * readyThresholdRatio)
+
 		if progress != nil && progress.Reason == "ProgressDeadlineExceeded" {
 			return false, fmt.Errorf("deployment %q exceeded its progress deadline", deployment.GetName())
 		} else if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
@@ -94,9 +97,9 @@ func (c *DeploymentController) isDeploymentReady(deployment *appsv1.Deployment, 
 		} else if deployment.Status.Replicas > deployment.Status.UpdatedReplicas {
 			return retriable, fmt.Errorf("waiting for rollout to finish: %d old replicas are pending termination",
 				deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
-		} else if deployment.Status.AvailableReplicas < deployment.Status.UpdatedReplicas {
-			return retriable, fmt.Errorf("waiting for rollout to finish: %d of %d updated replicas are available",
-				deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
+		} else if deployment.Status.AvailableReplicas < readyThresholdUpdatedReplicas {
+			return retriable, fmt.Errorf("waiting for rollout to finish: %d of %d (readyThreshold %d%%) updated replicas are available",
+				deployment.Status.AvailableReplicas, readyThresholdUpdatedReplicas, readyThreshold)
 		}
 	} else {
 		return true, fmt.Errorf(
