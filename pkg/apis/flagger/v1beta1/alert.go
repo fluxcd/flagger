@@ -60,9 +60,13 @@ type AlertProviderSpec struct {
 	// +optional
 	Username string `json:"username,omitempty"`
 
-	// HTTP(S) webhook address of this provider
+	// HTTP(S) webhook or API endpoint address of this provider
 	// +optional
 	Address string `json:"address,omitempty"`
+
+	// APIToken of this provider
+	// +optional
+	APIToken string `json:"apiToken,omitempty"`
 
 	// HTTP/S address of the proxy
 	// +optional

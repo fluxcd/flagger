@@ -28,16 +28,9 @@ type Factory struct {
 	Channel  string
 }
 
-func NewFactory(url string, proxy string, username string, channel string) *Factory {
+func NewFactory(url string, apiToken string, proxy string, username string, channel string) *Factory {
 	return &Factory{
 		URL:      url,
-		ProxyURL: proxy,
-		Channel:  channel,
-		Username: username,
-	}
-}
-func NewAPITokenFactory(apiToken string, proxy string, username string, channel string) *Factory {
-	return &Factory{
 		APIToken: apiToken,
 		ProxyURL: proxy,
 		Channel:  channel,
@@ -56,8 +49,7 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 	case "slack":
 		n, err = NewSlack(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "slack-api":
-		apiURL := "https://slack.com/api/chat.postMessage"
-		n, err = NewSlackAPIToken(apiURL, f.APIToken, f.ProxyURL, f.Username, f.Channel)
+		n, err = NewSlackAPIToken(f.URL, f.APIToken, f.ProxyURL, f.Username, f.Channel)
 	case "discord":
 		n, err = NewDiscord(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "rocket":

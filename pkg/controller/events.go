@@ -122,6 +122,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 
 		// set hook URL address
 		url := provider.Spec.Address
+		apiToken := provider.Spec.APIToken
 
 		// extract address from secret
 		if provider.Spec.SecretRef != nil {
@@ -155,7 +156,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 		}
 
 		// create notifier based on provider type
-		f := notifier.NewFactory(url, proxy, username, channel)
+		f := notifier.NewFactory(url, apiToken, proxy, username, channel)
 		n, err := f.Notifier(provider.Spec.Type)
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
