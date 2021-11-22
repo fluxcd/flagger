@@ -253,6 +253,42 @@ to the nGrinder server and start a new performance test. the load tester will pe
 poll the nGrinder server for the status of the test,
 and prevent duplicate requests from being sent in subsequent analysis loops.
 
+### K6 Load Tester
+
+You can also delegate load testing to a third-party webhook. An example of this is the [`k6 webhook`](https://github.com/grafana/flagger-k6-webhook). This webhook uses [`k6`](https://k6.io/), a very featureful load tester, to run load or smoke tests on canaries. For all features available, see the source repository. 
+
+Here's an example integrating this webhook as a `pre-rollout` step, to load test a service before any traffic is sent to it:
+
+```yaml
+webhooks:
+- name: k6-load-test
+  timeout: 5m
+  type: pre-rollout
+  url: http://k6-loadtester.flagger/launch-test
+  metadata:
+    script: |
+      import http from 'k6/http';
+      import { sleep } from 'k6';
+      export const options = {
+        vus: 2,
+        duration: '30s',
+        thresholds: {
+            http_req_duration: ['p(95)<50']
+        },
+        ext: {
+          loadimpact: {
+            name: '<cluster>/<your_service>',
+            projectID: <project id>,
+          },
+        },
+      };
+
+      export default function () {
+        http.get('http://<your_service>-canary.<namespace>:80/');
+        sleep(0.10);
+      }
+```
+
 ## Integration Testing
 
 Flagger comes with a testing service that can run Helm tests, Bats tests or Concord tests when configured as a webhook.
