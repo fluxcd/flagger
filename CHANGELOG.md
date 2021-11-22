@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.16.0
+
+**Release date:** 2021-11-22
+
+This release comes with a new API field called `primaryReadyThreshold`
+that allows setting the percentage of pods that need to be available
+to consider the primary deployment as ready.
+
+#### Features
+
+- Allow configuring threshold for primary
+  [#1048](https://github.com/fluxcd/flagger/pull/1048)
+
+#### Improvements
+
+- Append to list of ownerReferences for primary configmaps and secrets
+  [#1052](https://github.com/fluxcd/flagger/pull/1052)
+- Prevent Flux from overriding Flagger managed objects
+  [#1049](https://github.com/fluxcd/flagger/pull/1049)
+- Add warning in docs about ExternalDNS + Istio configuration
+  [#1044](https://github.com/fluxcd/flagger/pull/1044)
+
+#### Fixes
+
+- Mark `CanaryMetric.Threshold` as omitempty
+  [#1047](https://github.com/fluxcd/flagger/pull/1047)
+- Replace `ioutil` in testing of gchat
+  [#1045](https://github.com/fluxcd/flagger/pull/1045)
+
 ## 1.15.0
 
 **Release date:** 2021-10-28
