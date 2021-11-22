@@ -391,7 +391,7 @@ func TestServiceRouter_InitializeMetadata(t *testing.T) {
 
 	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, 0, len(primarySvc.Annotations))
+	assert.Equal(t, 1, len(primarySvc.Annotations))
 	assert.Equal(t, "podinfo-primary", primarySvc.Labels["app"])
 }
 
@@ -423,12 +423,12 @@ func TestServiceRouter_ReconcileMetadata(t *testing.T) {
 
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, 0, len(canarySvc.Annotations))
+	assert.Equal(t, 1, len(canarySvc.Annotations))
 	assert.Equal(t, "podinfo-canary", canarySvc.Labels["app"])
 
 	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, 0, len(primarySvc.Annotations))
+	assert.Equal(t, 1, len(primarySvc.Annotations))
 	assert.Equal(t, "podinfo-primary", primarySvc.Labels["app"])
 
 	mocks.canary.Spec.Service.Apex = &flaggerv1.CustomMetadata{
