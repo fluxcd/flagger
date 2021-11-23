@@ -122,7 +122,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 
 		// set hook URL address
 		url := provider.Spec.Address
-		apiToken := provider.Spec.APIToken
+		apiToken := ""
 
 		// extract address from secret
 		if provider.Spec.SecretRef != nil {
@@ -134,9 +134,11 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 			}
 			if address, ok := secret.Data["address"]; ok {
 				url = string(address)
+			} else if token, ok := secret.Data["apiToken"]; ok {
+				apiToken = string(token)
 			} else {
 				c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-					Errorf("alert provider %s.%s secret does not contain an address", alert.ProviderRef.Name, providerNamespace)
+					Errorf("alert provider %s.%s secret does not contain an address or API token", alert.ProviderRef.Name, providerNamespace)
 				continue
 			}
 		}

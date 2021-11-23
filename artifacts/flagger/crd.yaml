@@ -1207,14 +1207,11 @@ spec:
                 address:
                   description: Hook URL or API endpoint address of this provider
                   type: string
-                apiToken:
-                  description: API token of this provider
-                  type: string
                 proxy:
                   description: Http/s proxy of this provider
                   type: string
                 secretRef:
-                  description: Kubernetes secret reference containing the provider address
+                  description: Kubernetes secret reference containing the provider address or API Token
                   type: object
                   required:
                     - name

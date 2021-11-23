@@ -64,15 +64,11 @@ type AlertProviderSpec struct {
 	// +optional
 	Address string `json:"address,omitempty"`
 
-	// APIToken of this provider
-	// +optional
-	APIToken string `json:"apiToken,omitempty"`
-
 	// HTTP/S address of the proxy
 	// +optional
 	Proxy string `json:"proxy,omitempty"`
 
-	// Secret reference containing the provider webhook URL
+	// Secret reference containing the provider webhook URL or API token
 	// +optional
 	SecretRef *corev1.LocalObjectReference `json:"secretRef,omitempty"`
 }
