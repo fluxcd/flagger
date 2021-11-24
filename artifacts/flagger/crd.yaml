@@ -1205,7 +1205,7 @@ spec:
                   description: Bot username for this provider
                   type: string
                 address:
-                  description: Hook URL or API endpoint address of this provider
+                  description: Hook URL address of this provider
                   type: string
                 proxy:
                   description: Http/s proxy of this provider

@@ -22,7 +22,8 @@ import (
 	"net/url"
 )
 
-const slackAPIPostMessageDefaultURL = "https://slack.com/api/chat.postMessage"
+// SlackAPIPostMessageDefaultURL is the default slack API url
+const SlackAPIPostMessageDefaultURL = "https://slack.com/api/chat.postMessage"
 
 // Slack holds the hook URL
 type Slack struct {
@@ -83,9 +84,6 @@ func NewSlack(hookURL string, proxyURL string, username string, channel string) 
 
 // NewSlackAPIToken returns a Slack object to be used with api to post message
 func NewSlackAPIToken(apiURL string, apiToken string, proxyURL string, username string, channel string) (*Slack, error) {
-	if apiURL == "" {
-		apiURL = slackAPIPostMessageDefaultURL
-	}
 	if slack, err := NewSlack(apiURL, proxyURL, username, channel); err != nil {
 		return nil, err
 	} else {
