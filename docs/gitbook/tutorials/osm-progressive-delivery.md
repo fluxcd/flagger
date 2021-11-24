@@ -8,27 +8,35 @@ This guide shows you how to use Open Service Mesh (OSM) and Flagger to automate 
 
 Flagger requires a Kubernetes cluster **v1.16** or newer and Open Service Mesh **0.9.1** or newer.
 
-Install Open Service Mesh with Prometheus and permissive traffic policy enabled.
+OSM must have permissive traffic policy enabled and have an instance of Prometheus for metrics.
 
-```bash
-osm install \
---set=OpenServiceMesh.deployPrometheus=true \
---set=OpenServiceMesh.enablePermissiveTrafficPolicy=true
-```
+- If the OSM CLI is being used for installation, install OSM using the following command:
+    ```bash
+    osm install \
+    --set=OpenServiceMesh.deployPrometheus=true \
+    --set=OpenServiceMesh.enablePermissiveTrafficPolicy=true
+    ```
+- If a managed instance of OSM is being used:
+  - [Bring your own instance](docs.openservicemesh.io/docs/guides/observability/metrics/#byo-prometheus) of Prometheus, 
+    setting the namespace to match the managed OSM controller namespace
+  - Enable permissive traffic policy after installation by updating the OSM MeshConfig resource:
+    ```bash
+    # Replace <osm-namespace> with OSM controller's namespace
+    kubectl patch meshconfig osm-mesh-config -n <osm-namespace> -p '{"spec":{"traffic":{"enablePermissiveTrafficPolicyMode":true}}}' --type=merge
+    ```   
 
-Install Flagger in the `osm-system` namespace using `kubectl`.
-
+To install Flagger in the default `osm-system` namespace, use:
 ```bash
 kubectl apply -k https://github.com/fluxcd/flagger//kustomize/osm?ref=main
 ```
-
-Alternatively, Flagger can be installed in the `osm-system` namespace using `helm`.
-
+    
+Alternatively, if a non-default namespace or managed instance of OSM is in use, install Flagger with Helm, replacing the <osm-namespace>
+values as appropriate. If a custom instance of Prometheus is being used, replace `osm-prometheus` with the relevant Prometheus service name.
 ```bash
 helm upgrade -i flagger flagger/flagger \
---namespace=osm-system \
+--namespace=<osm-namespace> \
 --set meshProvider=osm \
---set metricsServer=http://osm-prometheus.osm-system.svc:7070
+--set metricsServer=http://osm-prometheus.<osm-namespace>.svc:7070
 ```
 
 ## Bootstrap
@@ -37,7 +45,7 @@ Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler
 then creates a series of objects (Kubernetes deployments, ClusterIP services and SMI traffic split).
 These objects expose the application inside the mesh and drive the canary analysis and promotion.
 
-Create a `test` namespace and enable osm namespace monitoring and metrics scraping for the namespace.
+Create a `test` namespace and enable OSM namespace monitoring and metrics scraping for the namespace.
 
 ```bash
 kubectl create namespace test
@@ -241,16 +249,16 @@ Exec into the load tester pod with:
 kubectl -n test exec -it flagger-loadtester-xx-xx sh
 ```
 
-Repeatedly generate HTTP 500 errors:
+Repeatedly generate HTTP 500 errors until the `kubectl describe` output below shows canary rollout failure:
 
 ```bash
-watch -n 1 curl http://podinfo-canary.test:9898/status/500
+watch -n 0.1 curl http://podinfo-canary.test:9898/status/500
 ```
 
-Repeatedly generate latency:
+Repeatedly generate latency until canary rollout fails:
 
 ```bash
-watch -n 1 curl http://podinfo-canary.test:9898/delay/1
+watch -n 0.1 curl http://podinfo-canary.test:9898/delay/1
 ```
 
 When the number of failed checks reaches the canary analysis thresholds defined in the `podinfo` canary custom resource earlier, the traffic is routed back to the primary, the canary is scaled to zero and the rollout is marked as failed.
@@ -281,7 +289,7 @@ Events:
 
 The canary analysis can be extended with Prometheus queries.
 
-Let's a define a check for 404 not found errors.
+Let's define a check for 404 not found errors.
 Edit the canary analysis (`podinfo-canary.yaml` file) and add the following metric.
 For more information on creating additional custom metrics using OSM metrics, please check the [metrics available in OSM](https://docs.openservicemesh.io/docs/guides/observability/metrics/#available-metrics).
 
@@ -331,10 +339,10 @@ Exec into the load tester pod with:
 kubectl -n test exec -it flagger-loadtester-xx-xx sh
 ```
 
-Repeatedly generate 404s:
+Repeatedly generate 404s until canary rollout fails:
 
 ```bash
-watch -n 1 curl http://podinfo-canary.test:9898/status/404
+watch -n 0.1 curl http://podinfo-canary.test:9898/status/404
 ```
 
 Watch Flagger logs to confirm successful canary rollback.
