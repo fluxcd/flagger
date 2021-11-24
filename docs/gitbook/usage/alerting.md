@@ -53,14 +53,15 @@ Similar to Slack, Flagger alerts on canary analysis events:
 ![MS Teams Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/flagger-ms-teams-failed.png)
 
 ## Canary configuration
-Flagger supports posting the messages through [Slack API](https://api.slack.com/methods/chat.postMessage) with `type: slack-api`; `address` needs to be omitted in the `AlertProvider` config and a secret with `apiToken` key must be provided.
-
-Alternatively `type: slack` can be used for Slack Webhooks.
 
 Configuring alerting globally has several limitations as it's not possible to specify different channels
 or configure the verbosity on a per canary basis. To make the alerting move flexible,
 the canary analysis can be extended with a list of alerts that reference an alert provider.
 For each alert, users can configure the severity level. The alerts section overrides the global setting.
+
+Flagger supports posting the messages through [Slack API](https://api.slack.com/methods/chat.postMessage) with `type: slack-api`; In this case `address` needs to be omitted in the `AlertProvider` config and a secret with `apiToken` key must be provided.
+
+Alternatively `type: slack` can be used for Slack Webhooks.
 
 Slack example:
 
