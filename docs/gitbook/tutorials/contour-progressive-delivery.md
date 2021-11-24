@@ -36,7 +36,7 @@ helm upgrade -i flagger flagger/flagger \
 --set prometheus.install=true
 ```
 
-You can also enable Slack, Discord, Rocket or MS Teams notifications, see the alerting [docs](../usage/alerting.md).
+You can also enable Slack (Webhook or API), Discord, Rocket or MS Teams notifications, see the alerting [docs](../usage/alerting.md).
 
 ## Bootstrap
 
@@ -143,7 +143,7 @@ The canary analysis will run for five minutes while validating the HTTP metrics 
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo
