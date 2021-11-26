@@ -135,9 +135,6 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 			if address, ok := secret.Data["address"]; ok {
 				url = string(address)
 			} else if token, ok := secret.Data["apiToken"]; ok {
-				if provider.Spec.Type == "slack-api" {
-					url = notifier.SlackAPIPostMessageDefaultURL
-				}
 				apiToken = string(token)
 			} else {
 				c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).

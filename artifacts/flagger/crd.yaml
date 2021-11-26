@@ -1180,13 +1180,9 @@ spec:
             spec:
               description: AlertProviderSpec defines the desired state of a AlertProvider.
               type: object
-              oneOf:
-                - required:
-                    - type
-                    - address
-                - required:
-                    - type
-                    - secretRef
+              required:
+                - type
+                - address
               properties:
                 type:
                   description: Type of this provider
