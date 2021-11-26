@@ -73,17 +73,15 @@ metadata:
   namespace: flagger
 spec:
   type: slack
-  # type: slack-api
   channel: on-call-alerts
   username: flagger
   # webhook address (ignored if secretRef is specified)
   address: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
   # optional http/s proxy
   proxy: http://my-http-proxy.com
-  # secret containing the webhook address or apiToken for slack-api provider (optional)
+  # secret containing the webhook address (optional)
   secretRef:
     name: on-call-url
-    # name: slack-api-token
 ---
 apiVersion: v1
 kind: Secret
@@ -92,6 +90,27 @@ metadata:
   namespace: flagger
 data:
   address: <encoded-url>
+```
+
+Slack API example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: AlertProvider
+metadata:
+  name: on-call
+  namespace: flagger
+spec:
+  type: slack-api
+  channel: on-call-alerts
+  username: flagger
+  # Slack API endpoint
+  address: https://slack.com/api/chat.postMessage
+  # optional http/s proxy
+  proxy: http://my-http-proxy.com
+  # secret containing the  API token (required)
+  secretRef:
+    name: slack-api-token
 ---
 apiVersion: v1
 kind: Secret
