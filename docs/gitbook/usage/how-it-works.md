@@ -115,6 +115,10 @@ but disabling config-tracking using the per Secret/ConfigMap annotation may fit 
 The autoscaler reference is optional, when specified,
 Flagger will pause the traffic increase while the target and primary deployments are scaled up or down.
 HPA can help reduce the resource usage during the canary analysis.
+When the autoscaler reference is specified, any changes made to the autoscaler are only made active 
+in the primary autoscaler when a rollout for the deployment starts and completes successfully.
+Optionally, you can create two HPAs, one for canary and one for the primary to update the HPA without
+doing a new rollout. As the canary deployment will be scaled to 0, the HPA on the canary will be inactive.
 
 The progress deadline represents the maximum time in seconds for the canary deployment to
 make progress before it is rolled back, defaults to ten minutes.
