@@ -19,22 +19,18 @@ wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc
 chmod +x /usr/local/bin/grpc_health_probe
 
 RUN GHZ_VERSION=0.105.0 && \
-curl -sSL "https://github.com/bojand/ghz/releases/download/v${GHZ_VERSION}/ghz_${GHZ_VERSION}_Linux_x86_64.tar.gz" | tar xz -C /tmp && \
+curl -sSL "https://github.com/bojand/ghz/releases/download/v${GHZ_VERSION}/ghz-linux-x86_64.tar.gz" | tar xz -C /tmp && \
 mv /tmp/ghz /usr/local/bin && chmod +x /usr/local/bin/ghz
 
 RUN HELM_TILLER_VERSION=0.9.3 && \
 curl -sSL "https://github.com/rimusz/helm-tiller/archive/v${HELM_TILLER_VERSION}.tar.gz" | tar xz -C /tmp && \
 mv /tmp/helm-tiller-${HELM_TILLER_VERSION} /tmp/helm-tiller
 
-RUN WRK_VERSION=4.1.0 && \
-cd /tmp && git clone -b ${WRK_VERSION} https://github.com/wg/wrk
-RUN cd /tmp/wrk && make
-
 FROM bash:5.0
 
 RUN addgroup -S app && \
 adduser -S -g app app && \
-apk --no-cache add ca-certificates curl jq libgcc
+apk --no-cache add ca-certificates curl jq libgcc wrk
 
 WORKDIR /home/app
 
@@ -42,7 +38,6 @@ COPY --from=bats/bats:v1.1.0 /opt/bats/ /opt/bats/
 RUN ln -s /opt/bats/bin/bats /usr/local/bin/
 
 COPY --from=build /usr/local/bin/hey /usr/local/bin/
-COPY --from=build /tmp/wrk/wrk /usr/local/bin/
 COPY --from=build /usr/local/bin/helm /usr/local/bin/
 COPY --from=build /usr/local/bin/tiller /usr/local/bin/
 COPY --from=build /usr/local/bin/ghz /usr/local/bin/
