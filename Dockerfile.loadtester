@@ -1,4 +1,4 @@
-FROM alpine:3.14.2 as build
+FROM alpine:3.15.0 as build
 
 RUN apk --no-cache add alpine-sdk perl curl
 
@@ -14,27 +14,23 @@ RUN HELM3_VERSION=3.7.1 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-amd64.tar.gz" | tar xvz && \
 chmod +x linux-amd64/helm && mv linux-amd64/helm /usr/local/bin/helmv3
 
-RUN GRPC_HEALTH_PROBE_VERSION=v0.3.1 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.6 && \
 wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
 chmod +x /usr/local/bin/grpc_health_probe
 
-RUN GHZ_VERSION=0.39.0 && \
-curl -sSL "https://github.com/bojand/ghz/releases/download/v${GHZ_VERSION}/ghz_${GHZ_VERSION}_Linux_x86_64.tar.gz" | tar xz -C /tmp && \
+RUN GHZ_VERSION=0.105.0 && \
+curl -sSL "https://github.com/bojand/ghz/releases/download/v${GHZ_VERSION}/ghz-linux-x86_64.tar.gz" | tar xz -C /tmp && \
 mv /tmp/ghz /usr/local/bin && chmod +x /usr/local/bin/ghz
 
 RUN HELM_TILLER_VERSION=0.9.3 && \
 curl -sSL "https://github.com/rimusz/helm-tiller/archive/v${HELM_TILLER_VERSION}.tar.gz" | tar xz -C /tmp && \
 mv /tmp/helm-tiller-${HELM_TILLER_VERSION} /tmp/helm-tiller
 
-RUN WRK_VERSION=4.0.2 && \
-cd /tmp && git clone -b ${WRK_VERSION} https://github.com/wg/wrk
-RUN cd /tmp/wrk && make
-
 FROM bash:5.0
 
 RUN addgroup -S app && \
 adduser -S -g app app && \
-apk --no-cache add ca-certificates curl jq libgcc
+apk --no-cache add ca-certificates curl jq libgcc wrk
 
 WORKDIR /home/app
 
@@ -42,7 +38,6 @@ COPY --from=bats/bats:v1.1.0 /opt/bats/ /opt/bats/
 RUN ln -s /opt/bats/bin/bats /usr/local/bin/
 
 COPY --from=build /usr/local/bin/hey /usr/local/bin/
-COPY --from=build /tmp/wrk/wrk /usr/local/bin/
 COPY --from=build /usr/local/bin/helm /usr/local/bin/
 COPY --from=build /usr/local/bin/tiller /usr/local/bin/
 COPY --from=build /usr/local/bin/ghz /usr/local/bin/
