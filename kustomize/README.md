@@ -6,6 +6,7 @@ As an alternative to Helm, Flagger can be installed with [Kustomize](https://kus
 
 - Kubernetes cluster **>=1.13.0**
 - Kustomize **>=3.6.0**
+- Bash or Zsh [`setopt NO_NOMATCH`](https://superuser.com/a/982399)
 
 ## Service mesh specific installers
 
