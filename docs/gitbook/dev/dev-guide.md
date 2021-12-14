@@ -8,17 +8,17 @@ Flagger is written in Go and uses Go modules for dependency management.
 
 On your dev machine install the following tools:
 
-* go &gt;= 1.14
-* git &gt;= 2.20
-* bash &gt;= 5.0
-* make &gt;= 3.81
-* kubectl &gt;= 1.16
-* kustomize &gt;= 3.5
-* helm &gt;= 3.0
-* docker &gt;= 19.03
+* go >= 1.17
+* git >;= 2.20
+* bash >= 5.0
+* make >= 3.81
+* kubectl >= 1.22
+* kustomize >= 4.4
+* helm >= 3.0
+* docker >= 19.03
 
 You'll also need a Kubernetes cluster for testing Flagger.
-You can use Minikube, Kind, Docker desktop or any remote cluster (AKS/EKS/GKE/etc) Kubernetes version 1.16 or newer.
+You can use Minikube, Kind, Docker desktop or any remote cluster (AKS/EKS/GKE/etc) Kubernetes version 1.22 or newer.
 
 To start contributing to Flagger, fork the [repository](https://github.com/fluxcd/flagger) on GitHub.
 
@@ -100,6 +100,8 @@ make codegen
 Run code formatters:
 
 ```bash
+go install golang.org/x/tools/cmd/goimports@latest
+
 make fmt
 ```
 

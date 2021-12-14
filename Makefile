@@ -6,6 +6,7 @@ build:
 	CGO_ENABLED=0 go build -a -o ./bin/flagger ./cmd/flagger
 
 fmt:
+	go mod tidy
 	gofmt -l -s -w ./
 	goimports -l -w ./
 
