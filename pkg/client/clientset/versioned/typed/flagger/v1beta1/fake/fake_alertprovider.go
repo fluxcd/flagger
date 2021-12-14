@@ -117,7 +117,7 @@ func (c *FakeAlertProviders) UpdateStatus(ctx context.Context, alertProvider *v1
 // Delete takes name of the alertProvider and deletes it. Returns an error if one occurs.
 func (c *FakeAlertProviders) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(alertprovidersResource, c.ns, name), &v1beta1.AlertProvider{})
+		Invokes(testing.NewDeleteActionWithOptions(alertprovidersResource, c.ns, name, opts), &v1beta1.AlertProvider{})
 
 	return err
 }

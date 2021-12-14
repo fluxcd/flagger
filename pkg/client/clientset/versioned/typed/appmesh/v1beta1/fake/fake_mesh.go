@@ -110,7 +110,7 @@ func (c *FakeMeshes) UpdateStatus(ctx context.Context, mesh *v1beta1.Mesh, opts 
 // Delete takes name of the mesh and deletes it. Returns an error if one occurs.
 func (c *FakeMeshes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(meshesResource, name), &v1beta1.Mesh{})
+		Invokes(testing.NewRootDeleteActionWithOptions(meshesResource, name, opts), &v1beta1.Mesh{})
 	return err
 }
 

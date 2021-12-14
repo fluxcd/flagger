@@ -117,7 +117,7 @@ func (c *FakeVirtualNodes) UpdateStatus(ctx context.Context, virtualNode *v1beta
 // Delete takes name of the virtualNode and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualNodes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(virtualnodesResource, c.ns, name), &v1beta2.VirtualNode{})
+		Invokes(testing.NewDeleteActionWithOptions(virtualnodesResource, c.ns, name, opts), &v1beta2.VirtualNode{})
 
 	return err
 }

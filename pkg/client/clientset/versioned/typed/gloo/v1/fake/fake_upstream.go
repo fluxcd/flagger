@@ -105,7 +105,7 @@ func (c *FakeUpstreams) Update(ctx context.Context, upstream *gloov1.Upstream, o
 // Delete takes name of the upstream and deletes it. Returns an error if one occurs.
 func (c *FakeUpstreams) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(upstreamsResource, c.ns, name), &gloov1.Upstream{})
+		Invokes(testing.NewDeleteActionWithOptions(upstreamsResource, c.ns, name, opts), &gloov1.Upstream{})
 
 	return err
 }

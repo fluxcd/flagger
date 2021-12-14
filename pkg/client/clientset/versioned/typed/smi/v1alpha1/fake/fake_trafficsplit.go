@@ -105,7 +105,7 @@ func (c *FakeTrafficSplits) Update(ctx context.Context, trafficSplit *v1alpha1.T
 // Delete takes name of the trafficSplit and deletes it. Returns an error if one occurs.
 func (c *FakeTrafficSplits) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(trafficsplitsResource, c.ns, name), &v1alpha1.TrafficSplit{})
+		Invokes(testing.NewDeleteActionWithOptions(trafficsplitsResource, c.ns, name, opts), &v1alpha1.TrafficSplit{})
 
 	return err
 }
