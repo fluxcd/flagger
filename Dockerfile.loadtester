@@ -26,6 +26,27 @@ RUN HELM_TILLER_VERSION=0.9.3 && \
 curl -sSL "https://github.com/rimusz/helm-tiller/archive/v${HELM_TILLER_VERSION}.tar.gz" | tar xz -C /tmp && \
 mv /tmp/helm-tiller-${HELM_TILLER_VERSION} /tmp/helm-tiller
 
+FROM golang:1.17-alpine as go
+
+ARG TARGETPLATFORM
+ARG REVISON
+
+WORKDIR /workspace
+
+# copy modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+# cache modules
+RUN go mod download
+
+# copy source code
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+
+# build
+RUN CGO_ENABLED=0 go build -o loadtester ./cmd/loadtester/*
+
 FROM bash:5.0
 
 RUN addgroup -S app && \
@@ -47,8 +68,6 @@ COPY --from=build /tmp/helm-tiller /tmp/helm-tiller
 
 ADD https://raw.githubusercontent.com/grpc/grpc-proto/master/grpc/health/v1/health.proto /tmp/ghz/health.proto
 
-COPY ./bin/loadtester .
-
 RUN chown -R app:app ./
 RUN chown -R app:app /tmp/ghz
 
@@ -60,5 +79,7 @@ RUN wrk -d 1s -c 1 -t 1 https://flagger.app > /dev/null && echo $? | grep 0
 
 # install Helm v2 plugins
 RUN helm init --stable-repo-url=https://charts.helm.sh/stable --client-only && helm plugin install /tmp/helm-tiller
+
+COPY --from=go --chown=app:app /workspace/loadtester .
 
 ENTRYPOINT ["./loadtester"]
