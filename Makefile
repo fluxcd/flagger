@@ -43,7 +43,6 @@ release:
 	git push origin "v$(VERSION)"
 
 loadtester-build:
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/loadtester ./cmd/loadtester/*
 	docker build -t ghcr.io/fluxcd/flagger-loadtester:$(LT_VERSION) . -f Dockerfile.loadtester
 
 loadtester-push:
