@@ -7,7 +7,7 @@ set -o pipefail
 SCRIPT_ROOT=$(git rev-parse --show-toplevel)
 
 # Grab code-generator version from go.sum.
-CODEGEN_VERSION=$(grep 'k8s.io/code-generator' go.sum | awk '{print $2}' | head -1)
+CODEGEN_VERSION=$(grep 'k8s.io/code-generator' go.sum | awk '{print $2}' | tail -1 | awk -F '/' '{print $1}')
 CODEGEN_PKG=$(echo `go env GOPATH`"/pkg/mod/k8s.io/code-generator@${CODEGEN_VERSION}")
 
 echo ">> Using ${CODEGEN_PKG}"
