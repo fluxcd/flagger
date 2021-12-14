@@ -105,7 +105,7 @@ func (c *FakeVirtualServices) Update(ctx context.Context, virtualService *v1alph
 // Delete takes name of the virtualService and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(virtualservicesResource, c.ns, name), &v1alpha3.VirtualService{})
+		Invokes(testing.NewDeleteActionWithOptions(virtualservicesResource, c.ns, name, opts), &v1alpha3.VirtualService{})
 
 	return err
 }

@@ -105,7 +105,7 @@ func (c *FakeTraefikServices) Update(ctx context.Context, traefikService *v1alph
 // Delete takes name of the traefikService and deletes it. Returns an error if one occurs.
 func (c *FakeTraefikServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(traefikservicesResource, c.ns, name), &v1alpha1.TraefikService{})
+		Invokes(testing.NewDeleteActionWithOptions(traefikservicesResource, c.ns, name, opts), &v1alpha1.TraefikService{})
 
 	return err
 }

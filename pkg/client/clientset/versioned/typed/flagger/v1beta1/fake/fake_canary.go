@@ -117,7 +117,7 @@ func (c *FakeCanaries) UpdateStatus(ctx context.Context, canary *v1beta1.Canary,
 // Delete takes name of the canary and deletes it. Returns an error if one occurs.
 func (c *FakeCanaries) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(canariesResource, c.ns, name), &v1beta1.Canary{})
+		Invokes(testing.NewDeleteActionWithOptions(canariesResource, c.ns, name, opts), &v1beta1.Canary{})
 
 	return err
 }

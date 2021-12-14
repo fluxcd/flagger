@@ -105,7 +105,7 @@ func (c *FakeDestinationRules) Update(ctx context.Context, destinationRule *v1al
 // Delete takes name of the destinationRule and deletes it. Returns an error if one occurs.
 func (c *FakeDestinationRules) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(destinationrulesResource, c.ns, name), &v1alpha3.DestinationRule{})
+		Invokes(testing.NewDeleteActionWithOptions(destinationrulesResource, c.ns, name, opts), &v1alpha3.DestinationRule{})
 
 	return err
 }
