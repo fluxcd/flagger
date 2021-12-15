@@ -28,6 +28,7 @@ import (
 	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
 	splitv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
 	splitv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2"
@@ -46,6 +47,7 @@ type Interface interface {
 	GatewayV1() gatewayv1.GatewayV1Interface
 	GlooV1() gloov1.GlooV1Interface
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
+	KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface
 	ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface
 	SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface
 	SplitV1alpha2() splitv1alpha2.SplitV1alpha2Interface
@@ -63,6 +65,7 @@ type Clientset struct {
 	gatewayV1          *gatewayv1.GatewayV1Client
 	glooV1             *gloov1.GlooV1Client
 	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
+	kumaV1alpha1       *kumav1alpha1.KumaV1alpha1Client
 	projectcontourV1   *projectcontourv1.ProjectcontourV1Client
 	splitV1alpha1      *splitv1alpha1.SplitV1alpha1Client
 	splitV1alpha2      *splitv1alpha2.SplitV1alpha2Client
@@ -98,6 +101,11 @@ func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
 // NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
 func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface {
 	return c.networkingV1alpha3
+}
+
+// KumaV1alpha1 retrieves the KumaV1alpha1Client
+func (c *Clientset) KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface {
+	return c.kumaV1alpha1
 }
 
 // ProjectcontourV1 retrieves the ProjectcontourV1Client
@@ -189,6 +197,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.kumaV1alpha1, err = kumav1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.projectcontourV1, err = projectcontourv1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -236,6 +248,7 @@ func New(c rest.Interface) *Clientset {
 	cs.gatewayV1 = gatewayv1.New(c)
 	cs.glooV1 = gloov1.New(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
+	cs.kumaV1alpha1 = kumav1alpha1.New(c)
 	cs.projectcontourV1 = projectcontourv1.New(c)
 	cs.splitV1alpha1 = splitv1alpha1.New(c)
 	cs.splitV1alpha2 = splitv1alpha2.New(c)
