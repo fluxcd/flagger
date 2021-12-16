@@ -34,7 +34,7 @@ jobs:
           push: true
           builder: ${{ steps.buildx.outputs.name }}
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.loadtester
           platforms: linux/amd64
           tags: |
             ghcr.io/fluxcd/flagger-loadtester:${{ steps.prep.outputs.VERSION }}
