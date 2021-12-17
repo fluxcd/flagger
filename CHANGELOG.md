@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.16.1
+
+**Release date:** 2021-12-17
+
+This release contains updates to Kubernetes packages (1.23.0), Alpine (3.15)
+and load tester components.
+
+#### Improvements
+
+- Release loadtester v0.21.0
+  [#1083](https://github.com/fluxcd/flagger/pull/1083)
+- Add loadtester image pull secrets to Helm chart
+  [#1076](https://github.com/fluxcd/flagger/pull/1076)
+- Update libraries included in the load tester to newer versions
+  [#1063](https://github.com/fluxcd/flagger/pull/1063)
+  [#1080](https://github.com/fluxcd/flagger/pull/1080)
+- Update Kubernetes packages to v1.23.0
+  [#1078](https://github.com/fluxcd/flagger/pull/1078)
+- Update Alpine to 3.15
+  [#1081](https://github.com/fluxcd/flagger/pull/1081)
+- Update Go to v1.17
+  [#1077](https://github.com/fluxcd/flagger/pull/1077)
+
 ## 1.16.0
 
 **Release date:** 2021-11-22

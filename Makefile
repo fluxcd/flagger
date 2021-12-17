@@ -30,12 +30,12 @@ crd:
 version-set:
 	@next="$(TAG)" && \
 	current="$(VERSION)" && \
-	sed -i '' "s/$$current/$$next/g" pkg/version/version.go && \
-	sed -i '' "s/flagger:$$current/flagger:$$next/g" artifacts/flagger/deployment.yaml && \
-	sed -i '' "s/tag: $$current/tag: $$next/g" charts/flagger/values.yaml && \
-	sed -i '' "s/appVersion: $$current/appVersion: $$next/g" charts/flagger/Chart.yaml && \
-	sed -i '' "s/version: $$current/version: $$next/g" charts/flagger/Chart.yaml && \
-	sed -i '' "s/newTag: $$current/newTag: $$next/g" kustomize/base/flagger/kustomization.yaml && \
+	sed -i "s/$$current/$$next/g" pkg/version/version.go && \
+	sed -i "s/flagger:$$current/flagger:$$next/g" artifacts/flagger/deployment.yaml && \
+	sed -i "s/tag: $$current/tag: $$next/g" charts/flagger/values.yaml && \
+	sed -i "s/appVersion: $$current/appVersion: $$next/g" charts/flagger/Chart.yaml && \
+	sed -i "s/version: $$current/version: $$next/g" charts/flagger/Chart.yaml && \
+	sed -i "s/newTag: $$current/newTag: $$next/g" kustomize/base/flagger/kustomization.yaml && \
 	echo "Version $$next set in code, deployment, chart and kustomize"
 
 release:
