@@ -103,10 +103,6 @@ type CanarySpec struct {
 	// revert canary mutation on deletion of canary resource
 	// +optional
 	RevertOnDeletion bool `json:"revertOnDeletion,omitempty"`
-
-	// Summary creates new notification message
-	// +optional
-	Summary string `json:"summary,omitempty"`
 }
 
 // CanaryService defines how ClusterIP services, service mesh or ingress routing objects are generated

@@ -74,7 +74,7 @@ func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template
 func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bool, severity flaggerv1.AlertSeverity) {
 	var fields []notifier.Field
 	if metadata {
-		fields = alertMetadata(canary)
+		fields = alertMetadata(canary, c.clusterName)
 	}
 
 	// send alert with the global notifier
@@ -173,14 +173,14 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 	}
 }
 
-func alertMetadata(canary *flaggerv1.Canary) []notifier.Field {
+func alertMetadata(canary *flaggerv1.Canary, cluster string) []notifier.Field {
 	var fields []notifier.Field
 
-	if canary.Spec.Summary != "" {
+	if cluster != "" {
 		fields = append(fields,
 			notifier.Field{
-				Name:  "Summary",
-				Value: canary.Spec.Summary,
+				Name:  "Cluster",
+				Value: cluster,
 			},
 		)
 	}
