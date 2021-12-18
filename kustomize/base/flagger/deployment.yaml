@@ -53,5 +53,4 @@ spec:
             memory: "32Mi"
             cpu: "10m"
         securityContext:
-          readOnlyRootFilesystem: true
           runAsUser: 10001
