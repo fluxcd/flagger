@@ -28,11 +28,16 @@ import (
 
 type KumaV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	TrafficRoutesGetter
 }
 
 // KumaV1alpha1Client is used to interact with features provided by the kuma.io group.
 type KumaV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *KumaV1alpha1Client) TrafficRoutes() TrafficRouteInterface {
+	return newTrafficRoutes(c)
 }
 
 // NewForConfig creates a new KumaV1alpha1Client for the given config.

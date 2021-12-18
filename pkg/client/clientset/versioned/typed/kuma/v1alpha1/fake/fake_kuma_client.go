@@ -19,12 +19,17 @@ limitations under the License.
 package fake
 
 import (
+	v1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
 type FakeKumaV1alpha1 struct {
 	*testing.Fake
+}
+
+func (c *FakeKumaV1alpha1) TrafficRoutes() v1alpha1.TrafficRouteInterface {
+	return &FakeTrafficRoutes{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

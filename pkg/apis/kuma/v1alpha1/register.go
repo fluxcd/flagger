@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// SchemeGroupVersion is the GroupVersion for the Contour API
+// SchemeGroupVersion is the GroupVersion for the Kuma API
 var SchemeGroupVersion = schema.GroupVersion{Group: kuma.GroupName, Version: "v1alpha1"}
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind
@@ -15,7 +15,7 @@ func Kind(kind string) schema.GroupKind {
 	return SchemeGroupVersion.WithKind(kind).GroupKind()
 }
 
-// Resource gets an Contour GroupResource for a specified resource
+// Resource gets a Kuma GroupResource for a specified resource
 func Resource(resource string) schema.GroupResource {
 	return SchemeGroupVersion.WithResource(resource).GroupResource()
 }
