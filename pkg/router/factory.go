@@ -170,6 +170,13 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			smiClient:     factory.meshClient,
 			targetMesh:    flaggerv1.OsmProvider,
 		}
+	case provider == flaggerv1.KumaProvider:
+		return &KumaRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			kumaClient:    factory.meshClient,
+		}
 	case provider == flaggerv1.KubernetesProvider:
 		return &NopRouter{}
 	default:

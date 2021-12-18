@@ -84,6 +84,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &OsmObserver{
 			client: factory.Client,
 		}
+	case provider == flaggerv1.KumaProvider:
+		return &KumaObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,
