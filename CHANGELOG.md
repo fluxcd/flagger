@@ -16,9 +16,12 @@ command flag, or with Helm `--set clusterName=my-cluster`.
 
 - Add kuma support for progressive traffic shifting canaries
   [#1085](https://github.com/fluxcd/flagger/pull/1085)
+  [#1093](https://github.com/fluxcd/flagger/pull/1093)
 
 #### Improvements
 
+- Publish a Software Bill of Materials (SBOM)
+  [#1094](https://github.com/fluxcd/flagger/pull/1094)
 - Add cluster name to flagger cmd args for altering
   [#1041](https://github.com/fluxcd/flagger/pull/1041)
 
