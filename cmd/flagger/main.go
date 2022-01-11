@@ -83,6 +83,7 @@ var (
 	enableConfigTracking     bool
 	ver                      bool
 	kubeconfigServiceMesh    string
+	clusterName              string
 )
 
 func init() {
@@ -115,6 +116,7 @@ func init() {
 	flag.BoolVar(&enableConfigTracking, "enable-config-tracking", true, "Enable secrets and configmaps tracking.")
 	flag.BoolVar(&ver, "version", false, "Print version")
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
+	flag.StringVar(&clusterName, "cluster-name", "", "Cluster name to be included in alert msgs.")
 }
 
 func main() {
@@ -238,6 +240,7 @@ func main() {
 		meshProvider,
 		version.VERSION,
 		fromEnv("EVENT_WEBHOOK_URL", eventWebhook),
+		clusterName,
 	)
 
 	// leader election context

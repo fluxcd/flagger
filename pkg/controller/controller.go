@@ -66,6 +66,7 @@ type Controller struct {
 	observerFactory  *observers.Factory
 	meshProvider     string
 	eventWebhook     string
+	clusterName      string
 }
 
 type Informers struct {
@@ -87,6 +88,7 @@ func NewController(
 	meshProvider string,
 	version string,
 	eventWebhook string,
+	clusterName string,
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
 	flaggerscheme.AddToScheme(scheme.Scheme)
@@ -118,6 +120,7 @@ func NewController(
 		routerFactory:    routerFactory,
 		meshProvider:     meshProvider,
 		eventWebhook:     eventWebhook,
+		clusterName:      clusterName,
 	}
 
 	flaggerInformers.CanaryInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
