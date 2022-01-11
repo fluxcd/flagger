@@ -23,6 +23,7 @@ jobs:
           - gloo
           - skipper
           - osm
+          - kuma
           - kubernetes
     steps:
       - name: Checkout

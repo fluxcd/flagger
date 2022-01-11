@@ -177,6 +177,19 @@ rules:
       - update
       - patch
       - delete
+  - apiGroups:
+      - kuma.io
+    resources:
+      - trafficroutes
+      - trafficroutes/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - nonResourceURLs:
       - /version
     verbs:

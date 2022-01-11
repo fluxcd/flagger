@@ -1,0 +1,5 @@
+namespace: kuma-system
+bases:
+  - ../base/flagger/
+patchesStrategicMerge:
+  - patch.yaml

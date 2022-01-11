@@ -37,6 +37,7 @@ After installing Flagger, you can follow one of these tutorials to get started:
 * [Linkerd](tutorials/linkerd-progressive-delivery.md)
 * [AWS App Mesh](tutorials/appmesh-progressive-delivery.md)
 * [Open Service Mesh](tutorials/osm-progressive-delivery.md)
+* [Kuma](tutorials/kuma-progressive-delivery.md)
 
 **Ingress controller tutorials**
 

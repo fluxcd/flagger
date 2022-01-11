@@ -30,6 +30,7 @@ import (
 	gloo "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gloo"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/fluxcd/flagger/pkg/client/informers/externalversions/istio"
+	kuma "github.com/fluxcd/flagger/pkg/client/informers/externalversions/kuma"
 	projectcontour "github.com/fluxcd/flagger/pkg/client/informers/externalversions/projectcontour"
 	smi "github.com/fluxcd/flagger/pkg/client/informers/externalversions/smi"
 	traefik "github.com/fluxcd/flagger/pkg/client/informers/externalversions/traefik"
@@ -184,6 +185,7 @@ type SharedInformerFactory interface {
 	Gateway() gateway.Interface
 	Gloo() gloo.Interface
 	Networking() istio.Interface
+	Kuma() kuma.Interface
 	Projectcontour() projectcontour.Interface
 	Split() smi.Interface
 	Traefik() traefik.Interface
@@ -207,6 +209,10 @@ func (f *sharedInformerFactory) Gloo() gloo.Interface {
 
 func (f *sharedInformerFactory) Networking() istio.Interface {
 	return istio.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Kuma() kuma.Interface {
+	return kuma.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Projectcontour() projectcontour.Interface {

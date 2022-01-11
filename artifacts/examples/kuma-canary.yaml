@@ -1,0 +1,50 @@
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+  annotations:
+    kuma.io/mesh: default
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  progressDeadlineSeconds: 60
+  service:
+    port: 9898
+    targetPort: 9898
+    apex:
+      annotations:
+        9898.service.kuma.io/protocol: "http"
+    canary:
+      annotations:
+        9898.service.kuma.io/protocol: "http"
+    primary:
+      annotations:
+        9898.service.kuma.io/protocol: "http"
+  analysis:
+    interval: 15s
+    threshold: 15
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: request-success-rate
+        threshold: 99
+        interval: 1m
+      - name: request-duration
+        threshold: 500
+        interval: 30s
+    webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://podinfo-canary.test:9898/token | grep token"
+      - name: load-test
+        type: rollout
+        url: http://flagger-loadtester.test/
+        metadata:
+          cmd: "hey -z 2m -q 10 -c 2 http://podinfo-canary.test:9898/"
