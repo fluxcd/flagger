@@ -1,4 +1,4 @@
-# Kuma Canary Deployments
+    # Kuma Canary Deployments
 
 This guide shows you how to use Kuma and Flagger to automate canary deployments.
 

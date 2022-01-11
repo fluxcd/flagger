@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.17.0
+
+**Release date:** 2022-01-11
+
+This release comes with support for [Kuma Service Mesh](https://kuma.io/).
+For more details see the [Kuma Progressive Delivery tutorial](https://docs.flagger.app/tutorials/kuma-progressive-delivery).
+
+To differentiate alerts based on the cluster name, you can configure Flagger with the `-cluster-name=my-cluster`
+command flag, or with Helm `--set clusterName=my-cluster`.
+
+#### Features
+
+- Add kuma support for progressive traffic shifting canaries
+  [#1085](https://github.com/fluxcd/flagger/pull/1085)
+
+#### Improvements
+
+- Add cluster name to flagger cmd args for altering
+  [#1041](https://github.com/fluxcd/flagger/pull/1041)
+
 ## 1.16.1
 
 **Release date:** 2021-12-17

@@ -20,9 +20,10 @@ Once the webhook has been generated. Flagger can be configured to send Slack not
 ```bash
 helm upgrade -i flagger flagger/flagger \
 --set slack.url=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
---set slack.proxy-url=my-http-proxy.com \ # optional http/s proxy
+--set slack.proxy=my-http-proxy.com \ # optional http/s proxy
 --set slack.channel=general \
---set slack.user=flagger
+--set slack.user=flagger \
+--set clusterName=my-cluster
 ```
 
 Once configured with a Slack incoming **webhook**,
@@ -126,6 +127,9 @@ Alert fields:
 
 When the severity is set to `warn`, Flagger will alert when waiting on manual confirmation or if the analysis fails.
 When the severity is set to `error`, Flagger will alert only if the canary analysis fails.
+
+To differentiate alerts based on the cluster name, you can configure Flagger with the `-cluster-name=my-cluster`
+command flag, or with Helm `--set clusterName=my-cluster`.
 
 ## Prometheus Alert Manager
 
