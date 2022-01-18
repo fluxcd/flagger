@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -33,9 +34,10 @@ import (
 
 // ServiceController is managing the operations for Kubernetes service kind
 type ServiceController struct {
-	kubeClient    kubernetes.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
+	kubeClient         kubernetes.Interface
+	flaggerClient      clientset.Interface
+	logger             *zap.SugaredLogger
+	includeLabelPrefix []string
 }
 
 // SetStatusFailedChecks updates the canary failed checks counter
@@ -171,29 +173,45 @@ func (c *ServiceController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
-	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("service %s.%s get query error: %w", targetName, cd.Namespace, err)
-	}
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("service %s.%s get query error: %w", targetName, cd.Namespace, err)
+		}
 
-	primary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("service %s.%s get query error: %w", primaryName, cd.Namespace, err)
-	}
+		primary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("service %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
 
-	primaryCopy := canary.DeepCopy()
-	primaryCopy.ObjectMeta.Name = primary.ObjectMeta.Name
-	if primaryCopy.Spec.Type == "ClusterIP" {
-		primaryCopy.Spec.ClusterIP = primary.Spec.ClusterIP
-	}
-	primaryCopy.ObjectMeta.ResourceVersion = primary.ObjectMeta.ResourceVersion
-	primaryCopy.ObjectMeta.UID = primary.ObjectMeta.UID
+		primaryCopy := canary.DeepCopy()
+		primaryCopy.ObjectMeta.Name = primary.ObjectMeta.Name
+		if primaryCopy.Spec.Type == "ClusterIP" {
+			primaryCopy.Spec.ClusterIP = primary.Spec.ClusterIP
+		}
+		primaryCopy.ObjectMeta.ResourceVersion = primary.ObjectMeta.ResourceVersion
+		primaryCopy.ObjectMeta.UID = primary.ObjectMeta.UID
 
-	// apply update
-	_, err = c.kubeClient.CoreV1().Services(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		// update service annotations
+		primaryCopy.ObjectMeta.Annotations = make(map[string]string)
+		filteredAnnotations := includeLabelsByPrefix(canary.ObjectMeta.Annotations, c.includeLabelPrefix)
+		for k, v := range filteredAnnotations {
+			primaryCopy.ObjectMeta.Annotations[k] = v
+		}
+		// update service labels
+		primaryCopy.ObjectMeta.Labels = make(map[string]string)
+		filteredLabels := includeLabelsByPrefix(canary.ObjectMeta.Labels, c.includeLabelPrefix)
+		for k, v := range filteredLabels {
+			primaryCopy.ObjectMeta.Labels[k] = v
+		}
+
+		// apply update
+		_, err = c.kubeClient.CoreV1().Services(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("updating service %s.%s spec failed: %w",
-			primaryCopy.GetName(), primaryCopy.Namespace, err)
+			primaryName, cd.Namespace, err)
 	}
 
 	return nil

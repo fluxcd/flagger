@@ -58,16 +58,18 @@ func (factory *Factory) Controller(kind string) Controller {
 		includeLabelPrefix: factory.includeLabelPrefix,
 	}
 	daemonSetCtrl := &DaemonSetController{
-		logger:        factory.logger,
-		kubeClient:    factory.kubeClient,
-		flaggerClient: factory.flaggerClient,
-		labels:        factory.labels,
-		configTracker: factory.configTracker,
+		logger:             factory.logger,
+		kubeClient:         factory.kubeClient,
+		flaggerClient:      factory.flaggerClient,
+		labels:             factory.labels,
+		configTracker:      factory.configTracker,
+		includeLabelPrefix: factory.includeLabelPrefix,
 	}
 	serviceCtrl := &ServiceController{
-		logger:        factory.logger,
-		kubeClient:    factory.kubeClient,
-		flaggerClient: factory.flaggerClient,
+		logger:             factory.logger,
+		kubeClient:         factory.kubeClient,
+		flaggerClient:      factory.flaggerClient,
+		includeLabelPrefix: factory.includeLabelPrefix,
 	}
 
 	switch kind {

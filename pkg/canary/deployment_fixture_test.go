@@ -122,6 +122,7 @@ func newCustomizableFixture(dc deploymentConfigs) (deploymentControllerFixture, 
 			KubeClient:    kubeClient,
 			FlaggerClient: flaggerClient,
 		},
+		includeLabelPrefix: []string{"app.kubernetes.io"},
 	}
 
 	return deploymentControllerFixture{
@@ -421,6 +422,10 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 			Name:      dc.name,
 			Annotations: map[string]string{
 				"kustomize.toolkit.fluxcd.io/checksum": "0a40893bfdc545d62125bd3e74eeb2ebaa7097c2",
+				"test-annotation-1":                    "test-annotation-value-1",
+			},
+			Labels: map[string]string{
+				"test-label-1": "test-label-value-1",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -431,8 +436,12 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"test-annotation-1": "test-annotation-value-1",
+					},
 					Labels: map[string]string{
-						dc.label: dc.labelValue,
+						dc.label:       dc.labelValue,
+						"test-label-1": "test-label-value-1",
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -757,6 +766,12 @@ func newDeploymentControllerTestV2() *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
+			Annotations: map[string]string{
+				"test-annotation-1": "test-annotation-value-1",
+			},
+			Labels: map[string]string{
+				"test-label-1": "test-label-value-1",
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -767,7 +782,11 @@ func newDeploymentControllerTestV2() *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"name": "podinfo",
+						"name":         "podinfo",
+						"test-label-1": "test-label-value-1",
+					},
+					Annotations: map[string]string{
+						"test-annotation-1": "test-annotation-value-1",
 					},
 				},
 				Spec: corev1.PodSpec{
