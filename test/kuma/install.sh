@@ -4,6 +4,7 @@ set -o errexit
 
 KUMA_VER="1.4.1"
 REPO_ROOT=$(git rev-parse --show-toplevel)
+KUSTOMIZE_VERSION=3.8.2
 mkdir -p ${REPO_ROOT}/bin
 
 echo ">>> Downloading Kuma ${KUMA_VER}"
@@ -15,11 +16,9 @@ chmod +x ${REPO_ROOT}/bin/kumactl
 echo ">>> Installing Kuma ${KUMA_VER}"
 ${REPO_ROOT}/bin/kumactl install control-plane | kubectl apply -f -
 
-echo ">>> Installing Kuma Metrics"
-${REPO_ROOT}/bin/kumactl install metrics | kubectl apply -f -
-
 echo ">>> Waiting for Kuma Control Plane to be ready"
-kubectl wait --for=condition=ready pod -n kuma-system -l app=kuma-control-plane
+kubectl wait --for condition=established crd/meshes.kuma.io
+kubectl -n kuma-system rollout status deployment/kuma-control-plane
 
 echo ">>> Configuring Default Kuma Mesh"
 cat <<EOF | kubectl apply -f -
@@ -54,8 +53,13 @@ spec:
             expiration: 10y
 EOF
 
+echo '>>> Installing Kustomize'
+cd ${REPO_ROOT}/bin && kustomize_url=https://github.com/kubernetes-sigs/kustomize/releases/download && \
+curl -sL ${kustomize_url}/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz | \
+tar xz
+
 echo '>>> Installing Flagger'
-kubectl apply -k ${REPO_ROOT}/kustomize/kuma
+${REPO_ROOT}/bin/kustomize build ${REPO_ROOT}/test/kuma | kubectl apply -f -
 
 kubectl -n kuma-system set image deployment/flagger flagger=test/flagger:latest
 kubectl -n kuma-system rollout status deployment/flagger

@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: kuma-system
+resources:
+  - ../../kustomize/base/prometheus/
+  - ../../kustomize/base/flagger/
+patchesStrategicMerge:
+  - patch.yml
+configMapGenerator:
+  - name: flagger-prometheus
+    behavior: replace
+    files:
+      - prometheus.yml
