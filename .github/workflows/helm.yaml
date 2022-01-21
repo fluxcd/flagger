@@ -3,6 +3,9 @@ name: helm
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write # needed to push chart
+
 jobs:
   build-push:
     runs-on: ubuntu-latest

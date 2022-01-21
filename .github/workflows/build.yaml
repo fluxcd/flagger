@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read # for actions/checkout to fetch code
+
 jobs:
   container:
     runs-on: ubuntu-latest

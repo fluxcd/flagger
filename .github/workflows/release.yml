@@ -4,6 +4,14 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write # needed to write releases
+  id-token: write # needed for keyless signing
+  packages: write # needed for ghcr access
+
+env:
+  IMAGE: "ghcr.io/fluxcd/${{ github.event.repository.name }}"
+
 jobs:
   build-push:
     runs-on: ubuntu-latest
@@ -15,24 +23,28 @@ jobs:
         run: |
           VERSION=$(grep 'VERSION' pkg/version/version.go | awk '{ print $4 }' | tr -d '"')
           CHANGELOG="https://github.com/fluxcd/flagger/blob/main/CHANGELOG.md#$(echo $VERSION | tr -d '.')"
+          echo "[CHANGELOG](${CHANGELOG})" > notes.md
           echo ::set-output name=BUILD_DATE::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
           echo ::set-output name=VERSION::${VERSION}
-          echo ::set-output name=CHANGELOG::${CHANGELOG}
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v1
-        with:
-          platforms: all
       - name: Setup Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          buildkitd-flags: "--debug"
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: fluxcdbot
           password: ${{ secrets.GHCR_TOKEN }}
+      - name: Generate image meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.prep.outputs.VERSION }}
       - name: Publish image
         uses: docker/build-push-action@v2
         with:
@@ -43,42 +55,31 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           build-args: |
             REVISON=${{ github.sha }}
-          tags: |
-            ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
-          labels: |
-            org.opencontainers.image.title=${{ github.event.repository.name }}
-            org.opencontainers.image.description=${{ github.event.repository.description }}
-            org.opencontainers.image.url=${{ github.event.repository.html_url }}
-            org.opencontainers.image.source=${{ github.event.repository.html_url }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ steps.prep.outputs.VERSION }}
-            org.opencontainers.image.created=${{ steps.prep.outputs.BUILD_DATE }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
       - name: Sign image
         run: |
           echo -n "${{secrets.COSIGN_PASSWORD}}" | \
           cosign sign -key ./.cosign/cosign.key -a git_sha=$GITHUB_SHA \
-          ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
+          ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
       - name: Check images
         run: |
-          docker buildx imagetools inspect ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
+          docker buildx imagetools inspect ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
       - name: Verifiy image signature
         run: |
           cosign verify -key ./.cosign/cosign.pub \
-          ghcr.io/fluxcd/flagger:${{ steps.prep.outputs.VERSION }}
+          ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
       - name: Publish Helm charts
         uses: stefanprodan/helm-gh-pages@v1.3.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_url: https://flagger.app
           linting: off
-      - name: Create release
-        uses: actions/create-release@latest
+      - uses: anchore/sbom-action/download-syft@v0
+      - name: Create release and SBOM
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --release-notes=notes.md --rm-dist --skip-validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
-          body: |
-            [CHANGELOG](${{ steps.prep.outputs.CHANGELOG }})

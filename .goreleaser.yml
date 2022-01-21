@@ -1,14 +1,17 @@
+project_name: flagger
+
 builds:
-  - main: ./cmd/flagger
-    binary: flagger
-    ldflags: -s -w -X github.com/fluxcd/flagger/pkg/version.REVISION={{.Commit}}
-    goos:
-      - linux
-    goarch:
-      - amd64
-    env:
-      - CGO_ENABLED=0
-archives:
-  - name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    files:
-    - none*
+  - skip: true
+
+release:
+  prerelease: auto
+
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}_{{ .Version }}_source_code"
+
+sboms:
+  - id: source
+    artifacts: source
+    documents:
+      - "{{ .ProjectName }}_{{ .Version }}_sbom.spdx.json"
