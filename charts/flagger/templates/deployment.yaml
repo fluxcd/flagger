@@ -138,6 +138,9 @@ spec:
           {{- if .Values.threadiness }}
           - -threadiness={{ .Values.threadiness }}
           {{- end }}
+          {{- if .Values.clusterName }}
+          - -cluster-name={{ .Values.clusterName }}
+          {{- end }}
           livenessProbe:
             exec:
               command:

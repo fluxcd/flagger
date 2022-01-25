@@ -28,16 +28,7 @@ func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []stri
 }
 
 func filterMetadata(meta map[string]string) map[string]string {
-	res := make(map[string]string)
-	for k, v := range meta {
-		// remove Flux ownership
-		if strings.Contains(k, toolkitMarker) {
-			continue
-		}
-		res[k] = v
-	}
-
 	// prevent Flux from overriding Flagger managed objects
-	res[toolkitReconcileKey] = toolkitReconcileValue
-	return res
+	meta[toolkitReconcileKey] = toolkitReconcileValue
+	return meta
 }

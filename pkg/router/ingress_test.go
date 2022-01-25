@@ -48,9 +48,6 @@ func TestIngressRouter_Reconcile(t *testing.T) {
 	inCanary, err := router.kubeClient.NetworkingV1().Ingresses("default").Get(context.TODO(), canaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
-	annotation := inCanary.Annotations["kustomize.toolkit.fluxcd.io/checksum"]
-	assert.Equal(t, "", annotation)
-
 	// test initialisation
 	assert.Equal(t, "true", inCanary.Annotations[canaryAn])
 	assert.Equal(t, "0", inCanary.Annotations[canaryWeightAn])
@@ -184,6 +181,5 @@ func TestIngressRouter_ABTest(t *testing.T) {
 		// test initialisation
 		assert.Equal(t, "true", inCanary.Annotations[canaryAn])
 		assert.Equal(t, "test", inCanary.Annotations[table.annotation])
-		assert.Equal(t, "", inCanary.Annotations["kustomize.toolkit.fluxcd.io/checksum"])
 	}
 }
