@@ -2,7 +2,7 @@
 
 image:
   repository: ghcr.io/fluxcd/flagger
-  tag: 1.16.1
+  tag: 1.17.0
   pullPolicy: IfNotPresent
   pullSecret:
 
@@ -49,6 +49,9 @@ securityContext:
 
 # when specified, flagger will publish events to the provided webhook
 eventWebhook: ""
+
+# when specified, flagger will add the cluster name to alerts
+clusterName: ""
 
 slack:
   user: flagger
@@ -135,7 +138,7 @@ tolerations: []
 prometheus:
   # to be used with ingress controllers
   install: false
-  image: docker.io/prom/prometheus:v2.23.0
+  image: docker.io/prom/prometheus:v2.32.1
   pullSecret:
   retention: 2h
   # when enabled, it will add a security context for the prometheus pod
