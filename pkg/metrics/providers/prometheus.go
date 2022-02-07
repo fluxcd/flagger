@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
@@ -148,7 +149,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 			value = &f
 		}
 	}
-	if value == nil {
+	if value == nil || math.IsNaN(*value) {
 		return 0, fmt.Errorf("%w", ErrNoValuesFound)
 	}
 

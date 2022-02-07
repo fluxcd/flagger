@@ -134,29 +134,40 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 		assert.Equal(t, float64(100), val)
 	})
 
-	t.Run("no values", func(t *testing.T) {
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			json := `{"status":"success","data":{"resultType":"vector","result":[]}}`
-			w.Write([]byte(json))
-		}))
-		defer ts.Close()
+	noResultTests := []struct {
+		name        string
+		queryResult string
+	}{
+		{name: "no values result", queryResult: `{"status":"success","data":{"resultType":"vector","result":[]}}`},
+		{name: "NaN result", queryResult: `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1643023250.379,"NaN"]}]}}`},
+	}
 
-		clients := prometheusFake()
+	for _, tt := range noResultTests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				json := tt.queryResult
+				w.Write([]byte(json))
+			}))
+			defer ts.Close()
 
-		template, err := clients.flaggerClient.FlaggerV1beta1().
-			MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
-		require.NoError(t, err)
-		template.Spec.Provider.Address = ts.URL
+			clients := prometheusFake()
 
-		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
-		require.NoError(t, err)
+			template, err := clients.flaggerClient.FlaggerV1beta1().
+				MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+			require.NoError(t, err)
+			template.Spec.Provider.Address = ts.URL
 
-		prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
-		require.NoError(t, err)
+			secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+			require.NoError(t, err)
 
-		_, err = prom.RunQuery(template.Spec.Query)
-		require.True(t, errors.Is(err, ErrNoValuesFound))
-	})
+			prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
+			require.NoError(t, err)
+
+			_, err = prom.RunQuery(template.Spec.Query)
+			require.True(t, errors.Is(err, ErrNoValuesFound))
+		})
+	}
+
 }
 
 func TestPrometheusProvider_IsOnline(t *testing.T) {
