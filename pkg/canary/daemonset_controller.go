@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -119,59 +120,76 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
-	canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("damonset %s.%s get query error: %v", targetName, cd.Namespace, err)
-	}
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		canary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("damonset %s.%s get query error: %v", targetName, cd.Namespace, err)
+		}
 
-	label, labelValue, err := c.getSelectorLabel(canary)
-	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
-	if err != nil {
-		return fmt.Errorf("getSelectorLabel failed: %w", err)
-	}
+		label, labelValue, err := c.getSelectorLabel(canary)
+		primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
+		if err != nil {
+			return fmt.Errorf("getSelectorLabel failed: %w", err)
+		}
 
-	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
-	}
+		primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
 
-	// promote secrets and config maps
-	configRefs, err := c.configTracker.GetTargetConfigs(cd)
-	if err != nil {
-		return fmt.Errorf("GetTargetConfigs failed: %w", err)
-	}
-	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
-		return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
-	}
+		// promote secrets and config maps
+		configRefs, err := c.configTracker.GetTargetConfigs(cd)
+		if err != nil {
+			return fmt.Errorf("GetTargetConfigs failed: %w", err)
+		}
+		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
+			return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
+		}
 
-	primaryCopy := primary.DeepCopy()
-	primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
-	primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
-	primaryCopy.Spec.UpdateStrategy = canary.Spec.UpdateStrategy
+		primaryCopy := primary.DeepCopy()
+		primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
+		primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
+		primaryCopy.Spec.UpdateStrategy = canary.Spec.UpdateStrategy
 
-	// update spec with primary secrets and config maps
-	primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
+		// update spec with primary secrets and config maps
+		primaryCopy.Spec.Template.Spec = c.configTracker.ApplyPrimaryConfigs(canary.Spec.Template.Spec, configRefs)
 
-	// ignore `daemonSetScaleDownNodeSelector` node selector
-	for key := range daemonSetScaleDownNodeSelector {
-		delete(primaryCopy.Spec.Template.Spec.NodeSelector, key)
-	}
+		// ignore `daemonSetScaleDownNodeSelector` node selector
+		for key := range daemonSetScaleDownNodeSelector {
+			delete(primaryCopy.Spec.Template.Spec.NodeSelector, key)
+		}
 
-	// update pod annotations to ensure a rolling update
-	annotations, err := makeAnnotations(canary.Spec.Template.Annotations)
-	if err != nil {
-		return fmt.Errorf("makeAnnotations failed: %w", err)
-	}
+		// update pod annotations to ensure a rolling update
+		annotations, err := makeAnnotations(canary.Spec.Template.Annotations)
+		if err != nil {
+			return fmt.Errorf("makeAnnotations failed: %w", err)
+		}
 
-	primaryCopy.Spec.Template.Annotations = annotations
-	primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryLabelValue, label)
+		primaryCopy.Spec.Template.Annotations = annotations
+		primaryCopy.Spec.Template.Labels = makePrimaryLabels(canary.Spec.Template.Labels, primaryLabelValue, label)
 
-	// apply update
-	_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		// update ds annotations
+		primaryCopy.ObjectMeta.Annotations = make(map[string]string)
+		filteredAnnotations := includeLabelsByPrefix(canary.ObjectMeta.Annotations, c.includeLabelPrefix)
+		for k, v := range filteredAnnotations {
+			primaryCopy.ObjectMeta.Annotations[k] = v
+		}
+		// update ds labels
+		primaryCopy.ObjectMeta.Labels = make(map[string]string)
+		filteredLabels := includeLabelsByPrefix(canary.ObjectMeta.Labels, c.includeLabelPrefix)
+		for k, v := range filteredLabels {
+			primaryCopy.ObjectMeta.Labels[k] = v
+		}
+
+		// apply update
+		_, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("updating daemonset %s.%s template spec failed: %w",
-			primaryCopy.GetName(), primaryCopy.Namespace, err)
+			primaryName, cd.Namespace, err)
 	}
+
 	return nil
 }
 

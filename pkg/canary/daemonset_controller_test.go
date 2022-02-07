@@ -96,6 +96,14 @@ func TestDaemonSetController_Promote(t *testing.T) {
 	sourceImage := dae2.Spec.Template.Spec.Containers[0].Image
 	assert.Equal(t, primaryImage, sourceImage)
 
+	daePrimaryLabels := daePrimary.ObjectMeta.Labels
+	daeSourceLabels := dae2.ObjectMeta.Labels
+	assert.Equal(t, daeSourceLabels["app.kubernetes.io/test-label-1"], daePrimaryLabels["app.kubernetes.io/test-label-1"])
+
+	daePrimaryAnnotations := daePrimary.ObjectMeta.Annotations
+	daeSourceAnnotations := dae2.ObjectMeta.Annotations
+	assert.Equal(t, daeSourceAnnotations["app.kubernetes.io/test-annotation-1"], daePrimaryAnnotations["app.kubernetes.io/test-annotation-1"])
+
 	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 	if assert.NoError(t, err) {
 		assert.Equal(t, configPrimary.Data["color"], config2.Data["color"])
