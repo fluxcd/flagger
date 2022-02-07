@@ -529,6 +529,14 @@ func (c *DeploymentController) appendPrimarySuffixToValuesIfNeeded(labelSelector
 				}
 			}
 		}
+
+		for key, value := range labelSelector.MatchLabels {
+			if contains(c.labels, key) {
+				if value == canaryDep.Name {
+					labelSelector.MatchLabels[key] = value + "-primary"
+				}
+			}
+		}
 	}
 }
 
