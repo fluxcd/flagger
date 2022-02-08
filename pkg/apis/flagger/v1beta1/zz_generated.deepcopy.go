@@ -208,6 +208,11 @@ func (in *CanaryAnalysis) DeepCopyInto(out *CanaryAnalysis) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.CanaryReadyThreshold != nil {
+		in, out := &in.CanaryReadyThreshold, &out.CanaryReadyThreshold
+		*out = new(int)
+		**out = **in
+	}
 	if in.Alerts != nil {
 		in, out := &in.Alerts, &out.Alerts
 		*out = make([]CanaryAlert, len(*in))
