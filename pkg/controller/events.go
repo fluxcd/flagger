@@ -98,7 +98,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 			if severity == alert.Severity {
 				shouldAlert = true
 			}
-			if severity == flaggerv1.SeverityWarn && alert.Severity == flaggerv1.SeverityError {
+			if severity == flaggerv1.SeverityError && alert.Severity == flaggerv1.SeverityWarn {
 				shouldAlert = true
 			}
 		}
