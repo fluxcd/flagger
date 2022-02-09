@@ -1,0 +1,6 @@
+namespace: projectcontour
+bases:
+  - ../../kustomize/base/flagger/
+  - ../../kustomize/base/prometheus/
+patchesStrategicMerge:
+  - patch.yaml

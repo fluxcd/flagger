@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -138,6 +139,11 @@ type CanaryService struct {
 	// Defaults to the internal mesh gateway
 	// +optional
 	Gateways []string `json:"gateways,omitempty"`
+
+	// Gateways that the HTTPRoute needs to attach itself to.
+	// Must be specified while using the Gateway API as a provider.
+	// +optional
+	GatewayRefs []v1alpha2.ParentReference `json:"gatewayRefs,omitempty"`
 
 	// Hosts attached to the generated Istio virtual service
 	// Defaults to the service name
