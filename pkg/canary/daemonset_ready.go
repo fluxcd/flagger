@@ -52,7 +52,7 @@ func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) 
 		return true, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	retryable, err := c.isDaemonSetReady(cd, canary, 100)
+	retryable, err := c.isDaemonSetReady(cd, canary, cd.GetAnalysisCanaryReadyThreshold())
 	if err != nil {
 		return retryable, fmt.Errorf("canary damonset %s.%s not ready with retryable %v: %w",
 			targetName, cd.Namespace, retryable, err)

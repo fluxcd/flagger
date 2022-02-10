@@ -343,6 +343,10 @@ Spec:
     # before starting rollout. this is optional and the default is 100
     # percentage (0-100)
     primaryReadyThreshold: 100
+    # threshold of canary pods that need to be available to consider it ready
+    # before starting rollout. this is optional and the default is 100
+    # percentage (0-100)
+    canaryReadyThreshold: 100
     # canary match conditions
     # used for A/B Testing
     match:
