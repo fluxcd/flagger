@@ -2,6 +2,40 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.18.0
+
+**Release date:** 2022-02-14
+
+This release comes with a new API field called `canaryReadyThreshold`
+that allows setting the percentage of pods that need to be available
+to consider the canary deployment as ready.
+
+Starting with version, the canary deployment labels, annotations and
+replicas fields are copied to the primary deployment at promotion time.
+
+#### Features
+
+- Add field `spec.analysis.canaryReadyThreshold` for configuring canary threshold
+  [#1102](https://github.com/fluxcd/flagger/pull/1102)
+
+#### Improvements
+
+- Update metadata during subsequent promote
+  [#1092](https://github.com/fluxcd/flagger/pull/1092)
+- Set primary deployment `replicas` when autoscaler isn't used
+  [#1106](https://github.com/fluxcd/flagger/pull/1106)
+- Update `matchLabels` for `TopologySpreadContstraints` in Deployments
+  [#1041](https://github.com/fluxcd/flagger/pull/1041)
+
+#### Fixes
+
+- Send warning and error alerts correctly
+  [#1105](https://github.com/fluxcd/flagger/pull/1105)
+- Fix for when Prometheus returns NaN
+  [#1095](https://github.com/fluxcd/flagger/pull/1095)
+- docs: Fix typo ExternalDNS
+  [#1103](https://github.com/fluxcd/flagger/pull/1103)
+
 ## 1.17.0
 
 **Release date:** 2022-01-11
