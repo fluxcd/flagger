@@ -49,6 +49,23 @@ spec:
         timestamp: "2020-03-10T14:24:48+0000"
 ```
 
+#### How to change replicas for a deployment when not using HPA?
+
+To change replicas for a deployment when not using HPA, you have to update the canary deployment with the desired replica count
+and trigger an analysis by annotating the template. After the analysis finishes, Flagger will promote the `spec.replicas` changes to the primary deployment.
+
+Example:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  replicas: 4  #update replicas
+  template:
+    metadata:
+      annotations:
+        timestamp: "2022-02-10T14:24:48+0000" #add annotation to trigger analysis
+```
+
 #### Why is there a window of downtime during the canary initializing process when analysis is disabled?
 
 A window of downtime is the intended behavior when the analysis is disabled. This allows instant rollback and also mimics the way
