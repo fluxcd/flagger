@@ -11,5 +11,5 @@ spec:
           args:
             - -log-level=debug
             - -include-label-prefix=app.kubernetes.io
-            - -mesh-provider=gatewayapi
+            - -mesh-provider=gatewayapi:v1alpha2
             - -metrics-server=http://flagger-prometheus:9090

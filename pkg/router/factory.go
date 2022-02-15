@@ -177,7 +177,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			kumaClient:    factory.meshClient,
 		}
-	case provider == flaggerv1.GatewayAPIProvider:
+	case strings.HasPrefix(provider, flaggerv1.GatewayAPIProvider):
 		return &GatewayAPIRouter{
 			logger:           factory.logger,
 			kubeClient:       factory.kubeClient,

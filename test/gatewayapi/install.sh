@@ -12,8 +12,11 @@ ARCH=$(arch)
 mkdir -p ${REPO_ROOT}/bin
 
 echo ">>> Installing Contour ${CONTOUR_VER}, Gateway API components ${GATEWAY_API_VER}"
-cd ${REPO_ROOT}/bin && \
-kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour-gateway.yaml
+# retry if it fails, creating a gateway object is flaky sometimes
+until cd ${REPO_ROOT}/bin && kubectl apply -f \
+    https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour-gateway.yaml; do
+    sleep 1
+done
 
 kubectl -n projectcontour rollout status deployment/contour
 kubectl -n projectcontour get all

@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -65,6 +66,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 		newTestDeployment(),
 		newTestABTestDeployment(),
 		newTestIngress(),
+		newTestGateway(),
 	)
 
 	meshClient := fakeFlagger.NewSimpleClientset()
@@ -476,4 +478,76 @@ func newTestIngress() *netv1.Ingress {
 			},
 		},
 	}
+}
+
+func newTestGatewayAPICanary() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Name:     "podinfo",
+				Port:     80,
+				PortName: "http",
+				TargetPort: intstr.IntOrString{
+					Type:   0,
+					IntVal: 9898,
+				},
+				PortDiscovery: true,
+				GatewayRefs: []v1alpha2.ParentReference{
+					{
+						Name: "podinfo",
+					},
+				},
+			},
+			Analysis: &flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newTestGateway() *v1alpha2.Gateway {
+	hostName := v1alpha2.Hostname("app.example.com")
+	gw := &v1alpha2.Gateway{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha2.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: v1alpha2.GatewaySpec{
+			GatewayClassName: "example",
+			Listeners: []v1alpha2.Listener{
+				{
+					Hostname: &hostName,
+					Name:     "http",
+					Port:     80,
+				},
+			},
+		},
+	}
+	return gw
 }
