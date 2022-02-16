@@ -8,6 +8,9 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 KUSTOMIZE_VERSION=4.5.2
 OS=$(uname -s)
 ARCH=$(arch)
+if [[ $ARCH == "x86_64" ]]; then
+    ARCH="amd64"
+fi
 
 mkdir -p ${REPO_ROOT}/bin
 
@@ -22,9 +25,9 @@ kubectl -n projectcontour rollout status deployment/contour
 kubectl -n projectcontour get all
 
 echo '>>> Installing Kustomize'
-cd ${REPO_ROOT}/bin && kustomize_url=https://github.com/kubernetes-sigs/kustomize/releases/download && \
-curl -sL ${kustomize_url}/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_${OS}_${ARCH}.tar.gz | \
-tar xz
+cd ${REPO_ROOT}/bin && \
+    curl -sL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_${OS}_${ARCH}.tar.gz | \
+    tar xz
 
 echo '>>> Installing Flagger'
 ${REPO_ROOT}/bin/kustomize build ${REPO_ROOT}/test/gatewayapi | kubectl apply -f -

@@ -66,7 +66,6 @@ func newFixture(c *flaggerv1.Canary) fixture {
 		newTestDeployment(),
 		newTestABTestDeployment(),
 		newTestIngress(),
-		newTestGateway(),
 	)
 
 	meshClient := fakeFlagger.NewSimpleClientset()
@@ -528,26 +527,4 @@ func newTestGatewayAPICanary() *flaggerv1.Canary {
 		},
 	}
 	return cd
-}
-
-func newTestGateway() *v1alpha2.Gateway {
-	hostName := v1alpha2.Hostname("app.example.com")
-	gw := &v1alpha2.Gateway{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha2.SchemeGroupVersion.String()},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "podinfo",
-		},
-		Spec: v1alpha2.GatewaySpec{
-			GatewayClassName: "example",
-			Listeners: []v1alpha2.Listener{
-				{
-					Hostname: &hostName,
-					Name:     "http",
-					Port:     80,
-				},
-			},
-		},
-	}
-	return gw
 }

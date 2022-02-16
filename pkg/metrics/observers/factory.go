@@ -68,7 +68,7 @@ func (factory Factory) Observer(provider string) Interface {
 		return &NginxObserver{
 			client: factory.Client,
 		}
-	case provider == flaggerv1.KubernetesProvider || provider == flaggerv1.GatewayAPIProvider:
+	case provider == flaggerv1.KubernetesProvider || strings.HasPrefix(provider, flaggerv1.GatewayAPIProvider):
 		return &HttpObserver{
 			client: factory.Client,
 		}

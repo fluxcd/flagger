@@ -164,20 +164,23 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 	}
 
-	if diff := cmp.Diff(
-		httpRoute.Spec, httpRouteSpec,
-		cmpopts.IgnoreFields(v1alpha2.BackendRef{}, "Weight"),
-	); diff != "" {
-		hrClone := httpRoute.DeepCopy()
-		hrClone.Spec = httpRouteSpec
-		_, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).
-			Update(context.TODO(), hrClone, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("HTTPRoute %s.%s update error: %w", hrClone.GetName(), hrNamespace, err)
+	if httpRoute != nil {
+		if diff := cmp.Diff(
+			httpRoute.Spec, httpRouteSpec,
+			cmpopts.IgnoreFields(v1alpha2.BackendRef{}, "Weight"),
+		); diff != "" {
+			hrClone := httpRoute.DeepCopy()
+			hrClone.Spec = httpRouteSpec
+			_, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).
+				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("HTTPRoute %s.%s update error: %w", hrClone.GetName(), hrNamespace, err)
+			}
+			gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("HTTPProxy %s.%s updated", hrClone.GetName(), hrNamespace)
 		}
-		gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-			Infof("HTTPProxy %s.%s updated", hrClone.GetName(), hrNamespace)
 	}
+
 	return nil
 }
 
