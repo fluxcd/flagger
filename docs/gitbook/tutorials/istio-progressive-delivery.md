@@ -13,6 +13,7 @@ Install Istio with telemetry support and Prometheus:
 ```bash
 istioctl manifest install --set profile=default
 
+# Suggestion: Please change release-1.8 in below command, to your real istio version.
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/prometheus.yaml
 ```
 
