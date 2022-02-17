@@ -5,6 +5,57 @@
 
 set -o errexit
 
+echo '>>> Create metric templates'
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: flagger-system
+spec:
+  provider:
+    type: prometheus
+    address: http://flagger-prometheus:9090
+  query: |
+    histogram_quantile(0.99,
+      sum(
+        rate(
+          envoy_cluster_upstream_rq_time_bucket{
+            envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
+          }[{{ interval }}]
+        )
+      ) by (le)
+    )/1000
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: request-success-rate
+  namespace: flagger-system
+spec:
+  provider:
+    type: prometheus
+    address: http://flagger-prometheus:9090
+  query: |
+    sum(
+      rate(
+        envoy_cluster_upstream_rq{
+          envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
+          envoy_response_code!~"5.*"
+        }[{{ interval }}]
+      )
+    )
+    /
+    sum(
+      rate(
+        envoy_cluster_upstream_rq{
+          envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
+        }[{{ interval }}]
+      )
+    )
+    * 100
+EOF
+
 echo '>>> Installing Canary'
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
@@ -34,10 +85,18 @@ spec:
     stepWeight: 10
     metrics:
       - name: request-success-rate
-        threshold: 99
+        templateRef:
+          name: request-success-rate
+          namespace: flagger-system
+        thresholdRange:
+          min: 99
         interval: 1m
-      - name: request-duration
-        threshold: 500
+      - name: latency
+        templateRef:
+          name: latency
+          namespace: flagger-system
+        thresholdRange:
+          max: 0.5
         interval: 30s
     webhooks:
       - name: load-test
@@ -58,7 +117,7 @@ until ${ok}; do
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
-        kubectl -n projectcontour logs deployment/flagger
+        kubectl -n flagger-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi
@@ -84,10 +143,10 @@ ok=false
 until ${ok}; do
     kubectl -n test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
     sleep 10
-    kubectl -n projectcontour logs deployment/flagger --tail 1
+    kubectl -n flagger-system logs deployment/flagger --tail 1
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
-        kubectl -n projectcontour logs deployment/flagger
+        kubectl -n flagger-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi
@@ -102,7 +161,7 @@ until ${ok}; do
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
-        kubectl -n istio-system logs deployment/flagger
+        kubectl -n flagger-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi
@@ -127,9 +186,8 @@ spec:
     name: podinfo
   progressDeadlineSeconds: 60
   service:
-    port: 80
-    targetPort: 9898
-    portName: http-podinfo
+    port: 9898
+    portName: http
     hosts:
      - localproject.contour.io
     gatewayRefs:
@@ -141,19 +199,27 @@ spec:
     iterations: 5
     metrics:
     - name: request-success-rate
+      templateRef:
+        name: request-success-rate
+        namespace: flagger-system
       thresholdRange:
         min: 99
       interval: 1m
-    - name: request-duration
-      threshold: 500
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: flagger-system
+      thresholdRange:
+        max: 0.5
       interval: 30s
     webhooks:
       - name: load-test
+        type: rollout
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          type: cmd
           cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+          logCmdOutput: "true"
 EOF
 
 echo '>>> Triggering B/G deployment'
@@ -166,12 +232,12 @@ ok=false
 until ${ok}; do
     kubectl -n test describe deployment/podinfo-primary | grep '3.1.2' && ok=true || ok=false
     sleep 10
-    kubectl -n projectcontour logs deployment/flagger --tail 1
+    kubectl -n flagger-system logs deployment/flagger --tail 1
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
         kubectl -n test describe deployment/podinfo
         kubectl -n test describe deployment/podinfo-primary
-        kubectl -n projectcontour logs deployment/flagger
+        kubectl -n flagger-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi
@@ -186,7 +252,7 @@ until ${ok}; do
     sleep 5
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
-        kubectl -n projectcontour logs deployment/flagger
+        kubectl -n flagger-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi
@@ -207,8 +273,7 @@ spec:
     kind: Deployment
     name: podinfo
   service:
-    port: 80
-    targetPort: 9898
+    port: 9898
     portName: http
     hosts:
      - localproject.contour.io
@@ -225,22 +290,27 @@ spec:
           exact: "insider"
     metrics:
     - name: request-success-rate
+      templateRef:
+        name: request-success-rate
+        namespace: flagger-system
       thresholdRange:
         min: 99
       interval: 1m
-    - name: request-duration
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: flagger-system
       thresholdRange:
-        max: 500
+        max: 0.5
       interval: 30s
     webhooks:
-    - name: load-test
-      type: rollout
-      url: http://flagger-loadtester.test/
-      timeout: 5s
-      metadata:
-        type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 -H 'X-Canary: insider' -host localproject.contour.io http://envoy.projectcontour/"
-        logCmdOutput: "true"
+      - name: load-test
+        type: rollout
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+          logCmdOutput: "true"
 EOF
 
 echo '>>> Triggering A/B testing'
@@ -253,12 +323,12 @@ ok=false
 until ${ok}; do
     kubectl -n test describe deployment/podinfo-primary | grep '3.1.3' && ok=true || ok=false
     sleep 10
-    kubectl -n projectcontour logs deployment/flagger --tail 1
+    kubectl -n flagger-system logs deployment/flagger --tail 1
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
         kubectl -n test describe deployment/podinfo
         kubectl -n test describe deployment/podinfo-primary
-        kubectl -n projectcontour logs deployment/flagger
+        kubectl -n flagger-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi
@@ -293,12 +363,20 @@ spec:
     maxWeight: 50
     stepWeight: 10
     metrics:
-      - name: request-success-rate
-        threshold: 99
-        interval: 1m
-      - name: request-duration
-        threshold: 500
-        interval: 30s
+    - name: request-success-rate
+      templateRef:
+        name: request-success-rate
+        namespace: flagger-system
+      thresholdRange:
+        min: 99
+      interval: 1m
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: flagger-system
+      thresholdRange:
+        max: 0.5
+      interval: 30s
     webhooks:
       - name: load-test
         type: rollout
@@ -319,10 +397,10 @@ ok=false
 until ${ok}; do
     kubectl -n test get canary/podinfo | grep 'Failed' && ok=true || ok=false
     sleep 10
-    kubectl -n projectcontour logs deployment/flagger --tail 1
+    kubectl -n flagger-system logs deployment/flagger --tail 1
     count=$(($count + 1))
     if [[ ${count} -eq ${retries} ]]; then
-        kubectl -n projectcontour logs deployment/flagger
+        kubectl -n flagger-system logs deployment/flagger
         echo "No more retries left"
         exit 1
     fi

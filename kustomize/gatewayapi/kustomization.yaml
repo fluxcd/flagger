@@ -1,5 +1,7 @@
 bases:
   - ../base/flagger/
   - ../base/prometheus/
+resources:
+  - namespace.yaml
 patchesStrategicMerge:
   - patch.yaml

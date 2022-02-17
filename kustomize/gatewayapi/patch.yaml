@@ -7,7 +7,6 @@ spec:
     spec:
       containers:
         - name: flagger
-          image: aryan9600/flagger
           args:
             - -log-level=debug
             - -include-label-prefix=app.kubernetes.io

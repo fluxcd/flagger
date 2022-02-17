@@ -30,7 +30,7 @@ cd ${REPO_ROOT}/bin && \
     tar xz
 
 echo '>>> Installing Flagger'
-${REPO_ROOT}/bin/kustomize build ${REPO_ROOT}/test/gatewayapi | kubectl apply -f -
+${REPO_ROOT}/bin/kustomize build ${REPO_ROOT}/kustomize/gatewayapi | kubectl apply -f -
+kubectl -n flagger-system set image deployment/flagger flagger=test/flagger:latest
 
-kubectl -n projectcontour set image deployment/flagger flagger=test/flagger:latest
-kubectl -n projectcontour rollout status deployment/flagger
+kubectl -n flagger-system rollout status deployment/flagger

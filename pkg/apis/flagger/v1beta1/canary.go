@@ -145,7 +145,7 @@ type CanaryService struct {
 	// +optional
 	GatewayRefs []v1alpha2.ParentReference `json:"gatewayRefs,omitempty"`
 
-	// Hosts attached to the generated Istio virtual service
+	// Hosts attached to the generated Istio virtual service or Gateway API HTTPRoute.
 	// Defaults to the service name
 	// +optional
 	Hosts []string `json:"hosts,omitempty"`
