@@ -14,15 +14,17 @@ fi
 
 mkdir -p ${REPO_ROOT}/bin
 
-echo ">>> Installing Contour ${CONTOUR_VER}, Gateway API components ${GATEWAY_API_VER}"
-# retry if it fails, creating a gateway object is flaky sometimes
-until cd ${REPO_ROOT}/bin && kubectl apply -f \
-    https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour-gateway.yaml; do
-    sleep 1
-done
+echo ">>> Installing Gateway API CRDs"
+kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.4.1" \
+| kubectl apply -f -
+
+echo ">>> Installing Contour components, GatewayClass and Gateway"
+kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour-gateway.yaml
 
 kubectl -n projectcontour rollout status deployment/contour
 kubectl -n projectcontour get all
+kubectl get gatewayclass -oyaml
+kubectl -n projectcontour get gateway -oyaml
 
 echo '>>> Installing Kustomize'
 cd ${REPO_ROOT}/bin && \

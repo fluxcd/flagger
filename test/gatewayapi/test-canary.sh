@@ -30,14 +30,14 @@ spec:
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: request-success-rate
+  name: error-rate
   namespace: flagger-system
 spec:
   provider:
     type: prometheus
     address: http://flagger-prometheus:9090
   query: |
-    sum(
+    100 - sum(
       rate(
         envoy_cluster_upstream_rq{
           envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
@@ -71,7 +71,6 @@ spec:
   progressDeadlineSeconds: 60
   service:
     port: 9898
-    targetPort: 9898
     portName: http
     hosts:
      - localproject.contour.io
@@ -84,12 +83,12 @@ spec:
     maxWeight: 50
     stepWeight: 10
     metrics:
-      - name: request-success-rate
+      - name: error-rate
         templateRef:
-          name: request-success-rate
+          name: error-rate
           namespace: flagger-system
         thresholdRange:
-          min: 99
+          max: 1
         interval: 1m
       - name: latency
         templateRef:
@@ -132,6 +131,11 @@ if [ -z "$passed" ]; then
 fi
 
 echo '✔ Canary service custom metadata test passed'
+
+if ! kubectl -n test get httproute podinfo -oyaml; then
+    echo "Could not find HTTPRoute podinfo"
+    exit 1
+fi
 
 echo '>>> Triggering canary deployment'
 kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
@@ -198,12 +202,12 @@ spec:
     threshold: 5
     iterations: 5
     metrics:
-    - name: request-success-rate
+    - name: error-rate
       templateRef:
-        name: request-success-rate
+        name: error-rate
         namespace: flagger-system
       thresholdRange:
-        min: 99
+        max: 1
       interval: 1m
     - name: latency
       templateRef:
@@ -289,12 +293,12 @@ spec:
         x-canary:
           exact: "insider"
     metrics:
-    - name: request-success-rate
+    - name: error-rate
       templateRef:
-        name: request-success-rate
+        name: error-rate
         namespace: flagger-system
       thresholdRange:
-        min: 99
+        max: 1
       interval: 1m
     - name: latency
       templateRef:
@@ -347,7 +351,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: podinfo
-  progressDeadlineSeconds: 60
+  progressDeadlineSeconds: 30
   service:
     port: 9898
     targetPort: 9898
@@ -363,13 +367,13 @@ spec:
     maxWeight: 50
     stepWeight: 10
     metrics:
-    - name: request-success-rate
+    - name: error-rate
       templateRef:
-        name: request-success-rate
+        name: error-rate
         namespace: flagger-system
       thresholdRange:
-        min: 99
-      interval: 1m
+        max: 1
+      interval: 30s
     - name: latency
       templateRef:
         name: latency

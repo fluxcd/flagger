@@ -8,10 +8,17 @@ This guide shows you how to use Gateway API and Flagger to automate canary deplo
 
 Flagger requires a Kubernetes cluster **v1.16** or newer and any mesh/ingress that implements the `v1alpha2` of Gateway API. We'll be using Contour for the sake of this tutorial, but you can use any other implementation. 
 
-Install Contour with GatewayAPI and create a GatewayClass and a Gateway object:
+Install the GatewayAPI CRDs:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/release-1.20/examples/render/contour-gateway.yaml
+kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.4.1" \
+| kubectl apply -f -
+```
+
+Install a cluster-wide GatewayClass; a Gateway belonging to the GatewayClass and Contour components in the `projectcontour` namespace:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/release-1.20/examples/render/contour.yaml
 ```
 
 Install Flagger in the `flagger-system` namespace:
@@ -42,7 +49,7 @@ Deploy the load testing service to generate traffic during the canary analysis:
 kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
 ```
 
-Create metric templates targeting the Prometheus server in the `flagger-system` namespace. The PromQL query below is meant for `Envoy`, but you can [change it to your ingress/mesh provider](https://docs.flagger.app/faq#metrics) accordingly.
+Create metric templates targeting the Prometheus server in the `flagger-system` namespace. The PromQL queries below are meant for `Envoy`, but you can [change it to your ingress/mesh provider](https://docs.flagger.app/faq#metrics) accordingly.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -68,14 +75,14 @@ spec:
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: request-success-rate
+  name: error-rate
   namespace: flagger-system
 spec:
   provider:
     type: prometheus
     address: http://flagger-prometheus:9090
   query: |
-    sum(
+    100 - sum(
       rate(
         envoy_cluster_upstream_rq{
           envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
@@ -100,7 +107,7 @@ Save the above resource as metric-templates.yaml and then apply it:
 kubectl apply -f metric-templates.yaml
 ```
 
-Create a canary custom resource \(replace example.com with your own domain\):
+Create a canary custom resource \(replace "loaclproject.contour.io" with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -150,10 +157,10 @@ spec:
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       templateRef:
-        name: request-success-rate
+        name: error-rate
         namespace: flagger-system
       thresholdRange:
-        min: 99
+        max: 1
       interval: 1m
     - name: latency
       templateRef:
@@ -198,6 +205,29 @@ service/podinfo-canary
 service/podinfo-primary
 httproutes.gateway.networking.k8s.io/podinfo
 ```
+
+## Expose the app outside the cluster
+
+Find the external address of Contour's Envoy load balancer:
+
+```bash
+export ADDRESS="$(kubectl -n projectcontour get svc/envoy -ojson \
+| jq -r ".status.loadBalancer.ingress[].hostname")"
+echo $ADDRESS
+```
+
+Configure your DNS server with a CNAME record \(AWS\) or A record \(GKE/AKS/DOKS\) and point a domain e.g. `app.example.com` to the LB address.
+
+Now you can access the podinfo UI using your domain address.
+
+Note that you should be using HTTPS when exposing production workloads on internet. You can obtain free TLS certs from Let's Encrypt, read this [guide](https://github.com/stefanprodan/eks-contour-ingress) on how to configure cert-manager to secure Contour with TLS certificates.
+
+If you're using a local cluster via kind/k3s you can port forward the Envoy LoadBalancer service:
+```bash
+kubectl port-forward -n projectcontour svc/envoy 8080:80
+```
+
+Now you can access the podinfo UI on `localhost:8080`
 
 ## Automated canary promotion
 
