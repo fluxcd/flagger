@@ -109,7 +109,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if len(canary.GetAnalysis().Match) > 0 {
 		analysisMatches, _ := gwr.mapRouteMatches(canary.GetAnalysis().Match)
 		// serviceMatches, _ := gwr.mapRouteMatches(canary.Spec.Service.Match)
-		httpRouteSpec.Rules[0].Matches = analysisMatches
+		httpRouteSpec.Rules[0].Matches = gwr.mergeMatchConditions(analysisMatches, matches)
 		httpRouteSpec.Rules = append(httpRouteSpec.Rules, v1alpha2.HTTPRouteRule{
 			Matches: matches,
 			BackendRefs: []v1alpha2.HTTPBackendRef{
@@ -165,16 +165,17 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	if httpRoute != nil {
-		if diff := cmp.Diff(
+		diff := cmp.Diff(
 			httpRoute.Spec, httpRouteSpec,
 			cmpopts.IgnoreFields(v1alpha2.BackendRef{}, "Weight"),
-		); diff != "" {
+		)
+		if diff != "" && httpRoute.Name != "" {
 			hrClone := httpRoute.DeepCopy()
 			hrClone.Spec = httpRouteSpec
 			_, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).
 				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 			if err != nil {
-				return fmt.Errorf("HTTPRoute %s.%s update error: %w", hrClone.GetName(), hrNamespace, err)
+				return fmt.Errorf("HTTPRoute %s.%s update error: %w while reconciling", hrClone.GetName(), hrNamespace, err)
 			}
 			gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 				Infof("HTTPProxy %s.%s updated", hrClone.GetName(), hrNamespace)
@@ -275,7 +276,7 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	// A/B testing
 	if len(canary.GetAnalysis().Match) > 0 {
 		analysisMatches, _ := gwr.mapRouteMatches(canary.GetAnalysis().Match)
-		hrClone.Spec.Rules[0].Matches = analysisMatches
+		hrClone.Spec.Rules[0].Matches = gwr.mergeMatchConditions(analysisMatches, matches)
 		hrClone.Spec.Rules = append(hrClone.Spec.Rules, v1alpha2.HTTPRouteRule{
 			Matches: matches,
 			BackendRefs: []v1alpha2.HTTPBackendRef{
@@ -288,8 +289,11 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 
 	_, err = gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("HTTPRoute %s.%s update error: %w", hrClone.GetName(), hrNamespace, err)
+		return fmt.Errorf("HTTPRoute %s.%s update error: %w while setting weights", hrClone.GetName(), hrNamespace, err)
 	}
+	gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+		Infof("HTTPProxy %s.%s weights updated", hrClone.GetName(), hrNamespace)
+
 	return nil
 }
 
@@ -385,4 +389,26 @@ func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32) 
 		},
 		Weight: &weight,
 	}
+}
+
+func (gwr *GatewayAPIRouter) mergeMatchConditions(analysis, service []v1alpha2.HTTPRouteMatch) []v1alpha2.HTTPRouteMatch {
+	if len(analysis) == 0 {
+		return service
+	}
+
+	merged := make([]v1alpha2.HTTPRouteMatch, len(service)*len(analysis))
+	num := 0
+	for _, a := range analysis {
+		for _, s := range service {
+			merged[num] = *s.DeepCopy()
+			if len(a.Headers) > 0 {
+				merged[num].Headers = a.Headers
+			}
+			if len(a.QueryParams) > 0 {
+				merged[num].QueryParams = a.QueryParams
+			}
+			num++
+		}
+	}
+	return merged
 }

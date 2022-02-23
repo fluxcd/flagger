@@ -9,3 +9,5 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 
 "$REPO_ROOT"/test/workloads/init.sh
 "$DIR"/test-canary.sh
+"$DIR"/test-bg.sh
+"$DIR"/test-ab.sh
