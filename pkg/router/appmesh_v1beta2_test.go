@@ -157,6 +157,48 @@ func TestAppmesv1beta2hRouter_ABTest(t *testing.T) {
 	assert.Equal(t, "test", *vrApex.Spec.Routes[0].HTTPRoute.Match.Headers[0].Match.Exact)
 }
 
+func TestAppmeshv1beta2Router_OutlierDetection(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &AppMeshv1beta2Router{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	_, primaryName, _ := mocks.appmeshCanaryWithOutlierDetection.GetServiceNames()
+	err := router.Reconcile(mocks.appmeshCanaryWithOutlierDetection)
+	require.NoError(t, err)
+
+	vn, err := router.appmeshClient.AppmeshV1beta2().VirtualNodes("default").Get(context.TODO(), primaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.Equal(t, mocks.appmeshCanaryWithOutlierDetection.Spec.Service.OutlierDetection.MaxServerErrors, vn.Spec.Listeners[0].OutlierDetection.MaxServerErrors)
+	assert.Equal(t, mocks.appmeshCanaryWithOutlierDetection.Spec.Service.OutlierDetection.MaxEjectionPercent, vn.Spec.Listeners[0].OutlierDetection.MaxEjectionPercent)
+	assert.Equal(t, mocks.appmeshCanaryWithOutlierDetection.Spec.Service.OutlierDetection.Interval, vn.Spec.Listeners[0].OutlierDetection.Interval)
+	assert.Equal(t, mocks.appmeshCanaryWithOutlierDetection.Spec.Service.OutlierDetection.BaseEjectionDuration, vn.Spec.Listeners[0].OutlierDetection.BaseEjectionDuration)
+}
+
+func TestAppmeshv1beta2Router_ConnectionPool(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &AppMeshv1beta2Router{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	_, primaryName, _ := mocks.appmeshCanaryWithConnectionPool.GetServiceNames()
+	err := router.Reconcile(mocks.appmeshCanaryWithConnectionPool)
+	require.NoError(t, err)
+
+	vn, err := router.appmeshClient.AppmeshV1beta2().VirtualNodes("default").Get(context.TODO(), primaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.Equal(t, mocks.appmeshCanaryWithConnectionPool.Spec.Service.ConnectionPool.HTTP.MaxConnections, vn.Spec.Listeners[0].ConnectionPool.HTTP.MaxConnections)
+	assert.Equal(t, mocks.appmeshCanaryWithConnectionPool.Spec.Service.ConnectionPool.HTTP.MaxPendingRequests, vn.Spec.Listeners[0].ConnectionPool.HTTP.MaxPendingRequests)
+}
+
 func TestAppmeshv1beta2Router_Gateway(t *testing.T) {
 	mocks := newFixture(nil)
 	router := &AppMeshv1beta2Router{
