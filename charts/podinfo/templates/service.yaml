@@ -1,4 +1,4 @@
-{{- if not .Values.canary.enabled }}
+{{- if not .Values.service.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
