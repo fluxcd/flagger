@@ -6,7 +6,6 @@ check_primary() {
     retries=50
     count=0
     ok=false
-    echo $namespace
     until ${ok}; do
         kubectl get -n ${namespace} canary/podinfo | grep 'Initialized' && ok=true || ok=false
         sleep 5

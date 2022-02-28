@@ -1,8 +1,10 @@
-# Gateway API Canary Deployments
+# Gateway API A/B Testing
 
-This guide shows you how to use Gateway API and Flagger to automate canary deployments.
+This guide shows you how to use Gateway API and Flagger to automate A/B testing.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-gatewayapi-canary.png)
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
+
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
 
 ## Prerequisites
 
@@ -153,7 +155,7 @@ spec:
     # percentage (0-100)
     stepWeight: 10
     metrics:
-    - name: request-success-rate
+    - name: error-rate
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       templateRef:
@@ -183,8 +185,10 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io -H 'X-Canary: insider' http://envoy.projectcontour/"
 ```
+
+The above configuration will run an analysis for ten minutes targeting those users that have an insider cookie.
 
 Save the above resource as podinfo-canary.yaml and then apply it:
 
@@ -248,10 +252,9 @@ podinfod=stefanprodan/podinfo:3.1.1
 Flagger detects that the deployment revision changed and starts a new rollout:
 
 ```text
-kubectl -n test describe canary/podinfo
+kubectl -n test describe canary/abtest
 
 Status:
-  Canary Weight:         0
   Failed Checks:         0
   Phase:                 Succeeded
 Events:
@@ -260,16 +263,16 @@ Events:
   Normal   Synced  3m    flagger  New revision detected podinfo.test
   Normal   Synced  3m    flagger  Scaling up podinfo.test
   Warning  Synced  3m    flagger  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
-  Normal   Synced  2m    flagger  Advance podinfo.test canary weight 20
-  Normal   Synced  2m    flagger  Advance podinfo.test canary weight 25
-  Normal   Synced  1m    flagger  Advance podinfo.test canary weight 30
-  Normal   Synced  1m    flagger  Advance podinfo.test canary weight 35
-  Normal   Synced  55s   flagger  Advance podinfo.test canary weight 40
-  Normal   Synced  45s   flagger  Advance podinfo.test canary weight 45
-  Normal   Synced  35s   flagger  Advance podinfo.test canary weight 50
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 1/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 2/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 3/10
+  Normal   Synced  2m    flagger  Advance podinfo.test canary iteration 4/10
+  Normal   Synced  2m    flagger  Advance podinfo.test canary iteration 5/10
+  Normal   Synced  1m    flagger  Advance podinfo.test canary iteration 6/10
+  Normal   Synced  1m    flagger  Advance podinfo.test canary iteration 7/10
+  Normal   Synced  55s   flagger  Advance podinfo.test canary iteration 8/10
+  Normal   Synced  45s   flagger  Advance podinfo.test canary iteration 9/10
+  Normal   Synced  35s   flagger  Advance podinfo.test canary iteration 10/10
   Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
   Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
@@ -283,7 +286,7 @@ A canary deployment is triggered by changes in any of the following objects:
 * ConfigMaps mounted as volumes or mapped to environment variables
 * Secrets mounted as volumes or mapped to environment variables
 
-You can monitor how Flagger progressively changes the weights of the HTTPRoute object that is attahed to the Gateway with:
+You can monitor how Flagger changes the weights of the HTTPRoute object that is attahed to the Gateway with:
 
 ```bash
 watch kubectl get httproute -n test podinfo -o=jsonpath='{.spec.rules}'
@@ -335,22 +338,18 @@ When the number of failed checks reaches the canary analysis threshold, the traf
 kubectl -n test describe canary/podinfo
 
 Status:
-  Canary Weight:         0
-  Failed Checks:         10
+  Failed Checks:         2
   Phase:                 Failed
 Events:
   Type     Reason  Age   From     Message
   ----     ------  ----  ----     -------
   Normal   Synced  3m    flagger  Starting canary deployment for podinfo.test
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
-  Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 1/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 2/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 3/10
   Normal   Synced  3m    flagger  Halt podinfo.test advancement success rate 69.17% < 99%
   Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 61.39% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 55.06% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 47.00% < 99%
-  Normal   Synced  2m    flagger  (combined from similar events): Halt podinfo.test advancement success rate 38.08% < 99%
-  Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
+  Warning  Synced  2m    flagger  Rolling back podinfo.test failed checks threshold reached 2
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
