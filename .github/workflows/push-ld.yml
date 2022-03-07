@@ -2,6 +2,9 @@ name: push-ld
 on:
   workflow_dispatch:
 
+env:
+  IMAGE: "ghcr.io/fluxcd/flagger-loadtester"
+
 permissions:
   contents: write # needed to write releases
   packages: write # needed for ghcr access
@@ -28,6 +31,14 @@ jobs:
           registry: ghcr.io
           username: fluxcdbot
           password: ${{ secrets.GHCR_TOKEN }}
+      - name: Generate image meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.prep.outputs.VERSION }}
       - name: Publish image
         uses: docker/build-push-action@v2
         with:
@@ -35,9 +46,11 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: ./Dockerfile.loadtester
-          platforms: linux/amd64
-          tags: |
-            ghcr.io/fluxcd/flagger-loadtester:${{ steps.prep.outputs.VERSION }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            REVISION=${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
       - name: Check images
         run: |
-          docker buildx imagetools inspect ghcr.io/fluxcd/flagger-loadtester:${{ steps.prep.outputs.VERSION }}
+          docker buildx imagetools inspect ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
