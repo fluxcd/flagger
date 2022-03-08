@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/fluxcd/flagger/pkg/loadtester"
@@ -32,6 +33,7 @@ var (
 	logLevel          string
 	port              string
 	timeout           time.Duration
+	namespaceRegexp   string
 	zapReplaceGlobals bool
 	zapEncoding       string
 )
@@ -40,6 +42,7 @@ func init() {
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "9090", "Port to listen on.")
 	flag.DurationVar(&timeout, "timeout", time.Hour, "Load test exec timeout.")
+	flag.StringVar(&namespaceRegexp, "namespace-regexp", "", "Restrict access to canaries in matching namespaces.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 }
@@ -66,5 +69,12 @@ func main() {
 	logger.Infof("Starting load tester v%s API on port %s", VERSION, port)
 
 	gateStorage := loadtester.NewGateStorage("in-memory")
-	loadtester.ListenAndServe(port, time.Minute, logger, taskRunner, gateStorage, stopCh)
+
+	var namespaceRegexpCompiled *regexp.Regexp
+	if namespaceRegexp != "" {
+		namespaceRegexpCompiled = regexp.MustCompile(namespaceRegexp)
+	}
+	authorizer := loadtester.NewAuthorizer(namespaceRegexpCompiled)
+
+	loadtester.ListenAndServe(port, time.Minute, logger, taskRunner, gateStorage, authorizer, stopCh)
 }

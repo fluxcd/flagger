@@ -143,7 +143,8 @@ helm repo add flagger https://flagger.app
 
 helm upgrade -i flagger-loadtester flagger/loadtester \
 --namespace=test \
---set cmd.timeout=1h
+--set cmd.timeout=1h \
+--set cmd.namespaceRegexp=''
 ```
 
 When deployed the load tester API will be available at `http://flagger-loadtester.test/`.

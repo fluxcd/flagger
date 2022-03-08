@@ -46,7 +46,7 @@ func TestServer_HandleNewBashTaskCmdExitZero(t *testing.T) {
 			"cmd":  "echo some-output-not-to-be-returned",
 		},
 	})
-	HandleNewTask(mocks.logger, mocks.taskRunner)(resp, req)
+	HandleNewTask(mocks.logger, mocks.taskRunner, NewAuthorizer(nil))(resp, req)
 
 	assert.Equal(t, http.StatusOK, resp.Code)
 	assert.Empty(t, resp.Body.String())
@@ -62,7 +62,7 @@ func TestServer_HandleNewBashTaskCmdExitZeroReturnCmdOutput(t *testing.T) {
 			"returnCmdOutput": "true",
 		},
 	})
-	HandleNewTask(mocks.logger, mocks.taskRunner)(resp, req)
+	HandleNewTask(mocks.logger, mocks.taskRunner, NewAuthorizer(nil))(resp, req)
 
 	assert.Equal(t, http.StatusOK, resp.Code)
 	assert.Equal(t, "some-output-to-be-returned\n", resp.Body.String())
@@ -78,7 +78,7 @@ func TestServer_HandleNewBashTaskCmdExitNonZero(t *testing.T) {
 		},
 	})
 
-	HandleNewTask(mocks.logger, mocks.taskRunner)(resp, req)
+	HandleNewTask(mocks.logger, mocks.taskRunner, NewAuthorizer(nil))(resp, req)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.Code)
 	assert.Equal(t, "command false failed: : exit status 1", resp.Body.String())

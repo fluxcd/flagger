@@ -31,7 +31,7 @@ import (
 )
 
 // ListenAndServe starts a web server and waits for SIGTERM
-func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogger, taskRunner *TaskRunner, gate *GateStorage, stopCh <-chan struct{}) {
+func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogger, taskRunner *TaskRunner, gate *GateStorage, authorizer *Authorizer, stopCh <-chan struct{}) {
 	mux := http.DefaultServeMux
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/healthz", HandleHealthz)
@@ -57,6 +57,12 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		if err != nil {
 			logger.Error("decoding the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if !authorizer.Authorize(canary) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
 			return
 		}
 
@@ -90,6 +96,12 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
+		if !authorizer.Authorize(canary) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
+			return
+		}
+
 		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
 		gate.open(canaryName)
 
@@ -115,6 +127,12 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
+		if !authorizer.Authorize(canary) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
+			return
+		}
+
 		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
 		gate.close(canaryName)
 
@@ -137,6 +155,12 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		if err != nil {
 			logger.Error("decoding the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if !authorizer.Authorize(canary) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
 			return
 		}
 
@@ -169,6 +193,12 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
+		if !authorizer.Authorize(canary) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
+			return
+		}
+
 		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
 		gate.open(canaryName)
 
@@ -193,6 +223,12 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
+		if !authorizer.Authorize(canary) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
+			return
+		}
+
 		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
 		gate.close(canaryName)
 
@@ -201,7 +237,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 		logger.Infof("%s rollback closed", canaryName)
 	})
 
-	mux.HandleFunc("/", HandleNewTask(logger, taskRunner))
+	mux.HandleFunc("/", HandleNewTask(logger, taskRunner, authorizer))
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
@@ -233,7 +269,7 @@ func HandleHealthz(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleNewTask handles task creation requests
-func HandleNewTask(logger *zap.SugaredLogger, taskRunner TaskRunnerInterface) func(w http.ResponseWriter, r *http.Request) {
+func HandleNewTask(logger *zap.SugaredLogger, taskRunner TaskRunnerInterface, authorizer *Authorizer) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -248,6 +284,12 @@ func HandleNewTask(logger *zap.SugaredLogger, taskRunner TaskRunnerInterface) fu
 		if err != nil {
 			logger.Error("decoding the request body failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if !authorizer.Authorize(payload) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden"))
 			return
 		}
 
