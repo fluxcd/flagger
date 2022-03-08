@@ -115,7 +115,7 @@ func hasFinalizer(canary *flaggerv1.Canary) bool {
 	return false
 }
 
-// addFinalizer adds a provided finalizer to the specified canary resource.
+// addFinalizer adds a provided finalizer (if it already doesn't exist) to the specified canary resource.
 // If failures occur the error will be returned otherwise the action is deemed successful
 // and error will be nil.
 func (c *Controller) addFinalizer(canary *flaggerv1.Canary) error {
@@ -128,11 +128,14 @@ func (c *Controller) addFinalizer(canary *flaggerv1.Canary) error {
 				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
 			}
 		}
+		firstTry = false
 
 		cCopy := canary.DeepCopy()
-		cCopy.ObjectMeta.Finalizers = append(cCopy.ObjectMeta.Finalizers, finalizer)
-		_, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(context.TODO(), cCopy, metav1.UpdateOptions{})
-		firstTry = false
+		if !hasFinalizer(cCopy) {
+			cCopy.ObjectMeta.Finalizers = append(cCopy.ObjectMeta.Finalizers, finalizer)
+			_, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Update(context.TODO(), cCopy, metav1.UpdateOptions{})
+		}
+
 		return
 	})
 
