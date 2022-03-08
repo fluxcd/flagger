@@ -6,14 +6,9 @@ ARG REVISION
 
 RUN apk --no-cache add alpine-sdk perl curl bash tar
 
-RUN HELM2_VERSION=2.17.0 && \
-curl -sSL "https://get.helm.sh/helm-v${HELM2_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
-chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm && \
-chmod +x linux-${TARGETARCH}/tiller && mv linux-${TARGETARCH}/tiller /usr/local/bin/tiller
-
 RUN HELM3_VERSION=3.7.2 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
-chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helmv3
+chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
 RUN GRPC_HEALTH_PROBE_VERSION=v0.4.6 && \
 wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-${TARGETARCH} && \
@@ -23,10 +18,6 @@ RUN GHZ_VERSION=0.105.0 && \
 curl -sSL "https://github.com/bojand/ghz/archive/refs/tags/v${GHZ_VERSION}.tar.gz" | tar xz -C /tmp && \
 cd /tmp/ghz-${GHZ_VERSION}/cmd/ghz && GOARCH=$TARGETARCH go build . && mv ghz /usr/local/bin && \
 chmod +x /usr/local/bin/ghz
-
-RUN HELM_TILLER_VERSION=0.9.3 && \
-curl -sSL "https://github.com/rimusz/helm-tiller/archive/refs/tags/v${HELM_TILLER_VERSION}.tar.gz" | \
-tar xz -C /tmp && mv /tmp/helm-tiller-${HELM_TILLER_VERSION} /tmp/helm-tiller
 
 WORKDIR /workspace
 
@@ -58,11 +49,8 @@ COPY --from=bats/bats:v1.1.0 /opt/bats/ /opt/bats/
 RUN ln -s /opt/bats/bin/bats /usr/local/bin/
 
 COPY --from=builder /usr/local/bin/helm /usr/local/bin/
-COPY --from=builder /usr/local/bin/tiller /usr/local/bin/
 COPY --from=builder /usr/local/bin/ghz /usr/local/bin/
-COPY --from=builder /usr/local/bin/helmv3 /usr/local/bin/
 COPY --from=builder /usr/local/bin/grpc_health_probe /usr/local/bin/
-COPY --from=builder /tmp/helm-tiller /tmp/helm-tiller
 
 ADD https://raw.githubusercontent.com/grpc/grpc-proto/master/grpc/health/v1/health.proto /tmp/ghz/health.proto
 
@@ -74,9 +62,6 @@ USER app
 # test load generator tools
 RUN hey -n 1 -c 1 https://flagger.app > /dev/null && echo $? | grep 0
 RUN wrk -d 1s -c 1 -t 1 https://flagger.app > /dev/null && echo $? | grep 0
-
-# install Helm v2 plugins
-RUN helm init --stable-repo-url=https://charts.helm.sh/stable --client-only && helm plugin install /tmp/helm-tiller
 
 COPY --from=builder --chown=app:app /workspace/loadtester .
 
