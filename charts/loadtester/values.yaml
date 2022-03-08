@@ -17,6 +17,7 @@ podPriorityClassName: ""
 logLevel: info
 cmd:
   timeout: 1h
+  namespaceRegexp: ""
 
 nameOverride: ""
 fullnameOverride: ""

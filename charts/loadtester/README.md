@@ -59,6 +59,7 @@ Parameter | Description | Default
 `service.type` | Type of service | `ClusterIP`
 `service.port` | ClusterIP port | `80`
 `cmd.timeout` | Command execution timeout | `1h`
+`cmd.namespaceRegexp` | Restrict access to canaries in matching namespaces | ""
 `logLevel` | Log level can be debug, info, warning, error or panic | `info`
 `appmesh.enabled` | Create AWS App Mesh v1beta2 virtual node | `false`
 `appmesh.backends` | AWS App Mesh virtual services | `none`
