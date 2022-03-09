@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The Flux authors
+Copyright 2020, 2022 The Flux authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import (
 )
 
 const TaskTypeHelmv3 = "helmv3"
+const TaskTypeHelm = "helm"
 
 type HelmTaskv3 struct {
 	TaskBase
@@ -39,7 +40,7 @@ func (task *HelmTaskv3) Run(ctx context.Context) (*TaskRunResult, error) {
 	helmCmd := fmt.Sprintf("%s %s", TaskTypeHelmv3, task.command)
 	task.logger.With("canary", task.canary).Infof("running command %v", helmCmd)
 
-	cmd := exec.CommandContext(ctx, TaskTypeHelmv3, strings.Fields(task.command)...)
+	cmd := exec.CommandContext(ctx, TaskTypeHelm, strings.Fields(task.command)...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		task.logger.With("canary", task.canary).Errorf("command failed %s %v %s", task.command, err, out)
