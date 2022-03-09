@@ -28,7 +28,7 @@ helm upgrade -i flagger ${REPO_ROOT}/charts/flagger \
 --set prometheus.install=true \
 --set meshProvider=nginx
 
-kubectl -n ingress-nginx set image deployment/flagger flagger=test/flagger:latest
+# kubectl -n ingress-nginx set image deployment/flagger flagger=test/flagger:latest
 
 kubectl -n ingress-nginx rollout status deployment/flagger
 kubectl -n ingress-nginx rollout status deployment/flagger-prometheus
