@@ -111,6 +111,13 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 				Hostname: host,
 			},
 		},
+		Logging: &appmeshv1.Logging{
+			AccessLog: &appmeshv1.AccessLog{
+				File: &appmeshv1.FileAccessLog{
+					Path: "/dev/stdout",
+				},
+			},
+		},
 		PodSelector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				ar.labelSelector: podSelector,

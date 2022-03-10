@@ -112,6 +112,13 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 				HostName: host,
 			},
 		},
+		Logging: &appmeshv1.Logging{
+			AccessLog: &appmeshv1.AccessLog{
+				File: &appmeshv1.FileAccessLog{
+					Path: "/dev/stdout",
+				},
+			},
+		},
 	}
 
 	backends := make([]appmeshv1.Backend, len(canary.Spec.Service.Backends))
