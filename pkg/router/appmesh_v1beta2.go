@@ -125,6 +125,7 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 		},
 	}
 
+
 	backends := make([]appmeshv1.Backend, 0)
 	for i := range canary.Spec.Service.Backends {
 		if strings.HasPrefix(canary.Spec.Service.Backends[i], "arn:aws") {
