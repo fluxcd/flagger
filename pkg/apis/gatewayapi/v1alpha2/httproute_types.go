@@ -851,3 +851,29 @@ type HTTPBackendRef struct {
 type HTTPRouteStatus struct {
 	RouteStatus `json:",inline"`
 }
+
+// Hostname is the fully qualified domain name of a network host. This matches
+// the RFC 1123 definition of a hostname with 2 notable exceptions:
+//
+// 1. IPs are not allowed.
+// 2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard
+//    label must appear by itself as the first label.
+//
+// Hostname can be "precise" which is a domain name without the terminating
+// dot of a network host (e.g. "foo.example.com") or "wildcard", which is a
+// domain name prefixed with a single wildcard label (e.g. `*.example.com`).
+//
+// Note that as per RFC1035 and RFC1123, a *label* must consist of lower case
+// alphanumeric characters or '-', and must start and end with an alphanumeric
+// character. No other punctuation is allowed.
+//
+// +kubebuilder:validation:MinLength=1
+// +kubebuilder:validation:MaxLength=253
+// +kubebuilder:validation:Pattern=`^(\*\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+type Hostname string
+
+// PortNumber defines a network port.
+//
+// +kubebuilder:validation:Minimum=1
+// +kubebuilder:validation:Maximum=65535
+type PortNumber int32

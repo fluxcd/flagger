@@ -28,10 +28,6 @@ type FakeGatewayapiV1alpha2 struct {
 	*testing.Fake
 }
 
-func (c *FakeGatewayapiV1alpha2) Gateways(namespace string) v1alpha2.GatewayInterface {
-	return &FakeGateways{c, namespace}
-}
-
 func (c *FakeGatewayapiV1alpha2) HTTPRoutes(namespace string) v1alpha2.HTTPRouteInterface {
 	return &FakeHTTPRoutes{c, namespace}
 }

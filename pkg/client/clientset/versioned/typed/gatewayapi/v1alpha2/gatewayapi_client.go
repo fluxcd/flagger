@@ -28,17 +28,12 @@ import (
 
 type GatewayapiV1alpha2Interface interface {
 	RESTClient() rest.Interface
-	GatewaysGetter
 	HTTPRoutesGetter
 }
 
 // GatewayapiV1alpha2Client is used to interact with features provided by the gatewayapi group.
 type GatewayapiV1alpha2Client struct {
 	restClient rest.Interface
-}
-
-func (c *GatewayapiV1alpha2Client) Gateways(namespace string) GatewayInterface {
-	return newGateways(c, namespace)
 }
 
 func (c *GatewayapiV1alpha2Client) HTTPRoutes(namespace string) HTTPRouteInterface {
