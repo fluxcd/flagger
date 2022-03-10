@@ -208,6 +208,17 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	replicas := int32p(1)
 	if dep.Spec.Replicas != nil && *dep.Spec.Replicas > 0 {
 		replicas = dep.Spec.Replicas
+	} else if cd.Spec.AutoscalerRef == nil {
+		// If HPA isn't set and replicas are not specified, it uses the primary replicas when scaling up the canary
+		primaryName := fmt.Sprintf("%s-primary", targetName)
+		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
+
+		if primary.Spec.Replicas != nil && *primary.Spec.Replicas > 0 {
+			replicas = primary.Spec.Replicas
+		}
 	}
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = replicas
