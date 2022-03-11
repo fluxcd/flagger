@@ -11,8 +11,7 @@ Flagger requires a Kubernetes cluster **v1.16** or newer and any mesh/ingress th
 Install the GatewayAPI CRDs:
 
 ```bash
-kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.4.1" \
-| kubectl apply -f -
+kubectl apply -k github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.4.1
 ```
 
 Install a cluster-wide GatewayClass; a Gateway belonging to the GatewayClass and Contour components in the `projectcontour` namespace:
@@ -153,8 +152,8 @@ spec:
     # percentage (0-100)
     stepWeight: 10
     metrics:
-    - name: request-success-rate
-      # minimum req success rate (non 5xx responses)
+    - name: error-rate
+      # max error rate (5xx responses)
       # percentage (0-100)
       templateRef:
         name: error-rate
@@ -193,8 +192,6 @@ kubectl apply -f ./podinfo-canary.yaml
 ```
 
 When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary. The canary analysis will run for five minutes while validating the HTTP metrics and rollout hooks every minute.
-
-![Flagger Canary Process](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-hpa.png)
 
 After a couple of seconds Flagger will create the canary objects:
 
@@ -242,7 +239,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:3.1.1
+podinfod=stefanprodan/podinfo:6.0.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -295,9 +292,9 @@ You can monitor all canaries with:
 watch kubectl get canaries --all-namespaces
 
 NAMESPACE   NAME      STATUS        WEIGHT   LASTTRANSITIONTIME
-test        podinfo   Progressing   15       2019-01-16T14:05:07Z
-prod        frontend  Succeeded     0        2019-01-15T16:15:07Z
-prod        backend   Failed        0        2019-01-14T17:05:07Z
+test        podinfo   Progressing   15       2022-01-16T14:05:07Z
+prod        frontend  Succeeded     0        2022-01-15T16:15:07Z
+prod        backend   Failed        0        2022-01-14T17:05:07Z
 ```
 
 ## Automated rollback
@@ -308,7 +305,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:3.1.2
+podinfod=stefanprodan/podinfo:6.0.2
 ```
 
 Exec into the load tester pod with:
@@ -345,13 +342,143 @@ Events:
   Normal   Synced  3m    flagger  Advance podinfo.test canary weight 5
   Normal   Synced  3m    flagger  Advance podinfo.test canary weight 10
   Normal   Synced  3m    flagger  Advance podinfo.test canary weight 15
-  Normal   Synced  3m    flagger  Halt podinfo.test advancement success rate 69.17% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 61.39% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 55.06% < 99%
-  Normal   Synced  2m    flagger  Halt podinfo.test advancement success rate 47.00% < 99%
-  Normal   Synced  2m    flagger  (combined from similar events): Halt podinfo.test advancement success rate 38.08% < 99%
+  Normal   Synced  3m    flagger  Halt podinfo.test advancement error rate 69.17% > 1%
+  Normal   Synced  2m    flagger  Halt podinfo.test advancement error rate 61.39% > 1%
+  Normal   Synced  2m    flagger  Halt podinfo.test advancement error rate 55.06% > 1%
+  Normal   Synced  2m    flagger  Halt podinfo.test advancement error rate 47.00% > 1%
+  Normal   Synced  2m    flagger  (combined from similar events): Halt podinfo.test advancement error rate 38.08% > 1%
   Warning  Synced  1m    flagger  Rolling back podinfo.test failed checks threshold reached 10
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
+
+# A/B Testing
+
+Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
+
+![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
+
+Create a canary custom resource \(replace "loaclproject.contour.io" with your own domain\):
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  # deployment reference
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  # the maximum time in seconds for the canary deployment
+  # to make progress before it is rollback (default 600s)
+  progressDeadlineSeconds: 60
+  # HPA reference (optional)
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta2
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  service:
+    # service port number
+    port: 9898
+    # container port number or name (optional)
+    targetPort: 9898
+    # Gateway API HTTPRoute host names
+    hosts:
+     - localproject.contour.io
+    # Reference to the Gateway that the generated HTTPRoute would attach to.
+    gatewayRefs:
+      - name: contour
+        namespace: projectcontour
+  analysis:
+    # schedule interval (default 60s)
+    interval: 1m
+    # max number of failed metric checks before rollback
+    threshold: 5
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 10
+    metrics:
+    - name: error-rate
+      # max error rate (5xx responses)
+      # percentage (0-100)
+      templateRef:
+        name: error-rate
+        namespace: flagger-system
+      thresholdRange:
+        max: 1
+      interval: 1m
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: flagger-system
+      # seconds
+      thresholdRange:
+         max: 0.5
+      interval: 30s
+    # testing (optional)
+    webhooks:
+      - name: smoke-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 15s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'anon' http://podinfo-canary.test:9898/token | grep token"
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io -H 'X-Canary: insider' http://envoy.projectcontour/"
+```
+
+The above configuration will run an analysis for ten minutes targeting those users that have an insider cookie.
+
+Save the above resource as podinfo-ab-canary.yaml and then apply it:
+
+```bash
+kubectl apply -f ./podinfo-ab-canary.yaml
+```
+
+Trigger a canary deployment by updating the container image:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=stefanprodan/podinfo:6.0.3
+```
+
+Flagger detects that the deployment revision changed and starts a new rollout:
+
+```text
+kubectl -n test describe canary/abtest
+
+Status:
+  Failed Checks:         0
+  Phase:                 Succeeded
+Events:
+  Type     Reason  Age   From     Message
+  ----     ------  ----  ----     -------
+  Normal   Synced  3m    flagger  New revision detected podinfo.test
+  Normal   Synced  3m    flagger  Scaling up podinfo.test
+  Warning  Synced  3m    flagger  Waiting for podinfo.test rollout to finish: 0 of 1 updated replicas are available
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 1/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 2/10
+  Normal   Synced  3m    flagger  Advance podinfo.test canary iteration 3/10
+  Normal   Synced  2m    flagger  Advance podinfo.test canary iteration 4/10
+  Normal   Synced  2m    flagger  Advance podinfo.test canary iteration 5/10
+  Normal   Synced  1m    flagger  Advance podinfo.test canary iteration 6/10
+  Normal   Synced  1m    flagger  Advance podinfo.test canary iteration 7/10
+  Normal   Synced  55s   flagger  Advance podinfo.test canary iteration 8/10
+  Normal   Synced  45s   flagger  Advance podinfo.test canary iteration 9/10
+  Normal   Synced  35s   flagger  Advance podinfo.test canary iteration 10/10
+  Normal   Synced  25s   flagger  Copying podinfo.test template spec to podinfo-primary.test
+  Warning  Synced  15s   flagger  Waiting for podinfo-primary.test rollout to finish: 1 of 2 updated replicas are available
+  Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
+```
+
 
 The above procedures can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
