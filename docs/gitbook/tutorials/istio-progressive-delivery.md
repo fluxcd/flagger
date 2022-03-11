@@ -185,7 +185,7 @@ Trigger a canary deployment by updating the container image:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:3.1.1
+podinfod=ghcr.io/stefanprodan/podinfo:6.0.1
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -245,7 +245,7 @@ Trigger another canary deployment:
 
 ```bash
 kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:3.1.2
+podinfod=ghcr.io/stefanprodan/podinfo:6.0.2
 ```
 
 Exec into the load tester pod with:

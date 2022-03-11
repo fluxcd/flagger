@@ -320,7 +320,7 @@ After a couple of seconds Flux will apply the Kubernetes resources from Git and 
 A CI/CD pipeline for the `frontend` release could look like this:
 
 * cut a release from the master branch of the podinfo code repo with the git tag `3.1.1`
-* CI builds the image and pushes the `podinfo:3.1.1` image to the container registry
+* CI builds the image and pushes the `podinfo:6.0.1` image to the container registry
 * Flux scans the registry and updates the Helm release `image.tag` to `3.1.1`
 * Flux commits and push the change to the cluster repo
 * Flux applies the updated Helm release on the cluster
