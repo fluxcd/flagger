@@ -27,6 +27,7 @@ import (
 	appmesh "github.com/fluxcd/flagger/pkg/client/informers/externalversions/appmesh"
 	flagger "github.com/fluxcd/flagger/pkg/client/informers/externalversions/flagger"
 	gateway "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gateway"
+	gatewayapi "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gatewayapi"
 	gloo "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gloo"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/fluxcd/flagger/pkg/client/informers/externalversions/istio"
@@ -183,6 +184,7 @@ type SharedInformerFactory interface {
 	Appmesh() appmesh.Interface
 	Flagger() flagger.Interface
 	Gateway() gateway.Interface
+	Gatewayapi() gatewayapi.Interface
 	Gloo() gloo.Interface
 	Networking() istio.Interface
 	Kuma() kuma.Interface
@@ -201,6 +203,10 @@ func (f *sharedInformerFactory) Flagger() flagger.Interface {
 
 func (f *sharedInformerFactory) Gateway() gateway.Interface {
 	return gateway.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Gatewayapi() gatewayapi.Interface {
+	return gatewayapi.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Gloo() gloo.Interface {

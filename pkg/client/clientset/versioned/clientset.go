@@ -26,6 +26,7 @@ import (
 	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
+	gatewayapiv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1alpha2"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
@@ -45,6 +46,7 @@ type Interface interface {
 	AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface
 	FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface
 	GatewayV1() gatewayv1.GatewayV1Interface
+	GatewayapiV1alpha2() gatewayapiv1alpha2.GatewayapiV1alpha2Interface
 	GlooV1() gloov1.GlooV1Interface
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
 	KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface
@@ -63,6 +65,7 @@ type Clientset struct {
 	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
 	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
 	gatewayV1          *gatewayv1.GatewayV1Client
+	gatewayapiV1alpha2 *gatewayapiv1alpha2.GatewayapiV1alpha2Client
 	glooV1             *gloov1.GlooV1Client
 	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
 	kumaV1alpha1       *kumav1alpha1.KumaV1alpha1Client
@@ -91,6 +94,11 @@ func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
 // GatewayV1 retrieves the GatewayV1Client
 func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
 	return c.gatewayV1
+}
+
+// GatewayapiV1alpha2 retrieves the GatewayapiV1alpha2Client
+func (c *Clientset) GatewayapiV1alpha2() gatewayapiv1alpha2.GatewayapiV1alpha2Interface {
+	return c.gatewayapiV1alpha2
 }
 
 // GlooV1 retrieves the GlooV1Client
@@ -189,6 +197,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.gatewayapiV1alpha2, err = gatewayapiv1alpha2.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.glooV1, err = gloov1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -246,6 +258,7 @@ func New(c rest.Interface) *Clientset {
 	cs.appmeshV1beta1 = appmeshv1beta1.New(c)
 	cs.flaggerV1beta1 = flaggerv1beta1.New(c)
 	cs.gatewayV1 = gatewayv1.New(c)
+	cs.gatewayapiV1alpha2 = gatewayapiv1alpha2.New(c)
 	cs.glooV1 = gloov1.New(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
 	cs.kumaV1alpha1 = kumav1alpha1.New(c)

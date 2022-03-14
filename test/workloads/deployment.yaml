@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: podinfo
-  namespace: test
   labels:
     app.kubernetes.io/name: podinfo
     app.kubernetes.io/managed-by: test-label-prefix

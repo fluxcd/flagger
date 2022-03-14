@@ -495,6 +495,40 @@ spec:
                       type: array
                       items:
                         type: string
+                    gatewayRefs:
+                      description: The list of parent Gateways for a HTTPRoute
+                      maxItems: 32
+                      type: array
+                      items:
+                        required:
+                        - name
+                        type: object
+                        properties:
+                          group:
+                            default: gateway.networking.k8s.io
+                            maxLength: 253
+                            pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                            type: string
+                          kind:
+                            default: Gateway
+                            maxLength: 63
+                            minLength: 1
+                            pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                            type: string
+                          name:
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          namespace:
+                            maxLength: 63
+                            minLength: 1
+                            pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                            type: string
+                          sectionName:
+                            maxLength: 253
+                            minLength: 1
+                            pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                            type: string
                     corsPolicy:
                       description: Istio Cross-Origin Resource Sharing policy (CORS)
                       type: object
