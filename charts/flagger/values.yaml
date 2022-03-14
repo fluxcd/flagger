@@ -2,7 +2,7 @@
 
 image:
   repository: ghcr.io/fluxcd/flagger
-  tag: 1.18.0
+  tag: 1.19.0
   pullPolicy: IfNotPresent
   pullSecret:
 
@@ -138,7 +138,7 @@ tolerations: []
 prometheus:
   # to be used with ingress controllers
   install: false
-  image: docker.io/prom/prometheus:v2.32.1
+  image: docker.io/prom/prometheus:v2.33.5
   pullSecret:
   retention: 2h
   # when enabled, it will add a security context for the prometheus pod
