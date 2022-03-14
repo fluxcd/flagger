@@ -399,8 +399,6 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 		diffLabels := cmp.Diff(hpa.ObjectMeta.Labels, primaryHpa.ObjectMeta.Labels)
 		diffAnnotations := cmp.Diff(hpa.ObjectMeta.Annotations, primaryHpa.ObjectMeta.Annotations)
 		if diffMetrics != "" || diffBehavior != "" || diffLabels != "" || diffAnnotations != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
-			fmt.Println(diffMetrics, diffBehavior, hpaSpec.MinReplicas, primaryHpa.Spec.MinReplicas, hpaSpec.MaxReplicas, primaryHpa.Spec.MaxReplicas)
-
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				primaryHpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
 				if err != nil {
