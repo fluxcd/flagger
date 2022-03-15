@@ -1,4 +1,3 @@
-# Gateway API Canary Deployments
 
 This guide shows you how to use [Gateway API](https://gateway-api.sigs.k8s.io/) and Flagger to automate canary deployments and A/B testing.
 
