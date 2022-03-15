@@ -111,18 +111,22 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 				Hostname: host,
 			},
 		},
-		Logging: &appmeshv1.Logging{
-			AccessLog: &appmeshv1.AccessLog{
-				File: &appmeshv1.FileAccessLog{
-					Path: "/dev/stdout",
-				},
-			},
-		},
 		PodSelector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				ar.labelSelector: podSelector,
 			},
 		},
+	}
+
+	//get annotation to enable the access log
+	if canary.ObjectMeta.GetAnnotations()["appmesh.flagger.dev/accesslog"] == "enabled" {
+		vnSpec.Logging = &appmeshv1.Logging{
+			AccessLog: &appmeshv1.AccessLog{
+				File: &appmeshv1.FileAccessLog{
+					Path: "/dev/stdout",
+				},
+			},
+		}
 	}
 
 	backends := make([]appmeshv1.Backend, 0)
