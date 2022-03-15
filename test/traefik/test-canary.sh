@@ -122,14 +122,14 @@ fi
 echo '✔ Canary service custom metadata test passed'
 
 echo '>>> Triggering canary deployment'
-kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
+kubectl -n test set image deployment/podinfo podinfod=ghcr.io/stefanprodan/podinfo:6.0.1
 
 echo '>>> Waiting for canary promotion'
 retries=60
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '6.0.1' && ok=true || ok=false
     sleep 10
     kubectl -n traefik logs deployment/flagger --tail 1
     count=$(($count + 1))

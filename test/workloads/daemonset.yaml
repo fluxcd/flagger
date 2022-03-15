@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: podinfo-ds
-  namespace: test
   labels:
     app.kubernetes.io/name: podinfo-ds
 spec:
@@ -21,7 +20,7 @@ spec:
     spec:
       containers:
       - name: podinfod
-        image: stefanprodan/podinfo:3.1.0
+        image: ghcr.io/stefanprodan/podinfo:6.0.0
         imagePullPolicy: IfNotPresent
         ports:
           - name: http

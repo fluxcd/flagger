@@ -184,21 +184,17 @@ For more details on how the canary analysis and promotion works please [read the
 
 **Service Mesh**
 
-| Feature                                    | App Mesh           | Istio              | Linkerd            | Kuma               | OSM                | SMI                | Kubernetes CNI     |
-|--------------------------------------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
-| Canary deployments (weighted traffic)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| A/B testing (headers and cookies routing)  | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Blue/Green deployments (traffic switch)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Blue/Green deployments (traffic mirroring) | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Webhooks (acceptance/load testing)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Manual gating (approve/pause/resume)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Request duration check (L7 metric)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Custom metric checks                       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-
-For other SMI compatible service mesh solutions like Consul Connect or Nginx Service Mesh,
-[Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus) can be used to implement
-the request success rate and request duration checks.
+| Feature                                    | App Mesh           | Istio              | Linkerd            | Kuma               | OSM                | Kubernetes CNI     |
+|--------------------------------------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
+| Canary deployments (weighted traffic)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| A/B testing (headers and cookies routing)  | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Blue/Green deployments (traffic mirroring) | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Webhooks (acceptance/load testing)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| Request duration check (L7 metric)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| Custom metric checks                       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 **Ingress**
 
@@ -213,6 +209,22 @@ the request success rate and request duration checks.
 | Request duration check (L7 metric)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: |
 | Custom metric checks                      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
+**Networking Interface**
+
+| Feature                                       | Gateway API        | SMI                |
+|-----------------------------------------------|--------------------|--------------------|
+| Canary deployments (weighted traffic)         | :heavy_check_mark: | :heavy_check_mark: |
+| A/B testing (headers and cookies routing)     | :heavy_check_mark: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)       | :heavy_check_mark: | :heavy_check_mark: |
+| Blue/Green deployments (traffic mirrroring)   | :heavy_minus_sign: | :heavy_minus_sign: |
+| Webhooks (acceptance/load testing)            | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)          | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)        | :heavy_minus_sign: | :heavy_minus_sign: |
+| Request duration check (L7 metric)            | :heavy_minus_sign: | :heavy_minus_sign: |
+| Custom metric checks                          | :heavy_check_mark: | :heavy_check_mark: |
+
+For all [Gateway API](https://gateway-api.sigs.k8s.io/) implementations like [Contour](https://projectcontour.io/guides/gateway-api/), [Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/) and [SMI](https://smi-spec.io) compatible service mesh solutions like [Consul Connect](https://www.consul.io/docs/connect) or [Nginx Service Mesh](https://docs.nginx.com/nginx-service-mesh/), [Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus) can be used to implement the request success rate and request duration checks.
+
 ### Roadmap
 
 #### [GitOps Toolkit](https://github.com/fluxcd/flux2) compatibility
@@ -224,7 +236,6 @@ the request success rate and request duration checks.
 
 #### Integrations
 
-* Add support for Kubernetes [Ingress v2](https://github.com/kubernetes-sigs/service-apis)
 * Add support for ingress controllers like HAProxy and ALB
 * Add support for metrics providers like InfluxDB, Stackdriver, SignalFX
 

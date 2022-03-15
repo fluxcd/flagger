@@ -32,6 +32,7 @@
 * [Traefik Canary Deployments](tutorials/traefik-progressive-delivery.md)
 * [Open Service Mesh Deployments](tutorials/osm-progressive-delivery.md)
 * [Kuma Canary Deployments](tutorials/kuma-progressive-delivery.md)
+* [Gateway API Canary Deployments](tutorials/gatewayapi-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
