@@ -495,6 +495,33 @@ histogram_quantile(0.99,
 The analysis can be extended with metrics provided by Prometheus, Datadog, AWS CloudWatch, New Relic and Graphite.
 For more details on how custom metrics can be used, please read the [metrics docs](usage/metrics.md).
 
+#### Istio Gateway API
+
+If you're using Istio with Gateway API, the Prometheus query needs to include `reporter="source"`. For example, to calculate HTTP requests error percentage, the query would be:
+
+```javascript
+100 - sum(
+    rate(
+        istio_requests_total{
+          reporter="source",
+          destination_workload_namespace=~"$namespace",
+          destination_workload=~"$workload",
+          response_code!~"5.*"
+        }[$interval]
+    )
+)
+/
+sum(
+    rate(
+        istio_requests_total{
+          reporter="source",
+          destination_workload_namespace=~"$namespace",
+          destination_workload=~"$workload"
+        }[$interval]
+    )
+) * 100
+```
+
 ## Istio routing
 
 #### How does Flagger interact with Istio?

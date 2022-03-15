@@ -20,6 +20,6 @@ kubectl apply -k ${REPO_ROOT}/kustomize/tester
 kubectl -n test rollout status deployment/flagger-loadtester
 
 echo '>>> Deploy podinfo'
-kubectl apply -f ${REPO_ROOT}/test/workloads/secret.yaml
-kubectl apply -f ${REPO_ROOT}/test/workloads/deployment.yaml
-kubectl apply -f ${REPO_ROOT}/test/workloads/daemonset.yaml
+kubectl apply -f ${REPO_ROOT}/test/workloads/secret.yaml -n test
+kubectl apply -f ${REPO_ROOT}/test/workloads/deployment.yaml -n test
+kubectl apply -f ${REPO_ROOT}/test/workloads/daemonset.yaml -n test

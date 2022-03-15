@@ -208,6 +208,17 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	replicas := int32p(1)
 	if dep.Spec.Replicas != nil && *dep.Spec.Replicas > 0 {
 		replicas = dep.Spec.Replicas
+	} else if cd.Spec.AutoscalerRef == nil {
+		// If HPA isn't set and replicas are not specified, it uses the primary replicas when scaling up the canary
+		primaryName := fmt.Sprintf("%s-primary", targetName)
+		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
+
+		if primary.Spec.Replicas != nil && *primary.Spec.Replicas > 0 {
+			replicas = primary.Spec.Replicas
+		}
 	}
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = replicas
@@ -388,8 +399,6 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 		diffLabels := cmp.Diff(hpa.ObjectMeta.Labels, primaryHpa.ObjectMeta.Labels)
 		diffAnnotations := cmp.Diff(hpa.ObjectMeta.Annotations, primaryHpa.ObjectMeta.Annotations)
 		if diffMetrics != "" || diffBehavior != "" || diffLabels != "" || diffAnnotations != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
-			fmt.Println(diffMetrics, diffBehavior, hpaSpec.MinReplicas, primaryHpa.Spec.MinReplicas, hpaSpec.MaxReplicas, primaryHpa.Spec.MaxReplicas)
-
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				primaryHpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
 				if err != nil {

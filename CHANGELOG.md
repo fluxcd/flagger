@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.19.0
+
+**Release date:** 2022-03-14
+
+This release comes with support for Kubernetes [Gateway API](https://gateway-api.sigs.k8s.io/) v1alpha2.
+For more details see the [Gateway API Progressive Delivery tutorial](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery).
+
+#### Features
+
+- Add Gateway API as a provider
+  [#1108](https://github.com/fluxcd/flagger/pull/1108)
+
+#### Improvements
+
+- Add arm64 support for loadtester
+  [#1128](https://github.com/fluxcd/flagger/pull/1128)
+- Restrict source namespaces in flagger-loadtester
+  [#1119](https://github.com/fluxcd/flagger/pull/1119)
+- Remove support for Helm v2 in loadtester
+  [#1130](https://github.com/fluxcd/flagger/pull/1130)
+
+#### Fixes
+
+- Fix potential canary finalizer duplication
+  [#1125](https://github.com/fluxcd/flagger/pull/1125)
+- Use the primary replicas when scaling up the canary (no hpa)
+  [#1110](https://github.com/fluxcd/flagger/pull/1110)
+
 ## 1.18.0
 
 **Release date:** 2022-02-14

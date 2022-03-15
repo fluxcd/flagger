@@ -13,4 +13,5 @@ const (
 	TraefikProvider    string = "traefik"
 	OsmProvider        string = "osm"
 	KumaProvider       string = "kuma"
+	GatewayAPIProvider string = "gatewayapi"
 )
