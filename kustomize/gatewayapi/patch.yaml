@@ -8,7 +8,7 @@ spec:
       containers:
         - name: flagger
           args:
-            - -log-level=debug
+            - -log-level=info
             - -include-label-prefix=app.kubernetes.io
             - -mesh-provider=gatewayapi:v1alpha2
             - -metrics-server=http://flagger-prometheus:9090
