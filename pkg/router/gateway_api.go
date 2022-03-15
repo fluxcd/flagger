@@ -291,8 +291,6 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s update error: %w while setting weights", hrClone.GetName(), hrNamespace, err)
 	}
-	gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-		Infof("HTTPProxy %s.%s weights updated", hrClone.GetName(), hrNamespace)
 
 	return nil
 }
