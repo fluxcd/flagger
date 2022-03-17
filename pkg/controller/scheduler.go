@@ -347,7 +347,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check if the number of failed checks reached the threshold
-	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing &&
+	if (cd.Status.Phase == flaggerv1.CanaryPhaseProgressing || cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion) &&
 		(!retriable || cd.Status.FailedChecks >= cd.GetAnalysisThreshold()) {
 		if !retriable {
 			c.recordEventWarningf(cd, "Rolling back %s.%s progress deadline exceeded %v",
