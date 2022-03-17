@@ -104,6 +104,24 @@ func (c *Controller) runConfirmPromotionHooks(canary *flaggerv1.Canary, canaryCo
 	return true
 }
 
+func (c *Controller) runConfirmFinalizingHook(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) bool {
+	for _, webhook := range canary.GetAnalysis().Webhooks {
+		if webhook.Type == flaggerv1.ConfirmFinalizingHook {
+			err := CallWebhook(canary.Name, canary.Namespace, phase, webhook)
+			if err != nil {
+				c.recordEventWarningf(canary, "Halt finalizing %s.%s waiting for finalizing approval %s", canary.Name, canary.Namespace, webhook.Name)
+				if !webhook.MuteAlert {
+					c.alert(canary, "Canary finalizing is waiting for approval.", false, flaggerv1.SeverityWarn)
+				}
+				return false
+			} else {
+				c.recordEventInfof(canary, "Confirm-finalizing check %s passed", webhook.Name)
+			}
+		}
+	}
+	return true
+}
+
 func (c *Controller) runPreRolloutHooks(canary *flaggerv1.Canary) bool {
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == flaggerv1.PreRolloutHook {

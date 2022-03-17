@@ -992,6 +992,7 @@ spec:
                               - pre-rollout
                               - rollout
                               - confirm-promotion
+                              - confirm-finalizing
                               - post-rollout
                               - event
                               - rollback

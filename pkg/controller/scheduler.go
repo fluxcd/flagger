@@ -295,19 +295,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
-	// check canary status
-	var retriable = true
-	retriable, err = canaryController.IsCanaryReady(cd)
-	if err != nil && retriable {
-		c.recordEventWarningf(cd, "%v", err)
-		return
-	}
-
-	// check if analysis should be skipped
-	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, err, retriable); skip {
-		return
-	}
-
 	// check if we should rollback
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
@@ -328,6 +315,11 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// scale canary to zero if promotion has finished
 	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+
+		if ok := c.runConfirmFinalizingHook(cd, flaggerv1.CanaryPhaseFinalising); !ok {
+			return
+		}
+
 		if err := canaryController.ScaleToZero(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
@@ -340,9 +332,29 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
-		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
-			false, flaggerv1.SeverityInfo)
+
+		if cd.SkipAnalysis() {
+			c.recordEventInfof(cd, "Promotion completed! Canary analysis was skipped for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+			c.alert(cd, "Canary analysis was skipped, promotion finished.",
+				false, flaggerv1.SeverityInfo)
+		} else {
+			c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+			c.alert(cd, "Canary analysis completed successfully, promotion finished.",
+				false, flaggerv1.SeverityInfo)
+		}
+		return
+	}
+
+	// check canary status
+	var retriable = true
+	retriable, err = canaryController.IsCanaryReady(cd)
+	if err != nil && retriable {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
+	// check if analysis should be skipped
+	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, err, retriable); skip {
 		return
 	}
 
@@ -700,6 +712,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	}
 
 	// regardless if analysis is being skipped, rollback if canary failed to progress
+	//if !retriable || canary.Status.FailedChecks >= canary.GetAnalysisThreshold() {
 	if !retriable {
 		c.recordEventWarningf(canary, "Rolling back %s.%s progress deadline exceeded %v", canary.Name, canary.Namespace, err)
 		c.alert(canary, fmt.Sprintf("Progress deadline exceeded %v", err), false, flaggerv1.SeverityError)
@@ -725,24 +738,10 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 		return true
 	}
 
-	// shutdown canary
-	if err := canaryController.ScaleToZero(canary); err != nil {
+	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
 		return true
 	}
-
-	// update status phase
-	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseSucceeded); err != nil {
-		c.recordEventWarningf(canary, "%v", err)
-		return true
-	}
-
-	// notify
-	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
-	c.recordEventInfof(canary, "Promotion completed! Canary analysis was skipped for %s.%s",
-		canary.Spec.TargetRef.Name, canary.Namespace)
-	c.alert(canary, "Canary analysis was skipped, promotion finished.",
-		false, flaggerv1.SeverityInfo)
 
 	return true
 }
@@ -754,6 +753,7 @@ func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController ca
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true, nil
 	}
@@ -867,6 +867,10 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 		canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
 
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
+
+	if ok := c.runConfirmFinalizingHook(canary, flaggerv1.CanaryPhaseFailed); !ok {
+		return
+	}
 
 	// shutdown canary
 	if err := canaryController.ScaleToZero(canary); err != nil {
