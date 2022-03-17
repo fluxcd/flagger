@@ -700,7 +700,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	}
 
 	// regardless if analysis is being skipped, rollback if canary failed to progress
-	if !retriable || canary.Status.FailedChecks >= canary.GetAnalysisThreshold() {
+	if !retriable {
 		c.recordEventWarningf(canary, "Rolling back %s.%s progress deadline exceeded %v", canary.Name, canary.Namespace, err)
 		c.alert(canary, fmt.Sprintf("Progress deadline exceeded %v", err), false, flaggerv1.SeverityError)
 		c.rollback(canary, canaryController, meshRouter)
@@ -713,7 +713,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	canaryWeight := 0
 	if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
-		return false
+		return true
 	}
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
 
@@ -722,19 +722,19 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 		canary.Spec.TargetRef.Name, canary.Namespace, canary.Spec.TargetRef.Name, canary.Namespace)
 	if err := canaryController.Promote(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
-		return false
+		return true
 	}
 
 	// shutdown canary
 	if err := canaryController.ScaleToZero(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
-		return false
+		return true
 	}
 
 	// update status phase
 	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseSucceeded); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
-		return false
+		return true
 	}
 
 	// notify
