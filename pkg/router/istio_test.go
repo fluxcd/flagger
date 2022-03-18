@@ -372,6 +372,9 @@ func TestIstioRouter_Delegate(t *testing.T) {
 
 		assert.Equal(t, 0, len(vs.Spec.Hosts))
 		assert.Equal(t, 0, len(vs.Spec.Gateways))
+
+		port := vs.Spec.Http[0].Route[0].Destination.Port.Number
+		assert.Equal(t, uint32(mocks.canary.Spec.Service.Port), port)
 	})
 
 	t.Run("invalid", func(t *testing.T) {
