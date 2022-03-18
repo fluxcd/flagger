@@ -114,6 +114,17 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 		},
 	}
 
+	//get annotation to enable the access log
+	if canary.ObjectMeta.GetAnnotations()["appmesh.flagger.dev/accesslog"] == "enabled" {
+		vnSpec.Logging = &appmeshv1.Logging{
+			AccessLog: &appmeshv1.AccessLog{
+				File: &appmeshv1.FileAccessLog{
+					Path: "/dev/stdout",
+				},
+			},
+		}
+	}
+
 	backends := make([]appmeshv1.Backend, len(canary.Spec.Service.Backends))
 	for i, b := range canary.Spec.Service.Backends {
 		backends[i] = appmeshv1.Backend{
