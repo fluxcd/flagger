@@ -158,6 +158,9 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 		if phase != flaggerv1.CanaryPhaseProgressing && phase != flaggerv1.CanaryPhaseWaiting {
 			cdCopy.Status.CanaryWeight = 0
 			cdCopy.Status.Iterations = 0
+			if phase == flaggerv1.CanaryPhaseWaitingPromotion {
+				cdCopy.Status.Iterations = cd.GetAnalysis().Iterations - 1
+			}
 		}
 
 		// on promotion set primary spec hash

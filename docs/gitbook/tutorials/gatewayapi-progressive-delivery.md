@@ -1,6 +1,6 @@
 # Gateway API Canary Deployments
 
-This guide shows you how to use Gateway API and Flagger to automate canary deployments.
+This guide shows you how to use [Gateway API](https://gateway-api.sigs.k8s.io/) and Flagger to automate canary deployments and A/B testing.
 
 ![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-gatewayapi-canary.png)
 
@@ -17,7 +17,7 @@ kubectl apply -k github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.4.1
 Install a cluster-wide GatewayClass; a Gateway belonging to the GatewayClass and Contour components in the `projectcontour` namespace:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/release-1.20/examples/render/contour.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/release-1.20/examples/render/contour-gateway.yaml
 ```
 
 Install Flagger in the `flagger-system` namespace:
