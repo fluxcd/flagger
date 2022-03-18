@@ -118,6 +118,17 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 		},
 	}
 
+	//get annotation to enable the access log
+	if canary.ObjectMeta.GetAnnotations()["appmesh.flagger.dev/accesslog"] == "enabled" {
+		vnSpec.Logging = &appmeshv1.Logging{
+			AccessLog: &appmeshv1.AccessLog{
+				File: &appmeshv1.FileAccessLog{
+					Path: "/dev/stdout",
+				},
+			},
+		}
+	}
+
 	backends := make([]appmeshv1.Backend, 0)
 	for i := range canary.Spec.Service.Backends {
 		if strings.HasPrefix(canary.Spec.Service.Backends[i], "arn:aws") {
