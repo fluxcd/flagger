@@ -90,6 +90,10 @@ func (c *Controller) runConfirmPromotionHooks(canary *flaggerv1.Canary, canaryCo
 					if !webhook.MuteAlert {
 						c.alert(canary, "Canary promotion is waiting for approval.", false, flaggerv1.SeverityWarn)
 					}
+				} else {
+					if err := canaryController.SetStatusIterations(canary, canary.GetAnalysis().Iterations-1); err != nil {
+						c.recordEventWarningf(canary, "%v", err)
+					}
 				}
 				return false
 			} else {
