@@ -89,6 +89,9 @@ func newTestCanary() *flaggerv1.Canary {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
+			Annotations: map[string]string{
+				"appmesh.flagger.dev/accesslog": "enabled",
+			},
 		},
 		Spec: flaggerv1.CanarySpec{
 			TargetRef: flaggerv1.CrossNamespaceObjectReference{
