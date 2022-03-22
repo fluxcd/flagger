@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
+	appmesh "github.com/fluxcd/flagger/pkg/apis/appmesh"
 	appmeshv1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -112,6 +113,18 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 				HostName: host,
 			},
 		},
+	}
+
+	//get annotation to enable the access log
+	val, _ := canary.ObjectMeta.GetAnnotations()[appmesh.AccessLogAnnotation]
+	if val == appmesh.EnabledValue {
+		vnSpec.Logging = &appmeshv1.Logging{
+			AccessLog: &appmeshv1.AccessLog{
+				File: &appmeshv1.FileAccessLog{
+					Path: "/dev/stdout",
+				},
+			},
+		}
 	}
 
 	backends := make([]appmeshv1.Backend, len(canary.Spec.Service.Backends))

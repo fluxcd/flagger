@@ -63,6 +63,7 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 	vnName := mocks.appmeshCanary.Spec.TargetRef.Name
 	vn, err := router.appmeshClient.AppmeshV1beta1().VirtualNodes("default").Get(context.TODO(), vnName, metav1.GetOptions{})
 	require.NoError(t, err)
+	require.NotNil(t, vn.Spec.Logging)
 
 	primaryDNS := fmt.Sprintf("%s-primary.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
 	assert.Equal(t, primaryDNS, vn.Spec.ServiceDiscovery.Dns.HostName)
