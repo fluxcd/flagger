@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
+	appmesh "github.com/fluxcd/flagger/pkg/apis/appmesh"
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
@@ -164,6 +165,9 @@ func newTestCanaryAppMesh() *flaggerv1.Canary {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "appmesh",
+			Annotations: map[string]string{
+				appmesh.AccessLogAnnotation: appmesh.EnabledValue,
+			},
 		},
 		Spec: flaggerv1.CanarySpec{
 			TargetRef: flaggerv1.CrossNamespaceObjectReference{

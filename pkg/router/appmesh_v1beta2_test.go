@@ -67,6 +67,7 @@ func TestAppmeshv1beta2Router_Reconcile(t *testing.T) {
 	// check primary virtual node
 	vnPrimary, err := router.appmeshClient.AppmeshV1beta2().VirtualNodes("default").Get(context.TODO(), primaryName, metav1.GetOptions{})
 	require.NoError(t, err)
+	require.NotNil(t, vnPrimary.Spec.Logging)
 
 	// check FQDN
 	primaryDNS := fmt.Sprintf("%s.%s.svc.cluster.local.", primaryName, mocks.appmeshCanary.Namespace)

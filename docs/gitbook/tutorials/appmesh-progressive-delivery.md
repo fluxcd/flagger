@@ -62,6 +62,9 @@ Create a canary definition:
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
+  annotations:
+    # Enable Envoy access logging to stdout.
+    appmesh.flagger.app/accesslog: enabled
   name: podinfo
   namespace: test
 spec:
