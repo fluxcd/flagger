@@ -71,8 +71,8 @@ func NewRecorder(controller string, register bool) Recorder {
 	analysis := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
 		Name:      "canary_metric_analysis",
-		Help:      "Last canary metric analysis result per different metric template",
-	}, []string{"name", "namespace", "metricTemplate"})
+		Help:      "Last canary analysis result per metric",
+	}, []string{"name", "namespace", "metric"})
 
 	if register {
 		prometheus.MustRegister(info)
