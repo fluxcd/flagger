@@ -18,6 +18,7 @@ package router
 
 import (
 	"context"
+	contourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -70,6 +71,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	assert.Equal(t, "1m", proxy.Spec.Routes[0].TimeoutPolicy.Response)
 	assert.Equal(t, "/podinfo", proxy.Spec.Routes[0].Conditions[0].Prefix)
 	assert.Equal(t, uint32(10), proxy.Spec.Routes[0].RetryPolicy.NumRetries)
+	assert.Equal(t, []contourv1.RetryOn{"connect-failure", "gateway-error"}, proxy.Spec.Routes[0].RetryPolicy.RetryOn)
 
 	// test headers update
 	cd, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
