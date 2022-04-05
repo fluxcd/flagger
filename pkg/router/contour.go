@@ -19,6 +19,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -444,9 +445,20 @@ func (cr *ContourRouter) makeRetryPolicy(canary *flaggerv1.Canary) *contourv1.Re
 		return &contourv1.RetryPolicy{
 			NumRetries:    uint32(canary.Spec.Service.Retries.Attempts),
 			PerTryTimeout: canary.Spec.Service.Retries.PerTryTimeout,
+			RetryOn:       makeRetryOn(canary.Spec.Service.Retries.RetryOn),
 		}
 	}
 	return nil
+}
+
+func makeRetryOn(retryOnString string) []contourv1.RetryOn {
+	retryOnSplit := strings.Split(retryOnString, ",")
+
+	retryOn := make([]contourv1.RetryOn, len(retryOnSplit))
+	for i, v := range retryOnSplit {
+		retryOn[i] = contourv1.RetryOn(v)
+	}
+	return retryOn
 }
 
 func (cr *ContourRouter) makeLinkerdHeaderValue(canary *flaggerv1.Canary, serviceName string) contourv1.HeaderValue {
