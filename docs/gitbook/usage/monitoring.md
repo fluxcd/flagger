@@ -117,4 +117,8 @@ flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="10"} 
 flagger_canary_duration_seconds_bucket{name="podinfo",namespace="test",le="+Inf"} 6
 flagger_canary_duration_seconds_sum{name="podinfo",namespace="test"} 17.3561329
 flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
+
+# Last canary metric analysis result per different metrics
+flagger_canary_metric_analysis{metric="podinfo-http-successful-rate",name="podinfo",namespace="test"} 1
+flagger_canary_metric_analysis{metric="podinfo-custom-metric",name="podinfo",namespace="test"} 0.918223108974359
 ```
