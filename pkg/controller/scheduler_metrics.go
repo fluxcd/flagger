@@ -146,7 +146,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 				}
 				return false
 			}
-
+			c.recorder.SetAnalysis(canary, metric.Name, val)
 			if metric.ThresholdRange != nil {
 				tr := *metric.ThresholdRange
 				if tr.Min != nil && val < *tr.Min {
@@ -177,6 +177,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 				}
 				return false
 			}
+			c.recorder.SetAnalysis(canary, metric.Name, val.Seconds())
 			if metric.ThresholdRange != nil {
 				tr := *metric.ThresholdRange
 				if tr.Min != nil && val < time.Duration(*tr.Min)*time.Millisecond {
@@ -209,6 +210,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 				}
 				return false
 			}
+			c.recorder.SetAnalysis(canary, metric.Name, val)
 			if metric.ThresholdRange != nil {
 				tr := *metric.ThresholdRange
 				if tr.Min != nil && val < *tr.Min {
@@ -282,6 +284,8 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 				}
 				return false
 			}
+
+			c.recorder.SetAnalysis(canary, metric.Name, val)
 
 			if metric.ThresholdRange != nil {
 				tr := *metric.ThresholdRange

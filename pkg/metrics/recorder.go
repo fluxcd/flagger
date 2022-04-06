@@ -31,6 +31,7 @@ type Recorder struct {
 	total    *prometheus.GaugeVec
 	status   *prometheus.GaugeVec
 	weight   *prometheus.GaugeVec
+	analysis *prometheus.GaugeVec
 }
 
 // NewRecorder creates a new recorder and registers the Prometheus metrics
@@ -67,12 +68,19 @@ func NewRecorder(controller string, register bool) Recorder {
 		Help:      "The virtual service destination weight current value",
 	}, []string{"workload", "namespace"})
 
+	analysis := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Subsystem: controller,
+		Name:      "canary_metric_analysis",
+		Help:      "Last canary analysis result per metric",
+	}, []string{"name", "namespace", "metric"})
+
 	if register {
 		prometheus.MustRegister(info)
 		prometheus.MustRegister(duration)
 		prometheus.MustRegister(total)
 		prometheus.MustRegister(status)
 		prometheus.MustRegister(weight)
+		prometheus.MustRegister(analysis)
 	}
 
 	return Recorder{
@@ -81,6 +89,7 @@ func NewRecorder(controller string, register bool) Recorder {
 		total:    total,
 		status:   status,
 		weight:   weight,
+		analysis: analysis,
 	}
 }
 
@@ -97,6 +106,10 @@ func (cr *Recorder) SetDuration(cd *flaggerv1.Canary, duration time.Duration) {
 // SetTotal sets the total number of canaries per namespace
 func (cr *Recorder) SetTotal(namespace string, total int) {
 	cr.total.WithLabelValues(namespace).Set(float64(total))
+}
+
+func (cr *Recorder) SetAnalysis(cd *flaggerv1.Canary, metricTemplateName string, val float64) {
+	cr.analysis.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace, metricTemplateName).Set(val)
 }
 
 // SetStatus sets the last known canary analysis status
