@@ -18,8 +18,9 @@ package router
 
 import (
 	"context"
-	contourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	"testing"
+
+	contourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,8 +48,8 @@ func TestContourRouter_Reconcile(t *testing.T) {
 
 	services := proxy.Spec.Routes[0].Services
 	require.Len(t, services, 2)
-	assert.Equal(t, uint32(100), services[0].Weight)
-	assert.Equal(t, uint32(0), services[1].Weight)
+	assert.Equal(t, int64(100), services[0].Weight)
+	assert.Equal(t, int64(0), services[1].Weight)
 	assert.Equal(t, "contour", proxy.Annotations["projectcontour.io/ingress.class"])
 
 	// test update
@@ -70,7 +71,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	assert.Equal(t, 8080, proxy.Spec.Routes[0].Services[0].Port)
 	assert.Equal(t, "1m", proxy.Spec.Routes[0].TimeoutPolicy.Response)
 	assert.Equal(t, "/podinfo", proxy.Spec.Routes[0].Conditions[0].Prefix)
-	assert.Equal(t, uint32(10), proxy.Spec.Routes[0].RetryPolicy.NumRetries)
+	assert.Equal(t, int64(10), proxy.Spec.Routes[0].RetryPolicy.NumRetries)
 	assert.Equal(t, []contourv1.RetryOn{"connect-failure", "gateway-error"}, proxy.Spec.Routes[0].RetryPolicy.RetryOn)
 
 	// test headers update
@@ -113,7 +114,7 @@ func TestContourRouter_Routes(t *testing.T) {
 	require.NoError(t, err)
 
 	primary := proxy.Spec.Routes[0].Services[0]
-	assert.Equal(t, uint32(50), primary.Weight)
+	assert.Equal(t, int64(50), primary.Weight)
 
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -137,10 +138,10 @@ func TestContourRouter_Routes(t *testing.T) {
 	require.NoError(t, err)
 
 	primary = proxy.Spec.Routes[0].Services[0]
-	assert.Equal(t, uint32(100), primary.Weight)
+	assert.Equal(t, int64(100), primary.Weight)
 
 	primary = proxy.Spec.Routes[1].Services[0]
-	assert.Equal(t, uint32(100), primary.Weight)
+	assert.Equal(t, int64(100), primary.Weight)
 
 	// test set routers for A/B
 	err = router.SetRoutes(canary, 0, 100, false)
@@ -150,8 +151,8 @@ func TestContourRouter_Routes(t *testing.T) {
 	require.NoError(t, err)
 
 	primary = proxy.Spec.Routes[0].Services[0]
-	assert.Equal(t, uint32(0), primary.Weight)
+	assert.Equal(t, int64(0), primary.Weight)
 
 	primary = proxy.Spec.Routes[1].Services[0]
-	assert.Equal(t, uint32(100), primary.Weight)
+	assert.Equal(t, int64(100), primary.Weight)
 }
