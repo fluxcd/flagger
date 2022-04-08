@@ -13,6 +13,7 @@ spec:
     singular: canary
     categories:
       - all
+  preserveUnknownFields: false
   scope: Namespaced
   versions:
     - name: v1beta1
