@@ -19,6 +19,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -51,7 +52,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 	newSpec := contourv1.HTTPProxySpec{
 		Routes: []contourv1.Route{
 			{
-				Conditions: []contourv1.Condition{
+				Conditions: []contourv1.MatchCondition{
 					{
 						Prefix: cr.makePrefix(canary),
 					},
@@ -62,7 +63,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 					{
 						Name:   primaryName,
 						Port:   int(canary.Spec.Service.Port),
-						Weight: uint32(100),
+						Weight: int64(100),
 						RequestHeadersPolicy: &contourv1.HeadersPolicy{
 							Set: []contourv1.HeaderValue{
 								cr.makeLinkerdHeaderValue(canary, primaryName),
@@ -72,7 +73,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 					{
 						Name:   canaryName,
 						Port:   int(canary.Spec.Service.Port),
-						Weight: uint32(0),
+						Weight: int64(0),
 						RequestHeadersPolicy: &contourv1.HeadersPolicy{
 							Set: []contourv1.HeaderValue{
 								cr.makeLinkerdHeaderValue(canary, canaryName),
@@ -95,7 +96,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						{
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(100),
+							Weight: int64(100),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, primaryName),
@@ -105,7 +106,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(0),
+							Weight: int64(0),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, canaryName),
@@ -115,7 +116,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 					},
 				},
 				{
-					Conditions: []contourv1.Condition{
+					Conditions: []contourv1.MatchCondition{
 						{
 							Prefix: cr.makePrefix(canary),
 						},
@@ -126,7 +127,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						{
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(100),
+							Weight: int64(100),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, primaryName),
@@ -136,7 +137,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(0),
+							Weight: int64(0),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, canaryName),
@@ -177,7 +178,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 				},
 			},
 			Spec: newSpec,
-			Status: contourv1.Status{
+			Status: contourv1.HTTPProxyStatus{
 				CurrentStatus: "valid",
 				Description:   "valid HTTPProxy",
 			},
@@ -274,7 +275,7 @@ func (cr *ContourRouter) SetRoutes(
 	proxy.Spec = contourv1.HTTPProxySpec{
 		Routes: []contourv1.Route{
 			{
-				Conditions: []contourv1.Condition{
+				Conditions: []contourv1.MatchCondition{
 					{
 						Prefix: cr.makePrefix(canary),
 					},
@@ -285,7 +286,7 @@ func (cr *ContourRouter) SetRoutes(
 					{
 						Name:   primaryName,
 						Port:   int(canary.Spec.Service.Port),
-						Weight: uint32(primaryWeight),
+						Weight: int64(primaryWeight),
 						RequestHeadersPolicy: &contourv1.HeadersPolicy{
 							Set: []contourv1.HeaderValue{
 								cr.makeLinkerdHeaderValue(canary, primaryName),
@@ -295,7 +296,7 @@ func (cr *ContourRouter) SetRoutes(
 					{
 						Name:   canaryName,
 						Port:   int(canary.Spec.Service.Port),
-						Weight: uint32(canaryWeight),
+						Weight: int64(canaryWeight),
 						RequestHeadersPolicy: &contourv1.HeadersPolicy{
 							Set: []contourv1.HeaderValue{
 								cr.makeLinkerdHeaderValue(canary, canaryName),
@@ -317,7 +318,7 @@ func (cr *ContourRouter) SetRoutes(
 						{
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(primaryWeight),
+							Weight: int64(primaryWeight),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, primaryName),
@@ -327,7 +328,7 @@ func (cr *ContourRouter) SetRoutes(
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(canaryWeight),
+							Weight: int64(canaryWeight),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, canaryName),
@@ -337,7 +338,7 @@ func (cr *ContourRouter) SetRoutes(
 					},
 				},
 				{
-					Conditions: []contourv1.Condition{
+					Conditions: []contourv1.MatchCondition{
 						{
 							Prefix: cr.makePrefix(canary),
 						},
@@ -348,7 +349,7 @@ func (cr *ContourRouter) SetRoutes(
 						{
 							Name:   primaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(100),
+							Weight: int64(100),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, primaryName),
@@ -358,7 +359,7 @@ func (cr *ContourRouter) SetRoutes(
 						{
 							Name:   canaryName,
 							Port:   int(canary.Spec.Service.Port),
-							Weight: uint32(0),
+							Weight: int64(0),
 							RequestHeadersPolicy: &contourv1.HeadersPolicy{
 								Set: []contourv1.HeaderValue{
 									cr.makeLinkerdHeaderValue(canary, canaryName),
@@ -390,36 +391,36 @@ func (cr *ContourRouter) makePrefix(canary *flaggerv1.Canary) string {
 	return prefix
 }
 
-func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.Condition {
-	list := []contourv1.Condition{}
+func (cr *ContourRouter) makeConditions(canary *flaggerv1.Canary) []contourv1.MatchCondition {
+	list := []contourv1.MatchCondition{}
 
 	if len(canary.GetAnalysis().Match) > 0 {
 		for _, match := range canary.GetAnalysis().Match {
 			for s, stringMatch := range match.Headers {
-				h := &contourv1.HeaderCondition{
+				h := &contourv1.HeaderMatchCondition{
 					Name:  s,
 					Exact: stringMatch.Exact,
 				}
 				if stringMatch.Suffix != "" {
-					h = &contourv1.HeaderCondition{
+					h = &contourv1.HeaderMatchCondition{
 						Name:     s,
 						Contains: stringMatch.Suffix,
 					}
 				}
 				if stringMatch.Prefix != "" {
-					h = &contourv1.HeaderCondition{
+					h = &contourv1.HeaderMatchCondition{
 						Name:     s,
 						Contains: stringMatch.Prefix,
 					}
 				}
-				list = append(list, contourv1.Condition{
+				list = append(list, contourv1.MatchCondition{
 					Prefix: cr.makePrefix(canary),
 					Header: h,
 				})
 			}
 		}
 	} else {
-		list = []contourv1.Condition{
+		list = []contourv1.MatchCondition{
 			{
 				Prefix: cr.makePrefix(canary),
 			},
@@ -442,11 +443,22 @@ func (cr *ContourRouter) makeTimeoutPolicy(canary *flaggerv1.Canary) *contourv1.
 func (cr *ContourRouter) makeRetryPolicy(canary *flaggerv1.Canary) *contourv1.RetryPolicy {
 	if canary.Spec.Service.Retries != nil {
 		return &contourv1.RetryPolicy{
-			NumRetries:    uint32(canary.Spec.Service.Retries.Attempts),
+			NumRetries:    int64(canary.Spec.Service.Retries.Attempts),
 			PerTryTimeout: canary.Spec.Service.Retries.PerTryTimeout,
+			RetryOn:       makeRetryOn(canary.Spec.Service.Retries.RetryOn),
 		}
 	}
 	return nil
+}
+
+func makeRetryOn(retryOnString string) []contourv1.RetryOn {
+	retryOnSplit := strings.Split(retryOnString, ",")
+
+	retryOn := make([]contourv1.RetryOn, len(retryOnSplit))
+	for i, v := range retryOnSplit {
+		retryOn[i] = contourv1.RetryOn(v)
+	}
+	return retryOn
 }
 
 func (cr *ContourRouter) makeLinkerdHeaderValue(canary *flaggerv1.Canary, serviceName string) contourv1.HeaderValue {

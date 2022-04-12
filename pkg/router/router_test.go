@@ -132,6 +132,7 @@ func newTestCanary() *flaggerv1.Canary {
 				Retries: &istiov1alpha3.HTTPRetry{
 					Attempts:      10,
 					PerTryTimeout: "30s",
+					RetryOn:       "connect-failure,gateway-error",
 				},
 				Gateways: []string{
 					"public-gateway.istio",
