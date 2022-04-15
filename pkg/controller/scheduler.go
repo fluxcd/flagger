@@ -758,6 +758,14 @@ func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController ca
 		return true, nil
 	}
 
+	// Make sure to sync lastAppliedSpec even if the canary is in a failed state.
+	if canary.Status.Phase == flaggerv1.CanaryPhaseFailed {
+		if err := canaryController.SyncStatus(canary, canary.Status); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+			return false, err
+		}
+	}
+
 	newTarget, err := canaryController.HasTargetChanged(canary)
 	if err != nil {
 		return false, err

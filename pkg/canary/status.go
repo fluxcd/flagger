@@ -48,6 +48,9 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		cdCopy.Status.FailedChecks = status.FailedChecks
 		cdCopy.Status.Iterations = status.Iterations
 		cdCopy.Status.LastAppliedSpec = hash
+		if status.Phase == flaggerv1.CanaryPhaseInitialized {
+			cdCopy.Status.LastPromotedSpec = hash
+		}
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 		setAll(cdCopy)
 
