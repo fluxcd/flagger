@@ -478,7 +478,7 @@ spec:
       name: graphite-basic-auth
 ```
 
-## Google CLoud Monitoring (Stackdriver)
+## Google Cloud Monitoring (Stackdriver)
 
 Enable Workload Identity on your cluster, create a service account key that has read access to the
 Cloud Monitoring API and then create an IAM policy binding between the GCP service account and the Flagger 
@@ -528,18 +528,20 @@ spec:
 
 The reference for the query language can be found [here](https://cloud.google.com/monitoring/mql/reference)
 
-## Influxdb
+## InfluxDB
 
-The influxdb provider uses the [flux](https://docs.influxdata.com/influxdb/v2.0/query-data/get-started/) scripting language.
+The InfluxDB provider uses the [flux](https://docs.influxdata.com/influxdb/v2.0/query-data/get-started/) query language.
 
-Create a secret that contains your authentication token that can be gotthen from the InfluxDB UI.
+Create a secret that contains your authentication token that can be found in the InfluxDB UI.
 
 ```
- kubectl create secret generic gcloud-sa --from-literal=token=<token>
+ kubectl create secret generic influx-token --from-literal=token=<token>
 ```
 
-Then reference the secret in the metric template.qq
+Then reference the secret in the metric template.
+
 Note: The particular MQL query used here works if [Istio is installed on GKE](https://cloud.google.com/istio/docs/istio-on-gke/installing).
+
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate

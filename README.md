@@ -237,7 +237,6 @@ For all [Gateway API](https://gateway-api.sigs.k8s.io/) implementations like [Co
 #### Integrations
 
 * Add support for ingress controllers like HAProxy and ALB
-* Add support for metrics providers like InfluxDB, Stackdriver, SignalFX
 
 ### Contributing
 

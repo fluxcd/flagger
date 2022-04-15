@@ -10,10 +10,10 @@ version in production by gradually shifting traffic to the new version while mea
 and running conformance tests.
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
-using a service mesh (App Mesh, Istio, Linkerd, Open Service Mesh)
+using a service mesh (App Mesh, Istio, Linkerd, Kuma, Open Service Mesh)
 or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
-For release analysis, Flagger can query Prometheus, Datadog, New Relic, CloudWatch or Graphite
-and for alerting it uses Slack, MS Teams, Discord and Rocket.
+For release analysis, Flagger can query Prometheus, InfluxDB, Datadog, New Relic, CloudWatch, Stackdriver
+or Graphite and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
 ![Flagger overview diagram](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-overview.png)
 

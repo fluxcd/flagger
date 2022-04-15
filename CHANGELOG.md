@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.20.0
+
+**Release date:** 2022-04-15
+
+This release comes with improvements to the AppMesh, Contour and Istio integrations.
+
+#### Improvements
+
+- AppMesh: Add annotation to enable Envoy access logs
+  [#1156](https://github.com/fluxcd/flagger/pull/1156)
+- Contour: Update the httproxy API and enable RetryOn
+  [#1164](https://github.com/fluxcd/flagger/pull/1164)
+- Istio: Add destination port when port discovery and delegation are true
+  [#1145](https://github.com/fluxcd/flagger/pull/1145)
+- Metrics: Add canary analysis result as Prometheus metrics
+  [#1148](https://github.com/fluxcd/flagger/pull/1148)
+
+#### Fixes
+
+- Fix canary rollback behaviour
+  [#1171](https://github.com/fluxcd/flagger/pull/1171)
+- Shorten the metric analysis cycle after confirm promotion gate is open
+  [#1139](https://github.com/fluxcd/flagger/pull/1139)
+- Fix unit of time in the Istio Grafana dashboard
+  [#1162](https://github.com/fluxcd/flagger/pull/1162)
+- Fix the service toggle condition in the podinfo helm chart
+  [#1146](https://github.com/fluxcd/flagger/pull/1146)
+
 ## 1.19.0
 
 **Release date:** 2022-03-14
