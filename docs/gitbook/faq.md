@@ -66,11 +66,11 @@ spec:
         timestamp: "2022-02-10T14:24:48+0000" #add annotation to trigger analysis
 ```
 
-#### Why is there a window of downtime during the canary initializing process when analysis is disabled?
+#### Why is there a window of downtime during the canary initializing process when analysis is enabled (`skipAnalysis: false`)?
 
-A window of downtime is the intended behavior when the analysis is disabled. This allows instant rollback and also mimics the way
-a Kubernetes deployment initialization works. To avoid this, enable the analysis (`skipAnalysis: true`), wait for the initialization
-to finish, and disable it afterward (`skipAnalysis: false`).
+A window of downtime is the intended behavior when the analysis is enabled. This allows instant rollback and also mimics the way
+a Kubernetes deployment initialization works. To avoid this, disable the analysis (`skipAnalysis: true`), wait for the initialization
+to finish, and enabled it afterward (`skipAnalysis: false`).
 
 ## Kubernetes services
 
