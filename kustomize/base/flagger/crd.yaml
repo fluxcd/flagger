@@ -1046,6 +1046,9 @@ spec:
                 iterations:
                   description: Iteration count of the current canary analysis
                   type: number
+                lastPromotedSpec:
+                  description: LastPromotedSpec of this canary
+                  type: string
                 lastAppliedSpec:
                   description: LastAppliedSpec of this canary
                   type: string
