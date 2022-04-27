@@ -49,24 +49,25 @@ const controllerAgentName = "flagger"
 
 // Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
-	kubeClient       kubernetes.Interface
-	flaggerClient    clientset.Interface
-	flaggerInformers Informers
-	flaggerSynced    cache.InformerSynced
-	flaggerWindow    time.Duration
-	workqueue        workqueue.RateLimitingInterface
-	eventRecorder    record.EventRecorder
-	logger           *zap.SugaredLogger
-	canaries         *sync.Map
-	jobs             map[string]CanaryJob
-	recorder         metrics.Recorder
-	notifier         notifier.Interface
-	canaryFactory    *canary.Factory
-	routerFactory    *router.Factory
-	observerFactory  *observers.Factory
-	meshProvider     string
-	eventWebhook     string
-	clusterName      string
+	kubeClient           kubernetes.Interface
+	flaggerClient        clientset.Interface
+	flaggerInformers     Informers
+	flaggerSynced        cache.InformerSynced
+	flaggerWindow        time.Duration
+	workqueue            workqueue.RateLimitingInterface
+	eventRecorder        record.EventRecorder
+	logger               *zap.SugaredLogger
+	canaries             *sync.Map
+	jobs                 map[string]CanaryJob
+	recorder             metrics.Recorder
+	notifier             notifier.Interface
+	canaryFactory        *canary.Factory
+	routerFactory        *router.Factory
+	observerFactory      *observers.Factory
+	meshProvider         string
+	eventWebhook         string
+	clusterName          string
+	noCrossNamespaceRefs bool
 }
 
 type Informers struct {
@@ -89,6 +90,7 @@ func NewController(
 	version string,
 	eventWebhook string,
 	clusterName string,
+	noCrossNamespaceRefs bool,
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
 	flaggerscheme.AddToScheme(scheme.Scheme)
@@ -103,24 +105,25 @@ func NewController(
 	recorder.SetInfo(version, meshProvider)
 
 	ctrl := &Controller{
-		kubeClient:       kubeClient,
-		flaggerClient:    flaggerClient,
-		flaggerInformers: flaggerInformers,
-		flaggerSynced:    flaggerInformers.CanaryInformer.Informer().HasSynced,
-		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder:    eventRecorder,
-		logger:           logger,
-		canaries:         new(sync.Map),
-		jobs:             map[string]CanaryJob{},
-		flaggerWindow:    flaggerWindow,
-		observerFactory:  observerFactory,
-		recorder:         recorder,
-		notifier:         notifier,
-		canaryFactory:    canaryFactory,
-		routerFactory:    routerFactory,
-		meshProvider:     meshProvider,
-		eventWebhook:     eventWebhook,
-		clusterName:      clusterName,
+		kubeClient:           kubeClient,
+		flaggerClient:        flaggerClient,
+		flaggerInformers:     flaggerInformers,
+		flaggerSynced:        flaggerInformers.CanaryInformer.Informer().HasSynced,
+		workqueue:            workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder:        eventRecorder,
+		logger:               logger,
+		canaries:             new(sync.Map),
+		jobs:                 map[string]CanaryJob{},
+		flaggerWindow:        flaggerWindow,
+		observerFactory:      observerFactory,
+		recorder:             recorder,
+		notifier:             notifier,
+		canaryFactory:        canaryFactory,
+		routerFactory:        routerFactory,
+		meshProvider:         meshProvider,
+		eventWebhook:         eventWebhook,
+		clusterName:          clusterName,
+		noCrossNamespaceRefs: noCrossNamespaceRefs,
 	}
 
 	flaggerInformers.CanaryInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{

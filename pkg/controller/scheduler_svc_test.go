@@ -123,7 +123,7 @@ func newTestServiceCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "core/v1",
 				Kind:       "Service",
@@ -161,7 +161,7 @@ func newTestServiceCanaryMaxWeight() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "core/v1",
 				Kind:       "Service",
@@ -199,7 +199,7 @@ func newTestServiceCanaryWithWeightsHappyCase() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "core/v1",
 				Kind:       "Service",
@@ -236,7 +236,7 @@ func newTestServiceCanaryWithWeightsOverflow() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "core/v1",
 				Kind:       "Service",

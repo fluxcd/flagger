@@ -92,7 +92,7 @@ func newTestCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -171,7 +171,7 @@ func newTestCanaryAppMesh() *flaggerv1.Canary {
 			},
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -217,7 +217,7 @@ func newTestSMICanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -268,7 +268,7 @@ func newTestABTest() *flaggerv1.Canary {
 			Name:      "abtest",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "abtest",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -417,12 +417,12 @@ func newTestCanaryIngress() *flaggerv1.Canary {
 			},
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			IngressRef: &flaggerv1.CrossNamespaceObjectReference{
+			IngressRef: &flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "networking.k8s.io/v1",
 				Kind:       "Ingress",
@@ -492,7 +492,7 @@ func newTestGatewayAPICanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",

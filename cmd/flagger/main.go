@@ -84,6 +84,7 @@ var (
 	ver                      bool
 	kubeconfigServiceMesh    string
 	clusterName              string
+	noCrossNamespaceRefs     bool
 )
 
 func init() {
@@ -117,6 +118,7 @@ func init() {
 	flag.BoolVar(&ver, "version", false, "Print version")
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
 	flag.StringVar(&clusterName, "cluster-name", "", "Cluster name to be included in alert msgs.")
+	flag.BoolVar(&noCrossNamespaceRefs, "no-cross-namespace-refs", false, "When set to true, Flagger can only refer to resources in the same namespace.")
 }
 
 func main() {
@@ -241,6 +243,7 @@ func main() {
 		version.VERSION,
 		fromEnv("EVENT_WEBHOOK_URL", eventWebhook),
 		clusterName,
+		noCrossNamespaceRefs,
 	)
 
 	// leader election context
