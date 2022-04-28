@@ -165,3 +165,5 @@ podDisruptionBudget:
   minAvailable: 1
 
 podLabels: {}
+
+noCrossNamespaceRefs: false

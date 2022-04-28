@@ -141,6 +141,9 @@ spec:
           {{- if .Values.clusterName }}
           - -cluster-name={{ .Values.clusterName }}
           {{- end }}
+          {{- if .Values.noCrossNamespaceRefs }}
+          - -no-cross-namespace-refs={{ .Values.noCrossNamespaceRefs }}
+          {{- end }}
           livenessProbe:
             exec:
               command:
