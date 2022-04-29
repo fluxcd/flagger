@@ -55,9 +55,6 @@ func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) e
 		if metric.TemplateRef != nil {
 			namespace := canary.Namespace
 			if metric.TemplateRef.Namespace != canary.Namespace {
-				if c.noCrossNamespaceRefs {
-					return fmt.Errorf("can't access metric template ref %s.%s, cross-namespace references are blocked", metric.TemplateRef.Name, metric.TemplateRef.Namespace)
-				}
 				namespace = metric.TemplateRef.Namespace
 			}
 
@@ -242,10 +239,6 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 		if metric.TemplateRef != nil {
 			namespace := canary.Namespace
 			if metric.TemplateRef.Namespace != canary.Namespace {
-				if c.noCrossNamespaceRefs {
-					c.recordEventErrorf(canary, "Metric template %s.%s error: cross-namespace references are blocked", metric.TemplateRef.Name, metric.TemplateRef.Namespace)
-					return false
-				}
 				namespace = metric.TemplateRef.Namespace
 			}
 

@@ -65,9 +65,5 @@ func TestController_checkMetricProviderAvailability(t *testing.T) {
 			Namespace: "default",
 		}
 		require.NoError(t, ctrl.checkMetricProviderAvailability(canary))
-
-		ctrl.noCrossNamespaceRefs = true
-		canary.Namespace = "test"
-		require.Error(t, ctrl.checkMetricProviderAvailability(canary))
 	})
 }

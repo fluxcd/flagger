@@ -253,6 +253,10 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
+	if err := c.verifyCanary(cd); err != nil {
+		return fmt.Errorf("invalid canary spec: %s", err)
+	}
+
 	// Finalize if canary has been marked for deletion and revert is desired
 	if cd.Spec.RevertOnDeletion && cd.ObjectMeta.DeletionTimestamp != nil {
 		// If finalizers have been previously removed proceed
@@ -313,6 +317,34 @@ func (c *Controller) enqueue(obj interface{}) {
 		return
 	}
 	c.workqueue.AddRateLimited(key)
+}
+
+func (c *Controller) verifyCanary(canary *flaggerv1.Canary) error {
+	if c.noCrossNamespaceRefs {
+		if err := verifyNoCrossNamespaceRefs(canary); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func verifyNoCrossNamespaceRefs(canary *flaggerv1.Canary) error {
+	if canary.Spec.UpstreamRef != nil && canary.Spec.UpstreamRef.Namespace != canary.Namespace {
+		return fmt.Errorf("can't access gloo upstream %s.%s, cross-namespace references are blocked", canary.Spec.UpstreamRef.Name, canary.Spec.UpstreamRef.Namespace)
+	}
+	if canary.Spec.Analysis != nil {
+		for _, metric := range canary.Spec.Analysis.Metrics {
+			if metric.TemplateRef != nil && metric.TemplateRef.Namespace != canary.Namespace {
+				return fmt.Errorf("can't access metric template %s.%s, cross-namespace references are blocked", metric.TemplateRef.Name, metric.TemplateRef.Namespace)
+			}
+		}
+		for _, alert := range canary.Spec.Analysis.Alerts {
+			if alert.ProviderRef.Namespace != canary.Namespace {
+				return fmt.Errorf("can't access alert provider %s.%s, cross-namespace references are blocked", alert.ProviderRef.Name, alert.ProviderRef.Namespace)
+			}
+		}
+	}
+	return nil
 }
 
 func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flaggerv1.Canary, bool) {

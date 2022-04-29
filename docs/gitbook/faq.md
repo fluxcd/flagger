@@ -74,8 +74,8 @@ to finish, and disable it afterward (`skipAnalysis: false`).
 
 #### How to disable cross namespace references?
 
-Flagger by default can access resources across namespaces (`AlertProivder` and `MetricProvider`). If you're in a multi-tenant enviornemnt
-and wish to disable this, you can do so through the `no-cross-namespace-refs` flag.
+Flagger by default can access resources across namespaces (`AlertProivder`, `MetricProvider` and Gloo `Upsteream`).
+If you're in a multi-tenant environment and wish to disable this, you can do so through the `no-cross-namespace-refs` flag.
 
 ```
 flagger \

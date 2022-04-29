@@ -109,11 +109,6 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 		// determine alert provider namespace
 		providerNamespace := canary.GetNamespace()
 		if alert.ProviderRef.Namespace != canary.Namespace {
-			if c.noCrossNamespaceRefs {
-				c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-					Errorf("can't access alert provider ref %s.%s, cross-namespace references are blocked", alert.ProviderRef.Name, alert.ProviderRef.Namespace)
-				return
-			}
 			providerNamespace = alert.ProviderRef.Namespace
 		}
 
