@@ -289,12 +289,12 @@ func newDeploymentTestCanary() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
+			AutoscalerRef: &flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta2",
 				Kind:       "HorizontalPodAutoscaler",
@@ -351,12 +351,12 @@ func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 			Name:      "podinfo",
 		},
 		Spec: flaggerv1.CanarySpec{
-			TargetRef: flaggerv1.CrossNamespaceObjectReference{
+			TargetRef: flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &flaggerv1.CrossNamespaceObjectReference{
+			AutoscalerRef: &flaggerv1.LocalObjectReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta2",
 				Kind:       "HorizontalPodAutoscaler",

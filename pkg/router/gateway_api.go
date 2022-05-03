@@ -64,9 +64,6 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
 
 	hrNamespace := canary.Namespace
-	if canary.Spec.TargetRef.Namespace != "" {
-		hrNamespace = canary.Spec.TargetRef.Namespace
-	}
 
 	hostNames := []v1alpha2.Hostname{}
 	for _, host := range canary.Spec.Service.Hosts {
@@ -193,9 +190,6 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 ) {
 	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
 	hrNamespace := canary.Namespace
-	if canary.Spec.TargetRef.Namespace != "" {
-		hrNamespace = canary.Spec.TargetRef.Namespace
-	}
 	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
@@ -228,9 +222,6 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	cWeight := int32(canaryWeight)
 	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
 	hrNamespace := canary.Namespace
-	if canary.Spec.TargetRef.Namespace != "" {
-		hrNamespace = canary.Spec.TargetRef.Namespace
-	}
 	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)

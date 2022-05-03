@@ -49,24 +49,25 @@ const controllerAgentName = "flagger"
 
 // Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
-	kubeClient       kubernetes.Interface
-	flaggerClient    clientset.Interface
-	flaggerInformers Informers
-	flaggerSynced    cache.InformerSynced
-	flaggerWindow    time.Duration
-	workqueue        workqueue.RateLimitingInterface
-	eventRecorder    record.EventRecorder
-	logger           *zap.SugaredLogger
-	canaries         *sync.Map
-	jobs             map[string]CanaryJob
-	recorder         metrics.Recorder
-	notifier         notifier.Interface
-	canaryFactory    *canary.Factory
-	routerFactory    *router.Factory
-	observerFactory  *observers.Factory
-	meshProvider     string
-	eventWebhook     string
-	clusterName      string
+	kubeClient           kubernetes.Interface
+	flaggerClient        clientset.Interface
+	flaggerInformers     Informers
+	flaggerSynced        cache.InformerSynced
+	flaggerWindow        time.Duration
+	workqueue            workqueue.RateLimitingInterface
+	eventRecorder        record.EventRecorder
+	logger               *zap.SugaredLogger
+	canaries             *sync.Map
+	jobs                 map[string]CanaryJob
+	recorder             metrics.Recorder
+	notifier             notifier.Interface
+	canaryFactory        *canary.Factory
+	routerFactory        *router.Factory
+	observerFactory      *observers.Factory
+	meshProvider         string
+	eventWebhook         string
+	clusterName          string
+	noCrossNamespaceRefs bool
 }
 
 type Informers struct {
@@ -89,6 +90,7 @@ func NewController(
 	version string,
 	eventWebhook string,
 	clusterName string,
+	noCrossNamespaceRefs bool,
 ) *Controller {
 	logger.Debug("Creating event broadcaster")
 	flaggerscheme.AddToScheme(scheme.Scheme)
@@ -103,24 +105,25 @@ func NewController(
 	recorder.SetInfo(version, meshProvider)
 
 	ctrl := &Controller{
-		kubeClient:       kubeClient,
-		flaggerClient:    flaggerClient,
-		flaggerInformers: flaggerInformers,
-		flaggerSynced:    flaggerInformers.CanaryInformer.Informer().HasSynced,
-		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
-		eventRecorder:    eventRecorder,
-		logger:           logger,
-		canaries:         new(sync.Map),
-		jobs:             map[string]CanaryJob{},
-		flaggerWindow:    flaggerWindow,
-		observerFactory:  observerFactory,
-		recorder:         recorder,
-		notifier:         notifier,
-		canaryFactory:    canaryFactory,
-		routerFactory:    routerFactory,
-		meshProvider:     meshProvider,
-		eventWebhook:     eventWebhook,
-		clusterName:      clusterName,
+		kubeClient:           kubeClient,
+		flaggerClient:        flaggerClient,
+		flaggerInformers:     flaggerInformers,
+		flaggerSynced:        flaggerInformers.CanaryInformer.Informer().HasSynced,
+		workqueue:            workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
+		eventRecorder:        eventRecorder,
+		logger:               logger,
+		canaries:             new(sync.Map),
+		jobs:                 map[string]CanaryJob{},
+		flaggerWindow:        flaggerWindow,
+		observerFactory:      observerFactory,
+		recorder:             recorder,
+		notifier:             notifier,
+		canaryFactory:        canaryFactory,
+		routerFactory:        routerFactory,
+		meshProvider:         meshProvider,
+		eventWebhook:         eventWebhook,
+		clusterName:          clusterName,
+		noCrossNamespaceRefs: noCrossNamespaceRefs,
 	}
 
 	flaggerInformers.CanaryInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -250,6 +253,10 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
+	if err := c.verifyCanary(cd); err != nil {
+		return fmt.Errorf("invalid canary spec: %s", err)
+	}
+
 	// Finalize if canary has been marked for deletion and revert is desired
 	if cd.Spec.RevertOnDeletion && cd.ObjectMeta.DeletionTimestamp != nil {
 		// If finalizers have been previously removed proceed
@@ -310,6 +317,34 @@ func (c *Controller) enqueue(obj interface{}) {
 		return
 	}
 	c.workqueue.AddRateLimited(key)
+}
+
+func (c *Controller) verifyCanary(canary *flaggerv1.Canary) error {
+	if c.noCrossNamespaceRefs {
+		if err := verifyNoCrossNamespaceRefs(canary); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func verifyNoCrossNamespaceRefs(canary *flaggerv1.Canary) error {
+	if canary.Spec.UpstreamRef != nil && canary.Spec.UpstreamRef.Namespace != canary.Namespace {
+		return fmt.Errorf("can't access gloo upstream %s.%s, cross-namespace references are blocked", canary.Spec.UpstreamRef.Name, canary.Spec.UpstreamRef.Namespace)
+	}
+	if canary.Spec.Analysis != nil {
+		for _, metric := range canary.Spec.Analysis.Metrics {
+			if metric.TemplateRef != nil && metric.TemplateRef.Namespace != canary.Namespace {
+				return fmt.Errorf("can't access metric template %s.%s, cross-namespace references are blocked", metric.TemplateRef.Name, metric.TemplateRef.Namespace)
+			}
+		}
+		for _, alert := range canary.Spec.Analysis.Alerts {
+			if alert.ProviderRef.Namespace != canary.Namespace {
+				return fmt.Errorf("can't access alert provider %s.%s, cross-namespace references are blocked", alert.ProviderRef.Name, alert.ProviderRef.Namespace)
+			}
+		}
+	}
+	return nil
 }
 
 func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flaggerv1.Canary, bool) {

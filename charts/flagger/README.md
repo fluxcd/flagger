@@ -179,6 +179,8 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `podPriorityClassName`             | PriorityClass name for pod priority configuration                                                                                                  | ""                                    |
 | `podDisruptionBudget.enabled`      | A PodDisruptionBudget will be created if `true`                                                                                                    | `false`                               |
 | `podDisruptionBudget.minAvailable` | The minimal number of available replicas that will be set in the PodDisruptionBudget                                                               | `1`                                   |
+| `podDisruptionBudget.minAvailable` | The minimal number of available replicas that will be set in the PodDisruptionBudget                                                               | `1`                                   |
+| `noCrossNamespaceRefs`             | If `true`, cross namespace references to custom resources will be disabled.                                                                        | `false`                               |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 

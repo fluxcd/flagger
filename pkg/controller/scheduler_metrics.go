@@ -54,7 +54,7 @@ func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) e
 
 		if metric.TemplateRef != nil {
 			namespace := canary.Namespace
-			if metric.TemplateRef.Namespace != "" {
+			if metric.TemplateRef.Namespace != canary.Namespace {
 				namespace = metric.TemplateRef.Namespace
 			}
 
@@ -238,7 +238,7 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 	for _, metric := range canary.GetAnalysis().Metrics {
 		if metric.TemplateRef != nil {
 			namespace := canary.Namespace
-			if metric.TemplateRef.Namespace != "" {
+			if metric.TemplateRef.Namespace != canary.Namespace {
 				namespace = metric.TemplateRef.Namespace
 			}
 

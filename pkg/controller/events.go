@@ -108,7 +108,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 
 		// determine alert provider namespace
 		providerNamespace := canary.GetNamespace()
-		if alert.ProviderRef.Namespace != "" {
+		if alert.ProviderRef.Namespace != canary.Namespace {
 			providerNamespace = alert.ProviderRef.Namespace
 		}
 
