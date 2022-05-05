@@ -41,6 +41,7 @@ type ContourRouter struct {
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 	ingressClass  string
+	setOwnerRefs  bool
 }
 
 // Reconcile creates or updates the HTTP proxy
@@ -169,19 +170,21 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Namespace:   canary.Namespace,
 				Labels:      metadata.Labels,
 				Annotations: filterMetadata(metadata.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: newSpec,
 			Status: contourv1.HTTPProxyStatus{
 				CurrentStatus: "valid",
 				Description:   "valid HTTPProxy",
 			},
+		}
+		if cr.setOwnerRefs {
+			proxy.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		if cr.ingressClass != "" {

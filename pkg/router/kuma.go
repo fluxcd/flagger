@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -85,16 +84,10 @@ func (kr *KumaRouter) Reconcile(canary *flaggerv1.Canary) error {
 			meshName = "default"
 		}
 
+		// TrafficRoute is a cluster-scoped object, hence we don't set an owner reference.
 		t := &kumav1alpha1.TrafficRoute{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: apexName,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
+				Name:        apexName,
 				Annotations: filterMetadata(metadata.Annotations),
 			},
 			Spec: trSpec,

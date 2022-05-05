@@ -43,6 +43,7 @@ type GlooRouter struct {
 	flaggerClient      clientset.Interface
 	logger             *zap.SugaredLogger
 	includeLabelPrefix []string
+	setOwnerRefs       bool
 }
 
 // Reconcile creates or updates the Gloo Edge route table
@@ -116,15 +117,17 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Namespace:   canary.Namespace,
 				Labels:      metadata.Labels,
 				Annotations: filterMetadata(metadata.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: newSpec,
+		}
+		if gr.setOwnerRefs {
+			routeTable.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err = gr.glooClient.GatewayV1().RouteTables(canary.Namespace).Create(context.TODO(), routeTable, metav1.CreateOptions{})
@@ -310,21 +313,24 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 
 	upstreamLabels := includeLabelsByPrefix(upstreamSpec.Labels, gr.includeLabelPrefix)
 
-	return &gloov1.Upstream{
+	upstream := &gloov1.Upstream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      upstreamName,
 			Namespace: canary.Namespace,
 			Labels:    upstreamLabels,
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-					Group:   flaggerv1.SchemeGroupVersion.Group,
-					Version: flaggerv1.SchemeGroupVersion.Version,
-					Kind:    flaggerv1.CanaryKind,
-				}),
-			},
 		},
 		Spec: upstreamSpec,
 	}
+	if gr.setOwnerRefs {
+		upstream.OwnerReferences = []metav1.OwnerReference{
+			*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+				Group:   flaggerv1.SchemeGroupVersion.Group,
+				Version: flaggerv1.SchemeGroupVersion.Version,
+				Kind:    flaggerv1.CanaryKind,
+			}),
+		}
+	}
+	return upstream
 }
 
 func (gr *GlooRouter) getGlooConfigUpstream(canary *flaggerv1.Canary) (*gloov1.Upstream, error) {

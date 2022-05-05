@@ -35,6 +35,7 @@ import (
 type TraefikRouter struct {
 	traefikClient clientset.Interface
 	logger        *zap.SugaredLogger
+	setOwnerRefs  bool
 }
 
 // Reconcile creates or updates the Traefik service
@@ -73,15 +74,17 @@ func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Namespace:   canary.Namespace,
 				Labels:      tsMetadata.Labels,
 				Annotations: filterMetadata(tsMetadata.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: newSpec,
+		}
+		if tr.setOwnerRefs {
+			traefikService.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err = tr.traefikClient.TraefikV1alpha1().TraefikServices(canary.Namespace).Create(context.TODO(), traefikService, metav1.CreateOptions{})

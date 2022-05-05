@@ -40,6 +40,7 @@ type Smiv1alpha3Router struct {
 	smiClient     clientset.Interface
 	logger        *zap.SugaredLogger
 	targetMesh    string
+	setOwnerRefs  bool
 }
 
 // Reconcile creates or updates the SMI traffic split
@@ -72,18 +73,20 @@ func (sr *Smiv1alpha3Router) Reconcile(canary *flaggerv1.Canary) error {
 	if errors.IsNotFound(err) {
 		t := &smiv1alpha3.TrafficSplit{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      apexName,
-				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
+				Name:        apexName,
+				Namespace:   canary.Namespace,
 				Annotations: sr.makeAnnotations(canary.Spec.Service.Gateways),
 			},
 			Spec: tsSpec,
+		}
+		if sr.setOwnerRefs {
+			t.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err := sr.smiClient.SplitV1alpha3().TrafficSplits(canary.Namespace).Create(context.TODO(), t, metav1.CreateOptions{})

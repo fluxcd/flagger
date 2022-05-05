@@ -54,6 +54,7 @@ type GatewayAPIRouter struct {
 	gatewayAPIClient clientset.Interface
 	kubeClient       kubernetes.Interface
 	logger           *zap.SugaredLogger
+	setOwnerRefs     bool
 }
 
 func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
@@ -138,15 +139,18 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Namespace:   hrNamespace,
 				Labels:      metadata.Labels,
 				Annotations: filterMetadata(metadata.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: httpRouteSpec,
+		}
+
+		if gwr.setOwnerRefs {
+			route.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).

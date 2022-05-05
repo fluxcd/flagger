@@ -35,6 +35,7 @@ type Factory struct {
 	ingressAnnotationsPrefix string
 	ingressClass             string
 	logger                   *zap.SugaredLogger
+	setOwnerRefs             bool
 }
 
 func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
@@ -42,7 +43,8 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	ingressAnnotationsPrefix string,
 	ingressClass string,
 	logger *zap.SugaredLogger,
-	meshClient clientset.Interface) *Factory {
+	meshClient clientset.Interface,
+	setOwnerRefs bool) *Factory {
 	return &Factory{
 		kubeConfig:               kubeConfig,
 		meshClient:               meshClient,
@@ -51,6 +53,7 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 		ingressAnnotationsPrefix: ingressAnnotationsPrefix,
 		ingressClass:             ingressClass,
 		logger:                   logger,
+		setOwnerRefs:             setOwnerRefs,
 	}
 }
 
@@ -81,6 +84,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			appmeshClient: factory.meshClient,
 			labelSelector: labelSelector,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.AppMeshProvider:
 		return &AppMeshRouter{
@@ -88,6 +92,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			appmeshClient: factory.meshClient,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.LinkerdProvider:
 		return &SmiRouter{
@@ -96,6 +101,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			smiClient:     factory.meshClient,
 			targetMesh:    flaggerv1.LinkerdProvider,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.IstioProvider:
 		return &IstioRouter{
@@ -103,6 +109,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			istioClient:   factory.meshClient,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha1"):
 		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha1:")
@@ -112,6 +119,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			smiClient:     factory.meshClient,
 			targetMesh:    mesh,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha2"):
 		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha2:")
@@ -121,6 +129,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			smiClient:     factory.meshClient,
 			targetMesh:    mesh,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha3"):
 		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha3:")
@@ -130,6 +139,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			smiClient:     factory.meshClient,
 			targetMesh:    mesh,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.ContourProvider:
 		return &ContourRouter{
@@ -138,6 +148,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			contourClient: factory.meshClient,
 			ingressClass:  factory.ingressClass,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
 		return &GlooRouter{
@@ -145,22 +156,26 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			glooClient:    factory.meshClient,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.NGINXProvider:
 		return &IngressRouter{
 			logger:            factory.logger,
 			kubeClient:        factory.kubeClient,
 			annotationsPrefix: factory.ingressAnnotationsPrefix,
+			setOwnerRefs:      factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.SkipperProvider:
 		return &SkipperRouter{
-			logger:     factory.logger,
-			kubeClient: factory.kubeClient,
+			logger:       factory.logger,
+			kubeClient:   factory.kubeClient,
+			setOwnerRefs: factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.TraefikProvider:
 		return &TraefikRouter{
 			logger:        factory.logger,
 			traefikClient: factory.meshClient,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.OsmProvider:
 		return &Smiv1alpha2Router{
@@ -169,6 +184,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			smiClient:     factory.meshClient,
 			targetMesh:    flaggerv1.OsmProvider,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.KumaProvider:
 		return &KumaRouter{
@@ -182,6 +198,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			logger:           factory.logger,
 			kubeClient:       factory.kubeClient,
 			gatewayAPIClient: factory.meshClient,
+			setOwnerRefs:     factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.KubernetesProvider:
 		return &NopRouter{}
@@ -191,6 +208,7 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			flaggerClient: factory.flaggerClient,
 			kubeClient:    factory.kubeClient,
 			istioClient:   factory.meshClient,
+			setOwnerRefs:  factory.setOwnerRefs,
 		}
 	}
 }

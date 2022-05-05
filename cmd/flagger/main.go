@@ -168,15 +168,15 @@ func main() {
 	if kubeconfigServiceMesh == "" {
 		kubeconfigServiceMesh = kubeconfig
 	}
-	cfgHost, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfigServiceMesh)
+	serviceMeshCfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfigServiceMesh)
 	if err != nil {
 		logger.Fatalf("Error building host kubeconfig: %v", err)
 	}
 
-	cfgHost.QPS = float32(kubeconfigQPS)
-	cfgHost.Burst = kubeconfigBurst
+	serviceMeshCfg.QPS = float32(kubeconfigQPS)
+	serviceMeshCfg.Burst = kubeconfigBurst
 
-	meshClient, err := clientset.NewForConfig(cfgHost)
+	meshClient, err := clientset.NewForConfig(serviceMeshCfg)
 	if err != nil {
 		logger.Fatalf("Error building mesh clientset: %v", err)
 	}
@@ -212,7 +212,14 @@ func main() {
 	// start HTTP server
 	go server.ListenAndServe(port, 3*time.Second, logger, stopCh)
 
-	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, ingressClass, logger, meshClient)
+	setOwnerRefs := true
+	// Router shouldn't set OwnerRefs on resources that they create since the
+	// service mesh/ingress controller is in a different cluster.
+	if cfg.Host != serviceMeshCfg.Host {
+		setOwnerRefs = false
+	}
+
+	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, ingressClass, logger, meshClient, setOwnerRefs)
 
 	var configTracker canary.Tracker
 	if enableConfigTracking {
