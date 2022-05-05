@@ -100,6 +100,7 @@ func newTestCanary() *flaggerv1.Canary {
 			Service: flaggerv1.CanaryService{
 				Port:          9898,
 				PortDiscovery: true,
+				AppProtocol:   "http",
 				Headers: &istiov1alpha3.Headers{
 					Request: &istiov1alpha3.HeaderOperations{
 						Add: map[string]string{

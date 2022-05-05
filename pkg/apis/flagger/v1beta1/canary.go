@@ -128,6 +128,11 @@ type CanaryService struct {
 	// +optional
 	TargetPort intstr.IntOrString `json:"targetPort,omitempty"`
 
+	// AppProtocol of the service
+	// https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol
+	// +optional
+	AppProtocol string `json:"appProtocol,omitempty"`
+
 	// PortDiscovery adds all container ports to the generated Kubernetes service
 	PortDiscovery bool `json:"portDiscovery"`
 
