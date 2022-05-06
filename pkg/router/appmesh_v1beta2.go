@@ -44,6 +44,7 @@ type AppMeshv1beta2Router struct {
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
 	labelSelector string
+	setOwnerRefs  bool
 }
 
 // Reconcile creates or updates App Mesh virtual nodes and virtual services
@@ -175,15 +176,17 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 				Namespace:   canary.Namespace,
 				Labels:      metadata.Labels,
 				Annotations: filterMetadata(metadata.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: vnSpec,
+		}
+		if ar.setOwnerRefs {
+			virtualnode.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 		_, err = ar.appmeshClient.AppmeshV1beta2().VirtualNodes(canary.Namespace).Create(context.TODO(), virtualnode, metav1.CreateOptions{})
 		if err != nil {
@@ -341,15 +344,17 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: vrSpec,
+		}
+		if ar.setOwnerRefs {
+			virtualRouter.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err = ar.appmeshClient.AppmeshV1beta2().VirtualRouters(canary.Namespace).Create(context.TODO(), virtualRouter, metav1.CreateOptions{})
@@ -363,13 +368,6 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: appmeshv1.VirtualServiceSpec{
 				Provider: &appmeshv1.VirtualServiceProvider{
@@ -380,6 +378,15 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualRouter(canary *flaggerv1.Canary,
 					},
 				},
 			},
+		}
+		if ar.setOwnerRefs {
+			virtualService.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		// set App Mesh Gateway annotation on primary virtual service

@@ -42,6 +42,7 @@ type SmiRouter struct {
 	smiClient     clientset.Interface
 	logger        *zap.SugaredLogger
 	targetMesh    string
+	setOwnerRefs  bool
 }
 
 // Reconcile creates or updates the SMI traffic split
@@ -74,18 +75,20 @@ func (sr *SmiRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if errors.IsNotFound(err) {
 		t := &smiv1alpha1.TrafficSplit{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      apexName,
-				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
+				Name:        apexName,
+				Namespace:   canary.Namespace,
 				Annotations: sr.makeAnnotations(canary.Spec.Service.Gateways),
 			},
 			Spec: tsSpec,
+		}
+		if sr.setOwnerRefs {
+			t.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err := sr.smiClient.SplitV1alpha1().TrafficSplits(canary.Namespace).Create(context.TODO(), t, metav1.CreateOptions{})
@@ -203,15 +206,8 @@ func (sr *SmiRouter) getWithConvert(canary *flaggerv1.Canary, host string) (*smi
 	if errors.IsInvalid(err) {
 		t := &smiv1alpha2.TrafficSplit{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      apexName,
-				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
+				Name:        apexName,
+				Namespace:   canary.Namespace,
 				Annotations: sr.makeAnnotations(canary.Spec.Service.Gateways),
 			},
 			Spec: smiv1alpha2.TrafficSplitSpec{
@@ -227,6 +223,15 @@ func (sr *SmiRouter) getWithConvert(canary *flaggerv1.Canary, host string) (*smi
 					},
 				},
 			},
+		}
+		if sr.setOwnerRefs {
+			t.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err := sr.smiClient.SplitV1alpha2().TrafficSplits(canary.Namespace).Update(context.TODO(), t, metav1.UpdateOptions{})

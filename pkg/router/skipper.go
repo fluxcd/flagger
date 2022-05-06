@@ -55,8 +55,9 @@ const (
 )
 
 type SkipperRouter struct {
-	kubeClient kubernetes.Interface
-	logger     *zap.SugaredLogger
+	kubeClient   kubernetes.Interface
+	logger       *zap.SugaredLogger
+	setOwnerRefs bool
 }
 
 // Reconcile creates or updates the ingresses
@@ -98,12 +99,14 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 	iClone.Annotations = skp.makeAnnotations(iClone.Annotations, map[string]int{primarySvcName: 100, canarySvcName: 0})
 	iClone.Name = canaryIngressName
 	iClone.Namespace = canary.Namespace
-	iClone.OwnerReferences = []metav1.OwnerReference{
-		*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-			Group:   flaggerv1.SchemeGroupVersion.Group,
-			Version: flaggerv1.SchemeGroupVersion.Version,
-			Kind:    flaggerv1.CanaryKind,
-		}),
+	if skp.setOwnerRefs {
+		iClone.OwnerReferences = []metav1.OwnerReference{
+			*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+				Group:   flaggerv1.SchemeGroupVersion.Group,
+				Version: flaggerv1.SchemeGroupVersion.Version,
+				Kind:    flaggerv1.CanaryKind,
+			}),
+		}
 	}
 
 	// search for existence

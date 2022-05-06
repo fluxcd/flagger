@@ -43,6 +43,7 @@ type AppMeshRouter struct {
 	appmeshClient clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
+	setOwnerRefs  bool
 }
 
 // Reconcile creates or updates App Mesh virtual nodes and virtual services
@@ -161,15 +162,17 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 				Namespace:   canary.Namespace,
 				Labels:      metadata.Labels,
 				Annotations: filterMetadata(metadata.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: vnSpec,
+		}
+		if ar.setOwnerRefs {
+			virtualnode.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 		_, err = ar.appmeshClient.AppmeshV1beta1().VirtualNodes(canary.Namespace).Create(context.TODO(), virtualnode, metav1.CreateOptions{})
 		if err != nil {
@@ -314,15 +317,17 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: vsSpec,
+		}
+		if ar.setOwnerRefs {
+			virtualService.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		// set App Mesh Gateway annotation on primary virtual service

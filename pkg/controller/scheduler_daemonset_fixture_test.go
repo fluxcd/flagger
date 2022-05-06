@@ -92,7 +92,7 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 	}
 
 	// init router
-	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", "", logger, flaggerClient)
+	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", "", logger, flaggerClient, true)
 
 	// init observer
 	observerFactory, _ := observers.NewFactory(testMetricsServerURL)

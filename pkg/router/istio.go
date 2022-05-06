@@ -40,6 +40,7 @@ type IstioRouter struct {
 	istioClient   clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
+	setOwnerRefs  bool
 }
 
 // Reconcile creates or updates the Istio virtual service and destination rules
@@ -73,15 +74,17 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: newSpec,
+		}
+		if ir.setOwnerRefs {
+			destinationRule.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 		_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Create(context.TODO(), destinationRule, metav1.CreateOptions{})
 		if err != nil {
@@ -223,15 +226,17 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Namespace:   canary.Namespace,
 				Labels:      metadata.Labels,
 				Annotations: filterMetadata(metadata.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
 			},
 			Spec: newSpec,
+		}
+		if ir.setOwnerRefs {
+			virtualService.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 		_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Create(context.TODO(), virtualService, metav1.CreateOptions{})
 		if err != nil {

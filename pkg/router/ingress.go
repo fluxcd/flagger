@@ -37,6 +37,7 @@ type IngressRouter struct {
 	kubeClient        kubernetes.Interface
 	annotationsPrefix string
 	logger            *zap.SugaredLogger
+	setOwnerRefs      bool
 }
 
 func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
@@ -75,19 +76,21 @@ func (i *IngressRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if errors.IsNotFound(err) {
 		ing := &netv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      canaryIngressName,
-				Namespace: canary.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(canary, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
+				Name:        canaryIngressName,
+				Namespace:   canary.Namespace,
 				Annotations: i.makeAnnotations(ingressClone.Annotations),
 				Labels:      ingressClone.Labels,
 			},
 			Spec: ingressClone.Spec,
+		}
+		if i.setOwnerRefs {
+			ing.OwnerReferences = []metav1.OwnerReference{
+				*metav1.NewControllerRef(canary, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
+			}
 		}
 
 		_, err := i.kubeClient.NetworkingV1().Ingresses(canary.Namespace).Create(context.TODO(), ing, metav1.CreateOptions{})
