@@ -43,8 +43,8 @@ helm upgrade -i flagger flagger/flagger \
 --set crd.create=false \
 --set meshProvider=istio \
 --set metricsServer=http://istio-cluster-prometheus:9090 \
---set istio.kubeconfig.secretName=istio-kubeconfig \
---set istio.kubeconfig.key=kubeconfig
+--set controlplane.kubeconfig.secretName=istio-kubeconfig \
+--set controlplane.kubeconfig.key=kubeconfig
 ```
 
 Note that the Istio kubeconfig must be stored in a Kubernetes secret with a data key named `kubeconfig`.

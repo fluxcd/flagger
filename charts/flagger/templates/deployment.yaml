@@ -48,10 +48,10 @@ spec:
         - name: {{ .Values.image.pullSecret }}
       {{- end }}
       volumes:
-        {{- if .Values.istio.kubeconfig.secretName }}
+        {{- if .Values.controlplane.kubeconfig.secretName }}
         - name: kubeconfig
           secret:
-            secretName: "{{ .Values.istio.kubeconfig.secretName }}"
+            secretName: "{{ .Values.controlplane.kubeconfig.secretName }}"
         {{- end }}
       {{- if .Values.podPriorityClassName }}
       priorityClassName: {{ .Values.podPriorityClassName }}
@@ -63,9 +63,9 @@ spec:
 {{ toYaml .Values.securityContext.context | indent 12 }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.istio.kubeconfig.secretName }}
+            {{- if .Values.controlplane.kubeconfig.secretName }}
             - name: kubeconfig
-              mountPath: "/tmp/istio-host"
+              mountPath: "/tmp/controlplane"
             {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -132,8 +132,8 @@ spec:
           {{- if .Values.kubeconfigBurst }}
           - -kubeconfig-burst={{ .Values.kubeconfigBurst }}
           {{- end }}
-          {{- if .Values.istio.kubeconfig.secretName }}
-          - -kubeconfig-service-mesh=/tmp/istio-host/{{ .Values.istio.kubeconfig.key }}
+          {{- if .Values.controlplane.kubeconfig.secretName }}
+          - -kubeconfig-service-mesh=/tmp/controlplane/{{ .Values.controlplane.kubeconfig.key }}
           {{- end }}
           {{- if .Values.threadiness }}
           - -threadiness={{ .Values.threadiness }}

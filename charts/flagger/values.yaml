@@ -151,13 +151,12 @@ prometheus:
 kubeconfigQPS: ""
 kubeconfigBurst: ""
 
-#  Istio multi-cluster service mesh (shared control plane single-network)
-# https://istio.io/docs/setup/install/multicluster/shared-vpn/
-istio:
+#  Multi-cluster service mesh (shared control plane single-network)
+controlplane:
   kubeconfig:
-    # istio.kubeconfig.secretName: The name of the secret containing the Istio control plane kubeconfig
+    # controlplane.kubeconfig.secretName: The name of the secret containing the mesh control plane kubeconfig
     secretName: ""
-    # istio.kubeconfig.key: The name of secret data key that contains the Istio control plane kubeconfig
+    # controlplane.kubeconfig.key: The name of secret data key that contains the mesh control plane kubeconfig
     key: "kubeconfig"
 
 podDisruptionBudget:
