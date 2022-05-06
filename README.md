@@ -1,4 +1,4 @@
-  # flagger
+ # flagger
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4783/badge)](https://bestpractices.coreinfrastructure.org/projects/4783)
 [![build](https://github.com/fluxcd/flagger/workflows/build/badge.svg)](https://github.com/fluxcd/flagger/actions)
@@ -13,10 +13,7 @@ by gradually shifting traffic to the new version while measuring metrics and run
 ![flagger-overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-overview.png)
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
-using a service mesh (App Mesh, Istio, Linkerd, Open Service Mesh, Kuma)
-or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
-For release analysis, Flagger can query Prometheus, Datadog, New Relic, CloudWatch, Dynatrace,
-InfluxDB and Stackdriver and for alerting it uses Slack, MS Teams, Discord, Rocket and Google Chat.
+and integrates with various Kubernetes ingress controllers, service mesh and monitoring solutions.
 
 Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
 and part of [Flux](https://fluxcd.io) family of GitOps tools.
@@ -85,7 +82,7 @@ spec:
   progressDeadlineSeconds: 60
   # HPA reference (optional)
   autoscalerRef:
-    apiVersion: autoscaling/v2beta1
+    apiVersion: autoscaling/v2beta2
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
@@ -223,7 +220,13 @@ For more details on how the canary analysis and promotion works please [read the
 | Request duration check (L7 metric)            | :heavy_minus_sign: | :heavy_minus_sign: |
 | Custom metric checks                          | :heavy_check_mark: | :heavy_check_mark: |
 
-For all [Gateway API](https://gateway-api.sigs.k8s.io/) implementations like [Contour](https://projectcontour.io/guides/gateway-api/), [Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/) and [SMI](https://smi-spec.io) compatible service mesh solutions like [Consul Connect](https://www.consul.io/docs/connect) or [Nginx Service Mesh](https://docs.nginx.com/nginx-service-mesh/), [Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus) can be used to implement the request success rate and request duration checks.
+For all [Gateway API](https://gateway-api.sigs.k8s.io/) implementations like
+[Contour](https://projectcontour.io/guides/gateway-api/) or
+[Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
+and [SMI](https://smi-spec.io) compatible service mesh solutions like 
+[Nginx Service Mesh](https://docs.nginx.com/nginx-service-mesh/),
+[Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus)
+can be used to implement the request success rate and request duration checks.
 
 ### Roadmap
 
@@ -236,17 +239,16 @@ For all [Gateway API](https://gateway-api.sigs.k8s.io/) implementations like [Co
 
 #### Integrations
 
-* Add support for ingress controllers like HAProxy and ALB
+* Add support for ingress controllers like HAProxy, ALB and Apache APISIX
 
 ### Contributing
 
 Flagger is Apache 2.0 licensed and accepts contributions via GitHub pull requests.
 To start contributing please read the [development guide](https://docs.flagger.app/dev/dev-guide).
 
-When submitting bug reports please include as much details as possible:
+When submitting bug reports please include as many details as possible:
 
 * which Flagger version
-* which Flagger CRD version
 * which Kubernetes version
 * what configuration (canary, ingress and workloads definitions)
 * what happened (Flagger and Proxy logs)
