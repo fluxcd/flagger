@@ -2,6 +2,32 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.21.0
+
+**Release date:** 2022-05-06
+
+This release comes with an option to disable cross-namespace references to Kubernetes
+custom resources such as `AlertProivders` and `MetricProviders`. When running Flagger
+on multi-tenant environments it is advised to set the `-no-cross-namespace-refs=true` flag.
+
+In addition, this version enables Flagger to target Istio and Kuma multi-cluster setups.
+When installing Flagger with Helm, the service mesh control plane kubeconfig secret
+can be specified using `--set controlplane.kubeconfig.secretName`.
+
+#### Improvements
+
+- Add flag to disable cross namespace refs to custom resources
+  [#1181](https://github.com/fluxcd/flagger/pull/1181)
+- Rename kubeconfig section in helm values
+  [#1188](https://github.com/fluxcd/flagger/pull/1188)
+- Update Flagger overview diagram
+  [#1187](https://github.com/fluxcd/flagger/pull/1187)
+
+#### Fixes
+
+- Avoid setting owner refs if the service mesh/ingress is on a different cluster
+  [#1183](https://github.com/fluxcd/flagger/pull/1183)
+
 ## 1.20.0
 
 **Release date:** 2022-04-15
