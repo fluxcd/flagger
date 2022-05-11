@@ -257,6 +257,8 @@ type CanaryAnalysis struct {
 	// A/B testing HTTP header match conditions
 	// +optional
 	Match []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+
+	FreezeOnFailure bool `json:"freezeOnFailure,omitempty"`
 }
 
 // CanaryMetric holds the reference to metrics used for canary analysis
@@ -483,6 +485,10 @@ func (c *Canary) GetAnalysisCanaryReadyThreshold() int {
 		return *c.GetAnalysis().CanaryReadyThreshold
 	}
 	return CanaryReadyThreshold
+}
+
+func (c *Canary) GetAnalysisFreezeOnFailure() bool {
+	return c.GetAnalysis().FreezeOnFailure
 }
 
 // GetMetricInterval returns the metric interval default value (1m)

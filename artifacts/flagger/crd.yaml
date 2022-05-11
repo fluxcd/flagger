@@ -1012,6 +1012,9 @@ spec:
                             type: object
                             additionalProperties:
                               type: string
+                    freezeOnFailure:
+                      description: Freeze canary on failure
+                      type: boolean
             status:
               description: CanaryStatus defines the observed state of a canary.
               type: object
@@ -1032,6 +1035,7 @@ spec:
                     - Failed
                     - Terminating
                     - Terminated
+                    - Frozen
                 trackedConfigs:
                   description: TrackedConfig of this canary
                   additionalProperties:
