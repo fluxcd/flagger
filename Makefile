@@ -24,7 +24,7 @@ test: test-fmt test-codegen
 	go test ./...
 
 crd:
-	cat artifacts/flagger/crd.yaml > charts/flagger/crds/crd.yaml
+	cat artifacts/flagger/crd.yaml > charts/flagger/charts/flagger-crd/templates/crd.yaml
 	cat artifacts/flagger/crd.yaml > kustomize/base/flagger/crd.yaml
 
 version-set:
@@ -35,6 +35,8 @@ version-set:
 	sed -i "s/tag: $$current/tag: $$next/g" charts/flagger/values.yaml && \
 	sed -i "s/appVersion: $$current/appVersion: $$next/g" charts/flagger/Chart.yaml && \
 	sed -i "s/version: $$current/version: $$next/g" charts/flagger/Chart.yaml && \
+	sed -i "s/appVersion: $$current/appVersion: $$next/g" charts/flagger/charts/flagger-crd/Chart.yaml && \
+	sed -i "s/version: $$current/version: $$next/g" charts/flagger/charts/flagger-crd/Chart.yaml && \
 	sed -i "s/newTag: $$current/newTag: $$next/g" kustomize/base/flagger/kustomization.yaml && \
 	echo "Version $$next set in code, deployment, chart and kustomize"
 
