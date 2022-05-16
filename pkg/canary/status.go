@@ -212,22 +212,25 @@ func MakeStatusConditions(cd *flaggerv1.Canary,
 		message = fmt.Sprintf("%s initialization completed.", cd.Spec.TargetRef.Kind)
 	case flaggerv1.CanaryPhaseWaiting:
 		status = corev1.ConditionUnknown
-		message = "Waiting for approval."
-	case flaggerv1.CanaryPhaseWaitingPromotion:
-		status = corev1.ConditionUnknown
-		message = "Waiting for approval."
+		message = "Waiting for approval to start canary handling."
 	case flaggerv1.CanaryPhaseProgressing:
 		status = corev1.ConditionUnknown
 		message = "New revision detected, progressing canary analysis."
+	case flaggerv1.CanaryPhaseWaitingPromotion:
+		status = corev1.ConditionUnknown
+		message = "Waiting for approval to start primary rolling update"
 	case flaggerv1.CanaryPhasePromoting:
 		status = corev1.ConditionUnknown
 		message = "Canary analysis completed, starting primary rolling update."
+	case flaggerv1.CanaryPhaseWaitingFinalising:
+		status = corev1.ConditionUnknown
+		message = "Waiting for approval to start finalizing"
 	case flaggerv1.CanaryPhaseFinalising:
 		status = corev1.ConditionUnknown
-		message = "Canary analysis completed, routing all traffic to primary."
+		message = "Primary rolling update completed, routed all traffic to primary."
 	case flaggerv1.CanaryPhaseSucceeded:
 		status = corev1.ConditionTrue
-		message = "Canary analysis completed successfully, promotion finished."
+		message = "Canary analysis completed successfully, promotion & finlization finished."
 	case flaggerv1.CanaryPhaseFailed:
 		status = corev1.ConditionFalse
 		message = fmt.Sprintf("Canary analysis failed, %s scaled to zero.", cd.Spec.TargetRef.Kind)

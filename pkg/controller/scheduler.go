@@ -241,9 +241,11 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check gates
+	//if cd.Status.Phase != flaggerv1.CanaryPhaseWaitingFinalising && cd.Status.Phase != flaggerv1.CanaryPhaseFinalising {
 	if isApproved := c.runConfirmRolloutHooks(cd, canaryController); !isApproved {
 		return
 	}
+	//}
 
 	maxWeight := c.maxWeight(cd)
 
@@ -295,10 +297,24 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
+	// check canary status
+	var retriable = true
+	retriable, err = canaryController.IsCanaryReady(cd)
+	if err != nil && retriable {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
+	// check if analysis should be skipped
+	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, err, retriable); skip {
+		return
+	}
+
 	// check if we should rollback
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion {
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising {
 		if ok := c.runRollbackHooks(cd, cd.Status.Phase); ok {
 			c.recordEventWarningf(cd, "Rolling back %s.%s manual webhook invoked", cd.Name, cd.Namespace)
 			c.alert(cd, "Rolling back manual webhook invoked", false, flaggerv1.SeverityWarn)
@@ -314,9 +330,11 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// scale canary to zero if promotion has finished
-	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+	if (cd.Status.Phase == flaggerv1.CanaryPhaseFinalising ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising) &&
+		cd.Status.FailedChecks < cd.GetAnalysisThreshold() {
 
-		if ok := c.runConfirmFinalizingHook(cd, flaggerv1.CanaryPhaseFinalising); !ok {
+		if ok := c.runConfirmFinalizingHook(cd, flaggerv1.CanaryPhaseFinalising, canaryController); !ok {
 			return
 		}
 
@@ -324,7 +342,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
-
 		// set status to succeeded
 		if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
@@ -345,21 +362,10 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
-	// check canary status
-	var retriable = true
-	retriable, err = canaryController.IsCanaryReady(cd)
-	if err != nil && retriable {
-		c.recordEventWarningf(cd, "%v", err)
-		return
-	}
-
-	// check if analysis should be skipped
-	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, err, retriable); skip {
-		return
-	}
-
-	// check if the number of failed checks reached the threshold
-	if (cd.Status.Phase == flaggerv1.CanaryPhaseProgressing || cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion) &&
+	// check if the number of failed checks reached the threshold for rollback
+	if (cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising) &&
 		(!retriable || cd.Status.FailedChecks >= cd.GetAnalysisThreshold()) {
 		if !retriable {
 			c.recordEventWarningf(cd, "Rolling back %s.%s progress deadline exceeded %v",
@@ -440,7 +446,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 	meshRouter router.Interface, provider string, canaryWeight int, primaryWeight int) {
 	// finalize promotion since no traffic shifting is possible for Kubernetes CNI
 	if provider == flaggerv1.KubernetesProvider {
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
 		}
 		return
@@ -454,7 +460,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 			return
 		}
 		c.recorder.SetWeight(canary, c.totalWeight(canary), 0)
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
 		}
 		return
@@ -479,7 +485,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 
 		// finalize promotion
 		if primaryWeight == c.totalWeight(canary) {
-			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
 			}
 		} else {
@@ -738,7 +744,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 		return true
 	}
 
-	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
 		return true
 	}
@@ -788,6 +794,7 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true
 	}
@@ -868,7 +875,7 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
 
-	if ok := c.runConfirmFinalizingHook(canary, flaggerv1.CanaryPhaseFailed); !ok {
+	if ok := c.runConfirmFinalizingHook(canary, flaggerv1.CanaryPhaseFailed, canaryController); !ok {
 		return
 	}
 

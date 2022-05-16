@@ -1029,6 +1029,7 @@ spec:
                     - WaitingPromotion
                     - Promoting
                     - Finalising
+                    - WaitingFinalising                    
                     - Succeeded
                     - Failed
                     - Terminating
