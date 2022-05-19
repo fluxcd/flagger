@@ -39,6 +39,7 @@ func TestServiceRouter_Create(t *testing.T) {
 		flaggerClient: mocks.flaggerClient,
 		logger:        mocks.logger,
 	}
+	appProtocol := "http"
 
 	err := router.Initialize(mocks.canary)
 	require.NoError(t, err)
@@ -49,6 +50,7 @@ func TestServiceRouter_Create(t *testing.T) {
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
 
+	assert.Equal(t, &appProtocol, canarySvc.Spec.Ports[0].AppProtocol)
 	assert.Equal(t, "http", canarySvc.Spec.Ports[0].Name)
 	assert.Equal(t, int32(9898), canarySvc.Spec.Ports[0].Port)
 
