@@ -569,7 +569,7 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 
 		// update primary spec
 		if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
-			c.recordEventInfof(canary, "Run Canary: Copying %s.%s template spec to %s.%s",
+			c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
 				canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
 			if err := canaryController.Promote(canary); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
@@ -614,7 +614,7 @@ func (c *Controller) runAB(canary *flaggerv1.Canary, canaryController canary.Con
 	// promote canary - max iterations reached
 	if canary.GetAnalysis().Iterations == canary.Status.Iterations {
 		if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
-			c.recordEventInfof(canary, "runAB: Copying %s.%s template spec to %s.%s",
+			c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
 				canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
 			if err := canaryController.Promote(canary); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
@@ -685,7 +685,7 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 	// promote canary - max iterations reached
 	if canary.GetAnalysis().Iterations < canary.Status.Iterations {
 		if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
-			c.recordEventInfof(canary, "runBlueGreen: Copying %s.%s template spec to %s.%s",
+			c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
 				canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
 			if err := canaryController.Promote(canary); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
@@ -754,7 +754,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 
 	// copy spec and configs from canary to primary
 	if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
-		c.recordEventInfof(canary, "Should Skip Analysis: Copying %s.%s template spec to %s-primary.%s",
+		c.recordEventInfof(canary, "Copying %s.%s template spec to %s-primary.%s",
 			canary.Spec.TargetRef.Name, canary.Namespace, canary.Spec.TargetRef.Name, canary.Namespace)
 		if err := canaryController.Promote(canary); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
