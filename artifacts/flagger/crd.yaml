@@ -995,6 +995,7 @@ spec:
                               - pre-rollout
                               - rollout
                               - confirm-promotion
+                              - confirm-finalizing                              
                               - post-rollout
                               - event
                               - rollback
@@ -1030,6 +1031,7 @@ spec:
                     - Progressing
                     - WaitingPromotion
                     - Promoting
+                    - WaitingFinalising
                     - Finalising
                     - Succeeded
                     - Failed

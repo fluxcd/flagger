@@ -51,6 +51,8 @@ const (
 	CanaryPhaseWaitingPromotion CanaryPhase = "WaitingPromotion"
 	// CanaryPhasePromoting means the canary analysis is finished and the primary spec has been updated
 	CanaryPhasePromoting CanaryPhase = "Promoting"
+	// CanaryPhaseWaitingFinalising means the canary finalising is paused (waiting for confirmation to proceed)
+	CanaryPhaseWaitingFinalising CanaryPhase = "WaitingFinalising"
 	// CanaryPhaseFinalising means the canary promotion is finished and traffic has been routed back to primary
 	CanaryPhaseFinalising CanaryPhase = "Finalising"
 	// CanaryPhaseSucceeded means the canary analysis has been successful

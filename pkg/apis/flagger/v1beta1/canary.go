@@ -324,22 +324,24 @@ type CanaryAlert struct {
 type HookType string
 
 const (
-	// RolloutHook execute webhook during the canary analysis
+	// RolloutHook executes webhook during the canary analysis
 	RolloutHook HookType = "rollout"
-	// PreRolloutHook execute webhook before routing traffic to canary
+	// PreRolloutHook executes webhook before routing traffic to canary
 	PreRolloutHook HookType = "pre-rollout"
-	// PostRolloutHook execute webhook after the canary analysis
+	// PostRolloutHook executes webhook after the canary analysis
 	PostRolloutHook HookType = "post-rollout"
-	// ConfirmRolloutHook halt canary analysis until webhook returns HTTP 200
+	// ConfirmRolloutHook halts canary analysis until webhook returns HTTP 200
 	ConfirmRolloutHook HookType = "confirm-rollout"
-	// ConfirmPromotionHook halt canary promotion until webhook returns HTTP 200
+	// ConfirmPromotionHook halts canary promotion until webhook returns HTTP 200
 	ConfirmPromotionHook HookType = "confirm-promotion"
+	// ConfirmFinalizingHook halts canary finalizing until webhook returns HTTP 200
+	ConfirmFinalizingHook HookType = "confirm-finalizing"
 	// EventHook dispatches Flagger events to the specified endpoint
 	EventHook HookType = "event"
-	// RollbackHook rollback canary analysis if webhook returns HTTP 200
+	// RollbackHook rollbacks canary analysis if webhook returns HTTP 200
 	RollbackHook HookType = "rollback"
 	// ConfirmTrafficIncreaseHook increases traffic weight if webhook returns HTTP 200
-	ConfirmTrafficIncreaseHook = "confirm-traffic-increase"
+	ConfirmTrafficIncreaseHook HookType = "confirm-traffic-increase"
 )
 
 // CanaryWebhook holds the reference to external checks used for canary analysis

@@ -104,6 +104,33 @@ func (c *Controller) runConfirmPromotionHooks(canary *flaggerv1.Canary, canaryCo
 	return true
 }
 
+func (c *Controller) runConfirmFinalizingHook(canary *flaggerv1.Canary, nextPhase flaggerv1.CanaryPhase, canaryController canary.Controller) bool {
+	for _, webhook := range canary.GetAnalysis().Webhooks {
+		if webhook.Type == flaggerv1.ConfirmFinalizingHook {
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseWaitingFinalising, webhook)
+			if err != nil {
+				if canary.Status.Phase != flaggerv1.CanaryPhaseWaitingFinalising {
+					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
+						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+					}
+				}
+				c.recordEventWarningf(canary, "Halt finalizing %s.%s waiting for finalizing approval %s", canary.Name, canary.Namespace, webhook.Name)
+				if !webhook.MuteAlert {
+					c.alert(canary, "Canary finalizing is waiting for approval.", false, flaggerv1.SeverityWarn)
+				}
+				return false
+			} else {
+				if err := canaryController.SetStatusPhase(canary, nextPhase); err != nil {
+					c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+					return false
+				}
+				c.recordEventInfof(canary, "Confirm-finalizing check %s passed. Next phase is %s", webhook.Name, nextPhase)
+			}
+		}
+	}
+	return true
+}
+
 func (c *Controller) runPreRolloutHooks(canary *flaggerv1.Canary) bool {
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == flaggerv1.PreRolloutHook {

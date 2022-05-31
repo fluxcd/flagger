@@ -241,9 +241,11 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check gates
+	//if cd.Status.Phase != flaggerv1.CanaryPhaseWaitingFinalising && cd.Status.Phase != flaggerv1.CanaryPhaseFinalising {
 	if isApproved := c.runConfirmRolloutHooks(cd, canaryController); !isApproved {
 		return
 	}
+	//}
 
 	maxWeight := c.maxWeight(cd)
 
@@ -311,7 +313,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// check if we should rollback
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
-		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion {
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising {
 		if ok := c.runRollbackHooks(cd, cd.Status.Phase); ok {
 			c.recordEventWarningf(cd, "Rolling back %s.%s manual webhook invoked", cd.Name, cd.Namespace)
 			c.alert(cd, "Rolling back manual webhook invoked", false, flaggerv1.SeverityWarn)
@@ -322,32 +325,29 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// route traffic back to primary if analysis has succeeded
 	if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
+		//start traffic shift only when the primary is ready
+		if err := canaryController.IsPrimaryReady(cd); err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+
 		c.runPromotionTrafficShift(cd, canaryController, meshRouter, provider, canaryWeight, primaryWeight)
 		return
 	}
 
 	// scale canary to zero if promotion has finished
-	if cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
-		if err := canaryController.ScaleToZero(cd); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
+	if (cd.Status.Phase == flaggerv1.CanaryPhaseFinalising ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising) &&
+		cd.Status.FailedChecks < cd.GetAnalysisThreshold() {
 
-		// set status to succeeded
-		if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
-		}
-		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
-		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
-		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
-			false, flaggerv1.SeverityInfo)
+		c.runFinalizing(cd, canaryController)
 		return
 	}
 
-	// check if the number of failed checks reached the threshold
-	if (cd.Status.Phase == flaggerv1.CanaryPhaseProgressing || cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion) &&
+	// check if the number of failed checks reached the threshold for rollback
+	if (cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising) &&
 		(!retriable || cd.Status.FailedChecks >= cd.GetAnalysisThreshold()) {
 		if !retriable {
 			c.recordEventWarningf(cd, "Rolling back %s.%s progress deadline exceeded %v",
@@ -428,7 +428,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 	meshRouter router.Interface, provider string, canaryWeight int, primaryWeight int) {
 	// finalize promotion since no traffic shifting is possible for Kubernetes CNI
 	if provider == flaggerv1.KubernetesProvider {
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
 		}
 		return
@@ -442,7 +442,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 			return
 		}
 		c.recorder.SetWeight(canary, c.totalWeight(canary), 0)
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
 		}
 		return
@@ -467,7 +467,7 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 
 		// finalize promotion
 		if primaryWeight == c.totalWeight(canary) {
-			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
+			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
 				c.recordEventWarningf(canary, "%v", err)
 			}
 		} else {
@@ -479,6 +479,34 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 
 	return
 
+}
+
+func (c *Controller) runFinalizing(cd *flaggerv1.Canary, canaryController canary.Controller) {
+	if ok := c.runConfirmFinalizingHook(cd, flaggerv1.CanaryPhaseFinalising, canaryController); !ok {
+		return
+	}
+
+	if err := canaryController.ScaleToZero(cd); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+	// set status to succeeded
+	if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+	c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+	c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
+
+	if cd.SkipAnalysis() {
+		c.recordEventInfof(cd, "Promotion completed! Canary analysis was skipped for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.alert(cd, "Canary analysis was skipped, promotion finished.",
+			false, flaggerv1.SeverityInfo)
+	} else {
+		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
+			false, flaggerv1.SeverityInfo)
+	}
 }
 
 func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary.Controller,
@@ -540,17 +568,19 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 		}
 
 		// update primary spec
-		c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
-			canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
-		if err := canaryController.Promote(canary); err != nil {
-			c.recordEventWarningf(canary, "%v", err)
-			return
-		}
+		if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
+			c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
+				canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
+			if err := canaryController.Promote(canary); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+				return
+			}
 
-		// update status phase
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
-			c.recordEventWarningf(canary, "%v", err)
-			return
+			// update status phase
+			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+				return
+			}
 		}
 	}
 }
@@ -583,17 +613,19 @@ func (c *Controller) runAB(canary *flaggerv1.Canary, canaryController canary.Con
 
 	// promote canary - max iterations reached
 	if canary.GetAnalysis().Iterations == canary.Status.Iterations {
-		c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
-			canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
-		if err := canaryController.Promote(canary); err != nil {
-			c.recordEventWarningf(canary, "%v", err)
-			return
-		}
+		if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
+			c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
+				canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
+			if err := canaryController.Promote(canary); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+				return
+			}
 
-		// update status phase
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
-			c.recordEventWarningf(canary, "%v", err)
-			return
+			// update status phase
+			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+				return
+			}
 		}
 	}
 }
@@ -652,17 +684,19 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 
 	// promote canary - max iterations reached
 	if canary.GetAnalysis().Iterations < canary.Status.Iterations {
-		c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
-			canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
-		if err := canaryController.Promote(canary); err != nil {
-			c.recordEventWarningf(canary, "%v", err)
-			return
-		}
+		if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
+			c.recordEventInfof(canary, "Copying %s.%s template spec to %s.%s",
+				canary.Spec.TargetRef.Name, canary.Namespace, primaryName, canary.Namespace)
+			if err := canaryController.Promote(canary); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+				return
+			}
 
-		// update status phase
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
-			c.recordEventWarningf(canary, "%v", err)
-			return
+			// update status phase
+			if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
+				c.recordEventWarningf(canary, "%v", err)
+				return
+			}
 		}
 	}
 
@@ -700,6 +734,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	}
 
 	// regardless if analysis is being skipped, rollback if canary failed to progress
+	//if !retriable || canary.Status.FailedChecks >= canary.GetAnalysisThreshold() {
 	if !retriable {
 		c.recordEventWarningf(canary, "Rolling back %s.%s progress deadline exceeded %v", canary.Name, canary.Namespace, err)
 		c.alert(canary, fmt.Sprintf("Progress deadline exceeded %v", err), false, flaggerv1.SeverityError)
@@ -718,31 +753,42 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
 
 	// copy spec and configs from canary to primary
-	c.recordEventInfof(canary, "Copying %s.%s template spec to %s-primary.%s",
-		canary.Spec.TargetRef.Name, canary.Namespace, canary.Spec.TargetRef.Name, canary.Namespace)
-	if err := canaryController.Promote(canary); err != nil {
-		c.recordEventWarningf(canary, "%v", err)
-		return true
+	if canary.Status.Phase != flaggerv1.CanaryPhasePromoting {
+		c.recordEventInfof(canary, "Copying %s.%s template spec to %s-primary.%s",
+			canary.Spec.TargetRef.Name, canary.Namespace, canary.Spec.TargetRef.Name, canary.Namespace)
+		if err := canaryController.Promote(canary); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return true
+		}
+
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhasePromoting); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return true
+		}
 	}
 
-	// shutdown canary
-	if err := canaryController.ScaleToZero(canary); err != nil {
-		c.recordEventWarningf(canary, "%v", err)
-		return true
+	// route traffic back to primary if analysis has succeeded
+	if canary.Status.Phase == flaggerv1.CanaryPhasePromoting {
+		//start traffic shift only when the primary is ready
+		if err := canaryController.IsPrimaryReady(canary); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return true
+		}
+
+		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingFinalising); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return true
+		}
+
 	}
 
-	// update status phase
-	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseSucceeded); err != nil {
-		c.recordEventWarningf(canary, "%v", err)
+	// scale canary to zero if promotion has finished
+	if (canary.Status.Phase == flaggerv1.CanaryPhaseFinalising ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising) &&
+		canary.Status.FailedChecks < canary.GetAnalysisThreshold() {
+		c.runFinalizing(canary, canaryController)
 		return true
 	}
-
-	// notify
-	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
-	c.recordEventInfof(canary, "Promotion completed! Canary analysis was skipped for %s.%s",
-		canary.Spec.TargetRef.Name, canary.Namespace)
-	c.alert(canary, "Canary analysis was skipped, promotion finished.",
-		false, flaggerv1.SeverityInfo)
 
 	return true
 }
@@ -754,6 +800,7 @@ func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController ca
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true, nil
 	}
@@ -788,6 +835,7 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingFinalising ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
 		return true
 	}
@@ -867,6 +915,10 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 		canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
 
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
+
+	if ok := c.runConfirmFinalizingHook(canary, flaggerv1.CanaryPhaseFailed, canaryController); !ok {
+		return
+	}
 
 	// shutdown canary
 	if err := canaryController.ScaleToZero(canary); err != nil {
