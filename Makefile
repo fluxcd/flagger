@@ -5,6 +5,12 @@ LT_VERSION?=$(shell grep 'VERSION' cmd/loadtester/main.go | awk '{ print $$4 }' 
 build:
 	CGO_ENABLED=0 go build -a -o ./bin/flagger ./cmd/flagger
 
+tidy:
+	rm -f go.sum; go mod tidy -compat=1.17
+
+vet:
+	go vet ./...
+
 fmt:
 	go mod tidy
 	gofmt -l -s -w ./

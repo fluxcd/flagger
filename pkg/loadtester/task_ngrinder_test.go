@@ -54,7 +54,8 @@ func TestTaskNGrinder(t *testing.T) {
 			"pollInterval": "1s",
 		}, canary, logger)
 		require.NoError(t, err, "Failed to create ngrinder task")
-		ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		defer cancel()
 		task.Run(ctx)
 		<-ctx.Done()
 	})
