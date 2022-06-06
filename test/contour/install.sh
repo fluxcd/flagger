@@ -2,7 +2,7 @@
 
 set -o errexit
 
-CONTOUR_VER="release-1.18"
+CONTOUR_VER="v1.21.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin

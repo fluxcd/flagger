@@ -2,7 +2,7 @@
 
 set -o errexit
 
-TRAEFIK_CHART_VERSION="10.1.1" # traefik 2.4.9
+TRAEFIK_CHART_VERSION="10.20.1" # traefik 2.7.0
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin

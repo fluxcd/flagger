@@ -2,7 +2,7 @@
 
 set -o errexit
 
-OSM_VER="v0.9.1"
+OSM_VER="v1.1.1"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin
@@ -12,14 +12,16 @@ chmod +x ${REPO_ROOT}/bin/linux-amd64/osm
 
 echo ">>> Installing Open Service Mesh ${OSM_VER}"
 ${REPO_ROOT}/bin/linux-amd64/osm install \
---set=OpenServiceMesh.deployPrometheus=true \
---set=OpenServiceMesh.enablePermissiveTrafficPolicy=true \
---set=OpenServiceMesh.osmController.resource.limits.cpu=300m \
---set=OpenServiceMesh.osmController.resource.requests.cpu=300m \
---set=OpenServiceMesh.prometheus.resources.limits.cpu=300m \
---set=OpenServiceMesh.prometheus.resources.requests.cpu=300m \
---set=OpenServiceMesh.injector.resource.limits.cpu=300m \
---set=OpenServiceMesh.injector.resource.requests.cpu=300m
+--set=osm.deployPrometheus=true \
+--set=osm.enablePermissiveTrafficPolicy=true \
+--set=osm.osmController.resource.limits.cpu=250m \
+--set=osm.osmController.resource.requests.cpu=250m \
+--set=osm.prometheus.resources.limits.cpu=250m \
+--set=osm.prometheus.resources.requests.cpu=250m \
+--set=osm.injector.resource.limits.cpu=250m \
+--set=osm.injector.resource.requests.cpu=250m \
+--set=osm.osmBootstrap.resource.limits.cpu=250m \
+--set=osm.osmBootstrap.resource.requests.cpu=250m
 
 ${REPO_ROOT}/bin/linux-amd64/osm version
 

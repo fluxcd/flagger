@@ -2,7 +2,7 @@
 
 set -o errexit
 
-ISTIO_VER="1.11.0"
+ISTIO_VER="1.14.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin
