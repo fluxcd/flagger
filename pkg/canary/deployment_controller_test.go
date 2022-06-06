@@ -50,10 +50,6 @@ func TestDeploymentController_Sync_ConsistentNaming(t *testing.T) {
 
 	annotation := depPrimary.Annotations["kustomize.toolkit.fluxcd.io/checksum"]
 	assert.Equal(t, "", annotation)
-
-	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Equal(t, depPrimary.Name, hpaPrimary.Spec.ScaleTargetRef.Name)
 }
 
 func TestDeploymentController_Sync_InconsistentNaming(t *testing.T) {
@@ -71,10 +67,6 @@ func TestDeploymentController_Sync_InconsistentNaming(t *testing.T) {
 
 	primarySelectorValue := depPrimary.Spec.Selector.MatchLabels[dc.label]
 	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", dc.labelValue))
-
-	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Equal(t, depPrimary.Name, hpaPrimary.Spec.ScaleTargetRef.Name)
 }
 
 func TestDeploymentController_Promote(t *testing.T) {
@@ -88,15 +80,6 @@ func TestDeploymentController_Promote(t *testing.T) {
 
 	config2 := newDeploymentControllerTestConfigMapV2()
 	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(context.TODO(), config2, metav1.UpdateOptions{})
-	require.NoError(t, err)
-
-	hpa, err := mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
-	require.NoError(t, err)
-
-	hpaClone := hpa.DeepCopy()
-	hpaClone.Spec.MaxReplicas = 2
-
-	_, err = mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	err = mocks.controller.Promote(mocks.canary)
@@ -120,18 +103,6 @@ func TestDeploymentController_Promote(t *testing.T) {
 	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, config2.Data["color"], configPrimary.Data["color"])
-
-	hpaPrimary, err := mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Equal(t, int32(2), hpaPrimary.Spec.MaxReplicas)
-
-	hpaPrimaryLabels := hpaPrimary.ObjectMeta.Labels
-	hpaSourceLabels := hpa.ObjectMeta.Labels
-	assert.Equal(t, hpaSourceLabels["app.kubernetes.io/test-label-1"], hpaPrimaryLabels["app.kubernetes.io/test-label-1"])
-
-	hpaPrimaryAnnotations := hpaPrimary.ObjectMeta.Annotations
-	hpaSourceAnnotations := hpa.ObjectMeta.Annotations
-	assert.Equal(t, hpaSourceAnnotations["app.kubernetes.io/test-annotation-1"], hpaPrimaryAnnotations["app.kubernetes.io/test-annotation-1"])
 
 	value := depPrimary.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[0].PodAffinityTerm.LabelSelector.MatchExpressions[0].Values[0]
 	assert.Equal(t, "podinfo-primary", value)
