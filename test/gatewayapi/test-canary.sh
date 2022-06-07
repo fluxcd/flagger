@@ -59,7 +59,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy-contour.projectcontour/"
           logCmdOutput: "true"
 EOF
 
@@ -68,14 +68,14 @@ check_primary "test"
 display_httproute "test"
 
 echo '>>> Triggering canary deployment'
-kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:6.0.1
 
 echo '>>> Waiting for canary promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
+    kubectl -n test describe deployment/podinfo-primary | grep '6.0.1' && ok=true || ok=false
     sleep 10
     kubectl -n flagger-system logs deployment/flagger --tail 1
     count=$(($count + 1))
@@ -152,12 +152,12 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/status/500"
+          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy-contour.projectcontour/status/500"
           logCmdOutput: "true"
 EOF
 
 echo '>>> Triggering canary deployment rollback test'
-kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.2
+kubectl -n test set image deployment/podinfo podinfod=stefanprodan/podinfo:6.0.2
 
 echo '>>> Waiting for canary rollback'
 retries=50

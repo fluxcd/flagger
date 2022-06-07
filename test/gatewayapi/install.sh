@@ -2,7 +2,7 @@
 
 set -o errexit
 
-CONTOUR_VER="release-1.20"
+CONTOUR_VER="v1.21.0"
 GATEWAY_API_VER="v1alpha2"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 KUSTOMIZE_VERSION=4.5.2
@@ -14,17 +14,42 @@ fi
 
 mkdir -p ${REPO_ROOT}/bin
 
-echo ">>> Installing Gateway API CRDs"
-kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.4.1" \
-| kubectl apply -f -
+echo ">>> Installing Contour components, Gateway API CRDs"
+kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour-gateway-provisioner.yaml
 
-echo ">>> Installing Contour components, GatewayClass and Gateway"
-kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VER}/examples/render/contour-gateway.yaml
-
-kubectl -n projectcontour rollout status deployment/contour
+kubectl -n projectcontour rollout status deployment/contour-gateway-provisioner
+kubectl -n gateway-api wait --for=condition=complete job/gateway-api-admission
+kubectl -n gateway-api wait --for=condition=complete job/gateway-api-admission-patch
+kubectl -n gateway-api rollout status deployment/gateway-api-admission-server
 kubectl -n projectcontour get all
-kubectl get gatewayclass -oyaml
-kubectl -n projectcontour get gateway -oyaml
+
+echo ">>> Creating GatewayClass"
+cat <<EOF | kubectl apply -f -
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: contour
+spec:
+  controllerName: projectcontour.io/gateway-controller
+EOF
+
+echo ">>> Creating Gateway"
+cat <<EOF | kubectl apply -f -
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: contour
+  namespace: projectcontour
+spec:
+  gatewayClassName: contour
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+EOF
 
 echo '>>> Installing Kustomize'
 cd ${REPO_ROOT}/bin && \

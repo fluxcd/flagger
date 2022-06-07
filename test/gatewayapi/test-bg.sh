@@ -68,14 +68,14 @@ check_primary "bg-test"
 display_httproute "bg-test"
 
 echo '>>> Triggering B/G deployment'
-kubectl -n bg-test set image deployment/podinfo podinfod=stefanprodan/podinfo:3.1.1
+kubectl -n bg-test set image deployment/podinfo podinfod=stefanprodan/podinfo:6.0.1
 
 echo '>>> Waiting for B/G promotion'
 retries=50
 count=0
 ok=false
 until ${ok}; do
-    kubectl -n bg-test describe deployment/podinfo-primary | grep '3.1.1' && ok=true || ok=false
+    kubectl -n bg-test describe deployment/podinfo-primary | grep '6.0.1' && ok=true || ok=false
     sleep 10
     kubectl -n flagger-system logs deployment/flagger --tail 1
     count=$(($count + 1))
