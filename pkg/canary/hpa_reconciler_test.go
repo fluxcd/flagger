@@ -63,6 +63,7 @@ func Test_reconcilePrimaryHpaV2(t *testing.T) {
 	assert.Equal(t, int(*primaryHPA.Spec.Metrics[0].Resource.Target.AverageUtilization), 99)
 
 	hpa.Spec.Metrics[0].Resource.Target = hpav2.MetricTarget{AverageUtilization: int32p(50)}
+	hpa.Spec.MaxReplicas = 10
 	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Update(context.TODO(), hpa, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
@@ -72,6 +73,7 @@ func Test_reconcilePrimaryHpaV2(t *testing.T) {
 	primaryHPA, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, int(*primaryHPA.Spec.Metrics[0].Resource.Target.AverageUtilization), 50)
+	assert.Equal(t, int(primaryHPA.Spec.MaxReplicas), 10)
 }
 
 func Test_reconcilePrimaryHpaV2Beta2(t *testing.T) {
@@ -94,6 +96,7 @@ func Test_reconcilePrimaryHpaV2Beta2(t *testing.T) {
 	assert.Equal(t, int(*primaryHPA.Spec.Metrics[0].Resource.Target.AverageUtilization), 99)
 
 	hpa.Spec.Metrics[0].Resource.Target = hpav2beta2.MetricTarget{AverageUtilization: int32p(50)}
+	hpa.Spec.MaxReplicas = 10
 	_, err = mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Update(context.TODO(), hpa, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
@@ -103,4 +106,5 @@ func Test_reconcilePrimaryHpaV2Beta2(t *testing.T) {
 	primaryHPA, err = mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, int(*primaryHPA.Spec.Metrics[0].Resource.Target.AverageUtilization), 50)
+	assert.Equal(t, int(primaryHPA.Spec.MaxReplicas), 10)
 }
