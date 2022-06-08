@@ -83,3 +83,19 @@ func (factory *Factory) Controller(kind string) Controller {
 		return deploymentCtrl
 	}
 }
+
+func (factory *Factory) ScalerReconciler(kind string) ScalerReconciler {
+	hpaReconciler := &HPAReconciler{
+		logger:             factory.logger,
+		kubeClient:         factory.kubeClient,
+		flaggerClient:      factory.flaggerClient,
+		includeLabelPrefix: factory.includeLabelPrefix,
+	}
+
+	switch kind {
+	case "HorizontalPodAutoscaler":
+		return hpaReconciler
+	default:
+		return nil
+	}
+}

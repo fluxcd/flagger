@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,7 +90,6 @@ func newCustomizableFixture(dc deploymentConfigs) (deploymentControllerFixture, 
 	// init kube clientset and register mock objects
 	kubeClient := fake.NewSimpleClientset(
 		newDeploymentControllerTest(dc),
-		newDeploymentControllerTestHPA(),
 		newDeploymentControllerTestConfigMap(),
 		newDeploymentControllerTestConfigMapEnv(),
 		newDeploymentControllerTestConfigMapVol(),
@@ -999,34 +997,4 @@ func newDeploymentControllerTestV2() *appsv1.Deployment {
 	}
 
 	return d
-}
-
-func newDeploymentControllerTestHPA() *hpav2.HorizontalPodAutoscaler {
-	h := &hpav2.HorizontalPodAutoscaler{
-		TypeMeta: metav1.TypeMeta{APIVersion: hpav2.SchemeGroupVersion.String()},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "podinfo",
-		},
-		Spec: hpav2.HorizontalPodAutoscalerSpec{
-			ScaleTargetRef: hpav2.CrossVersionObjectReference{
-				Name:       "podinfo",
-				APIVersion: "apps/v1",
-				Kind:       "Deployment",
-			},
-			Metrics: []hpav2.MetricSpec{
-				{
-					Type: "Resource",
-					Resource: &hpav2.ResourceMetricSource{
-						Name: "cpu",
-						Target: hpav2.MetricTarget{
-							AverageUtilization: int32p(99),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return h
 }

@@ -48,7 +48,6 @@ type DeploymentController struct {
 // Initialize creates the primary deployment, hpa,
 // scales to zero the canary deployment and returns the pod selector label and container ports
 func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	if err := c.createPrimaryDeployment(cd, c.includeLabelPrefix); err != nil {
 		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
 	}
@@ -67,16 +66,6 @@ func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
 		}
 	}
 
-	if cd.Spec.AutoscalerRef != nil {
-		if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
-			if err := c.reconcilePrimaryHpa(cd, true); err != nil {
-				return fmt.Errorf(
-					"initial reconcilePrimaryHpa for %s.%s failed: %w", primaryName, cd.Namespace, err)
-			}
-		} else {
-			return fmt.Errorf("cd.Spec.AutoscalerRef.Kind is invalid: %s", cd.Spec.AutoscalerRef.Kind)
-		}
-	}
 	return nil
 }
 
@@ -155,17 +144,6 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 			primaryName, cd.Namespace, err)
 	}
 
-	// update HPA
-	if cd.Spec.AutoscalerRef != nil {
-		if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
-			if err := c.reconcilePrimaryHpa(cd, false); err != nil {
-				return fmt.Errorf(
-					"reconcilePrimaryHpa for %s.%s failed: %w", primaryName, cd.Namespace, err)
-			}
-		} else {
-			return fmt.Errorf("cd.Spec.AutoscalerRef.Kind is invalid: %s", cd.Spec.AutoscalerRef.Kind)
-		}
-	}
 	return nil
 }
 

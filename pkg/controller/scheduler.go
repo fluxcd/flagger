@@ -178,6 +178,11 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
+	var scalerReconciler canary.ScalerReconciler
+	if cd.Spec.AutoscalerRef != nil {
+		scalerReconciler = c.canaryFactory.ScalerReconciler(cd.Spec.AutoscalerRef.Kind)
+	}
+
 	// init Kubernetes router
 	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, labelValue, ports)
 
@@ -211,6 +216,14 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
+	}
+
+	if scalerReconciler != nil {
+		err = scalerReconciler.ReconcilePrimaryScaler(cd, true)
+		if err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
 	}
 
 	// change the apex service pod selector to primary
@@ -304,7 +317,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check if analysis should be skipped
-	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, err, retriable); skip {
+	if skip := c.shouldSkipAnalysis(cd, canaryController, meshRouter, scalerReconciler, err, retriable); skip {
 		return
 	}
 
@@ -322,6 +335,13 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// route traffic back to primary if analysis has succeeded
 	if cd.Status.Phase == flaggerv1.CanaryPhasePromoting {
+		if scalerReconciler != nil {
+			err = scalerReconciler.ReconcilePrimaryScaler(cd, false)
+			if err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+		}
 		c.runPromotionTrafficShift(cd, canaryController, meshRouter, provider, canaryWeight, primaryWeight)
 		return
 	}
@@ -694,7 +714,7 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	return true
 }
 
-func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, err error, retriable bool) bool {
+func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryController canary.Controller, meshRouter router.Interface, scalerReconciler canary.ScalerReconciler, err error, retriable bool) bool {
 	if !canary.SkipAnalysis() {
 		return false
 	}
@@ -723,6 +743,13 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	if err := canaryController.Promote(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
 		return true
+	}
+
+	if scalerReconciler != nil {
+		if err := scalerReconciler.ReconcilePrimaryScaler(canary, false); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return true
+		}
 	}
 
 	// shutdown canary
