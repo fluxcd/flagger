@@ -123,15 +123,15 @@ func (hr *HPAReconciler) reconcilePrimaryHpaV2(cd *flaggerv1.Canary, hpa *hpav2.
 				if err != nil {
 					return err
 				}
-				hpaClone := primaryHpa.DeepCopy()
-				hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
-				hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
-				hpaClone.Spec.Metrics = hpaSpec.Metrics
-				hpaClone.Spec.Behavior = hpaSpec.Behavior
+				primaryHpaClone := primaryHpa.DeepCopy()
+				primaryHpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
+				primaryHpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
+				primaryHpaClone.Spec.Metrics = hpaSpec.Metrics
+				primaryHpaClone.Spec.Behavior = hpaSpec.Behavior
 
-				hr.updateObjectMeta(hpaClone.ObjectMeta)
+				hr.updateObjectMeta(primaryHpaClone.ObjectMeta, hpa.ObjectMeta)
 
-				_, err = hr.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
+				_, err = hr.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), primaryHpaClone, metav1.UpdateOptions{})
 				return err
 			})
 			if err != nil {
@@ -207,15 +207,15 @@ func (hr *HPAReconciler) reconcilePrimaryHpaV2Beta2(cd *flaggerv1.Canary, hpa *h
 				if err != nil {
 					return err
 				}
-				hpaClone := primaryHpa.DeepCopy()
-				hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
-				hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
-				hpaClone.Spec.Metrics = hpaSpec.Metrics
-				hpaClone.Spec.Behavior = hpaSpec.Behavior
+				primaryHpaClone := primaryHpa.DeepCopy()
+				primaryHpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
+				primaryHpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
+				primaryHpaClone.Spec.Metrics = hpaSpec.Metrics
+				primaryHpaClone.Spec.Behavior = hpaSpec.Behavior
 
-				hr.updateObjectMeta(hpaClone.ObjectMeta)
+				hr.updateObjectMeta(primaryHpaClone.ObjectMeta, hpa.ObjectMeta)
 
-				_, err = hr.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
+				_, err = hr.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), primaryHpaClone, metav1.UpdateOptions{})
 				return err
 			})
 			if err != nil {
@@ -237,19 +237,13 @@ func (hr *HPAReconciler) ResumeTargetScaler(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-func (hr *HPAReconciler) updateObjectMeta(meta metav1.ObjectMeta) {
+func (hr *HPAReconciler) updateObjectMeta(updateMeta, readMeta metav1.ObjectMeta) {
 	// update hpa annotations
-	meta.Annotations = make(map[string]string)
-	filteredAnnotations := includeLabelsByPrefix(meta.Annotations, hr.includeLabelPrefix)
-	for k, v := range filteredAnnotations {
-		meta.Annotations[k] = v
-	}
+	filteredAnnotations := includeLabelsByPrefix(readMeta.Annotations, hr.includeLabelPrefix)
+	updateMeta.Annotations = filteredAnnotations
 	// update hpa labels
-	meta.Labels = make(map[string]string)
-	filteredLabels := includeLabelsByPrefix(meta.Labels, hr.includeLabelPrefix)
-	for k, v := range filteredLabels {
-		meta.Labels[k] = v
-	}
+	filteredLabels := includeLabelsByPrefix(readMeta.Labels, hr.includeLabelPrefix)
+	updateMeta.Labels = filteredLabels
 }
 
 type hpaFields struct {
