@@ -34,6 +34,8 @@ import (
 	fakegloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1/fake"
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	fakenetworkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
+	kedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1"
+	fakekedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1/fake"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
 	fakekumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1/fake"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
@@ -136,6 +138,11 @@ func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
 // NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
 func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface {
 	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
+}
+
+// KedaV1alpha1 retrieves the KedaV1alpha1Client
+func (c *Clientset) KedaV1alpha1() kedav1alpha1.KedaV1alpha1Interface {
+	return &fakekedav1alpha1.FakeKedaV1alpha1{Fake: &c.Fake}
 }
 
 // KumaV1alpha1 retrieves the KumaV1alpha1Client

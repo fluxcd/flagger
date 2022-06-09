@@ -74,7 +74,7 @@ type CanarySpec struct {
 
 	// AutoscalerRef references an autoscaling resource
 	// +optional
-	AutoscalerRef *LocalObjectReference `json:"autoscalerRef,omitempty"`
+	AutoscalerRef *AutoscalerRefernce `json:"autoscalerRef,omitempty"`
 
 	// Reference to NGINX ingress resource
 	// +optional
@@ -411,6 +411,24 @@ type LocalObjectReference struct {
 
 	// Name of the referent
 	Name string `json:"name"`
+}
+
+type AutoscalerRefernce struct {
+	// API version of the scaler
+	// +optional
+	APIVersion string `json:"apiVersion,omitempty"`
+
+	// Kind of the scaler
+	// +optional
+	Kind string `json:"kind,omitempty"`
+
+	// Name of the scaler
+	Name string `json:"name"`
+
+	// PrimaryScalerQuery is the query to use for the primary scaler, if
+	// Flagger generates one.
+	// +optional
+	PrimaryScalerQuery string `json:"primaryScalerQuery"`
 }
 
 // CustomMetadata holds labels and annotations to set on generated objects.
