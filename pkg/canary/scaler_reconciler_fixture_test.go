@@ -9,6 +9,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
+	keda "github.com/fluxcd/flagger/pkg/apis/keda/v1alpha1"
+
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/fluxcd/flagger/pkg/client/clientset/versioned/fake"
@@ -31,7 +33,10 @@ type scalerConfig struct {
 
 func newScalerReconcilerFixture(cfg scalerConfig) scalerReconcilerFixture {
 	canary := newDeploymentControllerTestCanary(canaryConfigs{targetName: cfg.targetName})
-	flaggerClient := fakeFlagger.NewSimpleClientset(canary)
+	flaggerClient := fakeFlagger.NewSimpleClientset(
+		canary,
+		newScaledObject(),
+	)
 
 	kubeClient := fake.NewSimpleClientset(
 		newScalerReconcilerTestHPAV2(),
@@ -55,10 +60,18 @@ func newScalerReconcilerFixture(cfg scalerConfig) scalerReconcilerFixture {
 	}
 
 	logger, _ := logger.NewLogger("debug")
-	var hpaReconciler HPAReconciler
+	var scalerReconciler ScalerReconciler
 
 	if cfg.scaler == "HorizontalPodAutoscaler" {
-		hpaReconciler = HPAReconciler{
+		scalerReconciler = &HPAReconciler{
+			kubeClient:         kubeClient,
+			flaggerClient:      flaggerClient,
+			logger:             logger,
+			includeLabelPrefix: []string{"app.kubernetes.io"},
+		}
+	}
+	if cfg.scaler == "ScaledObject" {
+		scalerReconciler = &ScaledObjectReconciler{
 			kubeClient:         kubeClient,
 			flaggerClient:      flaggerClient,
 			logger:             logger,
@@ -70,7 +83,7 @@ func newScalerReconcilerFixture(cfg scalerConfig) scalerReconcilerFixture {
 		canary:           canary,
 		kubeClient:       kubeClient,
 		flaggerClient:    flaggerClient,
-		scalerReconciler: &hpaReconciler,
+		scalerReconciler: scalerReconciler,
 		logger:           logger,
 	}
 }
@@ -133,4 +146,35 @@ func newScalerReconcilerTestHPAV2() *hpav2.HorizontalPodAutoscaler {
 	}
 
 	return h
+}
+
+func newScaledObject() *keda.ScaledObject {
+	so := &keda.ScaledObject{
+		TypeMeta: metav1.TypeMeta{APIVersion: keda.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: keda.ScaledObjectSpec{
+			ScaleTargetRef: &keda.ScaleTarget{
+				Name: "podinfo",
+			},
+			PollingInterval: int32p(10),
+			MinReplicaCount: int32p(1),
+			MaxReplicaCount: int32p(4),
+			Triggers: []keda.ScaleTriggers{
+				{
+					Type: "prometheus",
+					Metadata: map[string]string{
+						"serverAddress": "http://flagger-prometheus.projectcontour:9090",
+						"metricName":    "http_requests_total",
+						"query":         `sum(rate(http_requests_total{deployment="podinfo-canary"}[2m]))`,
+						"threshold":     "100",
+					},
+				},
+			},
+		},
+	}
+
+	return so
 }

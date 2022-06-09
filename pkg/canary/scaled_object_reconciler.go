@@ -37,38 +37,39 @@ func (sor *ScaledObjectReconciler) ReconcilePrimaryScaler(cd *flaggerv1.Canary, 
 }
 
 func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, init bool) error {
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
 	targetSo, err := sor.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Keda ScaledObject %s.%s get query error: %w",
 			cd.Spec.AutoscalerRef.Name, cd.Namespace, err)
 	}
+	targetSoClone := targetSo.DeepCopy()
 
-	for _, trigger := range targetSo.Spec.Triggers {
+	for _, trigger := range targetSoClone.Spec.Triggers {
 		setPrimaryScaledObjectQuery(cd, trigger.Metadata)
 	}
 
 	soSpec := keda.ScaledObjectSpec{
 		ScaleTargetRef: &keda.ScaleTarget{
 			Name:                   primaryName,
-			Kind:                   targetSo.Spec.ScaleTargetRef.Kind,
-			APIVersion:             targetSo.Spec.ScaleTargetRef.APIVersion,
-			EnvSourceContainerName: targetSo.Spec.ScaleTargetRef.EnvSourceContainerName,
+			Kind:                   targetSoClone.Spec.ScaleTargetRef.Kind,
+			APIVersion:             targetSoClone.Spec.ScaleTargetRef.APIVersion,
+			EnvSourceContainerName: targetSoClone.Spec.ScaleTargetRef.EnvSourceContainerName,
 		},
-		PollingInterval:  targetSo.Spec.PollingInterval,
-		CooldownPeriod:   targetSo.Spec.CooldownPeriod,
-		MinReplicaCount:  targetSo.Spec.MinReplicaCount,
-		MaxReplicaCount:  targetSo.Spec.MaxReplicaCount,
-		Advanced:         targetSo.Spec.Advanced,
-		Triggers:         targetSo.Spec.Triggers,
-		Fallback:         targetSo.Spec.Fallback,
-		IdleReplicaCount: targetSo.Spec.IdleReplicaCount,
+		PollingInterval:  targetSoClone.Spec.PollingInterval,
+		CooldownPeriod:   targetSoClone.Spec.CooldownPeriod,
+		MinReplicaCount:  targetSoClone.Spec.MinReplicaCount,
+		MaxReplicaCount:  targetSoClone.Spec.MaxReplicaCount,
+		Advanced:         targetSoClone.Spec.Advanced,
+		Triggers:         targetSoClone.Spec.Triggers,
+		Fallback:         targetSoClone.Spec.Fallback,
+		IdleReplicaCount: targetSoClone.Spec.IdleReplicaCount,
 	}
 	primarySoName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
 	primarySo, err := sor.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Get(context.TODO(), primarySoName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		primarySo = &keda.ScaledObject{
-			ObjectMeta: makeObjectMeta(primarySoName, primarySo.Labels, cd),
+			ObjectMeta: makeObjectMeta(primarySoName, targetSoClone.Labels, cd),
 			Spec:       soSpec,
 		}
 		_, err = sor.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Create(context.TODO(), primarySo, metav1.CreateOptions{})
