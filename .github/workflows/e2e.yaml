@@ -32,6 +32,7 @@ jobs:
           - skipper
           - kubernetes
           - gatewayapi
+          - keda
     steps:
       - name: Checkout
         uses: actions/checkout@v2

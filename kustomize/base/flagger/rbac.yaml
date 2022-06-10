@@ -215,6 +215,19 @@ rules:
       - update
       - patch
       - delete
+  - apiGroups:
+      - keda.sh
+    resources:
+      - scaledobjects
+      - scaledobjects/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - nonResourceURLs:
       - /version
     verbs:
