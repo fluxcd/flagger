@@ -37,7 +37,7 @@ func (sor *ScaledObjectReconciler) ReconcilePrimaryScaler(cd *flaggerv1.Canary, 
 }
 
 func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, init bool) error {
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	targetSo, err := sor.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Keda ScaledObject %s.%s get query error: %w",
@@ -45,9 +45,7 @@ func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, 
 	}
 	targetSoClone := targetSo.DeepCopy()
 
-	for _, trigger := range targetSoClone.Spec.Triggers {
-		setPrimaryScaledObjectQuery(cd, trigger.Metadata)
-	}
+	setPrimaryScaledObjectQueries(cd, targetSoClone.Spec.Triggers)
 
 	soSpec := keda.ScaledObjectSpec{
 		ScaleTargetRef: &keda.ScaleTarget{
@@ -166,24 +164,34 @@ func randSeq() string {
 	return string(b)
 }
 
-func setPrimaryScaledObjectQuery(cd *flaggerv1.Canary, metadata map[string]string) {
-	for key, val := range metadata {
-		if key == "query" {
-			if cd.Spec.AutoscalerRef.PrimaryScalerQuery != "" {
-				metadata[key] = cd.Spec.AutoscalerRef.PrimaryScalerQuery
-			} else {
-				// We could've used regex with negative look-arounds to avoid using a placeholder, but Go does
-				// not support them. We need them because, we need to replace both "podinfo" and "podinfo-canary"
-				// (assuming "podinfo" to be the targetRef name), with "podinfo-primary". This placeholder makes
-				// sure that we don't end up with a query which contains terms like "podinfo-primary-canary" or
-				// "podinfo-primary-primary". This is a best effort approach, and users should be encouraged to
-				// check the generated query and opt for using `autoscalerRef.primaryScalerQuery` if the former
-				// doesn't look correct.
-				placeholder := randSeq()
-				replaced := strings.ReplaceAll(val, fmt.Sprintf("%s-canary", cd.Spec.TargetRef.Name), placeholder)
-				replaced = strings.ReplaceAll(replaced, cd.Spec.TargetRef.Name, fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name))
-				replaced = strings.ReplaceAll(replaced, placeholder, fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name))
-				metadata[key] = replaced
+// setPrimaryScaledObjectQueries accepts a list of ScaleTriggers and modifies the query
+// for each of them.
+func setPrimaryScaledObjectQueries(cd *flaggerv1.Canary, triggers []keda.ScaleTriggers) {
+	for _, trigger := range triggers {
+		if cd.Spec.AutoscalerRef.PrimaryScalerQueries != nil {
+			// If .spec.autoscalerRef.primaryScalerQueries is specified, the triggers must be named,
+			// otherwise it might lead to unexpected behaviour.
+			for name, query := range cd.Spec.AutoscalerRef.PrimaryScalerQueries {
+				if trigger.Name == name {
+					trigger.Metadata["query"] = query
+				}
+			}
+		} else {
+			for key, val := range trigger.Metadata {
+				if key == "query" {
+					// We could've used regex with negative look-arounds to avoid using a placeholder, but Go does
+					// not support them. We need them because, we need to replace both "podinfo" and "podinfo-canary"
+					// (assuming "podinfo" to be the targetRef name), with "podinfo-primary". This placeholder makes
+					// sure that we don't end up with a query which contains terms like "podinfo-primary-canary" or
+					// "podinfo-primary-primary". This is a best effort approach, and users should be encouraged to
+					// check the generated query and opt for using `autoscalerRef.primaryScalerQuery` if the former
+					// doesn't look correct.
+					placeholder := randSeq()
+					replaced := strings.ReplaceAll(val, fmt.Sprintf("%s-canary", cd.Spec.TargetRef.Name), placeholder)
+					replaced = strings.ReplaceAll(replaced, cd.Spec.TargetRef.Name, fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name))
+					replaced = strings.ReplaceAll(replaced, placeholder, fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name))
+					trigger.Metadata[key] = replaced
+				}
 			}
 		}
 	}

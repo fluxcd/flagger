@@ -104,7 +104,7 @@ spec:
                     name:
                       type: string
                 autoscalerRef:
-                  description: HPA selector
+                  description: Scaler selector
                   type: object
                   required: ["apiVersion", "kind", "name"]
                   properties:
@@ -114,8 +114,13 @@ spec:
                       type: string
                       enum:
                         - HorizontalPodAutoscaler
+                        - ScaledObject
                     name:
                       type: string
+                    primaryScalerQueries:
+                      type: object
+                      additionalProperties:
+                        type: string
                 ingressRef:
                   description: Ingress selector
                   type: object

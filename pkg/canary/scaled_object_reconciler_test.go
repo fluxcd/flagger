@@ -2,6 +2,7 @@ package canary
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,7 @@ func Test_reconcilePrimaryScaledObject(t *testing.T) {
 
 	primarySO, err := mocks.flaggerClient.KedaV1alpha1().ScaledObjects("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
+	assert.Equal(t, primarySO.Spec.ScaleTargetRef.Name, fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name))
 	assert.Equal(t, int(*primarySO.Spec.PollingInterval), 10)
 	assert.Equal(t, int(*primarySO.Spec.MinReplicaCount), 1)
 	assert.Equal(t, primarySO.Spec.Triggers[0].Metadata["query"], `sum(rate(http_requests_total{deployment="podinfo-primary"}[2m]))`)
@@ -77,7 +79,7 @@ func Test_resumeScaledObject(t *testing.T) {
 	assert.False(t, exists)
 }
 
-func Test_setPrimaryScaledObjectQuery(t *testing.T) {
+func Test_setPrimaryScaledObjectQueries(t *testing.T) {
 	cd := &flaggerv1.Canary{
 		Spec: flaggerv1.CanarySpec{
 			TargetRef: flaggerv1.LocalObjectReference{
@@ -111,18 +113,44 @@ func Test_setPrimaryScaledObjectQuery(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			metadata := make(map[string]string)
-			metadata["query"] = test.query
-			setPrimaryScaledObjectQuery(cd, metadata)
-			assert.Equal(t, metadata["query"], test.wantQuery)
+			triggers := make([]keda.ScaleTriggers, 0)
+			triggers = append(triggers, keda.ScaleTriggers{
+				Metadata: map[string]string{
+					"query": test.query,
+				},
+			})
+			setPrimaryScaledObjectQueries(cd, triggers)
+			assert.Equal(t, triggers[0].Metadata["query"], test.wantQuery)
 		})
 	}
 
-	primaryQuery := `sum(rate(envoy_cluster_upstream_rq{ envoy_cluster_name="test_podinfo-primary_80" }[30s]))`
-	cd.Spec.AutoscalerRef.PrimaryScalerQuery = primaryQuery
-	metadata := make(map[string]string)
-	metadata["query"] = ""
+	pq1 := `sum(rate(envoy_cluster_upstream_rq{ envoy_cluster_name="test_podinfo-primary_80" }[30s]))`
+	pq2 := `sum(rate(envoy_cluster_upstream_rq{ envoy_cluster_name="test_podinfo" }[30s]))`
+	triggers := make([]keda.ScaleTriggers, 0)
+	triggers = append(triggers, keda.ScaleTriggers{
+		Name: "trigger1",
+		Metadata: map[string]string{
+			"query": pq1,
+		},
+	})
+	triggers = append(triggers, keda.ScaleTriggers{
+		Name: "trigger2",
+		Metadata: map[string]string{
+			"query": pq2,
+		},
+	})
+	cd.Spec.AutoscalerRef.PrimaryScalerQueries = map[string]string{
+		"trigger1": pq1,
+		"trigger2": pq2,
+	}
 
-	setPrimaryScaledObjectQuery(cd, metadata)
-	assert.Equal(t, primaryQuery, metadata["query"])
+	setPrimaryScaledObjectQueries(cd, triggers)
+	for _, trigger := range triggers {
+		if trigger.Name == "trigger1" {
+			assert.Equal(t, pq1, trigger.Metadata["query"])
+		}
+		if trigger.Name == "trigger2" {
+			assert.Equal(t, pq2, trigger.Metadata["query"])
+		}
+	}
 }

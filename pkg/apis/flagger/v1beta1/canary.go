@@ -425,10 +425,10 @@ type AutoscalerRefernce struct {
 	// Name of the scaler
 	Name string `json:"name"`
 
-	// PrimaryScalerQuery is the query to use for the primary scaler, if
-	// Flagger generates one.
+	// PrimaryScalerQueries maps a unique id to a query for the primary
+	// scaler, if a scaler supports scaling using queries.
 	// +optional
-	PrimaryScalerQuery string `json:"primaryScalerQuery"`
+	PrimaryScalerQueries map[string]string `json:"primaryScalerQueries"`
 }
 
 // CustomMetadata holds labels and annotations to set on generated objects.

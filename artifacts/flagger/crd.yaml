@@ -117,8 +117,10 @@ spec:
                         - ScaledObject
                     name:
                       type: string
-                    primaryScalerQuery:
-                      type: string
+                    primaryScalerQueries:
+                      type: object
+                      additionalProperties:
+                        type: string
                 ingressRef:
                   description: Ingress selector
                   type: object
