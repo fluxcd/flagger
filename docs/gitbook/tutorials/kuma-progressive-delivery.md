@@ -133,7 +133,7 @@ service/podinfo-primary
 trafficroutes.kuma.io/podinfo
 ```
 
-After the boostrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test` will be routed to the primary pods. During the canary analysis, the `podinfo-canary.test` address can be used to target directly the canary pods.
+After the bootstrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test` will be routed to the primary pods. During the canary analysis, the `podinfo-canary.test` address can be used to target directly the canary pods.
 
 ## Automated canary promotion
 
