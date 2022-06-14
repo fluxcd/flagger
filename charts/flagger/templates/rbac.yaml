@@ -86,6 +86,7 @@ rules:
     resources:
       - canaries
       - canaries/status
+      - canaries/finalizers
       - metrictemplates
       - metrictemplates/status
       - alertproviders
