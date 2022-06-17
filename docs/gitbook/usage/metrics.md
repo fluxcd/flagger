@@ -29,7 +29,7 @@ Flagger comes with two builtin metric checks: HTTP request success rate and dura
 
 For each metric you can specify a range of accepted values with `thresholdRange` and
 the window size or the time series with `interval`.
-The builtin checks are available for every service mesh / ingress controlle
+The builtin checks are available for every service mesh / ingress controller
 and are implemented with [Prometheus queries](../faq.md#metrics).
 
 ## Custom metrics
