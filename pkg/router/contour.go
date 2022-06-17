@@ -188,9 +188,10 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 		}
 
 		if cr.ingressClass != "" {
-			proxy.Annotations = map[string]string{
-				annotation: cr.ingressClass,
+			if proxy.Annotations == nil {
+				proxy.Annotations = make(map[string]string)
 			}
+			proxy.Annotations[annotation] = cr.ingressClass
 		}
 
 		_, err = cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Create(context.TODO(), proxy, metav1.CreateOptions{})
