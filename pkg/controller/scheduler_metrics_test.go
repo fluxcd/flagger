@@ -25,6 +25,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestController_checkMetricProviderAvailability(t *testing.T) {
@@ -63,6 +64,21 @@ func TestController_checkMetricProviderAvailability(t *testing.T) {
 		canary.Spec.Analysis.Metrics[0].TemplateRef = &flaggerv1.CrossNamespaceObjectReference{
 			Name:      "envoy",
 			Namespace: "default",
+		}
+		require.NoError(t, ctrl.checkMetricProviderAvailability(canary))
+	})
+
+	t.Run("intraNamespaceTemplateRef", func(t *testing.T) {
+
+		ctrl := newDeploymentFixture(nil).ctrl
+		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
+			Name: "", TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
+				Name: "envoy",
+			},
+		}}}
+		canary := &flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
 		}
 		require.NoError(t, ctrl.checkMetricProviderAvailability(canary))
 	})
