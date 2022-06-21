@@ -90,6 +90,8 @@ spec:
     retries:
       attempts: 3
       perTryTimeout: 5s
+      # supported values for retryOn - https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on
+      retryOn: "5xx"
   # define the canary analysis timing and KPIs
   analysis:
     # schedule interval (default 60s)
