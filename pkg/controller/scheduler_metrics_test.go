@@ -69,7 +69,6 @@ func TestController_checkMetricProviderAvailability(t *testing.T) {
 	})
 
 	t.Run("intraNamespaceTemplateRef", func(t *testing.T) {
-
 		ctrl := newDeploymentFixture(nil).ctrl
 		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
 			Name: "", TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
