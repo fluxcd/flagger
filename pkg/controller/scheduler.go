@@ -287,18 +287,22 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		c.recordEventInfof(cd, "New revision detected! Restarting analysis for %s.%s",
 			cd.Spec.TargetRef.Name, cd.Namespace)
 
-		// route all traffic back to primary
-		primaryWeight = c.totalWeight(cd)
 		canaryWeight = 0
-		if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
-			c.recordEventWarningf(cd, "%v", err)
-			return
+		if !cd.Spec.Analysis.FreezeOnFailure {
+			// route all traffic back to primary
+			primaryWeight = c.totalWeight(cd)
+			if err := meshRouter.SetRoutes(cd, primaryWeight, canaryWeight, false); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+				return
+			}
+		} else {
+			canaryWeight = c.totalWeight(cd)
 		}
 
 		// reset status
 		status := flaggerv1.CanaryStatus{
 			Phase:        flaggerv1.CanaryPhaseProgressing,
-			CanaryWeight: 0,
+			CanaryWeight: canaryWeight,
 			FailedChecks: 0,
 			Iterations:   0,
 		}
@@ -374,6 +378,14 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 				cd.Name, cd.Namespace, err)
 			c.alert(cd, fmt.Sprintf("Progress deadline exceeded %v", err),
 				false, flaggerv1.SeverityError)
+		}
+		if cd.Spec.Analysis.FreezeOnFailure {
+			c.recordEventInfof(cd, "Freezing failed canary: %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+			cd.Status.Phase = flaggerv1.CanaryPhaseFrozen
+			if err := canaryController.SyncStatus(cd, cd.Status); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+			}
+			return
 		}
 		c.rollback(cd, canaryController, meshRouter)
 		return
@@ -815,7 +827,8 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
-		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseFrozen {
 		return true
 	}
 
@@ -861,7 +874,8 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 
 func (c *Controller) hasCanaryRevisionChanged(canary *flaggerv1.Canary, canaryController canary.Controller) bool {
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
-		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion {
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseFrozen {
 		if diff, _ := canaryController.HasTargetChanged(canary); diff {
 			return true
 		}

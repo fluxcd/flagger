@@ -65,6 +65,7 @@ const (
 	// CanaryPhaseTerminated means the canary has been finalized
 	// and successfully deleted
 	CanaryPhaseTerminated CanaryPhase = "Terminated"
+	CanaryPhaseFrozen     CanaryPhase = "Frozen"
 )
 
 // CanaryStatus is used for state persistence (read-only)
