@@ -35,6 +35,7 @@
 * [Gateway API Canary Deployments](tutorials/gatewayapi-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
+* [Canary analysis with KEDA ScaledObjects](tutorials/keda-scaledobject.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
 
 ## Dev
