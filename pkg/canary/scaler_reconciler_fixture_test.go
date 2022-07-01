@@ -168,7 +168,7 @@ func newScaledObject() *keda.ScaledObject {
 					Metadata: map[string]string{
 						"serverAddress": "http://flagger-prometheus.projectcontour:9090",
 						"metricName":    "http_requests_total",
-						"query":         `sum(rate(http_requests_total{deployment="podinfo-canary"}[2m]))`,
+						"query":         `sum(rate(http_requests_total{app="podinfo-canary"}[2m]))`,
 						"threshold":     "100",
 					},
 				},

@@ -32,10 +32,10 @@ func Test_reconcilePrimaryScaledObject(t *testing.T) {
 	assert.Equal(t, primarySO.Spec.ScaleTargetRef.Name, fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name))
 	assert.Equal(t, int(*primarySO.Spec.PollingInterval), 10)
 	assert.Equal(t, int(*primarySO.Spec.MinReplicaCount), 1)
-	assert.Equal(t, primarySO.Spec.Triggers[0].Metadata["query"], `sum(rate(http_requests_total{deployment="podinfo-primary"}[2m]))`)
+	assert.Equal(t, primarySO.Spec.Triggers[0].Metadata["query"], `sum(rate(http_requests_total{app="podinfo-primary"}[2m]))`)
 
 	so.Spec.PollingInterval = int32p(20)
-	so.Spec.Triggers[0].Metadata["query"] = `sum(rate(http_requests_total{deployment="podinfo-canary"}[10m]))`
+	so.Spec.Triggers[0].Metadata["query"] = `sum(rate(http_requests_total{app="podinfo-canary"}[10m]))`
 	_, err = mocks.flaggerClient.KedaV1alpha1().ScaledObjects("default").Update(context.TODO(), so, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
@@ -45,7 +45,7 @@ func Test_reconcilePrimaryScaledObject(t *testing.T) {
 	primarySO, err = mocks.flaggerClient.KedaV1alpha1().ScaledObjects("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, int(*primarySO.Spec.PollingInterval), 20)
-	assert.Equal(t, primarySO.Spec.Triggers[0].Metadata["query"], `sum(rate(http_requests_total{deployment="podinfo-primary"}[10m]))`)
+	assert.Equal(t, primarySO.Spec.Triggers[0].Metadata["query"], `sum(rate(http_requests_total{app="podinfo-primary"}[10m]))`)
 }
 
 func Test_pauseScaledObject(t *testing.T) {
@@ -97,18 +97,18 @@ func Test_setPrimaryScaledObjectQueries(t *testing.T) {
 	}{
 		{
 			name:      "query only has 'podinfo'",
-			query:     `sum(rate(http_requests_total{deployment="podinfo"}[2m]))`,
-			wantQuery: `sum(rate(http_requests_total{deployment="podinfo-primary"}[2m]))`,
+			query:     `sum(rate(http_requests_total{app="podinfo"}[2m]))`,
+			wantQuery: `sum(rate(http_requests_total{app="podinfo-primary"}[2m]))`,
 		},
 		{
 			name:      "query only has 'podinfo-canary'",
-			query:     `sum(rate(http_requests_total{deployment="podinfo-canary"}[2m]))`,
-			wantQuery: `sum(rate(http_requests_total{deployment="podinfo-primary"}[2m]))`,
+			query:     `sum(rate(http_requests_total{app="podinfo-canary"}[2m]))`,
+			wantQuery: `sum(rate(http_requests_total{app="podinfo-primary"}[2m]))`,
 		},
 		{
 			name:      "query has both 'podinfo-canary' and 'podinfo'",
-			query:     `sum(rate(http_requests_total{deployment="podinfo-canary", svc="podinfo"}[2m]))`,
-			wantQuery: `sum(rate(http_requests_total{deployment="podinfo-primary", svc="podinfo-primary"}[2m]))`,
+			query:     `sum(rate(http_requests_total{app="podinfo-canary", svc="podinfo"}[2m]))`,
+			wantQuery: `sum(rate(http_requests_total{app="podinfo-primary", svc="podinfo-primary"}[2m]))`,
 		},
 	}
 	for _, test := range tests {
