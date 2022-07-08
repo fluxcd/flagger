@@ -28,7 +28,8 @@ import (
 	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
-	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
+	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/keda/v1alpha1"
+	kumav1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	smiv1alpha1 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha1"
 	smiv1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
@@ -100,8 +101,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case gloov1.SchemeGroupVersion.WithResource("upstreams"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gloo().V1().Upstreams().Informer()}, nil
 
+		// Group=keda.sh, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("scaledobjects"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Keda().V1alpha1().ScaledObjects().Informer()}, nil
+
 		// Group=kuma.io, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("trafficroutes"):
+	case kumav1alpha1.SchemeGroupVersion.WithResource("trafficroutes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Kuma().V1alpha1().TrafficRoutes().Informer()}, nil
 
 		// Group=networking.istio.io, Version=v1alpha3

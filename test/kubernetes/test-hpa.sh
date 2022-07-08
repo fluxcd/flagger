@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# This script runs E2E tests targetting Flagger's integration with HPAs.
+
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
