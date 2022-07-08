@@ -458,6 +458,11 @@ func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 		*out = new(CrossNamespaceObjectReference)
 		**out = **in
 	}
+	if in.RouteTableRef != nil {
+		in, out := &in.RouteTableRef, &out.RouteTableRef
+		*out = new(CrossNamespaceObjectReference)
+		**out = **in
+	}
 	in.Service.DeepCopyInto(&out.Service)
 	if in.Analysis != nil {
 		in, out := &in.Analysis, &out.Analysis

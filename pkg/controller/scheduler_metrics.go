@@ -97,6 +97,8 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 	// For example, `crossover` metrics provider should be used for `smi:crossover` mesh provider
 	if strings.Contains(c.meshProvider, "crossover") {
 		metricsProvider = "crossover"
+	} else if strings.Contains(c.meshProvider, "gloo-mesh") {
+		metricsProvider = "istio"
 	} else {
 		metricsProvider = c.meshProvider
 	}
@@ -107,6 +109,11 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		// set the metrics provider to Linkerd Prometheus when Linkerd is the default mesh provider
 		if strings.Contains(c.meshProvider, "linkerd") {
 			metricsProvider = "linkerd"
+		}
+
+		// set the metrics provider to istio when gloo-mesh is the selected provider in canary spec
+		if strings.Contains(canary.Spec.Provider, "gloo-mesh") {
+			metricsProvider = "istio"
 		}
 	}
 	// set the metrics provider to query Prometheus for the canary Kubernetes service if the canary target is Service

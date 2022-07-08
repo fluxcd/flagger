@@ -56,6 +56,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &IstioObserver{
 			client: factory.Client,
 		}
+	case provider == flaggerv1.GlooMeshProvider:
+		return &IstioObserver{
+			client: factory.Client,
+		}
 	case provider == flaggerv1.ContourProvider:
 		return &ContourObserver{
 			client: factory.Client,

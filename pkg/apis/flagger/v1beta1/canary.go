@@ -85,6 +85,11 @@ type CanarySpec struct {
 	// +optional
 	UpstreamRef *CrossNamespaceObjectReference `json:"upstreamRef,omitempty"`
 
+	// Reference to RouteTable Delegator resource. RouteTable delegator delegates routing decisions
+	// to the RouteTable delegate
+	// +optional
+	RouteTableRef *CrossNamespaceObjectReference `json:"routeTableRef,omitempty"`
+
 	// Service defines how ClusterIP services, service mesh or ingress routing objects are generated
 	Service CanaryService `json:"service"`
 

@@ -27,6 +27,7 @@
 * [App Mesh Canary Deployments](tutorials/appmesh-progressive-delivery.md)
 * [Contour Canary Deployments](tutorials/contour-progressive-delivery.md)
 * [Gloo Canary Deployments](tutorials/gloo-progressive-delivery.md)
+* [Gloo Mesh Canary Deployments](tutorials/gloo-mesh-progressive-delivery.md)
 * [NGINX Canary Deployments](tutorials/nginx-progressive-delivery.md)
 * [Skipper Canary Deployments](tutorials/skipper-progressive-delivery.md)
 * [Traefik Canary Deployments](tutorials/traefik-progressive-delivery.md)

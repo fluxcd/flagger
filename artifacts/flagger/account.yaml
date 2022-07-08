@@ -188,6 +188,19 @@ rules:
       - patch
       - delete
   - apiGroups:
+      - networking.gloo.solo.io
+    resources:
+      - routetables
+      - routetables/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
       - projectcontour.io
     resources:
       - httpproxies

@@ -149,6 +149,21 @@ spec:
                       type: string
                     namespace:
                       type: string
+                routeTableRef:
+                  description: Gloo Mesh Route Table selector
+                  type: object
+                  required: ["name", "namespace"]
+                  properties:
+                    apiVersion:
+                      type: string
+                    kind:
+                      type: string
+                      enum:
+                        - RouteTable
+                    name:
+                      type: string
+                    namespace:
+                      type: string
                 service:
                   description: Kubernetes Service spec
                   type: object

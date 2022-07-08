@@ -7,6 +7,7 @@ const (
 	SMIProvider        string = "smi"
 	ContourProvider    string = "contour"
 	GlooProvider       string = "gloo"
+	GlooMeshProvider   string = "gloo-mesh"
 	NGINXProvider      string = "nginx"
 	KubernetesProvider string = "kubernetes"
 	SkipperProvider    string = "skipper"
