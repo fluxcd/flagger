@@ -2,6 +2,59 @@
 
 All notable changes to this project are documented in this file.
 
+
+## 1.22.0
+
+**Release date:** 2022-07-11
+
+This release with support for KEDA ScaledObjects as an alternative to HPAs. Check the
+[tutorial](https://docs.flagger.app/tutorials/keda-scaledobject) to understand it's usage
+with Flagger.
+
+The `.spec.service.appProtocol` field can now be used to specify the [`appProtocol`](https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol)
+of the services that Flagger generates.
+
+In addition, a bug related to the Contour prometheus query for when service name is overwritten
+along with a bug related to a Contour `HTTPProxy` annotations have been fixed.
+
+Furthermore, the installation guide for Alibaba ServiceMesh has been updated.
+
+#### Improvements:
+
+- feat: Add an optional `appProtocol` field to `spec.service`
+  [#1185](https://github.com/fluxcd/flagger/pull/1185)
+- Update Kubernetes packages to v1.24.1
+  [#1208](https://github.com/fluxcd/flagger/pull/1208)
+- charts: Add namespace parameter to parameters table
+  [#1210](https://github.com/fluxcd/flagger/pull/1210)
+- Introduce `ScalerReconciler` and refactor HPA reconciliation
+  [#1211](https://github.com/fluxcd/flagger/pull/1211)
+- e2e: Update providers and Kubernetes to v1.23
+  [#1212](https://github.com/fluxcd/flagger/pull/1212)
+- Add support for KEDA ScaledObjects as an auto scaler
+  [#1216](https://github.com/fluxcd/flagger/pull/1216)
+- include Contour retryOn in the sample canary
+  [#1223](https://github.com/fluxcd/flagger/pull/1223)
+
+#### Fixes:
+- fix contour prom query for when service name is overwritten
+  [#1204](https://github.com/fluxcd/flagger/pull/1204)
+- fix contour httproxy annotations overwrite
+  [#1205](https://github.com/fluxcd/flagger/pull/1205)
+- Fix primary HPA label reconciliation
+  [#1215](https://github.com/fluxcd/flagger/pull/1215)
+- fix: add finalizers to canaries
+  [#1219](https://github.com/fluxcd/flagger/pull/1219)
+- typo: boostrap -> bootstrap
+  [#1220](https://github.com/fluxcd/flagger/pull/1220)
+- typo: controller
+  [#1221](https://github.com/fluxcd/flagger/pull/1221)
+- update guide for flagger on aliyun ASM
+  [#1222](https://github.com/fluxcd/flagger/pull/1222)
+- Reintroducing empty check for metric template references.
+  [#1224](https://github.com/fluxcd/flagger/pull/1224)
+
+
 ## 1.21.0
 
 **Release date:** 2022-05-06
