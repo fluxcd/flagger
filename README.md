@@ -13,10 +13,10 @@ by gradually shifting traffic to the new version while measuring metrics and run
 ![flagger-overview](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-overview.png)
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
-and integrates with various Kubernetes ingress controllers, service mesh and monitoring solutions.
+and integrates with various Kubernetes ingress controllers, service mesh, and monitoring solutions.
 
 Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
-and part of [Flux](https://fluxcd.io) family of GitOps tools.
+and part of the [Flux](https://fluxcd.io) family of GitOps tools.
 
 ### Documentation
 
@@ -53,11 +53,11 @@ If you are using Flagger, please [submit a PR to add your organization](https://
 ### Canary CRD
 
 Flagger takes a Kubernetes deployment and optionally a horizontal pod autoscaler (HPA),
-then creates a series of objects (Kubernetes deployments, ClusterIP services, service mesh or ingress routes).
+then creates a series of objects (Kubernetes deployments, ClusterIP services, service mesh, or ingress routes).
 These objects expose the application on the mesh and drive the canary analysis and promotion.
 
 Flagger keeps track of ConfigMaps and Secrets referenced by a Kubernetes Deployment and triggers a canary analysis if any of those objects change.
-When promoting a workload in production, both code (container images) and configuration (config maps and secrets) are being synchronised.
+When promoting a workload in production, both code (container images) and configuration (config maps and secrets) are being synchronized.
 
 For a deployment named _podinfo_, a canary promotion can be defined using Flagger's custom resource:
 
@@ -239,7 +239,7 @@ can be used to implement the request success rate and request duration checks.
 
 #### Integrations
 
-* Add support for ingress controllers like HAProxy, ALB and Apache APISIX
+* Add support for ingress controllers like HAProxy, ALB, and Apache APISIX
 
 ### Contributing
 
@@ -260,7 +260,7 @@ If you have any questions about Flagger and progressive delivery:
 * Read the Flagger [docs](https://docs.flagger.app).
 * Invite yourself to the [CNCF community slack](https://slack.cncf.io/)
   and join the [#flagger](https://cloud-native.slack.com/messages/flagger/) channel.
-* Check out the **[Flux events calendar](https://fluxcd.io/#calendar)**, both with upcoming talks, events and meetings you can attend.
+* Check out the **[Flux events calendar](https://fluxcd.io/#calendar)**, both with upcoming talks, events, and meetings you can attend.
 * Or view the **[Flux resources section](https://fluxcd.io/resources)** with past events videos you can watch.
 * File an [issue](https://github.com/fluxcd/flagger/issues/new).
 
