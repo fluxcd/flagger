@@ -21,6 +21,7 @@ spec:
   maxReplicaCount: 3
   triggers:
   - type: prometheus
+    metricType: AverageValue
     metadata:
       serverAddress: http://flagger-prometheus.flagger-system:9090
       metricName: http_requests_total

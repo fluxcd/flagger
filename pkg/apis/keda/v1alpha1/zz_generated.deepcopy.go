@@ -188,11 +188,6 @@ func (in *ScaleTriggers) DeepCopyInto(out *ScaleTriggers) {
 		*out = new(ScaledObjectAuthRef)
 		**out = **in
 	}
-	if in.FallbackReplicas != nil {
-		in, out := &in.FallbackReplicas, &out.FallbackReplicas
-		*out = new(int32)
-		**out = **in
-	}
 	return
 }
 
@@ -384,6 +379,11 @@ func (in *ScaledObjectStatus) DeepCopyInto(out *ScaledObjectStatus) {
 		for key, val := range *in {
 			(*out)[key] = *val.DeepCopy()
 		}
+	}
+	if in.PausedReplicaCount != nil {
+		in, out := &in.PausedReplicaCount, &out.PausedReplicaCount
+		*out = new(int32)
+		**out = **in
 	}
 	return
 }
