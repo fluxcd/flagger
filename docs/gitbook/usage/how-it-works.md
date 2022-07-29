@@ -120,6 +120,8 @@ in the primary autoscaler when a rollout for the deployment starts and completes
 Optionally, you can create two HPAs, one for canary and one for the primary to update the HPA without
 doing a new rollout. As the canary deployment will be scaled to 0, the HPA on the canary will be inactive.
 
+**Note** Flagger requires `autoscaling/v2` or `autoscaling/v2beta2` API version for HPAs.
+
 The progress deadline represents the maximum time in seconds for the canary deployment to
 make progress before it is rolled back, defaults to ten minutes.
 
