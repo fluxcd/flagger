@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine as builder
+FROM golang:1.18-alpine as builder
 
 ARG TARGETPLATFORM
 ARG REVISON
@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 go build \
     -ldflags "-s -w -X github.com/fluxcd/flagger/pkg/version.REVISION=${REVISON}" \
     -a -o flagger ./cmd/flagger
 
-FROM alpine:3.15
+FROM alpine:3.16
 
 RUN apk --no-cache add ca-certificates
 

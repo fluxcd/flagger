@@ -8,7 +8,7 @@ Flagger is written in Go and uses Go modules for dependency management.
 
 On your dev machine install the following tools:
 
-* go >= 1.17
+* go >= 1.18
 * git >;= 2.20
 * bash >= 5.0
 * make >= 3.81
