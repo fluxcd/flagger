@@ -164,7 +164,8 @@ func newScaledObject() *keda.ScaledObject {
 			MaxReplicaCount: int32p(4),
 			Triggers: []keda.ScaleTriggers{
 				{
-					Type: "prometheus",
+					Type:       "prometheus",
+					MetricType: "AverageValue",
 					Metadata: map[string]string{
 						"serverAddress": "http://flagger-prometheus.projectcontour:9090",
 						"metricName":    "http_requests_total",

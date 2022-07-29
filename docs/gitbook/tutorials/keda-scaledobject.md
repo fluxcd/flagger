@@ -6,7 +6,7 @@ you can use any deployment strategy combined with any supported provider.
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.16** or newer. For this tutorial, we'll need KEDA **2.71** or newer.
+Flagger requires a Kubernetes cluster **v1.16** or newer. For this tutorial, we'll need KEDA **2.7.1** or newer.
 
 Install KEDA:
 
