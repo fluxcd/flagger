@@ -38,7 +38,8 @@ func (hr *HPAReconciler) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) er
 	var betaHpa *hpav2beta2.HorizontalPodAutoscaler
 	hpa, err := hr.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
-		hr.logger.Debugf("v2 HorizontalPodAutoscaler %s.%s get query error: %w; falling back to v2beta2",
+		hpa = nil
+		hr.logger.Debugf("v2 HorizontalPodAutoscaler %s.%s get query error: %s; falling back to v2beta2",
 			cd.Namespace, cd.Spec.AutoscalerRef.Name, err)
 		var betaErr error
 		betaHpa, betaErr = hr.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
