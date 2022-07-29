@@ -1,6 +1,6 @@
 module github.com/fluxcd/flagger
 
-go 1.17
+go 1.18
 
 require (
 	cloud.google.com/go/monitoring v1.5.0
@@ -27,7 +27,7 @@ require (
 )
 
 // Fix CVE-2022-28948
-replace gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0
+replace gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.1
 
 require (
 	cloud.google.com/go/compute v1.6.1 // indirect
