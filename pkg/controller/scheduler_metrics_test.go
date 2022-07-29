@@ -81,4 +81,91 @@ func TestController_checkMetricProviderAvailability(t *testing.T) {
 		}
 		require.NoError(t, ctrl.checkMetricProviderAvailability(canary))
 	})
+	t.Run("intraNamespaceTemplateRef", func(t *testing.T) {
+		ctrl := newDeploymentFixture(nil).ctrl
+		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
+			Name: "", TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
+				Name: "envoy",
+			},
+		}}}
+		canary := &flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
+		}
+		require.NoError(t, ctrl.checkMetricProviderAvailability(canary))
+	})
+}
+
+func TestController_selectMetricsProvider(t *testing.T) {
+	t.Run("crossover", func(t *testing.T) {
+		ctrl := Controller{meshProvider: "crossover"}
+		canary := &flaggerv1.Canary{
+			Spec: flaggerv1.CanarySpec{},
+		}
+		metricsProvider := ctrl.selectMetricsProvider(canary)
+		require.Equal(t, "crossover", metricsProvider)
+	})
+	t.Run("gloo-mesh-provider-set-to-istio", func(t *testing.T) {
+		ctrl := Controller{meshProvider: "gloo-mesh"}
+		canary := &flaggerv1.Canary{
+			Spec: flaggerv1.CanarySpec{
+				Provider: "",
+			},
+		}
+		metricsProvider := ctrl.selectMetricsProvider(canary)
+		require.Equal(t, "istio", metricsProvider)
+	})
+	t.Run("linkerd", func(t *testing.T) {
+		ctrl := Controller{meshProvider: "linkerd"}
+		canary := &flaggerv1.Canary{
+			Spec: flaggerv1.CanarySpec{
+				Provider: "",
+			},
+		}
+		metricsProvider := ctrl.selectMetricsProvider(canary)
+		require.Equal(t, "linkerd", metricsProvider)
+	})
+	t.Run("defaults-to-ctrl-provider", func(t *testing.T) {
+		ctrl := Controller{meshProvider: "any-mesh-provider"}
+		canary := &flaggerv1.Canary{
+			Spec: flaggerv1.CanarySpec{
+				Provider: "",
+			},
+		}
+		metricsProvider := ctrl.selectMetricsProvider(canary)
+		require.Equal(t, "any-mesh-provider", metricsProvider)
+	})
+	t.Run("overridden-by-canary-provider", func(t *testing.T) {
+		ctrl := Controller{meshProvider: "any-mesh-provider"}
+		canary := &flaggerv1.Canary{
+			Spec: flaggerv1.CanarySpec{
+				Provider: "overriding-mesh-provider",
+			},
+		}
+		metricsProvider := ctrl.selectMetricsProvider(canary)
+		require.Equal(t, "overriding-mesh-provider", metricsProvider)
+	})
+	t.Run("canary-provider-gloo-mesh-set-to-istio", func(t *testing.T) {
+		ctrl := Controller{meshProvider: "any-mesh-provider"}
+		canary := &flaggerv1.Canary{
+			Spec: flaggerv1.CanarySpec{
+				Provider: "gloo-mesh",
+			},
+		}
+		metricsProvider := ctrl.selectMetricsProvider(canary)
+		require.Equal(t, "istio", metricsProvider)
+	})
+	t.Run("service-suffix-added", func(t *testing.T) {
+		ctrl := Controller{meshProvider: ""}
+		canary := &flaggerv1.Canary{
+			Spec: flaggerv1.CanarySpec{
+				Provider: "istio",
+				TargetRef: flaggerv1.LocalObjectReference{
+					Kind: "Service",
+				},
+			},
+		}
+		metricsProvider := ctrl.selectMetricsProvider(canary)
+		require.Equal(t, "istio:service", metricsProvider)
+	})
 }
