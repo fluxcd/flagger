@@ -7,7 +7,7 @@ It can be used to generate HTTP and gRPC traffic during canary analysis when con
 
 ## Prerequisites
 
-* Kubernetes >= 1.11
+* Kubernetes >= 1.19
 
 ## Installing the Chart
 
@@ -44,35 +44,35 @@ The command removes all the Kubernetes components associated with the chart and 
 
 The following tables lists the configurable parameters of the load tester chart and their default values.
 
-Parameter | Description | Default
---- | --- | ---
-`image.repository` | Image repository | `quay.io/stefanprodan/flagger-loadtester`
-`image.pullPolicy` | Image pull policy | `IfNotPresent`
-`image.tag` | Image tag | `<VERSION>`
-`replicaCount` | Desired number of pods | `1`
-`serviceAccountName` | Kubernetes service account name | `none`
-`resources.requests.cpu` | CPU requests | `10m`
-`resources.requests.memory` | Memory requests | `64Mi`
-`tolerations` | List of node taints to tolerate | `[]`
-`affinity` | node/pod affinities | `node`
-`nodeSelector` | Node labels for pod assignment | `{}`
-`service.type` | Type of service | `ClusterIP`
-`service.port` | ClusterIP port | `80`
-`cmd.timeout` | Command execution timeout | `1h`
-`cmd.namespaceRegexp` | Restrict access to canaries in matching namespaces | ""
-`logLevel` | Log level can be debug, info, warning, error or panic | `info`
-`appmesh.enabled` | Create AWS App Mesh v1beta2 virtual node | `false`
-`appmesh.backends` | AWS App Mesh virtual services | `none`
-`istio.enabled` | Create Istio virtual service | `false`
-`istio.host` | Loadtester hostname  | `flagger-loadtester.flagger`
-`istio.gateway.enabled` | Create Istio gateway in namespace | `false`
-`istio.tls.enabled` | Enable TLS in gateway ( TLS secrets should be in namespace ) | `false`
-`istio.tls.httpsRedirect` | Redirect traffic to TLS port | `false`
-`podPriorityClassName` | PriorityClass name for pod priority configuration | ""
-`securityContext.enabled` | Add securityContext to container | ""
-`securityContext.context` | securityContext to add | ""
-`podDisruptionBudget.enabled` | A PodDisruptionBudget will be created if `true` | `false`
-`podDisruptionBudget.minAvailable` | The minimal number of available replicas that will be set in the PodDisruptionBudget | `1`
+| Parameter                          | Description                                                                          | Default                             |
+|------------------------------------|--------------------------------------------------------------------------------------|-------------------------------------|
+| `image.repository`                 | Image repository                                                                     | `ghcr.io/fluxcd/flagger-loadtester` |
+| `image.pullPolicy`                 | Image pull policy                                                                    | `IfNotPresent`                      |
+| `image.tag`                        | Image tag                                                                            | `<VERSION>`                         |
+| `replicaCount`                     | Desired number of pods                                                               | `1`                                 |
+| `serviceAccountName`               | Kubernetes service account name                                                      | `none`                              |
+| `resources.requests.cpu`           | CPU requests                                                                         | `10m`                               |
+| `resources.requests.memory`        | Memory requests                                                                      | `64Mi`                              |
+| `tolerations`                      | List of node taints to tolerate                                                      | `[]`                                |
+| `affinity`                         | node/pod affinities                                                                  | `node`                              |
+| `nodeSelector`                     | Node labels for pod assignment                                                       | `{}`                                |
+| `service.type`                     | Type of service                                                                      | `ClusterIP`                         |
+| `service.port`                     | ClusterIP port                                                                       | `80`                                |
+| `cmd.timeout`                      | Command execution timeout                                                            | `1h`                                |
+| `cmd.namespaceRegexp`              | Restrict access to canaries in matching namespaces                                   | ""                                  |
+| `logLevel`                         | Log level can be debug, info, warning, error or panic                                | `info`                              |
+| `appmesh.enabled`                  | Create AWS App Mesh v1beta2 virtual node                                             | `false`                             |
+| `appmesh.backends`                 | AWS App Mesh virtual services                                                        | `none`                              |
+| `istio.enabled`                    | Create Istio virtual service                                                         | `false`                             |
+| `istio.host`                       | Loadtester hostname                                                                  | `flagger-loadtester.flagger`        |
+| `istio.gateway.enabled`            | Create Istio gateway in namespace                                                    | `false`                             |
+| `istio.tls.enabled`                | Enable TLS in gateway ( TLS secrets should be in namespace )                         | `false`                             |
+| `istio.tls.httpsRedirect`          | Redirect traffic to TLS port                                                         | `false`                             |
+| `podPriorityClassName`             | PriorityClass name for pod priority configuration                                    | ""                                  |
+| `securityContext.enabled`          | Add securityContext to container                                                     | ""                                  |
+| `securityContext.context`          | securityContext to add                                                               | ""                                  |
+| `podDisruptionBudget.enabled`      | A PodDisruptionBudget will be created if `true`                                      | `false`                             |
+| `podDisruptionBudget.minAvailable` | The minimal number of available replicas that will be set in the PodDisruptionBudget | `1`                                 |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
