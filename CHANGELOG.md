@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.22.1
+
+**Release date:** 2022-08-01
+
+This minor release fixes a bug related to the use of HPA v2beta2 and updates
+the KEDA ScaledObject API to include `MetricType` for `ScaleTriggers`.
+
+Furthermore, the project has been updated to use Go 1.18 and Alpine 3.16.
+
+#### Fixes:
+
+- Update KEDA ScaledObject API to include MetricType for Triggers
+  [#1241](https://github.com/fluxcd/flagger/pull/1241)
+- Fix fallback logic for HPAv2 to v2beta2
+  [#1242](https://github.com/fluxcd/flagger/pull/1242)
+
+#### Improvements:
+- Update Go to 1.18 and Alpine to 3.16
+  [#1243](https://github.com/fluxcd/flagger/pull/1243)
+- Clarify HPA API requirement
+  [#1239](https://github.com/fluxcd/flagger/pull/1239)
+- Update README
+  [#1233](https://github.com/fluxcd/flagger/pull/1233)
 
 ## 1.22.0
 
