@@ -11,7 +11,7 @@ features:
 - title: Flexible Traffic Routing
   details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd, Kuma, OSM or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
 - title:  Extensible Validation
-  details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics and webooks for running acceptance tests, load tests, or any other custom validation. 
+  details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics and webhooks for running acceptance tests, load tests, or any other custom validation. 
 footer: Apache License 2.0 | Copyright © 2018-2022 The Flux authors
 ---
 
