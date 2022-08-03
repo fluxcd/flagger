@@ -360,6 +360,11 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 				return
 			}
 		}
+	       // run pre scale to zero canary webhooks
+	        if ok := c.runPreScaleToZeroCanaryRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded); !ok {
+	           return
+	        }
+
 		if err := canaryController.ScaleToZero(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
@@ -767,6 +772,11 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 			return true
 		}
 	}
+
+	// run pre scale to zero canary webhooks
+	if ok := c.runPreScaleToZeroCanaryRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded); !ok {
+	      return
+	 }
 
 	// shutdown canary
 	if err := canaryController.ScaleToZero(canary); err != nil {
