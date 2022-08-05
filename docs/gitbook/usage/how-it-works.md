@@ -256,7 +256,7 @@ status:
 ```
 
 The `Promoted` status condition can have one of the following reasons:
-Initialized, Waiting, Progressing, WaitingPromotion, Promoting, Finalising, Succeeded or Failed.
+Initialized, Waiting, Progressing, WaitingTrafficIncrease, WaitingPromotion, Promoting, Finalising, Succeeded or Failed.
 A failed canary will have the promoted status set to `false`,
 the reason to `failed` and the last applied spec will be different to the last promoted one.
 

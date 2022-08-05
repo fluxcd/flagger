@@ -1033,6 +1033,7 @@ spec:
                     - Initialized
                     - Waiting
                     - Progressing
+                    - WaitingTrafficIncrease
                     - WaitingPromotion
                     - Promoting
                     - Finalising

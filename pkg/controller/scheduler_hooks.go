@@ -23,17 +23,29 @@ import (
 	"github.com/fluxcd/flagger/pkg/canary"
 )
 
-func (c *Controller) runConfirmTrafficIncreaseHooks(canary *flaggerv1.Canary) bool {
+func (c *Controller) runConfirmTrafficIncreaseHooks(canary *flaggerv1.Canary, canaryController canary.Controller) bool {
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == flaggerv1.ConfirmTrafficIncreaseHook {
-			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			err := CallWebhook(canary.Name, canary.Namespace, canary.Status.Phase, webhook)
 			if err != nil {
-				c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for traffic increase approval %s",
-					canary.Name, canary.Namespace, webhook.Name)
-				if !webhook.MuteAlert {
-					c.alert(canary, "Canary traffic increase is waiting for approval.", false, flaggerv1.SeverityWarn)
+				if canary.Status.Phase != flaggerv1.CanaryPhaseWaitingTrafficIncrease {
+					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaitingTrafficIncrease); err != nil {
+						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+					}
+					c.recordEventWarningf(canary, "Halt %s.%s advancement waiting for traffic increase approval %s",
+						canary.Name, canary.Namespace, webhook.Name)
+					if !webhook.MuteAlert {
+						c.alert(canary, "Canary traffic increase is waiting for approval.", false, flaggerv1.SeverityWarn)
+					}
 				}
 				return false
+			} else {
+				if canary.Status.Phase == flaggerv1.CanaryPhaseWaitingTrafficIncrease {
+					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseProgressing); err != nil {
+						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+						return false
+					}
+				}
 			}
 			c.recordEventInfof(canary, "Confirm-traffic-increase check %s passed", webhook.Name)
 		}
