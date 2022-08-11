@@ -163,6 +163,9 @@ spec:
                     portName:
                       description: Container port name
                       type: string
+                    appProtocol:
+                      description: Application protocol of the port
+                      type: string
                     targetPort:
                       description: Container target port name
                       x-kubernetes-int-or-string: true
@@ -1037,25 +1040,25 @@ spec:
                     - Failed
                     - Terminating
                     - Terminated
+                failedChecks:
+                  description: Failed check count of the current canary analysis
+                  type: number
+                canaryWeight:
+                  description: Traffic weight routed to canary
+                  type: number
+                iterations:
+                  description: Iteration count of the current canary analysis
+                  type: number
                 trackedConfigs:
                   description: TrackedConfig of this canary
                   additionalProperties:
                     type: string
                   type: object
-                canaryWeight:
-                  description: Traffic weight routed to canary
-                  type: number
-                failedChecks:
-                  description: Failed check count of the current canary analysis
-                  type: number
-                iterations:
-                  description: Iteration count of the current canary analysis
-                  type: number
-                lastPromotedSpec:
-                  description: LastPromotedSpec of this canary
-                  type: string
                 lastAppliedSpec:
                   description: LastAppliedSpec of this canary
+                  type: string
+                lastPromotedSpec:
+                  description: LastPromotedSpec of this canary
                   type: string
                 lastTransitionTime:
                   description: LastTransitionTime of this canary
