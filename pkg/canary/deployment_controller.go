@@ -197,6 +197,30 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 		if primary.Spec.Replicas != nil && *primary.Spec.Replicas > 0 {
 			replicas = primary.Spec.Replicas
 		}
+	} else if cd.Spec.AutoscalerRef != nil {
+		if cd.Spec.AutoscalerRef.Kind == "HorizontalPodAutoscaler" {
+			hpa, err := c.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+			if err == nil {
+				if hpa.Spec.MinReplicas != nil && *hpa.Spec.MinReplicas > 1 {
+					replicas = hpa.Spec.MinReplicas
+				}
+			} else {
+				// fallback to v2beta2
+				hpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+				if err == nil {
+					if hpa.Spec.MinReplicas != nil && *hpa.Spec.MinReplicas > 1 {
+						replicas = hpa.Spec.MinReplicas
+					}
+				}
+			}
+		} else if cd.Spec.AutoscalerRef.Kind == "ScaledObject" {
+			so, err := c.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+			if err == nil {
+				if so.Spec.MinReplicaCount != nil && *so.Spec.MinReplicaCount > 1 {
+					replicas = so.Spec.MinReplicaCount
+				}
+			}
+		}
 	}
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = replicas
