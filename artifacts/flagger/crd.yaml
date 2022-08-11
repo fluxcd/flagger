@@ -1040,20 +1040,20 @@ spec:
                     - Failed
                     - Terminating
                     - Terminated
+                failedChecks:
+                  description: Failed check count of the current canary analysis
+                  type: number
+                canaryWeight:
+                  description: Traffic weight routed to canary
+                  type: number
+                iterations:
+                  description: Iteration count of the current canary analysis
+                  type: number
                 trackedConfigs:
                   description: TrackedConfig of this canary
                   additionalProperties:
                     type: string
                   type: object
-                canaryWeight:
-                  description: Traffic weight routed to canary
-                  type: number
-                failedChecks:
-                  description: Failed check count of the current canary analysis
-                  type: number
-                iterations:
-                  description: Iteration count of the current canary analysis
-                  type: number
                 lastAppliedSpec:
                   description: LastAppliedSpec of this canary
                   type: string

@@ -33,6 +33,9 @@ crd:
 	cat artifacts/flagger/crd.yaml > charts/flagger/crds/crd.yaml
 	cat artifacts/flagger/crd.yaml > kustomize/base/flagger/crd.yaml
 
+verify-crd:
+	./hack/verify-crd.sh
+
 version-set:
 	@next="$(TAG)" && \
 	current="$(VERSION)" && \

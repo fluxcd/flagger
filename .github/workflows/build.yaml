@@ -35,6 +35,8 @@ jobs:
           go install golang.org/x/tools/cmd/goimports
       - name: Run linters
         run: make test-fmt test-codegen
+      - name: Verify CRDs
+        run: make verify-crd
       - name: Run tests
         run: go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./pkg/...)
       - name: Check if working tree is dirty
