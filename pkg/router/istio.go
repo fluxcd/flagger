@@ -158,6 +158,11 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		makeDestination(canary, canaryName, 0),
 	}
 
+	// create destinations with primary weight 100%
+	canaryRouteHeader := []istiov1alpha3.DestinationWeight{
+		makeDestination(canary, primaryName, 100),
+	}
+
 	if canary.Spec.Service.Delegation {
 		// delegate VirtualService requires the hosts and gateway empty.
 		hosts = []string{}
@@ -180,6 +185,22 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		},
 	}
 
+	// get the trfficType value
+	traffictype := canary.Spec.Analysis.TrafficType
+
+	// create destinations with canary weight when trafficType is 2
+	if traffictype == 2 {
+		canaryRoute = []istiov1alpha3.DestinationWeight{
+			makeDestination(canary, canaryName, 0),
+		}
+
+		canaryRouteHeader = []istiov1alpha3.DestinationWeight{
+			makeDestination(canary, primaryName, 100),
+			makeDestination(canary, canaryName, 0),
+		}
+
+	}
+
 	if len(canary.GetAnalysis().Match) > 0 {
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
@@ -199,9 +220,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Route: []istiov1alpha3.DestinationWeight{
-					makeDestination(canary, primaryName, 100),
-				},
+				Route:      canaryRouteHeader,
 			},
 		}
 	}
