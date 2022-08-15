@@ -21,17 +21,18 @@ type DestinationRule struct {
 // balancing pool. For example, a simple load balancing policy for the
 // ratings service would look as follows:
 //
-//
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: bookinfo-ratings
-// spec:
-//   host: ratings.prod.svc.cluster.local
-//   trafficPolicy:
-//     loadBalancer:
-//       simple: LEAST_CONN
 //
+//	name: bookinfo-ratings
+//
+// spec:
+//
+//	host: ratings.prod.svc.cluster.local
+//	trafficPolicy:
+//	  loadBalancer:
+//	    simple: LEAST_CONN
 //
 // Version specific policies can be specified by defining a named
 // subset and overriding the settings specified at the service level. The
@@ -39,24 +40,25 @@ type DestinationRule struct {
 // going to a subset named testversion that is composed of endpoints (e.g.,
 // pods) with labels (version:v3).
 //
-//
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: bookinfo-ratings
-// spec:
-//   host: ratings.prod.svc.cluster.local
-//   trafficPolicy:
-//     loadBalancer:
-//       simple: LEAST_CONN
-//   subsets:
-//   - name: testversion
-//     labels:
-//       version: v3
-//     trafficPolicy:
-//       loadBalancer:
-//         simple: ROUND_ROBIN
 //
+//	name: bookinfo-ratings
+//
+// spec:
+//
+//	host: ratings.prod.svc.cluster.local
+//	trafficPolicy:
+//	  loadBalancer:
+//	    simple: LEAST_CONN
+//	subsets:
+//	- name: testversion
+//	  labels:
+//	    version: v3
+//	  trafficPolicy:
+//	    loadBalancer:
+//	      simple: ROUND_ROBIN
 //
 // **Note:** Policies specified for subsets will not take effect until
 // a route rule explicitly sends traffic to this subset.
@@ -66,24 +68,25 @@ type DestinationRule struct {
 // traffic to port 80, while uses a round robin load balancing setting for
 // traffic to the port 9080.
 //
-//
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: bookinfo-ratings-port
-// spec:
-//   host: ratings.prod.svc.cluster.local
-//   trafficPolicy: # Apply to all ports
-//     portLevelSettings:
-//     - port:
-//         number: 80
-//       loadBalancer:
-//         simple: LEAST_CONN
-//     - port:
-//         number: 9080
-//       loadBalancer:
-//         simple: ROUND_ROBIN
 //
+//	name: bookinfo-ratings-port
+//
+// spec:
+//
+//	host: ratings.prod.svc.cluster.local
+//	trafficPolicy: # Apply to all ports
+//	  portLevelSettings:
+//	  - port:
+//	      number: 80
+//	    loadBalancer:
+//	      simple: LEAST_CONN
+//	  - port:
+//	      number: 9080
+//	    loadBalancer:
+//	      simple: ROUND_ROBIN
 type DestinationRuleSpec struct {
 	// REQUIRED. The name of a service from the service registry. Service
 	// names are looked up from the platform's service registry (e.g.,
@@ -172,19 +175,22 @@ type PortTrafficPolicy struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: bookinfo-ratings
+//
+//	name: bookinfo-ratings
+//
 // spec:
-//   host: ratings.prod.svc.cluster.local
-//   trafficPolicy:
-//     loadBalancer:
-//       simple: LEAST_CONN
-//   subsets:
-//   - name: testversion
-//     labels:
-//       version: v3
-//     trafficPolicy:
-//       loadBalancer:
-//         simple: ROUND_ROBIN
+//
+//	host: ratings.prod.svc.cluster.local
+//	trafficPolicy:
+//	  loadBalancer:
+//	    simple: LEAST_CONN
+//	subsets:
+//	- name: testversion
+//	  labels:
+//	    version: v3
+//	  trafficPolicy:
+//	    loadBalancer:
+//	      simple: ROUND_ROBIN
 //
 // **Note:** Policies specified for subsets will not take effect until
 // a route rule explicitly sends traffic to this subset.
@@ -215,29 +221,32 @@ type Subset struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: bookinfo-ratings
+//
+//	name: bookinfo-ratings
+//
 // spec:
-//   host: ratings.prod.svc.cluster.local
-//   trafficPolicy:
-//     loadBalancer:
-//       simple: ROUND_ROBIN
+//
+//	host: ratings.prod.svc.cluster.local
+//	trafficPolicy:
+//	  loadBalancer:
+//	    simple: ROUND_ROBIN
 //
 // The following example sets up sticky sessions for the ratings service
 // hashing-based load balancer for the same ratings service using the
 // the User cookie as the hash key.
 //
-//  apiVersion: networking.istio.io/v1alpha3
-//  kind: DestinationRule
-//  metadata:
-//    name: bookinfo-ratings
-//  spec:
-//    host: ratings.prod.svc.cluster.local
-//    trafficPolicy:
-//      loadBalancer:
-//        consistentHash:
-//          httpCookie:
-//            name: user
-//            ttl: 0s
+//	apiVersion: networking.istio.io/v1alpha3
+//	kind: DestinationRule
+//	metadata:
+//	  name: bookinfo-ratings
+//	spec:
+//	  host: ratings.prod.svc.cluster.local
+//	  trafficPolicy:
+//	    loadBalancer:
+//	      consistentHash:
+//	        httpCookie:
+//	          name: user
+//	          ttl: 0s
 type LoadBalancerSettings struct {
 	// It is required to specify exactly one of the fields:
 	// Simple or ConsistentHash
@@ -265,15 +274,17 @@ type LoadBalancerSettings struct {
 // A similar setting is specified for traffic originating in "us-west/zone2/*".
 //
 // ```yaml
-//   distribute:
-//     - from: us-west/zone1/*
-//       to:
-//         "us-west/zone1/*": 80
-//         "us-west/zone2/*": 20
-//     - from: us-west/zone2/*
-//       to:
-//         "us-west/zone1/*": 20
-//         "us-west/zone2/*": 80
+//
+//	distribute:
+//	  - from: us-west/zone1/*
+//	    to:
+//	      "us-west/zone1/*": 80
+//	      "us-west/zone2/*": 20
+//	  - from: us-west/zone2/*
+//	    to:
+//	      "us-west/zone1/*": 20
+//	      "us-west/zone2/*": 80
+//
 // ```
 //
 // If the goal of the operator is not to distribute load across zones and
@@ -288,11 +299,13 @@ type LoadBalancerSettings struct {
 // and similarly us-west should failover to us-east.
 //
 // ```yaml
-//  failover:
-//    - from: us-east
-//      to: eu-west
-//    - from: us-west
-//      to: us-east
+//
+//	failover:
+//	  - from: us-east
+//	    to: eu-west
+//	  - from: us-west
+//	    to: us-east
+//
 // ```
 // Locality load balancing settings.
 type LocalityLbSetting struct {
@@ -461,14 +474,17 @@ type HTTPCookie struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: bookinfo-redis
+//
+//	name: bookinfo-redis
+//
 // spec:
-//   host: myredissrv.prod.svc.cluster.local
-//   trafficPolicy:
-//     connectionPool:
-//       tcp:
-//         maxConnections: 100
-//         connectTimeout: 30ms
+//
+//	host: myredissrv.prod.svc.cluster.local
+//	trafficPolicy:
+//	  connectionPool:
+//	    tcp:
+//	      maxConnections: 100
+//	      connectTimeout: 30ms
 type ConnectionPoolSettings struct {
 
 	// Settings common to both HTTP and TCP upstream connections.
@@ -535,20 +551,23 @@ type HTTPSettings struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: reviews-cb-policy
+//
+//	name: reviews-cb-policy
+//
 // spec:
-//   host: reviews.prod.svc.cluster.local
-//   trafficPolicy:
-//     connectionPool:
-//       tcp:
-//         maxConnections: 100
-//       http:
-//         http2MaxRequests: 1000
-//         maxRequestsPerConnection: 10
-//     outlierDetection:
-//       consecutiveErrors: 7
-//       interval: 5m
-//       baseEjectionTime: 15m
+//
+//	host: reviews.prod.svc.cluster.local
+//	trafficPolicy:
+//	  connectionPool:
+//	    tcp:
+//	      maxConnections: 100
+//	    http:
+//	      http2MaxRequests: 1000
+//	      maxRequestsPerConnection: 10
+//	  outlierDetection:
+//	    consecutiveErrors: 7
+//	    interval: 5m
+//	    baseEjectionTime: 15m
 type OutlierDetection struct {
 	// Number of errors before a host is ejected from the connection
 	// pool. Defaults to 5. When the upstream host is accessed over HTTP, a
@@ -621,15 +640,18 @@ type OutlierDetection struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: db-mtls
+//
+//	name: db-mtls
+//
 // spec:
-//   host: mydbserver.prod.svc.cluster.local
-//   trafficPolicy:
-//     tls:
-//       mode: MUTUAL
-//       clientCertificate: /etc/certs/myclientcert.pem
-//       privateKey: /etc/certs/client_private_key.pem
-//       caCertificates: /etc/certs/rootcacerts.pem
+//
+//	host: mydbserver.prod.svc.cluster.local
+//	trafficPolicy:
+//	  tls:
+//	    mode: MUTUAL
+//	    clientCertificate: /etc/certs/myclientcert.pem
+//	    privateKey: /etc/certs/client_private_key.pem
+//	    caCertificates: /etc/certs/rootcacerts.pem
 //
 // The following rule configures a client to use TLS when talking to a
 // foreign service whose domain matches *.foo.com.
@@ -637,12 +659,15 @@ type OutlierDetection struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: tls-foo
+//
+//	name: tls-foo
+//
 // spec:
-//   host: "*.foo.com"
-//   trafficPolicy:
-//     tls:
-//       mode: SIMPLE
+//
+//	host: "*.foo.com"
+//	trafficPolicy:
+//	  tls:
+//	    mode: SIMPLE
 //
 // The following rule configures a client to use Istio mutual TLS when talking
 // to rating services.
@@ -650,12 +675,15 @@ type OutlierDetection struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: ratings-istio-mtls
+//
+//	name: ratings-istio-mtls
+//
 // spec:
-//   host: ratings.prod.svc.cluster.local
-//   trafficPolicy:
-//     tls:
-//       mode: ISTIO_MUTUAL
+//
+//	host: ratings.prod.svc.cluster.local
+//	trafficPolicy:
+//	  tls:
+//	    mode: ISTIO_MUTUAL
 type TLSSettings struct {
 
 	// REQUIRED: Indicates whether connections to this port should be secured

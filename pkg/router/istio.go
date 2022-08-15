@@ -190,7 +190,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 
 	// create destinations with canary weight when trafficType is 2
 	if traffictype == 2 {
-	
+
 		canaryRoute = []istiov1alpha3.DestinationWeight{
 			makeDestination(canary, canaryName, 0),
 		}

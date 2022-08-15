@@ -30,31 +30,34 @@ type VirtualService struct {
 // HTTP requests with path starting with /wpcatalog/ or /consumercatalog/ will
 // be rewritten to /newcatalog and sent to pods with label "version: v2".
 //
-//
 // ```yaml
 // apiVersion: networking.istio.io/v1alpha3
 // kind: VirtualService
 // metadata:
-//   name: reviews-route
+//
+//	name: reviews-route
+//
 // spec:
-//   hosts:
-//   - reviews.prod.svc.cluster.local
-//   http:
-//   - match:
-//     - uri:
-//         prefix: "/wpcatalog"
-//     - uri:
-//         prefix: "/consumercatalog"
-//     rewrite:
-//       uri: "/newcatalog"
-//     route:
-//     - destination:
-//         host: reviews.prod.svc.cluster.local
-//         subset: v2
-//   - route:
-//     - destination:
-//         host: reviews.prod.svc.cluster.local
-//         subset: v1
+//
+//	hosts:
+//	- reviews.prod.svc.cluster.local
+//	http:
+//	- match:
+//	  - uri:
+//	      prefix: "/wpcatalog"
+//	  - uri:
+//	      prefix: "/consumercatalog"
+//	  rewrite:
+//	    uri: "/newcatalog"
+//	  route:
+//	  - destination:
+//	      host: reviews.prod.svc.cluster.local
+//	      subset: v2
+//	- route:
+//	  - destination:
+//	      host: reviews.prod.svc.cluster.local
+//	      subset: v1
+//
 // ```
 //
 // A subset/version of a route destination is identified with a reference
@@ -65,18 +68,21 @@ type VirtualService struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: reviews-destination
-// spec:
-//   host: reviews.prod.svc.cluster.local
-//   subsets:
-//   - name: v1
-//     labels:
-//       version: v1
-//   - name: v2
-//     labels:
-//       version: v2
-// ```
 //
+//	name: reviews-destination
+//
+// spec:
+//
+//	host: reviews.prod.svc.cluster.local
+//	subsets:
+//	- name: v1
+//	  labels:
+//	    version: v1
+//	- name: v2
+//	  labels:
+//	    version: v2
+//
+// ```
 type VirtualServiceSpec struct {
 	// REQUIRED. The destination hosts to which traffic is being sent. Could
 	// be a DNS name with wildcard prefix or an IP address.  Depending on the
@@ -153,46 +159,54 @@ type VirtualServiceSpec struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: VirtualService
 // metadata:
-//   name: reviews-route
-//   namespace: foo
+//
+//	name: reviews-route
+//	namespace: foo
+//
 // spec:
-//   hosts:
-//   - reviews # interpreted as reviews.foo.svc.cluster.local
-//   http:
-//   - match:
-//     - uri:
-//         prefix: "/wpcatalog"
-//     - uri:
-//         prefix: "/consumercatalog"
-//     rewrite:
-//       uri: "/newcatalog"
-//     route:
-//     - destination:
-//         host: reviews # interpreted as reviews.foo.svc.cluster.local
-//         subset: v2
-//   - route:
-//     - destination:
-//         host: reviews # interpreted as reviews.foo.svc.cluster.local
-//         subset: v1
+//
+//	hosts:
+//	- reviews # interpreted as reviews.foo.svc.cluster.local
+//	http:
+//	- match:
+//	  - uri:
+//	      prefix: "/wpcatalog"
+//	  - uri:
+//	      prefix: "/consumercatalog"
+//	  rewrite:
+//	    uri: "/newcatalog"
+//	  route:
+//	  - destination:
+//	      host: reviews # interpreted as reviews.foo.svc.cluster.local
+//	      subset: v2
+//	- route:
+//	  - destination:
+//	      host: reviews # interpreted as reviews.foo.svc.cluster.local
+//	      subset: v1
+//
 // ```
 //
-// And the associated DestinationRule
+// # And the associated DestinationRule
 //
 // ```yaml
 // apiVersion: networking.istio.io/v1alpha3
 // kind: DestinationRule
 // metadata:
-//   name: reviews-destination
-//   namespace: foo
+//
+//	name: reviews-destination
+//	namespace: foo
+//
 // spec:
-//   host: reviews # interpreted as reviews.foo.svc.cluster.local
-//   subsets:
-//   - name: v1
-//     labels:
-//       version: v1
-//   - name: v2
-//     labels:
-//       version: v2
+//
+//	host: reviews # interpreted as reviews.foo.svc.cluster.local
+//	subsets:
+//	- name: v1
+//	  labels:
+//	    version: v1
+//	- name: v2
+//	  labels:
+//	    version: v2
+//
 // ```
 //
 // The following VirtualService sets a timeout of 5s for all calls to
@@ -209,16 +223,20 @@ type VirtualServiceSpec struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: VirtualService
 // metadata:
-//   name: my-productpage-rule
-//   namespace: istio-system
+//
+//	name: my-productpage-rule
+//	namespace: istio-system
+//
 // spec:
-//   hosts:
-//   - productpage.prod.svc.cluster.local # ignores rule namespace
-//   http:
-//   - timeout: 5s
-//     route:
-//     - destination:
-//         host: productpage.prod.svc.cluster.local
+//
+//	hosts:
+//	- productpage.prod.svc.cluster.local # ignores rule namespace
+//	http:
+//	- timeout: 5s
+//	  route:
+//	  - destination:
+//	      host: productpage.prod.svc.cluster.local
+//
 // ```
 //
 // To control routing for traffic bound to services outside the mesh, external
@@ -231,29 +249,36 @@ type VirtualServiceSpec struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: ServiceEntry
 // metadata:
-//   name: external-svc-wikipedia
+//
+//	name: external-svc-wikipedia
+//
 // spec:
-//   hosts:
-//   - wikipedia.org
-//   location: MESH_EXTERNAL
-//   ports:
-//   - number: 80
-//     name: example-http
-//     protocol: HTTP
-//   resolution: DNS
+//
+//	hosts:
+//	- wikipedia.org
+//	location: MESH_EXTERNAL
+//	ports:
+//	- number: 80
+//	  name: example-http
+//	  protocol: HTTP
+//	resolution: DNS
 //
 // apiVersion: networking.istio.io/v1alpha3
 // kind: VirtualService
 // metadata:
-//   name: my-wiki-rule
+//
+//	name: my-wiki-rule
+//
 // spec:
-//   hosts:
-//   - wikipedia.org
-//   http:
-//   - timeout: 5s
-//     route:
-//     - destination:
-//         host: wikipedia.org
+//
+//	hosts:
+//	- wikipedia.org
+//	http:
+//	- timeout: 5s
+//	  route:
+//	  - destination:
+//	      host: wikipedia.org
+//
 // ```
 type Destination struct {
 	// REQUIRED. The name of a service from the service registry. Service
@@ -374,23 +399,23 @@ type HeaderOperations struct {
 // starts with /ratings/v2/ and the request contains a "cookie" with value
 // "user=jason".
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: ratings-route
-//     spec:
-//       hosts:
-//       - ratings
-//       http:
-//       - match:
-//         - headers:
-//             cookie:
-//               regex: "^(.*?;)?(user=jason)(;.*)?"
-//             uri:
-//               prefix: "/ratings/v2/"
-//         route:
-//         - destination:
-//             host: ratings
+//	apiVersion: networking.istio.io/v1alpha3
+//	kind: VirtualService
+//	metadata:
+//	  name: ratings-route
+//	spec:
+//	  hosts:
+//	  - ratings
+//	  http:
+//	  - match:
+//	    - headers:
+//	        cookie:
+//	          regex: "^(.*?;)?(user=jason)(;.*)?"
+//	        uri:
+//	          prefix: "/ratings/v2/"
+//	    route:
+//	    - destination:
+//	        host: ratings
 //
 // HTTPMatchRequest CANNOT be empty.
 type HTTPMatchRequest struct {
@@ -536,19 +561,23 @@ type PortSelector struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: VirtualService
 // metadata:
-//   name: bookinfo-Mongo
+//
+//	name: bookinfo-Mongo
+//
 // spec:
-//   hosts:
-//   - mongo.prod.svc.cluster.local
-//   tcp:
-//   - match:
-//     - port: 27017
-//       sourceSubnet: "172.17.16.0/24"
-//     route:
-//     - destination:
-//         host: mongo.backup.svc.cluster.local
-//         port:
-//           number: 5555
+//
+//	hosts:
+//	- mongo.prod.svc.cluster.local
+//	tcp:
+//	- match:
+//	  - port: 27017
+//	    sourceSubnet: "172.17.16.0/24"
+//	  route:
+//	  - destination:
+//	      host: mongo.backup.svc.cluster.local
+//	      port:
+//	        number: 5555
+//
 // ```
 type TCPRoute struct {
 	// Match conditions to be satisfied for the rule to be
@@ -600,22 +629,21 @@ type L4MatchAttributes struct {
 // requests for /v1/getProductRatings API on the ratings service to
 // /v1/bookRatings provided by the bookratings service.
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: ratings-route
-//     spec:
-//       hosts:
-//       - ratings
-//       http:
-//       - match:
-//         - uri:
-//             exact: /v1/getProductRatings
-//       redirect:
-//         uri: /v1/bookRatings
-//         authority: bookratings.default.svc.cluster.local
-//       ...
-//
+//	apiVersion: networking.istio.io/v1alpha3
+//	kind: VirtualService
+//	metadata:
+//	  name: ratings-route
+//	spec:
+//	  hosts:
+//	  - ratings
+//	  http:
+//	  - match:
+//	    - uri:
+//	        exact: /v1/getProductRatings
+//	  redirect:
+//	    uri: /v1/bookRatings
+//	    authority: bookratings.default.svc.cluster.local
+//	  ...
 type HTTPRedirect struct {
 	// On a redirect, overwrite the Path portion of the URL with this
 	// value. Note that the entire path will be replaced, irrespective of the
@@ -633,24 +661,23 @@ type HTTPRedirect struct {
 // demonstrates how to rewrite the URL prefix for api call (/ratings) to
 // ratings service before making the actual API call.
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: ratings-route
-//     spec:
-//       hosts:
-//       - ratings
-//       http:
-//       - match:
-//         - uri:
-//             prefix: /ratings
-//         rewrite:
-//           uri: /v1/bookRatings
-//         route:
-//         - destination:
-//             host: ratings
-//             subset: v1
-//
+//	apiVersion: networking.istio.io/v1alpha3
+//	kind: VirtualService
+//	metadata:
+//	  name: ratings-route
+//	spec:
+//	  hosts:
+//	  - ratings
+//	  http:
+//	  - match:
+//	    - uri:
+//	        prefix: /ratings
+//	    rewrite:
+//	      uri: /v1/bookRatings
+//	    route:
+//	    - destination:
+//	        host: ratings
+//	        subset: v1
 type HTTPRewrite struct {
 	// rewrite the path (or the prefix) portion of the URI with this
 	// value. If the original URI was matched based on prefix, the value
@@ -669,21 +696,24 @@ type HTTPRewrite struct {
 // apiVersion: networking.istio.io/v1alpha3
 // kind: VirtualService
 // metadata:
-//   name: ratings-route
-// spec:
-//   hosts:
-//   - ratings.prod.svc.cluster.local
-//   http:
-//   - route:
-//     - destination:
-//         host: ratings.prod.svc.cluster.local
-//         subset: v1
-//     retries:
-//       attempts: 3
-//       perTryTimeout: 2s
-//       retryOn: gateway-error,connect-failure,refused-stream
-// ```
 //
+//	name: ratings-route
+//
+// spec:
+//
+//	hosts:
+//	- ratings.prod.svc.cluster.local
+//	http:
+//	- route:
+//	  - destination:
+//	      host: ratings.prod.svc.cluster.local
+//	      subset: v1
+//	  retries:
+//	    attempts: 3
+//	    perTryTimeout: 2s
+//	    retryOn: gateway-error,connect-failure,refused-stream
+//
+// ```
 type HTTPRetry struct {
 	// REQUIRED. Number of retries for a given request. The interval
 	// between retries will be determined automatically (25ms+). Actual
@@ -710,29 +740,28 @@ type HTTPRetry struct {
 // Access-Control-Allow-Credentials header to false. In addition, it only
 // exposes X-Foo-bar header and sets an expiry period of 1 day.
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: ratings-route
-//     spec:
-//       hosts:
-//       - ratings
-//       http:
-//       - route:
-//         - destination:
-//             host: ratings
-//             subset: v1
-//         corsPolicy:
-//           allowOrigin:
-//           - example.com
-//           allowMethods:
-//           - POST
-//           - GET
-//           allowCredentials: false
-//           allowHeaders:
-//           - X-Foo-Bar
-//           maxAge: "1d"
-//
+//	apiVersion: networking.istio.io/v1alpha3
+//	kind: VirtualService
+//	metadata:
+//	  name: ratings-route
+//	spec:
+//	  hosts:
+//	  - ratings
+//	  http:
+//	  - route:
+//	    - destination:
+//	        host: ratings
+//	        subset: v1
+//	    corsPolicy:
+//	      allowOrigin:
+//	      - example.com
+//	      allowMethods:
+//	      - POST
+//	      - GET
+//	      allowCredentials: false
+//	      allowHeaders:
+//	      - X-Foo-Bar
+//	      maxAge: "1d"
 type CorsPolicy struct {
 	// The list of origins that are allowed to perform CORS requests. The
 	// content will be serialized into the Access-Control-Allow-Origin
@@ -790,25 +819,25 @@ type HTTPFaultInjection struct {
 // in 10% of the requests to the "v1" version of the "reviews"
 // service from all pods with label env: prod
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: reviews-route
-//     spec:
-//       hosts:
-//       - reviews
-//       http:
-//       - match:
-//         - sourceLabels:
-//             env: prod
-//         route:
-//         - destination:
-//             host: reviews
-//             subset: v1
-//         fault:
-//           delay:
-//             percent: 10
-//             fixedDelay: 5s
+//	apiVersion: networking.istio.io/v1alpha3
+//	kind: VirtualService
+//	metadata:
+//	  name: reviews-route
+//	spec:
+//	  hosts:
+//	  - reviews
+//	  http:
+//	  - match:
+//	    - sourceLabels:
+//	        env: prod
+//	    route:
+//	    - destination:
+//	        host: reviews
+//	        subset: v1
+//	    fault:
+//	      delay:
+//	        percent: 10
+//	        fixedDelay: 5s
 //
 // The _fixedDelay_ field is used to indicate the amount of delay in
 // seconds. An optional _percent_ field, a value between 0 and 100, can
@@ -832,22 +861,22 @@ type InjectDelay struct {
 // pre-specified error code. The following example will return an HTTP
 // 400 error code for 10% of the requests to the "ratings" service "v1".
 //
-//     apiVersion: networking.istio.io/v1alpha3
-//     kind: VirtualService
-//     metadata:
-//       name: ratings-route
-//     spec:
-//       hosts:
-//       - ratings
-//       http:
-//       - route:
-//         - destination:
-//             host: ratings
-//             subset: v1
-//         fault:
-//           abort:
-//             percent: 10
-//             httpStatus: 400
+//	apiVersion: networking.istio.io/v1alpha3
+//	kind: VirtualService
+//	metadata:
+//	  name: ratings-route
+//	spec:
+//	  hosts:
+//	  - ratings
+//	  http:
+//	  - route:
+//	    - destination:
+//	        host: ratings
+//	        subset: v1
+//	    fault:
+//	      abort:
+//	        percent: 10
+//	        httpStatus: 400
 //
 // The _httpStatus_ field is used to indicate the HTTP status code to
 // return to the caller. The optional _percent_ field, a value between 0

@@ -54,6 +54,10 @@ spec:
         - name: LastTransitionTime
           type: string
           jsonPath: .status.lastTransitionTime
+        - name: TrafficType
+          type: string
+          jsonPath: .spec.analysis.trafficType
+          priority: 1
       schema:
         openAPIV3Schema:
           description: Canary is the Schema for the Canary API.
@@ -867,6 +871,9 @@ spec:
                       type: boolean
                     mirrorWeight:
                       description: Weight of traffic to be mirrored
+                      type: number
+                    trafficType:
+                      description: Type of forwarded traffic split  by header "1" is native "2" is request by service
                       type: number
                     primaryReadyThreshold:
                       description: Percentage of pods that need to be available to consider primary as ready
