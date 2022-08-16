@@ -773,11 +773,6 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 		}
 	}
 
-	// run pre scale to zero canary webhooks
-	if ok := c.runPreScaleToZeroCanaryRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded); !ok {
-	      return
-	 }
-
 	// shutdown canary
 	if err := canaryController.ScaleToZero(canary); err != nil {
 		c.recordEventWarningf(canary, "%v", err)
@@ -928,7 +923,17 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 		canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
 
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
-
+        cd, err := c.flaggerClient.FlaggerV1beta1().Canaries(canaryPhaseFailed.Namespace).Get(context.TODO(), canaryPhaseFailed.Name, metav1.GetOptions{})
+        if err != nil {
+	    c.logger.With("canary", fmt.Sprintf("%s.%s", canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)).
+		Errorf("Canary %s.%s not found", canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
+	    return
+	}
+	c.runPreScaleToZeroCanaryRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
+	// run pre scale to zero canary web hooks
+	if ok := c.runPreScaleToZeroCanaryRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded); !ok {
+		return
+	}
 	if scalerReconciler != nil {
 		if err := scalerReconciler.PauseTargetScaler(canary); err != nil {
 			c.recordEventWarningf(canary, "%v", err)

@@ -340,6 +340,8 @@ const (
 	RollbackHook HookType = "rollback"
 	// ConfirmTrafficIncreaseHook increases traffic weight if webhook returns HTTP 200
 	ConfirmTrafficIncreaseHook = "confirm-traffic-increase"
+        // PreCanaryScaleZero execute webhook before scaling canary deployment to zero
+        PreCanaryScaleZero HookType = "pre-canary-scale-zero-rollout"
 )
 
 // CanaryWebhook holds the reference to external checks used for canary analysis
