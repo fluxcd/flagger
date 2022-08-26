@@ -240,6 +240,7 @@ can be used to implement the request success rate and request duration checks.
 #### Integrations
 
 * Add support for ingress controllers like HAProxy, ALB, and Apache APISIX
+* Add support for Knative Serving
 
 ### Contributing
 
