@@ -2,6 +2,42 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.22.2
+
+**Release date:** 2022-08-29
+
+This release fixes a bug related scaling up the canary deployment when a
+reference to an autoscaler is specified.
+
+Furthermore, it contains updates to packages used by the project, including
+updates to Helm and grpc-health-probe used in the loadtester.
+
+CVEs fixed (originating from dependencies):
+* CVE-2022-37434
+* CVE-2022-27191
+* CVE-2021-33194
+* CVE-2021-44716
+* CVE-2022-29526
+* CVE-2022-1996
+
+#### Fixes:
+
+- If HPA is set, it uses HPA minReplicas when scaling up the canary
+  [#1253](https://github.com/fluxcd/flagger/pull/1253)
+
+#### Improvements:
+
+- Release loadtester v0.23.0
+  [#1246](https://github.com/fluxcd/flagger/pull/1246)
+- Add target and script to keep crds in sync
+  [#1254](https://github.com/fluxcd/flagger/pull/1254)
+- docs: add knative support to roadmap
+  [#1258](https://github.com/fluxcd/flagger/pull/1258)
+- Update dependencies
+  [#1259](https://github.com/fluxcd/flagger/pull/1259)
+- Release loadtester v0.24.0
+  [#1261](https://github.com/fluxcd/flagger/pull/1261)
+
 ## 1.22.1
 
 **Release date:** 2022-08-01
