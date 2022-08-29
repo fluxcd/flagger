@@ -6,11 +6,11 @@ ARG REVISION
 
 RUN apk --no-cache add alpine-sdk perl curl bash tar
 
-RUN HELM3_VERSION=3.9.2 && \
+RUN HELM3_VERSION=3.9.4 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
 chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
-RUN GRPC_HEALTH_PROBE_VERSION=v0.4.6 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.12 && \
 wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-${TARGETARCH} && \
 chmod +x /usr/local/bin/grpc_health_probe
 
