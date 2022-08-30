@@ -1,0 +1,2 @@
+/v/main/*       https://fluxcd.io/flagger/:splat    301!
+/*              https://fluxcd.io/flagger/:splat    301!
