@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: {{ template "flagger.name" . }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
 spec:
   replicas: {{ .Values.leaderElection.replicaCount }}
   {{- if eq .Values.leaderElection.enabled false }}
@@ -22,6 +23,7 @@ spec:
       labels:
         app.kubernetes.io/name: {{ template "flagger.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/version: {{ .Chart.AppVersion }}
       {{- if .Values.podLabels }}
       {{- range $key, $value := .Values.podLabels }}
         {{ $key }}: {{ $value | quote }}
