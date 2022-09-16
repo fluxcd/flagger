@@ -43,7 +43,7 @@ func (task *BashTask) Run(ctx context.Context) (*TaskRunResult, error) {
 		return &TaskRunResult{false, out}, fmt.Errorf("command %s failed: %s: %w", task.command, out, err)
 	} else {
 		if task.logCmdOutput {
-			fmt.Printf("%s\n", out)
+			task.logger.With("canary", task.canary).Info(string(out))
 		}
 		task.logger.With("canary", task.canary).Infof("command finished %s", task.command)
 	}
