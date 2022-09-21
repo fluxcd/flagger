@@ -22,14 +22,16 @@ import (
 
 type Factory struct {
 	URL      string
+	Token    string
 	ProxyURL string
 	Username string
 	Channel  string
 }
 
-func NewFactory(url string, proxy string, username string, channel string) *Factory {
+func NewFactory(url, token, proxy, username, channel string) *Factory {
 	return &Factory{
 		URL:      url,
+		Token:    token,
 		ProxyURL: proxy,
 		Channel:  channel,
 		Username: username,
@@ -45,7 +47,7 @@ func (f Factory) Notifier(provider string) (Interface, error) {
 	var err error
 	switch provider {
 	case "slack":
-		n, err = NewSlack(f.URL, f.ProxyURL, f.Username, f.Channel)
+		n, err = NewSlack(f.URL, f.Token, f.ProxyURL, f.Username, f.Channel)
 	case "discord":
 		n, err = NewDiscord(f.URL, f.ProxyURL, f.Username, f.Channel)
 	case "rocket":
