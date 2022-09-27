@@ -19,7 +19,6 @@ package loadtester
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os/exec"
 	"strconv"
 
@@ -57,7 +56,7 @@ func (task *CmdTask) Run(ctx context.Context) *TaskRunResult {
 		task.logger.With("canary", task.canary).Errorf("command failed %s %v %s", task.command, err, out)
 	} else {
 		if task.logCmdOutput {
-			fmt.Printf("%s\n", out)
+			task.logger.With("canary", task.canary).Info(string(out))
 		}
 		task.logger.With("canary", task.canary).Infof("command finished %s", task.command)
 	}
