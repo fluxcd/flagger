@@ -41,6 +41,7 @@ type fixture struct {
 	abtest        *flaggerv1.Canary
 	appmeshCanary *flaggerv1.Canary
 	ingressCanary *flaggerv1.Canary
+	apisixCanary  *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface

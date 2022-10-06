@@ -24,6 +24,7 @@ import (
 	time "time"
 
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
+	apisix "github.com/fluxcd/flagger/pkg/client/informers/externalversions/apisix"
 	appmesh "github.com/fluxcd/flagger/pkg/client/informers/externalversions/appmesh"
 	flagger "github.com/fluxcd/flagger/pkg/client/informers/externalversions/flagger"
 	gateway "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gateway"
@@ -182,6 +183,7 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
+	Apisix() apisix.Interface
 	Appmesh() appmesh.Interface
 	Flagger() flagger.Interface
 	Gateway() gateway.Interface
@@ -193,6 +195,10 @@ type SharedInformerFactory interface {
 	Projectcontour() projectcontour.Interface
 	Split() smi.Interface
 	Traefik() traefik.Interface
+}
+
+func (f *sharedInformerFactory) Apisix() apisix.Interface {
+	return apisix.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Appmesh() appmesh.Interface {

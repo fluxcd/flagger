@@ -19,6 +19,7 @@ limitations under the License.
 package fake
 
 import (
+	apisixv2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
 	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -45,6 +46,7 @@ var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 
 var localSchemeBuilder = runtime.SchemeBuilder{
+	apisixv2.AddToScheme,
 	appmeshv1beta2.AddToScheme,
 	appmeshv1beta1.AddToScheme,
 	flaggerv1beta1.AddToScheme,
