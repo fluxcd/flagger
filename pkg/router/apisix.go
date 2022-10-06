@@ -60,22 +60,9 @@ func (ar *ApisixRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	apexName, primaryName, canaryName := canary.GetServiceNames()
-	var targetHttpRoute *a6v2.ApisixRouteHTTP
-	var targetIndex int
-	for index, item := range apisixRouteClone.Spec.HTTP {
-		for _, backend := range item.Backends {
-			if backend.ServiceName == apexName {
-				targetHttpRoute = &item
-				targetIndex = index
-				goto found
-			}
-		}
-	}
-
-found:
-	if targetHttpRoute == nil {
-		return fmt.Errorf("Can not find %s backend on apisix route %s.%s ",
-			primaryName, canary.Spec.RouteRef.Name, canary.Namespace)
+	targetHttpRoute, targetIndex, err := ar.getTargetHttpRoute(canary, apisixRouteClone, apexName)
+	if err != nil {
+		return err
 	}
 	if len(targetHttpRoute.Backends) != 1 {
 		return fmt.Errorf("APISIX route %s.%s's http route %s only one http backend is supported",
@@ -154,6 +141,19 @@ found:
 	return nil
 }
 
+func (ar *ApisixRouter) getTargetHttpRoute(canary *flaggerv1.Canary, apisixRoute *a6v2.ApisixRoute, serviceName string) (*a6v2.ApisixRouteHTTP, int, error) {
+	for index, item := range apisixRoute.Spec.HTTP {
+		for _, backend := range item.Backends {
+			if backend.ServiceName == serviceName {
+				return &item, index, nil
+			}
+		}
+	}
+
+	return nil, 0, fmt.Errorf("Can not find %s backend on apisix route %s.%s ",
+		serviceName, canary.Spec.RouteRef.Name, canary.Namespace)
+}
+
 // GetRoutes returns the destinations weight for primary and canary
 func (ar *ApisixRouter) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
@@ -168,8 +168,12 @@ func (ar *ApisixRouter) GetRoutes(canary *flaggerv1.Canary) (
 		err = fmt.Errorf("apisix route %s.%s query error: %w", canaryApisixRouteName, canary.Namespace, err)
 		return
 	}
+	_, targetIndex, err := ar.getTargetHttpRoute(canary, apisixRoute, primaryName)
+	if err != nil {
+		return
+	}
 
-	for _, backend := range apisixRoute.Spec.HTTP[0].Backends {
+	for _, backend := range apisixRoute.Spec.HTTP[targetIndex].Backends {
 		if backend.ServiceName == primaryName {
 			primaryWeight = *backend.Weight
 			canaryWeight = 100 - primaryWeight
@@ -199,7 +203,11 @@ func (ar *ApisixRouter) SetRoutes(
 		return fmt.Errorf("apisix route %s.%s query error: %w", canaryApisixRouteName, canary.Namespace, err)
 	}
 
-	backends := apisixRoute.Spec.HTTP[0].Backends
+	_, targetIndex, err := ar.getTargetHttpRoute(canary, apisixRoute, primaryName)
+	if err != nil {
+		return err
+	}
+	backends := apisixRoute.Spec.HTTP[targetIndex].Backends
 	for i, backend := range backends {
 		if backend.ServiceName == primaryName {
 			backends[i].Weight = &primaryWeight
@@ -207,7 +215,7 @@ func (ar *ApisixRouter) SetRoutes(
 			backends[i].Weight = &canaryWeight
 		}
 	}
-	apisixRoute.Spec.HTTP[0].Backends = backends
+	apisixRoute.Spec.HTTP[targetIndex].Backends = backends
 
 	_, err = ar.apisixClient.ApisixV2().ApisixRoutes(canary.Namespace).Update(context.TODO(), apisixRoute, metav1.UpdateOptions{})
 	if err != nil {
