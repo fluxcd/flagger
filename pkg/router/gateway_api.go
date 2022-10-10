@@ -66,7 +66,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	hrNamespace := canary.Namespace
 
-	hostNames := []v1alpha2.Hostname{}
+	var hostNames []v1alpha2.Hostname
 	for _, host := range canary.Spec.Service.Hosts {
 		hostNames = append(hostNames, v1alpha2.Hostname(host))
 	}
@@ -179,7 +179,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				return fmt.Errorf("HTTPRoute %s.%s update error: %w while reconciling", hrClone.GetName(), hrNamespace, err)
 			}
 			gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-				Infof("HTTPProxy %s.%s updated", hrClone.GetName(), hrNamespace)
+				Infof("HTTPRoute %s.%s updated", hrClone.GetName(), hrNamespace)
 		}
 	}
 
