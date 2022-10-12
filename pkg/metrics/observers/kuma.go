@@ -25,8 +25,9 @@ import (
 )
 
 // TODO [@johnharris85]: Do we also need to select by mesh here? These could be duplicated (but in different meshes).
-// 	We're currently getting the mesh name from an annotation on the Canary object, but that isn't propagated to the
-// 	MetricTemplateModel.
+//
+//	We're currently getting the mesh name from an annotation on the Canary object, but that isn't propagated to the
+//	MetricTemplateModel.
 var kumaQueries = map[string]string{
 	"request-success-rate": `
 	sum(
