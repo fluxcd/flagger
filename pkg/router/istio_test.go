@@ -122,7 +122,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		var pRoute, cRoute istiov1alpha3.DestinationWeight
+		var pRoute, cRoute istiov1alpha3.HTTPRouteDestination
 		var mirror *istiov1alpha3.Destination
 		for _, http := range vs.Spec.Http {
 			for _, route := range http.Route {
@@ -154,7 +154,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 			vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			var pRoute, cRoute istiov1alpha3.DestinationWeight
+			var pRoute, cRoute istiov1alpha3.HTTPRouteDestination
 			var mirror *istiov1alpha3.Destination
 			var mirrorWeight *istiov1alpha3.Percent
 			for _, http := range vs.Spec.Http {
@@ -310,8 +310,8 @@ func TestIstioRouter_ABTest(t *testing.T) {
 
 	pHost := fmt.Sprintf("%s-primary", mocks.abtest.Spec.TargetRef.Name)
 	cHost := fmt.Sprintf("%s-canary", mocks.abtest.Spec.TargetRef.Name)
-	pRoute := istiov1alpha3.DestinationWeight{}
-	cRoute := istiov1alpha3.DestinationWeight{}
+	pRoute := istiov1alpha3.HTTPRouteDestination{}
+	cRoute := istiov1alpha3.HTTPRouteDestination{}
 	var mirror *istiov1alpha3.Destination
 
 	for _, http := range vs.Spec.Http {
@@ -427,7 +427,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 		Http: []istiov1alpha3.HTTPRoute{
 			{
 				Match: nil,
-				Route: []istiov1alpha3.DestinationWeight{
+				Route: []istiov1alpha3.HTTPRouteDestination{
 					{
 						Destination: istiov1alpha3.Destination{Host: "podinfo"},
 					},

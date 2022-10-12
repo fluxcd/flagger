@@ -74,6 +74,10 @@ type CanaryStatus struct {
 	CanaryWeight int         `json:"canaryWeight"`
 	Iterations   int         `json:"iterations"`
 	// +optional
+	PreviousSessionAffinityCookie string `json:"previousSessionAffinityCookie,omitempty"`
+	// +optional
+	SessionAffinityCookie string `json:"sessionAffinityCookie,omitempty"`
+	// +optional
 	TrackedConfigs *map[string]string `json:"trackedConfigs,omitempty"`
 	// +optional
 	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`
