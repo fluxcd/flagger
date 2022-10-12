@@ -31,6 +31,7 @@ import (
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	kedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
+	gloomeshnetworkingv2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/networking/v2"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
 	splitv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
 	splitv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha2"
@@ -52,6 +53,7 @@ type Interface interface {
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
 	KedaV1alpha1() kedav1alpha1.KedaV1alpha1Interface
 	KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface
+	GloomeshnetworkingV2() gloomeshnetworkingv2.GloomeshnetworkingV2Interface
 	ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface
 	SplitV1alpha1() splitv1alpha1.SplitV1alpha1Interface
 	SplitV1alpha2() splitv1alpha2.SplitV1alpha2Interface
@@ -63,20 +65,21 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	appmeshV1beta2     *appmeshv1beta2.AppmeshV1beta2Client
-	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
-	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
-	gatewayV1          *gatewayv1.GatewayV1Client
-	gatewayapiV1alpha2 *gatewayapiv1alpha2.GatewayapiV1alpha2Client
-	glooV1             *gloov1.GlooV1Client
-	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
-	kedaV1alpha1       *kedav1alpha1.KedaV1alpha1Client
-	kumaV1alpha1       *kumav1alpha1.KumaV1alpha1Client
-	projectcontourV1   *projectcontourv1.ProjectcontourV1Client
-	splitV1alpha1      *splitv1alpha1.SplitV1alpha1Client
-	splitV1alpha2      *splitv1alpha2.SplitV1alpha2Client
-	splitV1alpha3      *splitv1alpha3.SplitV1alpha3Client
-	traefikV1alpha1    *traefikv1alpha1.TraefikV1alpha1Client
+	appmeshV1beta2       *appmeshv1beta2.AppmeshV1beta2Client
+	appmeshV1beta1       *appmeshv1beta1.AppmeshV1beta1Client
+	flaggerV1beta1       *flaggerv1beta1.FlaggerV1beta1Client
+	gatewayV1            *gatewayv1.GatewayV1Client
+	gatewayapiV1alpha2   *gatewayapiv1alpha2.GatewayapiV1alpha2Client
+	glooV1               *gloov1.GlooV1Client
+	networkingV1alpha3   *networkingv1alpha3.NetworkingV1alpha3Client
+	kedaV1alpha1         *kedav1alpha1.KedaV1alpha1Client
+	kumaV1alpha1         *kumav1alpha1.KumaV1alpha1Client
+	gloomeshnetworkingV2 *gloomeshnetworkingv2.GloomeshnetworkingV2Client
+	projectcontourV1     *projectcontourv1.ProjectcontourV1Client
+	splitV1alpha1        *splitv1alpha1.SplitV1alpha1Client
+	splitV1alpha2        *splitv1alpha2.SplitV1alpha2Client
+	splitV1alpha3        *splitv1alpha3.SplitV1alpha3Client
+	traefikV1alpha1      *traefikv1alpha1.TraefikV1alpha1Client
 }
 
 // AppmeshV1beta2 retrieves the AppmeshV1beta2Client
@@ -122,6 +125,11 @@ func (c *Clientset) KedaV1alpha1() kedav1alpha1.KedaV1alpha1Interface {
 // KumaV1alpha1 retrieves the KumaV1alpha1Client
 func (c *Clientset) KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface {
 	return c.kumaV1alpha1
+}
+
+// GloomeshnetworkingV2 retrieves the GloomeshnetworkingV2Client
+func (c *Clientset) GloomeshnetworkingV2() gloomeshnetworkingv2.GloomeshnetworkingV2Interface {
+	return c.gloomeshnetworkingV2
 }
 
 // ProjectcontourV1 retrieves the ProjectcontourV1Client
@@ -229,6 +237,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.gloomeshnetworkingV2, err = gloomeshnetworkingv2.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.projectcontourV1, err = projectcontourv1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -279,6 +291,7 @@ func New(c rest.Interface) *Clientset {
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
 	cs.kedaV1alpha1 = kedav1alpha1.New(c)
 	cs.kumaV1alpha1 = kumav1alpha1.New(c)
+	cs.gloomeshnetworkingV2 = gloomeshnetworkingv2.New(c)
 	cs.projectcontourV1 = projectcontourv1.New(c)
 	cs.splitV1alpha1 = splitv1alpha1.New(c)
 	cs.splitV1alpha2 = splitv1alpha2.New(c)

@@ -33,6 +33,7 @@ import (
 	istio "github.com/fluxcd/flagger/pkg/client/informers/externalversions/istio"
 	keda "github.com/fluxcd/flagger/pkg/client/informers/externalversions/keda"
 	kuma "github.com/fluxcd/flagger/pkg/client/informers/externalversions/kuma"
+	networking "github.com/fluxcd/flagger/pkg/client/informers/externalversions/networking"
 	projectcontour "github.com/fluxcd/flagger/pkg/client/informers/externalversions/projectcontour"
 	smi "github.com/fluxcd/flagger/pkg/client/informers/externalversions/smi"
 	traefik "github.com/fluxcd/flagger/pkg/client/informers/externalversions/traefik"
@@ -190,6 +191,7 @@ type SharedInformerFactory interface {
 	Networking() istio.Interface
 	Keda() keda.Interface
 	Kuma() kuma.Interface
+	Gloomeshnetworking() networking.Interface
 	Projectcontour() projectcontour.Interface
 	Split() smi.Interface
 	Traefik() traefik.Interface
@@ -225,6 +227,10 @@ func (f *sharedInformerFactory) Keda() keda.Interface {
 
 func (f *sharedInformerFactory) Kuma() kuma.Interface {
 	return kuma.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Gloomeshnetworking() networking.Interface {
+	return networking.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Projectcontour() projectcontour.Interface {

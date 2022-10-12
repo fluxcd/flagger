@@ -38,6 +38,8 @@ import (
 	fakekedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1/fake"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
 	fakekumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1/fake"
+	gloomeshnetworkingv2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/networking/v2"
+	fakegloomeshnetworkingv2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/networking/v2/fake"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
 	fakeprojectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1/fake"
 	splitv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/smi/v1alpha1"
@@ -148,6 +150,11 @@ func (c *Clientset) KedaV1alpha1() kedav1alpha1.KedaV1alpha1Interface {
 // KumaV1alpha1 retrieves the KumaV1alpha1Client
 func (c *Clientset) KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface {
 	return &fakekumav1alpha1.FakeKumaV1alpha1{Fake: &c.Fake}
+}
+
+// GloomeshnetworkingV2 retrieves the GloomeshnetworkingV2Client
+func (c *Clientset) GloomeshnetworkingV2() gloomeshnetworkingv2.GloomeshnetworkingV2Interface {
+	return &fakegloomeshnetworkingv2.FakeGloomeshnetworkingV2{Fake: &c.Fake}
 }
 
 // ProjectcontourV1 retrieves the ProjectcontourV1Client

@@ -27,6 +27,7 @@ import (
 	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
 	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
+	v2 "github.com/fluxcd/flagger/pkg/apis/gloo/networking/v2"
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/keda/v1alpha1"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
@@ -100,6 +101,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=gloo.solo.io, Version=v1
 	case gloov1.SchemeGroupVersion.WithResource("upstreams"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gloo().V1().Upstreams().Informer()}, nil
+
+		// Group=gloomeshnetworking.gloo.solo.io, Version=v2
+	case v2.SchemeGroupVersion.WithResource("routetables"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gloomeshnetworking().V2().RouteTables().Informer()}, nil
 
 		// Group=keda.sh, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("scaledobjects"):
