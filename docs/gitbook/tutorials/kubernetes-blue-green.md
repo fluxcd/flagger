@@ -59,7 +59,8 @@ kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 Deploy the load testing service to generate traffic during the analysis:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
+helm upgrade -i flagger-loadtester flagger/loadtester \
+--namespace=test
 ```
 
 Create a canary custom resource:
