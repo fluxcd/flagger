@@ -25,6 +25,7 @@ import (
 // Slack holds the hook URL
 type Slack struct {
 	URL      string
+	Token    string
 	ProxyURL string
 	Username string
 	Channel  string
@@ -56,10 +57,10 @@ type SlackField struct {
 }
 
 // NewSlack validates the Slack URL and returns a Slack object
-func NewSlack(hookURL string, proxyURL string, username string, channel string) (*Slack, error) {
-	_, err := url.ParseRequestURI(hookURL)
+func NewSlack(address, token, proxyURL, username, channel string) (*Slack, error) {
+	_, err := url.ParseRequestURI(address)
 	if err != nil {
-		return nil, fmt.Errorf("invalid Slack hook URL %s", hookURL)
+		return nil, fmt.Errorf("invalid Slack hook URL %s", address)
 	}
 
 	if username == "" {
@@ -72,7 +73,8 @@ func NewSlack(hookURL string, proxyURL string, username string, channel string) 
 
 	return &Slack{
 		Channel:  channel,
-		URL:      hookURL,
+		URL:      address,
+		Token:    token,
 		ProxyURL: proxyURL,
 		Username: username,
 	}, nil
@@ -106,7 +108,7 @@ func (s *Slack) Post(workload string, namespace string, message string, fields [
 
 	payload.Attachments = []SlackAttachment{a}
 
-	err := postMessage(s.URL, s.ProxyURL, payload)
+	err := postMessage(s.URL, s.Token, s.ProxyURL, payload)
 	if err != nil {
 		return fmt.Errorf("postMessage failed: %w", err)
 	}

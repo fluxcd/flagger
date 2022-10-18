@@ -111,7 +111,7 @@ func (s *GChat) Post(workload string, namespace string, message string, fields [
 		},
 	}
 
-	err := postMessage(s.URL, s.ProxyURL, payload)
+	err := postMessage(s.URL, "", s.ProxyURL, payload)
 	if err != nil {
 		return fmt.Errorf("postMessage failed: %w", err)
 	}

@@ -37,6 +37,8 @@ or if the analysis reached the maximum number of failed checks:
 
 ![Slack Notifications](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/screens/slack-canary-failed.png)
 
+For using a Slack bot token, you should add `token` to a secret and use **secretRef**.
+
 ### Microsoft Teams
 
 Flagger can be configured to send notifications to Microsoft Teams:
@@ -73,6 +75,7 @@ spec:
   channel: on-call-alerts
   username: flagger
   # webhook address (ignored if secretRef is specified)
+  # or https://slack.com/api/chat.postMessage if you use token in the secret
   address: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
   # optional http/s proxy
   proxy: http://my-http-proxy.com
@@ -87,6 +90,7 @@ metadata:
   namespace: flagger
 data:
   address: <encoded-url>
+  token: <encoded-token>
 ```
 
 The alert provider **type** can be: `slack`, `msteams`, `rocket` or `discord`. When set to `discord`,

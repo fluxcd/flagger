@@ -29,7 +29,7 @@ import (
 	"time"
 )
 
-func postMessage(address string, proxy string, payload interface{}) error {
+func postMessage(address, token, proxy string, payload interface{}) error {
 	var httpClient = &http.Client{}
 
 	if proxy != "" {
@@ -63,6 +63,10 @@ func postMessage(address string, proxy string, payload interface{}) error {
 		return fmt.Errorf("http.NewRequest failed: %w", err)
 	}
 	req.Header.Set("Content-type", "application/json")
+
+	if token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
 	defer cancel()

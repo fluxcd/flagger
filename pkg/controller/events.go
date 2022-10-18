@@ -133,6 +133,10 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 		// set hook URL address
 		url := provider.Spec.Address
 
+		// set the token which will be sent in the header
+		// https://datatracker.ietf.org/doc/html/rfc6750
+		token := ""
+
 		// extract address from secret
 		if provider.Spec.SecretRef != nil {
 			secret, err := c.kubeClient.CoreV1().Secrets(providerNamespace).Get(context.TODO(), provider.Spec.SecretRef.Name, metav1.GetOptions{})
@@ -147,6 +151,10 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 				c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 					Errorf("alert provider %s.%s secret does not contain an address", alert.ProviderRef.Name, providerNamespace)
 				continue
+			}
+
+			if tokenFromSecret, ok := secret.Data["token"]; ok {
+				token = string(tokenFromSecret)
 			}
 		}
 
@@ -165,7 +173,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 		}
 
 		// create notifier based on provider type
-		f := notifier.NewFactory(url, proxy, username, channel)
+		f := notifier.NewFactory(url, token, proxy, username, channel)
 		n, err := f.Notifier(provider.Spec.Type)
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
