@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.23.0
+
+**Release date:** 2022-10-20
+
+This release comes with support for Slack bot token authentication.
+
+#### Improvements:
+
+- alerts: Add support for Slack bot token authentication
+  [#1270](https://github.com/fluxcd/flagger/pull/1270)
+- loadtester: logCmdOutput to logger instead of stdout
+  [#1267](https://github.com/fluxcd/flagger/pull/1267)
+- helm: Add app.kubernetes.io/version label to chart
+  [#1264](https://github.com/fluxcd/flagger/pull/1264)
+- Update Go to 1.19
+  [#1264](https://github.com/fluxcd/flagger/pull/1264)
+- Update Kubernetes packages to v1.25.3
+  [#1283](https://github.com/fluxcd/flagger/pull/1283)
+- Bump Contour to v1.22 in e2e tests
+  [#1282](https://github.com/fluxcd/flagger/pull/1282)
+
+#### Fixes:
+
+- gatewayapi: Fix reconciliation of nil hostnames
+  [#1276](https://github.com/fluxcd/flagger/pull/1276)
+- alerts: Include cluster name in all alerts
+  [#1275](https://github.com/fluxcd/flagger/pull/1275)
+
 ## 1.22.2
 
 **Release date:** 2022-08-29
