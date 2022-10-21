@@ -9,13 +9,13 @@ on:
     - cron: '18 10 * * 3'
 
 permissions:
-  contents: read # for actions/checkout to fetch code
-  security-events: write # for codeQL to write security events
+  contents: read
 
 jobs:
-  fossa:
-    name: FOSSA
+  scan-fossa:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     steps:
       - uses: actions/checkout@v2
       - name: Run FOSSA scan and upload build data
@@ -24,10 +24,10 @@ jobs:
           # FOSSA Push-Only API Token
           fossa-api-key: 5ee8bf422db1471e0bcf2bcb289185de
           github-token: ${{ github.token }}
-
-  codeql:
-    name: CodeQL
+  scan-codeql:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2

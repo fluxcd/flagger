@@ -10,10 +10,10 @@ on:
       - main
 
 permissions:
-  contents: read # for actions/checkout to fetch code
+  contents: read
 
 jobs:
-  kind:
+  e2e-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
