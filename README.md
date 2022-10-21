@@ -1,10 +1,12 @@
  # flagger
 
+[![release](https://img.shields.io/github/release/fluxcd/flagger/all.svg)](https://github.com/fluxcd/flagger/releases)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4783/badge)](https://bestpractices.coreinfrastructure.org/projects/4783)
 [![build](https://github.com/fluxcd/flagger/workflows/build/badge.svg)](https://github.com/fluxcd/flagger/actions)
 [![report](https://goreportcard.com/badge/github.com/fluxcd/flagger)](https://goreportcard.com/report/github.com/fluxcd/flagger)
 [![license](https://img.shields.io/github/license/fluxcd/flagger.svg)](https://github.com/fluxcd/flagger/blob/main/LICENSE)
-[![release](https://img.shields.io/github/release/fluxcd/flagger/all.svg)](https://github.com/fluxcd/flagger/releases)
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B162%2Fgithub.com%2Ffluxcd%2Fflagger.svg?type=shield)](https://app.fossa.com/projects/custom%2B162%2Fgithub.com%2Ffluxcd%2Fflagger?ref=badge_shield)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/flagger)](https://artifacthub.io/packages/search?repo=flagger)
 
 Flagger is a progressive delivery tool that automates the release process for applications running on Kubernetes. 
 It reduces the risk of introducing a new software version in production
@@ -44,11 +46,12 @@ Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.ap
   * [Traefik](https://docs.flagger.app/tutorials/traefik-progressive-delivery)
   * [Kubernetes Blue/Green](https://docs.flagger.app/tutorials/kubernetes-blue-green)
 
-### Who is using Flagger
+### Adopters
 
 **Our list of production users has moved to <https://fluxcd.io/adopters/#flagger>**.
 
-If you are using Flagger, please [submit a PR to add your organization](https://github.com/fluxcd/website/tree/main/adopters#readme) to the list!
+If you are using Flagger, please
+[submit a PR to add your organization](https://github.com/fluxcd/website/tree/main/adopters#readme) to the list!
 
 ### Canary CRD
 
