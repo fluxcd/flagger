@@ -72,7 +72,7 @@ jobs:
           cosign verify -key ./.cosign/cosign.pub \
           ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
       - name: Publish Helm charts
-        uses: stefanprodan/helm-gh-pages@v1.3.0
+        uses: stefanprodan/helm-gh-pages@v1.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_url: https://flagger.app
