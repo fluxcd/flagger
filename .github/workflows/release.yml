@@ -41,7 +41,7 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
       - name: Generate image meta
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: |
             ${{ env.IMAGE }}
