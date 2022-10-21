@@ -6,12 +6,13 @@ env:
   IMAGE: "ghcr.io/fluxcd/flagger-loadtester"
 
 permissions:
-  contents: write # needed to write releases
-  packages: write # needed for ghcr access
+  contents: read
 
 jobs:
-  build-push:
+  release-load-tester:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - uses: actions/checkout@v2
       - name: Prepare

@@ -10,10 +10,10 @@ on:
       - main
 
 permissions:
-  contents: read # for actions/checkout to fetch code
+  contents: read
 
 jobs:
-  container:
+  build-flagger:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
