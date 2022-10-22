@@ -19,6 +19,8 @@ jobs:
       packages: write # needed for ghcr access
     steps:
       - uses: actions/checkout@v3
+      - uses: azure/setup-helm@main
+      - uses: fluxcd/flux2/action@main
       - uses: sigstore/cosign-installer@main
       - name: Prepare
         id: prep
@@ -70,6 +72,23 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_url: https://flagger.app
           linting: off
+      - name: Publish signed Helm chart to GHCR
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          helm package charts/flagger
+          helm push flagger-${{ steps.prep.outputs.VERSION }}.tgz oci://ghcr.io/fluxcd/charts
+          cosign sign ghcr.io/fluxcd/charts/flagger:${{ steps.prep.outputs.VERSION }}
+          rm flagger-${{ steps.prep.outputs.VERSION }}.tgz
+      - name: Publish signed manifests to GHCR
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          flux push artifact oci://ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }} \
+          --path="./kustomize" \
+          --source="$(git config --get remote.origin.url)" \
+          --revision="${{ steps.prep.outputs.VERSION }}/$(git rev-parse HEAD)"
+          cosign sign ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }}
       - uses: anchore/sbom-action/download-syft@v0
       - name: Create release and SBOM
         uses: goreleaser/goreleaser-action@v2
