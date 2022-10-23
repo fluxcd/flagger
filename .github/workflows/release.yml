@@ -19,7 +19,7 @@ jobs:
       packages: write # needed for ghcr access
     steps:
       - uses: actions/checkout@v3
-      - uses: azure/setup-helm@main
+      - uses: fluxcd/pkg/actions/helm@main
       - uses: fluxcd/flux2/action@main
       - uses: sigstore/cosign-installer@main
       - name: Prepare
