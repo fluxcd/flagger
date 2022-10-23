@@ -19,9 +19,8 @@ jobs:
       packages: write # needed for ghcr access
     steps:
       - uses: actions/checkout@v3
-      - uses: fluxcd/pkg/actions/helm@main
       - uses: fluxcd/flux2/action@main
-      - uses: sigstore/cosign-installer@main
+      - uses: sigstore/cosign-installer@v2.8.1
       - name: Prepare
         id: prep
         run: |
@@ -72,6 +71,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_url: https://flagger.app
           linting: off
+      - uses: fluxcd/pkg/actions/helm@main
+        with:
+          version: 3.10.1
       - name: Publish signed Helm chart to GHCR
         env:
           COSIGN_EXPERIMENTAL: 1
