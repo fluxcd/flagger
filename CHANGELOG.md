@@ -2,6 +2,44 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.24.0
+
+**Release date:** 2022-10-23
+
+Starting with this version, the Flagger release artifacts are published to
+GitHub Container Registry, and they are signed with Cosign and GitHub ODIC.
+
+OCI artifacts:
+
+- `ghcr.io/fluxcd/flagger:<version>` multi-arch container images
+- `ghcr.io/fluxcd/flagger-manifest:<version>` Kubernetes manifests
+- `ghcr.io/fluxcd/charts/flagger:<version>` Helm charts
+
+To verify an OCI artifact with Cosign:
+
+```shell
+export COSIGN_EXPERIMENTAL=1
+cosign verify ghcr.io/fluxcd/flagger:1.24.0
+cosign verify ghcr.io/fluxcd/flagger-manifests:1.24.0
+cosign verify ghcr.io/fluxcd/charts/flagger:1.24.0
+```
+
+To deploy Flagger from its OCI artifacts the GitOps way,
+please see the [Flux installation guide](docs/gitbook/install/flagger-install-with-flux.md).
+
+#### Improvements:
+
+- docs: Add guide on how to install Flagger with Flux OCI
+  [#1294](https://github.com/fluxcd/flagger/pull/1294)
+- ci: Publish signed Helm charts and manifests to GHCR
+  [#1293](https://github.com/fluxcd/flagger/pull/1293)
+- ci: Sign release and containers with Cosign and GitHub OIDC
+  [#1292](https://github.com/fluxcd/flagger/pull/1292)
+- ci: Adjust GitHub workflow permissions
+  [#1286](https://github.com/fluxcd/flagger/pull/1286)
+- docs: Add link to Flux governance document
+  [#1286](https://github.com/fluxcd/flagger/pull/1286)
+
 ## 1.23.0
 
 **Release date:** 2022-10-20
