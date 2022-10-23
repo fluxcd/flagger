@@ -6,6 +6,7 @@
 ## Install
 
 * [Flagger Install on Kubernetes](install/flagger-install-on-kubernetes.md)
+* [Flagger Install with Flux](install/flagger-install-with-flux.md)
 * [Flagger Install on GKE Istio](install/flagger-install-on-google-cloud.md)
 * [Flagger Install on EKS App Mesh](install/flagger-install-on-eks-appmesh.md)
 * [Flagger Install on Alibaba ServiceMesh](install/flagger-install-on-alibaba-servicemesh.md)

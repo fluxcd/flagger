@@ -19,7 +19,8 @@ or Graphite and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
 Flagger can be configured with Kubernetes custom resources and is compatible with
 any CI/CD solutions made for Kubernetes. Since Flagger is declarative and reacts to Kubernetes events,
-it can be used in **GitOps** pipelines together with tools like Flux, JenkinsX, Carvel, Argo, etc.
+it can be used in **GitOps** pipelines together with tools like [Flux](install/flagger-install-with-flux.md),
+JenkinsX, Carvel, Argo, etc.
 
 Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
 and part of [Flux](https://fluxcd.io) family of GitOps tools.
