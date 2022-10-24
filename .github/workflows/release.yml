@@ -93,7 +93,7 @@ jobs:
           cosign sign ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }}
       - uses: anchore/sbom-action/download-syft@v0
       - name: Create release and SBOM
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: release --release-notes=notes.md --rm-dist --skip-validate
