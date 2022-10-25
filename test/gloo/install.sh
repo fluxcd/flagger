@@ -15,7 +15,6 @@ helm upgrade -i gloo gloo/gloo --version ${GLOO_VER} \
 --set discovery.enabled=false
 
 kubectl -n gloo-system rollout status deployment/gloo
-kubectl -n gloo-system rollout status deployment/gateway
 kubectl -n gloo-system get all
 
 echo '>>> Installing Flagger'
