@@ -170,9 +170,8 @@ func (gr *GlooRouter) GetRoutes(canary *flaggerv1.Canary) (
 	mirrored bool,
 	err error,
 ) {
-	apexName := canary.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-%s-primaryupstream-%v", canary.Namespace, canary.Spec.TargetRef.Name, canary.Spec.Service.Port)
-
+	apexName, _, _ := canary.GetServiceNames()
+	primaryUpstreamName := fmt.Sprintf("%s-%s-primaryupstream-%v", canary.Namespace, apexName, canary.Spec.Service.Port)
 	routeTable, err := gr.glooClient.GatewayV1().RouteTables(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("RouteTable %s.%s get query error: %w", apexName, canary.Namespace, err)
@@ -185,7 +184,7 @@ func (gr *GlooRouter) GetRoutes(canary *flaggerv1.Canary) (
 	}
 
 	for _, dst := range routeTable.Spec.Routes[0].Action.Destination.Destinations {
-		if dst.Destination.Upstream.Name == primaryName {
+		if dst.Destination.Upstream.Name == primaryUpstreamName {
 			primaryWeight = int(dst.Weight)
 			canaryWeight = 100 - primaryWeight
 			return
