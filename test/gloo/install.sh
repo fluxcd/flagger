@@ -2,7 +2,7 @@
 
 set -o errexit
 
-GLOO_VER="1.11.13"
+GLOO_VER="1.12.31"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin
@@ -15,7 +15,6 @@ helm upgrade -i gloo gloo/gloo --version ${GLOO_VER} \
 --set discovery.enabled=false
 
 kubectl -n gloo-system rollout status deployment/gloo
-kubectl -n gloo-system rollout status deployment/gateway
 kubectl -n gloo-system get all
 
 echo '>>> Installing Flagger'
