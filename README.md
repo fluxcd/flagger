@@ -260,7 +260,7 @@ When submitting bug reports please include as many details as possible:
 Here is a list of good entry points into our community, how we stay in touch and how you can meet us as a team.
 
 - Slack: Join in and talk to us in the `#flagger` channel on [CNCF Slack](https://slack.cncf.io/).
-- Meetings: We run weekly, public meetings - join one of the upcoming dev meetings from the [Flux calendar](https://fluxcd.io/#calendar).
+- Public meetings: We run weekly meetings - join one of the upcoming dev meetings from the [Flux calendar](https://fluxcd.io/#calendar).
 - Blog: Stay up to date with the latest news on [the Flux blog](https://fluxcd.io/blog/).
 - Mailing list: To be updated on Flux and Flagger progress regularly, please [join the flux-dev mailing list](https://lists.cncf.io/g/cncf-flux-dev).
 
