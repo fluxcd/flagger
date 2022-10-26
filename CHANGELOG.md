@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.24.1
+
+**Release date:** 2022-10-26
+
+This release comes with a fix to Gloo routing when a custom service name id used.
+
+In addition, the Gloo ingress end-to-end testing was updated to Gloo Helm chart v1.12.31.
+
+#### Fixes:
+
+- fix(gloo): Use correct route table name in case service name was overwritten
+  [#1300](https://github.com/fluxcd/flagger/pull/1300)
+
 ## 1.24.0
 
 **Release date:** 2022-10-23
