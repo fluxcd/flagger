@@ -84,7 +84,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 	}
 
 	if metadata {
-		fields = alertMetadata(canary)
+		fields = append(fields, alertMetadata(canary)...)
 	}
 
 	// send alert with the global notifier
