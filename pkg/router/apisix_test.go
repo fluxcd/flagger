@@ -17,17 +17,70 @@ limitations under the License.
 package router
 
 import (
+	"context"
+	"fmt"
 	"testing"
+
+	"github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestApisixRouter_Reconcile(t *testing.T) {
-	// TODO
+	mocks := newFixture(nil)
+	mocks.canary.Spec.RouteRef = &v1beta1.LocalObjectReference{
+		Name:       "podinfo",
+		Kind:       "ApisixRoute",
+		APIVersion: "apisix.apache.org/v2",
+	}
+	router := &ApisixRouter{
+		apisixClient: mocks.flaggerClient,
+		logger:       mocks.logger,
+	}
+	err := router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+	canaryName := fmt.Sprintf("%s-canary", mocks.canary.Spec.RouteRef.Name)
+	arCanary, err := router.apisixClient.ApisixV2().ApisixRoutes("default").Get(context.TODO(), canaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(arCanary.Spec.HTTP[0].Backends))
 }
 
-func TestApisixRouter_SetRoutes(t *testing.T) {
-	// TODO
-}
+func TestApisixRouter_GetSetRoutes(t *testing.T) {
+	mocks := newFixture(nil)
+	mocks.canary.Spec.RouteRef = &v1beta1.LocalObjectReference{
+		Name:       "podinfo",
+		Kind:       "ApisixRoute",
+		APIVersion: "apisix.apache.org/v2",
+	}
+	router := &ApisixRouter{
+		apisixClient: mocks.flaggerClient,
+		logger:       mocks.logger,
+	}
+	err := router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+	p, c, m, err := router.GetRoutes(mocks.canary)
+	require.NoError(t, err)
+	assert.Equal(t, 100, p)
+	assert.Equal(t, 0, c)
+	assert.False(t, m)
 
-func TestApisixRouter_GetRoutes(t *testing.T) {
-	// TODO
+	p = 50
+	c = 50
+	m = false
+	err = router.SetRoutes(mocks.canary, p, c, m)
+	require.NoError(t, err)
+
+	p, c, m, err = router.GetRoutes(mocks.canary)
+	require.NoError(t, err)
+	assert.Equal(t, 50, p)
+	assert.Equal(t, 50, c)
+	assert.False(t, m)
+
+	canaryName := fmt.Sprintf("%s-canary", mocks.canary.Spec.RouteRef.Name)
+	arRouter, err := router.apisixClient.ApisixV2().ApisixRoutes("default").Get(context.TODO(), canaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(arRouter.Spec.HTTP[0].Backends))
+	assert.Equal(t, 50, *arRouter.Spec.HTTP[0].Backends[0].Weight)
+	assert.Equal(t, 50, *arRouter.Spec.HTTP[0].Backends[1].Weight)
 }
