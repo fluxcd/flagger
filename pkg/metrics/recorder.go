@@ -32,6 +32,9 @@ type Recorder struct {
 	status   *prometheus.GaugeVec
 	weight   *prometheus.GaugeVec
 	analysis *prometheus.GaugeVec
+	total_counter *prometheus.CounterVec
+	failure_total *prometheus.CounterVec
+	success_total *prometheus.CounterVec
 }
 
 // NewRecorder creates a new recorder and registers the Prometheus metrics
@@ -52,7 +55,7 @@ func NewRecorder(controller string, register bool) Recorder {
 	total := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
 		Name:      "canary_total",
-		Help:      "Total number of canary object",
+		Help:      "Total number of active canary object",
 	}, []string{"namespace"})
 
 	// 0 - running, 1 - successful, 2 - failed
@@ -74,6 +77,24 @@ func NewRecorder(controller string, register bool) Recorder {
 		Help:      "Last canary analysis result per metric",
 	}, []string{"name", "namespace", "metric"})
 
+	total_counter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: controller,
+		Name:      "count_canary_total",
+		Help:      "Total number of canary object",
+	}, []string{"namespace"})
+
+	failure_total := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: controller,
+		Name:      "count_canary_failure",
+		Help:      "Total number of canary failures",
+	}, []string{"namespace"})
+
+	success_total := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: controller,
+		Name:      "count_canary_success",
+		Help:      "Total number of canary successes",
+	}, []string{"namespace"})
+
 	if register {
 		prometheus.MustRegister(info)
 		prometheus.MustRegister(duration)
@@ -81,6 +102,10 @@ func NewRecorder(controller string, register bool) Recorder {
 		prometheus.MustRegister(status)
 		prometheus.MustRegister(weight)
 		prometheus.MustRegister(analysis)
+		prometheus.MustRegister(total_counter)
+		prometheus.MustRegister(failure_total)
+		prometheus.MustRegister(success_total)
+
 	}
 
 	return Recorder{
@@ -90,6 +115,9 @@ func NewRecorder(controller string, register bool) Recorder {
 		status:   status,
 		weight:   weight,
 		analysis: analysis,
+		total_counter: total_counter,
+		failure_total: failure_total,
+		success_total: success_total,
 	}
 }
 
@@ -106,6 +134,7 @@ func (cr *Recorder) SetDuration(cd *flaggerv1.Canary, duration time.Duration) {
 // SetTotal sets the total number of canaries per namespace
 func (cr *Recorder) SetTotal(namespace string, total int) {
 	cr.total.WithLabelValues(namespace).Set(float64(total))
+	cr.total_counter.WithLabelValues(namespace).Inc()
 }
 
 func (cr *Recorder) SetAnalysis(cd *flaggerv1.Canary, metricTemplateName string, val float64) {
@@ -120,8 +149,10 @@ func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase)
 		status = 0
 	case flaggerv1.CanaryPhaseFailed:
 		status = 2
+		cr.failure_total.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Inc()
 	default:
 		status = 1
+		cr.success_total.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Inc()
 	}
 	cr.status.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(status))
 }
