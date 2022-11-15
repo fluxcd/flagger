@@ -10,6 +10,8 @@ Flagger can run automated application analysis, promotion and rollback for the f
   * Kubernetes CNI, Istio, Linkerd, App Mesh, NGINX, Contour, Gloo Edge, Open Service Mesh, Gateway API
 * **Blue/Green Mirroring** \(traffic shadowing\)
   * Istio
+* **Canary Release with Session Affinity** \(progressive traffic shifting combined with cookie based routing\)
+  * Istio
 
 For Canary releases and A/B testing you'll need a Layer 7 traffic management solution like
 a service mesh or an ingress controller. For Blue/Green deployments no service mesh or ingress controller is required.
@@ -393,3 +395,59 @@ After the analysis finishes, the traffic is routed to the canary (green) before
 triggering the primary (blue) rolling update, this ensures a smooth transition
 to the new version avoiding dropping in-flight requests during the Kubernetes deployment rollout.
 
+## Canary Release with Session Affinity
+
+This deployment strategy mixes a Canary Release with A/B testing. A Canary Release is helpful when
+we're trying to expose new features to users progressively, but because of the very nature of its
+routing (weight based), users can land on the application's old version even after they have been
+routed to the new version previously. This can be annoying, or worse break how other services interact
+with our application. To address this issue, we borrow some things from A/B testing.
+
+Since A/B testing is particularly helpful for applications that require session affinity, we integrate
+cookie based routing with regular weight based routing. This means once a user is exposed to the new
+version of our application (based on the traffic weights), they're always routed to that version, i.e.
+they're never routed back to the old version of our application.
+
+You can enable this, by specifying `.spec.analsyis.sessionAffinity` in the Canary (only Istio is supported):
+
+```yaml
+  analysis:
+    # schedule interval (default 60s)
+    interval: 1m
+    # max number of failed metric checks before rollback
+    threshold: 10
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 2
+    # session affinity config
+    sessionAffinity:
+      # name of the cookie used
+      cookieName: flagger-cookie
+      # max age of the cookie (in seconds)
+      # optional; defaults to 86400
+      maxAge: 21600
+```
+
+`.spec.analysis.sessionAffinity.cookieName` is the name of the Cookie that is stored. The value of the
+cookie is a randomly generated string of characters that act as a unique identifier. For the above
+config, the response header of a request routed to the canary deployment during a Canary run will look like:
+```
+Set-Cookie: flagger-cookie=LpsIaLdoNZ; Max-Age=21600
+```
+
+After a Canary run is over and all traffic is shifted back to the primary deployment, all responses will
+have the following header:
+```
+Set-Cookie: flagger-cookie=LpsIaLdoNZ; Max-Age=-1
+```
+This tells the client to delete the cookie, making sure there are no junk cookies lying around in the user's
+system.
+
+If a new Canary run is triggered, the response header will set a new cookie for all requests routed to
+the Canary deployment:
+```
+Set-Cookie: flagger-cookie=McxKdLQoIN; Max-Age=21600
+```
