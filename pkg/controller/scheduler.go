@@ -368,10 +368,10 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		// set status to succeeded
 		if err := canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseSucceeded); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
-			c.recorder.IncSuccess(cd, flaggerv1.CanaryPhaseSucceeded)
 			return
 		}
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+		c.recorder.IncSuccess(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
@@ -935,11 +935,11 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	// mark canary as failed
 	if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
 		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
-		c.recorder.IncFailure(canary, flaggerv1.CanaryPhaseFailed)
 		return
 	}
 
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
+	c.recorder.IncFailure(canary, flaggerv1.CanaryPhaseFailed)
 	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
 }
 
