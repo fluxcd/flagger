@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.25.0
+
+**Release date:** 2022-11-16
+
+This release introduces a new deployment strategy combining Canary releases with session affinity
+for Istio.
+
+Furthermore, it contains a regression fix regarding metadata in alerts introduced in
+[#1275](https://github.com/fluxcd/flagger/pull/1275)
+
+#### Improvements:
+
+- Add support for session affinity during weighted routing with Istio
+  [#1280](https://github.com/fluxcd/flagger/pull/1280)
+
+#### Fixes:
+
+- Fix cluster name inclusion in alerts metadata
+  [#1306](https://github.com/fluxcd/flagger/pull/1306)
+- fix(faq): Update FAQ about zero downtime with correct values
+  [#1302](https://github.com/fluxcd/flagger/pull/1302)
+
 ## 1.24.1
 
 **Release date:** 2022-10-26

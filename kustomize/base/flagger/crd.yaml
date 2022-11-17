@@ -1020,6 +1020,18 @@ spec:
                             type: object
                             additionalProperties:
                               type: string
+                    sessionAffinity:
+                      description: SessionAffinity represents the session affinity settings for a canary run.
+                      type: object
+                      required: [ "cookieName" ]
+                      properties:
+                        cookieName:
+                          description: CookieName is the key that will be used for the session affinity cookie.
+                          type: string
+                        maxAge:
+                          description: MaxAge indicates the number of seconds until the session affinity cookie will expire.
+                          default: 86400
+                          type: number
             status:
               description: CanaryStatus defines the observed state of a canary.
               type: object
@@ -1063,6 +1075,12 @@ spec:
                 lastTransitionTime:
                   description: LastTransitionTime of this canary
                   format: date-time
+                  type: string
+                sessionAffinityCookie:
+                  description: Session affinity cookie of the current canary run
+                  type: string
+                previousSessionAffinityCookie:
+                  description: Session affinity cookie of the previous canary run
                   type: string
                 conditions:
                   description: Status conditions of this canary

@@ -311,6 +311,10 @@ type Destination struct {
 // Describes match conditions and actions for routing HTTP/1.1, HTTP2, and
 // gRPC traffic. See VirtualService for usage examples.
 type HTTPRoute struct {
+	// The name assigned to the route for debugging purposes. The route’s name will
+	// be concatenated with the match’s name and will be logged in the access logs
+	// for requests matching this route/match.
+	Name string `json:"name,omitempty"`
 	// Match conditions to be satisfied for the rule to be
 	// activated. All conditions inside a single match block have AND
 	// semantics, while the list of match blocks have OR semantics. The rule
@@ -321,7 +325,7 @@ type HTTPRoute struct {
 	// forwarding target can be one of several versions of a service (see
 	// glossary in beginning of document). Weights associated with the
 	// service version determine the proportion of traffic it receives.
-	Route []DestinationWeight `json:"route,omitempty"`
+	Route []HTTPRouteDestination `json:"route,omitempty"`
 
 	// A http rule can either redirect or forward (default) traffic. If
 	// traffic passthrough option is specified in the rule,
@@ -528,7 +532,7 @@ type HTTPMatchRequest struct {
 	SourceNamespace string `json:"sourceNamespace,omitempty"`
 }
 
-type DestinationWeight struct {
+type HTTPRouteDestination struct {
 	// REQUIRED. Destination uniquely identifies the instances of a service
 	// to which the request/connection should be forwarded to.
 	Destination Destination `json:"destination"`
@@ -538,6 +542,9 @@ type DestinationWeight struct {
 	// If there is only destination in a rule, the weight value is assumed to
 	// be 100.
 	Weight int `json:"weight"`
+
+	// Header manipulation rules
+	Headers *Headers `json:"headers,omitempty"`
 }
 
 // PortSelector specifies the number of a port to be used for
@@ -590,7 +597,7 @@ type TCPRoute struct {
 	// Currently, only one destination is allowed for TCP services. When TCP
 	// weighted routing support is introduced in Envoy, multiple destinations
 	// with weights can be specified.
-	Route DestinationWeight `json:"route"`
+	Route HTTPRouteDestination `json:"route"`
 }
 
 // L4 connection match attributes. Note that L4 connection matching support
