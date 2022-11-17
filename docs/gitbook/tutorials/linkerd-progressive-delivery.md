@@ -11,6 +11,7 @@ Flagger requires a Kubernetes cluster **v1.16** or newer and Linkerd **2.10** or
 Install Linkerd the Promethues (part of Linkerd Viz):
 
 ```bash
+linkerd install --crds | kubectl apply -f -
 linkerd install | kubectl apply -f -
 linkerd viz install | kubectl apply -f -
 ```
