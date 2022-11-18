@@ -38,9 +38,10 @@ func TestApisixRouter_Reconcile(t *testing.T) {
 		apisixClient: mocks.flaggerClient,
 		logger:       mocks.logger,
 	}
+	apexName, _, _ := mocks.canary.GetServiceNames()
 	err := router.Reconcile(mocks.canary)
 	require.NoError(t, err)
-	canaryName := fmt.Sprintf("%s-canary", mocks.canary.Spec.RouteRef.Name)
+	canaryName := fmt.Sprintf("%s-%s-canary", mocks.canary.Spec.RouteRef.Name, apexName)
 	arCanary, err := router.apisixClient.ApisixV2().ApisixRoutes("default").Get(context.TODO(), canaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(arCanary.Spec.HTTP[0].Backends))
@@ -77,7 +78,8 @@ func TestApisixRouter_GetSetRoutes(t *testing.T) {
 	assert.Equal(t, 50, c)
 	assert.False(t, m)
 
-	canaryName := fmt.Sprintf("%s-canary", mocks.canary.Spec.RouteRef.Name)
+	apexName, _, _ := mocks.canary.GetServiceNames()
+	canaryName := fmt.Sprintf("%s-%s-canary", mocks.canary.Spec.RouteRef.Name, apexName)
 	arRouter, err := router.apisixClient.ApisixV2().ApisixRoutes("default").Get(context.TODO(), canaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(arRouter.Spec.HTTP[0].Backends))
