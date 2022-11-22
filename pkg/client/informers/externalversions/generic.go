@@ -25,6 +25,7 @@ import (
 	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
+	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
@@ -96,6 +97,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=gatewayapi, Version=v1alpha2
 	case v1alpha2.SchemeGroupVersion.WithResource("httproutes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1alpha2().HTTPRoutes().Informer()}, nil
+
+		// Group=gatewayapi, Version=v1beta1
+	case gatewayapiv1beta1.SchemeGroupVersion.WithResource("httproutes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1beta1().HTTPRoutes().Informer()}, nil
 
 		// Group=gloo.solo.io, Version=v1
 	case gloov1.SchemeGroupVersion.WithResource("upstreams"):

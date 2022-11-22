@@ -27,6 +27,7 @@ import (
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
 	gatewayapiv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1alpha2"
+	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
 	kedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1"
@@ -48,6 +49,7 @@ type Interface interface {
 	FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface
 	GatewayV1() gatewayv1.GatewayV1Interface
 	GatewayapiV1alpha2() gatewayapiv1alpha2.GatewayapiV1alpha2Interface
+	GatewayapiV1beta1() gatewayapiv1beta1.GatewayapiV1beta1Interface
 	GlooV1() gloov1.GlooV1Interface
 	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
 	KedaV1alpha1() kedav1alpha1.KedaV1alpha1Interface
@@ -68,6 +70,7 @@ type Clientset struct {
 	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
 	gatewayV1          *gatewayv1.GatewayV1Client
 	gatewayapiV1alpha2 *gatewayapiv1alpha2.GatewayapiV1alpha2Client
+	gatewayapiV1beta1  *gatewayapiv1beta1.GatewayapiV1beta1Client
 	glooV1             *gloov1.GlooV1Client
 	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
 	kedaV1alpha1       *kedav1alpha1.KedaV1alpha1Client
@@ -102,6 +105,11 @@ func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
 // GatewayapiV1alpha2 retrieves the GatewayapiV1alpha2Client
 func (c *Clientset) GatewayapiV1alpha2() gatewayapiv1alpha2.GatewayapiV1alpha2Interface {
 	return c.gatewayapiV1alpha2
+}
+
+// GatewayapiV1beta1 retrieves the GatewayapiV1beta1Client
+func (c *Clientset) GatewayapiV1beta1() gatewayapiv1beta1.GatewayapiV1beta1Interface {
+	return c.gatewayapiV1beta1
 }
 
 // GlooV1 retrieves the GlooV1Client
@@ -213,6 +221,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.gatewayapiV1beta1, err = gatewayapiv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.glooV1, err = gloov1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -275,6 +287,7 @@ func New(c rest.Interface) *Clientset {
 	cs.flaggerV1beta1 = flaggerv1beta1.New(c)
 	cs.gatewayV1 = gatewayv1.New(c)
 	cs.gatewayapiV1alpha2 = gatewayapiv1alpha2.New(c)
+	cs.gatewayapiV1beta1 = gatewayapiv1beta1.New(c)
 	cs.glooV1 = gloov1.New(c)
 	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
 	cs.kedaV1alpha1 = kedav1alpha1.New(c)

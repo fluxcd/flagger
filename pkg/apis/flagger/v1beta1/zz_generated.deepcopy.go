@@ -22,7 +22,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
+	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -369,7 +369,7 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 	}
 	if in.GatewayRefs != nil {
 		in, out := &in.GatewayRefs, &out.GatewayRefs
-		*out = make([]v1alpha2.ParentReference, len(*in))
+		*out = make([]gatewayapiv1beta1.ParentReference, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
