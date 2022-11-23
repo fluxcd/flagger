@@ -22,7 +22,6 @@ import (
 	"reflect"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	"github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -36,29 +35,24 @@ import (
 )
 
 var (
-	initialPrimaryWeight = int32(100)
-	initialCanaryWeight  = int32(0)
-	backendRefGroup      = ""
-	backendRefKind       = "Service"
-	pathMatchValue       = "/"
-	pathMatchType        = v1alpha2.PathMatchPathPrefix
-	pathMatchRegex       = v1alpha2.PathMatchRegularExpression
-	pathMatchExact       = v1alpha2.PathMatchExact
-	pathMatchPrefix      = v1alpha2.PathMatchPathPrefix
-	headerMatchExact     = v1alpha2.HeaderMatchExact
-	headerMatchRegex     = v1alpha2.HeaderMatchRegularExpression
-	queryMatchExact      = v1alpha2.QueryParamMatchExact
-	queryMatchRegex      = v1alpha2.QueryParamMatchRegularExpression
+	v1beta1PathMatchType    = v1beta1.PathMatchPathPrefix
+	v1beta1PathMatchRegex   = v1beta1.PathMatchRegularExpression
+	v1beta1PathMatchExact   = v1beta1.PathMatchExact
+	v1beta1PathMatchPrefix  = v1beta1.PathMatchPathPrefix
+	v1beta1HeaderMatchExact = v1beta1.HeaderMatchExact
+	v1beta1HeaderMatchRegex = v1beta1.HeaderMatchRegularExpression
+	v1beta1QueryMatchExact  = v1beta1.QueryParamMatchExact
+	v1beta1QueryMatchRegex  = v1beta1.QueryParamMatchRegularExpression
 )
 
-type GatewayAPIRouter struct {
+type GatewayAPIV1Beta1Router struct {
 	gatewayAPIClient clientset.Interface
 	kubeClient       kubernetes.Interface
 	logger           *zap.SugaredLogger
 	setOwnerRefs     bool
 }
 
-func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
+func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 	if len(canary.Spec.Service.GatewayRefs) == 0 {
 		return fmt.Errorf("GatewayRefs must be specified when using Gateway API as a provider.")
 	}
@@ -67,32 +61,32 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	hrNamespace := canary.Namespace
 
-	var hostNames []v1alpha2.Hostname
+	var hostNames []v1beta1.Hostname
 	for _, host := range canary.Spec.Service.Hosts {
-		hostNames = append(hostNames, v1alpha2.Hostname(host))
+		hostNames = append(hostNames, v1beta1.Hostname(host))
 	}
 	matches, err := gwr.mapRouteMatches(canary.Spec.Service.Match)
 	if err != nil {
 		return fmt.Errorf("Invalid request matching selectors: %w", err)
 	}
 	if len(matches) == 0 {
-		matches = append(matches, v1alpha2.HTTPRouteMatch{
-			Path: &v1alpha2.HTTPPathMatch{
-				Type:  &pathMatchType,
+		matches = append(matches, v1beta1.HTTPRouteMatch{
+			Path: &v1beta1.HTTPPathMatch{
+				Type:  &v1beta1PathMatchType,
 				Value: &pathMatchValue,
 			},
 		})
 	}
 
-	httpRouteSpec := v1alpha2.HTTPRouteSpec{
-		CommonRouteSpec: v1alpha2.CommonRouteSpec{
-			ParentRefs: toV1alpha2ParentRefs(canary.Spec.Service.GatewayRefs),
+	httpRouteSpec := v1beta1.HTTPRouteSpec{
+		CommonRouteSpec: v1beta1.CommonRouteSpec{
+			ParentRefs: canary.Spec.Service.GatewayRefs,
 		},
 		Hostnames: hostNames,
-		Rules: []v1alpha2.HTTPRouteRule{
+		Rules: []v1beta1.HTTPRouteRule{
 			{
 				Matches: matches,
-				BackendRefs: []v1alpha2.HTTPBackendRef{
+				BackendRefs: []v1beta1.HTTPBackendRef{
 					{
 						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
 					},
@@ -109,9 +103,9 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		analysisMatches, _ := gwr.mapRouteMatches(canary.GetAnalysis().Match)
 		// serviceMatches, _ := gwr.mapRouteMatches(canary.Spec.Service.Match)
 		httpRouteSpec.Rules[0].Matches = gwr.mergeMatchConditions(analysisMatches, matches)
-		httpRouteSpec.Rules = append(httpRouteSpec.Rules, v1alpha2.HTTPRouteRule{
+		httpRouteSpec.Rules = append(httpRouteSpec.Rules, v1beta1.HTTPRouteRule{
 			Matches: matches,
-			BackendRefs: []v1alpha2.HTTPBackendRef{
+			BackendRefs: []v1beta1.HTTPBackendRef{
 				{
 					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
 				},
@@ -119,7 +113,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		})
 	}
 
-	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).Get(
+	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes(hrNamespace).Get(
 		context.TODO(), apexSvcName, metav1.GetOptions{},
 	)
 
@@ -134,7 +128,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		if metadata.Annotations == nil {
 			metadata.Annotations = make(map[string]string)
 		}
-		route := &v1alpha2.HTTPRoute{
+		route := &v1beta1.HTTPRoute{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexSvcName,
 				Namespace:   hrNamespace,
@@ -154,7 +148,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			}
 		}
 
-		_, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).
+		_, err := gwr.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes(hrNamespace).
 			Create(context.TODO(), route, metav1.CreateOptions{})
 
 		if err != nil {
@@ -169,12 +163,12 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if httpRoute != nil {
 		diff := cmp.Diff(
 			httpRoute.Spec, httpRouteSpec,
-			cmpopts.IgnoreFields(v1alpha2.BackendRef{}, "Weight"),
+			cmpopts.IgnoreFields(v1beta1.BackendRef{}, "Weight"),
 		)
 		if diff != "" && httpRoute.Name != "" {
 			hrClone := httpRoute.DeepCopy()
 			hrClone.Spec = httpRouteSpec
-			_, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).
+			_, err := gwr.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes(hrNamespace).
 				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("HTTPRoute %s.%s update error: %w while reconciling", hrClone.GetName(), hrNamespace, err)
@@ -187,7 +181,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	return nil
 }
 
-func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
+func (gwr *GatewayAPIV1Beta1Router) GetRoutes(canary *flaggerv1.Canary) (
 	primaryWeight int,
 	canaryWeight int,
 	mirrored bool,
@@ -195,7 +189,7 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 ) {
 	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
 	hrNamespace := canary.Namespace
-	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
+	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 		return
@@ -204,10 +198,10 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 		// A/B testing: Avoid reading the rule with only for backendRef.
 		if len(rule.BackendRefs) == 2 {
 			for _, backendRef := range rule.BackendRefs {
-				if backendRef.Name == v1alpha2.ObjectName(primarySvcName) {
+				if backendRef.Name == v1beta1.ObjectName(primarySvcName) {
 					primaryWeight = int(*backendRef.Weight)
 				}
-				if backendRef.Name == v1alpha2.ObjectName(canarySvcName) {
+				if backendRef.Name == v1beta1.ObjectName(canarySvcName) {
 					canaryWeight = int(*backendRef.Weight)
 				}
 			}
@@ -217,7 +211,7 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 	return
 }
 
-func (gwr *GatewayAPIRouter) SetRoutes(
+func (gwr *GatewayAPIV1Beta1Router) SetRoutes(
 	canary *flaggerv1.Canary,
 	primaryWeight int,
 	canaryWeight int,
@@ -227,36 +221,36 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	cWeight := int32(canaryWeight)
 	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
 	hrNamespace := canary.Namespace
-	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
+	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 	}
 	hrClone := httpRoute.DeepCopy()
-	hostNames := []v1alpha2.Hostname{}
+	hostNames := []v1beta1.Hostname{}
 	for _, host := range canary.Spec.Service.Hosts {
-		hostNames = append(hostNames, v1alpha2.Hostname(host))
+		hostNames = append(hostNames, v1beta1.Hostname(host))
 	}
 	matches, err := gwr.mapRouteMatches(canary.Spec.Service.Match)
 	if err != nil {
 		return fmt.Errorf("Invalid request matching selectors: %w", err)
 	}
 	if len(matches) == 0 {
-		matches = append(matches, v1alpha2.HTTPRouteMatch{
-			Path: &v1alpha2.HTTPPathMatch{
-				Type:  &pathMatchType,
+		matches = append(matches, v1beta1.HTTPRouteMatch{
+			Path: &v1beta1.HTTPPathMatch{
+				Type:  &v1beta1PathMatchType,
 				Value: &pathMatchValue,
 			},
 		})
 	}
-	httpRouteSpec := v1alpha2.HTTPRouteSpec{
-		CommonRouteSpec: v1alpha2.CommonRouteSpec{
-			ParentRefs: toV1alpha2ParentRefs(canary.Spec.Service.GatewayRefs),
+	httpRouteSpec := v1beta1.HTTPRouteSpec{
+		CommonRouteSpec: v1beta1.CommonRouteSpec{
+			ParentRefs: canary.Spec.Service.GatewayRefs,
 		},
 		Hostnames: hostNames,
-		Rules: []v1alpha2.HTTPRouteRule{
+		Rules: []v1beta1.HTTPRouteRule{
 			{
 				Matches: matches,
-				BackendRefs: []v1alpha2.HTTPBackendRef{
+				BackendRefs: []v1beta1.HTTPBackendRef{
 					{
 						BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
 					},
@@ -273,9 +267,9 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	if len(canary.GetAnalysis().Match) > 0 {
 		analysisMatches, _ := gwr.mapRouteMatches(canary.GetAnalysis().Match)
 		hrClone.Spec.Rules[0].Matches = gwr.mergeMatchConditions(analysisMatches, matches)
-		hrClone.Spec.Rules = append(hrClone.Spec.Rules, v1alpha2.HTTPRouteRule{
+		hrClone.Spec.Rules = append(hrClone.Spec.Rules, v1beta1.HTTPRouteRule{
 			Matches: matches,
-			BackendRefs: []v1alpha2.HTTPBackendRef{
+			BackendRefs: []v1beta1.HTTPBackendRef{
 				{
 					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
 				},
@@ -283,7 +277,7 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 		})
 	}
 
-	_, err = gwr.gatewayAPIClient.GatewayapiV1alpha2().HTTPRoutes(hrNamespace).Update(context.TODO(), hrClone, metav1.UpdateOptions{})
+	_, err = gwr.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes(hrNamespace).Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s update error: %w while setting weights", hrClone.GetName(), hrNamespace, err)
 	}
@@ -291,29 +285,29 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	return nil
 }
 
-func (gwr *GatewayAPIRouter) Finalize(_ *flaggerv1.Canary) error {
+func (gwr *GatewayAPIV1Beta1Router) Finalize(_ *flaggerv1.Canary) error {
 	return nil
 }
 
-func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []v1alpha3.HTTPMatchRequest) ([]v1alpha2.HTTPRouteMatch, error) {
-	matches := []v1alpha2.HTTPRouteMatch{}
+func (gwr *GatewayAPIV1Beta1Router) mapRouteMatches(requestMatches []v1alpha3.HTTPMatchRequest) ([]v1beta1.HTTPRouteMatch, error) {
+	matches := []v1beta1.HTTPRouteMatch{}
 
 	for _, requestMatch := range requestMatches {
-		match := v1alpha2.HTTPRouteMatch{}
+		match := v1beta1.HTTPRouteMatch{}
 		if requestMatch.Uri != nil {
 			if requestMatch.Uri.Regex != "" {
-				match.Path = &v1alpha2.HTTPPathMatch{
-					Type:  &pathMatchRegex,
+				match.Path = &v1beta1.HTTPPathMatch{
+					Type:  &v1beta1PathMatchRegex,
 					Value: &requestMatch.Uri.Regex,
 				}
 			} else if requestMatch.Uri.Exact != "" {
-				match.Path = &v1alpha2.HTTPPathMatch{
-					Type:  &pathMatchExact,
+				match.Path = &v1beta1.HTTPPathMatch{
+					Type:  &v1beta1PathMatchExact,
 					Value: &requestMatch.Uri.Exact,
 				}
 			} else if requestMatch.Uri.Prefix != "" {
-				match.Path = &v1alpha2.HTTPPathMatch{
-					Type:  &pathMatchPrefix,
+				match.Path = &v1beta1.HTTPPathMatch{
+					Type:  &v1beta1PathMatchPrefix,
 					Value: &requestMatch.Uri.Prefix,
 				}
 			} else {
@@ -322,50 +316,50 @@ func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []v1alpha3.HTTPMatch
 		}
 		if requestMatch.Method != nil {
 			if requestMatch.Method.Exact != "" {
-				method := v1alpha2.HTTPMethod(requestMatch.Method.Exact)
+				method := v1beta1.HTTPMethod(requestMatch.Method.Exact)
 				match.Method = &method
 			} else {
 				return nil, fmt.Errorf("Gateway API doesn't support the specified header matching selector: %+v\n", requestMatch.Headers)
 			}
 		}
 		for key, val := range requestMatch.Headers {
-			headerMatch := v1alpha2.HTTPHeaderMatch{}
+			headerMatch := v1beta1.HTTPHeaderMatch{}
 			if val.Exact != "" {
-				headerMatch.Name = v1alpha2.HTTPHeaderName(key)
-				headerMatch.Type = &headerMatchExact
+				headerMatch.Name = v1beta1.HTTPHeaderName(key)
+				headerMatch.Type = &v1beta1HeaderMatchExact
 				headerMatch.Value = val.Exact
 			} else if val.Regex != "" {
-				headerMatch.Name = v1alpha2.HTTPHeaderName(key)
-				headerMatch.Type = &headerMatchRegex
+				headerMatch.Name = v1beta1.HTTPHeaderName(key)
+				headerMatch.Type = &v1beta1HeaderMatchRegex
 				headerMatch.Value = val.Regex
 			} else {
 				return nil, fmt.Errorf("Gateway API doesn't support the specified header matching selector: %+v\n", requestMatch.Headers)
 			}
-			if (v1alpha2.HTTPHeaderMatch{} != headerMatch) {
+			if (v1beta1.HTTPHeaderMatch{} != headerMatch) {
 				match.Headers = append(match.Headers, headerMatch)
 			}
 		}
 
 		for key, val := range requestMatch.QueryParams {
-			queryMatch := v1alpha2.HTTPQueryParamMatch{}
+			queryMatch := v1beta1.HTTPQueryParamMatch{}
 			if val.Exact != "" {
 				queryMatch.Name = key
-				queryMatch.Type = &queryMatchExact
+				queryMatch.Type = &v1beta1QueryMatchExact
 				queryMatch.Value = val.Exact
 			} else if val.Regex != "" {
 				queryMatch.Name = key
-				queryMatch.Type = &queryMatchRegex
+				queryMatch.Type = &v1beta1QueryMatchRegex
 				queryMatch.Value = val.Regex
 			} else {
 				return nil, fmt.Errorf("Gateway API doesn't support the specified query matching selector: %+v\n", requestMatch.QueryParams)
 			}
 
-			if (v1alpha2.HTTPQueryParamMatch{} != queryMatch) {
+			if (v1beta1.HTTPQueryParamMatch{} != queryMatch) {
 				match.QueryParams = append(match.QueryParams, queryMatch)
 			}
 		}
 
-		if !reflect.DeepEqual(match, v1alpha2.HTTPRouteMatch{}) {
+		if !reflect.DeepEqual(match, v1beta1.HTTPRouteMatch{}) {
 			matches = append(matches, match)
 		}
 	}
@@ -373,24 +367,24 @@ func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []v1alpha3.HTTPMatch
 	return matches, nil
 }
 
-func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32) v1alpha2.BackendRef {
-	return v1alpha2.BackendRef{
-		BackendObjectReference: v1alpha2.BackendObjectReference{
-			Group: (*v1alpha2.Group)(&backendRefGroup),
-			Kind:  (*v1alpha2.Kind)(&backendRefKind),
-			Name:  v1alpha2.ObjectName(svcName),
-			Port:  (*v1alpha2.PortNumber)(&port),
+func (gwr *GatewayAPIV1Beta1Router) makeBackendRef(svcName string, weight, port int32) v1beta1.BackendRef {
+	return v1beta1.BackendRef{
+		BackendObjectReference: v1beta1.BackendObjectReference{
+			Group: (*v1beta1.Group)(&backendRefGroup),
+			Kind:  (*v1beta1.Kind)(&backendRefKind),
+			Name:  v1beta1.ObjectName(svcName),
+			Port:  (*v1beta1.PortNumber)(&port),
 		},
 		Weight: &weight,
 	}
 }
 
-func (gwr *GatewayAPIRouter) mergeMatchConditions(analysis, service []v1alpha2.HTTPRouteMatch) []v1alpha2.HTTPRouteMatch {
+func (gwr *GatewayAPIV1Beta1Router) mergeMatchConditions(analysis, service []v1beta1.HTTPRouteMatch) []v1beta1.HTTPRouteMatch {
 	if len(analysis) == 0 {
 		return service
 	}
 
-	merged := make([]v1alpha2.HTTPRouteMatch, len(service)*len(analysis))
+	merged := make([]v1beta1.HTTPRouteMatch, len(service)*len(analysis))
 	num := 0
 	for _, a := range analysis {
 		for _, s := range service {
@@ -405,19 +399,4 @@ func (gwr *GatewayAPIRouter) mergeMatchConditions(analysis, service []v1alpha2.H
 		}
 	}
 	return merged
-}
-
-func toV1alpha2ParentRefs(gatewayRefs []v1beta1.ParentReference) []v1alpha2.ParentReference {
-	parentRefs := make([]v1alpha2.ParentReference, 0)
-	for i := 0; i < len(gatewayRefs); i++ {
-		gatewayRef := gatewayRefs[i]
-		parentRefs = append(parentRefs, v1alpha2.ParentReference{
-			Group:       (*v1alpha2.Group)(gatewayRef.Group),
-			Kind:        (*v1alpha2.Kind)(gatewayRef.Kind),
-			Namespace:   (*v1alpha2.Namespace)(gatewayRef.Namespace),
-			Name:        (v1alpha2.ObjectName)(gatewayRef.Name),
-			SectionName: (*v1alpha2.SectionName)(gatewayRef.SectionName),
-		})
-	}
-	return parentRefs
 }

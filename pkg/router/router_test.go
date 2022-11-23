@@ -28,7 +28,7 @@ import (
 
 	appmesh "github.com/fluxcd/flagger/pkg/apis/appmesh"
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
+	gatewayapiv1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -507,7 +507,7 @@ func newTestGatewayAPICanary() *flaggerv1.Canary {
 					IntVal: 9898,
 				},
 				PortDiscovery: true,
-				GatewayRefs: []v1alpha2.ParentReference{
+				GatewayRefs: []gatewayapiv1.ParentReference{
 					{
 						Name: "podinfo",
 					},
