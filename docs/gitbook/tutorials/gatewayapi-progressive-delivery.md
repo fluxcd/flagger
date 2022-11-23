@@ -6,24 +6,55 @@ This guide shows you how to use [Gateway API](https://gateway-api.sigs.k8s.io/) 
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.16** or newer and any mesh/ingress that implements the `v1alpha2` of Gateway API. We'll be using Contour for the sake of this tutorial, but you can use any other implementation. 
+Flagger requires a Kubernetes cluster **v1.19** or newer and any mesh/ingress that implements the `v1beta1` version of Gateway API. We'll be using Contour for the sake of this tutorial, but you can use any other implementation.
 
-Install the GatewayAPI CRDs:
+> Note: Flagger supports `v1alpha2` version of Gateway API, but the alpha version has been deprecated and support will be dropped in a future release.
+
+Install Contour, its Gateway provisioner and Gateway API CRDs in the `projectcontour` namespace:
 
 ```bash
-kubectl apply -k github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.4.1
+https://raw.githubusercontent.com/projectcontour/contour/release-1.23/examples/render/contour-gateway-provisioner.yaml
 ```
 
-Install a cluster-wide GatewayClass; a Gateway belonging to the GatewayClass and Contour components in the `projectcontour` namespace:
-
+> Alternatively, you can also install the Gateway API CRDs from the upstream project:
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/release-1.20/examples/render/contour-gateway.yaml
+kubectl apply -k github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.0
 ```
 
 Install Flagger in the `flagger-system` namespace:
 
 ```bash
 kubectl apply -k github.com/fluxcd/flagger//kustomize/gatewayapi
+```
+
+Create a `GatewayClass` that specifies information about the Gateway controller:
+
+```yaml
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: contour
+spec:
+  controllerName: projectcontour.io/gateway-controller
+```
+
+Create a `Gateway` that configures load balancing, traffic ACL, etc:
+
+```yaml
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: contour
+  namespace: projectcontour
+spec:
+  gatewayClassName: contour
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
 ```
 
 ## Bootstrap
