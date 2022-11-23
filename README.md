@@ -5,6 +5,7 @@
 [![report](https://goreportcard.com/badge/github.com/fluxcd/flagger)](https://goreportcard.com/report/github.com/fluxcd/flagger)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B162%2Fgithub.com%2Ffluxcd%2Fflagger.svg?type=shield)](https://app.fossa.com/projects/custom%2B162%2Fgithub.com%2Ffluxcd%2Fflagger?ref=badge_shield)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/flagger)](https://artifacthub.io/packages/search?repo=flagger)
+[![CLOMonitor](https://img.shields.io/endpoint?url=https://clomonitor.io/api/projects/cncf/flagger/badge)](https://clomonitor.io/projects/cncf/flagger)
 
 Flagger is a progressive delivery tool that automates the release process for applications running on Kubernetes. 
 It reduces the risk of introducing a new software version in production
@@ -20,29 +21,29 @@ and part of the [Flux](https://fluxcd.io) family of GitOps tools.
 
 ### Documentation
 
-Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.app).
+Flagger documentation can be found at [fluxcd.io/flagger](https://fluxcd.io/flagger/).
 
 * Install
-  * [Flagger install on Kubernetes](https://docs.flagger.app/install/flagger-install-on-kubernetes)
+  * [Flagger install on Kubernetes](https://fluxcd.io/flagger/install/flagger-install-on-kubernetes)
 * Usage
-  * [How it works](https://docs.flagger.app/usage/how-it-works)
-  * [Deployment strategies](https://docs.flagger.app/usage/deployment-strategies)
-  * [Metrics analysis](https://docs.flagger.app/usage/metrics)
-  * [Webhooks](https://docs.flagger.app/usage/webhooks)
-  * [Alerting](https://docs.flagger.app/usage/alerting)
-  * [Monitoring](https://docs.flagger.app/usage/monitoring)
+  * [How it works](https://fluxcd.io/flagger/usage/how-it-works)
+  * [Deployment strategies](https://fluxcd.io/flagger/usage/deployment-strategies)
+  * [Metrics analysis](https://fluxcd.io/flagger/usage/metrics)
+  * [Webhooks](https://fluxcd.io/flagger/usage/webhooks)
+  * [Alerting](https://fluxcd.io/flagger/usage/alerting)
+  * [Monitoring](https://fluxcd.io/flagger/usage/monitoring)
 * Tutorials
-  * [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery)
-  * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery)
-  * [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery)
-  * [Open Service Mesh (OSM)](https://docs.flagger.app/tutorials/osm-progressive-delivery)
-  * [Kuma Service Mesh](https://docs.flagger.app/tutorials/kuma-progressive-delivery)
-  * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery)
-  * [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
-  * [NGINX Ingress](https://docs.flagger.app/tutorials/nginx-progressive-delivery)
-  * [Skipper](https://docs.flagger.app/tutorials/skipper-progressive-delivery)
-  * [Traefik](https://docs.flagger.app/tutorials/traefik-progressive-delivery)
-  * [Kubernetes Blue/Green](https://docs.flagger.app/tutorials/kubernetes-blue-green)
+  * [App Mesh](https://fluxcd.io/flagger/tutorials/appmesh-progressive-delivery)
+  * [Istio](https://fluxcd.io/flagger/tutorials/istio-progressive-delivery)
+  * [Linkerd](https://fluxcd.io/flagger/tutorials/linkerd-progressive-delivery)
+  * [Open Service Mesh (OSM)](https://dfluxcd.io/flagger/tutorials/osm-progressive-delivery)
+  * [Kuma Service Mesh](https://fluxcd.io/flagger/tutorials/kuma-progressive-delivery)
+  * [Contour](https://fluxcd.io/flagger/tutorials/contour-progressive-delivery)
+  * [Gloo](https://fluxcd.io/flagger/tutorials/gloo-progressive-delivery)
+  * [NGINX Ingress](https://fluxcd.io/flagger/tutorials/nginx-progressive-delivery)
+  * [Skipper](https://fluxcd.io/flagger/tutorials/skipper-progressive-delivery)
+  * [Traefik](https://fluxcd.io/flagger/tutorials/traefik-progressive-delivery)
+  * [Kubernetes Blue/Green](https://fluxcd.io/flagger/tutorials/kubernetes-blue-green)
 
 ### Adopters
 
@@ -176,7 +177,7 @@ spec:
           name: on-call-msteams
 ```
 
-For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/usage/how-it-works).
+For more details on how the canary analysis and promotion works please [read the docs](https://fluxcd.io/flagger/usage/how-it-works).
 
 ### Features
 
