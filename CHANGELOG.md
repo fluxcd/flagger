@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.26.0
+
+**Release date:** 2022-11-23
+
+This release comes with support Kubernetes [Gateway API](https://gateway-api.sigs.k8s.io/) v1beta1.
+For more details see the [Gateway API Progressive Delivery tutorial](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery).
+
+Please note that starting with this version, the Gateway API v1alpha2 is considered deprecated
+and will be removed from Flagger after 6 months.
+
+#### Improvements:
+
+- Updated Gateway API from v1alpha2 to v1beta1
+  [#1319](https://github.com/fluxcd/flagger/pull/1319)
+- Updated Gateway API docs to v1beta1
+  [#1321](https://github.com/fluxcd/flagger/pull/1321)
+- Update dependencies
+  [#1322](https://github.com/fluxcd/flagger/pull/1322)
+
+#### Fixes:
+
+- docs: Add `linkerd install --crds` to Linkerd tutorial
+  [#1316](https://github.com/fluxcd/flagger/pull/1316)
+
 ## 1.25.0
 
 **Release date:** 2022-11-16
