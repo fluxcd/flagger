@@ -44,6 +44,8 @@ func (factory Factory) Provider(
 		return NewInfluxdbProvider(provider, credentials)
 	case "dynatrace":
 		return NewDynatraceProvider(metricInterval, provider, credentials)
+	case "skywalking":
+		return NewSkyWalkingProvider(metricInterval, provider, credentials)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}
