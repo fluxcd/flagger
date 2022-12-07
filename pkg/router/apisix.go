@@ -60,7 +60,7 @@ func (ar *ApisixRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	apexName, primaryName, canaryName := canary.GetServiceNames()
-	targetHttpRoute, targetIndex, err := ar.getTargetHttpRoute(canary, apisixRouteClone, apexName)
+	targetHttpRoute, _, err := ar.getTargetHttpRoute(canary, apisixRouteClone, apexName)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (ar *ApisixRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	targetHttpRoute.Backends = append(targetHttpRoute.Backends, canaryBackend)
-	apisixRouteClone.Spec.HTTP[targetIndex] = *targetHttpRoute
+	apisixRouteClone.Spec.HTTP = []a6v2.ApisixRouteHTTP{*targetHttpRoute}
 
 	canaryApisixRouteName := fmt.Sprintf("%s-%s-canary", canary.Spec.RouteRef.Name, apexName)
 	canaryApisixRoute, err := ar.apisixClient.ApisixV2().ApisixRoutes(canary.Namespace).Get(context.TODO(), canaryApisixRouteName, metav1.GetOptions{})
