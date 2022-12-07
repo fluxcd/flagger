@@ -1,6 +1,7 @@
 package v1beta1
 
 const (
+	ApisixProvider     string = "apisix"
 	AppMeshProvider    string = "appmesh"
 	LinkerdProvider    string = "linkerd"
 	IstioProvider      string = "istio"

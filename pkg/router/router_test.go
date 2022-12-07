@@ -17,6 +17,7 @@ limitations under the License.
 package router
 
 import (
+	a6v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -55,12 +56,14 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	abtest := newTestABTest()
 	appmeshCanary := newTestCanaryAppMesh()
 	ingressCanary := newTestCanaryIngress()
+	apisixRoute := newTestApisixRoute()
 
 	flaggerClient := fakeFlagger.NewSimpleClientset(
 		canary,
 		abtest,
 		appmeshCanary,
 		ingressCanary,
+		apisixRoute,
 	)
 
 	kubeClient := fake.NewSimpleClientset(
@@ -82,6 +85,45 @@ func newFixture(c *flaggerv1.Canary) fixture {
 		flaggerClient: flaggerClient,
 		logger:        logger,
 	}
+}
+
+func newTestApisixRoute() *a6v2.ApisixRoute {
+	ar := &a6v2.ApisixRoute{
+		TypeMeta: metav1.TypeMeta{APIVersion: a6v2.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: a6v2.ApisixRouteSpec{HTTP: []a6v2.ApisixRouteHTTP{
+			{
+				Name: "method",
+				Match: a6v2.ApisixRouteHTTPMatch{
+					Hosts:   []string{"foobar.com"},
+					Methods: []string{"GET"},
+					Paths:   []string{"/*"},
+				},
+				Plugins: []a6v2.ApisixRoutePlugin{
+					{
+						Name:   "prometheus",
+						Enable: true,
+						Config: a6v2.ApisixRoutePluginConfig{
+							"disable":     "false",
+							"prefer_name": "true",
+						},
+					},
+				},
+				Backends: []a6v2.ApisixRouteHTTPBackend{
+					{ServiceName: "podinfo",
+						ServicePort: intstr.IntOrString{
+							Type:   intstr.Int,
+							IntVal: 80,
+						}},
+				},
+			},
+		},
+		},
+	}
+	return ar
 }
 
 func newTestCanary() *flaggerv1.Canary {

@@ -33,6 +33,7 @@ jobs:
           - kubernetes
           - gatewayapi
           - keda
+          - apisix
     steps:
       - name: Checkout
         uses: actions/checkout@v3

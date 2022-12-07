@@ -134,6 +134,19 @@ spec:
                         - Ingress
                     name:
                       type: string
+                routeRef:
+                  description: APISIX route selector
+                  type: object
+                  required: [ "apiVersion", "kind", "name" ]
+                  properties:
+                    apiVersion:
+                      type: string
+                    kind:
+                      type: string
+                      enum:
+                        - ApisixRoute
+                    name:
+                      type: string
                 upstreamRef:
                   description: Gloo Upstream selector
                   type: object

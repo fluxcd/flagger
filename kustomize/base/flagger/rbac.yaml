@@ -229,6 +229,18 @@ rules:
       - update
       - patch
       - delete
+  - apiGroups:
+      - apisix.apache.org
+    resources:
+      - apisixroutes
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - nonResourceURLs:
       - /version
     verbs:

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 
+	apisixv2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/apisix/v2"
 	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
@@ -44,6 +45,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	ApisixV2() apisixv2.ApisixV2Interface
 	AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface
 	AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface
 	FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface
@@ -65,6 +67,7 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	apisixV2           *apisixv2.ApisixV2Client
 	appmeshV1beta2     *appmeshv1beta2.AppmeshV1beta2Client
 	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
 	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
@@ -80,6 +83,11 @@ type Clientset struct {
 	splitV1alpha2      *splitv1alpha2.SplitV1alpha2Client
 	splitV1alpha3      *splitv1alpha3.SplitV1alpha3Client
 	traefikV1alpha1    *traefikv1alpha1.TraefikV1alpha1Client
+}
+
+// ApisixV2 retrieves the ApisixV2Client
+func (c *Clientset) ApisixV2() apisixv2.ApisixV2Interface {
+	return c.apisixV2
 }
 
 // AppmeshV1beta2 retrieves the AppmeshV1beta2Client
@@ -201,6 +209,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
+	cs.apisixV2, err = apisixv2.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.appmeshV1beta2, err = appmeshv1beta2.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -282,6 +294,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.apisixV2 = apisixv2.New(c)
 	cs.appmeshV1beta2 = appmeshv1beta2.New(c)
 	cs.appmeshV1beta1 = appmeshv1beta1.New(c)
 	cs.flaggerV1beta1 = flaggerv1beta1.New(c)

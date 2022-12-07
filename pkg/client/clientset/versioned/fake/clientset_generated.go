@@ -20,6 +20,8 @@ package fake
 
 import (
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
+	apisixv2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/apisix/v2"
+	fakeapisixv2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/apisix/v2/fake"
 	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
 	fakeappmeshv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta1/fake"
 	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2"
@@ -106,6 +108,11 @@ var (
 	_ clientset.Interface = &Clientset{}
 	_ testing.FakeClient  = &Clientset{}
 )
+
+// ApisixV2 retrieves the ApisixV2Client
+func (c *Clientset) ApisixV2() apisixv2.ApisixV2Interface {
+	return &fakeapisixv2.FakeApisixV2{Fake: &c.Fake}
+}
 
 // AppmeshV1beta2 retrieves the AppmeshV1beta2Client
 func (c *Clientset) AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface {

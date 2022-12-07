@@ -458,6 +458,11 @@ func (in *CanarySpec) DeepCopyInto(out *CanarySpec) {
 		*out = new(LocalObjectReference)
 		**out = **in
 	}
+	if in.RouteRef != nil {
+		in, out := &in.RouteRef, &out.RouteRef
+		*out = new(LocalObjectReference)
+		**out = **in
+	}
 	if in.UpstreamRef != nil {
 		in, out := &in.UpstreamRef, &out.UpstreamRef
 		*out = new(CrossNamespaceObjectReference)

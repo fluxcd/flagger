@@ -21,6 +21,7 @@ package externalversions
 import (
 	"fmt"
 
+	v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -66,7 +67,11 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=appmesh.k8s.aws, Version=v1beta1
+	// Group=apisix.apache.org, Version=v2
+	case v2.SchemeGroupVersion.WithResource("apisixroutes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Apisix().V2().ApisixRoutes().Informer()}, nil
+
+		// Group=appmesh.k8s.aws, Version=v1beta1
 	case v1beta1.SchemeGroupVersion.WithResource("meshes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta1().Meshes().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("virtualnodes"):

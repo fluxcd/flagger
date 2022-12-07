@@ -31,6 +31,7 @@
 * [NGINX Canary Deployments](tutorials/nginx-progressive-delivery.md)
 * [Skipper Canary Deployments](tutorials/skipper-progressive-delivery.md)
 * [Traefik Canary Deployments](tutorials/traefik-progressive-delivery.md)
+* [Apache APISIX Canary Deployments](tutorials/apisix-progressive-delivery.md)
 * [Open Service Mesh Deployments](tutorials/osm-progressive-delivery.md)
 * [Kuma Canary Deployments](tutorials/kuma-progressive-delivery.md)
 * [Gateway API Canary Deployments](tutorials/gatewayapi-progressive-delivery.md)

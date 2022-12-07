@@ -16,3 +16,4 @@ redirects:
   usage/osm-progressive-delivery: tutorials/osm-progressive-delivery.md
   usage/kuma-progressive-delivery: tutorials/kuma-progressive-delivery.md
   usage/gatewayapi-progressive-delivery: tutorials/gatewayapi-progressive-delivery.md
+  usage/apisix-progressive-delivery: tutorials/apisix-progressive-delivery.md

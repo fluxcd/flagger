@@ -177,6 +177,12 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			traefikClient: factory.meshClient,
 			setOwnerRefs:  factory.setOwnerRefs,
 		}
+	case provider == flaggerv1.ApisixProvider:
+		return &ApisixRouter{
+			logger:       factory.logger,
+			apisixClient: factory.meshClient,
+			setOwnerRefs: factory.setOwnerRefs,
+		}
 	case provider == flaggerv1.OsmProvider:
 		return &Smiv1alpha2Router{
 			logger:        factory.logger,
