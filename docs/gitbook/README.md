@@ -11,7 +11,7 @@ and running conformance tests.
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
 using a service mesh (App Mesh, Istio, Linkerd, Kuma, Open Service Mesh)
-or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik) for traffic routing.
+or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik, APISIX) for traffic routing.
 For release analysis, Flagger can query Prometheus, InfluxDB, Datadog, New Relic, CloudWatch, Stackdriver
 or Graphite and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
@@ -47,6 +47,7 @@ After installing Flagger, you can follow one of these tutorials to get started:
 * [NGINX Ingress](tutorials/nginx-progressive-delivery.md)
 * [Skipper Ingress](tutorials/skipper-progressive-delivery.md)
 * [Traefik](tutorials/traefik-progressive-delivery.md)
+* [Apache APISIX](tutorials/apisix-progressive-delivery.md)
 
 **Hands-on GitOps workshops**
 

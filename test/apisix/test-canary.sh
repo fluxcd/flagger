@@ -20,7 +20,7 @@ spec:
           servicePort: 80
       match:
         hosts:
-          - foobar.com
+          - app.example.com
         methods:
           - GET
         paths:
@@ -92,7 +92,7 @@ spec:
         type: rollout
         metadata:
           cmd: |-
-              hey -z 1m -q 10 -c 2 -h2 -host foobar.com http://apisix-gateway.apisix/api/info
+              hey -z 1m -q 10 -c 2 -h2 -host app.example.com http://apisix-gateway.apisix/api/info
 EOF
 
 echo '>>> Waiting for primary to be ready'

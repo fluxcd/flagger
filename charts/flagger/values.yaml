@@ -19,7 +19,7 @@ podPriorityClassName: ""
 
 metricsServer: "http://prometheus:9090"
 
-# accepted values are kubernetes, istio, linkerd, appmesh, contour, nginx, gloo, skipper, traefik, osm
+# accepted values are kubernetes, istio, linkerd, appmesh, contour, nginx, gloo, skipper, traefik, apisix, osm
 meshProvider: ""
 
 # single namespace restriction
