@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.27.0
+
+**Release date:** 2022-12-15
+
+This release comes with support for Apachae APISIX. For more details see the
+[tutorial](https://fluxcd.io/flagger/tutorials/apisix-progressive-delivery).
+
+#### Improvements
+
+- [apisix] Implement router interface and observer interface
+  [#1281](https://github.com/fluxcd/flagger/pull/1281)
+- Bump stefanprodan/helm-gh-pages from 1.6.0 to 1.7.0
+  [#1326](https://github.com/fluxcd/flagger/pull/1326)
+- Release loadtester v0.28.0
+  [#1328](https://github.com/fluxcd/flagger/pull/1328)
+
+#### Fixes
+
+- Update release docs
+  [#1324](https://github.com/fluxcd/flagger/pull/1324)
+
 ## 1.26.0
 
 **Release date:** 2022-11-23

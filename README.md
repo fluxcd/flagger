@@ -43,6 +43,7 @@ Flagger documentation can be found at [fluxcd.io/flagger](https://fluxcd.io/flag
   * [NGINX Ingress](https://fluxcd.io/flagger/tutorials/nginx-progressive-delivery)
   * [Skipper](https://fluxcd.io/flagger/tutorials/skipper-progressive-delivery)
   * [Traefik](https://fluxcd.io/flagger/tutorials/traefik-progressive-delivery)
+  * [Gateway API](https://fluxcd.io/flagger/tutorials/gatewayapi-progressive-delivery/)
   * [Kubernetes Blue/Green](https://fluxcd.io/flagger/tutorials/kubernetes-blue-green)
 
 ### Adopters
@@ -197,16 +198,16 @@ For more details on how the canary analysis and promotion works please [read the
 
 **Ingress**
 
-| Feature                                   | Contour            | Gloo               | NGINX              | Skipper            | Traefik            |
-|-------------------------------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
-| Canary deployments (weighted traffic)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies routing) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Blue/Green deployments (traffic switch)   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Webhooks (acceptance/load testing)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Manual gating (approve/pause/resume)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: |
-| Request duration check (L7 metric)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: |
-| Custom metric checks                      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Feature                                   | Contour            | Gloo               | NGINX              | Skipper            | Traefik            | Apache APISIX      |
+|-------------------------------------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
+| Canary deployments (weighted traffic)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| A/B testing (headers and cookies routing) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Webhooks (acceptance/load testing)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request duration check (L7 metric)        | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Custom metric checks                      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 **Networking Interface**
 
