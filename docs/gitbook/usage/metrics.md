@@ -184,11 +184,23 @@ as the `MetricTemplate` with the basic-auth credentials:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: prom-basic-auth
+  name: prom-auth
   namespace: flagger
 data:
   username: your-user
   password: your-password
+```
+
+or if you require bearer token authentication (via a SA token):
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prom-auth
+  namespace: flagger
+data:
+  token: ey1234...
 ```
 
 Then reference the secret in the `MetricTemplate`:
@@ -204,7 +216,7 @@ spec:
     type: prometheus
     address: http://prometheus.monitoring:9090
     secretRef:
-      name: prom-basic-auth
+      name: prom-auth
 ```
 
 ## Datadog
