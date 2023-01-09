@@ -19,7 +19,7 @@ linkerd viz install | kubectl apply -f -
 Install Flagger in the linkerd namespace:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/linkerd
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/linkerd
 ```
 
 ## Bootstrap
@@ -470,4 +470,3 @@ Events:
 ```
 
 The above procedure can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
-

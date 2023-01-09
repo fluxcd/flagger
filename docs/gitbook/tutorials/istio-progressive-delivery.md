@@ -20,7 +20,7 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/sampl
 Install Flagger in the `istio-system` namespace:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/istio
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/istio
 ```
 
 Create an ingress gateway to expose the demo app outside of the mesh:
@@ -164,12 +164,12 @@ When the canary analysis starts, Flagger will call the pre-rollout webhooks befo
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo
 
-# generated 
+# generated
 deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
@@ -428,7 +428,7 @@ spec:
     threshold: 5
     # total number of iterations
     iterations: 10
-    # enable traffic shadowing 
+    # enable traffic shadowing
     mirror: true
     # weight of the traffic mirrored to your canary (defaults to 100%)
     mirrorWeight: 100
@@ -479,4 +479,3 @@ With the above configuration, Flagger will run a canary release with the followi
 * send notification with the canary analysis result
 
 The above procedure can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
-

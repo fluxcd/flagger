@@ -24,7 +24,7 @@ kubectl apply -k github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.0
 Install Flagger in the `flagger-system` namespace:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/gatewayapi
+kubectl apply -k https://github.com/fluxcd/flagger//kustomize/gatewayapi
 ```
 
 Create a `GatewayClass` that specifies information about the Gateway controller:
@@ -227,12 +227,12 @@ When the canary analysis starts, Flagger will call the pre-rollout webhooks befo
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo
 
-# generated 
+# generated
 deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
