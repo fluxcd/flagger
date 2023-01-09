@@ -43,7 +43,7 @@ EOF
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
@@ -150,7 +150,7 @@ kubectl apply -f ./podinfo-canary.yaml
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo

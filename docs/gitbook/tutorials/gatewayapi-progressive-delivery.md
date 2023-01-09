@@ -24,7 +24,7 @@ kubectl apply -k github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.0
 Install Flagger in the `flagger-system` namespace:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/gatewayapi
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/gatewayapi
 ```
 
 Create a `GatewayClass` that specifies information about the Gateway controller:
@@ -70,13 +70,13 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/tester?ref=main
 ```
 
 Create metric templates targeting the Prometheus server in the `flagger-system` namespace. The PromQL queries below are meant for `Envoy`, but you can [change it to your ingress/mesh provider](https://docs.flagger.app/faq#metrics) accordingly.

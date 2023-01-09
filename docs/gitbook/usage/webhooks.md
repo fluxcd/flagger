@@ -85,7 +85,7 @@ Webhook payload (HTTP POST):
 {
     "name": "podinfo",
     "namespace": "test",
-    "phase": "Progressing", 
+    "phase": "Progressing",
     "metadata": {
         "test":  "all",
         "token":  "16688eb5e9f289f1991c"
@@ -115,7 +115,7 @@ Event payload (HTTP POST):
 }
 ```
 
-The event receiver can create alerts based on the received phase 
+The event receiver can create alerts based on the received phase
 (possible values: `Initialized`, `Waiting`, `Progressing`, `Promoting`, `Finalising`, `Succeeded` or `Failed`).
 
 ## Load Testing
@@ -133,7 +133,7 @@ that generates traffic during analysis when configured as a webhook.
 First you need to deploy the load test runner in a namespace with sidecar injection enabled:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/tester?ref=main
 ```
 
 Or by using Helm:
@@ -256,7 +256,7 @@ and prevent duplicate requests from being sent in subsequent analysis loops.
 
 ### K6 Load Tester
 
-You can also delegate load testing to a third-party webhook. An example of this is the [`k6 webhook`](https://github.com/grafana/flagger-k6-webhook). This webhook uses [`k6`](https://k6.io/), a very featureful load tester, to run load or smoke tests on canaries. For all features available, see the source repository. 
+You can also delegate load testing to a third-party webhook. An example of this is the [`k6 webhook`](https://github.com/grafana/flagger-k6-webhook). This webhook uses [`k6`](https://k6.io/), a very featureful load tester, to run load or smoke tests on canaries. For all features available, see the source repository.
 
 Here's an example integrating this webhook as a `pre-rollout` step, to load test a service before any traffic is sent to it:
 
@@ -531,7 +531,7 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "watch", "list", "update"]
-  # choose the permission based on helm test type (Pod or Job) 
+  # choose the permission based on helm test type (Pod or Job)
   - apiGroups: [""]
     resources: ["pods", "pods/log"]
     verbs: ["create", "list", "delete", "watch"]

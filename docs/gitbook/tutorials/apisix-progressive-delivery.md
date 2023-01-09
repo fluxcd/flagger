@@ -51,7 +51,7 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
@@ -168,13 +168,13 @@ kubectl apply -f ./podinfo-canary.yaml
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 apisixroute/podinfo
 canary.flagger.app/podinfo
 
-# generated 
+# generated
 deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
@@ -348,4 +348,3 @@ The above configuration validates the canary by checking if the HTTP 404 req/sec
 
 
 The above procedures can be extended with more [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
-

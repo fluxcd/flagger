@@ -53,7 +53,7 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the analysis:
@@ -97,7 +97,7 @@ spec:
     threshold: 2
     # number of checks to run before rollback
     iterations: 10
-    # Prometheus checks based on 
+    # Prometheus checks based on
     # http_request_duration_seconds histogram
     metrics:
       - name: request-success-rate
@@ -140,12 +140,12 @@ kubectl apply -f ./podinfo-canary.yaml
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo
 
-# generated 
+# generated
 deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
@@ -370,4 +370,3 @@ Add a helm test pre-rollout hook to your chart:
 When the canary analysis starts, Flagger will call the pre-rollout webhooks. If the helm test fails, Flagger will retry until the analysis threshold is reached and the canary is rolled back.
 
 For an in-depth look at the analysis process read the [usage docs](../usage/how-it-works.md).
-

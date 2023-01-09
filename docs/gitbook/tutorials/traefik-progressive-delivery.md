@@ -50,7 +50,7 @@ kubectl create ns test
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
@@ -166,12 +166,12 @@ kubectl apply -f ./podinfo-canary.yaml
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo
 
-# generated 
+# generated
 deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
@@ -367,4 +367,3 @@ Canary failed! Scaling down podinfo.test
 If you have [alerting](../usage/alerting.md) configured, Flagger will send a notification with the reason why the canary failed.
 
 For an in-depth look at the analysis process read the [usage docs](../usage/how-it-works.md).
-

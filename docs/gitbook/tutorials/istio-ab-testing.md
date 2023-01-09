@@ -21,7 +21,7 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/sampl
 Install Flagger in the `istio-system` namespace:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/istio
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/istio
 ```
 
 Create an ingress gateway to expose the demo app outside of the mesh:
@@ -56,13 +56,13 @@ kubectl label namespace test istio-injection=enabled
 Create a deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/podinfo?ref=main
 ```
 
 Deploy the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/tester?ref=main
 ```
 
 Create a canary custom resource \(replace example.com with your own domain\):

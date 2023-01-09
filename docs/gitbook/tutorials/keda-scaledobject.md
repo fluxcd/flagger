@@ -28,7 +28,7 @@ helm upgrade -i flagger flagger/flagger \
 
 ## Bootstrap
 
-Flagger takes a Kubernetes deployment and a KEDA ScaledObject targeting the deployment. It then creates a series of objects 
+Flagger takes a Kubernetes deployment and a KEDA ScaledObject targeting the deployment. It then creates a series of objects
 (Kubernetes deployments, ClusterIP services and another KEDA ScaledObject targeting the created Deployment).
 These objects expose the application inside the mesh and drive the Canary analysis and Blue/Green promotion.
 
@@ -47,7 +47,7 @@ kubectl apply -n test -f https://raw.githubusercontent.com/fluxcd/flagger/main/k
 Deploy the load testing service to generate traffic during the analysis:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/tester?ref=main
 ```
 
 Create a ScaledObject which targets the `podinfo` deployment and uses Prometheus as a trigger:
@@ -95,7 +95,7 @@ spec:
     kind: ScaledObject
     # ScaledObject targeting the canary deployment
     name: podinfo-so
-    # Mapping between trigger names and the related query to use for the generated 
+    # Mapping between trigger names and the related query to use for the generated
     # ScaledObject targeting the primary deployment. (Optional)
     primaryScalerQueries:
       prom-trigger: sum(rate(http_requests_total{ app="podinfo-primary" }[30s]))
@@ -114,7 +114,7 @@ spec:
     threshold: 5
     # number of checks to run before promotion
     iterations: 5
-    # Prometheus checks based on 
+    # Prometheus checks based on
     # http_request_duration_seconds histogram
     metrics:
       - name: request-success-rate
@@ -163,14 +163,14 @@ By default, Flagger will try to guess the query to use for the primary ScaledObj
 with `{.spec.targetRef.Name}-primary`, for all triggers.
 For eg, if your ScaledObject has a trigger query defined as: `sum(rate(http_requests_total{ app="podinfo" }[30s]))` or `sum(rate(http_requests_total{ app="podinfo-primary" }[30s]))`, then the primary ScaledObject will have the same trigger with a query defined as `sum(rate(http_requests_total{ app="podinfo-primary" }[30s]))`.
 
-If, the generated query does not meet your requirements, you can specify the query for autoscaling the primary deployment explicitly using 
+If, the generated query does not meet your requirements, you can specify the query for autoscaling the primary deployment explicitly using
 `.spec.autoscalerRef.primaryScalerQueries`, which lets you define a query for each trigger. Please note that, your ScaledObject's `.spec.triggers[@].name` must
 not be blank, as Flagger needs that to identify each trigger uniquely.
 
 After the boostrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test` will be routed to the primary pods. To keep the podinfo deployment
 at 0 replicas and pause auto scaling, Flagger will add an annotation to your ScaledObject: `autoscaling.keda.sh/paused-replicas: 0`.
 During the canary analysis, the annotation is removed, to enable auto scaling for the podinfo deployment.
-The `podinfo-canary.test` address can be used to target directly the canary pods. 
+The `podinfo-canary.test` address can be used to target directly the canary pods.
 When the canary analysis starts, Flagger will call the pre-rollout webhooks before routing traffic to the canary. The Blue/Green deployment will run for five iterations while validating the HTTP metrics and rollout hooks every 15 seconds.
 
 

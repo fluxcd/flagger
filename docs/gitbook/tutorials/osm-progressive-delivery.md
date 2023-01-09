@@ -17,19 +17,19 @@ OSM must have permissive traffic policy enabled and have an instance of Promethe
     --set=OpenServiceMesh.enablePermissiveTrafficPolicy=true
     ```
 - If a managed instance of OSM is being used:
-  - [Bring your own instance](docs.openservicemesh.io/docs/guides/observability/metrics/#byo-prometheus) of Prometheus, 
+  - [Bring your own instance](docs.openservicemesh.io/docs/guides/observability/metrics/#byo-prometheus) of Prometheus,
     setting the namespace to match the managed OSM controller namespace
   - Enable permissive traffic policy after installation by updating the OSM MeshConfig resource:
     ```bash
     # Replace <osm-namespace> with OSM controller's namespace
     kubectl patch meshconfig osm-mesh-config -n <osm-namespace> -p '{"spec":{"traffic":{"enablePermissiveTrafficPolicyMode":true}}}' --type=merge
-    ```   
+    ```
 
 To install Flagger in the default `osm-system` namespace, use:
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/osm?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/osm?ref=main
 ```
-    
+
 Alternatively, if a non-default namespace or managed instance of OSM is in use, install Flagger with Helm, replacing the <osm-namespace>
 values as appropriate. If a custom instance of Prometheus is being used, replace `osm-prometheus` with the relevant Prometheus service name.
 ```bash
@@ -56,13 +56,13 @@ osm metrics enable --namespace test
 Create a `podinfo` deployment and a horizontal pod autoscaler:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/podinfo?ref=main
 ```
 
 Install the load testing service to generate traffic during the canary analysis:
 
 ```bash
-kubectl apply -k https://github.com/fluxcd/flagger//kustomize/tester?ref=main
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/tester?ref=main
 ```
 
 Create a canary custom resource for the `podinfo` deployment.
