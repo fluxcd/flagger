@@ -46,6 +46,20 @@ func Test_reconcilePrimaryScaledObject(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int(*primarySO.Spec.PollingInterval), 20)
 	assert.Equal(t, primarySO.Spec.Triggers[0].Metadata["query"], `sum(rate(http_requests_total{app="podinfo-primary"}[10m]))`)
+
+	// Test reconcile with PrimaryScaledObjectOverride
+	mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas = &flaggerv1.ScalerReplicas{
+		MinReplicas: int32p(2),
+		MaxReplicas: int32p(15),
+	}
+	err = soReconciler.reconcilePrimaryScaler(mocks.canary, false)
+	require.NoError(t, err)
+
+	primarySO, err = mocks.flaggerClient.KedaV1alpha1().ScaledObjects("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, int(*primarySO.Spec.PollingInterval), 20)
+	assert.Equal(t, primarySO.Spec.MinReplicaCount, mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas.MinReplicas)
+	assert.Equal(t, primarySO.Spec.MaxReplicaCount, mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas.MaxReplicas)
 }
 
 func Test_pauseScaledObject(t *testing.T) {

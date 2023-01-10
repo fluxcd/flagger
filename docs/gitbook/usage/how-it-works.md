@@ -68,6 +68,9 @@ spec:
     apiVersion: autoscaling/v2beta2
     kind: HorizontalPodAutoscaler
     name: podinfo
+    primaryScalerReplicas:
+      minReplicas: 2
+      maxReplicas: 5
 ```
 
 Based on the above configuration, Flagger generates the following Kubernetes objects:
@@ -79,6 +82,11 @@ The primary deployment is considered the stable release of your app,
 by default all traffic is routed to this version and the target deployment is scaled to zero.
 Flagger will detect changes to the target deployment (including secrets and configmaps)
 and will perform a canary analysis before promoting the new version as primary.
+
+Use `.spec.autoscalerRef.primaryScalerReplicas` to override the replica scaling
+configuration for the generated primary HorizontalPodAutoscaler. This is useful
+for situations when you want to have a different scaling configuration for the
+primary workload as opposed to using the same values from the original workload HorizontalPodAutoscaler. 
 
 **Note** that the target deployment must have a single label selector in the format `app: <DEPLOYMENT-NAME>`:
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	hpav2 "k8s.io/api/autoscaling/v2"
@@ -73,6 +74,19 @@ func Test_reconcilePrimaryHpaV2(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int(*primaryHPA.Spec.Metrics[0].Resource.Target.AverageUtilization), 50)
 	assert.Equal(t, int(primaryHPA.Spec.MaxReplicas), 10)
+
+	// Test reconcile with PrimaryHorizontalPodAutoscalerOverride
+	mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas = &flaggerv1.ScalerReplicas{
+		MinReplicas: int32p(2),
+		MaxReplicas: int32p(15),
+	}
+	err = hpaReconciler.reconcilePrimaryHpaV2(mocks.canary, hpa, false)
+	require.NoError(t, err)
+
+	primaryHPA, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, primaryHPA.Spec.MinReplicas, mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas.MinReplicas)
+	assert.Equal(t, primaryHPA.Spec.MaxReplicas, *mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas.MaxReplicas)
 }
 
 func Test_reconcilePrimaryHpaV2Beta2(t *testing.T) {
@@ -105,4 +119,17 @@ func Test_reconcilePrimaryHpaV2Beta2(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int(*primaryHPA.Spec.Metrics[0].Resource.Target.AverageUtilization), 50)
 	assert.Equal(t, int(primaryHPA.Spec.MaxReplicas), 10)
+
+	// Test reconcile with PrimaryHorizontalPodAutoscalerOverride
+	mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas = &flaggerv1.ScalerReplicas{
+		MinReplicas: int32p(2),
+		MaxReplicas: int32p(15),
+	}
+	err = hpaReconciler.reconcilePrimaryHpaV2Beta2(mocks.canary, hpa, false)
+	require.NoError(t, err)
+
+	primaryHPA, err = mocks.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, primaryHPA.Spec.MinReplicas, mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas.MinReplicas)
+	assert.Equal(t, primaryHPA.Spec.MaxReplicas, *mocks.canary.Spec.AutoscalerRef.PrimaryScalerReplicas.MaxReplicas)
 }

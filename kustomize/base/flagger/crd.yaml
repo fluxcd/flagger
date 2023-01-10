@@ -121,6 +121,13 @@ spec:
                       type: object
                       additionalProperties:
                         type: string
+                    primaryScalerReplicas:
+                      type: object
+                      properties:
+                        minReplicas:
+                          type: number
+                        maxReplicas:
+                          type: number
                 ingressRef:
                   description: Ingress selector
                   type: object
