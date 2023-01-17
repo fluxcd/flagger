@@ -63,6 +63,16 @@ func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, 
 		Fallback:         targetSoClone.Spec.Fallback,
 		IdleReplicaCount: targetSoClone.Spec.IdleReplicaCount,
 	}
+
+	if replicas := cd.Spec.AutoscalerRef.PrimaryScalerReplicas; replicas != nil {
+		if minReplicas := replicas.MinReplicas; minReplicas != nil {
+			soSpec.MinReplicaCount = minReplicas
+		}
+		if maxReplicas := replicas.MaxReplicas; maxReplicas != nil {
+			soSpec.MaxReplicaCount = maxReplicas
+		}
+	}
+
 	primarySoName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
 	primarySo, err := sor.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Get(context.TODO(), primarySoName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {

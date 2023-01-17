@@ -99,6 +99,11 @@ spec:
     # ScaledObject targeting the primary deployment. (Optional)
     primaryScalerQueries:
       prom-trigger: sum(rate(http_requests_total{ app="podinfo-primary" }[30s]))
+    # Overriding replica scaling configuration for the generated ScaledObject
+    # targeting the primary deployment. (Optional)
+    primaryScalerReplicas:
+      minReplicas: 2
+      maxReplicas: 5
   # the maximum time in seconds for the canary deployment
   # to make progress before rollback (default 600s)
   progressDeadlineSeconds: 60
@@ -166,6 +171,9 @@ For eg, if your ScaledObject has a trigger query defined as: `sum(rate(http_requ
 If, the generated query does not meet your requirements, you can specify the query for autoscaling the primary deployment explicitly using 
 `.spec.autoscalerRef.primaryScalerQueries`, which lets you define a query for each trigger. Please note that, your ScaledObject's `.spec.triggers[@].name` must
 not be blank, as Flagger needs that to identify each trigger uniquely.
+
+In the situation when it is desired to have different scaling replica configuration between the canary and primary deployment ScaledObject you can use
+the `.spec.autoscalerRef.primaryScalerReplicas` to override these values for the generated primary ScaledObject.
 
 After the boostrap, the podinfo deployment will be scaled to zero and the traffic to `podinfo.test` will be routed to the primary pods. To keep the podinfo deployment
 at 0 replicas and pause auto scaling, Flagger will add an annotation to your ScaledObject: `autoscaling.keda.sh/paused-replicas: 0`.

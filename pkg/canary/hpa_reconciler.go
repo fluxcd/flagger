@@ -77,6 +77,15 @@ func (hr *HPAReconciler) reconcilePrimaryHpaV2(cd *flaggerv1.Canary, hpa *hpav2.
 		Behavior:    hpa.Spec.Behavior,
 	}
 
+	if replicas := cd.Spec.AutoscalerRef.PrimaryScalerReplicas; replicas != nil {
+		if minReplicas := replicas.MinReplicas; minReplicas != nil {
+			hpaSpec.MinReplicas = minReplicas
+		}
+		if maxReplicas := replicas.MaxReplicas; maxReplicas != nil {
+			hpaSpec.MaxReplicas = *maxReplicas
+		}
+	}
+
 	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
 	primaryHpa, err := hr.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
 
@@ -159,6 +168,15 @@ func (hr *HPAReconciler) reconcilePrimaryHpaV2Beta2(cd *flaggerv1.Canary, hpa *h
 		MaxReplicas: hpa.Spec.MaxReplicas,
 		Metrics:     hpa.Spec.Metrics,
 		Behavior:    hpa.Spec.Behavior,
+	}
+
+	if replicas := cd.Spec.AutoscalerRef.PrimaryScalerReplicas; replicas != nil {
+		if minReplicas := replicas.MinReplicas; minReplicas != nil {
+			hpaSpec.MinReplicas = minReplicas
+		}
+		if maxReplicas := replicas.MaxReplicas; maxReplicas != nil {
+			hpaSpec.MaxReplicas = *maxReplicas
+		}
 	}
 
 	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)

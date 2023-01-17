@@ -447,6 +447,19 @@ type AutoscalerRefernce struct {
 	// scaler, if a scaler supports scaling using queries.
 	// +optional
 	PrimaryScalerQueries map[string]string `json:"primaryScalerQueries"`
+
+	// PrimaryScalerReplicas defines overrides for the primary
+	// autoscaler replicas.
+	// +optional
+	PrimaryScalerReplicas *ScalerReplicas `json:"primaryScalerReplicas,omitempty"`
+}
+
+// ScalerReplicas holds overrides for autoscaler replicas
+type ScalerReplicas struct {
+	// +optional
+	MinReplicas *int32 `json:"minReplicas,omitempty"`
+	// +optional
+	MaxReplicas *int32 `json:"maxReplicas,omitempty"`
 }
 
 // CustomMetadata holds labels and annotations to set on generated objects.
