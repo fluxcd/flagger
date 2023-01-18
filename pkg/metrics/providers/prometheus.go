@@ -41,6 +41,7 @@ type PrometheusProvider struct {
 	url      url.URL
 	username string
 	password string
+	token    string
 	client   *http.Client
 }
 
@@ -56,7 +57,7 @@ type prometheusResponse struct {
 }
 
 // NewPrometheusProvider takes a provider spec and the credentials map,
-// validates the address, extracts the username and password values if provided and
+// validates the address, extracts the bearer token or username and password values if provided and
 // returns a Prometheus client ready to execute queries against the API
 func NewPrometheusProvider(provider flaggerv1.MetricTemplateProvider, credentials map[string][]byte) (*PrometheusProvider, error) {
 	promURL, err := url.Parse(provider.Address)
@@ -77,16 +78,21 @@ func NewPrometheusProvider(provider flaggerv1.MetricTemplateProvider, credential
 	}
 
 	if provider.SecretRef != nil {
-		if username, ok := credentials["username"]; ok {
-			prom.username = string(username)
+		if token, ok := credentials["token"]; ok {
+			prom.token = string(token)
 		} else {
-			return nil, fmt.Errorf("%s credentials does not contain a username", provider.Type)
-		}
 
-		if password, ok := credentials["password"]; ok {
-			prom.password = string(password)
-		} else {
-			return nil, fmt.Errorf("%s credentials does not contain a password", provider.Type)
+			if username, ok := credentials["username"]; ok {
+				prom.username = string(username)
+			} else {
+				return nil, fmt.Errorf("%s credentials does not contain a username", provider.Type)
+			}
+
+			if password, ok := credentials["password"]; ok {
+				prom.password = string(password)
+			} else {
+				return nil, fmt.Errorf("%s credentials does not contain a password", provider.Type)
+			}
 		}
 	}
 
@@ -109,7 +115,9 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 		return 0, fmt.Errorf("http.NewRequest failed: %w", err)
 	}
 
-	if p.username != "" && p.password != "" {
+	if p.token != "" {
+		req.Header.Add("Authorization", "Bearer "+p.token)
+	} else if p.username != "" && p.password != "" {
 		req.SetBasicAuth(p.username, p.password)
 	}
 
