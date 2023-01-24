@@ -106,9 +106,9 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 		primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
 		primaryCopy.Spec.Strategy = canary.Spec.Strategy
 		// update replica if hpa isn't set
-		if cd.Spec.AutoscalerRef == nil {
-			primaryCopy.Spec.Replicas = canary.Spec.Replicas
-		}
+		// if cd.Spec.AutoscalerRef == nil {
+		//	primaryCopy.Spec.Replicas = canary.Spec.Replicas
+		// }
 
 		// update spec with primary secrets and config maps
 		primaryCopy.Spec.Template.Spec = c.getPrimaryDeploymentTemplateSpec(canary, configRefs)
