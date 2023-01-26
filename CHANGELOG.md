@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.28.0
+
+**Release date:** 2023-01-26
+
+This release comes with support for setting a different autoscaling
+configuration for the primary workload.
+The `.spec.autoscalerRef.primaryScalerReplicas` is useful in the
+situation where the user does not want to scale the canary workload
+to the exact same size as the primary, especially when opting for a
+canary deployment pattern where only a small portion of traffic is
+routed to the canary workload pods.
+
+#### Improvements
+
+- Support for overriding primary scaler replicas
+  [#1343](https://github.com/fluxcd/flagger/pull/1343)
+- Allow access to Prometheus in OpenShift via SA token
+  [#1338](https://github.com/fluxcd/flagger/pull/1338)
+- Update Kubernetes packages to v1.26.1
+  [#1352](https://github.com/fluxcd/flagger/pull/1352)
+
 ## 1.27.0
 
 **Release date:** 2022-12-15
