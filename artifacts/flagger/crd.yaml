@@ -970,6 +970,11 @@ spec:
                               namespace:
                                 description: Namespace of this metric template
                                 type: string
+                          templateVariables:
+                            description: Additional variables to be used in the metrics query (key-value pairs)
+                            type: object
+                            additionalProperties:
+                              type: string
                     alerts:
                       description: Alert list for this canary analysis
                       type: array

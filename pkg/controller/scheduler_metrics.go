@@ -268,6 +268,8 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 			}
 
 			query, err := observers.RenderQuery(template.Spec.Query, toMetricModel(canary, metric.Interval, metric.TemplateVariables))
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, namespace)).
+				Debugf("Metric template %s.%s query: %s", metric.TemplateRef.Name, namespace, query)
 			if err != nil {
 				c.recordEventErrorf(canary, "Metric template %s.%s query render error: %v",
 					metric.TemplateRef.Name, namespace, err)
