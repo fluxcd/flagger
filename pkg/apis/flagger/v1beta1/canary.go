@@ -304,6 +304,10 @@ type CanaryMetric struct {
 	// TemplateRef references a metric template object
 	// +optional
 	TemplateRef *CrossNamespaceObjectReference `json:"templateRef,omitempty"`
+
+	// TemplateVariables provides a map of key/value pairs to be used on a metric template object
+	// +optional
+	TemplateVariables map[string]string `json:"variables,omitempty"`
 }
 
 // CanaryThresholdRange defines the range used for metrics validation
