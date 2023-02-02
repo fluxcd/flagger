@@ -27,8 +27,8 @@ jobs:
           VERSION=$(grep 'VERSION' pkg/version/version.go | awk '{ print $4 }' | tr -d '"')
           CHANGELOG="https://github.com/fluxcd/flagger/blob/main/CHANGELOG.md#$(echo $VERSION | tr -d '.')"
           echo "[CHANGELOG](${CHANGELOG})" > notes.md
-          echo ::set-output name=BUILD_DATE::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          echo ::set-output name=VERSION::${VERSION}
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
       - name: Setup Docker Buildx
@@ -51,6 +51,8 @@ jobs:
       - name: Publish image
         uses: docker/build-push-action@v3
         with:
+          sbom: true
+          provenance: true
           push: true
           builder: ${{ steps.buildx.outputs.name }}
           context: .

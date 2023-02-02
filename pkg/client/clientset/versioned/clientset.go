@@ -63,8 +63,7 @@ type Interface interface {
 	TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	apisixV2           *apisixv2.ApisixV2Client
