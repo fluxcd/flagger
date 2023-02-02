@@ -69,7 +69,7 @@ type MetricTemplateProvider struct {
 
 	// Secret reference containing the provider credentials
 	// +optional
-	SecretRef *corev1.LocalObjectReference `json:"secretRef,omitempty"`
+	SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
 
 	// Region of the provider
 	// +optional

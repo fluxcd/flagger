@@ -1210,6 +1210,9 @@ spec:
                         name:
                           description: Name of the Kubernetes secret
                           type: string
+                        namespace:
+                          description: Namespace where the Kubernetes secret lives
+                          type: string
                     region:
                       description: Region of the provider
                       type: string

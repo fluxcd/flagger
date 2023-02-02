@@ -65,7 +65,13 @@ func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) e
 
 			var credentials map[string][]byte
 			if template.Spec.Provider.SecretRef != nil {
-				secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), template.Spec.Provider.SecretRef.Name, metav1.GetOptions{})
+
+				var secretNamespace string = template.Spec.Provider.SecretRef.Namespace
+
+				if secretNamespace == "" {
+					secretNamespace = namespace
+				}
+				secret, err := c.kubeClient.CoreV1().Secrets(secretNamespace).Get(context.TODO(), template.Spec.Provider.SecretRef.Name, metav1.GetOptions{})
 				if err != nil {
 					return fmt.Errorf("metric template %s.%s secret %s error: %v",
 						metric.TemplateRef.Name, namespace, template.Spec.Provider.SecretRef.Name, err)
