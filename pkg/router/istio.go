@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -443,10 +444,11 @@ func (ir *IstioRouter) SetRoutes(
 				weightedRoute.Route[i] = routeDest
 			}
 
+			cookieKeyAndVal := strings.Split(canary.Status.SessionAffinityCookie, "=")
 			cookieMatch := istiov1alpha3.HTTPMatchRequest{
 				Headers: map[string]istiov1alpha1.StringMatch{
 					cookieHeader: {
-						Exact: canary.Status.SessionAffinityCookie,
+						Regex: fmt.Sprintf(".*%s.*%s.*", cookieKeyAndVal[0], cookieKeyAndVal[1]),
 					},
 				},
 			}
@@ -465,10 +467,11 @@ func (ir *IstioRouter) SetRoutes(
 
 			// Match against the previous session cookie and delete that cookie
 			if previousCookie != "" {
+				cookieKeyAndVal := strings.Split(previousCookie, "=")
 				cookieMatch := istiov1alpha3.HTTPMatchRequest{
 					Headers: map[string]istiov1alpha1.StringMatch{
 						cookieHeader: {
-							Exact: previousCookie,
+							Regex: fmt.Sprintf(".*%s.*%s.*", cookieKeyAndVal[0], cookieKeyAndVal[1]),
 						},
 					},
 				}
