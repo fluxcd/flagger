@@ -37,6 +37,7 @@ After installing Flagger, you can follow one of these tutorials to get started:
 * [Istio](tutorials/istio-progressive-delivery.md)
 * [Linkerd](tutorials/linkerd-progressive-delivery.md)
 * [AWS App Mesh](tutorials/appmesh-progressive-delivery.md)
+* [AWS App Mesh: Canary Deployment Using Flagger](https://www.eksworkshop.com/advanced/340_appmesh_flagger/)
 * [Open Service Mesh](tutorials/osm-progressive-delivery.md)
 * [Kuma](tutorials/kuma-progressive-delivery.md)
 
