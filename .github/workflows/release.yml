@@ -3,6 +3,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'image tag prefix'
+        default: 'rc'
+        required: true
 
 permissions:
   contents: read
@@ -24,7 +30,11 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          VERSION=$(grep 'VERSION' pkg/version/version.go | awk '{ print $4 }' | tr -d '"')
+          if [[ ${GITHUB_EVENT_NAME} = "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.tag }}-${GITHUB_SHA::8}"
+          else
+            VERSION=$(grep 'VERSION' pkg/version/version.go | awk '{ print $4 }' | tr -d '"')
+          fi
           CHANGELOG="https://github.com/fluxcd/flagger/blob/main/CHANGELOG.md#$(echo $VERSION | tr -d '.')"
           echo "[CHANGELOG](${CHANGELOG})" > notes.md
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
@@ -68,6 +78,7 @@ jobs:
         run: |
           cosign sign ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
       - name: Publish Helm charts
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: stefanprodan/helm-gh-pages@v1.7.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -77,6 +88,7 @@ jobs:
         with:
           version: 3.10.1
       - name: Publish signed Helm chart to GHCR
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
@@ -85,6 +97,7 @@ jobs:
           cosign sign ghcr.io/fluxcd/charts/flagger:${{ steps.prep.outputs.VERSION }}
           rm flagger-${{ steps.prep.outputs.VERSION }}.tgz
       - name: Publish signed manifests to GHCR
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
@@ -96,6 +109,7 @@ jobs:
       - uses: anchore/sbom-action/download-syft@v0
       - name: Create release and SBOM
         uses: goreleaser/goreleaser-action@v4
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           version: latest
           args: release --release-notes=notes.md --rm-dist --skip-validate
