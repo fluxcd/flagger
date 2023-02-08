@@ -82,13 +82,14 @@ type MetricTemplateProvider struct {
 
 // MetricTemplateModel is the query template model
 type MetricTemplateModel struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Target    string `json:"target"`
-	Service   string `json:"service"`
-	Ingress   string `json:"ingress"`
-	Route     string `json:"route"`
-	Interval  string `json:"interval"`
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
+	Target    string            `json:"target"`
+	Service   string            `json:"service"`
+	Ingress   string            `json:"ingress"`
+	Route     string            `json:"route"`
+	Interval  string            `json:"interval"`
+	Variables map[string]string `json:"variables"`
 }
 
 // TemplateFunctions returns a map of functions, one for each model field
@@ -101,6 +102,7 @@ func (mtm *MetricTemplateModel) TemplateFunctions() template.FuncMap {
 		"ingress":   func() string { return mtm.Ingress },
 		"route":     func() string { return mtm.Route },
 		"interval":  func() string { return mtm.Interval },
+		"variables": func() map[string]string { return mtm.Variables },
 	}
 }
 

@@ -19,6 +19,7 @@ package controller
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"k8s.io/client-go/tools/record"
@@ -80,5 +81,30 @@ func TestController_checkMetricProviderAvailability(t *testing.T) {
 			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
 		}
 		require.NoError(t, ctrl.checkMetricProviderAvailability(canary))
+	})
+}
+
+func TestController_runMetricChecks(t *testing.T) {
+	t.Run("customVariables", func(t *testing.T) {
+		ctrl := newDeploymentFixture(nil).ctrl
+		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
+			Name: "", TemplateVariables: map[string]string{
+				"first":  "abc",
+				"second": "def",
+			},
+			TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
+				Name:      "custom-vars",
+				Namespace: "default",
+			},
+			ThresholdRange: &flaggerv1.CanaryThresholdRange{
+				Min: toFloatPtr(0),
+				Max: toFloatPtr(100),
+			},
+		}}}
+		canary := &flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
+		}
+		assert.Equal(t, true, ctrl.runMetricChecks(canary))
 	})
 }

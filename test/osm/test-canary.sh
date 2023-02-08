@@ -22,7 +22,7 @@ spec:
             rate(
                 osm_request_duration_ms_bucket{
                     destination_namespace="{{ namespace }}",
-                    destination_kind="Deployment",
+                    destination_kind="{{ variables.destination_kind }}",
                     destination_name=~"{{ target }}"
                 }[{{ interval }}]
             )
@@ -67,6 +67,8 @@ spec:
         namespace: osm-system
       threshold: 300
       interval: 1m
+      templateVariables:
+        destination_kind: Deployment
     webhooks:
       - name: acceptance-test
         type: pre-rollout
@@ -184,6 +186,8 @@ spec:
         namespace: osm-system
       threshold: 300
       interval: 1m
+      templateVariables:
+        destination_kind: Deployment
     webhooks:
       - name: acceptance-test
         type: pre-rollout

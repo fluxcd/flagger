@@ -49,7 +49,7 @@ spec:
           http_request_duration_seconds_bucket{
             kubernetes_namespace="{{ namespace }}",
             kubernetes_pod_name=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
-            path="root"
+            path="{{ variables.path }}"
           }[{{ interval }}]
         )
       ) by (le)
@@ -92,6 +92,8 @@ spec:
       thresholdRange:
         max: 0.5
       interval: 30s
+      templateVariables:
+        path: root
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
@@ -229,6 +231,8 @@ spec:
       thresholdRange:
         max: 0.5
       interval: 30s
+      templateVariables:
+        path: root
     webhooks:
       - name: test-header-routing
         type: rollout

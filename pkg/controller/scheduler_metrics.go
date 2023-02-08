@@ -135,7 +135,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		}
 
 		if metric.Name == "request-success-rate" {
-			val, err := observer.GetRequestSuccessRate(toMetricModel(canary, metric.Interval))
+			val, err := observer.GetRequestSuccessRate(toMetricModel(canary, metric.Interval, metric.TemplateVariables))
 			if err != nil {
 				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary,
@@ -167,7 +167,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		}
 
 		if metric.Name == "request-duration" {
-			val, err := observer.GetRequestDuration(toMetricModel(canary, metric.Interval))
+			val, err := observer.GetRequestDuration(toMetricModel(canary, metric.Interval, metric.TemplateVariables))
 			if err != nil {
 				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
@@ -199,7 +199,7 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 
 		// in-line PromQL
 		if metric.Query != "" {
-			query, err := observers.RenderQuery(metric.Query, toMetricModel(canary, metric.Interval))
+			query, err := observers.RenderQuery(metric.Query, toMetricModel(canary, metric.Interval, metric.TemplateVariables))
 			val, err := observerFactory.Client.RunQuery(query)
 			if err != nil {
 				if errors.Is(err, providers.ErrNoValuesFound) {
@@ -267,7 +267,9 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 				return false
 			}
 
-			query, err := observers.RenderQuery(template.Spec.Query, toMetricModel(canary, metric.Interval))
+			query, err := observers.RenderQuery(template.Spec.Query, toMetricModel(canary, metric.Interval, metric.TemplateVariables))
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, namespace)).
+				Debugf("Metric template %s.%s query: %s", metric.TemplateRef.Name, namespace, query)
 			if err != nil {
 				c.recordEventErrorf(canary, "Metric template %s.%s query render error: %v",
 					metric.TemplateRef.Name, namespace, err)
@@ -310,7 +312,7 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 	return true
 }
 
-func toMetricModel(r *flaggerv1.Canary, interval string) flaggerv1.MetricTemplateModel {
+func toMetricModel(r *flaggerv1.Canary, interval string, variables map[string]string) flaggerv1.MetricTemplateModel {
 	service := r.Spec.TargetRef.Name
 	if r.Spec.Service.Name != "" {
 		service = r.Spec.Service.Name
@@ -331,5 +333,6 @@ func toMetricModel(r *flaggerv1.Canary, interval string) flaggerv1.MetricTemplat
 		Ingress:   ingress,
 		Route:     route,
 		Interval:  interval,
+		Variables: variables,
 	}
 }
