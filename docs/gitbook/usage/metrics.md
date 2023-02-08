@@ -62,6 +62,7 @@ The following variables are available in query templates:
 * `service` (canary.spec.service.name)
 * `ingress` (canary.spec.ingresRef.name)
 * `interval` (canary.spec.analysis.metrics[].interval)
+* `variables` (canary.spec.analysis.metrics[].templateVariables)
 
 A canary analysis metric can reference a template with `templateRef`:
 
@@ -80,6 +81,50 @@ A canary analysis metric can reference a template with `templateRef`:
           max: 1000
         # metric query time window
         interval: 1m
+```
+
+A canary analysis metric can reference a set of custom variables with `templateVariables`. These variables will be then injected into the query defined in the referred `MetricTemplate` object during canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "my metric"
+        templateRef:
+          name: my-metric
+          namespace: flagger
+        # accepted values
+        thresholdRange:
+          min: 10
+          max: 1000
+        # metric query time window
+        interval: 1m
+        # custom variables used within the referenced metric template
+        templateVariables:
+          direction: inbound
+```
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: my-metric
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    histogram_quantile(
+      0.99,
+      sum(
+        rate(
+          response_latency_ms_bucket{
+            namespace="{{ namespace }}",
+            deployment=~"{{ target }}",
+            direction="{{ variables.direction }}"
+          }[{{ interval }}]
+        )
+      ) by (le)
+    )
 ```
 
 ## Prometheus

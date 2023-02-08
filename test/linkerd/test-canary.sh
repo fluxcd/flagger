@@ -24,7 +24,7 @@ spec:
                 response_latency_ms_bucket{
                     namespace="{{ namespace }}",
                     deployment=~"{{ target }}",
-                    direction="inbound"
+                    direction="{{ variables.direction }}"
                     }[{{ interval }}]
                 )
             ) by (le)
@@ -65,6 +65,8 @@ spec:
         namespace: linkerd
       threshold: 300
       interval: 1m
+      templateVariables:
+        direction: inbound
     webhooks:
       - name: http-acceptance-test
         type: pre-rollout
