@@ -166,7 +166,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		for _, match := range stickyRoute.Match {
 			if val, ok := match.Headers[cookieHeader]; ok {
 				found = true
-				assert.True(t, strings.HasPrefix(val.Exact, cookieKey))
+				assert.True(t, strings.Contains(val.Regex, cookieKey))
 				for _, routeDest := range stickyRoute.Route {
 					if routeDest.Destination.Host == pHost {
 						assert.Equal(t, 0, routeDest.Weight)
@@ -223,7 +223,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		for _, match := range stickyRoute.Match {
 			if val, ok := match.Headers[cookieHeader]; ok {
 				found = true
-				assert.True(t, strings.HasPrefix(val.Exact, cookieKey))
+				assert.True(t, strings.Contains(val.Regex, cookieKey))
 				for _, routeDest := range stickyRoute.Route {
 					if routeDest.Destination.Host == pHost {
 						assert.Equal(t, 0, routeDest.Weight)
@@ -266,7 +266,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		for _, match := range stickyRoute.Match {
 			if val, ok := match.Headers[cookieHeader]; ok {
 				found = true
-				assert.True(t, strings.HasPrefix(val.Exact, cookieKey))
+				assert.True(t, strings.Contains(val.Regex, cookieKey))
 				for _, routeDest := range stickyRoute.Route {
 					if routeDest.Destination.Host == pHost {
 						assert.Equal(t, 100, routeDest.Weight)
