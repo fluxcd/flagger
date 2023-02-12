@@ -126,18 +126,18 @@ func (p *AppDynamicsCloudProvider) RunQuery(query string) (float64, error) {
 		return 0, fmt.Errorf("failed to un-marshaling result: %s.\n error: %w", string(body), err)
 	}
 	if len(anyValue) < 1 {
-		return 0, fmt.Errorf("invalid response: %s: %w", string(body), ErrNoValuesFound)
+		return 0, fmt.Errorf("invalid response for query: %s: %w", query, ErrNoValuesFound)
 	}
 	// actual result (non-meta data) is in the data element of the last item
 	// of the json array
 	data := anyValue[len(anyValue)-1]["data"].([]any)
 	if len(data) < 1 {
-		return 0, fmt.Errorf("invalid response: %s: %w", string(body), ErrNoValuesFound)
+		return 0, fmt.Errorf("metrics not available for query: %s", query)
 	}
 	// nested in the data element of the first item
 	data_data := data[0].([]any)
 	if len(data_data) < 2 {
-		return 0, fmt.Errorf("invalid response: %s: %w", string(body), ErrNoValuesFound)
+		return 0, fmt.Errorf("invalid data item for query: %s", query)
 	}
 	// metrics data is the second element, the first element is the
 	// source, e.g. "sys:derived"
