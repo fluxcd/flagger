@@ -91,6 +91,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	flaggerClient := fakeFlagger.NewSimpleClientset(
 		c,
 		newDeploymentTestMetricTemplate(),
+		newDeploymentTestMetricTemplateCustomVars(),
 		newDeploymentTestAlertProvider(),
 	)
 
@@ -152,6 +153,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	ctrl.flaggerSynced = alwaysReady
 	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
 	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDeploymentTestMetricTemplate())
+	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDeploymentTestMetricTemplateCustomVars())
 	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newDeploymentTestAlertProvider())
 
 	meshRouter := rf.MeshRouter("istio", "")
@@ -741,6 +743,29 @@ func newDeploymentTestMetricTemplate() *flaggerv1.MetricTemplate {
 		Spec: flaggerv1.MetricTemplateSpec{
 			Provider: provider,
 			Query:    `sum(envoy_cluster_upstream_rq{envoy_cluster_name=~"{{ namespace }}_{{ target }}"})`,
+		},
+	}
+	return template
+}
+
+func newDeploymentTestMetricTemplateCustomVars() *flaggerv1.MetricTemplate {
+	provider := flaggerv1.MetricTemplateProvider{
+		Type:    "prometheus",
+		Address: testMetricsServerURL,
+		SecretRef: &corev1.LocalObjectReference{
+			Name: "podinfo-secret-env",
+		},
+	}
+
+	template := &flaggerv1.MetricTemplate{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "custom-vars",
+		},
+		Spec: flaggerv1.MetricTemplateSpec{
+			Provider: provider,
+			Query:    `sum(envoy_cluster_upstream_rq{envoy_cluster_name=~"{{ namespace }}_{{ target }},custom_label!={{ variables.second }}"})`,
 		},
 	}
 	return template

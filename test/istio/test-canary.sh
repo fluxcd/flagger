@@ -22,7 +22,7 @@ spec:
         sum(
             rate(
                 istio_request_duration_milliseconds_bucket{
-                    reporter="destination",
+                    reporter="{{ variables.reporter }}",
                     destination_workload_namespace="{{ namespace }}",
                     destination_workload=~"{{ target }}"
                 }[{{ interval }}]
@@ -75,6 +75,8 @@ spec:
       thresholdRange:
         max: 500
       interval: 1m
+      templateVariables:
+        reporter: destination
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/
@@ -195,6 +197,8 @@ spec:
       thresholdRange:
         max: 500
       interval: 30s
+      templateVariables:
+        reporter: destination
     webhooks:
       - name: http-acceptance-test
         type: pre-rollout
@@ -293,6 +297,8 @@ spec:
       thresholdRange:
         max: 500
       interval: 30s
+      templateVariables:
+        reporter: destination
     webhooks:
       - name: pre
         type: pre-rollout
@@ -376,6 +382,8 @@ spec:
       thresholdRange:
         max: 500
       interval: 30s
+      templateVariables:
+        reporter: destination
     webhooks:
       - name: pre
         type: pre-rollout
@@ -509,6 +517,8 @@ spec:
       thresholdRange:
         max: 500
       interval: 30s
+      templateVariables:
+        reporter: destination
     webhooks:
       - name: pre
         type: pre-rollout

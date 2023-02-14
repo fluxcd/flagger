@@ -26,7 +26,7 @@ import (
 )
 
 func RenderQuery(queryTemplate string, model flaggerv1.MetricTemplateModel) (string, error) {
-	t, err := template.New("tmpl").Funcs(model.TemplateFunctions()).Parse(queryTemplate)
+	t, err := template.New("tmpl").Option("missingkey=error").Funcs(model.TemplateFunctions()).Parse(queryTemplate)
 	if err != nil {
 		return "", fmt.Errorf("template parsing failed: %w", err)
 	}
