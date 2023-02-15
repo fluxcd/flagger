@@ -1203,6 +1203,7 @@ spec:
                         - newrelic
                         - graphite
                         - dynatrace
+                        - skywalking
                     address:
                       description: API address of this provider
                       type: string

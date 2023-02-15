@@ -303,7 +303,7 @@ spec:
         destination_workload:{{ target }},
         !response_code:404
       }.as_count()
-      / 
+      /
       sum:istio.mesh.request.count{
         reporter:destination,
         destination_workload_namespace:{{ namespace }},
@@ -438,11 +438,11 @@ spec:
     secretRef:
       name: newrelic
   query: |
-    SELECT 
-        filter(sum(nginx_ingress_controller_requests), WHERE status >= '500') / 
+    SELECT
+        filter(sum(nginx_ingress_controller_requests), WHERE status >= '500') /
         sum(nginx_ingress_controller_requests) * 100
-    FROM Metric 
-    WHERE metricName = 'nginx_ingress_controller_requests' 
+    FROM Metric
+    WHERE metricName = 'nginx_ingress_controller_requests'
     AND ingress = '{{ ingress }}' AND  namespace = '{{ namespace }}'
 ```
 
@@ -538,7 +538,7 @@ spec:
 ## Google Cloud Monitoring (Stackdriver)
 
 Enable Workload Identity on your cluster, create a service account key that has read access to the
-Cloud Monitoring API and then create an IAM policy binding between the GCP service account and the Flagger 
+Cloud Monitoring API and then create an IAM policy binding between the GCP service account and the Flagger
 service account on Kubernetes. You can take a look at this [guide](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity)
 
 Annotate the flagger service account
@@ -557,7 +557,7 @@ your [service account json](https://cloud.google.com/docs/authentication/product
  kubectl create secret generic gcloud-sa --from-literal=project=<project-id>
 ```
 
-Then reference the secret in the metric template. 
+Then reference the secret in the metric template.
 Note: The particular MQL query used here works if [Istio is installed on GKE](https://cloud.google.com/istio/docs/istio-on-gke/installing).
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -568,7 +568,7 @@ metadata:
 spec:
   provider:
     type: stackdriver
-    secretRef: 
+    secretRef:
       name: gcloud-sa
   query: |
     fetch k8s_container
@@ -666,5 +666,45 @@ Reference the template in the canary analysis:
           namespace: istio-system
         thresholdRange:
           max: 1000
+        interval: 1m
+```
+
+## Apache SkyWalking
+
+You can create custom metric checks using the Apache SkyWalking provider.
+
+SkyWalking metric template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: apdex
+  namespace: istio-system
+spec:
+  provider:
+    type: skywalking
+    address: http://skywalking-oap.istio-system.cluster.local:12800
+  query: >-
+    query queryData($duration: Duration!) {
+      service_apdex: readMetricsValues(
+        condition: { name: "service_apdex", entity: { scope: Service, serviceName: "{{ target }}", normal: true } },
+        duration: $duration) {
+          label values { values { value } }
+        }
+    }
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: apdex
+        templateRef:
+          name: apdex
+          namespace: istio-system
+        thresholdRange:
+          max: 9900
         interval: 1m
 ```
