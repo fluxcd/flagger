@@ -70,14 +70,13 @@ func (ar *ApisixRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	targetHttpRoute.Priority = maxPriority
+	primaryWeight, canaryWeight := initializationWeights(canary)
 
 	primaryBackend := targetHttpRoute.Backends[0]
 	primaryBackend.ServiceName = primaryName
-	primaryWeight := 100
 	primaryBackend.Weight = &primaryWeight
 	targetHttpRoute.Backends[0] = primaryBackend
 
-	canaryWeight := 0
 	canaryBackend := a6v2.ApisixRouteHTTPBackend{
 		ServiceName:        canaryName,
 		ServicePort:        primaryBackend.ServicePort,

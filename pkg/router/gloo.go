@@ -65,6 +65,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("error creating flagger canary upstream: %w", err)
 	}
 
+	primaryWeight, canaryWeight := initializationWeights(canary)
 	newSpec := gatewayv1.RouteTableSpec{
 		Routes: []gatewayv1.Route{
 			{
@@ -80,7 +81,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 										Namespace: canary.Namespace,
 									},
 								},
-								Weight: 100,
+								Weight: uint32(primaryWeight),
 							},
 							{
 								Destination: gatewayv1.Destination{
@@ -89,7 +90,7 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 										Namespace: canary.Namespace,
 									},
 								},
-								Weight: 0,
+								Weight: uint32(canaryWeight),
 							},
 						},
 					},

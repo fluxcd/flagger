@@ -107,6 +107,9 @@ type CanarySpec struct {
 	// +optional
 	SkipAnalysis bool `json:"skipAnalysis,omitempty"`
 
+	// ProgressiveInitialization initializes the primary using the stepWeightPromotion configured
+	ProgressiveInitialization bool `json:"progressiveInitialization,omitempty"`
+
 	// revert canary mutation on deletion of canary resource
 	// +optional
 	RevertOnDeletion bool `json:"revertOnDeletion,omitempty"`
@@ -560,8 +563,21 @@ func (c *Canary) GetMetricInterval() string {
 // SkipAnalysis returns true if the analysis is nil
 // or if spec.SkipAnalysis is true
 func (c *Canary) SkipAnalysis() bool {
-	if c.Spec.Analysis == nil && c.Spec.CanaryAnalysis == nil {
-		return true
+	return c.GetAnalysis() == nil || c.Spec.SkipAnalysis
+}
+
+// ProgressiveInitialization returns true if spec.ProgressiveInitialization is true
+// and spec.Analysis.StepWeightPromotion is set and spec.Analysis.Match is empty
+func (c *Canary) ProgressiveInitialization() bool {
+	if c.Spec.ProgressiveInitialization {
+		analysis := c.GetAnalysis()
+		return analysis != nil && (analysis.StepWeight > 0 || len(analysis.StepWeights) > 0) && analysis.StepWeightPromotion > 0 && len(analysis.Match) == 0
+	} else {
+		return false
 	}
-	return c.Spec.SkipAnalysis
+}
+
+// InitializingPhase returns true if the Status.Phase is not set or if it's CanaryPhaseInitializing
+func (c *Canary) InitializingPhase() bool {
+	return c.Status.Phase == "" || c.Status.Phase == CanaryPhaseInitializing
 }

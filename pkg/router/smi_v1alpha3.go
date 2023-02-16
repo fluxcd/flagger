@@ -46,6 +46,7 @@ type Smiv1alpha3Router struct {
 // Reconcile creates or updates the SMI traffic split
 func (sr *Smiv1alpha3Router) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
+	initialPrimaryWeight, initialCanaryWeight := initializationWeights(canary)
 
 	var host string
 	if len(canary.Spec.Service.Hosts) > 0 {
@@ -59,11 +60,11 @@ func (sr *Smiv1alpha3Router) Reconcile(canary *flaggerv1.Canary) error {
 		Backends: []smiv1alpha3.TrafficSplitBackend{
 			{
 				Service: canaryName,
-				Weight:  0,
+				Weight:  initialCanaryWeight,
 			},
 			{
 				Service: primaryName,
-				Weight:  100,
+				Weight:  initialPrimaryWeight,
 			},
 		},
 	}

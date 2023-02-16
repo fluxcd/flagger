@@ -29,6 +29,7 @@ type KumaRouter struct {
 // Reconcile creates or updates the Kuma TrafficRoute
 func (kr *KumaRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
+	initialPrimaryWeight, initialCanaryWeight := initializationWeights(canary)
 
 	trSpec := kumav1alpha1.TrafficRouteSpec{
 		Sources: []*kumav1alpha1.Selector{
@@ -48,13 +49,13 @@ func (kr *KumaRouter) Reconcile(canary *flaggerv1.Canary) error {
 		Conf: &kumav1alpha1.TrafficRouteConf{
 			Split: []*kumav1alpha1.TrafficRouteSplit{
 				{
-					Weight: uint32(100),
+					Weight: uint32(initialPrimaryWeight),
 					Destination: map[string]string{
 						"kuma.io/service": fmt.Sprintf("%s_%s_svc_%d", primaryName, canary.Namespace, canary.Spec.Service.Port),
 					},
 				},
 				{
-					Weight: uint32(0),
+					Weight: uint32(initialCanaryWeight),
 					Destination: map[string]string{
 						"kuma.io/service": fmt.Sprintf("%s_%s_svc_%d", canaryName, canary.Namespace, canary.Spec.Service.Port),
 					},

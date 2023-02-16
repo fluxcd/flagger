@@ -78,6 +78,8 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 		})
 	}
 
+	initialPrimaryWeight, initialCanaryWeight := initializationWeights(canary)
+
 	httpRouteSpec := v1beta1.HTTPRouteSpec{
 		CommonRouteSpec: v1beta1.CommonRouteSpec{
 			ParentRefs: canary.Spec.Service.GatewayRefs,
@@ -88,10 +90,10 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 				Matches: matches,
 				BackendRefs: []v1beta1.HTTPBackendRef{
 					{
-						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+						BackendRef: gwr.makeBackendRef(primarySvcName, int32(initialPrimaryWeight), canary.Spec.Service.Port),
 					},
 					{
-						BackendRef: gwr.makeBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port),
+						BackendRef: gwr.makeBackendRef(canarySvcName, int32(initialCanaryWeight), canary.Spec.Service.Port),
 					},
 				},
 			},
@@ -107,7 +109,7 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 			Matches: matches,
 			BackendRefs: []v1beta1.HTTPBackendRef{
 				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+					BackendRef: gwr.makeBackendRef(primarySvcName, 100, canary.Spec.Service.Port),
 				},
 			},
 		})
@@ -271,7 +273,7 @@ func (gwr *GatewayAPIV1Beta1Router) SetRoutes(
 			Matches: matches,
 			BackendRefs: []v1beta1.HTTPBackendRef{
 				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+					BackendRef: gwr.makeBackendRef(primarySvcName, 100, canary.Spec.Service.Port),
 				},
 			},
 		})

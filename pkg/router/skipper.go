@@ -96,7 +96,11 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("backend %s not found in ingress %s", apexSvcName, apexIngressName)
 	}
 
-	iClone.Annotations = skp.makeAnnotations(iClone.Annotations, map[string]int{primarySvcName: 100, canarySvcName: 0})
+	initialPrimaryWeight, initialCanaryWeight := initializationWeights(canary)
+	iClone.Annotations = skp.makeAnnotations(iClone.Annotations, map[string]int{
+		primarySvcName: initialPrimaryWeight,
+		canarySvcName:  initialCanaryWeight,
+	})
 	iClone.Name = canaryIngressName
 	iClone.Namespace = canary.Namespace
 	if skp.setOwnerRefs {

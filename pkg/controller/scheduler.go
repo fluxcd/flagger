@@ -193,7 +193,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check metric servers' availability
-	if !cd.SkipAnalysis() && (cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing) {
+	if !cd.SkipAnalysis() && cd.InitializingPhase() {
 		if err := c.checkMetricProviderAvailability(cd); err != nil {
 			c.recordEventErrorf(cd, "Error checking metric providers: %v", err)
 		}
@@ -224,7 +224,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
-		if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
+		if cd.InitializingPhase() {
 			err = scalerReconciler.PauseTargetScaler(cd)
 			if err != nil {
 				c.recordEventWarningf(cd, "%v", err)
@@ -467,7 +467,8 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 	}
 
 	// route all traffic to primary in one go when promotion step wight is not set
-	if canary.Spec.Analysis.StepWeightPromotion == 0 {
+	stepWeightPromotion := canary.GetAnalysis().StepWeightPromotion
+	if stepWeightPromotion == 0 {
 		c.recordEventInfof(canary, "Routing all traffic to primary")
 		if err := meshRouter.SetRoutes(canary, c.totalWeight(canary), 0, false); err != nil {
 			c.recordEventWarningf(canary, "%v", err)
@@ -482,11 +483,11 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 
 	// increment the primary traffic weight until it reaches total weight
 	if canaryWeight > 0 {
-		primaryWeight += canary.GetAnalysis().StepWeightPromotion
+		primaryWeight += stepWeightPromotion
 		if primaryWeight > c.totalWeight(canary) {
 			primaryWeight = c.totalWeight(canary)
 		}
-		canaryWeight -= canary.GetAnalysis().StepWeightPromotion
+		canaryWeight -= stepWeightPromotion
 		if canaryWeight < 0 {
 			canaryWeight = 0
 		}
@@ -826,6 +827,7 @@ func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController ca
 
 }
 
+// checkCanaryStatus returns true if canary should advance based on current status
 func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryController canary.Controller, scalerReconciler canary.ScalerReconciler, shouldAdvance bool) bool {
 	c.recorder.SetStatus(canary, canary.Status.Phase)
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
@@ -842,16 +844,8 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		return false
 	}
 
-	if canary.Status.Phase == "" || canary.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
-			return false
-		}
-		c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseInitialized)
-		c.recordEventInfof(canary, "Initialization done! %s.%s", canary.Name, canary.Namespace)
-		c.alert(canary, fmt.Sprintf("New %s detected, initialization completed.", canary.Spec.TargetRef.Kind),
-			true, flaggerv1.SeverityInfo)
-		return false
+	if canary.InitializingPhase() {
+		return c.checkInitializingCanaryStatus(canary, canaryController, shouldAdvance)
 	}
 
 	if shouldAdvance {
@@ -880,6 +874,31 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		return false
 	}
 	return false
+}
+
+// checkInitializingCanaryStatus returns true if an initializing canary should advance based on current status
+func (c *Controller) checkInitializingCanaryStatus(canary *flaggerv1.Canary, canaryController canary.Controller, shouldAdvance bool) bool {
+	if !canary.InitializingPhase() {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("Not in initializing phase - got %s", canary.Status.Phase)
+		return false
+	}
+
+	if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+		return false
+	}
+	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseInitialized)
+	c.recordEventInfof(canary, "Initialization done! %s.%s", canary.Name, canary.Namespace)
+	c.alert(canary, fmt.Sprintf("New %s detected, initialization completed.", canary.Spec.TargetRef.Kind),
+		true, flaggerv1.SeverityInfo)
+
+	if canary.ProgressiveInitialization() && shouldAdvance {
+		c.alert(canary, fmt.Sprintf("Continuing with progressive initialization of %s.", canary.Name),
+			true, flaggerv1.SeverityInfo)
+		return true
+	} else {
+		return true
+	}
 }
 
 func (c *Controller) hasCanaryRevisionChanged(canary *flaggerv1.Canary, canaryController canary.Controller) bool {

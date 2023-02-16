@@ -1,6 +1,7 @@
 package router
 
 import (
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"strings"
 )
 
@@ -31,4 +32,17 @@ func filterMetadata(meta map[string]string) map[string]string {
 	// prevent Flux from overriding Flagger managed objects
 	meta[toolkitReconcileKey] = toolkitReconcileValue
 	return meta
+}
+
+// initializationWeights returns the initial weights that should be used to initialize
+// router resources depending on whether progressive initialization is enabled
+func initializationWeights(canary *flaggerv1.Canary) (
+	initialPrimaryWeight int,
+	initialCanaryWeight int,
+) {
+	if canary.ProgressiveInitialization() {
+		return 0, 100
+	} else {
+		return 100, 0
+	}
 }

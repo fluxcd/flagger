@@ -99,17 +99,19 @@ func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
 		return fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
 	}
 
-	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
+	if cd.InitializingPhase() {
 		if !cd.SkipAnalysis() {
 			if err := c.IsPrimaryReady(cd); err != nil {
 				return fmt.Errorf("%w", err)
 			}
 		}
 
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("Scaling down DaemonSet %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		if err := c.ScaleToZero(cd); err != nil {
-			return fmt.Errorf("ScaleToZero failed: %w", err)
+		if !cd.Spec.ProgressiveInitialization {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+				Infof("Scaling down DaemonSet %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+			if err := c.ScaleToZero(cd); err != nil {
+				return fmt.Errorf("ScaleToZero failed: %w", err)
+			}
 		}
 	}
 	return nil
