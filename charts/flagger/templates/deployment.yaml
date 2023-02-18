@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "flagger.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     helm.sh/chart: {{ template "flagger.chart" . }}
     app.kubernetes.io/name: {{ template "flagger.name" . }}

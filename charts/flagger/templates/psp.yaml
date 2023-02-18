@@ -50,6 +50,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ template "flagger.fullname" . }}-psp
+  namespace: {{ .Release.Namespace }}
   labels:
     helm.sh/chart: {{ template "flagger.chart" . }}
     app.kubernetes.io/name: {{ template "flagger.name" . }}
