@@ -151,7 +151,13 @@ func (p *AppDynamicsCloudProvider) RunQuery(query string) (float64, error) {
 		return 0, fmt.Errorf("invalid response: %s: %w", string(body), ErrNoValuesFound)
 	}
 
-	return metric[1].(float64), nil
+	// assert the second item of the array is numeric and return
+	r, ok := metric[1].(float64)
+	if ok {
+		return r, nil
+	} else {
+		return 0, fmt.Errorf("failed to retrieve numeric result: %s: %w", query, ErrNoValuesFound)
+	}
 }
 
 // IsOnline calls the Appdynamics Cloud's metrics endpoint with client ID and
