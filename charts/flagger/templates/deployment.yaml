@@ -36,16 +36,10 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "flagger.serviceAccountName" . }}
+      {{- if .Values.affinity }}
       affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchLabels:
-                    app.kubernetes.io/name: {{ template "flagger.name" . }}
-                    app.kubernetes.io/instance: {{ .Release.Name }}
-                topologyKey: kubernetes.io/hostname
+        {{- tpl (toYaml .Values.affinity) . | nindent 8 }}
+      {{- end }}
       {{- if .Values.image.pullSecret }}
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}
