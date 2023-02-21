@@ -2,6 +2,48 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.29.0
+
+**Release date:** 2023-02-21
+
+This release comes with support for template variables for analysis metrics.
+A canary analysis metric can reference a set of custom variables with
+`.spec.analysis.metrics[].templateVariables`. For more info see the [docs](https://fluxcd.io/flagger/usage/metrics/#custom-metrics).
+Furthemore, a bug related to Canary releases with session affinity has been
+fixed.
+
+#### Improvements
+
+- update dependencies
+  [#1374](https://github.com/fluxcd/flagger/pull/1374)
+- build(deps): bump golang.org/x/net from 0.4.0 to 0.7.0
+  [#1373](https://github.com/fluxcd/flagger/pull/1373)
+- build(deps): bump fossa-contrib/fossa-action from 1 to 2
+  [#1372](https://github.com/fluxcd/flagger/pull/1372)
+- Allow custom affinities for flagger deployment in helm chart
+  [#1371](https://github.com/fluxcd/flagger/pull/1371)
+- Add namespace to namespaced resources in helm chart
+  [#1370](https://github.com/fluxcd/flagger/pull/1370)
+- build(deps): bump actions/cache from 3.2.4 to 3.2.5
+  [#1366](https://github.com/fluxcd/flagger/pull/1366)
+- build(deps): bump actions/cache from 3.2.3 to 3.2.4
+  [#1362](https://github.com/fluxcd/flagger/pull/1362)
+- build(deps): bump docker/build-push-action from 3 to 4
+  [#1361](https://github.com/fluxcd/flagger/pull/1361)
+- modify release workflow to publish rc images
+  [#1359](https://github.com/fluxcd/flagger/pull/1359)
+- build: Enable SBOM and SLSA Provenance
+  [#1356](https://github.com/fluxcd/flagger/pull/1356)
+- Add support for custom variables in metric templates
+  [#1355](https://github.com/fluxcd/flagger/pull/1355)
+- docs(readme.md): add additional tutorial
+  [#1346](https://github.com/fluxcd/flagger/pull/1346)
+
+#### Fixes
+
+- use regex to match against headers in istio
+  [#1364](https://github.com/fluxcd/flagger/pull/1364)
+
 ## 1.28.0
 
 **Release date:** 2023-01-26
