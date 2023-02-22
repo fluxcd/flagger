@@ -897,7 +897,7 @@ func (c *Controller) checkInitializingCanaryStatus(canary *flaggerv1.Canary, can
 			true, flaggerv1.SeverityInfo)
 		return true
 	} else {
-		return true
+		return false
 	}
 }
 

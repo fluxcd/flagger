@@ -91,7 +91,7 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// Initialize creates the primary DaemonSet, scales down the canary DaemonSet,
+// Initialize creates the primary DaemonSet, scales down the canary DaemonSet unless progressive initialization is enabled,
 // and returns the pod selector label and container ports
 func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
 	err = c.createPrimaryDaemonSet(cd, c.includeLabelPrefix)

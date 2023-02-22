@@ -19,6 +19,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -166,4 +167,53 @@ func Test_insertPredicate(t *testing.T) {
 			assert.Equal(t, tt.want, insertPredicate(tt.raw, tt.insert))
 		})
 	}
+}
+
+func TestSkipperRouter_ProgressiveInit(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &SkipperRouter{logger: mocks.logger, kubeClient: mocks.kubeClient}
+
+	canary := mocks.ingressCanary
+	canarySpec := &canary.Spec
+	canarySpec.ProgressiveInitialization = true
+	canarySpec.Analysis.StepWeightPromotion = canarySpec.Analysis.StepWeight
+	err := router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// check virtual service routes all traffic to canary initially
+	primaryWeight, canaryWeight, _, err := router.GetRoutes(canary)
+	assert.Equal(t, 0, primaryWeight)
+	assert.Equal(t, 100, canaryWeight)
+}
+
+func TestSkipperRouter_ProgressiveUpdate(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &SkipperRouter{logger: mocks.logger, kubeClient: mocks.kubeClient}
+
+	canary := mocks.ingressCanary
+	canary.Spec.Analysis.StepWeightPromotion = canary.Spec.Analysis.StepWeight
+	err := router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// check virtual service routes all traffic to primary initially
+	primaryWeight, canaryWeight, _, err := router.GetRoutes(canary)
+	assert.Equal(t, 100, primaryWeight)
+	assert.Equal(t, 0, canaryWeight)
+
+	// test progressive update
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	cdClone := cd.DeepCopy()
+	cdClone.Spec.ProgressiveInitialization = true
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), cdClone, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// apply
+	err = router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// verify virtual service traffic remains intact
+	primaryWeight, canaryWeight, _, err = router.GetRoutes(canary)
+	assert.Equal(t, 100, primaryWeight)
+	assert.Equal(t, 0, canaryWeight)
 }

@@ -41,18 +41,17 @@ type TraefikRouter struct {
 // Reconcile creates or updates the Traefik service
 func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
+	initialPrimaryWeight, _ := initializationWeights(canary)
 
-	newSpec := traefikv1alpha1.ServiceSpec{
-		Weighted: &traefikv1alpha1.WeightedRoundRobin{
-			Services: []traefikv1alpha1.Service{
-				{
-					Name:      primaryName,
-					Namespace: canary.Namespace,
-					Port:      canary.Spec.Service.Port,
-					Weight:    100,
-				},
-			},
-		},
+	// configure only the service receiving traffic since services with 0 endpoints don't work properly
+	newSpec := traefikv1alpha1.ServiceSpec{}
+	var otherService traefikv1alpha1.Service
+	if initialPrimaryWeight == 100 {
+		newSpec.Weighted = &traefikv1alpha1.WeightedRoundRobin{Services: []traefikv1alpha1.Service{tr.createService(primaryName, canary)}}
+		otherService = tr.createService(canaryName, canary)
+	} else {
+		newSpec.Weighted = &traefikv1alpha1.WeightedRoundRobin{Services: []traefikv1alpha1.Service{tr.createService(canaryName, canary)}}
+		otherService = tr.createService(primaryName, canary)
 	}
 
 	traefikService, err := tr.traefikClient.TraefikV1alpha1().TraefikServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
@@ -103,12 +102,7 @@ func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 		if len(traefikService.Spec.Weighted.Services) == 2 {
 			newSpec.Weighted.Services = append(
 				newSpec.Weighted.Services,
-				traefikv1alpha1.Service{
-					Name:      canaryName,
-					Namespace: canary.Namespace,
-					Port:      canary.Spec.Service.Port,
-					Weight:    100,
-				},
+				otherService,
 			)
 		}
 
@@ -158,9 +152,12 @@ func (tr *TraefikRouter) GetRoutes(canary *flaggerv1.Canary) (
 			primaryWeight = int(s.Weight)
 			canaryWeight = 100 - primaryWeight
 			return
-
 		}
 	}
+
+	// if no primary, that means canary is taking all traffic
+	primaryWeight = 0
+	canaryWeight = 100
 
 	return
 }
@@ -210,4 +207,13 @@ func (tr *TraefikRouter) SetRoutes(
 
 func (tr *TraefikRouter) Finalize(_ *flaggerv1.Canary) error {
 	return nil
+}
+
+func (tr *TraefikRouter) createService(name string, canary *flaggerv1.Canary) traefikv1alpha1.Service {
+	return traefikv1alpha1.Service{
+		Name:      name,
+		Namespace: canary.Namespace,
+		Port:      canary.Spec.Service.Port,
+		Weight:    100,
+	}
 }

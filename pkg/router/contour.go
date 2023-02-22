@@ -49,6 +49,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 	const annotation = "projectcontour.io/ingress.class"
 
 	apexName, primaryName, canaryName := canary.GetServiceNames()
+	initialPrimaryWeight, initialCanaryWeight := initializationWeights(canary)
 
 	newSpec := contourv1.HTTPProxySpec{
 		Routes: []contourv1.Route{
@@ -64,7 +65,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 					{
 						Name:   primaryName,
 						Port:   int(canary.Spec.Service.Port),
-						Weight: int64(100),
+						Weight: int64(initialPrimaryWeight),
 						RequestHeadersPolicy: &contourv1.HeadersPolicy{
 							Set: []contourv1.HeaderValue{
 								cr.makeLinkerdHeaderValue(canary, primaryName),
@@ -74,7 +75,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 					{
 						Name:   canaryName,
 						Port:   int(canary.Spec.Service.Port),
-						Weight: int64(0),
+						Weight: int64(initialCanaryWeight),
 						RequestHeadersPolicy: &contourv1.HeadersPolicy{
 							Set: []contourv1.HeaderValue{
 								cr.makeLinkerdHeaderValue(canary, canaryName),

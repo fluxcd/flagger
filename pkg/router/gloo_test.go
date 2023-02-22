@@ -176,3 +176,80 @@ func TestGlooRouter_GetRoutes(t *testing.T) {
 	assert.Equal(t, 0, c)
 	assert.False(t, m)
 }
+
+func TestGlooRouter_ProgressiveInit(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &GlooRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		glooClient:    mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	canary := mocks.canary
+	canarySpec := &canary.Spec
+	canarySpec.ProgressiveInitialization = true
+	canarySpec.Analysis.StepWeightPromotion = canarySpec.Analysis.StepWeight
+	err = router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// check virtual service routes all traffic to canary initially
+	primaryWeight, canaryWeight, _, err := router.GetRoutes(canary)
+	assert.Equal(t, 0, primaryWeight)
+	assert.Equal(t, 100, canaryWeight)
+}
+
+func TestGlooRouter_ProgressiveUpdate(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &GlooRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		glooClient:    mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+	svcRouter := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+	err := svcRouter.Initialize(mocks.canary)
+	require.NoError(t, err)
+	err = svcRouter.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	canary := mocks.canary
+	canary.Spec.Analysis.StepWeightPromotion = canary.Spec.Analysis.StepWeight
+	err = router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// check virtual service routes all traffic to primary initially
+	primaryWeight, canaryWeight, _, err := router.GetRoutes(canary)
+	assert.Equal(t, 100, primaryWeight)
+	assert.Equal(t, 0, canaryWeight)
+
+	// test progressive update
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	cdClone := cd.DeepCopy()
+	cdClone.Spec.ProgressiveInitialization = true
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), cdClone, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// apply
+	err = router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// verify virtual service traffic remains intact
+	primaryWeight, canaryWeight, _, err = router.GetRoutes(canary)
+	assert.Equal(t, 100, primaryWeight)
+	assert.Equal(t, 0, canaryWeight)
+}

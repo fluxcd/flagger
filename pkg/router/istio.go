@@ -163,10 +163,11 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		gateways = append(gateways, "mesh")
 	}
 
-	// create destinations with primary weight 100% and canary weight 0%
+	// create destinations with initial weights
+	initialPrimaryWeight, initialCanaryWeight := initializationWeights(canary)
 	canaryRoute := []istiov1alpha3.HTTPRouteDestination{
-		makeDestination(canary, primaryName, 100),
-		makeDestination(canary, canaryName, 0),
+		makeDestination(canary, primaryName, initialPrimaryWeight),
+		makeDestination(canary, canaryName, initialCanaryWeight),
 	}
 
 	if canary.Spec.Service.Delegation {

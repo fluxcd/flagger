@@ -41,6 +41,9 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 	err := router.Reconcile(mocks.appmeshCanary)
 	require.NoError(t, err)
 
+	primaryVirtualNodeName := fmt.Sprintf("%s-primary", mocks.appmeshCanary.Spec.TargetRef.Name)
+	canaryVirtualNodeName := fmt.Sprintf("%s-canary", mocks.appmeshCanary.Spec.TargetRef.Name)
+
 	// check virtual service
 	vsName := fmt.Sprintf("%s.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
 	vs, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(context.TODO(), vsName, metav1.GetOptions{})
@@ -48,16 +51,22 @@ func TestAppmeshRouter_Reconcile(t *testing.T) {
 	assert.Equal(t, mocks.appmeshCanary.Spec.Service.MeshName, vs.Spec.MeshName)
 	assert.Len(t, vs.Spec.Routes[0].Http.Action.WeightedTargets, 2)
 
+	// check virtual service routes all traffic to the primary virtual node
+	assert.Equal(t, canaryVirtualNodeName, vs.Spec.Routes[0].Http.Action.WeightedTargets[0].VirtualNodeName)
+	assert.Equal(t, int64(0), vs.Spec.Routes[0].Http.Action.WeightedTargets[0].Weight)
+	assert.Equal(t, primaryVirtualNodeName, vs.Spec.Routes[0].Http.Action.WeightedTargets[1].VirtualNodeName)
+	assert.Equal(t, int64(100), vs.Spec.Routes[0].Http.Action.WeightedTargets[1].Weight)
+
 	// check canary virtual service
 	vsCanaryName := fmt.Sprintf("%s-canary.%s", mocks.appmeshCanary.Spec.TargetRef.Name, mocks.appmeshCanary.Namespace)
 	vsCanary, err := router.appmeshClient.AppmeshV1beta1().VirtualServices("default").Get(context.TODO(), vsCanaryName, metav1.GetOptions{})
 	require.NoError(t, err)
 
 	// check if the canary virtual service routes all traffic to the canary virtual node
-	target := vsCanary.Spec.Routes[0].Http.Action.WeightedTargets[0]
-	canaryVirtualNodeName := fmt.Sprintf("%s-canary", mocks.appmeshCanary.Spec.TargetRef.Name)
-	assert.Equal(t, canaryVirtualNodeName, target.VirtualNodeName)
-	assert.Equal(t, int64(100), target.Weight)
+	assert.Equal(t, canaryVirtualNodeName, vsCanary.Spec.Routes[0].Http.Action.WeightedTargets[0].VirtualNodeName)
+	assert.Equal(t, int64(100), vsCanary.Spec.Routes[0].Http.Action.WeightedTargets[0].Weight)
+	assert.Equal(t, primaryVirtualNodeName, vsCanary.Spec.Routes[0].Http.Action.WeightedTargets[1].VirtualNodeName)
+	assert.Equal(t, int64(0), vsCanary.Spec.Routes[0].Http.Action.WeightedTargets[1].Weight)
 
 	// check virtual node
 	vnName := mocks.appmeshCanary.Spec.TargetRef.Name
@@ -189,4 +198,63 @@ func TestAppmeshRouter_Gateway(t *testing.T) {
 
 	retries := vs.Annotations["gateway.appmesh.k8s.aws/retries"]
 	assert.Equal(t, strconv.Itoa(mocks.appmeshCanary.Spec.Service.Retries.Attempts), retries)
+}
+
+func TestAppmeshRouter_ProgressiveInit(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &AppMeshRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	canary := mocks.appmeshCanary
+	canarySpec := &canary.Spec
+	canarySpec.ProgressiveInitialization = true
+	canarySpec.Analysis.StepWeightPromotion = canarySpec.Analysis.StepWeight
+	err := router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// check virtual service routes all traffic to canary initially
+	primaryWeight, canaryWeight, _, err := router.GetRoutes(canary)
+	assert.Equal(t, 0, primaryWeight)
+	assert.Equal(t, 100, canaryWeight)
+}
+
+func TestAppmeshRouter_ProgressiveUpdate(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &AppMeshRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		appmeshClient: mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	canary := mocks.appmeshCanary
+	canary.Spec.Analysis.StepWeightPromotion = canary.Spec.Analysis.StepWeight
+	err := router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// check virtual service routes all traffic to primary initially
+	primaryWeight, canaryWeight, _, err := router.GetRoutes(canary)
+	assert.Equal(t, 100, primaryWeight)
+	assert.Equal(t, 0, canaryWeight)
+
+	// test progressive update
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	cdClone := cd.DeepCopy()
+	cdClone.Spec.ProgressiveInitialization = true
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), cdClone, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// apply
+	err = router.Reconcile(canary)
+	require.NoError(t, err)
+
+	// verify virtual service traffic remains intact
+	primaryWeight, canaryWeight, _, err = router.GetRoutes(canary)
+	assert.Equal(t, 100, primaryWeight)
+	assert.Equal(t, 0, canaryWeight)
 }

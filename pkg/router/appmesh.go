@@ -203,18 +203,19 @@ func (ar *AppMeshRouter) reconcileVirtualNode(canary *flaggerv1.Canary, name str
 }
 
 // reconcileVirtualService creates or updates a virtual service
-func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name string, primary bool) error {
+func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name string, mainService bool) error {
 	apexName, _, _ := canary.GetServiceNames()
 	canaryVirtualNode := fmt.Sprintf("%s-canary", apexName)
 	primaryVirtualNode := fmt.Sprintf("%s-primary", apexName)
 	protocol := ar.getProtocol(canary)
-	initialPrimaryWeight, initialCanaryWeight := initializationWeights(canary)
+
+	_, initialCanaryWeight := initializationWeights(canary)
 
 	routerName := apexName
-	weight := int64(initialPrimaryWeight)
-	if !primary {
+	canaryWeight := int64(initialCanaryWeight)
+	if !mainService {
 		routerName = fmt.Sprintf("%s-canary", apexName)
-		weight = int64(initialCanaryWeight)
+		canaryWeight = 100
 	}
 	// App Mesh supports only URI prefix
 	routePrefix := "/"
@@ -237,11 +238,11 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 					WeightedTargets: []appmeshv1.WeightedTarget{
 						{
 							VirtualNodeName: canaryVirtualNode,
-							Weight:          weight,
+							Weight:          canaryWeight,
 						},
 						{
 							VirtualNodeName: primaryVirtualNode,
-							Weight:          100 - weight,
+							Weight:          100 - canaryWeight,
 						},
 					},
 				},
@@ -250,7 +251,7 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 	}
 
 	// A/B testing - header based routing
-	if len(canary.GetAnalysis().Match) > 0 && primary {
+	if len(canary.GetAnalysis().Match) > 0 && mainService {
 		routes = []appmeshv1.Route{
 			{
 				Name:     fmt.Sprintf("%s-a", apexName),
@@ -265,11 +266,11 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 						WeightedTargets: []appmeshv1.WeightedTarget{
 							{
 								VirtualNodeName: canaryVirtualNode,
-								Weight:          weight,
+								Weight:          canaryWeight,
 							},
 							{
 								VirtualNodeName: primaryVirtualNode,
-								Weight:          100 - weight,
+								Weight:          100 - canaryWeight,
 							},
 						},
 					},
@@ -333,8 +334,8 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 			}
 		}
 
-		// set App Mesh Gateway annotation on primary virtual service
-		if primary {
+		// set App Mesh Gateway annotation on main virtual service
+		if mainService {
 			a := ar.gatewayAnnotations(canary)
 			if len(a) > 0 {
 				virtualService.ObjectMeta.Annotations = a
@@ -359,8 +360,8 @@ func (ar *AppMeshRouter) reconcileVirtualService(canary *flaggerv1.Canary, name 
 			vsClone.Spec = vsSpec
 			vsClone.Spec.Routes[0].Http.Action = virtualService.Spec.Routes[0].Http.Action
 
-			// update App Mesh Gateway annotation on primary virtual service
-			if primary {
+			// update App Mesh Gateway annotation on main virtual service
+			if mainService {
 				a := ar.gatewayAnnotations(canary)
 				if len(a) > 0 {
 					vsClone.ObjectMeta.Annotations = a
