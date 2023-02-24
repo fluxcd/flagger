@@ -467,7 +467,7 @@ metadata:
   namespace: test
 spec:
   gateways:
-  - ingressgateway/istio-system.svc.cluster.local
+  - istio-system.svc.cluster.local/ingressgateway
   hosts:
   - app.example.com
   - podinfo

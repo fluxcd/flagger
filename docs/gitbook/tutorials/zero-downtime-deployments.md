@@ -172,7 +172,7 @@ spec:
   service:
     port: 9898
     gateways:
-    - public-gateway/istio-system.svc.cluster.local
+    - istio-system.svc.cluster.local/public-gateway
     hosts:
     - app.example.com
     retries:
