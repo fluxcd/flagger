@@ -177,7 +177,8 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `podDisruptionBudget.minAvailable`   | The minimal number of available replicas that will be set in the PodDisruptionBudget                                                               | `1`                                   |
 | `podDisruptionBudget.minAvailable`   | The minimal number of available replicas that will be set in the PodDisruptionBudget                                                               | `1`                                   |
 | `noCrossNamespaceRefs`               | If `true`, cross namespace references to custom resources will be disabled                                                                         | `false`                               |
-| `namespace`                          | When specified, Flagger will restrict itself to watching Canary objects from that namespace                                                                   | `""`                                  |
+| `additionalContainers`               | List of additional containers that will be added to the deployment                                                                                 | `[]`                                  |
+| `namespace`                          | When specified, Flagger will restrict itself to watching Canary objects from that namespace                                                        | `""`                                  |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 

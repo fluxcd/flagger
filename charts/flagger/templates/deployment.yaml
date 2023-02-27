@@ -167,6 +167,9 @@ spec:
           {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+        {{- if .Values.additionalContainers }}
+          {{- toYaml .Values.additionalContainers | nindent 8}}
+        {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
