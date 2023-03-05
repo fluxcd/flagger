@@ -383,7 +383,7 @@ spec:
   hosts:
   - "grafana.example.com"
   gateways:
-  - istio-system.svc.cluster.local/public-gateway
+  - istio-system/public-gateway
   http:
   - route:
     - destination:

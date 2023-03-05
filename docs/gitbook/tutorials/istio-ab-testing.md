@@ -92,7 +92,7 @@ spec:
     port: 9898
     # Istio gateways (optional)
     gateways:
-    - istio-system.svc.cluster.local/public-gateway
+    - istio-system/public-gateway
     # Istio virtual service host names (optional)
     hosts:
     - app.example.com

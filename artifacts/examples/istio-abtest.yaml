@@ -20,7 +20,7 @@ spec:
     portName: http
     portDiscovery: true
     gateways:
-      - istio-system.svc.cluster.local/public-gateway
+      - istio-system/public-gateway
       - mesh
     hosts:
       - app.example.com
