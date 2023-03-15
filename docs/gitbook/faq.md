@@ -33,7 +33,7 @@ or capable of being processed twice (once by the primary and once by the canary)
 
 A canary analysis is triggered by changes in any of the following objects:
 
-* Deployment/DaemonSet PodSpec (metadata, container image, command, ports, env, resources, etc)
+* Deployment/DaemonSet/StatefulSet PodSpec (metadata, container image, command, ports, env, resources, etc)
 * ConfigMaps mounted as volumes or mapped to environment variables
 * Secrets mounted as volumes or mapped to environment variables
 

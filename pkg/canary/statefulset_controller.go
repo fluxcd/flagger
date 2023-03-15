@@ -35,8 +35,8 @@ import (
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
-// DeploymentController is managing the operations for Kubernetes Deployment kind
-type DeploymentController struct {
+// StatefulSetController is managing the operations for Kubernetes StatefulSet kind
+type StatefulSetController struct {
 	kubeClient         kubernetes.Interface
 	flaggerClient      clientset.Interface
 	logger             *zap.SugaredLogger
@@ -45,11 +45,11 @@ type DeploymentController struct {
 	includeLabelPrefix []string
 }
 
-// Initialize creates the primary deployment, hpa,
-// scales to zero the canary deployment and returns the pod selector label and container ports
-func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
-	if err := c.createPrimaryDeployment(cd, c.includeLabelPrefix); err != nil {
-		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
+// Initialize creates the primary StatefulSet, hpa,
+// scales to zero the canary StatefulSet and returns the pod selector label and container ports
+func (c *StatefulSetController) Initialize(cd *flaggerv1.Canary) (err error) {
+	if err := c.createPrimaryStatefulSet(cd, c.includeLabelPrefix); err != nil {
+		return fmt.Errorf("createPrimaryStatefulSet failed: %w", err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
@@ -60,9 +60,9 @@ func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
 		}
 
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("Scaling down Deployment %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+			Infof("Scaling down StatefulSet %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		if err := c.ScaleToZero(cd); err != nil {
-			return fmt.Errorf("scaling down canary deployment %s.%s failed: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
+			return fmt.Errorf("scaling down canary StatefulSet %s.%s failed: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 		}
 	}
 
@@ -70,14 +70,14 @@ func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary
-func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
+func (c *StatefulSetController) Promote(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+		canary, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+			return fmt.Errorf("StatefulSet %s.%s get query error: %w", targetName, cd.Namespace, err)
 		}
 
 		label, labelValue, err := c.getSelectorLabel(canary)
@@ -86,9 +86,9 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("getSelectorLabel failed: %w", err)
 		}
 
-		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		primary, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+			return fmt.Errorf("StatefulSet %s.%s get query error: %w", primaryName, cd.Namespace, err)
 		}
 
 		// promote secrets and config maps
@@ -101,17 +101,17 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 		}
 
 		primaryCopy := primary.DeepCopy()
-		primaryCopy.Spec.ProgressDeadlineSeconds = canary.Spec.ProgressDeadlineSeconds
+		primaryCopy.Spec.PodManagementPolicy = canary.Spec.PodManagementPolicy
 		primaryCopy.Spec.MinReadySeconds = canary.Spec.MinReadySeconds
 		primaryCopy.Spec.RevisionHistoryLimit = canary.Spec.RevisionHistoryLimit
-		primaryCopy.Spec.Strategy = canary.Spec.Strategy
+		primaryCopy.Spec.UpdateStrategy = canary.Spec.UpdateStrategy
 		// update replica if hpa isn't set
 		if cd.Spec.AutoscalerRef == nil {
 			primaryCopy.Spec.Replicas = canary.Spec.Replicas
 		}
 
 		// update spec with primary secrets and config maps
-		primaryCopy.Spec.Template.Spec = c.getPrimaryDeploymentTemplateSpec(canary, configRefs)
+		primaryCopy.Spec.Template.Spec = c.getPrimaryStatefulSetTemplateSpec(canary, configRefs)
 
 		// update pod annotations to ensure a rolling update
 		podAnnotations, err := makeAnnotations(canary.Spec.Template.Annotations)
@@ -136,51 +136,98 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 		}
 
 		// apply update
-		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		_, err = c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+
+		// hook into pod rollout
+		err = c.podRolloutStrategy(cd, primaryCopy)
+
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("updating deployment %s.%s template spec failed: %w",
+		return fmt.Errorf("updating StatefulSet %s.%s template spec failed: %w",
 			primaryName, cd.Namespace, err)
 	}
 
 	return nil
 }
 
-// HasTargetChanged returns true if the canary deployment pod spec has changed
-func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error) {
-	targetName := cd.Spec.TargetRef.Name
-	canary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+func (c *StatefulSetController) podRolloutStrategy(cd *flaggerv1.Canary, sts *appsv1.StatefulSet) error {
+	// If no strategy is define the default behaviour of the stateful controller is used.
+	// This can lead to unready pods and needs manual attention.
+	// https://github.com/kubernetes/kubernetes/issues/67250
+	if cd.Spec.StatefulRollout == nil {
+		return nil
+	}
+
+	podList, err := c.kubeClient.CoreV1().Pods(cd.Namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(sts.Spec.Selector),
+	})
+
 	if err != nil {
-		return false, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("failed to get pods governed by the StatefulSet: %w", err)
+	}
+
+	for _, pod := range podList.Items {
+		var owned bool
+		for _, ownerRef := range pod.OwnerReferences {
+			if ownerRef.UID == sts.UID {
+				owned = true
+			}
+		}
+
+		if owned == false {
+			continue
+		}
+
+		if cd.Spec.StatefulRollout.Strategy == flaggerv1.StatefulRolloutStrategyScaleToZero ||
+			(cd.Spec.StatefulRollout.Strategy == flaggerv1.StatefulRolloutStrategyDeleteUnreadyPods && !isPodReady(&pod)) {
+			err := c.kubeClient.CoreV1().Pods(cd.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to delete unready pod governed by the StatefulSet: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// HasTargetChanged returns true if the canary StatefulSet pod spec has changed
+func (c *StatefulSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error) {
+	targetName := cd.Spec.TargetRef.Name
+	canary, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+	if err != nil {
+		return false, fmt.Errorf("StatefulSet %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	return hasSpecChanged(cd, canary.Spec.Template)
 }
 
-// ScaleToZero Scale sets the canary deployment replicas
-func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
+// ScaleToZero Scale sets the canary StatefulSet replicas
+func (c *StatefulSetController) ScaleToZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("StatefulSet %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = int32p(0)
 
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	_, err = c.kubeClient.AppsV1().StatefulSets(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s update query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("StatefulSet %s.%s update query error: %w", targetName, cd.Namespace, err)
 	}
 	return nil
 }
 
-func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
+func (c *StatefulSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("StatefulSet %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	replicas := int32p(1)
@@ -189,9 +236,9 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	} else if cd.Spec.AutoscalerRef == nil {
 		// If HPA isn't set and replicas are not specified, it uses the primary replicas when scaling up the canary
 		primaryName := fmt.Sprintf("%s-primary", targetName)
-		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		primary, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+			return fmt.Errorf("StatefulSet %s.%s get query error: %w", primaryName, cd.Namespace, err)
 		}
 
 		if primary.Spec.Replicas != nil && *primary.Spec.Replicas > 0 {
@@ -225,7 +272,7 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = replicas
 
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	_, err = c.kubeClient.AppsV1().StatefulSets(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("scaling up %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}
@@ -233,12 +280,12 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 }
 
 // GetMetadata returns the pod label selector and svc ports
-func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, string, map[string]int32, error) {
+func (c *StatefulSetController) GetMetadata(cd *flaggerv1.Canary) (string, string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 
-	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+	canaryDep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return "", "", nil, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return "", "", nil, fmt.Errorf("StatefulSet %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	label, labelValue, err := c.getSelectorLabel(canaryDep)
@@ -253,13 +300,13 @@ func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, string
 
 	return label, labelValue, ports, nil
 }
-func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
+func (c *StatefulSetController) createPrimaryStatefulSet(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 
-	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+	canaryDep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("StatefulSet %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
 	// Create the labels map but filter unwanted labels
@@ -271,7 +318,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
-	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+	primaryDep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		// create primary secrets and config maps
 		configRefs, err := c.configTracker.GetTargetConfigs(cd)
@@ -291,8 +338,8 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 			replicas = *canaryDep.Spec.Replicas
 		}
 
-		// create primary deployment
-		primaryDep = &appsv1.Deployment{
+		// create primary StatefulSet
+		primaryDep = &appsv1.StatefulSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        primaryName,
 				Namespace:   cd.Namespace,
@@ -306,12 +353,12 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 					}),
 				},
 			},
-			Spec: appsv1.DeploymentSpec{
-				ProgressDeadlineSeconds: canaryDep.Spec.ProgressDeadlineSeconds,
-				MinReadySeconds:         canaryDep.Spec.MinReadySeconds,
-				RevisionHistoryLimit:    canaryDep.Spec.RevisionHistoryLimit,
-				Replicas:                int32p(replicas),
-				Strategy:                canaryDep.Spec.Strategy,
+			Spec: appsv1.StatefulSetSpec{
+				PodManagementPolicy:  canaryDep.Spec.PodManagementPolicy,
+				MinReadySeconds:      canaryDep.Spec.MinReadySeconds,
+				RevisionHistoryLimit: canaryDep.Spec.RevisionHistoryLimit,
+				Replicas:             int32p(replicas),
+				UpdateStrategy:       canaryDep.Spec.UpdateStrategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						label: primaryLabelValue,
@@ -323,24 +370,24 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 						Annotations: annotations,
 					},
 					// update spec with the primary secrets and config maps
-					Spec: c.getPrimaryDeploymentTemplateSpec(canaryDep, configRefs),
+					Spec: c.getPrimaryStatefulSetTemplateSpec(canaryDep, configRefs),
 				},
 			},
 		}
 
-		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Create(context.TODO(), primaryDep, metav1.CreateOptions{})
+		_, err = c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Create(context.TODO(), primaryDep, metav1.CreateOptions{})
 		if err != nil {
-			return fmt.Errorf("creating deployment %s.%s failed: %w", primaryDep.Name, cd.Namespace, err)
+			return fmt.Errorf("creating StatefulSet %s.%s failed: %w", primaryDep.Name, cd.Namespace, err)
 		}
 
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
+			Infof("StatefulSet %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
 	return nil
 }
 
-func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
+func (c *StatefulSetController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	hpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
 	if err != nil {
@@ -440,37 +487,37 @@ func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bo
 }
 
 // getSelectorLabel returns the selector match label
-func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (string, string, error) {
+func (c *StatefulSetController) getSelectorLabel(StatefulSet *appsv1.StatefulSet) (string, string, error) {
 	for _, l := range c.labels {
-		if _, ok := deployment.Spec.Selector.MatchLabels[l]; ok {
-			return l, deployment.Spec.Selector.MatchLabels[l], nil
+		if _, ok := StatefulSet.Spec.Selector.MatchLabels[l]; ok {
+			return l, StatefulSet.Spec.Selector.MatchLabels[l], nil
 		}
 	}
 
 	return "", "", fmt.Errorf(
-		"deployment %s.%s spec.selector.matchLabels must contain one of %v",
-		deployment.Name, deployment.Namespace, c.labels,
+		"StatefulSet %s.%s spec.selector.matchLabels must contain one of %v",
+		StatefulSet.Name, StatefulSet.Namespace, c.labels,
 	)
 }
 
-func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
+func (c *StatefulSetController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
 	return c.configTracker.HasConfigChanged(cd)
 }
 
 // Finalize will set the replica count from the primary to the reference instance.  This method is used
-// during a delete to attempt to revert the deployment back to the original state.  Error is returned if unable
-// update the reference deployment replicas to the primary replicas
-func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {
+// during a delete to attempt to revert the StatefulSet back to the original state.  Error is returned if unable
+// update the reference StatefulSet replicas to the primary replicas
+func (c *StatefulSetController) Finalize(cd *flaggerv1.Canary) error {
 
-	// get ref deployment
-	refDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), cd.Spec.TargetRef.Name, metav1.GetOptions{})
+	// get ref StatefulSet
+	refDep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("deplyoment %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
 	// get primary if possible, if not scale from zero
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+	primaryDep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			if err := c.ScaleFromZero(cd); err != nil {
@@ -483,7 +530,7 @@ func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {
 
 	// if both ref and primary present update the replicas of the ref to match the primary
 	if refDep.Spec.Replicas != primaryDep.Spec.Replicas {
-		// set the replicas value on the original reference deployment
+		// set the replicas value on the original reference StatefulSet
 		if err := c.scale(cd, int32Default(primaryDep.Spec.Replicas)); err != nil {
 			return fmt.Errorf("scale failed: %w", err)
 		}
@@ -491,24 +538,24 @@ func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// Scale sets the canary deployment replicas
-func (c *DeploymentController) scale(cd *flaggerv1.Canary, replicas int32) error {
+// Scale sets the canary StatefulSet replicas
+func (c *StatefulSetController) scale(cd *flaggerv1.Canary, replicas int32) error {
 	targetName := cd.Spec.TargetRef.Name
-	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+	dep, err := c.kubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("StatefulSet %s.%s query error: %w", targetName, cd.Namespace, err)
 	}
 
 	depCopy := dep.DeepCopy()
 	depCopy.Spec.Replicas = int32p(replicas)
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	_, err = c.kubeClient.AppsV1().StatefulSets(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("scaling %s.%s to %v failed: %w", depCopy.GetName(), depCopy.Namespace, replicas, err)
 	}
 	return nil
 }
 
-func (c *DeploymentController) getPrimaryDeploymentTemplateSpec(canaryDep *appsv1.Deployment, refs map[string]ConfigRef) corev1.PodSpec {
+func (c *StatefulSetController) getPrimaryStatefulSetTemplateSpec(canaryDep *appsv1.StatefulSet, refs map[string]ConfigRef) corev1.PodSpec {
 	spec := c.configTracker.ApplyPrimaryConfigs(canaryDep.Spec.Template.Spec, refs)
 
 	// update TopologySpreadConstraints
@@ -532,7 +579,7 @@ func (c *DeploymentController) getPrimaryDeploymentTemplateSpec(canaryDep *appsv
 	return spec
 }
 
-func (c *DeploymentController) appendPrimarySuffixToValuesIfNeeded(labelSelector *metav1.LabelSelector, canaryDep *appsv1.Deployment) {
+func (c *StatefulSetController) appendPrimarySuffixToValuesIfNeeded(labelSelector *metav1.LabelSelector, canaryDep *appsv1.StatefulSet) {
 	if labelSelector != nil {
 		for _, matchExpression := range labelSelector.MatchExpressions {
 			if contains(c.labels, matchExpression.Key) {

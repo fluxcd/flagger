@@ -110,6 +110,11 @@ type CanarySpec struct {
 	// revert canary mutation on deletion of canary resource
 	// +optional
 	RevertOnDeletion bool `json:"revertOnDeletion,omitempty"`
+
+	// StatefulRolloutS defines how pods are handled after a StatefulSet was updated.
+	// This is only considered if TargetRef.Kind is a StatefulSet
+	// +optional
+	StatefulRollout *StatefulRollout `json:"statefulRollout,omitempty"`
 }
 
 // CanaryService defines how ClusterIP services, service mesh or ingress routing objects are generated
@@ -465,6 +470,20 @@ type ScalerReplicas struct {
 	// +optional
 	MaxReplicas *int32 `json:"maxReplicas,omitempty"`
 }
+
+// StatefulRollout defines how pods are handled after a StatefulSet was updated
+type StatefulRollout struct {
+	// Strategy defines how pods are handled after a StatefulSet was updated.
+	Strategy StatefulRolloutStrategy `json:"strategy,omitempty"`
+}
+
+// StatefulRolloutStrategy defines a rollout strategy
+type StatefulRolloutStrategy string
+
+const (
+	StatefulRolloutStrategyScaleToZero       StatefulRolloutStrategy = "ScaleToZero"
+	StatefulRolloutStrategyDeleteUnreadyPods StatefulRolloutStrategy = "DeleteUnreadyPods"
+)
 
 // CustomMetadata holds labels and annotations to set on generated objects.
 type CustomMetadata struct {

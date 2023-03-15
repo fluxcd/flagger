@@ -101,6 +101,7 @@ spec:
                         - DaemonSet
                         - Deployment
                         - Service
+                        - StatefulSet
                     name:
                       type: string
                 autoscalerRef:
@@ -847,6 +848,17 @@ spec:
                 skipAnalysis:
                   description: Skip analysis and promote canary
                   type: boolean
+                statefulRollout:
+                  description: Hook into rollout of pods governed by a StatefulSet.
+                  type: object
+                  required: [ "strategy" ]
+                  properties:
+                    strategy:
+                      description: Strategy defines how pods are handled after a StatefulSet was updated.
+                      type: string
+                      enum:
+                      - "ScaleToZero"
+                      - "DeleteUnreadyPods"
                 revertOnDeletion:
                   description: Revert mutated resources to original spec on deletion
                   type: boolean

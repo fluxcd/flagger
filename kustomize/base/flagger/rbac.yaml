@@ -13,6 +13,7 @@ rules:
       - secrets/finalizers
       - services
       - services/finalizers
+      - pods
     verbs:
       - get
       - list
@@ -40,6 +41,8 @@ rules:
       - daemonsets/finalizers
       - deployments
       - deployments/finalizers
+      - statefulsets
+      - statefulsets/finalizers
     verbs:
       - get
       - list

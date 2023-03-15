@@ -120,7 +120,7 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 	}, nil
 }
 
-// GetTargetConfigs scans the target deployment for Kubernetes ConfigMaps and Secrets
+// GetTargetConfigs scans the target for Kubernetes ConfigMaps and Secrets
 // and returns a list of config references
 func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]ConfigRef, error) {
 	targetName := cd.Spec.TargetRef.Name
@@ -144,6 +144,14 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 		vs = targetDae.Spec.Template.Spec.Volumes
 		cs = targetDae.Spec.Template.Spec.Containers
 		cs = append(cs, targetDae.Spec.Template.Spec.InitContainers...)
+	case "StatefulSet":
+		targetSts, err := ct.KubeClient.AppsV1().StatefulSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("statefulset %s.%s get query error: %w", targetName, cd.Namespace, err)
+		}
+		vs = targetSts.Spec.Template.Spec.Volumes
+		cs = targetSts.Spec.Template.Spec.Containers
+		cs = append(cs, targetSts.Spec.Template.Spec.InitContainers...)
 	default:
 		return nil, fmt.Errorf("TargetRef.Kind invalid: %s", cd.Spec.TargetRef.Kind)
 	}
@@ -292,7 +300,7 @@ func (ct *ConfigTracker) HasConfigChanged(cd *flaggerv1.Canary) (bool, error) {
 }
 
 // CreatePrimaryConfigs syncs the primary Kubernetes ConfigMaps and Secrets
-// with those found in the target deployment
+// with those found in the target
 func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[string]ConfigRef, includeLabelPrefix []string) error {
 	for _, ref := range refs {
 		switch ref.Type {

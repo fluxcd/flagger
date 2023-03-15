@@ -53,7 +53,7 @@ you can override the global provider for a specific canary with `spec.provider`.
 
 ## Canary target
 
-A canary resource can target a Kubernetes Deployment or DaemonSet.
+A canary resource can target a Kubernetes Deployment, DaemonSet or StatefulSet.
 
 Kubernetes Deployment example:
 
@@ -132,6 +132,13 @@ doing a new rollout. As the canary deployment will be scaled to 0, the HPA on th
 
 The progress deadline represents the maximum time in seconds for the canary deployment to
 make progress before it is rolled back, defaults to ten minutes.
+
+### StatefulSet target
+
+While flagger does support canary releases targeting a StatefulSet this may only be used in certain scenarions. 
+There is no data migration or any other similar mechanism between the canary and primary StatefulSet!
+
+Canary releases for a StatefulSet are only useful if the StatefulSet has no direct dependency on data volumes. 
 
 ## Canary service
 

@@ -101,7 +101,6 @@ spec:
                         - DaemonSet
                         - Deployment
                         - Service
-                        - StatefulSet
                     name:
                       type: string
                 autoscalerRef:
@@ -848,17 +847,6 @@ spec:
                 skipAnalysis:
                   description: Skip analysis and promote canary
                   type: boolean
-                statefulRollout:
-                  description: Hook into rollout of pods governed by a StatefulSet.
-                  type: object
-                  required: [ "strategy" ]
-                  properties:
-                    strategy:
-                      description: Strategy defines how pods are handled after a StatefulSet was updated.
-                      type: string
-                      enum:
-                      - "ScaleToZero"
-                      - "DeleteUnreadyPods"
                 revertOnDeletion:
                   description: Revert mutated resources to original spec on deletion
                   type: boolean
@@ -1069,6 +1057,17 @@ spec:
                           description: MaxAge indicates the number of seconds until the session affinity cookie will expire.
                           default: 86400
                           type: number
+                    statefulRollout:
+                      description: Hook into rollout of pods governed by a StatefulSet.
+                      type: object
+                      required: [ "strategy" ]
+                      properties:
+                        strategy:
+                          description: Strategy defines how pods are handled after a StatefulSet was updated.
+                          type: string
+                          enum:
+                          - "ScaleToZero"
+                          - "DeleteUnreadyPods"
             status:
               description: CanaryStatus defines the observed state of a canary.
               type: object

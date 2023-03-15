@@ -65,6 +65,14 @@ func (factory *Factory) Controller(kind string) Controller {
 		configTracker:      factory.configTracker,
 		includeLabelPrefix: factory.includeLabelPrefix,
 	}
+	statefulSetCtrl := &StatefulSetController{
+		logger:             factory.logger,
+		kubeClient:         factory.kubeClient,
+		flaggerClient:      factory.flaggerClient,
+		labels:             factory.labels,
+		configTracker:      factory.configTracker,
+		includeLabelPrefix: factory.includeLabelPrefix,
+	}
 	serviceCtrl := &ServiceController{
 		logger:             factory.logger,
 		kubeClient:         factory.kubeClient,
@@ -77,6 +85,8 @@ func (factory *Factory) Controller(kind string) Controller {
 		return daemonSetCtrl
 	case "Deployment":
 		return deploymentCtrl
+	case "StatefulSet":
+		return statefulSetCtrl
 	case "Service":
 		return serviceCtrl
 	default:
