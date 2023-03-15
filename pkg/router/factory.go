@@ -75,7 +75,7 @@ func (factory *Factory) KubernetesRouter(kind string, labelSelector string, labe
 }
 
 // MeshRouter returns a service mesh router
-func (factory *Factory) MeshRouter(provider string, labelSelector string) Interface {
+func (factory *Factory) MeshRouter(provider string, labelSelector string, labelValue string) Interface {
 	switch {
 	case strings.HasPrefix(provider, flaggerv1.AppMeshProvider+":v1beta2"):
 		return &AppMeshv1beta2Router{
@@ -214,7 +214,13 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			setOwnerRefs:     factory.setOwnerRefs,
 		}
 	case provider == flaggerv1.KubernetesProvider:
-		return &NopRouter{}
+		return &KubernetesDefaultRouter{
+			logger:        factory.logger,
+			flaggerClient: factory.flaggerClient,
+			kubeClient:    factory.kubeClient,
+			labelSelector: labelSelector,
+			labelValue:    labelValue,
+		}
 	default:
 		return &IstioRouter{
 			logger:        factory.logger,

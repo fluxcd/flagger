@@ -18,7 +18,7 @@ a service mesh or an ingress controller. For Blue/Green deployments no service m
 
 A canary analysis is triggered by changes in any of the following objects:
 
-* Deployment PodSpec \(container image, command, ports, env, resources, etc\)
+* Spec \(container image, command, ports, env, resources, etc\) of referenced target \(Deployment, DaemonSet, StatefulSet\)
 * ConfigMaps mounted as volumes or mapped to environment variables
 * Secrets mounted as volumes or mapped to environment variables
 
@@ -328,7 +328,7 @@ Blue/Green rollout steps for service mesh:
 * run conformance tests for the canary pods
 * run load tests and metric checks for the canary pods every minute
 * abort the canary release if the failure threshold is reached
-* route traffic to canary (This doesn't happen when using the kubernetes provider)
+* route traffic to canary
 * promote canary spec over primary (blue)
 * wait for primary rollout
 * route traffic to primary

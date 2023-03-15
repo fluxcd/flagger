@@ -95,7 +95,7 @@ func (c *Controller) revertMesh(r *flaggerv1.Canary) error {
 		provider = r.Spec.Provider
 	}
 
-	meshRouter := c.routerFactory.MeshRouter(provider, "")
+	meshRouter := c.routerFactory.MeshRouter(provider, "", "")
 	if err := meshRouter.Finalize(r); err != nil {
 		return fmt.Errorf("meshRouter.Finlize failed: %w", err)
 	}

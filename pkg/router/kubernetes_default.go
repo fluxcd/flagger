@@ -77,12 +77,34 @@ func (c *KubernetesDefaultRouter) Reconcile(canary *flaggerv1.Canary) error {
 	return nil
 }
 
-func (c *KubernetesDefaultRouter) SetRoutes(_ *flaggerv1.Canary, _ int, _ int) error {
+func (c *KubernetesDefaultRouter) SetRoutes(canary *flaggerv1.Canary, primaryWeight int, canaryWeight int, mirrored bool) error {
+	var podSelector string
+	if primaryWeight == 0 && canaryWeight == 100 {
+		podSelector = fmt.Sprintf("%s-canary", c.labelValue)
+	} else if primaryWeight == 100 && canaryWeight == 0 {
+		podSelector = fmt.Sprintf("%s-primary", c.labelValue)
+	} else {
+		return nil
+	}
+
+	apexName, _, _ := canary.GetServiceNames()
+	svc, err := c.kubeClient.CoreV1().Services(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get apex service: %w", err)
+	}
+
+	svcClone := svc.DeepCopy()
+	svcClone.Spec.Selector = map[string]string{c.labelSelector: podSelector}
+	_, err = c.kubeClient.CoreV1().Services(canary.Namespace).Update(context.TODO(), svcClone, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("service %s update error: %w", apexName, err)
+	}
+
 	return nil
 }
 
-func (c *KubernetesDefaultRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute int, canaryRoute int, err error) {
-	return 0, 0, nil
+func (c *KubernetesDefaultRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute int, canaryRoute int, mirrored bool, err error) {
+	return 0, 0, false, nil
 }
 
 func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string, metadata *flaggerv1.CustomMetadata) error {

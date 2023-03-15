@@ -200,7 +200,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// init mesh router
-	meshRouter := c.routerFactory.MeshRouter(provider, labelSelector)
+	meshRouter := c.routerFactory.MeshRouter(provider, labelSelector, labelValue)
 
 	// register the AppMesh VirtualNodes before creating the primary deployment
 	// otherwise the pods will not be injected with the Envoy proxy
@@ -241,7 +241,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// take over an existing virtual service or ingress
 	// runs after the primary is ready to ensure zero downtime
-	if !strings.HasPrefix(provider, flaggerv1.AppMeshProvider) {
+	if !strings.HasPrefix(provider, flaggerv1.AppMeshProvider) && provider != "kubernetes" {
 		if err := meshRouter.Reconcile(cd); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			return
@@ -458,14 +458,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryController canary.Controller,
 	meshRouter router.Interface, provider string, canaryWeight int, primaryWeight int) {
-	// finalize promotion since no traffic shifting is possible for Kubernetes CNI
-	if provider == flaggerv1.KubernetesProvider {
-		if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFinalising); err != nil {
-			c.recordEventWarningf(canary, "%v", err)
-		}
-		return
-	}
-
 	// route all traffic to primary in one go when promotion step wight is not set
 	if canary.Spec.Analysis.StepWeightPromotion == 0 {
 		c.recordEventInfof(canary, "Routing all traffic to primary")
@@ -661,18 +653,16 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 
 	// route all traffic to canary - max iterations reached
 	if canary.GetAnalysis().Iterations == canary.Status.Iterations {
-		if provider != "kubernetes" {
-			if canary.GetAnalysis().Mirror {
-				c.recordEventInfof(canary, "Stop traffic mirroring and route all traffic to canary")
-			} else {
-				c.recordEventInfof(canary, "Routing all traffic to canary")
-			}
-			if err := meshRouter.SetRoutes(canary, 0, c.totalWeight(canary), false); err != nil {
-				c.recordEventWarningf(canary, "%v", err)
-				return
-			}
-			c.recorder.SetWeight(canary, 0, c.totalWeight(canary))
+		if canary.GetAnalysis().Mirror {
+			c.recordEventInfof(canary, "Stop traffic mirroring and route all traffic to canary")
+		} else {
+			c.recordEventInfof(canary, "Routing all traffic to canary")
 		}
+		if err := meshRouter.SetRoutes(canary, 0, c.totalWeight(canary), false); err != nil {
+			c.recordEventWarningf(canary, "%v", err)
+			return
+		}
+		c.recorder.SetWeight(canary, 0, c.totalWeight(canary))
 
 		// increment iterations
 		if err := canaryController.SetStatusIterations(canary, canary.Status.Iterations+1); err != nil {
@@ -697,7 +687,6 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 			return
 		}
 	}
-
 }
 
 func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
