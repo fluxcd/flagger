@@ -157,25 +157,26 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 
 	virtualnode, err := ar.appmeshClient.AppmeshV1beta2().VirtualNodes(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 
+	newMetadata := canary.Spec.Service.Apex
+	if newMetadata == nil {
+		newMetadata = &flaggerv1.CustomMetadata{}
+	}
+	if newMetadata.Labels == nil {
+		newMetadata.Labels = make(map[string]string)
+	}
+	if newMetadata.Annotations == nil {
+		newMetadata.Annotations = make(map[string]string)
+	}
+	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
+
 	// create virtual node
 	if errors.IsNotFound(err) {
-		metadata := canary.Spec.Service.Apex
-		if metadata == nil {
-			metadata = &flaggerv1.CustomMetadata{}
-		}
-		if metadata.Labels == nil {
-			metadata.Labels = make(map[string]string)
-		}
-		if metadata.Annotations == nil {
-			metadata.Annotations = make(map[string]string)
-		}
-
 		virtualnode = &appmeshv1.VirtualNode{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        name,
 				Namespace:   canary.Namespace,
-				Labels:      metadata.Labels,
-				Annotations: filterMetadata(metadata.Annotations),
+				Labels:      newMetadata.Labels,
+				Annotations: newMetadata.Annotations,
 			},
 			Spec: vnSpec,
 		}
@@ -201,12 +202,16 @@ func (ar *AppMeshv1beta2Router) reconcileVirtualNode(canary *flaggerv1.Canary, n
 
 	// update virtual node
 	if virtualnode != nil {
-		if diff := cmp.Diff(vnSpec, virtualnode.Spec,
-			cmpopts.IgnoreFields(appmeshv1.VirtualNodeSpec{}, "AWSName", "MeshRef")); diff != "" {
+		specDiff := cmp.Diff(vnSpec, virtualnode.Spec, cmpopts.IgnoreFields(appmeshv1.VirtualNodeSpec{}, "AWSName", "MeshRef"))
+		labelsDiff := cmp.Diff(newMetadata.Labels, virtualnode.Labels, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(newMetadata.Annotations, virtualnode.Annotations, cmpopts.EquateEmpty())
+		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" {
 			vnClone := virtualnode.DeepCopy()
 			vnClone.Spec = vnSpec
 			vnClone.Spec.AWSName = virtualnode.Spec.AWSName
 			vnClone.Spec.MeshRef = virtualnode.Spec.MeshRef
+			vnClone.ObjectMeta.Annotations = newMetadata.Annotations
+			vnClone.ObjectMeta.Labels = newMetadata.Labels
 			_, err = ar.appmeshClient.AppmeshV1beta2().VirtualNodes(canary.Namespace).Update(context.TODO(), vnClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("VirtualNode %s update error %w", name, err)

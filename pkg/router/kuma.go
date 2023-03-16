@@ -63,22 +63,22 @@ func (kr *KumaRouter) Reconcile(canary *flaggerv1.Canary) error {
 		},
 	}
 
+	newMetadata := canary.Spec.Service.Apex
+	if newMetadata == nil {
+		newMetadata = &flaggerv1.CustomMetadata{}
+	}
+	if newMetadata.Labels == nil {
+		newMetadata.Labels = make(map[string]string)
+	}
+	if newMetadata.Annotations == nil {
+		newMetadata.Annotations = make(map[string]string)
+	}
+	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
+
 	tr, err := kr.kumaClient.KumaV1alpha1().TrafficRoutes().Get(context.TODO(), apexName, metav1.GetOptions{})
 
 	// create TrafficRoute
 	if errors.IsNotFound(err) {
-		metadata := canary.Spec.Service.Apex
-		if metadata == nil {
-			metadata = &flaggerv1.CustomMetadata{}
-		}
-		if metadata.Labels == nil {
-			metadata.Labels = make(map[string]string)
-		}
-		if metadata.Annotations == nil {
-			metadata.Annotations = make(map[string]string)
-			metadata.Annotations[fmt.Sprintf("%d.service.kuma.io", canary.Spec.Service.Port)] = "http"
-		}
-
 		meshName, ok := canary.Annotations["kuma.io/mesh"]
 		if !ok {
 			meshName = "default"
@@ -88,7 +88,8 @@ func (kr *KumaRouter) Reconcile(canary *flaggerv1.Canary) error {
 		t := &kumav1alpha1.TrafficRoute{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexName,
-				Annotations: filterMetadata(metadata.Annotations),
+				Labels:      newMetadata.Labels,
+				Annotations: newMetadata.Annotations,
 			},
 			Spec: trSpec,
 			Mesh: meshName,
@@ -108,19 +109,26 @@ func (kr *KumaRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	// update TrafficRoute
-	if diff := cmp.Diff(trSpec, tr.Spec, cmpopts.IgnoreFields(kumav1alpha1.TrafficRouteSplit{}, "Weight")); diff != "" {
-		trClone := tr.DeepCopy()
-		trClone.Spec = trSpec
+	if tr != nil {
+		specDiff := cmp.Diff(trSpec, tr.Spec, cmpopts.IgnoreFields(kumav1alpha1.TrafficRouteSplit{}, "Weight"))
+		labelsDiff := cmp.Diff(newMetadata.Labels, tr.Labels, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(newMetadata.Annotations, tr.Annotations, cmpopts.EquateEmpty())
+		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" {
+			trClone := tr.DeepCopy()
+			trClone.Spec = trSpec
+			trClone.ObjectMeta.Annotations = newMetadata.Annotations
+			trClone.ObjectMeta.Labels = newMetadata.Labels
 
-		_, err := kr.kumaClient.KumaV1alpha1().TrafficRoutes().Update(context.TODO(), trClone, metav1.UpdateOptions{})
+			_, err := kr.kumaClient.KumaV1alpha1().TrafficRoutes().Update(context.TODO(), trClone, metav1.UpdateOptions{})
 
-		if err != nil {
-			return fmt.Errorf("TrafficRoute %s update error: %w", apexName, err)
+			if err != nil {
+				return fmt.Errorf("TrafficRoute %s update error: %w", apexName, err)
+			}
+
+			kr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("TrafficRoute %s.%s updated", apexName, canary.Namespace)
+			return nil
 		}
-
-		kr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-			Infof("TrafficRoute %s.%s updated", apexName, canary.Namespace)
-		return nil
 	}
 
 	return nil

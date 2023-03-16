@@ -117,23 +117,25 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 		context.TODO(), apexSvcName, metav1.GetOptions{},
 	)
 
+	newMetadata := canary.Spec.Service.Apex
+	if newMetadata == nil {
+		newMetadata = &flaggerv1.CustomMetadata{}
+	}
+	if newMetadata.Labels == nil {
+		newMetadata.Labels = make(map[string]string)
+	}
+	if newMetadata.Annotations == nil {
+		newMetadata.Annotations = make(map[string]string)
+	}
+	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
+
 	if errors.IsNotFound(err) {
-		metadata := canary.Spec.Service.Apex
-		if metadata == nil {
-			metadata = &flaggerv1.CustomMetadata{}
-		}
-		if metadata.Labels == nil {
-			metadata.Labels = make(map[string]string)
-		}
-		if metadata.Annotations == nil {
-			metadata.Annotations = make(map[string]string)
-		}
 		route := &v1beta1.HTTPRoute{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexSvcName,
 				Namespace:   hrNamespace,
-				Labels:      metadata.Labels,
-				Annotations: filterMetadata(metadata.Annotations),
+				Labels:      newMetadata.Labels,
+				Annotations: newMetadata.Annotations,
 			},
 			Spec: httpRouteSpec,
 		}
@@ -161,13 +163,17 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	if httpRoute != nil {
-		diff := cmp.Diff(
+		specDiff := cmp.Diff(
 			httpRoute.Spec, httpRouteSpec,
 			cmpopts.IgnoreFields(v1beta1.BackendRef{}, "Weight"),
 		)
-		if diff != "" && httpRoute.Name != "" {
+		labelsDiff := cmp.Diff(newMetadata.Labels, httpRoute.Labels, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(newMetadata.Annotations, httpRoute.Annotations, cmpopts.EquateEmpty())
+		if (specDiff != "" && httpRoute.Name != "") || labelsDiff != "" || annotationsDiff != "" {
 			hrClone := httpRoute.DeepCopy()
 			hrClone.Spec = httpRouteSpec
+			hrClone.ObjectMeta.Annotations = newMetadata.Annotations
+			hrClone.ObjectMeta.Labels = newMetadata.Labels
 			_, err := gwr.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes(hrNamespace).
 				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 			if err != nil {

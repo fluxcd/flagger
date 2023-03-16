@@ -52,7 +52,7 @@ func TestTraefikRouter_Reconcile(t *testing.T) {
 	assert.Equal(t, uint(100), services[0].Weight)
 
 	assert.Equal(t, ts.ObjectMeta.Labels, mocks.canary.Spec.Service.Apex.Labels)
-	assert.Equal(t, ts.ObjectMeta.Annotations, filterMetadata(mocks.canary.Spec.Service.Apex.Annotations))
+	assert.Equal(t, filterMetadata(ts.ObjectMeta.Annotations), filterMetadata(mocks.canary.Spec.Service.Apex.Annotations))
 
 	for _, tt := range []struct {
 		name        string

@@ -151,25 +151,26 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 		}
 	}
 
+	newMetadata := canary.Spec.Service.Apex
+	if newMetadata == nil {
+		newMetadata = &flaggerv1.CustomMetadata{}
+	}
+	if newMetadata.Labels == nil {
+		newMetadata.Labels = make(map[string]string)
+	}
+	if newMetadata.Annotations == nil {
+		newMetadata.Annotations = make(map[string]string)
+	}
+	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
+
 	proxy, err := cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		metadata := canary.Spec.Service.Apex
-		if metadata == nil {
-			metadata = &flaggerv1.CustomMetadata{}
-		}
-		if metadata.Labels == nil {
-			metadata.Labels = make(map[string]string)
-		}
-		if metadata.Annotations == nil {
-			metadata.Annotations = make(map[string]string)
-		}
-
 		proxy = &contourv1.HTTPProxy{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexName,
 				Namespace:   canary.Namespace,
-				Labels:      metadata.Labels,
-				Annotations: filterMetadata(metadata.Annotations),
+				Labels:      newMetadata.Labels,
+				Annotations: newMetadata.Annotations,
 			},
 			Spec: newSpec,
 			Status: contourv1.HTTPProxyStatus{
@@ -207,13 +208,18 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	// update HTTPProxy but keep the original destination weights
 	if proxy != nil {
-		if diff := cmp.Diff(
+		specDiff := cmp.Diff(
 			newSpec,
 			proxy.Spec,
 			cmpopts.IgnoreFields(contourv1.Service{}, "Weight"),
-		); diff != "" {
+		)
+		labelsDiff := cmp.Diff(newMetadata.Labels, proxy.Labels, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(newMetadata.Annotations, proxy.Annotations, cmpopts.EquateEmpty())
+		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" {
 			clone := proxy.DeepCopy()
 			clone.Spec = newSpec
+			clone.ObjectMeta.Annotations = newMetadata.Annotations
+			clone.ObjectMeta.Labels = newMetadata.Labels
 
 			_, err = cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 			if err != nil {

@@ -55,25 +55,26 @@ func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 		},
 	}
 
+	newMetadata := canary.Spec.Service.Apex
+	if newMetadata == nil {
+		newMetadata = &flaggerv1.CustomMetadata{}
+	}
+	if newMetadata.Labels == nil {
+		newMetadata.Labels = make(map[string]string)
+	}
+	if newMetadata.Annotations == nil {
+		newMetadata.Annotations = make(map[string]string)
+	}
+	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
+
 	traefikService, err := tr.traefikClient.TraefikV1alpha1().TraefikServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		tsMetadata := canary.Spec.Service.Apex
-		if tsMetadata == nil {
-			tsMetadata = &flaggerv1.CustomMetadata{}
-		}
-		if tsMetadata.Labels == nil {
-			tsMetadata.Labels = make(map[string]string)
-		}
-		if tsMetadata.Annotations == nil {
-			tsMetadata.Annotations = make(map[string]string)
-		}
-
 		traefikService = &traefikv1alpha1.TraefikService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexName,
 				Namespace:   canary.Namespace,
-				Labels:      tsMetadata.Labels,
-				Annotations: filterMetadata(tsMetadata.Annotations),
+				Labels:      newMetadata.Labels,
+				Annotations: newMetadata.Annotations,
 			},
 			Spec: newSpec,
 		}
@@ -112,14 +113,18 @@ func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 			)
 		}
 
-		if diff := cmp.Diff(
+		specDiff := cmp.Diff(
 			newSpec,
 			traefikService.Spec,
 			cmpopts.IgnoreFields(traefikv1alpha1.Service{}, "Weight"),
-		); diff != "" {
-
+		)
+		labelsDiff := cmp.Diff(newMetadata.Labels, traefikService.Labels, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(newMetadata.Annotations, traefikService.Annotations, cmpopts.EquateEmpty())
+		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" {
 			clone := traefikService.DeepCopy()
 			clone.Spec = newSpec
+			clone.ObjectMeta.Annotations = newMetadata.Annotations
+			clone.ObjectMeta.Labels = newMetadata.Labels
 
 			_, err = tr.traefikClient.TraefikV1alpha1().TraefikServices(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 			if err != nil {

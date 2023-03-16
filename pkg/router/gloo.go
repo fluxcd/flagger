@@ -98,25 +98,26 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 		},
 	}
 
+	newMetadata := canary.Spec.Service.Apex
+	if newMetadata == nil {
+		newMetadata = &flaggerv1.CustomMetadata{}
+	}
+	if newMetadata.Labels == nil {
+		newMetadata.Labels = make(map[string]string)
+	}
+	if newMetadata.Annotations == nil {
+		newMetadata.Annotations = make(map[string]string)
+	}
+	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
+
 	routeTable, err := gr.glooClient.GatewayV1().RouteTables(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		metadata := canary.Spec.Service.Apex
-		if metadata == nil {
-			metadata = &flaggerv1.CustomMetadata{}
-		}
-		if metadata.Labels == nil {
-			metadata.Labels = make(map[string]string)
-		}
-		if metadata.Annotations == nil {
-			metadata.Annotations = make(map[string]string)
-		}
-
 		routeTable = &gatewayv1.RouteTable{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexName,
 				Namespace:   canary.Namespace,
-				Labels:      metadata.Labels,
-				Annotations: filterMetadata(metadata.Annotations),
+				Labels:      newMetadata.Labels,
+				Annotations: newMetadata.Annotations,
 			},
 			Spec: newSpec,
 		}
@@ -143,13 +144,18 @@ func (gr *GlooRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	// update routeTable but keep the original destination weights
 	if routeTable != nil {
-		if diff := cmp.Diff(
+		specDiff := cmp.Diff(
 			newSpec,
 			routeTable.Spec,
 			cmpopts.IgnoreFields(gatewayv1.WeightedDestination{}, "Weight"),
-		); diff != "" {
+		)
+		labelsDiff := cmp.Diff(newMetadata.Labels, routeTable.Labels, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(newMetadata.Annotations, routeTable.Annotations, cmpopts.EquateEmpty())
+		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" {
 			clone := routeTable.DeepCopy()
 			clone.Spec = newSpec
+			clone.ObjectMeta.Annotations = newMetadata.Annotations
+			clone.ObjectMeta.Labels = newMetadata.Labels
 
 			_, err = gr.glooClient.GatewayV1().RouteTables(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 			if err != nil {

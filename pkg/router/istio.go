@@ -191,6 +191,18 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		},
 	}
 
+	newMetadata := canary.Spec.Service.Apex
+	if newMetadata == nil {
+		newMetadata = &flaggerv1.CustomMetadata{}
+	}
+	if newMetadata.Labels == nil {
+		newMetadata.Labels = make(map[string]string)
+	}
+	if newMetadata.Annotations == nil {
+		newMetadata.Annotations = make(map[string]string)
+	}
+	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
+
 	if len(canary.GetAnalysis().Match) > 0 {
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
@@ -220,23 +232,12 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
-		metadata := canary.Spec.Service.Apex
-		if metadata == nil {
-			metadata = &flaggerv1.CustomMetadata{}
-		}
-		if metadata.Labels == nil {
-			metadata.Labels = make(map[string]string)
-		}
-		if metadata.Annotations == nil {
-			metadata.Annotations = make(map[string]string)
-		}
-
 		virtualService = &istiov1alpha3.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexName,
 				Namespace:   canary.Namespace,
-				Labels:      metadata.Labels,
-				Annotations: filterMetadata(metadata.Annotations),
+				Labels:      newMetadata.Labels,
+				Annotations: newMetadata.Annotations,
 			},
 			Spec: newSpec,
 		}
@@ -282,20 +283,31 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		ignoreCmpOptions = append(ignoreCmpOptions, ignoreSlice)
 		ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(istiov1alpha3.HTTPRouteDestination{}, "Headers"))
 	}
+	if v, ok := virtualService.Annotations[kubectlAnnotation]; ok {
+		newMetadata.Annotations[kubectlAnnotation] = v
+	}
+	if v, ok := virtualService.Annotations[configAnnotation]; ok {
+		newMetadata.Annotations[configAnnotation] = v
+	}
 	// update service but keep the original destination weights and mirror
 	if virtualService != nil {
-		if diff := cmp.Diff(
+		specDiff := cmp.Diff(
 			newSpec,
 			virtualService.Spec,
 			ignoreCmpOptions...,
-		); diff != "" {
+		)
+		labelsDiff := cmp.Diff(newMetadata.Labels, virtualService.Labels, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(newMetadata.Annotations, virtualService.Annotations, cmpopts.EquateEmpty())
+		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" {
 			vtClone := virtualService.DeepCopy()
 			vtClone.Spec = newSpec
+			vtClone.ObjectMeta.Annotations = newMetadata.Annotations
+			vtClone.ObjectMeta.Labels = newMetadata.Labels
 
 			//If annotation kubectl.kubernetes.io/last-applied-configuration is present no need to duplicate
 			//serialization.  If not present store the serialized object in annotation
 			//flagger.kubernetes.app/original-configuration
-			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok {
+			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok && specDiff != "" {
 				b, err := json.Marshal(virtualService.Spec)
 				if err != nil {
 					ir.logger.Warnf("Unable to marshal VS %s for orig-configuration annotation", virtualService.Name)
