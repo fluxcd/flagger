@@ -202,6 +202,12 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 
 	// update existing service pod selector and ports
 	if svc != nil {
+		// if the apex service routes to the canary it does not get touched
+		apexName, _, _ := canary.GetServiceNames()
+		if name == apexName && svc.Spec.Selector[c.labelSelector] == fmt.Sprintf("%s-canary", c.labelValue) {
+			return nil
+		}
+
 		sortPorts := func(a, b interface{}) bool {
 			return a.(corev1.ServicePort).Port < b.(corev1.ServicePort).Port
 		}
