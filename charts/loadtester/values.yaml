@@ -92,3 +92,7 @@ securityContext:
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
+
+# Set to explicitly determine which API objects to deploy based on supported Kubernetes version
+# Leave blank to allow helm to auto-detect your cluster version
+kubeVersion:

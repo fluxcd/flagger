@@ -30,3 +30,29 @@ Create chart name and version as used by the chart label.
 {{- define "loadtester.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+Return the target Kubernetes version
+*/}}
+{{- define "capabilities.kubeVersion" -}}
+{{- if .Values.global }}
+    {{- if .Values.global.kubeVersion }}
+    {{- .Values.global.kubeVersion -}}
+    {{- else }}
+    {{- default .Capabilities.KubeVersion.Version .Values.kubeVersion -}}
+    {{- end -}}
+{{- else }}
+{{- default .Capabilities.KubeVersion.Version .Values.kubeVersion -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for policy.
+*/}}
+{{- define "capabilities.policy.apiVersion" -}}
+{{- if semverCompare "<1.21-0" (include "capabilities.kubeVersion" .) -}}
+{{- print "policy/v1beta1" -}}
+{{- else -}}
+{{- print "policy/v1" -}}
+{{- end -}}
+{{- end -}}
