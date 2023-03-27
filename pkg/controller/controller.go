@@ -17,9 +17,12 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
@@ -146,6 +149,18 @@ func NewController(
 					ctrl.logger.With("canary", fmt.Sprintf("%s.%s", oldCanary.Name, oldCanary.Namespace)).
 						Warnf("The service name changed to %s, remove %s objects to avoid routing conflicts",
 							newCanary.Spec.Service.Name, oldCanary.Spec.Service.Name)
+				}
+
+				if oldCanary.Spec.AutoscalerRef != nil && newCanary.Spec.AutoscalerRef == nil {
+					err := ctrl.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(oldCanary.Namespace).
+						Delete(context.TODO(), fmt.Sprintf("%s-primary", oldCanary.Name), v1.DeleteOptions{})
+					if err != nil {
+						ctrl.logger.With("canary", fmt.Sprintf("%s.%s", oldCanary.Name, oldCanary.Namespace)).
+							Errorf("Failed to delete HPA %s.%s, after autoScalerRef removed", fmt.Sprintf("%s-primary", oldCanary.Name), oldCanary.Namespace)
+						return
+					}
+					ctrl.logger.With("canary", fmt.Sprintf("%s.%s", oldCanary.Name, oldCanary.Namespace)).
+						Infof("Successfully deleted HPA %s.%s, after autoScalerRef removed", fmt.Sprintf("%s-primary", oldCanary.Name), oldCanary.Namespace)
 				}
 
 				ctrl.enqueue(new)
