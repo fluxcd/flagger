@@ -177,3 +177,5 @@ podDisruptionBudget:
 podLabels: {}
 
 noCrossNamespaceRefs: false
+
+additionalContainers: []
