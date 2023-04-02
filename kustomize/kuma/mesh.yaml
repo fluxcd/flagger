@@ -1,0 +1,10 @@
+apiVersion: kuma.io/v1alpha1
+kind: Mesh
+metadata:
+  name: default
+spec:
+  metrics:
+    enabledBackend: prometheus-1
+    backends:
+    - name: prometheus-1
+      type: prometheus
