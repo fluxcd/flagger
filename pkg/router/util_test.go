@@ -56,3 +56,16 @@ func TestIncludeLabelsByPrefixWithWildcard(t *testing.T) {
 		"lorem": "ipsum",
 	})
 }
+
+func TestIncludeLabelsNoIncludes(t *testing.T) {
+	labels := map[string]string{
+		"foo":   "foo-value",
+		"bar":   "bar-value",
+		"lorem": "ipsum",
+	}
+	includeLabelPrefix := []string{""}
+
+	filteredLabels := includeLabelsByPrefix(labels, includeLabelPrefix)
+
+	assert.Equal(t, map[string]string{}, filteredLabels)
+}

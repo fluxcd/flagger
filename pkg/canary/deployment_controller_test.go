@@ -95,6 +95,7 @@ func TestDeploymentController_Promote(t *testing.T) {
 	depPrimaryLabels := depPrimary.ObjectMeta.Labels
 	depSourceLabels := dep2.ObjectMeta.Labels
 	assert.Equal(t, depSourceLabels["app.kubernetes.io/test-label-1"], depPrimaryLabels["app.kubernetes.io/test-label-1"])
+	assert.Equal(t, "podinfo-primary", depPrimaryLabels["name"])
 
 	depPrimaryAnnotations := depPrimary.ObjectMeta.Annotations
 	depSourceAnnotations := dep2.ObjectMeta.Annotations

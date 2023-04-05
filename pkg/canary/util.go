@@ -115,7 +115,7 @@ func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []stri
 			continue
 		}
 		for _, includeLabelPrefix := range includeLabelPrefixes {
-			if includeLabelPrefix == "*" || strings.HasPrefix(key, includeLabelPrefix) {
+			if includeLabelPrefix == "*" || (includeLabelPrefix != "" && strings.HasPrefix(key, includeLabelPrefix)) {
 				filteredLabels[key] = value
 				break
 			}
