@@ -177,3 +177,8 @@ podDisruptionBudget:
 podLabels: {}
 
 noCrossNamespaceRefs: false
+
+#Placeholder to supply additional volumes to the flagger pod
+additionalVolumes: {}
+  # - name: tmpfs
+  #   emptyDir: {}

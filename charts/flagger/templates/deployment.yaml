@@ -50,6 +50,9 @@ spec:
           secret:
             secretName: "{{ .Values.controlplane.kubeconfig.secretName }}"
         {{- end }}
+        {{- if .Values.additionalVolumes }}
+          {{- toYaml .Values.additionalVolumes | nindent 8 -}}
+        {{- end }}
       {{- if .Values.podPriorityClassName }}
       priorityClassName: {{ .Values.podPriorityClassName }}
       {{- end }}                  
