@@ -6,13 +6,13 @@ This guide shows you how to use Kuma and Flagger to automate canary deployments.
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.16** or newer and Kuma **1.3** or newer.
+Flagger requires a Kubernetes cluster **v1.19** or newer and Kuma **1.7** or newer.
 
 Install Kuma and Prometheus (part of Kuma Metrics):
 
 ```bash
 kumactl install control-plane | kubectl apply -f -
-kumactl install metrics | kubectl apply -f -
+kumactl install observability --components "grafana,prometheus" | kubectl apply -f -
 ```
 
 Install Flagger in the `kuma-system` namespace:
