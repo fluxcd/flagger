@@ -129,11 +129,8 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 			primaryCopy.ObjectMeta.Annotations[k] = v
 		}
 		// update deploy labels
-		primaryCopy.ObjectMeta.Labels = make(map[string]string)
 		filteredLabels := includeLabelsByPrefix(canary.ObjectMeta.Labels, c.includeLabelPrefix)
-		for k, v := range filteredLabels {
-			primaryCopy.ObjectMeta.Labels[k] = v
-		}
+		primaryCopy.ObjectMeta.Labels = makePrimaryLabels(filteredLabels, primaryLabelValue, label)
 
 		// apply update
 		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Update(context.TODO(), primaryCopy, metav1.UpdateOptions{})

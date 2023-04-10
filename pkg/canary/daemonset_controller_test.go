@@ -99,6 +99,7 @@ func TestDaemonSetController_Promote(t *testing.T) {
 	daePrimaryLabels := daePrimary.ObjectMeta.Labels
 	daeSourceLabels := dae2.ObjectMeta.Labels
 	assert.Equal(t, daeSourceLabels["app.kubernetes.io/test-label-1"], daePrimaryLabels["app.kubernetes.io/test-label-1"])
+	assert.Equal(t, "podinfo-primary", daePrimaryLabels["name"])
 
 	daePrimaryAnnotations := daePrimary.ObjectMeta.Annotations
 	daeSourceAnnotations := dae2.ObjectMeta.Annotations
