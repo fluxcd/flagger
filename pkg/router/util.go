@@ -7,6 +7,7 @@ import (
 const (
 	toolkitMarker         = "toolkit.fluxcd.io"
 	toolkitReconcileKey   = "kustomize.toolkit.fluxcd.io/reconcile"
+	helmDriftDetectionKey = "helm.toolkit.fluxcd.io/driftDetection"
 	toolkitReconcileValue = "disabled"
 )
 
@@ -30,5 +31,6 @@ func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []stri
 func filterMetadata(meta map[string]string) map[string]string {
 	// prevent Flux from overriding Flagger managed objects
 	meta[toolkitReconcileKey] = toolkitReconcileValue
+	meta[helmDriftDetectionKey] = toolkitReconcileValue
 	return meta
 }

@@ -93,6 +93,13 @@ if [ -z "$passed" ]; then
   kubectl -n test get svc/podinfo-svc -oyaml
   exit 1
 fi
+passed=$(kubectl -n test get svc/podinfo-svc -oyaml 2>&1 | { grep 'helm.toolkit.fluxcd.io/driftDetection' || true; })
+if [ -z "$passed" ]; then
+  echo -e '\u2716 helm drift detection annotation test failed'
+  kubectl -n test get svc/podinfo-svc -oyaml
+  exit 1
+fi
+
 passed=$(kubectl -n test get deploy/podinfo-primary -oyaml 2>&1 | { grep test-label-prefix || true; })
 if [ -z "$passed" ]; then
   echo -e '\u2716 primary copy labels by prefix test failed'
