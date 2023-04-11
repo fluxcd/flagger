@@ -44,7 +44,7 @@ func (c *Controller) runConfirmTrafficIncreaseHooks(canary *flaggerv1.Canary) bo
 func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary, canaryController canary.Controller) bool {
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == flaggerv1.ConfirmRolloutHook {
-			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			err := CallWebhook(canary.Name, canary.Namespace, canary.Status.Phase, webhook)
 			if err != nil {
 				if canary.Status.Phase != flaggerv1.CanaryPhaseWaiting {
 					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseWaiting); err != nil {
@@ -57,20 +57,8 @@ func (c *Controller) runConfirmRolloutHooks(canary *flaggerv1.Canary, canaryCont
 					}
 				}
 				return false
-			} else {
-				if canary.Status.Phase == flaggerv1.CanaryPhaseWaiting {
-					if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseProgressing); err != nil {
-						c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
-						return false
-					}
-					if err := canaryController.ScaleFromZero(canary); err != nil {
-						c.recordEventErrorf(canary, "%v", err)
-						return false
-					}
-					c.recordEventInfof(canary, "Confirm-rollout check %s passed", webhook.Name)
-					return false
-				}
 			}
+			c.recordEventInfof(canary, "Confirm-rollout check %s passed", webhook.Name)
 		}
 	}
 	return true

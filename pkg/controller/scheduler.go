@@ -248,6 +248,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 	}
 
+	// set canary phase to initialized and sync the status
+	if err = c.setPhaseInitialized(cd, canaryController); err != nil {
+		c.recordEventWarningf(cd, "%v", err)
+		return
+	}
+
 	// check for changes
 	shouldAdvance, err := c.shouldAdvance(cd, canaryController)
 	if err != nil {
@@ -257,11 +263,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	if !shouldAdvance {
 		c.recorder.SetStatus(cd, cd.Status.Phase)
-		return
-	}
-
-	// check gates
-	if isApproved := c.runConfirmRolloutHooks(cd, canaryController); !isApproved {
 		return
 	}
 
@@ -791,9 +792,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 }
 
 func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController canary.Controller) (bool, error) {
-	if canary.Status.LastAppliedSpec == "" ||
-		canary.Status.Phase == flaggerv1.CanaryPhaseInitializing ||
-		canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
@@ -842,19 +841,12 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		return false
 	}
 
-	if canary.Status.Phase == "" || canary.Status.Phase == flaggerv1.CanaryPhaseInitializing {
-		if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+	if shouldAdvance {
+		// check confirm-rollout gate
+		if isApproved := c.runConfirmRolloutHooks(canary, canaryController); !isApproved {
 			return false
 		}
-		c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseInitialized)
-		c.recordEventInfof(canary, "Initialization done! %s.%s", canary.Name, canary.Namespace)
-		c.alert(canary, fmt.Sprintf("New %s detected, initialization completed.", canary.Spec.TargetRef.Kind),
-			true, flaggerv1.SeverityInfo)
-		return false
-	}
 
-	if shouldAdvance {
 		canaryPhaseProgressing := canary.DeepCopy()
 		canaryPhaseProgressing.Status.Phase = flaggerv1.CanaryPhaseProgressing
 		c.recordEventInfof(canaryPhaseProgressing, "New revision detected! Scaling up %s.%s", canaryPhaseProgressing.Spec.TargetRef.Name, canaryPhaseProgressing.Namespace)
@@ -939,6 +931,30 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
 	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
+}
+
+func (c *Controller) setPhaseInitialized(cd *flaggerv1.Canary, canaryController canary.Controller) error {
+	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
+		cd.Status.Phase = flaggerv1.CanaryPhaseInitialized
+		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseInitialized}); err != nil {
+			return fmt.Errorf("failed to sync canary %s.%s status: %w", cd.Name, cd.Namespace, err)
+		}
+
+		canary, err := c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(context.TODO(), cd.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get canary %s.%s: %w", cd.Name, cd.Namespace, err)
+		}
+		// We need to sync the LastAppliedSpec and TrackedConfigs of the `cd` Canary object as it
+		// is used later to determine whether target revision has changed in `shouldAdvance()`.
+		cd.Status.LastAppliedSpec = canary.Status.LastAppliedSpec
+		cd.Status.TrackedConfigs = canary.Status.TrackedConfigs
+
+		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseInitialized)
+		c.recordEventInfof(cd, "Initialization done! %s.%s", cd.Name, cd.Namespace)
+		c.alert(cd, fmt.Sprintf("New %s detected, initialization completed.", cd.Spec.TargetRef.Kind),
+			true, flaggerv1.SeverityInfo)
+	}
+	return nil
 }
 
 func (c *Controller) setPhaseInitializing(cd *flaggerv1.Canary) error {
