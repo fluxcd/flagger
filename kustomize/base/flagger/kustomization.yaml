@@ -9,4 +9,4 @@ resources:
 images:
   - name: ghcr.io/fluxcd/flagger
     newName: ghcr.io/fluxcd/flagger
-    newTag: 1.29.0
+    newTag: 1.30.0

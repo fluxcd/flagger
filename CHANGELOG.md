@@ -2,6 +2,46 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.30.0
+
+**Release date:** 2023-04-12
+
+This release fixes a bug related to the lack of updates to the generated
+object's metadata according to the metadata specified in `spec.service.apex`.
+Furthermore, a bug where labels were wrongfully copied over from the canary
+deployment to primary deployment when no value was provided for
+`--include-label-prefix` has been fixed.
+This release also makes Flagger compatible with Flux's helm-controller drift
+detection.
+
+#### Improvements
+
+- build(deps): bump actions/cache from 3.2.5 to 3.3.1
+  [#1385](https://github.com/fluxcd/flagger/pull/1385)
+- helm: Added the option to supply additional volumes
+  [#1393](https://github.com/fluxcd/flagger/pull/1393)
+- build(deps): bump actions/setup-go from 3 to 4
+  [#1394](https://github.com/fluxcd/flagger/pull/1394)
+- update Kuma version and docs
+  [#1402](https://github.com/fluxcd/flagger/pull/1402)
+- ci: bump k8s to 1.24 and kind to 1.18 
+  [#1406](https://github.com/fluxcd/flagger/pull/1406)
+- Helm: Allow configuring deployment `annotations`
+  [#1411](https://github.com/fluxcd/flagger/pull/1411)
+- update dependencies
+  [#1412](https://github.com/fluxcd/flagger/pull/1412)
+
+#### Fixes
+
+- Enable updates for labels and annotations
+  [#1392](https://github.com/fluxcd/flagger/pull/1392)
+- Update flagger-install-with-flux.md
+  [#1398](https://github.com/fluxcd/flagger/pull/1398)
+- avoid copying canary labels to primary on promotion
+  [#1405](https://github.com/fluxcd/flagger/pull/1405)
+- Disable Flux helm drift detection for managed resources
+  [#1408](https://github.com/fluxcd/flagger/pull/1408)
+
 ## 1.29.0
 
 **Release date:** 2023-02-21
