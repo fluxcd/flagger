@@ -371,6 +371,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+		c.recorder.IncSuccess(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
@@ -849,6 +850,7 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		}
 		c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseInitialized)
 		c.recordEventInfof(canary, "Initialization done! %s.%s", canary.Name, canary.Namespace)
+		c.recorder.IncSuccess(canary, flaggerv1.CanaryPhaseSucceeded)
 		c.alert(canary, fmt.Sprintf("New %s detected, initialization completed.", canary.Spec.TargetRef.Kind),
 			true, flaggerv1.SeverityInfo)
 		return false
@@ -900,6 +902,7 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	if canary.Status.FailedChecks >= canary.GetAnalysisThreshold() {
 		c.recordEventWarningf(canary, "Rolling back %s.%s failed checks threshold reached %v",
 			canary.Name, canary.Namespace, canary.Status.FailedChecks)
+		c.recorder.IncFailure(canary, flaggerv1.CanaryPhaseFailed)
 		c.alert(canary, fmt.Sprintf("Failed checks threshold reached %v", canary.Status.FailedChecks),
 			false, flaggerv1.SeverityError)
 	}
