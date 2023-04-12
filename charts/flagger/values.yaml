@@ -1,5 +1,8 @@
 # Default values for flagger.
 
+## Deployment annotations
+# annotations: {}
+
 image:
   repository: ghcr.io/fluxcd/flagger
   tag: 1.29.0
