@@ -16,6 +16,7 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
   appmesh.k8s.aws/sidecarInjectorWebhook: disabled
+  linkerd.io/inject: enabled
 
 # priority class name for pod priority configuration
 podPriorityClassName: ""
@@ -122,6 +123,13 @@ rbac:
 crd:
   # crd.create: `true` if custom resource definitions should be created
   create: false
+
+linkerdAuthPolicy:
+  # linkerdAuthPolicy.create: Whether to create an AuthorizationPolicy in
+  # linkerd viz' namespace to allow flagger to reach viz' prometheus service
+  create: false
+  # linkerdAuthPolicy.namespace: linkerd-viz' namespace
+  namespace: linkerd-viz
 
 nameOverride: ""
 fullnameOverride: ""
