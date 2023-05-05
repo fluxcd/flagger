@@ -8,18 +8,53 @@ This guide shows you how to use Linkerd and Flagger to automate canary deploymen
 
 Flagger requires a Kubernetes cluster **v1.16** or newer and Linkerd **2.10** or newer.
 
-Install Linkerd the Promethues (part of Linkerd Viz):
+Install Linkerd and Prometheus (part of Linkerd Viz):
 
 ```bash
+# For linkerd versions 2.12 and later, the CRDs need to be installed beforehand
 linkerd install --crds | kubectl apply -f -
+
 linkerd install | kubectl apply -f -
 linkerd viz install | kubectl apply -f -
+
+# For linkerd versions 2.12 and later, the SMI extension needs to be install in
+# order to enable TrafficSplits
+curl -sL https://linkerd.github.io/linkerd-smi/install | sh
+linkerd smi install | kubectl apply -f -
 ```
 
-Install Flagger in the linkerd namespace:
+Install Flagger in the flagger-system namespace:
 
 ```bash
 kubectl apply -k github.com/fluxcd/flagger//kustomize/linkerd
+```
+
+If you prefer Helm, these are the commands to install Linkerd, Linkerd Viz,
+Linkerd-SMI and Flagger:
+
+```bash
+helm repo add linkerd https://helm.linkerd.io/stable
+helm install linkerd-crds linkerd/linkerd-crds -n linkerd --create-namespace
+# See https://linkerd.io/2/tasks/generate-certificates/ for how to generate the
+# certs referred below
+helm install linkerd-control-plane linkerd/linkerd-control-plane \
+  -n linkerd \
+  --set-file identityTrustAnchorsPEM=ca.crt \
+  --set-file identity.issuer.tls.crtPEM=issuer.crt \
+  --set-file identity.issuer.tls.keyPEM=issuer.key \
+
+helm install linkerd-viz linkerd/linkerd-viz -n linkerd-viz --create-namespace
+
+helm repo add l5d-smi https://linkerd.github.io/linkerd-smi
+helm install linkerd-smi l5d-smi/linkerd-smi -n linkerd-smi --create-namespace
+
+# Note that linkerdAuthPolicy.create=true is only required for Linkerd 2.12 and
+# later
+helm install flagger flagger/flagger \
+  --n flagger-system \
+  --set meshProvider=linkerd \
+  --set metricsServer=http://prometheus.linkerd-viz:9090 \
+  --set linkerdAuthPolicy.create=true
 ```
 
 ## Bootstrap
@@ -310,7 +345,7 @@ watch -n 1 curl http://podinfo-canary:9898/status/404
 Watch Flagger logs:
 
 ```text
-kubectl -n linkerd logs deployment/flagger -f | jq .msg
+kubectl -n flagger-system logs deployment/flagger -f | jq .msg
 
 Starting canary deployment for podinfo.test
 Pre-rollout check acceptance-test passed
