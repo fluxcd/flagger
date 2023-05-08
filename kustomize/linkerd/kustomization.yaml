@@ -1,5 +1,18 @@
-namespace: linkerd
+namespace: flagger-system
 bases:
   - ../base/flagger/
+  - namespace.yaml
+  - authorizationpolicy.yaml
 patchesStrategicMerge:
   - patch.yaml
+# restore overridden namespace field
+patchesJson6902:
+  - target:
+      group: policy.linkerd.io
+      version: v1alpha1
+      kind: AuthorizationPolicy
+      name: prometheus-admin-flagger
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: linkerd-viz
