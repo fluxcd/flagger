@@ -22,7 +22,6 @@ jobs:
           # service mesh
           - istio
           - linkerd
-          - osm
           - kuma
           # ingress controllers
           - contour
