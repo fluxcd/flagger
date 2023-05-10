@@ -2,6 +2,73 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.31.0
+
+**Release date:** 2023-05-10
+
+⚠️  __Breaking Changes__
+
+This release adds support for Linkerd 2.12 and later. Due to changes in Linkerd
+the default namespace for Flagger's installation had to be changed from
+`linkerd` to `flagger-system` and the `flagger` Deployment is now injected with
+the Linkerd proxy. Furthermore, installing Flagger for Linkerd will result in
+the creation of an `AuthorizationPolicy` that allows access to the Prometheus
+instance in the `linkerd-viz` namespace. To upgrade your Flagger installation,
+please see the below migration guide.
+
+If you use Kustomize, then follow these steps:
+* `kubectl delete -n linkerd deploy/flagger`
+* `kubectl delete -n linkerd serviceaccount flagger`
+* If you're on Linkerd >= 2.12, you'll need to install the SMI extension to enable
+  support for `TrafficSplit`s:
+  ```bash
+  curl -sL https://linkerd.github.io/linkerd-smi/install | sh
+  linkerd smi install | kubectl apply -f -
+  ```
+* `kubectl apply -k github.com/fluxcd/flagger//kustomize/linkerd`
+
+  Note: If you're on Linkerd < 2.12, this will report an error about missing CRDs.
+  It is safe to ignore this error.
+
+If you use Helm and are on Linkerd < 2.12, then you can use `helm upgrade` to do
+a regular upgrade.
+
+If you use Helm and are on Linkerd >= 2.12, then follow these steps:
+* `helm uninstall flagger -n linkerd`
+* Install the Linkerd SMI extension:
+  ```bash
+  helm repo add l5d-smi https://linkerd.github.io/linkerd-smi
+  helm install linkerd-smi l5d-smi/linkerd-smi -n linkerd-smi --create-namespace
+  ```
+* Install Flagger in the `flagger-system` namespace
+  and create an `AuthorizationPolicy`:
+  ```bash
+  helm repo update flagger
+  helm install flagger flagger/flagger \
+  --namespace flagger-system \
+  --set meshProvider=linkerd \
+  --set metricsServer=http://prometheus.linkerd-viz:9090 \
+  --set linkerdAuthPolicy.create=true
+  ```
+
+Furthermore, a bug which led the `confirm-rollout` webhook to be executed at
+every step of the Canary instead of only being executed before the canary
+Deployment is scaled up, has been fixed.
+
+#### Improvements
+
+- Add support for Linkerd 2.13
+  [#1417](https://github.com/fluxcd/flagger/pull/1417)
+
+#### Fixes
+
+- Fix the loadtester install with flux documentation
+  [#1384](https://github.com/fluxcd/flagger/pull/1384)
+- Run `confirm-rollout` checks only before scaling up deployment
+  [#1414](https://github.com/fluxcd/flagger/pull/1414)
+- e2e: Remove OSM tests
+  [#1423](https://github.com/fluxcd/flagger/pull/1423)
+
 ## 1.30.0
 
 **Release date:** 2023-04-12
