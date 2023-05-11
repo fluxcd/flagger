@@ -1,0 +1,19 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "flagger.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: {{ template "flagger.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
