@@ -23,6 +23,10 @@ podPriorityClassName: ""
 
 metricsServer: "http://prometheus:9090"
 
+# creates serviceMonitor for monitoring Flagger metrics
+serviceMonitor:
+  enabled: false
+
 # accepted values are kubernetes, istio, linkerd, appmesh, contour, nginx, gloo, skipper, traefik, apisix, osm
 meshProvider: ""
 
