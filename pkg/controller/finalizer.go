@@ -18,9 +18,12 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -52,6 +55,16 @@ func (c *Controller) finalize(old interface{}) error {
 		c.recordEventInfof(canary, "Terminating canary %s.%s", canary.Name, canary.Namespace)
 	}
 
+	// Resume target scaler so that the targetRef Deployment is not stuck at 0 replicas.
+	if canary.Spec.AutoscalerRef != nil {
+		scalerReconciler := c.canaryFactory.ScalerReconciler(canary.Spec.AutoscalerRef.Kind)
+		if scalerReconciler != nil {
+			if err = scalerReconciler.ResumeTargetScaler(canary); err != nil {
+				return fmt.Errorf("failed to resume target scaler during finalizing: %w", err)
+			}
+		}
+	}
+
 	// Revert the Kubernetes deployment or daemonset
 	err = canaryController.Finalize(canary)
 	if err != nil {
@@ -61,7 +74,20 @@ func (c *Controller) finalize(old interface{}) error {
 
 	// Ensure that targetRef has met a ready state
 	c.logger.Infof("Checking if canary is ready %s.%s", canary.Name, canary.Namespace)
-	_, err = canaryController.IsCanaryReady(canary)
+	backoff := wait.Backoff{
+		Duration: time.Second,
+		Factor:   2,
+		Cap:      canary.GetAnalysisInterval(),
+	}
+	retry.OnError(backoff, func(err error) bool {
+		return err.Error() == "retriable error"
+	}, func() error {
+		retriable, err := canaryController.IsCanaryReady(canary)
+		if err != nil && retriable {
+			return errors.New("retriable error")
+		}
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("canary not ready during finalizing: %w", err)
 	}
