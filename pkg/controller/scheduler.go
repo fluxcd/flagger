@@ -164,6 +164,14 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
+	if cd.Spec.Suspend {
+		msg := "skipping canary run as object is suspended"
+		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
+			Debug(msg)
+		c.recordEventInfof(cd, msg)
+		return
+	}
+
 	// override the global provider if one is specified in the canary spec
 	provider := c.meshProvider
 	if cd.Spec.Provider != "" {
@@ -172,6 +180,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// init controller based on target kind
 	canaryController := c.canaryFactory.Controller(cd.Spec.TargetRef.Kind)
+
 	labelSelector, labelValue, ports, err := canaryController.GetMetadata(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)

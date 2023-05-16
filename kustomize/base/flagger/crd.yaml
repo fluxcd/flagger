@@ -27,6 +27,10 @@ spec:
         - name: Weight
           type: string
           jsonPath: .status.canaryWeight
+        - name: Suspended
+          type: boolean
+          jsonPath: .spec.suspend
+          priority: 1
         - name: FailedChecks
           type: string
           jsonPath: .status.failedChecks
@@ -849,6 +853,9 @@ spec:
                   type: boolean
                 revertOnDeletion:
                   description: Revert mutated resources to original spec on deletion
+                  type: boolean
+                suspend:
+                  description: Suspend Canary disabling/pausing all canary runs
                   type: boolean
                 analysis:
                   description: Canary analysis for this canary
