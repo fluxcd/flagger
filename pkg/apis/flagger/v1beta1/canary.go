@@ -110,6 +110,12 @@ type CanarySpec struct {
 	// revert canary mutation on deletion of canary resource
 	// +optional
 	RevertOnDeletion bool `json:"revertOnDeletion,omitempty"`
+
+	// Suspend, if set to true will suspend the Canary, disabling any canary runs
+	// regardless of any changes to its target, services, etc. Note that if the
+	// Canary is suspended during an analysis, its paused until the Canary is unsuspended.
+	// +optional
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 // CanaryService defines how ClusterIP services, service mesh or ingress routing objects are generated

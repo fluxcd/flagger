@@ -379,3 +379,10 @@ On each run, Flagger calls the webhooks, checks the metrics and if the failed ch
 stops the analysis and rolls back the canary.
 If alerting is configured, Flagger will post the analysis result using the alert providers.
 
+## Canary suspend
+
+The `suspend` field can be set to true to suspend the Canary. If a Canary is suspended,
+its reconciliation is completely paused. This means that changes to target workloads,
+tracked ConfigMaps and Secrets don't trigger a Canary run and changes to resources generated
+by Flagger are not corrected. If the Canary was suspended during an active Canary run,
+then the run is paused without disturbing the workloads or the traffic weights.
