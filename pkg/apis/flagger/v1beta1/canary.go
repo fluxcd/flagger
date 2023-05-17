@@ -437,14 +437,15 @@ type LocalObjectReference struct {
 
 type AutoscalerRefernce struct {
 	// API version of the scaler
-	// +optional
+	// +required
 	APIVersion string `json:"apiVersion,omitempty"`
 
 	// Kind of the scaler
-	// +optional
+	// +required
 	Kind string `json:"kind,omitempty"`
 
 	// Name of the scaler
+	// +required
 	Name string `json:"name"`
 
 	// PrimaryScalerQueries maps a unique id to a query for the primary
