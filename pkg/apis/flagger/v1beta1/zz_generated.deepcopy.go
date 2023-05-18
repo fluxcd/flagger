@@ -396,6 +396,13 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(v1alpha3.TrafficPolicy)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Subsets != nil {
+		in, out := &in.Subsets, &out.Subsets
+		*out = make([]v1alpha3.Subset, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.Match != nil {
 		in, out := &in.Match, &out.Match
 		*out = make([]v1alpha3.HTTPMatchRequest, len(*in))

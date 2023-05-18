@@ -76,6 +76,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 	newSpec := istiov1alpha3.DestinationRuleSpec{
 		Host:          name,
 		TrafficPolicy: canary.Spec.Service.TrafficPolicy,
+		Subsets:       canary.Spec.Service.Subsets,
 	}
 
 	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})

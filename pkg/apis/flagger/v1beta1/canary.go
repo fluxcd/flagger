@@ -175,6 +175,10 @@ type CanaryService struct {
 	// +optional
 	TrafficPolicy *istiov1alpha3.TrafficPolicy `json:"trafficPolicy,omitempty"`
 
+	// Subsets attached to the generated Istio destination rules
+	// +optional
+	Subsets []istiov1alpha3.Subset `json:"subsets,omitempty"`
+
 	// URI match conditions for the generated service
 	// +optional
 	Match []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
