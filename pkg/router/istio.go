@@ -73,10 +73,18 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 }
 
 func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name string) error {
-	newSpec := istiov1alpha3.DestinationRuleSpec{
-		Host:          name,
-		TrafficPolicy: canary.Spec.Service.TrafficPolicy,
-		Subsets:       canary.Spec.Service.Subsets,
+	newSpec := istiov1alpha3.DestinationRuleSpec{}
+	if canary.Spec.Service.Subsets != nil {
+		newSpec = istiov1alpha3.DestinationRuleSpec{
+			Host:          name,
+			TrafficPolicy: canary.Spec.Service.TrafficPolicy,
+			Subsets:       canary.Spec.Service.Subsets,
+		}
+	} else {
+		newSpec = istiov1alpha3.DestinationRuleSpec{
+			Host:          name,
+			TrafficPolicy: canary.Spec.Service.TrafficPolicy,
+		}
 	}
 
 	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
@@ -174,9 +182,9 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		hosts = []string{}
 		gateways = []string{}
 	}
-	test_flg := true
 	httproute := []istiov1alpha3.HTTPRoute{}
-	if test_flg {
+
+	if canary.Spec.Service.RouteName != nil {
 		httproute = make([]istiov1alpha3.HTTPRoute, len(canary.Spec.Service.RouteName))
 		for i, route := range canary.Spec.Service.RouteName {
 			httproute[i] = istiov1alpha3.HTTPRoute{
@@ -224,9 +232,6 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		newMetadata.Annotations = make(map[string]string)
 	}
 	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
-	// TODO: MEMO: 　'canary.GetAnalysis().Match'が0以上の時に何かしてる
-	fmt.Println("canary.GetAnalysis().Match")
-	fmt.Println(canary.GetAnalysis().Match)
 	if len(canary.GetAnalysis().Match) > 0 {
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
@@ -435,9 +440,8 @@ func (ir *IstioRouter) SetRoutes(
 	}
 
 	vsCopy := vs.DeepCopy()
-	test_flg := true
 	weightedRoute := istiov1alpha3.HTTPRoute{}
-	if test_flg {
+	if canary.Spec.Service.RouteName != nil {
 		//when httproutename true
 		weightedRoute := make([]istiov1alpha3.HTTPRoute, len(canary.Spec.Service.RouteName))
 		for i, route := range canary.Spec.Service.RouteName {
@@ -667,7 +671,6 @@ func mergeMatchConditions(canary, defaults []istiov1alpha3.HTTPMatchRequest) []i
 }
 
 // makeDestination returns a an destination weight for the specified host
-// TODO: 一旦関数分けて実装するけどこれが最適解じゃない
 func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1alpha3.HTTPRouteDestination {
 	dest := istiov1alpha3.HTTPRouteDestination{
 		Destination: istiov1alpha3.Destination{
@@ -692,6 +695,8 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 	return dest
 }
 
+// TODO: I'll implement the function separately once, but this is not the optimal solution.
+// makeDestination returns the destination weight of the specified host when httproutename is defined.
 func makeDestinationRouteName(canary *flaggerv1.Canary, host string, weight int, index int) istiov1alpha3.HTTPRouteDestination {
 	dest := istiov1alpha3.HTTPRouteDestination{
 		Destination: istiov1alpha3.Destination{
@@ -714,8 +719,6 @@ func makeDestinationRouteName(canary *flaggerv1.Canary, host string, weight int,
 			Weight: weight,
 		}
 	}
-	fmt.Println("dest")
-	fmt.Println(dest)
 	return dest
 }
 
