@@ -169,17 +169,33 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		makeDestination(canary, primaryName, 100),
 		makeDestination(canary, canaryName, 0),
 	}
-
 	if canary.Spec.Service.Delegation {
 		// delegate VirtualService requires the hosts and gateway empty.
 		hosts = []string{}
 		gateways = []string{}
 	}
-
-	newSpec := istiov1alpha3.VirtualServiceSpec{
-		Hosts:    hosts,
-		Gateways: gateways,
-		Http: []istiov1alpha3.HTTPRoute{
+	test_flg := true
+	httproute := []istiov1alpha3.HTTPRoute{}
+	if test_flg {
+		httproute = make([]istiov1alpha3.HTTPRoute, len(canary.Spec.Service.RouteName))
+		for i, route := range canary.Spec.Service.RouteName {
+			httproute[i] = istiov1alpha3.HTTPRoute{
+				Name:       route.Name,
+				Match:      route.Match,
+				Rewrite:    route.Rewrite,
+				Timeout:    route.Timeout,
+				Retries:    route.Retries,
+				CorsPolicy: route.CorsPolicy,
+				Headers:    route.Headers,
+				Route: []istiov1alpha3.HTTPRouteDestination{
+					makeDestinationRouteName(canary, primaryName, 100, i),
+					makeDestinationRouteName(canary, canaryName, 0, i),
+				},
+			}
+		}
+	} else {
+		// This line may need to be adjusted based on how you're generating the canaryRoute
+		httproute = []istiov1alpha3.HTTPRoute{
 			{
 				Match:      canary.Spec.Service.Match,
 				Rewrite:    canary.Spec.Service.Rewrite,
@@ -189,7 +205,12 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Headers:    canary.Spec.Service.Headers,
 				Route:      canaryRoute,
 			},
-		},
+		}
+	}
+	newSpec := istiov1alpha3.VirtualServiceSpec{
+		Hosts:    hosts,
+		Gateways: gateways,
+		Http:     httproute,
 	}
 
 	newMetadata := canary.Spec.Service.Apex
@@ -203,7 +224,9 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		newMetadata.Annotations = make(map[string]string)
 	}
 	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
-
+	// TODO: MEMO: 　'canary.GetAnalysis().Match'が0以上の時に何かしてる
+	fmt.Println("canary.GetAnalysis().Match")
+	fmt.Println(canary.GetAnalysis().Match)
 	if len(canary.GetAnalysis().Match) > 0 {
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
@@ -412,19 +435,39 @@ func (ir *IstioRouter) SetRoutes(
 	}
 
 	vsCopy := vs.DeepCopy()
-
-	// weighted routing (progressive canary)
-	weightedRoute := istiov1alpha3.HTTPRoute{
-		Match:      canary.Spec.Service.Match,
-		Rewrite:    canary.Spec.Service.Rewrite,
-		Timeout:    canary.Spec.Service.Timeout,
-		Retries:    canary.Spec.Service.Retries,
-		CorsPolicy: canary.Spec.Service.CorsPolicy,
-		Headers:    canary.Spec.Service.Headers,
-		Route: []istiov1alpha3.HTTPRouteDestination{
-			makeDestination(canary, primaryName, primaryWeight),
-			makeDestination(canary, canaryName, canaryWeight),
-		},
+	test_flg := true
+	weightedRoute := istiov1alpha3.HTTPRoute{}
+	if test_flg {
+		//when httproutename true
+		weightedRoute := make([]istiov1alpha3.HTTPRoute, len(canary.Spec.Service.RouteName))
+		for i, route := range canary.Spec.Service.RouteName {
+			weightedRoute[i] = istiov1alpha3.HTTPRoute{
+				Name:       route.Name,
+				Match:      route.Match,
+				Rewrite:    route.Rewrite,
+				Timeout:    route.Timeout,
+				Retries:    route.Retries,
+				CorsPolicy: route.CorsPolicy,
+				Headers:    route.Headers,
+				Route: []istiov1alpha3.HTTPRouteDestination{
+					makeDestinationRouteName(canary, primaryName, primaryWeight, i),
+					makeDestinationRouteName(canary, canaryName, canaryWeight, i),
+				},
+			}
+		}
+	} else {
+		weightedRoute = istiov1alpha3.HTTPRoute{
+			Match:      canary.Spec.Service.Match,
+			Rewrite:    canary.Spec.Service.Rewrite,
+			Timeout:    canary.Spec.Service.Timeout,
+			Retries:    canary.Spec.Service.Retries,
+			CorsPolicy: canary.Spec.Service.CorsPolicy,
+			Headers:    canary.Spec.Service.Headers,
+			Route: []istiov1alpha3.HTTPRouteDestination{
+				makeDestination(canary, primaryName, primaryWeight),
+				makeDestination(canary, canaryName, canaryWeight),
+			},
+		}
 	}
 	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
 		weightedRoute,
@@ -624,6 +667,7 @@ func mergeMatchConditions(canary, defaults []istiov1alpha3.HTTPMatchRequest) []i
 }
 
 // makeDestination returns a an destination weight for the specified host
+// TODO: 一旦関数分けて実装するけどこれが最適解じゃない
 func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1alpha3.HTTPRouteDestination {
 	dest := istiov1alpha3.HTTPRouteDestination{
 		Destination: istiov1alpha3.Destination{
@@ -631,7 +675,6 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 		},
 		Weight: weight,
 	}
-
 	// set destination port when an ingress gateway is specified
 	if canary.Spec.Service.PortDiscovery &&
 		(len(canary.Spec.Service.Gateways) > 0 &&
@@ -646,7 +689,33 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 			Weight: weight,
 		}
 	}
+	return dest
+}
 
+func makeDestinationRouteName(canary *flaggerv1.Canary, host string, weight int, index int) istiov1alpha3.HTTPRouteDestination {
+	dest := istiov1alpha3.HTTPRouteDestination{
+		Destination: istiov1alpha3.Destination{
+			Host:   host,
+			Subset: canary.Spec.Service.RouteName[index].Subset,
+		},
+		Weight: weight,
+	}
+	// set destination port when an ingress gateway is specified
+	if canary.Spec.Service.PortDiscovery &&
+		(len(canary.Spec.Service.Gateways) > 0 &&
+			canary.Spec.Service.Gateways[0] != "mesh" || canary.Spec.Service.Delegation) {
+		dest = istiov1alpha3.HTTPRouteDestination{
+			Destination: istiov1alpha3.Destination{
+				Host: host,
+				Port: &istiov1alpha3.PortSelector{
+					Number: uint32(canary.Spec.Service.Port),
+				},
+			},
+			Weight: weight,
+		}
+	}
+	fmt.Println("dest")
+	fmt.Println(dest)
 	return dest
 }
 

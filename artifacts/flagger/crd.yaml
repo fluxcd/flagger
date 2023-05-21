@@ -215,6 +215,28 @@ spec:
                     delegation:
                       description: enable behaving as a delegate VirtualService
                       type: boolean
+                    routename:
+                      description: routename
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          match:
+                            type: object
+                          rewrite:
+                            type: object
+                          retries:
+                            type: object
+                          headers:
+                            type: object
+                          timeout:
+                            type: string
+                          corsPolicy:
+                            type: object
+                          subset:
+                            type: string
                     subsets:
                       type: array
                       items:

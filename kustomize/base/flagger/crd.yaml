@@ -215,6 +215,44 @@ spec:
                     delegation:
                       description: enable behaving as a delegate VirtualService
                       type: boolean
+                    routename:
+                      description: routename
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          match:
+                            type: object
+                          rewrite:
+                            type: object
+                          retries:
+                            type: object
+                          headers:
+                            type: object
+                          timeout:
+                            type: string
+                          corsPolicy:
+                            type: object
+                          subset:
+                            type: string
+                    subsets:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            description: Name of the subset.
+                          labels:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: Labels apply a filter over the endpoints of a service in the service registry.
+                          trafficPolicy:
+                            type: object
+                            description: Traffic policies that apply to this subset.
                     match:
                       description: URI match conditions
                       type: array
