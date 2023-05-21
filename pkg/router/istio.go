@@ -442,7 +442,6 @@ func (ir *IstioRouter) SetRoutes(
 	vsCopy := vs.DeepCopy()
 	weightedRoute := istiov1alpha3.HTTPRoute{}
 	if canary.Spec.Service.RouteName != nil {
-		//when httproutename true
 		weightedRoute := make([]istiov1alpha3.HTTPRoute, len(canary.Spec.Service.RouteName))
 		for i, route := range canary.Spec.Service.RouteName {
 			weightedRoute[i] = istiov1alpha3.HTTPRoute{
@@ -459,8 +458,9 @@ func (ir *IstioRouter) SetRoutes(
 				},
 			}
 		}
+		vsCopy.Spec.Http = weightedRoute
 	} else {
-		weightedRoute = istiov1alpha3.HTTPRoute{
+		weightedRoute := istiov1alpha3.HTTPRoute{
 			Match:      canary.Spec.Service.Match,
 			Rewrite:    canary.Spec.Service.Rewrite,
 			Timeout:    canary.Spec.Service.Timeout,
@@ -472,11 +472,10 @@ func (ir *IstioRouter) SetRoutes(
 				makeDestination(canary, canaryName, canaryWeight),
 			},
 		}
+		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
+			weightedRoute,
+		}
 	}
-	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
-		weightedRoute,
-	}
-
 	if canary.Spec.Analysis.SessionAffinity != nil {
 		// If a canary run is active, we want all responses corresponding to requests hitting the canary deployment
 		// (due to weighted routing) to include a `Set-Cookie` header. All requests that have the `Cookie` header
