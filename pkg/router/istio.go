@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -315,9 +316,21 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 			ignoreCmpOptions = append(ignoreCmpOptions, ignoreSlice)
 			ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(istiov1alpha3.HTTPRouteDestination{}, "Headers"))
 		} else {
-			//TODO: ここを直さないとRouteNameが=!の場合には使うことができない
+			// We ignore this route as this does not do weighted routing and is handled exclusively
+			// by SetRoutes().
+			ignoreSlice := cmpopts.IgnoreSliceElements(func(t istiov1alpha3.HTTPRoute) bool {
+				for i := 0; i < len(canary.Spec.Service.RouteName); i++ {
+					if t.Name == stickyRouteName+"-"+strconv.Itoa(i) {
+						return true
+					}
+				}
+				return false
+			})
+			ignoreCmpOptions = append(ignoreCmpOptions, ignoreSlice)
+			ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(istiov1alpha3.HTTPRouteDestination{}, "Headers"))
 		}
 	}
+
 	if v, ok := virtualService.Annotations[kubectlAnnotation]; ok {
 		newMetadata.Annotations[kubectlAnnotation] = v
 	}
@@ -491,13 +504,7 @@ func (ir *IstioRouter) SetRoutes(
 			stickyRoute[0].Name = stickyRouteName
 		} else {
 			for i := 0; i < len(stickyRoute); i++ {
-				/*
-					stickyRoute.Name = stickyRouteName
-					は、routeName分loopで回って連番をつけるのが良さそう。
-					後々、ここの名前が一致してるかどうかで処理の挙動を変えてる部分がある。
-					func reconcileVirtualService()
-				*/
-				stickyRoute[i].Name = stickyRouteName
+				stickyRoute[i].Name = stickyRouteName + "-" + strconv.Itoa(i)
 			}
 		}
 		if canaryWeight != 0 {
@@ -646,20 +653,19 @@ func (ir *IstioRouter) SetRoutes(
 			if mw := canary.GetAnalysis().MirrorWeight; mw > 0 {
 				vsCopy.Spec.Http[0].MirrorPercentage = &istiov1alpha3.Percent{Value: float64(mw)}
 			}
-		}
-	} else {
-		for i := 0; i < len(canary.Spec.Service.RouteName); i++ {
-			vsCopy.Spec.Http[i].Mirror = &istiov1alpha3.Destination{
-				Host: canaryName,
+		} else {
+			for i := 0; i < len(canary.Spec.Service.RouteName); i++ {
+				vsCopy.Spec.Http[i].Mirror = &istiov1alpha3.Destination{
+					Host: canaryName,
+				}
 			}
-		}
-		for i := 0; i < len(canary.Spec.Service.RouteName); i++ {
-			if mw := canary.GetAnalysis().MirrorWeight; mw > 0 {
-				vsCopy.Spec.Http[i].MirrorPercentage = &istiov1alpha3.Percent{Value: float64(mw)}
+			for i := 0; i < len(canary.Spec.Service.RouteName); i++ {
+				if mw := canary.GetAnalysis().MirrorWeight; mw > 0 {
+					vsCopy.Spec.Http[i].MirrorPercentage = &istiov1alpha3.Percent{Value: float64(mw)}
+				}
 			}
 		}
 	}
-
 	// fix routing (A/B testing)
 	if len(canary.GetAnalysis().Match) > 0 {
 		// merge the common routes with the canary ones
