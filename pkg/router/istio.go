@@ -237,27 +237,62 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 
 	if len(canary.GetAnalysis().Match) > 0 {
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
-		newSpec.Http = []istiov1alpha3.HTTPRoute{
-			{
-				Match:      canaryMatch,
-				Rewrite:    canary.Spec.Service.Rewrite,
-				Timeout:    canary.Spec.Service.Timeout,
-				Retries:    canary.Spec.Service.Retries,
-				CorsPolicy: canary.Spec.Service.CorsPolicy,
-				Headers:    canary.Spec.Service.Headers,
-				Route:      canaryRoute,
-			},
-			{
-				Match:      canary.Spec.Service.Match,
-				Rewrite:    canary.Spec.Service.Rewrite,
-				Timeout:    canary.Spec.Service.Timeout,
-				Retries:    canary.Spec.Service.Retries,
-				CorsPolicy: canary.Spec.Service.CorsPolicy,
-				Headers:    canary.Spec.Service.Headers,
-				Route: []istiov1alpha3.HTTPRouteDestination{
-					makeDestination(canary, primaryName, 100),
+		if canary.Spec.Service.RouteName == nil {
+			newSpec.Http = []istiov1alpha3.HTTPRoute{
+				{
+					Match:      canaryMatch,
+					Rewrite:    canary.Spec.Service.Rewrite,
+					Timeout:    canary.Spec.Service.Timeout,
+					Retries:    canary.Spec.Service.Retries,
+					CorsPolicy: canary.Spec.Service.CorsPolicy,
+					Headers:    canary.Spec.Service.Headers,
+					Route:      canaryRoute,
 				},
-			},
+				{
+					Match:      canary.Spec.Service.Match,
+					Rewrite:    canary.Spec.Service.Rewrite,
+					Timeout:    canary.Spec.Service.Timeout,
+					Retries:    canary.Spec.Service.Retries,
+					CorsPolicy: canary.Spec.Service.CorsPolicy,
+					Headers:    canary.Spec.Service.Headers,
+					Route: []istiov1alpha3.HTTPRouteDestination{
+						makeDestination(canary, primaryName, 100),
+					},
+				},
+			}
+		} else {
+			//TODO: まだnameつけてないのとweightの調整コードも書けてないから注意
+			newSpec.Http = make([]istiov1alpha3.HTTPRoute, len(canary.Spec.Service.RouteName)*2)
+			for i, route := range canary.Spec.Service.RouteName {
+				canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.RouteName[i].Match)
+				newSpec.Http[i] = istiov1alpha3.HTTPRoute{
+					Name:       route.Name + "-ab-testing",
+					Match:      canaryMatch,
+					Rewrite:    route.Rewrite,
+					Timeout:    route.Timeout,
+					Retries:    route.Retries,
+					CorsPolicy: route.CorsPolicy,
+					Headers:    route.Headers,
+					Route: []istiov1alpha3.HTTPRouteDestination{
+						makeDestinationRouteName(canary, primaryName, 100, i),
+						makeDestinationRouteName(canary, canaryName, 0, i),
+					},
+				}
+			}
+			for i, route := range canary.Spec.Service.RouteName {
+				newSpec.Http[i+len(canary.Spec.Service.RouteName)] = istiov1alpha3.HTTPRoute{
+					Name:       route.Name,
+					Match:      route.Match,
+					Rewrite:    route.Rewrite,
+					Timeout:    route.Timeout,
+					Retries:    route.Retries,
+					CorsPolicy: route.CorsPolicy,
+					Headers:    route.Headers,
+					Route: []istiov1alpha3.HTTPRouteDestination{
+						makeDestinationRouteName(canary, primaryName, 100, i),
+					},
+				}
+			}
 		}
 	}
 
@@ -670,30 +705,64 @@ func (ir *IstioRouter) SetRoutes(
 	if len(canary.GetAnalysis().Match) > 0 {
 		// merge the common routes with the canary ones
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
-		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
-			{
-				Match:      canaryMatch,
-				Rewrite:    canary.Spec.Service.Rewrite,
-				Timeout:    canary.Spec.Service.Timeout,
-				Retries:    canary.Spec.Service.Retries,
-				CorsPolicy: canary.Spec.Service.CorsPolicy,
-				Headers:    canary.Spec.Service.Headers,
-				Route: []istiov1alpha3.HTTPRouteDestination{
-					makeDestination(canary, primaryName, primaryWeight),
-					makeDestination(canary, canaryName, canaryWeight),
+		if canary.Spec.Service.RouteName == nil {
+			vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
+				{
+					Match:      canaryMatch,
+					Rewrite:    canary.Spec.Service.Rewrite,
+					Timeout:    canary.Spec.Service.Timeout,
+					Retries:    canary.Spec.Service.Retries,
+					CorsPolicy: canary.Spec.Service.CorsPolicy,
+					Headers:    canary.Spec.Service.Headers,
+					Route: []istiov1alpha3.HTTPRouteDestination{
+						makeDestination(canary, primaryName, primaryWeight),
+						makeDestination(canary, canaryName, canaryWeight),
+					},
 				},
-			},
-			{
-				Match:      canary.Spec.Service.Match,
-				Rewrite:    canary.Spec.Service.Rewrite,
-				Timeout:    canary.Spec.Service.Timeout,
-				Retries:    canary.Spec.Service.Retries,
-				CorsPolicy: canary.Spec.Service.CorsPolicy,
-				Headers:    canary.Spec.Service.Headers,
-				Route: []istiov1alpha3.HTTPRouteDestination{
-					makeDestination(canary, primaryName, primaryWeight),
+				{
+					Match:      canary.Spec.Service.Match,
+					Rewrite:    canary.Spec.Service.Rewrite,
+					Timeout:    canary.Spec.Service.Timeout,
+					Retries:    canary.Spec.Service.Retries,
+					CorsPolicy: canary.Spec.Service.CorsPolicy,
+					Headers:    canary.Spec.Service.Headers,
+					Route: []istiov1alpha3.HTTPRouteDestination{
+						makeDestination(canary, primaryName, primaryWeight),
+					},
 				},
-			},
+			}
+		} else {
+			vsCopy.Spec.Http = make([]istiov1alpha3.HTTPRoute, len(canary.Spec.Service.RouteName)*2)
+			for i, route := range canary.Spec.Service.RouteName {
+				canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.RouteName[i].Match)
+				vsCopy.Spec.Http[i] = istiov1alpha3.HTTPRoute{
+					Name:       route.Name + "-ab-testing",
+					Match:      canaryMatch,
+					Rewrite:    route.Rewrite,
+					Timeout:    route.Timeout,
+					Retries:    route.Retries,
+					CorsPolicy: route.CorsPolicy,
+					Headers:    route.Headers,
+					Route: []istiov1alpha3.HTTPRouteDestination{
+						makeDestinationRouteName(canary, primaryName, primaryWeight, i),
+						makeDestinationRouteName(canary, canaryName, canaryWeight, i),
+					},
+				}
+			}
+			for i, route := range canary.Spec.Service.RouteName {
+				vsCopy.Spec.Http[i+len(canary.Spec.Service.RouteName)] = istiov1alpha3.HTTPRoute{
+					Name:       route.Name,
+					Match:      route.Match,
+					Rewrite:    route.Rewrite,
+					Timeout:    route.Timeout,
+					Retries:    route.Retries,
+					CorsPolicy: route.CorsPolicy,
+					Headers:    route.Headers,
+					Route: []istiov1alpha3.HTTPRouteDestination{
+						makeDestinationRouteName(canary, primaryName, primaryWeight, i),
+					},
+				}
+			}
 		}
 	}
 	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
