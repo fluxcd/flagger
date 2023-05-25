@@ -756,6 +756,7 @@ spec:
                                 - LEAST_CONN
                                 - RANDOM
                                 - PASSTHROUGH
+                                - LEAST_REQUEST
                               type: string
                         outlierDetection:
                           description: Settings controlling eviction of unhealthy hosts from the load balancing pool.
