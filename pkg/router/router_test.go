@@ -87,6 +87,44 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	}
 }
 
+func newRouteNameFixture(c *flaggerv1.Canary) fixture {
+	canary := newRouteNameTestCanary()
+	if c != nil {
+		canary = c
+	}
+	abtest := newTestABTest()
+	appmeshCanary := newTestCanaryAppMesh()
+	ingressCanary := newTestCanaryIngress()
+	apisixRoute := newTestApisixRoute()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(
+		canary,
+		abtest,
+		appmeshCanary,
+		ingressCanary,
+		apisixRoute,
+	)
+
+	kubeClient := fake.NewSimpleClientset(
+		newTestDeployment(),
+		newTestABTestDeployment(),
+		newTestIngress(),
+	)
+
+	meshClient := fakeFlagger.NewSimpleClientset()
+
+	logger, _ := logger.NewLogger("debug")
+	return fixture{
+		canary:        canary,
+		abtest:        abtest,
+		appmeshCanary: appmeshCanary,
+		ingressCanary: ingressCanary,
+		kubeClient:    kubeClient,
+		meshClient:    meshClient,
+		flaggerClient: flaggerClient,
+		logger:        logger,
+	}
+}
 func newTestApisixRoute() *a6v2.ApisixRoute {
 	ar := &a6v2.ApisixRoute{
 		TypeMeta: metav1.TypeMeta{APIVersion: a6v2.SchemeGroupVersion.String()},
