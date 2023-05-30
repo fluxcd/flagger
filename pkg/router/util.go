@@ -29,6 +29,9 @@ func includeLabelsByPrefix(labels map[string]string, includeLabelPrefixes []stri
 }
 
 func filterMetadata(meta map[string]string) map[string]string {
+	if meta == nil {
+		meta = map[string]string{}
+	}
 	// prevent Flux from overriding Flagger managed objects
 	meta[toolkitReconcileKey] = toolkitReconcileValue
 	meta[helmDriftDetectionKey] = toolkitReconcileValue
