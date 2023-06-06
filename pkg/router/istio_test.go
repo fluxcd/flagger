@@ -728,77 +728,6 @@ func TestIstioRouter_Match(t *testing.T) {
 	require.Equal(t, vs.Spec.Http[1].Match[0].Uri.Prefix, "/podinfo")
 }
 
-func TestIstioRouteNameRouter_Match(t *testing.T) {
-	mocks := newRouteNameFixture(nil)
-	router := &IstioRouter{
-		logger:        mocks.logger,
-		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
-		kubeClient:    mocks.kubeClient,
-	}
-
-	// service.match is not exists, analysis match is exists
-	err := router.Reconcile(mocks.abtest)
-	require.NoError(t, err)
-
-	// test insert
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Len(t, vs.Spec.Http, 2)
-	assert.Len(t, vs.Spec.Http[0].Match, 1) // check for abtest-canary
-	require.Equal(t, vs.Spec.Http[0].Match[0].Headers["x-user-type"].Exact, "test")
-	assert.Len(t, vs.Spec.Http[1].Match, 0) // check for abtest-primary
-
-	// Test Case that is service.match exists and multiple analysis.match
-	mocks.abtest.Spec.Service.Match = []istiov1alpha3.HTTPMatchRequest{
-		{
-			Name: "podinfo",
-			Uri: &istiov1alpha1.StringMatch{
-				Prefix: "/podinfo",
-			},
-			Method: &istiov1alpha1.StringMatch{
-				Exact: "GET",
-			},
-			IgnoreUriCase: true,
-		},
-	}
-	mocks.abtest.Spec.Analysis.Match = []istiov1alpha3.HTTPMatchRequest{
-		{
-			Headers: map[string]istiov1alpha1.StringMatch{
-				"x-user-type": {
-					Exact: "test",
-				},
-				"x-auth-test": {
-					Exact: "test",
-				},
-			},
-		},
-		{
-			Headers: map[string]istiov1alpha1.StringMatch{
-				"x-session-id": {
-					Exact: "test",
-				},
-			},
-		},
-	}
-
-	// apply changes
-	err = router.Reconcile(mocks.abtest)
-	require.NoError(t, err)
-
-	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Len(t, vs.Spec.Http, 2)
-	assert.Len(t, vs.Spec.Http[0].Match, 2) // check for abtest-canary
-	require.Equal(t, vs.Spec.Http[0].Match[0].Uri.Prefix, "/podinfo")
-	require.Equal(t, vs.Spec.Http[0].Match[0].Headers["x-user-type"].Exact, "test")
-	require.Equal(t, vs.Spec.Http[0].Match[0].Headers["x-auth-test"].Exact, "test")
-	require.Equal(t, vs.Spec.Http[0].Match[1].Uri.Prefix, "/podinfo")
-	require.Equal(t, vs.Spec.Http[0].Match[1].Headers["x-session-id"].Exact, "test")
-	assert.Len(t, vs.Spec.Http[1].Match, 1) // check for abtest-primary
-	require.Equal(t, vs.Spec.Http[1].Match[0].Uri.Prefix, "/podinfo")
-}
-
 func TestRouteNameIstioRouter_Sync(t *testing.T) {
 	mocks := newRouteNameFixture(nil)
 	router := &IstioRouter{
@@ -1421,4 +1350,75 @@ func TestIstioRouteNameRouter_Finalize(t *testing.T) {
 			require.Equal(t, *table.spec, vs.Spec)
 		}
 	}
+}
+
+func TestIstioRouteNameRouter_Match(t *testing.T) {
+	mocks := newRouteNameFixture(nil)
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	// service.match is not exists, analysis match is exists
+	err := router.Reconcile(mocks.abtest)
+	require.NoError(t, err)
+
+	// test insert
+	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Len(t, vs.Spec.Http, 2)
+	assert.Len(t, vs.Spec.Http[0].Match, 1) // check for abtest-canary
+	require.Equal(t, vs.Spec.Http[0].Match[0].Headers["x-user-type"].Exact, "test")
+	assert.Len(t, vs.Spec.Http[1].Match, 0) // check for abtest-primary
+
+	// Test Case that is service.match exists and multiple analysis.match
+	mocks.abtest.Spec.Service.Match = []istiov1alpha3.HTTPMatchRequest{
+		{
+			Name: "podinfo",
+			Uri: &istiov1alpha1.StringMatch{
+				Prefix: "/podinfo",
+			},
+			Method: &istiov1alpha1.StringMatch{
+				Exact: "GET",
+			},
+			IgnoreUriCase: true,
+		},
+	}
+	mocks.abtest.Spec.Analysis.Match = []istiov1alpha3.HTTPMatchRequest{
+		{
+			Headers: map[string]istiov1alpha1.StringMatch{
+				"x-user-type": {
+					Exact: "test",
+				},
+				"x-auth-test": {
+					Exact: "test",
+				},
+			},
+		},
+		{
+			Headers: map[string]istiov1alpha1.StringMatch{
+				"x-session-id": {
+					Exact: "test",
+				},
+			},
+		},
+	}
+
+	// apply changes
+	err = router.Reconcile(mocks.abtest)
+	require.NoError(t, err)
+
+	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Len(t, vs.Spec.Http, 2)
+	assert.Len(t, vs.Spec.Http[0].Match, 2) // check for abtest-canary
+	require.Equal(t, vs.Spec.Http[0].Match[0].Uri.Prefix, "/podinfo")
+	require.Equal(t, vs.Spec.Http[0].Match[0].Headers["x-user-type"].Exact, "test")
+	require.Equal(t, vs.Spec.Http[0].Match[0].Headers["x-auth-test"].Exact, "test")
+	require.Equal(t, vs.Spec.Http[0].Match[1].Uri.Prefix, "/podinfo")
+	require.Equal(t, vs.Spec.Http[0].Match[1].Headers["x-session-id"].Exact, "test")
+	assert.Len(t, vs.Spec.Http[1].Match, 1) // check for abtest-primary
+	require.Equal(t, vs.Spec.Http[1].Match[0].Uri.Prefix, "/podinfo")
 }
