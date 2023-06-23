@@ -155,7 +155,7 @@ func (g *GraphiteProvider) RunQuery(query string) (float64, error) {
 	query = g.trimQuery(query)
 	u, err := url.Parse(fmt.Sprintf("./render?%s", query))
 	if err != nil {
-		return 0, fmt.Errorf("url.Parase failed: %w", err)
+		return 0, fmt.Errorf("url.Parse failed: %w", err)
 	}
 
 	q := u.Query()

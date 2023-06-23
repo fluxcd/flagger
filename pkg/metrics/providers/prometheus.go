@@ -104,7 +104,7 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 	query = url.QueryEscape(p.trimQuery(query))
 	u, err := url.Parse(fmt.Sprintf("./api/v1/query?query=%s", query))
 	if err != nil {
-		return 0, fmt.Errorf("url.Parase failed: %w", err)
+		return 0, fmt.Errorf("url.Parse failed: %w", err)
 	}
 	u.Path = path.Join(p.url.Path, u.Path)
 
