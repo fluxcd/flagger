@@ -85,7 +85,7 @@ func TestTraefikObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestTraefikObserver_GetRequestDuration(t *testing.T) {
-	expected := ` histogram_quantile( 0.99, sum( rate( traefik_service_request_duration_seconds_bucket{ service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd" }[1m] ) ) by (le) )`
+	expected := ` histogram_quantile( 0.99, sum( rate( traefik_service_request_duration_seconds_bucket{ service=~"default-podinfo-canary-[0-9a-zA-Z-]+@kubernetescrd" }[1m] ) ) by (le) ) * 1000`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]

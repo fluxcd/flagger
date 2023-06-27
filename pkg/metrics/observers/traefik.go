@@ -54,7 +54,7 @@ var traefikQueries = map[string]string{
 				}[{{ interval }}]
 			)
 		) by (le)
-	)`,
+	) * 1000`,
 }
 
 type TraefikObserver struct {
