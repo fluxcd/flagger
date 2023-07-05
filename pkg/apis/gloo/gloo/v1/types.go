@@ -22,6 +22,7 @@ type UpstreamSpec struct {
 	SslConfig                   *UpstreamSslConfig    `json:"sslConfig,omitempty"`
 	CircuitBreakers             *CircuitBreakerConfig `json:"circuitBreakers,omitempty"`
 	ConnectionConfig            *ConnectionConfig     `json:"connectionConfig,omitempty"`
+	LoadBalancerConfig          *LoadBalancerConfig   `json:"loadBalancerConfig,omitempty"`
 	UseHttp2                    bool                  `json:"useHttp2,omitempty"`
 	InitialStreamWindowSize     uint32                `json:"initialStreamWindowSize,omitempty"`
 	InitialConnectionWindowSize uint32                `json:"initialConnectionWindowSize,omitempty"`
@@ -107,6 +108,26 @@ type ConnectionConfig_HttpProtocolOptions struct {
 	MaxHeadersCount              uint32    `json:"maxHeadersCount,omitempty"`
 	MaxStreamDuration            *Duration `json:"maxStreamDuration,omitempty"`
 	HeadersWithUnderscoresAction uint32    `json:"headersWithUnderscoresAction,omitempty"`
+}
+
+type LoadBalancerConfig struct {
+	RoundRobin   *LoadBalancerConfigRoundRobin   `json:"roundRobin,omitempty"`
+	LeastRequest *LoadBalancerConfigLeastRequest `json:"leastRequest,omitempty"`
+}
+
+type LoadBalancerConfigRoundRobin struct {
+	SlowStartConfig *SlowStartConfig `json:"slowStartConfig,omitempty"`
+}
+
+type LoadBalancerConfigLeastRequest struct {
+	SlowStartConfig *SlowStartConfig `json:"slowStartConfig,omitempty"`
+	ChoiceCount     uint32           `json:"choiceCount,omitempty"`
+}
+
+type SlowStartConfig struct {
+	SlowStartWindow  string  `json:"slowStartWindow,omitempty"`
+	Aggression       float64 `json:"aggression,omitempty"`
+	MinWeightPercent float64 `json:"minWeightPercent,omitempty"`
 }
 
 type Duration struct {
