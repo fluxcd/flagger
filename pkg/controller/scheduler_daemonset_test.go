@@ -46,9 +46,14 @@ func TestScheduler_DaemonSetNewRevision(t *testing.T) {
 	mocks := newDaemonSetFixture(nil)
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
+	// check if ScaleToZero was performed
+	ds, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Contains(t, ds.Spec.Template.Spec.NodeSelector, "flagger.app/scale-to-zero")
+
 	// update
 	dae2 := newDaemonSetTestDaemonSetV2()
-	_, err := mocks.kubeClient.AppsV1().DaemonSets("default").Update(context.TODO(), dae2, metav1.UpdateOptions{})
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(context.TODO(), dae2, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// detect changes

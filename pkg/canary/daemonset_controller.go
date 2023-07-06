@@ -91,8 +91,7 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// Initialize creates the primary DaemonSet, scales down the canary DaemonSet,
-// and returns the pod selector label and container ports
+// Initialize creates the primary DaemonSet if it does not exist.
 func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
 	err = c.createPrimaryDaemonSet(cd, c.includeLabelPrefix)
 	if err != nil {
@@ -105,13 +104,8 @@ func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
 				return fmt.Errorf("%w", err)
 			}
 		}
-
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("Scaling down DaemonSet %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		if err := c.ScaleToZero(cd); err != nil {
-			return fmt.Errorf("ScaleToZero failed: %w", err)
-		}
 	}
+
 	return nil
 }
 
