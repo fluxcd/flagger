@@ -419,6 +419,12 @@ const (
 	// advanced use cases. Refer to Original Destination load balancer in
 	// Envoy for further details.
 	SimpleLBPassthrough SimpleLB = "PASSTHROUGH"
+
+	// The least request load balancer spreads load across endpoints,
+	// favoring endpoints with the least outstanding requests. This is generally
+	// safer and outperforms ROUND_ROBIN in nearly all cases. Prefer to use LEAST_REQUEST
+	// as a drop-in replacement for ROUND_ROBIN.
+	SimpleLBLeastRequest SimpleLB = "LEAST_REQUEST"
 )
 
 // Consistent Hash-based load balancing can be used to provide soft
