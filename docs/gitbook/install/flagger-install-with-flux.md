@@ -42,7 +42,7 @@ apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
   name: flagger
-  namespace: flux-system
+  namespace: flagger-system
 spec:
   interval: 1h
   url: oci://ghcr.io/fluxcd/charts
