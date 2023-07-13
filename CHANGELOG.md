@@ -2,6 +2,40 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.32.0
+
+**Release date:** 2023-07-14
+
+This release adds support for suspending a Canary using `.spec.suspend`.
+It also fixes a bug where the target deployment gets stuck at 0 replicas
+after the Canary has been deleted.
+Furthermore, the Canary API has been modified to allow specifying the
+HTTPRoute port using `.service.gatewayRefs[].port`.
+
+#### Improvements
+- Helm: Add option to create service and serviceMonitor
+  [#1425](https://github.com/fluxcd/flagger/pull/1425)
+- Update Alpine to 3.18
+  [#1426](https://github.com/fluxcd/flagger/pull/1426)
+- Add `spec.suspend` to allow suspending canary
+  [#1431](https://github.com/fluxcd/flagger/pull/1431)
+- Add support for istio LEAST_REQUEST destination rule load balancing
+  [#1439](https://github.com/fluxcd/flagger/pull/1439)
+- Add gatewayRef port to Canary CRD
+  [#1453](https://github.com/fluxcd/flagger/pull/1453)
+- feat: Copy slowStartConfig for Gloo upstreams
+  [#1455](https://github.com/fluxcd/flagger/pull/1455)
+- Update Go dependencies
+  [#1459](https://github.com/fluxcd/flagger/pull/1459)
+
+#### Fixes
+- Resume target scaler during finalization
+  [#1429](https://github.com/fluxcd/flagger/pull/1429)
+- Fix panic when annotation of ingress is empty
+  [#1437](https://github.com/fluxcd/flagger/pull/1437)
+- Fixing namespace of HelmRepository in installation docs
+  [#1458](https://github.com/fluxcd/flagger/pull/1458)
+
 ## 1.31.0
 
 **Release date:** 2023-05-10
