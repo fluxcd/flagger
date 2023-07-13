@@ -302,6 +302,7 @@ func (gr *GlooRouter) getGlooUpstreamKubeService(canary *flaggerv1.Canary, svc *
 			SslConfig:                   configSpec.SslConfig,
 			CircuitBreakers:             configSpec.CircuitBreakers,
 			ConnectionConfig:            configSpec.ConnectionConfig,
+			LoadBalancerConfig:          configSpec.LoadBalancerConfig,
 			UseHttp2:                    configSpec.UseHttp2,
 			InitialStreamWindowSize:     configSpec.InitialStreamWindowSize,
 			InitialConnectionWindowSize: configSpec.InitialConnectionWindowSize,

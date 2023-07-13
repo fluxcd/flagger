@@ -40,6 +40,11 @@ spec:
       port: 80
   connectionConfig:
     maxRequestsPerConnection: 51
+  loadBalancerConfig:
+    roundRobin:
+      slowStartConfig:
+        slowStartWindow: 2m
+        minWeightPercent: 5
 EOF
 
 cat <<EOF | kubectl apply -f -
