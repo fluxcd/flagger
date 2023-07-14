@@ -1,7 +1,7 @@
 apiVersion: v1
 name: flagger
-version: 1.31.0
-appVersion: 1.31.0
+version: 1.32.0
+appVersion: 1.32.0
 kubeVersion: ">=1.19.0-0"
 engine: gotpl
 description: Flagger is a progressive delivery operator for Kubernetes
