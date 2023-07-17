@@ -362,7 +362,32 @@ func HandleNewTask(logger *zap.SugaredLogger, taskRunner TaskRunnerInterface, au
 				}
 				return
 			}
+			//run kubectl cmd
+			if typ == TaskTypeKubectl {
+				kubectl := KubectlTask{
+					command:      payload.Metadata["cmd"],
+					logCmdOutput: true,
+					TaskBase: TaskBase{
+						canary: fmt.Sprintf("%s.%s", payload.Name, payload.Namespace),
+						logger: logger,
+					},
+				}
 
+				ctx, cancel := context.WithTimeout(context.Background(), taskRunner.Timeout())
+				defer cancel()
+
+				result, err := kubectl.Run(ctx)
+				if !result.ok {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+				if rtnCmdOutput {
+					w.Write(result.out)
+				}
+				return
+			}
 			// run concord job (blocking task)
 			if typ == TaskTypeConcord {
 				concord, err := NewConcordTask(payload.Metadata, fmt.Sprintf("%s.%s", payload.Name, payload.Namespace), logger)
