@@ -341,6 +341,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// check if we should rollback
 	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingTrafficIncrease ||
 		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion {
 		if ok := c.runRollbackHooks(cd, cd.Status.Phase); ok {
 			c.recordEventWarningf(cd, "Rolling back %s.%s manual webhook invoked", cd.Name, cd.Namespace)
@@ -389,7 +390,9 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check if the number of failed checks reached the threshold
-	if (cd.Status.Phase == flaggerv1.CanaryPhaseProgressing || cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion) &&
+	if (cd.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingTrafficIncrease ||
+		cd.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion) &&
 		(!retriable || cd.Status.FailedChecks >= cd.GetAnalysisThreshold()) {
 		if !retriable {
 			c.recordEventWarningf(cd, "Rolling back %s.%s progress deadline exceeded %v",
@@ -408,7 +411,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// check if the canary success rate is above the threshold
 	// skip check if no traffic is routed or mirrored to canary
-	if canaryWeight == 0 && cd.Status.Iterations == 0 &&
+	if cd.Status.Phase == flaggerv1.CanaryPhaseProgressing && canaryWeight == 0 && cd.Status.Iterations == 0 &&
 		!(cd.GetAnalysis().Mirror && mirrored) {
 		c.recordEventInfof(cd, "Starting canary analysis for %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 
@@ -457,7 +460,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	if c.nextStepWeight(cd, canaryWeight) > 0 {
 		// run hook only if traffic is not mirrored
 		if !mirrored {
-			if promote := c.runConfirmTrafficIncreaseHooks(cd); !promote {
+			if promote := c.runConfirmTrafficIncreaseHooks(cd, canaryController); !promote {
 				return
 			}
 		}
@@ -803,6 +806,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController canary.Controller) (bool, error) {
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaiting ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingTrafficIncrease ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
@@ -837,6 +841,7 @@ func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController ca
 func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryController canary.Controller, scalerReconciler canary.ScalerReconciler, shouldAdvance bool) bool {
 	c.recorder.SetStatus(canary, canary.Status.Phase)
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingTrafficIncrease ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion ||
 		canary.Status.Phase == flaggerv1.CanaryPhasePromoting ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseFinalising {
@@ -885,6 +890,7 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 
 func (c *Controller) hasCanaryRevisionChanged(canary *flaggerv1.Canary, canaryController canary.Controller) bool {
 	if canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingTrafficIncrease ||
 		canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion {
 		if diff, _ := canaryController.HasTargetChanged(canary); diff {
 			return true

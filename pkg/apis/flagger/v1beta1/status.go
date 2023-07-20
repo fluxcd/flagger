@@ -47,6 +47,8 @@ const (
 	CanaryPhaseWaiting CanaryPhase = "Waiting"
 	// CanaryPhaseProgressing means the canary analysis is underway
 	CanaryPhaseProgressing CanaryPhase = "Progressing"
+	// CanaryPhaseWaitingTrafficIncrease means the canary advancement is paused and is waiting for confirmation to increase traffic to the canary.
+	CanaryPhaseWaitingTrafficIncrease CanaryPhase = "WaitingTrafficIncrease"
 	// CanaryPhaseWaitingPromotion means the canary promotion is paused (waiting for confirmation to proceed)
 	CanaryPhaseWaitingPromotion CanaryPhase = "WaitingPromotion"
 	// CanaryPhasePromoting means the canary analysis is finished and the primary spec has been updated
