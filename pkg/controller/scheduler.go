@@ -456,7 +456,10 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// strategy: Canary progressive traffic increase
 	if c.nextStepWeight(cd, canaryWeight) > 0 {
 		// run hook only if traffic is not mirrored
-		if !mirrored {
+		if !mirrored &&
+			(cd.Status.Phase != flaggerv1.CanaryPhasePromoting &&
+				cd.Status.Phase != flaggerv1.CanaryPhaseWaitingPromotion &&
+				cd.Status.Phase != flaggerv1.CanaryPhaseFinalising) {
 			if promote := c.runConfirmTrafficIncreaseHooks(cd); !promote {
 				return
 			}
