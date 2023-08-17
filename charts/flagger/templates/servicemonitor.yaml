@@ -3,10 +3,15 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ template "flagger.name" . }}
+{{- if .Values.serviceMonitor.namespace }}
   namespace: {{ .Release.Namespace }}
+{{- end }}
   labels:
     app.kubernetes.io/name: {{ template "flagger.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- with .Values.serviceMonitor.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   endpoints:
     - path: /metrics
