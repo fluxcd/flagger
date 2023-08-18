@@ -248,6 +248,16 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
+	// scale down the canary target to 0 replicas after the service is pointing to the primary target
+	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			Infof("Scaling down %s %s.%s", cd.Spec.TargetRef.Kind, cd.Spec.TargetRef.Name, cd.Namespace)
+		if err := canaryController.ScaleToZero(cd); err != nil {
+			c.recordEventWarningf(cd, "scaling down canary %s %s.%s failed: %v", cd.Spec.TargetRef.Kind, cd.Spec.TargetRef.Name, cd.Namespace, err)
+			return
+		}
+	}
+
 	// take over an existing virtual service or ingress
 	// runs after the primary is ready to ensure zero downtime
 	if !strings.HasPrefix(provider, flaggerv1.AppMeshProvider) {

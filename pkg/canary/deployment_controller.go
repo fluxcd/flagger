@@ -45,8 +45,7 @@ type DeploymentController struct {
 	includeLabelPrefix []string
 }
 
-// Initialize creates the primary deployment, hpa,
-// scales to zero the canary deployment and returns the pod selector label and container ports
+// Initialize creates the primary deployment if it does not exist.
 func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
 	if err := c.createPrimaryDeployment(cd, c.includeLabelPrefix); err != nil {
 		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
@@ -57,12 +56,6 @@ func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
 			if err := c.IsPrimaryReady(cd); err != nil {
 				return fmt.Errorf("%w", err)
 			}
-		}
-
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("Scaling down Deployment %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		if err := c.ScaleToZero(cd); err != nil {
-			return fmt.Errorf("scaling down canary deployment %s.%s failed: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 		}
 	}
 

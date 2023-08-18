@@ -54,9 +54,14 @@ func TestScheduler_DeploymentNewRevision(t *testing.T) {
 	// initialization done
 	mocks.ctrl.advanceCanary("podinfo", "default")
 
+	// check if ScaleToZero was performed
+	dp, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, int32(0), *dp.Spec.Replicas)
+
 	// update
 	dep2 := newDeploymentTestDeploymentV2()
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// detect changes
