@@ -391,10 +391,10 @@ sum(
     rate(
         istio_requests_total{
           reporter="destination",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload",
+          destination_workload_namespace=~"{{ namespace }}",
+          destination_workload=~"{{ target }}",
           response_code!~"5.*"
-        }[$interval]
+        }[{{ interval }}]
     )
 )
 /
@@ -402,9 +402,9 @@ sum(
     rate(
         istio_requests_total{
           reporter="destination",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload"
-        }[$interval]
+          destination_workload_namespace=~"{{ namespace }}",
+          destination_workload=~"{{ target }}"
+        }[{{ interval }}]
     )
 )
 ```
@@ -415,19 +415,19 @@ Envoy query (App Mesh):
 sum(
     rate(
         envoy_cluster_upstream_rq{
-          kubernetes_namespace="$namespace",
-          kubernetes_pod_name=~"$workload",
+          kubernetes_namespace="{{ namespace }}",
+          kubernetes_pod_name=~"{{ target }}",
           envoy_response_code!~"5.*"
-        }[$interval]
+        }[{{ interval }}]
     )
 )
 /
 sum(
     rate(
         envoy_cluster_upstream_rq{
-          kubernetes_namespace="$namespace",
-          kubernetes_pod_name=~"$workload"
-        }[$interval]
+          kubernetes_namespace="{{ namespace }}",
+          kubernetes_pod_name=~"{{ target }}"
+        }[{{ interval }}]
     )
 )
 ```
@@ -438,17 +438,17 @@ Envoy query (Contour and Gloo):
 sum(
     rate(
         envoy_cluster_upstream_rq{
-            envoy_cluster_name=~"$namespace-$workload",
+            envoy_cluster_name=~"{{ namespace }}-{{ target }}",
             envoy_response_code!~"5.*"
-        }[$interval]
+        }[{{ interval }}]
     )
 )
 /
 sum(
     rate(
         envoy_cluster_upstream_rq{
-            envoy_cluster_name=~"$namespace-$workload",
-        }[$interval]
+            envoy_cluster_name=~"{{ namespace }}-{{ target }}",
+        }[{{ interval }}]
     )
 )
 ```
@@ -476,9 +476,9 @@ histogram_quantile(0.99,
     irate(
       istio_request_duration_milliseconds_bucket{
         reporter="destination",
-        destination_workload=~"$workload",
-        destination_workload_namespace=~"$namespace"
-      }[$interval]
+        destination_workload=~"{{ target }}",
+        destination_workload_namespace=~"{{ namespace }}"
+      }[{{ interval }}]
     )
   ) by (le)
 )
@@ -491,9 +491,9 @@ histogram_quantile(0.99,
   sum(
     irate(
       envoy_cluster_upstream_rq_time_bucket{
-        kubernetes_pod_name=~"$workload",
-        kubernetes_namespace=~"$namespace"
-      }[$interval]
+        kubernetes_pod_name=~"{{ target }}",
+        kubernetes_namespace=~"{{ namespace }}"
+      }[{{ interval }}]
     )
   ) by (le)
 )
@@ -515,10 +515,10 @@ If you're using Istio with Gateway API, the Prometheus query needs to include `r
     rate(
         istio_requests_total{
           reporter="source",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload",
+          destination_workload_namespace=~"{{ namespace }}",
+          destination_workload=~"{{ target }}",
           response_code!~"5.*"
-        }[$interval]
+        }[{{ interval }}]
     )
 )
 /
@@ -526,9 +526,9 @@ sum(
     rate(
         istio_requests_total{
           reporter="source",
-          destination_workload_namespace=~"$namespace",
-          destination_workload=~"$workload"
-        }[$interval]
+          destination_workload_namespace=~"{{ namespace }}",
+          destination_workload=~"{{ target }}"
+        }[{{ interval }}]
     )
 ) * 100
 ```
