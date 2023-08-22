@@ -10,6 +10,10 @@ RUN HELM3_VERSION=3.11.0 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
 chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
+RUN KUBECTL_VERSION=v1.28.0 &&  \
+curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
+chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
+
 RUN GRPC_HEALTH_PROBE_VERSION=v0.4.12 && \
 wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-${TARGETARCH} && \
 chmod +x /usr/local/bin/grpc_health_probe
@@ -51,6 +55,7 @@ RUN ln -s /opt/bats/bin/bats /usr/local/bin/
 COPY --from=builder /usr/local/bin/helm /usr/local/bin/
 COPY --from=builder /usr/local/bin/ghz /usr/local/bin/
 COPY --from=builder /usr/local/bin/grpc_health_probe /usr/local/bin/
+COPY --from=builder /usr/local/bin/kubectl /usr/local/bin/
 
 ADD https://raw.githubusercontent.com/grpc/grpc-proto/master/grpc/health/v1/health.proto /tmp/ghz/health.proto
 
