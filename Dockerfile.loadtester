@@ -45,7 +45,7 @@ ARG TARGETPLATFORM
 
 RUN addgroup -S app && \
 adduser -S -g app app && \
-apk --no-cache add ca-certificates curl jq libgcc wrk hey
+apk --no-cache add ca-certificates curl jq libgcc wrk hey git
 
 WORKDIR /home/app
 
