@@ -95,7 +95,7 @@ spec:
     targetPort: 9898
     # Istio gateways (optional)
     gateways:
-    - public-gateway.istio-system.svc.cluster.local
+    - istio-system/public-gateway
     # Istio virtual service host names (optional)
     hosts:
     - app.example.com
@@ -326,7 +326,7 @@ spec:
     targetPort: 9898
     # Istio gateways (optional)
     gateways:
-    - public-gateway.istio-system.svc.cluster.local
+    - istio-system/public-gateway
     # Istio virtual service host names (optional)
     hosts:
     - app.example.com

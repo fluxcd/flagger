@@ -178,7 +178,7 @@ func newTestCanary() *flaggerv1.Canary {
 					RetryOn:       "connect-failure,gateway-error",
 				},
 				Gateways: []string{
-					"public-gateway.istio",
+					"istio/public-gateway",
 					"mesh",
 				},
 			}, Analysis: &flaggerv1.CanaryAnalysis{

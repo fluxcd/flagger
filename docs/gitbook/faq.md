@@ -558,7 +558,7 @@ spec:
     portName: http-frontend
     # Istio gateways (optional)
     gateways:
-    - public-gateway.istio-system.svc.cluster.local
+    - istio-system/public-gateway
     - mesh
     # Istio virtual service host names (optional)
     hosts:
@@ -614,7 +614,7 @@ metadata:
       uid: 3a4a40dd-3875-11e9-8e1d-42010a9c0fd1
 spec:
   gateways:
-    - public-gateway.istio-system.svc.cluster.local
+    - istio-system/public-gateway
     - mesh
   hosts:
     - frontend.example.com
@@ -784,7 +784,7 @@ metadata:
   namespace: test
 spec:
   gateways:
-    - public-gateway.istio-system.svc.cluster.local
+    - istio-system/public-gateway
     - mesh
   hosts:
     - frontend.example.com
@@ -821,7 +821,7 @@ spec:
   service:
     port: 8080
     gateways:
-    - public-gateway.istio-system.svc.cluster.local
+    - istio-system/public-gateway
     hosts:
     - my-site.com
     match:
@@ -838,7 +838,7 @@ spec:
   service:
     port: 8080
     gateways:
-    - public-gateway.istio-system.svc.cluster.local
+    - istio-system/public-gateway
     hosts:
     - my-site.com
     match:

@@ -80,7 +80,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	// test drift
 	vsClone := vs.DeepCopy()
 	gateways := vsClone.Spec.Gateways
-	gateways = append(gateways, "test-gateway.istio-system")
+	gateways = append(gateways, "istio-system/test-gateway")
 	vsClone.Spec.Gateways = gateways
 	totalGateways := len(mocks.canary.Spec.Service.Gateways)
 
@@ -542,7 +542,7 @@ func TestIstioRouter_Delegate(t *testing.T) {
 		if len(mocks.canary.Spec.Service.Gateways) == 0 {
 			// in this case, the gateways or hosts should not be not empty because it requires to cause an error.
 			mocks.canary.Spec.Service.Gateways = []string{
-				"public-gateway.istio",
+				"istio/public-gateway",
 				"mesh",
 			}
 		}
@@ -583,7 +583,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 
 	kubectlSpec := &istiov1alpha3.VirtualServiceSpec{
 		Hosts:    []string{"podinfo"},
-		Gateways: []string{"ingressgateway.istio-system.svc.cluster.local"},
+		Gateways: []string{"istio-system/ingressgateway"},
 		Http: []istiov1alpha3.HTTPRoute{
 			{
 				Match: nil,
@@ -631,7 +631,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 				require.NoError(t, err)
 				vs.Annotations[configAnnotation] = string(b)
 			case "kubectl":
-				vs.Annotations[kubectlAnnotation] = `{"apiVersion": "networking.istio.io/v1alpha3","kind": "VirtualService","metadata": {"annotations": {},"name": "podinfo","namespace": "test"},  "spec": {"gateways": ["ingressgateway.istio-system.svc.cluster.local"],"hosts": ["podinfo"],"http": [{"route": [{"destination": {"host": "podinfo"}}]}]}}`
+				vs.Annotations[kubectlAnnotation] = `{"apiVersion": "networking.istio.io/v1alpha3","kind": "VirtualService","metadata": {"annotations": {},"name": "podinfo","namespace": "test"},  "spec": {"gateways": ["istio-system/ingressgateway"],"hosts": ["podinfo"],"http": [{"route": [{"destination": {"host": "podinfo"}}]}]}}`
 			}
 			_, err = router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Update(context.TODO(), vs, metav1.UpdateOptions{})
 			require.NoError(t, err)
