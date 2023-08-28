@@ -6,7 +6,7 @@ ARG REVISION
 
 RUN apk --no-cache add alpine-sdk perl curl bash tar
 
-RUN HELM3_VERSION=3.11.0 && \
+RUN HELM3_VERSION=3.12.0 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
 chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
@@ -14,11 +14,11 @@ RUN KUBECTL_VERSION=v1.28.0 &&  \
 curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
 chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 
-RUN GRPC_HEALTH_PROBE_VERSION=v0.4.12 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.19 && \
 wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-${TARGETARCH} && \
 chmod +x /usr/local/bin/grpc_health_probe
 
-RUN GHZ_VERSION=0.109.0 && \
+RUN GHZ_VERSION=0.117.0 && \
 curl -sSL "https://github.com/bojand/ghz/archive/refs/tags/v${GHZ_VERSION}.tar.gz" | tar xz -C /tmp && \
 cd /tmp/ghz-${GHZ_VERSION}/cmd/ghz && GOARCH=$TARGETARCH go build . && mv ghz /usr/local/bin && \
 chmod +x /usr/local/bin/ghz

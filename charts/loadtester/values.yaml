@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/fluxcd/flagger-loadtester
-  tag: 0.28.1
+  tag: 0.29.0
   pullPolicy: IfNotPresent
   pullSecret:
 

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: loadtester
-          image: ghcr.io/fluxcd/flagger-loadtester:0.28.1
+          image: ghcr.io/fluxcd/flagger-loadtester:0.29.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
