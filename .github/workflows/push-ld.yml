@@ -43,6 +43,7 @@ jobs:
           tags: |
             type=raw,value=${{ steps.prep.outputs.VERSION }}
       - name: Publish image
+        id: build-push
         uses: docker/build-push-action@v4
         with:
           push: true
@@ -58,4 +59,4 @@ jobs:
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
-          cosign sign ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
+          cosign sign --yes ${{ env.IMAGE }}@${{ steps.build-push.outputs.digest }}
