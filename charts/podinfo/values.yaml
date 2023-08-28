@@ -25,7 +25,7 @@ canary:
   istioIngress:
     enabled: false
     # Istio ingress gateway name
-    gateway: public-gateway.istio-system.svc.cluster.local
+    gateway: istio-system/public-gateway
     # external host name eg. podinfo.example.com
     host:
   analysis:

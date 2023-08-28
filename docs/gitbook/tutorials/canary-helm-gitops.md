@@ -50,7 +50,7 @@ helm upgrade -i frontend flagger/podinfo \
 --set backend=http://backend.test:9898/echo \
 --set canary.enabled=true \
 --set canary.istioIngress.enabled=true \
---set canary.istioIngress.gateway=public-gateway.istio-system.svc.cluster.local \
+--set canary.istioIngress.gateway=istio-system/public-gateway \
 --set canary.istioIngress.host=frontend.istio.example.com
 ```
 
@@ -278,7 +278,7 @@ spec:
         enabled: true
         istioIngress:
           enabled: true
-          gateway: public-gateway.istio-system.svc.cluster.local
+          gateway: istio-system/public-gateway
           host: frontend.istio.example.com
         loadtest:
           enabled: true
