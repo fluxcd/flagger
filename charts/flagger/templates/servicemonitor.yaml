@@ -13,7 +13,7 @@ spec:
       port: http
       interval: 30s
       scrapeTimeout: 30s
-      honorLabels: false
+      honorLabels: {{ .Values.serviceMonitor.honorLabels }}
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}
