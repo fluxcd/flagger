@@ -15,7 +15,7 @@ Install Istio with telemetry support and Prometheus:
 ```bash
 istioctl manifest install --set profile=default
 
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/prometheus.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.18/samples/addons/prometheus.yaml
 ```
 
 Install Flagger in the `istio-system` namespace:
