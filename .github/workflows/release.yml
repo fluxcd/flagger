@@ -59,6 +59,7 @@ jobs:
           tags: |
             type=raw,value=${{ steps.prep.outputs.VERSION }}
       - name: Publish image
+        id: build-push
         uses: docker/build-push-action@v4
         with:
           sbom: true
@@ -76,7 +77,7 @@ jobs:
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
-          cosign sign ${{ env.IMAGE }}:${{ steps.prep.outputs.VERSION }}
+          cosign sign --yes ${{ env.IMAGE }}@${{ steps.build-push.outputs.digest }}
       - name: Publish Helm charts
         if: startsWith(github.ref, 'refs/tags/v')
         uses: stefanprodan/helm-gh-pages@v1.7.0
@@ -93,19 +94,22 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
         run: |
           helm package charts/flagger
-          helm push flagger-${{ steps.prep.outputs.VERSION }}.tgz oci://ghcr.io/fluxcd/charts
-          cosign sign ghcr.io/fluxcd/charts/flagger:${{ steps.prep.outputs.VERSION }}
+          digest = $(helm push flagger-${{ steps.prep.outputs.VERSION }}.tgz oci://ghcr.io/fluxcd/charts | awk '/Digest:/ {print $2}' | tr -d '\n' | xargs)
+          cosign sign --yes ghcr.io/fluxcd/charts/flagger@${{ digest }}
           rm flagger-${{ steps.prep.outputs.VERSION }}.tgz
       - name: Publish signed manifests to GHCR
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
-          flux push artifact oci://ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }} \
-          --path="./kustomize" \
-          --source="$(git config --get remote.origin.url)" \
-          --revision="${{ steps.prep.outputs.VERSION }}/$(git rev-parse HEAD)"
-          cosign sign ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }}
+          digest_url = $(flux push artifact \
+            oci://ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }} \
+            --path="./kustomize" \
+            --source="$(git config --get remote.origin.url)" \
+            --revision="${{ steps.prep.outputs.VERSION }}/$(git rev-parse HEAD)"
+            --output json | \
+            jq -r '. | .repository + "@" + .digest')
+          cosign sign --yes ${{ digest_url }}
       - uses: anchore/sbom-action/download-syft@v0
       - name: Create release and SBOM
         uses: goreleaser/goreleaser-action@v4
