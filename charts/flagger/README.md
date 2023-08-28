@@ -140,8 +140,10 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `prometheus.install`                 | If `true`, installs Prometheus configured to scrape all pods in the custer                                                                         | `false`                               |
 | `prometheus.retention`               | Prometheus data retention                                                                                                                          | `2h`                                  |
 | `selectorLabels`                     | List of labels that Flagger uses to create pod selectors                                                                                           | `app,name,app.kubernetes.io/name`     |
-| `serviceMonitor.enabled`             | If `true`, creates service and serviceMonitor for monitoring Flagger metrics                                                                                           | `false`     |
+| `serviceMonitor.enabled`             | If `true`, creates service and serviceMonitor for monitoring Flagger metrics                                                                       | `false`                               |
 | `serviceMonitor.honorLabels`         | If `true`, label conflicts are resolved by keeping label values from the scraped data and ignoring the conflicting server-side labels              | `false`                               |
+| `serviceMonitor.namespace`           | Namespace Servicemonitor is installed in                                                                                                           | the same namespace                    |
+| `serviceMonitor.labels`              | labels for the ServiceMonitor passed to Prometheus Operator                                                                                        | `{}`                                  |
 | `configTracking.enabled`             | If `true`, flagger will track changes in Secrets and ConfigMaps referenced in the target deployment                                                | `true`                                |
 | `eventWebhook`                       | If set, Flagger will publish events to the given webhook                                                                                           | None                                  |
 | `slack.url`                          | Slack incoming webhook                                                                                                                             | None                                  |
@@ -182,7 +184,7 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `podDisruptionBudget.minAvailable`   | The minimal number of available replicas that will be set in the PodDisruptionBudget                                                               | `1`                                   |
 | `podDisruptionBudget.minAvailable`   | The minimal number of available replicas that will be set in the PodDisruptionBudget                                                               | `1`                                   |
 | `noCrossNamespaceRefs`               | If `true`, cross namespace references to custom resources will be disabled                                                                         | `false`                               |
-| `namespace`                          | When specified, Flagger will restrict itself to watching Canary objects from that namespace                                                                   | `""`                                  |
+| `namespace`                          | When specified, Flagger will restrict itself to watching Canary objects from that namespace                                                        | `""`                                  |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 

@@ -27,6 +27,10 @@ metricsServer: "http://prometheus:9090"
 serviceMonitor:
   enabled: false
   honorLabels: false
+  # Set the namespace the ServiceMonitor should be deployed
+  # namespace: monitoring
+  # Set labels for the ServiceMonitor, use this to define your scrape label for Prometheus Operator
+  # labels:
 
 # accepted values are kubernetes, istio, linkerd, appmesh, contour, nginx, gloo, skipper, traefik, apisix, osm
 meshProvider: ""
