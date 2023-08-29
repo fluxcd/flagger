@@ -80,6 +80,19 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign --yes ${{ env.IMAGE }}@${{ steps.build-push.outputs.digest }}
+      - name: Publish signed manifests to GHCR
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          OCI_URL=$(flux push artifact \
+            oci://ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }} \
+            --path="./kustomize" \
+            --source="$(git config --get remote.origin.url)" \
+            --revision="${{ steps.prep.outputs.VERSION }}/$(git rev-parse HEAD)"
+            --output json | \
+            jq -r '. | .repository + "@" + .digest')
+          cosign sign --yes ${OCI_URL}
       - name: Publish Helm charts
         if: startsWith(github.ref, 'refs/tags/v')
         uses: stefanprodan/helm-gh-pages@v1.7.0
@@ -89,29 +102,17 @@ jobs:
           linting: off
       - uses: fluxcd/pkg/actions/helm@main
         with:
-          version: 3.10.1
+          version: 3.12.3
       - name: Publish signed Helm chart to GHCR
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
           helm package charts/flagger
-          echo "DIGEST=$(helm push flagger-${{ steps.prep.outputs.VERSION }}.tgz oci://ghcr.io/fluxcd/charts | awk '/Digest:/ {print $2}' | tr -d '\n' | xargs)" >> $GITHUB_ENV
-          cosign sign --yes ghcr.io/fluxcd/charts/flagger@$DIGEST
+          helm push flagger-${{ steps.prep.outputs.VERSION }}.tgz oci://ghcr.io/fluxcd/charts |& tee .digest
+          cosign sign --yes ghcr.io/fluxcd/charts/flagger@$(cat .digest | awk -F "[, ]+" '/Digest/{print $NF}')
           rm flagger-${{ steps.prep.outputs.VERSION }}.tgz
-      - name: Publish signed manifests to GHCR
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          echo "DIGEST_URL=$(flux push artifact \
-            oci://ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }} \
-            --path="./kustomize" \
-            --source="$(git config --get remote.origin.url)" \
-            --revision="${{ steps.prep.outputs.VERSION }}/$(git rev-parse HEAD)"
-            --output json | \
-            jq -r '. | .repository + "@" + .digest')" >> $GITHUB_ENV
-          cosign sign --yes $DIGEST_URL
+          rm .digest
       - uses: anchore/sbom-action/download-syft@v0
       - name: Create release and SBOM
         id: run-goreleaser
