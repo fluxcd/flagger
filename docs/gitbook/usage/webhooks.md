@@ -387,6 +387,22 @@ This can be done via mounting a Kubernetes secret in the tester's Deployment.
 to see if the process has finished (Default is 5s). `pollTimeout` represents the time in seconds
 the web-hook will try to call Concord before timing out (Default is 30s).
 
+If you need to start a Pod/Job to run tests, you can do so using `kubectl`.
+
+```yaml
+  analysis:
+    webhooks:
+      - name: "smoke test"
+        type: pre-rollout
+        url: http://flagger-kubectltester.kube-system/
+        timeout: 3m
+        metadata:
+          type: "kubectl"
+          cmd: "run test --image=alpine --overrides='{ "spec": { "serviceAccount": "default:default" }  }'"
+```
+
+Note that you need to setup RBAC for the load tester service account in order to run `kubectl` and `helm` commands.
+
 ## Manual Gating
 
 For manual approval of a canary deployment you can use the `confirm-rollout` and `confirm-promotion` webhooks.
