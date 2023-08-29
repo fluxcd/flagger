@@ -2,6 +2,51 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.33.0
+
+**Release date:** 2023-08-29
+
+This release fixes bugs related to the Canary lifecycle. The
+`confirm-traffic-increase` webhook is no longer called if the Canary is in the
+`WaitingPromotion` phase. Furthermore, a bug which caused downtime when
+initializing the Canary deployment has been fixed.
+Also, a bug in the `request-duration` metric for Traefik which assumed the
+result to be in milliseconds instead of seconds has been addressed.
+
+The loadtester now also supports running `kubectl` commands.
+
+#### Improvements
+- Helm: Add option to configure honorLabels for serviceMonitor
+  [#1442](https://github.com/fluxcd/flagger/pull/1442)
+- Helm: Use PodDisruptionBudget API policy/v1 if available
+  [#1476](https://github.com/fluxcd/flagger/pull/1476)
+- podinfo: Update hpa version from autoscaling/v2beta2 to autoscaling/v2
+  [#1477](https://github.com/fluxcd/flagger/pull/1477)
+- Helm: Allow custom labels for servicemonitor
+  [#1483](https://github.com/fluxcd/flagger/pull/1483)
+- feat: loadtester support kubectl type
+  [#1485](https://github.com/fluxcd/flagger/pull/1485)
+- Update Istio Gateway reference format
+  [#1489](https://github.com/fluxcd/flagger/pull/1489)
+- e2e: Update Istio to v1.18
+  [#1492](https://github.com/fluxcd/flagger/pull/1492)
+- add docs for kubectl in loadtester
+  [#1494](https://github.com/fluxcd/flagger/pull/1494)
+
+#### Fixes
+- fix: typo on "Parase", should be "Parse".
+  [#1443](https://github.com/fluxcd/flagger/pull/1443)
+- Fix Traefik request-duration metric
+  [#1446](https://github.com/fluxcd/flagger/pull/1446)
+- Fix initial deployment downtime
+  [#1451](https://github.com/fluxcd/flagger/pull/1451)
+- Fix FAQ templating format and change reference of $workload to $target.
+  [#1456](https://github.com/fluxcd/flagger/pull/1456)
+- Update doc.go
+  [#1466](https://github.com/fluxcd/flagger/pull/1466)
+- Avoid running traffic increase hooks when waiting for promotion or promoting
+  [#1470](https://github.com/fluxcd/flagger/pull/1470)
+
 ## 1.32.0
 
 **Release date:** 2023-07-14
