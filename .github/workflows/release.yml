@@ -89,7 +89,7 @@ jobs:
             oci://ghcr.io/fluxcd/flagger-manifests:${{ steps.prep.outputs.VERSION }} \
             --path="./kustomize" \
             --source="$(git config --get remote.origin.url)" \
-            --revision="${{ steps.prep.outputs.VERSION }}/$(git rev-parse HEAD)"
+            --revision="${{ steps.prep.outputs.VERSION }}/$(git rev-parse HEAD)" \
             --output json | \
             jq -r '. | .repository + "@" + .digest')
           cosign sign --yes ${OCI_URL}
