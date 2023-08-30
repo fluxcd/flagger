@@ -535,10 +535,10 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 	if canaryWeight < maxWeight {
 		// check trafic increace hook, only if traffic is not mirrored
 		if !mirrored &&
-			(cd.Status.Phase != flaggerv1.CanaryPhasePromoting &&
-				cd.Status.Phase != flaggerv1.CanaryPhaseWaitingPromotion &&
-				cd.Status.Phase != flaggerv1.CanaryPhaseFinalising) {
-			if promote := c.runConfirmTrafficIncreaseHooks(cd); !promote {
+			(canary.Status.Phase != flaggerv1.CanaryPhasePromoting &&
+				canary.Status.Phase != flaggerv1.CanaryPhaseWaitingPromotion &&
+				canary.Status.Phase != flaggerv1.CanaryPhaseFinalising) {
+			if promote := c.runConfirmTrafficIncreaseHooks(canary); !promote {
 				return
 			}
 		}
