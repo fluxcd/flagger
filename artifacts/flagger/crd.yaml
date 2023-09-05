@@ -936,6 +936,34 @@ spec:
                                   description: RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)
                                   format: string
                                   type: string
+                          queryParams:
+                            description: Query parameters for matching.
+                            type: object
+                            additionalProperties:
+                              oneOf:
+                              - not:
+                                  anyOf:
+                                  - required:
+                                    - exact
+                                  - required:
+                                    - prefix
+                                  - required:
+                                    - regex
+                              - required:
+                                - exact
+                              - required:
+                                - prefix
+                              - required:
+                                - regex
+                              properties:
+                                exact:
+                                  type: string
+                                prefix:
+                                  type: string
+                                regex:
+                                  description: RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+                                  type: string
+                              type: object
                           sourceLabels:
                             description: Applicable only when the 'mesh' gateway is included in the service.gateways list
                             type: object
