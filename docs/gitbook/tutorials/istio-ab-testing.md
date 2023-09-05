@@ -179,7 +179,7 @@ podinfod=ghcr.io/stefanprodan/podinfo:6.0.1
 Flagger detects that the deployment revision changed and starts a new rollout:
 
 ```text
-kubectl -n test describe canary/abtest
+kubectl -n test describe canary/podinfo
 
 Status:
   Failed Checks:         0

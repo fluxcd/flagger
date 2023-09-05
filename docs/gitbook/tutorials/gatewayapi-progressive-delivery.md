@@ -485,7 +485,7 @@ podinfod=stefanprodan/podinfo:6.0.3
 Flagger detects that the deployment revision changed and starts a new rollout:
 
 ```text
-kubectl -n test describe canary/abtest
+kubectl -n test describe canary/podinfo
 
 Status:
   Failed Checks:         0
