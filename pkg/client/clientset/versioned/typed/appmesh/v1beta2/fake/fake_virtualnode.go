@@ -24,7 +24,6 @@ import (
 	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeVirtualNodes struct {
 	ns   string
 }
 
-var virtualnodesResource = schema.GroupVersionResource{Group: "appmesh.k8s.aws", Version: "v1beta2", Resource: "virtualnodes"}
+var virtualnodesResource = v1beta2.SchemeGroupVersion.WithResource("virtualnodes")
 
-var virtualnodesKind = schema.GroupVersionKind{Group: "appmesh.k8s.aws", Version: "v1beta2", Kind: "VirtualNode"}
+var virtualnodesKind = v1beta2.SchemeGroupVersion.WithKind("VirtualNode")
 
 // Get takes name of the virtualNode, and returns the corresponding virtualNode object, and an error if there is any.
 func (c *FakeVirtualNodes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.VirtualNode, err error) {

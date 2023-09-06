@@ -24,7 +24,6 @@ import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -35,9 +34,9 @@ type FakeMeshes struct {
 	Fake *FakeAppmeshV1beta1
 }
 
-var meshesResource = schema.GroupVersionResource{Group: "appmesh.k8s.aws", Version: "v1beta1", Resource: "meshes"}
+var meshesResource = v1beta1.SchemeGroupVersion.WithResource("meshes")
 
-var meshesKind = schema.GroupVersionKind{Group: "appmesh.k8s.aws", Version: "v1beta1", Kind: "Mesh"}
+var meshesKind = v1beta1.SchemeGroupVersion.WithKind("Mesh")
 
 // Get takes name of the mesh, and returns the corresponding mesh object, and an error if there is any.
 func (c *FakeMeshes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Mesh, err error) {

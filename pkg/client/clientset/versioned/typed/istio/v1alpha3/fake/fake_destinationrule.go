@@ -24,7 +24,6 @@ import (
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeDestinationRules struct {
 	ns   string
 }
 
-var destinationrulesResource = schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "destinationrules"}
+var destinationrulesResource = v1alpha3.SchemeGroupVersion.WithResource("destinationrules")
 
-var destinationrulesKind = schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1alpha3", Kind: "DestinationRule"}
+var destinationrulesKind = v1alpha3.SchemeGroupVersion.WithKind("DestinationRule")
 
 // Get takes name of the destinationRule, and returns the corresponding destinationRule object, and an error if there is any.
 func (c *FakeDestinationRules) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha3.DestinationRule, err error) {

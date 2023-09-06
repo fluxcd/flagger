@@ -24,7 +24,6 @@ import (
 	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeTraefikServices struct {
 	ns   string
 }
 
-var traefikservicesResource = schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "traefikservices"}
+var traefikservicesResource = v1alpha1.SchemeGroupVersion.WithResource("traefikservices")
 
-var traefikservicesKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "TraefikService"}
+var traefikservicesKind = v1alpha1.SchemeGroupVersion.WithKind("TraefikService")
 
 // Get takes name of the traefikService, and returns the corresponding traefikService object, and an error if there is any.
 func (c *FakeTraefikServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
