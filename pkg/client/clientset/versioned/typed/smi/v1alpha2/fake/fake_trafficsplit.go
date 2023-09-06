@@ -24,7 +24,6 @@ import (
 	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeTrafficSplits struct {
 	ns   string
 }
 
-var trafficsplitsResource = schema.GroupVersionResource{Group: "split.smi-spec.io", Version: "v1alpha2", Resource: "trafficsplits"}
+var trafficsplitsResource = v1alpha2.SchemeGroupVersion.WithResource("trafficsplits")
 
-var trafficsplitsKind = schema.GroupVersionKind{Group: "split.smi-spec.io", Version: "v1alpha2", Kind: "TrafficSplit"}
+var trafficsplitsKind = v1alpha2.SchemeGroupVersion.WithKind("TrafficSplit")
 
 // Get takes name of the trafficSplit, and returns the corresponding trafficSplit object, and an error if there is any.
 func (c *FakeTrafficSplits) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.TrafficSplit, err error) {

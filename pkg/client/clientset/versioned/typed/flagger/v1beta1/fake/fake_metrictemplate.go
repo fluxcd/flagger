@@ -24,7 +24,6 @@ import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeMetricTemplates struct {
 	ns   string
 }
 
-var metrictemplatesResource = schema.GroupVersionResource{Group: "flagger.app", Version: "v1beta1", Resource: "metrictemplates"}
+var metrictemplatesResource = v1beta1.SchemeGroupVersion.WithResource("metrictemplates")
 
-var metrictemplatesKind = schema.GroupVersionKind{Group: "flagger.app", Version: "v1beta1", Kind: "MetricTemplate"}
+var metrictemplatesKind = v1beta1.SchemeGroupVersion.WithKind("MetricTemplate")
 
 // Get takes name of the metricTemplate, and returns the corresponding metricTemplate object, and an error if there is any.
 func (c *FakeMetricTemplates) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.MetricTemplate, err error) {

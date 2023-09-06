@@ -24,7 +24,6 @@ import (
 	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -35,9 +34,9 @@ type FakeTrafficRoutes struct {
 	Fake *FakeKumaV1alpha1
 }
 
-var trafficroutesResource = schema.GroupVersionResource{Group: "kuma.io", Version: "v1alpha1", Resource: "trafficroutes"}
+var trafficroutesResource = v1alpha1.SchemeGroupVersion.WithResource("trafficroutes")
 
-var trafficroutesKind = schema.GroupVersionKind{Group: "kuma.io", Version: "v1alpha1", Kind: "TrafficRoute"}
+var trafficroutesKind = v1alpha1.SchemeGroupVersion.WithKind("TrafficRoute")
 
 // Get takes name of the trafficRoute, and returns the corresponding trafficRoute object, and an error if there is any.
 func (c *FakeTrafficRoutes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TrafficRoute, err error) {

@@ -24,7 +24,6 @@ import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeCanaries struct {
 	ns   string
 }
 
-var canariesResource = schema.GroupVersionResource{Group: "flagger.app", Version: "v1beta1", Resource: "canaries"}
+var canariesResource = v1beta1.SchemeGroupVersion.WithResource("canaries")
 
-var canariesKind = schema.GroupVersionKind{Group: "flagger.app", Version: "v1beta1", Kind: "Canary"}
+var canariesKind = v1beta1.SchemeGroupVersion.WithKind("Canary")
 
 // Get takes name of the canary, and returns the corresponding canary object, and an error if there is any.
 func (c *FakeCanaries) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Canary, err error) {

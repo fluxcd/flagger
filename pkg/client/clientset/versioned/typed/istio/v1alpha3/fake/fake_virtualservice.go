@@ -24,7 +24,6 @@ import (
 	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeVirtualServices struct {
 	ns   string
 }
 
-var virtualservicesResource = schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "virtualservices"}
+var virtualservicesResource = v1alpha3.SchemeGroupVersion.WithResource("virtualservices")
 
-var virtualservicesKind = schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1alpha3", Kind: "VirtualService"}
+var virtualservicesKind = v1alpha3.SchemeGroupVersion.WithKind("VirtualService")
 
 // Get takes name of the virtualService, and returns the corresponding virtualService object, and an error if there is any.
 func (c *FakeVirtualServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha3.VirtualService, err error) {
