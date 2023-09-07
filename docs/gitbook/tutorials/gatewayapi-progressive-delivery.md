@@ -137,7 +137,7 @@ Save the above resource as metric-templates.yaml and then apply it:
 kubectl apply -f metric-templates.yaml
 ```
 
-Create a canary custom resource \(replace "loaclproject.contour.io" with your own domain\):
+Create a canary custom resource \(replace "localproject.contour.io" with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -382,13 +382,124 @@ Events:
   Warning  Synced  1m    flagger  Canary failed! Scaling down podinfo.test
 ```
 
+## Session Affinity
+
+While Flagger can perform weighted routing and A/B testing individually, with Gateway API it can combine the two leading to a Canary
+release with session affinity.
+For more information you can read the [deployment strategies docs](../usage/deployment-strategies.md#canary-release-with-session-affinity).
+
+> **Note:** The implementation must have support for the [`ResponseHeaderModifier`](https://github.com/kubernetes-sigs/gateway-api/blob/3d22aa5a08413222cb79e6b2e245870360434614/apis/v1beta1/httproute_types.go#L651) API. 
+
+Create a canary custom resource \(replace localproject.contour.io with your own domain\):
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  # deployment reference
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  # the maximum time in seconds for the canary deployment
+  # to make progress before it is rollback (default 600s)
+  progressDeadlineSeconds: 60
+  # HPA reference (optional)
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta2
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  service:
+    # service port number
+    port: 9898
+    # container port number or name (optional)
+    targetPort: 9898
+    # Gateway API HTTPRoute host names
+    hosts:
+     - localproject.contour.io
+    # Reference to the Gateway that the generated HTTPRoute would attach to.
+    gatewayRefs:
+      - name: contour
+        namespace: projectcontour
+  analysis:
+    # schedule interval (default 60s)
+    interval: 1m
+    # max number of failed metric checks before rollback
+    threshold: 5
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 10
+    # session affinity config
+    sessionAffinity:
+      # name of the cookie used
+      cookieName: flagger-cookie
+      # max age of the cookie (in seconds)
+      # optional; defaults to 86400
+      maxAge: 21600
+    metrics:
+    - name: error-rate
+      # max error rate (5xx responses)
+      # percentage (0-100)
+      templateRef:
+        name: error-rate
+        namespace: flagger-system
+      thresholdRange:
+        max: 1
+      interval: 1m
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: flagger-system
+      # seconds
+      thresholdRange:
+         max: 0.5
+      interval: 30s
+    # testing (optional)
+    webhooks:
+      - name: smoke-test
+        type: pre-rollout
+        url: http://flagger-loadtester.test/
+        timeout: 15s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'anon' http://podinfo-canary.test:9898/token | grep token"
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+```
+
+Save the above resource as podinfo-canary-session-affinity.yaml and then apply it:
+
+```bash
+kubectl apply -f ./podinfo-canary-session-affinity.yaml
+```
+
+Trigger a canary deployment by updating the container image:
+
+```bash
+kubectl -n test set image deployment/podinfo \
+podinfod=ghcr.io/stefanprodan/podinfo:6.0.1
+```
+
+You can load `localproject.contour.io` in your browser and refresh it until you see the requests being served by `podinfo:6.0.1`.
+All subsequent requests after that will be served by `podinfo:6.0.1` and not `podinfo:6.0.0` because of the session affinity
+configured by Flagger in the HTTPRoute object.
+
 # A/B Testing
 
 Besides weighted routing, Flagger can be configured to route traffic to the canary based on HTTP match conditions. In an A/B testing scenario, you'll be using HTTP headers or cookies to target a certain segment of your users. This is particularly useful for frontend applications that require session affinity.
 
 ![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
 
-Create a canary custom resource \(replace "loaclproject.contour.io" with your own domain\):
+Create a canary custom resource \(replace "localproject.contour.io" with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1

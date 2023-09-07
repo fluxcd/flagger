@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
@@ -162,10 +163,32 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 	}
 
+	ignoreCmpOptions := []cmp.Option{
+		cmpopts.IgnoreFields(v1beta1.BackendRef{}, "Weight"),
+		cmpopts.EquateEmpty(),
+	}
+	if canary.Spec.Analysis.SessionAffinity != nil {
+		ignoreRoute := cmpopts.IgnoreSliceElements(func(r v1beta1.HTTPRouteRule) bool {
+			// Ignore the rule that does sticky routing, i.e. matches against the `Cookie` header.
+			for _, match := range r.Matches {
+				for _, headerMatch := range match.Headers {
+					if *headerMatch.Type == v1beta1HeaderMatchRegex && headerMatch.Name == cookieHeader &&
+						strings.Contains(headerMatch.Value, canary.Spec.Analysis.SessionAffinity.CookieName) {
+						return true
+					}
+				}
+			}
+			return false
+		})
+		ignoreCmpOptions = append(ignoreCmpOptions, ignoreRoute)
+		// Ignore backend specific filters, since we use that to insert the `Set-Cookie` header in responses.
+		ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1beta1.HTTPBackendRef{}, "Filters"))
+	}
+
 	if httpRoute != nil {
 		specDiff := cmp.Diff(
 			httpRoute.Spec, httpRouteSpec,
-			cmpopts.IgnoreFields(v1beta1.BackendRef{}, "Weight"),
+			ignoreCmpOptions...,
 		)
 		labelsDiff := cmp.Diff(newMetadata.Labels, httpRoute.Labels, cmpopts.EquateEmpty())
 		annotationsDiff := cmp.Diff(newMetadata.Annotations, httpRoute.Annotations, cmpopts.EquateEmpty())
@@ -200,7 +223,19 @@ func (gwr *GatewayAPIV1Beta1Router) GetRoutes(canary *flaggerv1.Canary) (
 		err = fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 		return
 	}
+	var weightedRule *v1beta1.HTTPRouteRule
 	for _, rule := range httpRoute.Spec.Rules {
+		// If session affinity is enabled, then we are only interested in the rule
+		// that has backend-specific filters, as that's the rule that does weighted
+		// routing.
+		if canary.Spec.Analysis.SessionAffinity != nil {
+			for _, backendRef := range rule.BackendRefs {
+				if len(backendRef.Filters) > 0 {
+					weightedRule = &rule
+				}
+			}
+		}
+
 		// A/B testing: Avoid reading the rule with only for backendRef.
 		if len(rule.BackendRefs) == 2 {
 			for _, backendRef := range rule.BackendRefs {
@@ -212,7 +247,17 @@ func (gwr *GatewayAPIV1Beta1Router) GetRoutes(canary *flaggerv1.Canary) (
 				}
 			}
 		}
+	}
 
+	if weightedRule != nil {
+		for _, backendRef := range weightedRule.BackendRefs {
+			if backendRef.Name == v1beta1.ObjectName(primarySvcName) {
+				primaryWeight = int(*backendRef.Weight)
+			}
+			if backendRef.Name == v1beta1.ObjectName(canarySvcName) {
+				canaryWeight = int(*backendRef.Weight)
+			}
+		}
 	}
 	return
 }
@@ -248,25 +293,35 @@ func (gwr *GatewayAPIV1Beta1Router) SetRoutes(
 			},
 		})
 	}
+	weightedRouteRule := &v1beta1.HTTPRouteRule{
+		Matches: matches,
+		BackendRefs: []v1beta1.HTTPBackendRef{
+			{
+				BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
+			},
+			{
+				BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port),
+			},
+		},
+	}
 	httpRouteSpec := v1beta1.HTTPRouteSpec{
 		CommonRouteSpec: v1beta1.CommonRouteSpec{
 			ParentRefs: canary.Spec.Service.GatewayRefs,
 		},
 		Hostnames: hostNames,
 		Rules: []v1beta1.HTTPRouteRule{
-			{
-				Matches: matches,
-				BackendRefs: []v1beta1.HTTPBackendRef{
-					{
-						BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
-					},
-					{
-						BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port),
-					},
-				},
-			},
+			*weightedRouteRule,
 		},
 	}
+
+	if canary.Spec.Analysis.SessionAffinity != nil {
+		rules, err := gwr.getSessionAffinityRouteRules(canary, canaryWeight, weightedRouteRule)
+		if err != nil {
+			return err
+		}
+		httpRouteSpec.Rules = rules
+	}
+
 	hrClone.Spec = httpRouteSpec
 
 	// A/B testing
@@ -293,6 +348,112 @@ func (gwr *GatewayAPIV1Beta1Router) SetRoutes(
 
 func (gwr *GatewayAPIV1Beta1Router) Finalize(_ *flaggerv1.Canary) error {
 	return nil
+}
+
+// getSessionAffinityRouteRules returns the HTTPRouteRule objects required to perform
+// session affinity based Canary releases.
+func (gwr *GatewayAPIV1Beta1Router) getSessionAffinityRouteRules(canary *flaggerv1.Canary, canaryWeight int,
+	weightedRouteRule *v1beta1.HTTPRouteRule) ([]v1beta1.HTTPRouteRule, error) {
+	_, primarySvcName, canarySvcName := canary.GetServiceNames()
+	stickyRouteRule := *weightedRouteRule
+
+	// If a canary run is active, we want all responses corresponding to requests hitting the canary deployment
+	// (due to weighted routing) to include a `Set-Cookie` header. All requests that have the `Cookie` header
+	// and match the value of the `Set-Cookie` header will be routed to the canary deployment.
+	if canaryWeight != 0 {
+		if canary.Status.SessionAffinityCookie == "" {
+			canary.Status.SessionAffinityCookie = fmt.Sprintf("%s=%s", canary.Spec.Analysis.SessionAffinity.CookieName, randSeq())
+		}
+
+		// Add `Set-Cookie` header modifier to the primary backend in the weighted routing rule.
+		for i, backendRef := range weightedRouteRule.BackendRefs {
+			if string(backendRef.BackendObjectReference.Name) == canarySvcName {
+				backendRef.Filters = append(backendRef.Filters, v1beta1.HTTPRouteFilter{
+					Type: v1beta1.HTTPRouteFilterResponseHeaderModifier,
+					ResponseHeaderModifier: &v1beta1.HTTPHeaderFilter{
+						Add: []v1beta1.HTTPHeader{
+							{
+								Name: setCookieHeader,
+								Value: fmt.Sprintf("%s; %s=%d", canary.Status.SessionAffinityCookie, maxAgeAttr,
+									canary.Spec.Analysis.SessionAffinity.GetMaxAge(),
+								),
+							},
+						},
+					},
+				})
+			}
+			weightedRouteRule.BackendRefs[i] = backendRef
+		}
+
+		// Add `Cookie` header matcher to the sticky routing rule.
+		cookieKeyAndVal := strings.Split(canary.Status.SessionAffinityCookie, "=")
+		regexMatchType := v1beta1.HeaderMatchRegularExpression
+		cookieMatch := v1beta1.HTTPRouteMatch{
+			Headers: []v1beta1.HTTPHeaderMatch{
+				{
+					Type:  &regexMatchType,
+					Name:  cookieHeader,
+					Value: fmt.Sprintf(".*%s.*%s.*", cookieKeyAndVal[0], cookieKeyAndVal[1]),
+				},
+			},
+		}
+
+		svcMatches, err := gwr.mapRouteMatches(canary.Spec.Service.Match)
+		if err != nil {
+			return nil, err
+		}
+
+		mergedMatches := gwr.mergeMatchConditions([]v1beta1.HTTPRouteMatch{cookieMatch}, svcMatches)
+		stickyRouteRule.Matches = mergedMatches
+		stickyRouteRule.BackendRefs = []v1beta1.HTTPBackendRef{
+			{
+				BackendRef: gwr.makeBackendRef(primarySvcName, 0, canary.Spec.Service.Port),
+			},
+			{
+				BackendRef: gwr.makeBackendRef(canarySvcName, 100, canary.Spec.Service.Port),
+			},
+		}
+	} else {
+		// If canary weight is 0 and SessionAffinityCookie is non-blank, then it belongs to a previous canary run.
+		if canary.Status.SessionAffinityCookie != "" {
+			canary.Status.PreviousSessionAffinityCookie = canary.Status.SessionAffinityCookie
+		}
+		previousCookie := canary.Status.PreviousSessionAffinityCookie
+
+		// Match against the previous session cookie and delete that cookie
+		if previousCookie != "" {
+			cookieKeyAndVal := strings.Split(previousCookie, "=")
+			regexMatchType := v1beta1.HeaderMatchRegularExpression
+			cookieMatch := v1beta1.HTTPRouteMatch{
+				Headers: []v1beta1.HTTPHeaderMatch{
+					{
+						Type:  &regexMatchType,
+						Name:  cookieHeader,
+						Value: fmt.Sprintf(".*%s.*%s.*", cookieKeyAndVal[0], cookieKeyAndVal[1]),
+					},
+				},
+			}
+			svcMatches, _ := gwr.mapRouteMatches(canary.Spec.Service.Match)
+			mergedMatches := gwr.mergeMatchConditions([]v1beta1.HTTPRouteMatch{cookieMatch}, svcMatches)
+			stickyRouteRule.Matches = mergedMatches
+
+			stickyRouteRule.Filters = append(stickyRouteRule.Filters, v1beta1.HTTPRouteFilter{
+				Type: v1beta1.HTTPRouteFilterResponseHeaderModifier,
+				ResponseHeaderModifier: &v1beta1.HTTPHeaderFilter{
+					Add: []v1beta1.HTTPHeader{
+						{
+							Name:  setCookieHeader,
+							Value: fmt.Sprintf("%s; %s=%d", previousCookie, maxAgeAttr, -1),
+						},
+					},
+				},
+			})
+		}
+
+		canary.Status.SessionAffinityCookie = ""
+	}
+
+	return []v1beta1.HTTPRouteRule{stickyRouteRule, *weightedRouteRule}, nil
 }
 
 func (gwr *GatewayAPIV1Beta1Router) mapRouteMatches(requestMatches []v1alpha3.HTTPMatchRequest) ([]v1beta1.HTTPRouteMatch, error) {
@@ -388,6 +549,9 @@ func (gwr *GatewayAPIV1Beta1Router) makeBackendRef(svcName string, weight, port 
 func (gwr *GatewayAPIV1Beta1Router) mergeMatchConditions(analysis, service []v1beta1.HTTPRouteMatch) []v1beta1.HTTPRouteMatch {
 	if len(analysis) == 0 {
 		return service
+	}
+	if len(service) == 0 {
+		return analysis
 	}
 
 	merged := make([]v1beta1.HTTPRouteMatch, len(service)*len(analysis))
