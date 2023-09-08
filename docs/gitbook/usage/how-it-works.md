@@ -65,7 +65,7 @@ spec:
     kind: Deployment
     name: podinfo
   autoscalerRef:
-    apiVersion: autoscaling/v2beta2
+    apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     name: podinfo
     primaryScalerReplicas:

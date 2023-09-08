@@ -98,7 +98,7 @@ spec:
     name: podinfo
   # HPA reference (optional)
   autoscalerRef:
-    apiVersion: autoscaling/v2beta2
+    apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     name: podinfo
   # the maximum time in seconds for the canary deployment
@@ -426,7 +426,7 @@ spec:
     kind: Deployment
     name: podinfo
   autoscalerRef:
-    apiVersion: autoscaling/v2beta2
+    apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:
