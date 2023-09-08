@@ -1077,6 +1077,9 @@ spec:
                             description: URL address of this webhook
                             type: string
                             format: url
+                          retrylimit:
+                            type: integer
+                            description: Number of retry if Rollout hook failed
                           timeout:
                             description: Request timeout for this webhook
                             type: string
