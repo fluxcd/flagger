@@ -727,7 +727,7 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
-			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			err := CallWebhook(*canary, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
 				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
 					canary.Name, canary.Namespace, webhook.Name, err)

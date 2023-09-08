@@ -83,15 +83,18 @@ Webhook payload (HTTP POST):
 
 ```javascript
 {
-    "name": "podinfo",
-    "namespace": "test",
-    "phase": "Progressing", 
-    "metadata": {
-        "test":  "all",
-        "token":  "16688eb5e9f289f1991c"
-    }
+  "name": "podinfo",
+  "namespace": "test",
+  "phase": "Progressing",
+  "checksum": "85d557f47b",
+  "metadata": {
+    "test":  "all",
+    "token":  "16688eb5e9f289f1991c"
+  }
 }
 ```
+
+The checksum field is hashed from the TrackedConfigs and LastAppliedSpec of the Canary, it can be used to identify a Canary for a specific configuration of the deployed resources.
 
 Response status codes:
 
@@ -107,6 +110,7 @@ Event payload (HTTP POST):
   "name": "string (canary name)",
   "namespace": "string (canary namespace)",
   "phase": "string (canary phase)",
+  "checksum": "string (canary checksum"),
   "metadata": {
     "eventMessage": "string (canary event message)",
     "eventType": "string (canary event type)",
