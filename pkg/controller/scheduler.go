@@ -757,7 +757,7 @@ func (c *Controller) runRolloutWebhooks(canary *flaggerv1.Canary,retryLimit int)
 				c.recordEventWarningf(canary, "Retries exceeded limit for webhook %s", webhook.Name)
 				return false
 			}
-			if err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook); if err != nil {
+			if err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook); err != nil {
 				canary.Status.WebhookRetries++
 				return false
 			}
