@@ -393,7 +393,7 @@ type CanaryWebhook struct {
 
 	// FailureThreshold for rollout hook
 	// +optional
-	RetryLimit int `json:"retrylimit,omitempty"`
+	WebhookRetries int `json:"webhookRetries,omitempty"`
 
 }
 

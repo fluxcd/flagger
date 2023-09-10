@@ -727,22 +727,11 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	// run external checks
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
-			retries := 0 
-			for {
-				err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
-				if err != nil {
-					c.recordEventWarningf(canary, "Retrying %s.%s advancement external check %s failed %v",
-						canary.Name, canary.Namespace, webhook.Name, err)
-					retries++ 
-					if retries >= retrylimit { 
-						c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
-						canary.Name, canary.Namespace, webhook.Name, err)
-						return false // retry limit crossed retrylimit
-					} 
-				} else {
-					break // Success, exit the retry loop
-				}
-				
+			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
+			if err != nil {
+				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
+					canary.Name, canary.Namespace, webhook.Name, err)
+				return false
 			}
 		}
 	}
@@ -757,6 +746,24 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 		return ok
 	}
 
+	return true
+}
+
+func (c *Controller) runRolloutWebhooks(canary *flaggerv1.Canary,retryLimit int) bool {
+	for _, webhook := range canary.GetAnalysis().Webhooks {
+		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
+			if canary.Status.WebhookRetries >= retryLimit {
+				c.recordEventWarningf(canary, "Retries exceeded limit for webhook %s", webhook.Name)
+				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",canary.Name, canary.Namespace, webhook.Name, err)
+				return false
+			}
+			if err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook); if err != nil {
+				c.recordEventWarningf(canary, "Retrying: %s.%s advancement external check %s failed %v",canary.Name, canary.Namespace, webhook.Name, err)
+				canary.Status.WebhookRetries++
+				return false
+			}
+		}
+	}
 	return true
 }
 
