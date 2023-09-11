@@ -26,7 +26,7 @@ jobs:
       id-token: write # needed for keyless signing
       packages: write # needed for ghcr access
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: fluxcd/flux2/action@main
       - uses: sigstore/cosign-installer@v3.1.1
       - name: Prepare

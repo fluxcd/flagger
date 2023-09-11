@@ -15,7 +15,7 @@ jobs:
       id-token: write
       packages: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@v3.1.1
       - name: Prepare
         id: prep

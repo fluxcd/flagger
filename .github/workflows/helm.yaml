@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Publish Helm charts
         uses: stefanprodan/helm-gh-pages@v1.7.0
         with:

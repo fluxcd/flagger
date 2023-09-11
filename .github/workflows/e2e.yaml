@@ -35,7 +35,7 @@ jobs:
           - apisix
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Kubernetes
         uses: helm/kind-action@v1.8.0
         if: matrix.provider != 'skipper'
