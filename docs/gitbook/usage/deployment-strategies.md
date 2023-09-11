@@ -11,7 +11,7 @@ Flagger can run automated application analysis, promotion and rollback for the f
 * **Blue/Green Mirroring** \(traffic shadowing\)
   * Istio
 * **Canary Release with Session Affinity** \(progressive traffic shifting combined with cookie based routing\)
-  * Istio
+  * Istio, Gateway API
 
 For Canary releases and A/B testing you'll need a Layer 7 traffic management solution like
 a service mesh or an ingress controller. For Blue/Green deployments no service mesh or ingress controller is required.
@@ -408,7 +408,7 @@ cookie based routing with regular weight based routing. This means once a user i
 version of our application (based on the traffic weights), they're always routed to that version, i.e.
 they're never routed back to the old version of our application.
 
-You can enable this, by specifying `.spec.analsyis.sessionAffinity` in the Canary (only Istio is supported):
+You can enable this, by specifying `.spec.analsyis.sessionAffinity` in the Canary:
 
 ```yaml
   analysis:

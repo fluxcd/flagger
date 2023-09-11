@@ -14,7 +14,7 @@ spec:
     kind: Deployment
     name:  {{ template "podinfo.fullname" . }}
   autoscalerRef:
-    apiVersion: autoscaling/v2beta1
+    apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     name:  {{ template "podinfo.fullname" . }}
   service:

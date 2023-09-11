@@ -11,3 +11,4 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 "$DIR"/test-canary.sh
 "$DIR"/test-bg.sh
 "$DIR"/test-ab.sh
+"$DIR"/test-session-affinity.sh

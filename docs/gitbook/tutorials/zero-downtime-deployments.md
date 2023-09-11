@@ -139,7 +139,7 @@ Note that without resource requests the horizontal pod autoscaler can't determin
 A production environment should be able to handle traffic bursts without impacting the quality of service. This can be achieved with Kubernetes autoscaling capabilities. Autoscaling in Kubernetes has two dimensions: the Cluster Autoscaler that deals with node scaling operations and the Horizontal Pod Autoscaler that automatically scales the number of pods in a deployment.
 
 ```yaml
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 spec:
   scaleTargetRef:

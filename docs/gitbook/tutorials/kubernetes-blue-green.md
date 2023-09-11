@@ -84,7 +84,7 @@ spec:
   progressDeadlineSeconds: 60
   # HPA reference (optional)
   autoscalerRef:
-    apiVersion: autoscaling/v2beta2
+    apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     name: podinfo
   service:

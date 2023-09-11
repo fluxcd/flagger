@@ -2,7 +2,7 @@
 
 set -o errexit
 
-CONTOUR_VER="v1.23.0"
+CONTOUR_VER="v1.26.0"
 GATEWAY_API_VER="v1beta1"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 KUSTOMIZE_VERSION=4.5.2

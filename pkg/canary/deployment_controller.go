@@ -20,10 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -327,105 +325,6 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 			Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 	}
 
-	return nil
-}
-
-func (c *DeploymentController) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-	hpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("HorizontalPodAutoscaler %s.%s get query error: %w",
-			cd.Spec.AutoscalerRef.Name, cd.Namespace, err)
-	}
-
-	hpaSpec := hpav2.HorizontalPodAutoscalerSpec{
-		ScaleTargetRef: hpav2.CrossVersionObjectReference{
-			Name:       primaryName,
-			Kind:       hpa.Spec.ScaleTargetRef.Kind,
-			APIVersion: hpa.Spec.ScaleTargetRef.APIVersion,
-		},
-		MinReplicas: hpa.Spec.MinReplicas,
-		MaxReplicas: hpa.Spec.MaxReplicas,
-		Metrics:     hpa.Spec.Metrics,
-		Behavior:    hpa.Spec.Behavior,
-	}
-
-	primaryHpaName := fmt.Sprintf("%s-primary", cd.Spec.AutoscalerRef.Name)
-	primaryHpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
-
-	// create HPA
-	if errors.IsNotFound(err) {
-		primaryHpa = &hpav2.HorizontalPodAutoscaler{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      primaryHpaName,
-				Namespace: cd.Namespace,
-				Labels:    filterMetadata(hpa.Labels),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
-			},
-			Spec: hpaSpec,
-		}
-
-		_, err = c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Create(context.TODO(), primaryHpa, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("creating HorizontalPodAutoscaler %s.%s failed: %w",
-				primaryHpa.Name, primaryHpa.Namespace, err)
-		}
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof(
-			"HorizontalPodAutoscaler %s.%s created", primaryHpa.GetName(), cd.Namespace)
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("HorizontalPodAutoscaler %s.%s get query failed: %w",
-			primaryHpa.Name, primaryHpa.Namespace, err)
-	}
-
-	// update HPA
-	if !init && primaryHpa != nil {
-		diffMetrics := cmp.Diff(hpaSpec.Metrics, primaryHpa.Spec.Metrics)
-		diffBehavior := cmp.Diff(hpaSpec.Behavior, primaryHpa.Spec.Behavior)
-		diffLabels := cmp.Diff(hpa.ObjectMeta.Labels, primaryHpa.ObjectMeta.Labels)
-		diffAnnotations := cmp.Diff(hpa.ObjectMeta.Annotations, primaryHpa.ObjectMeta.Annotations)
-		if diffMetrics != "" || diffBehavior != "" || diffLabels != "" || diffAnnotations != "" || int32Default(hpaSpec.MinReplicas) != int32Default(primaryHpa.Spec.MinReplicas) || hpaSpec.MaxReplicas != primaryHpa.Spec.MaxReplicas {
-			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-				primaryHpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), primaryHpaName, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				hpaClone := primaryHpa.DeepCopy()
-				hpaClone.Spec.MaxReplicas = hpaSpec.MaxReplicas
-				hpaClone.Spec.MinReplicas = hpaSpec.MinReplicas
-				hpaClone.Spec.Metrics = hpaSpec.Metrics
-				hpaClone.Spec.Behavior = hpaSpec.Behavior
-
-				// update hpa annotations
-				hpaClone.ObjectMeta.Annotations = make(map[string]string)
-				filteredAnnotations := includeLabelsByPrefix(hpa.ObjectMeta.Annotations, c.includeLabelPrefix)
-				for k, v := range filteredAnnotations {
-					hpaClone.ObjectMeta.Annotations[k] = v
-				}
-				// update hpa labels
-				hpaClone.ObjectMeta.Labels = make(map[string]string)
-				filteredLabels := includeLabelsByPrefix(hpa.ObjectMeta.Labels, c.includeLabelPrefix)
-				for k, v := range filteredLabels {
-					hpaClone.ObjectMeta.Labels[k] = v
-				}
-
-				_, err = c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), hpaClone, metav1.UpdateOptions{})
-				return err
-			})
-			if err != nil {
-				return fmt.Errorf("updating HorizontalPodAutoscaler %s.%s failed: %w",
-					primaryHpa.Name, primaryHpa.Namespace, err)
-			}
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-				Infof("HorizontalPodAutoscaler %s.%s updated", primaryHpa.GetName(), cd.Namespace)
-		}
-	}
 	return nil
 }
 
