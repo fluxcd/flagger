@@ -482,6 +482,54 @@ spec:
                         uri:
                           format: string
                           type: string
+                        authority:
+                          format: string
+                          type: string
+                        type:
+                          format: string
+                          type: string
+                    mirror:
+                      description: Mirror defines a schema for a filter that mirrors requests.
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          backendRef:
+                            properties:
+                              group:
+                                default: ""
+                                maxLength: 253
+                                pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                type: string
+                              kind:
+                                default: Service
+                                maxLength: 63
+                                minLength: 1
+                                pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                                type: string
+                              name:
+                                maxLength: 253
+                                minLength: 1
+                                type: string
+                              namespace:
+                                maxLength: 63
+                                minLength: 1
+                                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                type: string
+                              port:
+                                format: int32
+                                maximum: 65535
+                                minimum: 1
+                                type: integer
+                            required:
+                            - name
+                            type: object
+                            x-kubernetes-validations:
+                            - message: Must have port for Service reference
+                              rule: '(size(self.group) == 0 && self.kind == ''Service'')
+                                ? has(self.port) : true'
+                      required:
+                      - backendRef
                     headers:
                       description: Headers operations
                       type: object

@@ -87,6 +87,7 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 		Rules: []v1beta1.HTTPRouteRule{
 			{
 				Matches: matches,
+				Filters: gwr.makeFilters(canary),
 				BackendRefs: []v1beta1.HTTPBackendRef{
 					{
 						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
@@ -106,6 +107,7 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 		httpRouteSpec.Rules[0].Matches = gwr.mergeMatchConditions(analysisMatches, matches)
 		httpRouteSpec.Rules = append(httpRouteSpec.Rules, v1beta1.HTTPRouteRule{
 			Matches: matches,
+			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1beta1.HTTPBackendRef{
 				{
 					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
@@ -295,6 +297,7 @@ func (gwr *GatewayAPIV1Beta1Router) SetRoutes(
 	}
 	weightedRouteRule := &v1beta1.HTTPRouteRule{
 		Matches: matches,
+		Filters: gwr.makeFilters(canary),
 		BackendRefs: []v1beta1.HTTPBackendRef{
 			{
 				BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
@@ -330,6 +333,7 @@ func (gwr *GatewayAPIV1Beta1Router) SetRoutes(
 		hrClone.Spec.Rules[0].Matches = gwr.mergeMatchConditions(analysisMatches, matches)
 		hrClone.Spec.Rules = append(hrClone.Spec.Rules, v1beta1.HTTPRouteRule{
 			Matches: matches,
+			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1beta1.HTTPBackendRef{
 				{
 					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
@@ -569,4 +573,95 @@ func (gwr *GatewayAPIV1Beta1Router) mergeMatchConditions(analysis, service []v1b
 		}
 	}
 	return merged
+}
+
+func (gwr *GatewayAPIV1Beta1Router) makeFilters(canary *flaggerv1.Canary) []v1beta1.HTTPRouteFilter {
+	var filters []v1beta1.HTTPRouteFilter
+
+	if canary.Spec.Service.Headers != nil {
+		if canary.Spec.Service.Headers.Request != nil {
+			requestHeaderFilter := v1beta1.HTTPRouteFilter{
+				Type:                  v1beta1.HTTPRouteFilterRequestHeaderModifier,
+				RequestHeaderModifier: &v1beta1.HTTPHeaderFilter{},
+			}
+
+			for name, val := range canary.Spec.Service.Headers.Request.Add {
+				requestHeaderFilter.RequestHeaderModifier.Add = append(requestHeaderFilter.RequestHeaderModifier.Add, v1beta1.HTTPHeader{
+					Name:  v1beta1.HTTPHeaderName(name),
+					Value: val,
+				})
+			}
+			for name, val := range canary.Spec.Service.Headers.Request.Set {
+				requestHeaderFilter.RequestHeaderModifier.Set = append(requestHeaderFilter.RequestHeaderModifier.Set, v1beta1.HTTPHeader{
+					Name:  v1beta1.HTTPHeaderName(name),
+					Value: val,
+				})
+			}
+
+			for _, name := range canary.Spec.Service.Headers.Request.Remove {
+				requestHeaderFilter.RequestHeaderModifier.Remove = append(requestHeaderFilter.RequestHeaderModifier.Remove, name)
+			}
+
+			filters = append(filters, requestHeaderFilter)
+		}
+		if canary.Spec.Service.Headers.Response != nil {
+			responseHeaderFilter := v1beta1.HTTPRouteFilter{
+				Type:                   v1beta1.HTTPRouteFilterResponseHeaderModifier,
+				ResponseHeaderModifier: &v1beta1.HTTPHeaderFilter{},
+			}
+
+			for name, val := range canary.Spec.Service.Headers.Response.Add {
+				responseHeaderFilter.ResponseHeaderModifier.Add = append(responseHeaderFilter.ResponseHeaderModifier.Add, v1beta1.HTTPHeader{
+					Name:  v1beta1.HTTPHeaderName(name),
+					Value: val,
+				})
+			}
+			for name, val := range canary.Spec.Service.Headers.Response.Set {
+				responseHeaderFilter.ResponseHeaderModifier.Set = append(responseHeaderFilter.ResponseHeaderModifier.Set, v1beta1.HTTPHeader{
+					Name:  v1beta1.HTTPHeaderName(name),
+					Value: val,
+				})
+			}
+
+			for _, name := range canary.Spec.Service.Headers.Response.Remove {
+				responseHeaderFilter.ResponseHeaderModifier.Remove = append(responseHeaderFilter.ResponseHeaderModifier.Remove, name)
+			}
+
+			filters = append(filters, responseHeaderFilter)
+		}
+	}
+
+	if canary.Spec.Service.Rewrite != nil {
+		rewriteFilter := v1beta1.HTTPRouteFilter{
+			Type:       v1beta1.HTTPRouteFilterURLRewrite,
+			URLRewrite: &v1beta1.HTTPURLRewriteFilter{},
+		}
+		if canary.Spec.Service.Rewrite.Authority != "" {
+			hostname := v1beta1.PreciseHostname(canary.Spec.Service.Rewrite.Authority)
+			rewriteFilter.URLRewrite.Hostname = &hostname
+		}
+		if canary.Spec.Service.Rewrite.Uri != "" {
+			rewriteFilter.URLRewrite.Path = &v1beta1.HTTPPathModifier{
+				Type: v1beta1.HTTPPathModifierType(canary.Spec.Service.Rewrite.GetType()),
+			}
+			if rewriteFilter.URLRewrite.Path.Type == v1beta1.FullPathHTTPPathModifier {
+				rewriteFilter.URLRewrite.Path.ReplaceFullPath = &canary.Spec.Service.Rewrite.Uri
+			} else {
+				rewriteFilter.URLRewrite.Path.ReplacePrefixMatch = &canary.Spec.Service.Rewrite.Uri
+			}
+		}
+
+		filters = append(filters, rewriteFilter)
+	}
+
+	for _, mirror := range canary.Spec.Service.Mirror {
+		mirror := mirror
+		mirrorFilter := v1beta1.HTTPRouteFilter{
+			Type:          v1beta1.HTTPRouteFilterRequestMirror,
+			RequestMirror: &mirror,
+		}
+		filters = append(filters, mirrorFilter)
+	}
+
+	return filters
 }
