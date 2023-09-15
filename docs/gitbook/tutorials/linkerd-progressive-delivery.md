@@ -75,9 +75,65 @@ Create a deployment and a horizontal pod autoscaler:
 kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
-Create a canary custom resource for the podinfo deployment:
+Create a metrics template and canary custom resources for the podinfo deployment:
 
 ```yaml
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: success-rate
+  namespace: test
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          classification!="failure",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    / 
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    * 100
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: test
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    histogram_quantile(
+        0.99,
+        sum(
+            rate(
+                response_latency_ms_bucket{
+                    namespace="{{ namespace }}",
+                    deployment=~"{{ target }}",
+                    direction="{{ variables.direction }}"
+                    }[{{ interval }}]
+                )
+            ) by (le)
+        )
+---
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
@@ -122,18 +178,28 @@ spec:
     stepWeight: 5
     # Linkerd Prometheus checks
     metrics:
-    - name: request-success-rate
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: test
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       thresholdRange:
         min: 99
       interval: 1m
-    - name: request-duration
+      templateVariables:
+        direction: inbound
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: test
       # maximum req duration P99
       # milliseconds
       thresholdRange:
         max: 500
       interval: 30s
+      templateVariables:
+        direction: inbound
     # testing (optional)
     webhooks:
       - name: acceptance-test

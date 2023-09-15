@@ -6,6 +6,65 @@ set -o errexit
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: success-rate
+  namespace: linkerd
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          classification!="failure",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    / 
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    * 100
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: linkerd
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    histogram_quantile(
+        0.99,
+        sum(
+            rate(
+                response_latency_ms_bucket{
+                    namespace="{{ namespace }}",
+                    deployment=~"{{ target }}",
+                    direction="{{ variables.direction }}"
+                    }[{{ interval }}]
+                )
+            ) by (le)
+        )
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
   name: podinfo
@@ -32,12 +91,22 @@ spec:
     maxWeight: 50
     stepWeights: [10, 20, 30, 40, 50, 60]
     metrics:
-    - name: request-success-rate
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: linkerd
       threshold: 99
       interval: 1m
-    - name: request-duration
+      templateVariables:
+        direction: inbound
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: linkerd
       threshold: 500
       interval: 30s
+      templateVariables:
+        direction: inbound
     webhooks:
       - name: load-test
         url: http://flagger-loadtester.test/

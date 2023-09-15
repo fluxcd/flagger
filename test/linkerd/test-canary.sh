@@ -10,6 +10,40 @@ cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
+  name: success-rate
+  namespace: linkerd
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          classification!="failure",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    / 
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    * 100
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
   name: latency
   namespace: linkerd
 spec:
@@ -59,12 +93,14 @@ spec:
     maxWeight: 50
     stepWeight: 10
     metrics:
-    - name: request-success-rate
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: linkerd
       threshold: 99
       interval: 1m
-    - name: request-duration
-      threshold: 500
-      interval: 30s
+      templateVariables:
+        direction: inbound
     - name: latency
       templateRef:
         name: latency
@@ -218,12 +254,22 @@ spec:
     maxWeight: 50
     stepWeight: 10
     metrics:
-    - name: request-success-rate
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: linkerd
       threshold: 99
       interval: 1m
-    - name: request-duration
+      templateVariables:
+        direction: inbound
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: linkerd
       threshold: 500
       interval: 30s
+      templateVariables:
+        direction: inbound
     webhooks:
       - name: http-acceptance-test
         type: pre-rollout
