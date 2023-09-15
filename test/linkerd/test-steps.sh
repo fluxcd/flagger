@@ -95,7 +95,8 @@ spec:
       templateRef:
         name: success-rate
         namespace: linkerd
-      threshold: 99
+      thresholdRange:
+        min: 99
       interval: 1m
       templateVariables:
         direction: inbound
