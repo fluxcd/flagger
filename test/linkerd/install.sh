@@ -2,8 +2,7 @@
 
 set -o errexit
 
-LINKERD_VER="stable-2.13.2"
-LINKERD_SMI_VER="0.2.0"
+LINKERD_VER="stable-2.14.0"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 mkdir -p ${REPO_ROOT}/bin
@@ -17,10 +16,6 @@ echo ">>> Installing Linkerd ${LINKERD_VER}"
 ${REPO_ROOT}/bin/linkerd install --crds | kubectl apply -f -
 ${REPO_ROOT}/bin/linkerd install | kubectl apply -f -
 ${REPO_ROOT}/bin/linkerd check
-
-echo ">>> Installing Linkerd SMI"
-${REPO_ROOT}/bin/linkerd-smi install | kubectl apply -f -
-${REPO_ROOT}/bin/linkerd-smi check
 
 echo ">>> Installing Linkerd Viz"
 ${REPO_ROOT}/bin/linkerd viz install | kubectl apply -f -
