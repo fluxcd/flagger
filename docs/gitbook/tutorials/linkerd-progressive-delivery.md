@@ -2,16 +2,14 @@
 
 This guide shows you how to use Linkerd and Flagger to automate canary deployments.
 
-![Flagger Linkerd Traffic Split](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-linkerd-traffic-split.png)
-
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.16** or newer and Linkerd **2.10** or newer.
+Flagger requires a Kubernetes cluster **v1.21** or newer and Linkerd **2.14** or newer.
 
 Install Linkerd and Prometheus (part of Linkerd Viz):
 
 ```bash
-# For linkerd versions 2.12 and later, the CRDs need to be installed beforehand
+# The CRDs need to be installed beforehand
 linkerd install --crds | kubectl apply -f -
 
 linkerd install | kubectl apply -f -
@@ -45,14 +43,9 @@ helm install linkerd-control-plane linkerd/linkerd-control-plane \
 
 helm install linkerd-viz linkerd/linkerd-viz -n linkerd-viz --create-namespace
 
-helm repo add l5d-smi https://linkerd.github.io/linkerd-smi
-helm install linkerd-smi l5d-smi/linkerd-smi -n linkerd-smi --create-namespace
-
-# Note that linkerdAuthPolicy.create=true is only required for Linkerd 2.12 and
-# later
 helm install flagger flagger/flagger \
   --n flagger-system \
-  --set meshProvider=linkerd \
+  --set meshProvider=gatewayapi:v1beta1 \
   --set metricsServer=http://prometheus.linkerd-viz:9090 \
   --set linkerdAuthPolicy.create=true
 ```
