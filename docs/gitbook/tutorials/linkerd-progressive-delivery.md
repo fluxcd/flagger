@@ -102,6 +102,13 @@ spec:
     port: 9898
     # container port number or name (optional)
     targetPort: 9898
+    # Reference to the Service that the generated HTTPRoute would attach to.
+    gatewayRefs:
+      - name: podinfo
+        namespace: test
+        group: core
+        kind: Service
+        port: 9898
   analysis:
     # schedule interval (default 60s)
     interval: 30s

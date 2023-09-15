@@ -20,6 +20,12 @@ spec:
     port: 80
     targetPort: http
     portDiscovery: true
+    gatewayRefs:
+      - name: podinfo
+        namespace: test
+        group: core
+        kind: Service
+        port: 80
   analysis:
     interval: 15s
     threshold: 15
