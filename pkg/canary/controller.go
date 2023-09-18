@@ -29,6 +29,7 @@ type Controller interface {
 	SetStatusWeight(canary *flaggerv1.Canary, val int) error
 	SetStatusIterations(canary *flaggerv1.Canary, val int) error
 	SetStatusPhase(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error
+	SetWebhookStatusRetries(canary *flaggerv1.Canary, webhook int, val int) error
 	Initialize(canary *flaggerv1.Canary) error
 	Promote(canary *flaggerv1.Canary) error
 	HasTargetChanged(canary *flaggerv1.Canary) (bool, error)

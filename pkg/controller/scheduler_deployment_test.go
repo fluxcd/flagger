@@ -646,3 +646,77 @@ func TestScheduler_DeploymentAlerts(t *testing.T) {
 	// initialization done - now send alert
 	mocks.ctrl.advanceCanary("podinfo", "default")
 }
+
+func TestScheduler_DeploymentWebhookRetry(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+
+	tsOk := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusFound)
+	}))
+	defer ts.Close()
+
+	canary := newDeploymentTestCanary()
+	canary.Spec.Analysis.Webhooks = []flaggerv1.CanaryWebhook{
+		{
+			Name:    "failing-url",
+			Type:    "rollout",
+			URL:     ts.URL,
+			Retries: 3,
+		},
+		{
+			Name:    "success-url",
+			Type:    "rollout",
+			URL:     tsOk.URL,
+			Retries: 5,
+		},
+	}
+	mocks := newDeploymentFixture(canary)
+
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized))
+
+	// update
+	dep2 := newDeploymentTestDeploymentV2()
+	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// detect changes
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+	mocks.makeCanaryReady(t)
+
+	// progressing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+
+	// verify webhook retry counter increases
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	// Failing URL 1, Success URL 0
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 0, 1))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 1, 0))
+	// Failing URL 2, Success URL 0
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 0, 2))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 1, 0))
+	// Failing URL 3, Success URL 0
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 0, 3))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 1, 0))
+
+	// update failed checks to max
+	mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing, FailedChecks: 10})
+
+	// canary failed due to failed webhook
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseFailed))
+}

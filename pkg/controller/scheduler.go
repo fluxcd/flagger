@@ -430,6 +430,16 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 	} else {
+		webhookStatus := c.runAnalysisWebhooks(cd, canaryController)
+		if webhookStatus == "failure" {
+			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+			}
+			return
+		} else if webhookStatus == "retry" {
+			return
+		}
+
 		if ok := c.runAnalysis(cd); !ok {
 			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
@@ -723,19 +733,31 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 
 }
 
-func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
+func (c *Controller) runAnalysisWebhooks(canary *flaggerv1.Canary, canaryController canary.Controller) string {
 	// run external checks
-	for _, webhook := range canary.GetAnalysis().Webhooks {
+	for id, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
 			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
+				if webhook.Retries > 0 && webhook.Status.Retries < webhook.Retries {
+					if err := canaryController.SetWebhookStatusRetries(canary, id, webhook.Status.Retries+1); err != nil {
+						c.recordEventWarningf(canary, "%v", err)
+					}
+					c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v retrying %d more times",
+						canary.Name, canary.Namespace, webhook.Name, err, webhook.Retries-webhook.Status.Retries-1)
+					return "retry"
+				}
 				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
 					canary.Name, canary.Namespace, webhook.Name, err)
-				return false
+				return "failure"
 			}
 		}
 	}
 
+	return "success"
+}
+
+func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 	ok := c.runBuiltinMetricChecks(canary)
 	if !ok {
 		return ok

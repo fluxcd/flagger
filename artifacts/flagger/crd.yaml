@@ -1086,6 +1086,16 @@ spec:
                             type: object
                             additionalProperties:
                               type: string
+                          status:
+                            description: CanaryStatus defines the observed state of a canary.
+                            type: object
+                            properties:
+                              retries:
+                                description: Current number of retries the webhook has performed
+                                type: number
+                          retries:
+                            description: Number of retries before incrementing canary failure count
+                            type: number
                     sessionAffinity:
                       description: SessionAffinity represents the session affinity settings for a canary run.
                       type: object

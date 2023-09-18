@@ -61,3 +61,8 @@ func (c *DeploymentController) SetStatusIterations(cd *flaggerv1.Canary, val int
 func (c *DeploymentController) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) error {
 	return setStatusPhase(c.flaggerClient, cd, phase)
 }
+
+// SetWebhookStatusRetries updates the webhook retries counter
+func (c *DeploymentController) SetWebhookStatusRetries(cd *flaggerv1.Canary, webhook int, val int) error {
+	return SetWebhookStatusRetries(c.flaggerClient, cd, webhook, val)
+}

@@ -88,3 +88,8 @@ type CanaryStatus struct {
 	// +optional
 	Conditions []CanaryCondition `json:"conditions,omitempty"`
 }
+
+// CanaryStatus is used for state persistence (read-only)
+type CanaryWebhookStatus struct {
+	Retries int `json:"retries"`
+}

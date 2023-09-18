@@ -185,6 +185,31 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 	return nil
 }
 
+func SetWebhookStatusRetries(flaggerClient clientset.Interface, cd *flaggerv1.Canary, webhook int, val int) error {
+	firstTry := true
+	name, ns := cd.GetName(), cd.GetNamespace()
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
+		if !firstTry {
+			cd, err = flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
+			}
+		}
+
+		cdCopy := cd.DeepCopy()
+		cdCopy.GetAnalysis().Webhooks[webhook].Status.Retries = val
+		cdCopy.Status.LastTransitionTime = metav1.Now()
+
+		err = updateStatusWithUpgrade(flaggerClient, cdCopy)
+		firstTry = false
+		return
+	})
+	if err != nil {
+		return fmt.Errorf("failed after retries: %w", err)
+	}
+	return nil
+}
+
 // getStatusCondition returns a condition based on type
 func getStatusCondition(status flaggerv1.CanaryStatus, conditionType flaggerv1.CanaryConditionType) *flaggerv1.CanaryCondition {
 	for i := range status.Conditions {
