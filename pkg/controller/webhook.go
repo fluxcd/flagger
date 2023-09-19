@@ -29,6 +29,7 @@ import (
 	"time"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	"github.com/fluxcd/flagger/pkg/canary"
 )
 
 func callWebhook(webhook string, payload interface{}, timeout string) error {
@@ -81,11 +82,12 @@ func callWebhook(webhook string, payload interface{}, timeout string) error {
 
 // CallWebhook does a HTTP POST to an external service and
 // returns an error if the response status code is non-2xx
-func CallWebhook(name string, namespace string, phase flaggerv1.CanaryPhase, w flaggerv1.CanaryWebhook) error {
+func CallWebhook(canary flaggerv1.Canary, phase flaggerv1.CanaryPhase, w flaggerv1.CanaryWebhook) error {
 	payload := flaggerv1.CanaryWebhookPayload{
-		Name:      name,
-		Namespace: namespace,
+		Name:      canary.Name,
+		Namespace: canary.Namespace,
 		Phase:     phase,
+		Checksum:  canaryChecksum(canary),
 	}
 
 	if w.Metadata != nil {
@@ -106,6 +108,7 @@ func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, e
 		Name:      r.Name,
 		Namespace: r.Namespace,
 		Phase:     r.Status.Phase,
+		Checksum:  canaryChecksum(*r),
 		Metadata: map[string]string{
 			"eventMessage": message,
 			"eventType":    eventtype,
@@ -122,4 +125,16 @@ func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, e
 		}
 	}
 	return callWebhook(w.URL, payload, "5s")
+}
+
+func canaryChecksum(c flaggerv1.Canary) string {
+	canaryFields := struct {
+		TrackedConfigs  *map[string]string
+		LastAppliedSpec string
+	}{
+		c.Status.TrackedConfigs,
+		c.Status.LastAppliedSpec,
+	}
+
+	return canary.ComputeHash(canaryFields)
 }

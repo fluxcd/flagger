@@ -30,7 +30,7 @@ import (
 )
 
 func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, status flaggerv1.CanaryStatus, canaryResource interface{}, setAll func(cdCopy *flaggerv1.Canary)) error {
-	hash := computeHash(canaryResource)
+	hash := ComputeHash(canaryResource)
 
 	firstTry := true
 	name, ns := cd.GetName(), cd.GetNamespace()

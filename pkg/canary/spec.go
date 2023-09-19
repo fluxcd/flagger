@@ -34,7 +34,7 @@ func hasSpecChanged(cd *flaggerv1.Canary, spec interface{}) (bool, error) {
 		return true, nil
 	}
 
-	newHash := computeHash(spec)
+	newHash := ComputeHash(spec)
 
 	// do not trigger a canary deployment on manual rollback
 	if cd.Status.LastPromotedSpec == newHash {
@@ -48,10 +48,10 @@ func hasSpecChanged(cd *flaggerv1.Canary, spec interface{}) (bool, error) {
 	return false, nil
 }
 
-// computeHash returns a hash value calculated from a spec using the spew library
+// ComputeHash returns a hash value calculated from a spec using the spew library
 // which follows pointers and prints actual values of the nested objects
 // ensuring the hash does not change when a pointer changes.
-func computeHash(spec interface{}) string {
+func ComputeHash(spec interface{}) string {
 	hasher := fnv.New32a()
 	printer := spew.ConfigState{
 		Indent:         " ",

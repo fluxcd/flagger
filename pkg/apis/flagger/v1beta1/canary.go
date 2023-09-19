@@ -403,6 +403,11 @@ type CanaryWebhookPayload struct {
 	// Phase of the canary analysis
 	Phase CanaryPhase `json:"phase"`
 
+	// Hash from the TrackedConfigs and LastAppliedSpec of the Canary.
+	// Can be used to identify a Canary for a specific configuration of the
+	// deployed resources.
+	Checksum string `json:"checksum"`
+
 	// Metadata (key-value pairs) for this webhook
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
