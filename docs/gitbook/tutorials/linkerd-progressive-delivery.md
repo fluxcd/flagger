@@ -2,16 +2,14 @@
 
 This guide shows you how to use Linkerd and Flagger to automate canary deployments.
 
-![Flagger Linkerd Traffic Split](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-linkerd-traffic-split.png)
-
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.16** or newer and Linkerd **2.10** or newer.
+Flagger requires a Kubernetes cluster **v1.21** or newer and Linkerd **2.14** or newer.
 
 Install Linkerd and Prometheus (part of Linkerd Viz):
 
 ```bash
-# For linkerd versions 2.12 and later, the CRDs need to be installed beforehand
+# The CRDs need to be installed beforehand
 linkerd install --crds | kubectl apply -f -
 
 linkerd install | kubectl apply -f -
@@ -45,14 +43,9 @@ helm install linkerd-control-plane linkerd/linkerd-control-plane \
 
 helm install linkerd-viz linkerd/linkerd-viz -n linkerd-viz --create-namespace
 
-helm repo add l5d-smi https://linkerd.github.io/linkerd-smi
-helm install linkerd-smi l5d-smi/linkerd-smi -n linkerd-smi --create-namespace
-
-# Note that linkerdAuthPolicy.create=true is only required for Linkerd 2.12 and
-# later
 helm install flagger flagger/flagger \
   --n flagger-system \
-  --set meshProvider=linkerd \
+  --set meshProvider=gatewayapi:v1beta1 \
   --set metricsServer=http://prometheus.linkerd-viz:9090 \
   --set linkerdAuthPolicy.create=true
 ```
@@ -82,9 +75,65 @@ Create a deployment and a horizontal pod autoscaler:
 kubectl apply -k https://github.com/fluxcd/flagger//kustomize/podinfo?ref=main
 ```
 
-Create a canary custom resource for the podinfo deployment:
+Create a metrics template and canary custom resources for the podinfo deployment:
 
 ```yaml
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: success-rate
+  namespace: test
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          classification!="failure",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    / 
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    * 100
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: latency
+  namespace: test
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    histogram_quantile(
+        0.99,
+        sum(
+            rate(
+                response_latency_ms_bucket{
+                    namespace="{{ namespace }}",
+                    deployment=~"{{ target }}",
+                    direction="{{ variables.direction }}"
+                    }[{{ interval }}]
+                )
+            ) by (le)
+        )
+---
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
@@ -109,6 +158,13 @@ spec:
     port: 9898
     # container port number or name (optional)
     targetPort: 9898
+    # Reference to the Service that the generated HTTPRoute would attach to.
+    gatewayRefs:
+      - name: podinfo
+        namespace: test
+        group: core
+        kind: Service
+        port: 9898
   analysis:
     # schedule interval (default 60s)
     interval: 30s
@@ -122,18 +178,28 @@ spec:
     stepWeight: 5
     # Linkerd Prometheus checks
     metrics:
-    - name: request-success-rate
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: test
       # minimum req success rate (non 5xx responses)
       # percentage (0-100)
       thresholdRange:
         min: 99
       interval: 1m
-    - name: request-duration
+      templateVariables:
+        direction: inbound
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: test
       # maximum req duration P99
       # milliseconds
       thresholdRange:
         max: 500
       interval: 30s
+      templateVariables:
+        direction: inbound
     # testing (optional)
     webhooks:
       - name: acceptance-test

@@ -10,6 +10,40 @@ cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
+  name: success-rate
+  namespace: linkerd
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz:9090
+  query: |
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          classification!="failure",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    / 
+    sum(
+      rate(
+        response_total{
+          namespace="{{ namespace }}",
+          deployment=~"{{ target }}",
+          direction="{{ variables.direction }}"
+        }[{{ interval }}]
+      )
+    ) 
+    * 100
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
   name: latency
   namespace: linkerd
 spec:
@@ -47,18 +81,27 @@ spec:
     port: 80
     targetPort: http
     portDiscovery: true
+    gatewayRefs:
+      - name: podinfo
+        namespace: test
+        group: core
+        kind: Service
+        port: 80
   analysis:
     interval: 15s
     threshold: 15
     maxWeight: 50
     stepWeight: 10
     metrics:
-    - name: request-success-rate
-      threshold: 99
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: linkerd
+      thresholdRange:
+        min: 99
       interval: 1m
-    - name: request-duration
-      threshold: 500
-      interval: 30s
+      templateVariables:
+        direction: inbound
     - name: latency
       templateRef:
         name: latency
@@ -106,6 +149,12 @@ spec:
   service:
     port: 9898
     portDiscovery: true
+    gatewayRefs:
+      - name: podinfo
+        namespace: test
+        group: core
+        kind: Service
+        port: 9898
   analysis:
     interval: 15s
     threshold: 15
@@ -194,18 +243,35 @@ spec:
   service:
     port: 80
     targetPort: 9898
+    gatewayRefs:
+      - name: podinfo
+        namespace: test
+        group: core
+        kind: Service
+        port: 80
   analysis:
     interval: 15s
     threshold: 3
     maxWeight: 50
     stepWeight: 10
     metrics:
-    - name: request-success-rate
-      threshold: 99
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: linkerd
+      thresholdRange:
+        min: 99
       interval: 1m
-    - name: request-duration
+      templateVariables:
+        direction: inbound
+    - name: latency
+      templateRef:
+        name: latency
+        namespace: linkerd
       threshold: 500
       interval: 30s
+      templateVariables:
+        direction: inbound
     webhooks:
       - name: http-acceptance-test
         type: pre-rollout

@@ -10,7 +10,7 @@ spec:
           args:
             - -log-level=info
             - -include-label-prefix=app.kubernetes.io
-            - -mesh-provider=linkerd
+            - -mesh-provider=gatewayapi:v1beta1
             - -metrics-server=http://prometheus.linkerd-viz:9090
 ---
 apiVersion: rbac.authorization.k8s.io/v1
