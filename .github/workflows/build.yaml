@@ -14,7 +14,8 @@ permissions:
 
 jobs:
   build-flagger:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: "Default Larger Runners"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
