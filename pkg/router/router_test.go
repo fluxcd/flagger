@@ -87,6 +87,44 @@ func newFixture(c *flaggerv1.Canary) fixture {
 	}
 }
 
+func newRouteNameFixture(c *flaggerv1.Canary) fixture {
+	canary := newRouteNameTestCanary()
+	if c != nil {
+		canary = c
+	}
+	abtest := newTestABTest()
+	appmeshCanary := newTestCanaryAppMesh()
+	ingressCanary := newTestCanaryIngress()
+	apisixRoute := newTestApisixRoute()
+
+	flaggerClient := fakeFlagger.NewSimpleClientset(
+		canary,
+		abtest,
+		appmeshCanary,
+		ingressCanary,
+		apisixRoute,
+	)
+
+	kubeClient := fake.NewSimpleClientset(
+		newTestDeployment(),
+		newTestABTestDeployment(),
+		newTestIngress(),
+	)
+
+	meshClient := fakeFlagger.NewSimpleClientset()
+
+	logger, _ := logger.NewLogger("debug")
+	return fixture{
+		canary:        canary,
+		abtest:        abtest,
+		appmeshCanary: appmeshCanary,
+		ingressCanary: ingressCanary,
+		kubeClient:    kubeClient,
+		meshClient:    meshClient,
+		flaggerClient: flaggerClient,
+		logger:        logger,
+	}
+}
 func newTestApisixRoute() *a6v2.ApisixRoute {
 	ar := &a6v2.ApisixRoute{
 		TypeMeta: metav1.TypeMeta{APIVersion: a6v2.SchemeGroupVersion.String()},
@@ -179,6 +217,88 @@ func newTestCanary() *flaggerv1.Canary {
 				},
 				Gateways: []string{
 					"istio/public-gateway",
+					"mesh",
+				},
+			}, Analysis: &flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newRouteNameTestCanary() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.LocalObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Port:          9898,
+				PortDiscovery: true,
+				AppProtocol:   "http",
+				RouteName: []flaggerv1.RouteName{
+					{
+						Name: "test-flagger",
+						Headers: &istiov1alpha3.Headers{
+							Request: &istiov1alpha3.HeaderOperations{
+								Add: map[string]string{
+									"x-envoy-upstream-rq-timeout-ms": "15000",
+								},
+								Remove: []string{"test"},
+							},
+							Response: &istiov1alpha3.HeaderOperations{
+								Remove: []string{"token"},
+							},
+						},
+						CorsPolicy: &istiov1alpha3.CorsPolicy{
+							AllowMethods: []string{
+								"GET",
+								"POST",
+							},
+						},
+						Match: []istiov1alpha3.HTTPMatchRequest{
+							{
+								Name: "podinfo",
+								Uri: &istiov1alpha1.StringMatch{
+									Prefix: "/podinfo",
+								},
+								Method: &istiov1alpha1.StringMatch{
+									Exact: "GET",
+								},
+								IgnoreUriCase: true,
+							},
+						},
+						Retries: &istiov1alpha3.HTTPRetry{
+							Attempts:      10,
+							PerTryTimeout: "30s",
+							RetryOn:       "connect-failure,gateway-error",
+						},
+					},
+				},
+				Gateways: []string{
+					"public-gateway.istio",
 					"mesh",
 				},
 			}, Analysis: &flaggerv1.CanaryAnalysis{

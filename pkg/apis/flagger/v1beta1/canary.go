@@ -175,6 +175,14 @@ type CanaryService struct {
 	// +optional
 	TrafficPolicy *istiov1alpha3.TrafficPolicy `json:"trafficPolicy,omitempty"`
 
+	// Subsets attached to the generated Istio destination rules
+	// +optional
+	Subsets []istiov1alpha3.Subset `json:"subsets,omitempty"`
+
+	//TODO: fix comment
+	// URI match conditions for the generated service
+	// +optional
+	RouteName []RouteName `json:"routename,omitempty"`
 	// URI match conditions for the generated service
 	// +optional
 	Match []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
@@ -286,6 +294,18 @@ type SessionAffinity struct {
 	// The default value is 86,400 seconds, i.e. a day.
 	// +optional
 	MaxAge int `json:"maxAge,omitempty"`
+}
+
+type RouteName struct {
+	//TODO: Add comment
+	Name       string                           `json:"name,omitempty"`
+	Match      []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+	Rewrite    *istiov1alpha3.HTTPRewrite       `json:"rewrite,omitempty"`
+	Retries    *istiov1alpha3.HTTPRetry         `json:"retries,omitempty"`
+	Headers    *istiov1alpha3.Headers           `json:"headers,omitempty"`
+	Timeout    string                           `json:"timeout,omitempty"`
+	CorsPolicy *istiov1alpha3.CorsPolicy        `json:"corsPolicy,omitempty"`
+	Subset     string                           `json:"subset,omitempty"`
 }
 
 // CanaryMetric holds the reference to metrics used for canary analysis
