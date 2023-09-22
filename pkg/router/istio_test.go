@@ -573,7 +573,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 		Http: []istiov1alpha3.HTTPRoute{
 			{
 				Match:      mocks.canary.Spec.Service.Match,
-				Rewrite:    mocks.canary.Spec.Service.Rewrite,
+				Rewrite:    mocks.canary.Spec.Service.GetIstioRewrite(),
 				Timeout:    mocks.canary.Spec.Service.Timeout,
 				Retries:    mocks.canary.Spec.Service.Retries,
 				CorsPolicy: mocks.canary.Spec.Service.CorsPolicy,

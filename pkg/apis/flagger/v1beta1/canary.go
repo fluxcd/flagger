@@ -181,7 +181,7 @@ type CanaryService struct {
 
 	// Rewrite HTTP URIs for the generated service
 	// +optional
-	Rewrite *istiov1alpha3.HTTPRewrite `json:"rewrite,omitempty"`
+	Rewrite *HTTPRewrite `json:"rewrite,omitempty"`
 
 	// Retries policy for the generated virtual service
 	// +optional
@@ -190,6 +190,10 @@ type CanaryService struct {
 	// Headers operations for the generated Istio virtual service
 	// +optional
 	Headers *istiov1alpha3.Headers `json:"headers,omitempty"`
+
+	// Mirror specifies the destination for request mirroring.
+	// Responses from this destination are dropped.
+	Mirror []v1beta1.HTTPRequestMirrorFilter `json:"mirror,omitempty"`
 
 	// Cross-Origin Resource Sharing policy for the generated Istio virtual service
 	// +optional
@@ -482,6 +486,41 @@ type ScalerReplicas struct {
 type CustomMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// HTTPRewrite holds information about how to modify a request URI during
+// forwarding.
+type HTTPRewrite struct {
+	// rewrite the path (or the prefix) portion of the URI with this
+	// value. If the original URI was matched based on prefix, the value
+	// provided in this field will replace the corresponding matched prefix.
+	Uri string `json:"uri,omitempty"`
+
+	// rewrite the Authority/Host header with this value.
+	Authority string `json:"authority,omitempty"`
+
+	// Type is the type of path modification to make.
+	// +optional
+	Type string `json:"type,omitempty"`
+}
+
+// GetType returns the type of HTTP path rewrite to be performed.
+func (r *HTTPRewrite) GetType() string {
+	if r.Type == string(v1beta1.PrefixMatchHTTPPathModifier) {
+		return r.Type
+	}
+	return string(v1beta1.FullPathHTTPPathModifier)
+}
+
+// GetIstioRewrite returns a istiov1alpha3.HTTPRewrite object.
+func (s *CanaryService) GetIstioRewrite() *istiov1alpha3.HTTPRewrite {
+	if s.Rewrite != nil {
+		return &istiov1alpha3.HTTPRewrite{
+			Authority: s.Rewrite.Authority,
+			Uri:       s.Rewrite.Uri,
+		}
+	}
+	return nil
 }
 
 // GetMaxAge returns the max age of a cookie in seconds.
