@@ -126,11 +126,11 @@ the step and the maximum weight value in 0 to 100 range.
 Example:
 
 ```yaml
-canary:
+# canary.yaml
+spec:
   analysis:
-    promotion:
-      maxWeight: 50
-      stepWeight: 20
+    maxWeight: 50
+    stepWeight: 20
 ```
 
 This configuration performs analysis starting from 20, increasing by 20 until weight goes above 50.  
@@ -148,10 +148,10 @@ In order to enable non-linear promotion a new parameter was introduced:
 Example:
 
 ```yaml
-canary:
+# canary.yaml
+spec:
   analysis:
-    promotion:
-      stepWeights: [1, 2, 10, 80]
+    stepWeights: [1, 2, 10, 80]
 ```
 
 This configuration performs analysis starting from 1, going through `stepWeights` values till 80.  
