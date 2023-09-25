@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   release-load-tester:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: "Default Larger Runners"
     permissions:
       id-token: write
       packages: write

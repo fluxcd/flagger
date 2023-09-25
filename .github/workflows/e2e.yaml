@@ -14,7 +14,8 @@ permissions:
 
 jobs:
   e2e-test:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: "Default Larger Runners"
     strategy:
       fail-fast: false
       matrix:
