@@ -391,9 +391,6 @@ type CanaryWebhook struct {
 	// +optional
 	Metadata *map[string]string `json:"metadata,omitempty"`
 
-	// Canary Webhook Status
-	Status CanaryWebhookStatus `json:"status"`
-
 	// Retries for failing webhook before incrementing rollout failure threshold
 	// +optional
 	Retries int `json:"retries,omitempty"`

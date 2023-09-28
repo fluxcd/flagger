@@ -72,7 +72,7 @@ func (c *DaemonSetController) SetStatusPhase(cd *flaggerv1.Canary, phase flagger
 	return setStatusPhase(c.flaggerClient, cd, phase)
 }
 
-// SetWebhookStatusRetries updates the webhook retries counter
-func (c *DaemonSetController) SetWebhookStatusRetries(cd *flaggerv1.Canary, webhook int, val int) error {
-	return SetWebhookStatusRetries(c.flaggerClient, cd, webhook, val)
+// SetStatusWebhookRetries updates the webhook retries counter
+func (c *DaemonSetController) SetStatusWebhookRetries(cd *flaggerv1.Canary, webhook string, val int) error {
+	return SetStatusWebhookRetries(c.flaggerClient, cd, webhook, val)
 }

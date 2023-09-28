@@ -60,14 +60,14 @@ func assertPhase(flaggerClient clientset.Interface, canary string, phase flagger
 	return nil
 }
 
-func assertWebhookRetries(flaggerClient clientset.Interface, canary string, webhook int, retries int) error {
+func assertWebhookRetries(flaggerClient clientset.Interface, canary string, webhook string, retries int) error {
 	c, err := flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), canary, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	if c.GetAnalysis().Webhooks[webhook].Status.Retries != retries {
-		return fmt.Errorf("got webhook status retries %d wanted %d", c.GetAnalysis().Webhooks[webhook].Status.Retries, retries)
+	if c.Status.Webhooks[webhook].Retries != retries {
+		return fmt.Errorf("got webhook status retries %d wanted %d %v", c.Status.Webhooks[webhook].Retries, retries, c.Status.Webhooks)
 	}
 
 	return nil

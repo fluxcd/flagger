@@ -735,25 +735,32 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 
 func (c *Controller) runAnalysisWebhooks(canary *flaggerv1.Canary, canaryController canary.Controller) string {
 	// run external checks
-	for id, webhook := range canary.GetAnalysis().Webhooks {
+	var retry bool
+	var failure bool
+	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
 			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
-				if webhook.Retries > 0 && webhook.Status.Retries < webhook.Retries {
-					if err := canaryController.SetWebhookStatusRetries(canary, id, webhook.Status.Retries+1); err != nil {
+				if webhook.Retries > 0 && canary.Status.Webhooks[webhook.Name].Retries < webhook.Retries {
+					if err := canaryController.SetStatusWebhookRetries(canary, webhook.Name, canary.Status.Webhooks[webhook.Name].Retries+1); err != nil {
 						c.recordEventWarningf(canary, "%v", err)
 					}
-					c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v retrying %d more times",
-						canary.Name, canary.Namespace, webhook.Name, err, webhook.Retries-webhook.Status.Retries-1)
-					return "retry"
+					c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v retries remaining %d",
+						canary.Name, canary.Namespace, webhook.Name, err, webhook.Retries-canary.Status.Webhooks[webhook.Name].Retries-1)
+					retry = true
+				} else {
+					c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
+						canary.Name, canary.Namespace, webhook.Name, err)
+					failure = true
 				}
-				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
-					canary.Name, canary.Namespace, webhook.Name, err)
-				return "failure"
 			}
 		}
 	}
-
+	if failure {
+		return "failure"
+	} else if retry {
+		return "retry"
+	}
 	return "success"
 }
 

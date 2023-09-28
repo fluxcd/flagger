@@ -87,9 +87,11 @@ type CanaryStatus struct {
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 	// +optional
 	Conditions []CanaryCondition `json:"conditions,omitempty"`
+	// +optional
+	Webhooks map[string]CanaryWebhookStatus `json:"webhooks,omitempty"`
 }
 
-// CanaryStatus is used for state persistence (read-only)
+// CanaryWebhookStatus is a status condition for a Canary Webhook
 type CanaryWebhookStatus struct {
 	Retries int `json:"retries"`
 }

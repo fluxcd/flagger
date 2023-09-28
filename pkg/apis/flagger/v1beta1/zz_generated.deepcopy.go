@@ -531,6 +531,13 @@ func (in *CanaryStatus) DeepCopyInto(out *CanaryStatus) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Webhooks != nil {
+		in, out := &in.Webhooks, &out.Webhooks
+		*out = make(map[string]CanaryWebhookStatus, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -584,7 +591,6 @@ func (in *CanaryWebhook) DeepCopyInto(out *CanaryWebhook) {
 			}
 		}
 	}
-	out.Status = in.Status
 	return
 }
 

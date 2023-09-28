@@ -47,6 +47,7 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		cdCopy.Status.CanaryWeight = status.CanaryWeight
 		cdCopy.Status.FailedChecks = status.FailedChecks
 		cdCopy.Status.Iterations = status.Iterations
+		cdCopy.Status.Webhooks = status.Webhooks
 		cdCopy.Status.LastAppliedSpec = hash
 		if status.Phase == flaggerv1.CanaryPhaseInitialized {
 			cdCopy.Status.LastPromotedSpec = hash
@@ -185,7 +186,7 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 	return nil
 }
 
-func SetWebhookStatusRetries(flaggerClient clientset.Interface, cd *flaggerv1.Canary, webhook int, val int) error {
+func SetStatusWebhookRetries(flaggerClient clientset.Interface, cd *flaggerv1.Canary, webhook string, val int) error {
 	firstTry := true
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
@@ -197,7 +198,11 @@ func SetWebhookStatusRetries(flaggerClient clientset.Interface, cd *flaggerv1.Ca
 		}
 
 		cdCopy := cd.DeepCopy()
-		cdCopy.GetAnalysis().Webhooks[webhook].Status.Retries = val
+		// initialize the map if it's nil
+		if cdCopy.Status.Webhooks == nil {
+			cdCopy.Status.Webhooks = make(map[string]flaggerv1.CanaryWebhookStatus)
+		}
+		cdCopy.Status.Webhooks[webhook] = flaggerv1.CanaryWebhookStatus{Retries: val}
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
 		err = updateStatusWithUpgrade(flaggerClient, cdCopy)

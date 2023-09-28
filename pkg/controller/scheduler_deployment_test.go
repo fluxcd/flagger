@@ -702,16 +702,16 @@ func TestScheduler_DeploymentWebhookRetry(t *testing.T) {
 	// verify webhook retry counter increases
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	// Failing URL 1, Success URL 0
-	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 0, 1))
-	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 1, 0))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", "failing-url", 1))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", "success-url", 0))
 	// Failing URL 2, Success URL 0
 	mocks.ctrl.advanceCanary("podinfo", "default")
-	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 0, 2))
-	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 1, 0))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", "failing-url", 2))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", "success-url", 0))
 	// Failing URL 3, Success URL 0
 	mocks.ctrl.advanceCanary("podinfo", "default")
-	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 0, 3))
-	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", 1, 0))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", "failing-url", 3))
+	require.NoError(t, assertWebhookRetries(mocks.flaggerClient, "podinfo", "success-url", 0))
 
 	// update failed checks to max
 	mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing, FailedChecks: 10})
