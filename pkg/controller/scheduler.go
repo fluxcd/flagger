@@ -734,11 +734,11 @@ func (c *Controller) runBlueGreen(canary *flaggerv1.Canary, canaryController can
 }
 
 func (c *Controller) runAnalysisWebhooks(canary *flaggerv1.Canary, canaryController canary.Controller) string {
-	// run external checks
 	var retry bool
 	var failure bool
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
+			c.recordEventInfof(canary, "Executing %s.%s analysis webhook %s", canary.Spec.TargetRef.Name, canary.Namespace, webhook.Name)
 			err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
 				if webhook.Retries > 0 && canary.Status.Webhooks[webhook.Name].Retries < webhook.Retries {
