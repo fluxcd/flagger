@@ -39,6 +39,7 @@ spec:
     - addr: "example.com"
       port: 80
   connectionConfig:
+    connectTimeout: 2s
     maxRequestsPerConnection: 51
   loadBalancerConfig:
     roundRobin:
