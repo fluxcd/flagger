@@ -622,5 +622,90 @@ Events:
   Normal   Synced  5s    flagger  Promotion completed! Scaling down podinfo.test
 ```
 
+## Traffic mirroring
+
+![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-traffic-mirroring.png)
+
+For applications that perform read operations, Flagger can be configured to do B/G tests with traffic mirroring.
+Gateway API traffic mirroring will copy each incoming request, sending one request to the primary and one to the canary service.
+The response from the primary is sent back to the user and the response from the canary is discarded.
+Metrics are collected on both requests so that the deployment will only proceed if the canary metrics are within the threshold values.
+
+Note that mirroring should be used for requests that are **idempotent** or capable of being processed twice \(once by the primary and once by the canary\).
+
+You can enable mirroring by replacing `stepWeight` with `iterations` and by setting `analysis.mirror` to `true`:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  # deployment reference
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  service:
+    # service port number
+    port: 9898
+    # container port number or name (optional)
+    targetPort: 9898
+    # Gateway API HTTPRoute host names
+    hosts:
+     - localproject.contour.io
+    # Reference to the Gateway that the generated HTTPRoute would attach to.
+    gatewayRefs:
+      - name: contour
+        namespace: projectcontour
+  analysis:
+    # schedule interval
+    interval: 1m
+    # max number of failed metric checks before rollback
+    threshold: 5
+    # total number of iterations
+    iterations: 10
+    # enable traffic shadowing
+    mirror: true
+    # Gateway API HTTPRoute host names
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+      - name: request-duration
+        thresholdRange:
+          max: 500
+        interval: 1m
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester.test/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+```
+
+With the above configuration, Flagger will run a canary release with the following steps:
+
+* detect new revision \(deployment spec, secrets or configmaps changes\)
+* scale from zero the canary deployment
+* wait for the HPA to set the canary minimum replicas
+* check canary pods health
+* run the acceptance tests
+* abort the canary release if tests fail
+* start the load tests
+* mirror 100% of the traffic from primary to canary
+* check request success rate and request duration every minute
+* abort the canary release if the metrics check failure threshold is reached
+* stop traffic mirroring after the number of iterations is reached
+* route live traffic to the canary pods
+* promote the canary \(update the primary secrets, configmaps and deployment spec\)
+* wait for the primary deployment rollout to finish
+* wait for the HPA to set the primary minimum replicas
+* check primary pods health
+* switch live traffic back to primary
+* scale to zero the canary
+* send notification with the canary analysis result
 
 The above procedures can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
