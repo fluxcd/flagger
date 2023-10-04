@@ -233,6 +233,44 @@ func TestGatewayAPIV1Beta1Router_Routes(t *testing.T) {
 		}
 		assert.True(t, found)
 	})
+
+	t.Run("b/g mirror", func(t *testing.T) {
+		canary := mocks.canary.DeepCopy()
+		canary.Spec.Analysis.Mirror = true
+		canary.Spec.Analysis.Iterations = 5
+		_, _, cSvcName := canary.GetServiceNames()
+
+		err = router.SetRoutes(canary, 100, 0, true)
+		hr, err := mocks.meshClient.GatewayapiV1beta1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Len(t, hr.Spec.Rules, 1)
+
+		rule := hr.Spec.Rules[0]
+		var found bool
+		for _, filter := range rule.Filters {
+			if filter.Type == v1beta1.HTTPRouteFilterRequestMirror && filter.RequestMirror != nil &&
+				string(filter.RequestMirror.BackendRef.Name) == cSvcName {
+				found = true
+			}
+		}
+		assert.True(t, found, "could not find request mirror filter in HTTPRoute")
+
+		// Mark the status as progressing to assert that request mirror filter is ignored.
+		canary.Status.Phase = flaggerv1.CanaryPhaseProgressing
+		err = router.Reconcile(canary)
+		require.NoError(t, err)
+
+		hr, err = mocks.meshClient.GatewayapiV1beta1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Len(t, hr.Spec.Rules, 1)
+		assert.Empty(t, cmp.Diff(hr.Spec.Rules[0], rule))
+
+		err = router.SetRoutes(canary, 100, 0, false)
+		hr, err = mocks.meshClient.GatewayapiV1beta1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Len(t, hr.Spec.Rules, 1)
+		assert.Len(t, hr.Spec.Rules[0].Filters, 0)
+	})
 }
 
 func TestGatewayAPIV1Beta1Router_getSessionAffinityRouteRules(t *testing.T) {

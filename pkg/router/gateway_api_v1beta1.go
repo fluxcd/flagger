@@ -187,6 +187,16 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 		ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1beta1.HTTPBackendRef{}, "Filters"))
 	}
 
+	if canary.GetAnalysis().Mirror {
+		// If a Canary run is in progress, the HTTPRoute rule will have an extra filter of type RequestMirror
+		// which needs to be ignored so that the requests are mirrored to the canary deployment.
+		inProgress := canary.Status.Phase == flaggerv1.CanaryPhaseWaiting || canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+			canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion
+		if inProgress {
+			ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1beta1.HTTPRouteRule{}, "Filters"))
+		}
+	}
+
 	if httpRoute != nil {
 		specDiff := cmp.Diff(
 			httpRoute.Spec, httpRouteSpec,
@@ -249,6 +259,12 @@ func (gwr *GatewayAPIV1Beta1Router) GetRoutes(canary *flaggerv1.Canary) (
 				}
 			}
 		}
+		for _, filter := range rule.Filters {
+			if filter.Type == v1beta1.HTTPRouteFilterRequestMirror && filter.RequestMirror != nil &&
+				string(filter.RequestMirror.BackendRef.Name) == canarySvcName {
+				mirrored = true
+			}
+		}
 	}
 
 	if weightedRule != nil {
@@ -307,6 +323,23 @@ func (gwr *GatewayAPIV1Beta1Router) SetRoutes(
 			},
 		},
 	}
+
+	// If B/G mirroring is enabled, then add a route filter which mirrors the traffic
+	// to the canary service.
+	if mirrored && canary.GetAnalysis().Iterations > 0 {
+		weightedRouteRule.Filters = append(weightedRouteRule.Filters, v1beta1.HTTPRouteFilter{
+			Type: v1beta1.HTTPRouteFilterRequestMirror,
+			RequestMirror: &v1beta1.HTTPRequestMirrorFilter{
+				BackendRef: v1beta1.BackendObjectReference{
+					Group: (*v1beta1.Group)(&backendRefGroup),
+					Kind:  (*v1beta1.Kind)(&backendRefKind),
+					Name:  v1beta1.ObjectName(canarySvcName),
+					Port:  (*v1beta1.PortNumber)(&canary.Spec.Service.Port),
+				},
+			},
+		})
+	}
+
 	httpRouteSpec := v1beta1.HTTPRouteSpec{
 		CommonRouteSpec: v1beta1.CommonRouteSpec{
 			ParentRefs: canary.Spec.Service.GatewayRefs,
