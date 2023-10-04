@@ -2,6 +2,55 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.34.0
+
+**Release date:** 2023-10-04
+
+This release comes with several new features. The Gateway API integration
+has been significantly improved with support for
+* [Canary releases with session affinty](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery#session-affinty)
+* [B/G deployments with traffic mirroring](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery#traffic-mirroring)
+* Filters in the generated `HTTPRoute` (`.spec.rules[].filters`)
+
+Most of the Filters are derived from existing fields in the Canary spec like
+`.spec.service.headers`. To support arbitary request mirroring through the
+`RequestMirror` filter, a new field `.spec.service.mirror` has been introduced.
+
+A new field `checksum` has been added to the Canary webhook payload. This field
+is computed by hashing the `.status.lastAppliedSpec` and
+`.status.trackedConfigs`. It can be used to distinguish between Canary runs.
+
+Furthermore, the Gloo integration now uses strings for specifying time durations
+in order to be better compatible with protobuf duration parsing.
+
+Lastly, Kubernetes packages were updated to be on 1.27.
+
+#### Improvements
+- Update Kubernetes to v1.27
+  [#1506](https://github.com/fluxcd/flagger/pull/1506)
+- gatewayapi: add support for session affinity
+  [#1507](https://github.com/fluxcd/flagger/pull/1507)
+- gatewayapi: add support for route rule filters
+  [#1512](https://github.com/fluxcd/flagger/pull/1512)
+- Update Linkerd tutorial to use Kubernetes Gateway API
+  [#1516](https://github.com/fluxcd/flagger/pull/1516)
+- Add Checksum field to the Webhook payload to distinguish canary runs
+  [#1521](https://github.com/fluxcd/flagger/pull/1521)
+- gatewayapi: add support for b/g mirroring
+  [#1525](https://github.com/fluxcd/flagger/pull/1525)
+- Update Go dependencies
+  [#1528](https://github.com/fluxcd/flagger/pull/1528)
+
+#### Fixes
+- chore: fix incorrect canary name on document
+  [#1502](https://github.com/fluxcd/flagger/pull/1502)
+- fix: Support for queryParams in canary match condition #880
+  [#1505](https://github.com/fluxcd/flagger/pull/1505)
+- docs: fix error example in deployment strategies
+  [#1518](https://github.com/fluxcd/flagger/pull/1518)
+- Change Gloo Duration type to string
+  [#1524](https://github.com/fluxcd/flagger/pull/1524)
+
 ## 1.33.0
 
 **Release date:** 2023-08-29
