@@ -806,6 +806,9 @@ spec:
                                 - PASSTHROUGH
                                 - LEAST_REQUEST
                               type: string
+                            warmupDurationSecs:
+                              description: Represents the warmup duration of Service.
+                              type: string
                         outlierDetection:
                           description: Settings controlling eviction of unhealthy hosts from the load balancing pool.
                           type: object
