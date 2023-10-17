@@ -394,6 +394,10 @@ type CanaryWebhook struct {
 	// Metadata (key-value pairs) for this webhook
 	// +optional
 	Metadata *map[string]string `json:"metadata,omitempty"`
+
+	// Number of retries for this webhook
+	// +optional
+	Retries int `json:"retries,omitempty"`
 }
 
 // CanaryWebhookPayload holds the deployment info and metadata sent to webhooks
