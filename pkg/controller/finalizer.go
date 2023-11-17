@@ -75,9 +75,10 @@ func (c *Controller) finalize(old interface{}) error {
 	// Ensure that targetRef has met a ready state
 	c.logger.Infof("Checking if canary is ready %s.%s", canary.Name, canary.Namespace)
 	backoff := wait.Backoff{
-		Duration: time.Second,
+		Duration: time.Second * 3,
 		Factor:   2,
 		Cap:      canary.GetAnalysisInterval(),
+		Steps:    4,
 	}
 	retry.OnError(backoff, func(err error) bool {
 		return err.Error() == "retriable error"
