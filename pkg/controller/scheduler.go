@@ -430,6 +430,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 	} else {
+		c.runRolloutWebhooks(cd);
 		if ok := c.runAnalysis(cd); !ok {
 			if err := canaryController.SetStatusFailedChecks(cd, cd.Status.FailedChecks+1); err != nil {
 				c.recordEventWarningf(cd, "%v", err)
@@ -746,6 +747,22 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 		return ok
 	}
 
+	return true
+}
+
+func (c *Controller) runRolloutWebhooks(canary *flaggerv1.Canary,retryLimit int) bool {
+	for _, webhook := range canary.GetAnalysis().Webhooks {
+		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
+			if canary.Status.WebhookRetries >= retryLimit {
+				c.recordEventWarningf(canary, "Retries exceeded limit for webhook %s", webhook.Name)
+				return false
+			}
+			if err := CallWebhook(canary.Name, canary.Namespace, flaggerv1.CanaryPhaseProgressing, webhook); err != nil {
+				canary.Status.WebhookRetries++
+				return false
+			}
+		}
+	}
 	return true
 }
 
