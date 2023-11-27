@@ -30,8 +30,8 @@ import (
 	fakeflaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1/fake"
 	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
 	fakegatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1/fake"
-	gatewayapiv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1alpha2"
-	fakegatewayapiv1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1alpha2/fake"
+	gatewayapiv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1"
+	fakegatewayapiv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1/fake"
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1"
 	fakegatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1/fake"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
@@ -134,14 +134,14 @@ func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
 	return &fakegatewayv1.FakeGatewayV1{Fake: &c.Fake}
 }
 
-// GatewayapiV1alpha2 retrieves the GatewayapiV1alpha2Client
-func (c *Clientset) GatewayapiV1alpha2() gatewayapiv1alpha2.GatewayapiV1alpha2Interface {
-	return &fakegatewayapiv1alpha2.FakeGatewayapiV1alpha2{Fake: &c.Fake}
-}
-
 // GatewayapiV1beta1 retrieves the GatewayapiV1beta1Client
 func (c *Clientset) GatewayapiV1beta1() gatewayapiv1beta1.GatewayapiV1beta1Interface {
 	return &fakegatewayapiv1beta1.FakeGatewayapiV1beta1{Fake: &c.Fake}
+}
+
+// GatewayapiV1 retrieves the GatewayapiV1Client
+func (c *Clientset) GatewayapiV1() gatewayapiv1.GatewayapiV1Interface {
+	return &fakegatewayapiv1.FakeGatewayapiV1{Fake: &c.Fake}
 }
 
 // GlooV1 retrieves the GlooV1Client

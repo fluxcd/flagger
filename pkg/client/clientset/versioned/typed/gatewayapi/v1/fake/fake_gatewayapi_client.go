@@ -19,22 +19,22 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1alpha2"
+	v1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeGatewayapiV1alpha2 struct {
+type FakeGatewayapiV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeGatewayapiV1alpha2) HTTPRoutes(namespace string) v1alpha2.HTTPRouteInterface {
+func (c *FakeGatewayapiV1) HTTPRoutes(namespace string) v1.HTTPRouteInterface {
 	return &FakeHTTPRoutes{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeGatewayapiV1alpha2) RESTClient() rest.Interface {
+func (c *FakeGatewayapiV1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }
