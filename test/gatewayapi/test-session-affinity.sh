@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # This script runs e2e tests for progressive traffic shifting with session affinity, Canary analysis and promotion
-# Prerequisites: Kubernetes Kind and Contour with GatewayAPI
+# Prerequisites: Kubernetes Kind and Istio with GatewayAPI
 
 set -o errexit
 
@@ -34,10 +34,10 @@ spec:
     port: 9898
     portName: http
     hosts:
-     - localproject.contour.io
+     - www.example.com
     gatewayRefs:
-      - name: contour
-        namespace: projectcontour
+      - name: gateway
+        namespace: istio-ingress
   analysis:
     interval: 15s
     threshold: 15
@@ -66,7 +66,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy-contour.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host www.example.com http://gateway-istio.istio-ingress"
           logCmdOutput: "true"
 EOF
 
@@ -75,7 +75,7 @@ check_primary "sa-test"
 display_httproute "sa-test"
 
 echo '>>> Port forwarding load balancer'
-kubectl port-forward -n projectcontour svc/envoy-contour 8888:80 2>&1 > /dev/null &
+kubectl port-forward -n istio-ingress svc/gateway-istio 8888:80 2>&1 > /dev/null &
 pf_pid=$!
 
 cleanup() {
@@ -104,7 +104,7 @@ until ${ok}; do
 done
 
 echo '>>> Verifying session affinity'
-if ! URL=http://localhost:8888 HOST=localproject.contour.io VERSION=6.1.0 COOKIE_NAME=flagger-cookie \
+if ! URL=http://localhost:8888 HOST=www.example.com VERSION=6.1.0 COOKIE_NAME=flagger-cookie \
     go run ${REPO_ROOT}/test/gatewayapi/verify_session_affinity.go; then
     echo "failed to verify session affinity"
     exit $?
@@ -145,7 +145,7 @@ done
 
 echo '>>> Verifying cookie cleanup'
 canary_cookie=$(kubectl -n sa-test get canary podinfo -o=jsonpath='{.status.previousSessionAffinityCookie}' | xargs)
-response=$(curl -H "Host: localproject.contour.io" -H "Cookie: $canary_cookie" -D - http://localhost:8888)
+response=$(curl -H "Host: www.example.com" -H "Cookie: $canary_cookie" -D - http://localhost:8888)
 
 if [[ $response == *"$canary_cookie"* ]]; then
   echo "✔ Found previous cookie in response"

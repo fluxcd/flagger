@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # This script runs e2e tests for A/B traffic shifting, Canary analysis and promotion
-# Prerequisites: Kubernetes Kind and Contour with GatewayAPI
+# Prerequisites: Kubernetes Kind and Istio with GatewayAPI
 
 set -o errexit
 
@@ -33,10 +33,10 @@ spec:
     port: 9898
     portName: http
     hosts:
-     - localproject.contour.io
+     - www.example.com
     gatewayRefs:
-      - name: contour
-        namespace: projectcontour
+      - name: gateway
+        namespace: istio-ingress
   analysis:
     interval: 15s
     threshold: 10
@@ -46,14 +46,6 @@ spec:
         x-canary:
           exact: "insider"
     metrics:
-    # - name: request-success-rate
-      # thresholdRange:
-        # min: 99
-      # interval: 1m
-    # - name: request-duration
-      # threshold: 500
-      # interval: 30s
-
     - name: error-rate
       templateRef:
         name: error-rate
@@ -74,7 +66,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io -H 'X-Canary: insider' http://envoy-contour.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host www.example.com -H 'X-Canary: insider' http://gateway-istio.istio-ingress"
           logCmdOutput: "true"
 EOF
 
