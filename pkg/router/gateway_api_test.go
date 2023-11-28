@@ -52,6 +52,9 @@ func TestGatewayAPIRouter_Reconcile(t *testing.T) {
 	require.Equal(t, len(backendRefs), 2)
 	assert.Equal(t, int32(100), *backendRefs[0].Weight)
 	assert.Equal(t, int32(0), *backendRefs[1].Weight)
+
+	timeout := routeRules[0].Timeouts
+	assert.Equal(t, string(*timeout.Request), canary.Spec.Service.Timeout)
 }
 
 func TestGatewayAPIRouter_Routes(t *testing.T) {

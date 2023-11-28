@@ -105,6 +105,12 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			},
 		},
 	}
+	if canary.Spec.Service.Timeout != "" {
+		timeout := v1.Duration(canary.Spec.Service.Timeout)
+		httpRouteSpec.Rules[0].Timeouts = &v1.HTTPRouteTimeouts{
+			Request: &timeout,
+		}
+	}
 
 	// A/B testing
 	if len(canary.GetAnalysis().Match) > 0 {
@@ -120,6 +126,12 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				},
 			},
 		})
+		if canary.Spec.Service.Timeout != "" {
+			timeout := v1.Duration(canary.Spec.Service.Timeout)
+			httpRouteSpec.Rules[1].Timeouts = &v1.HTTPRouteTimeouts{
+				Request: &timeout,
+			}
+		}
 	}
 
 	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).Get(
@@ -317,6 +329,11 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			},
 		})
 	}
+	var timeout v1.Duration
+	if canary.Spec.Service.Timeout != "" {
+		timeout = v1.Duration(canary.Spec.Service.Timeout)
+	}
+
 	weightedRouteRule := &v1.HTTPRouteRule{
 		Matches: matches,
 		Filters: gwr.makeFilters(canary),
@@ -328,6 +345,12 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 				BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port),
 			},
 		},
+	}
+	if canary.Spec.Service.Timeout != "" {
+		timeout := v1.Duration(canary.Spec.Service.Timeout)
+		weightedRouteRule.Timeouts = &v1.HTTPRouteTimeouts{
+			Request: &timeout,
+		}
 	}
 
 	// If B/G mirroring is enabled, then add a route filter which mirrors the traffic
@@ -378,7 +401,17 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
 				},
 			},
+			Timeouts: &v1.HTTPRouteTimeouts{
+				Request: &timeout,
+			},
 		})
+
+		if canary.Spec.Service.Timeout != "" {
+			timeout := v1.Duration(canary.Spec.Service.Timeout)
+			hrClone.Spec.Rules[1].Timeouts = &v1.HTTPRouteTimeouts{
+				Request: &timeout,
+			}
+		}
 	}
 
 	_, err = gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).Update(context.TODO(), hrClone, metav1.UpdateOptions{})
