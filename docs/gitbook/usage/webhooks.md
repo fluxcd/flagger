@@ -41,6 +41,7 @@ Spec:
       - name: "start gate"
         type: confirm-rollout
         url: http://flagger-loadtester.test/gate/approve
+        retries: 5
       - name: "helm test"
         type: pre-rollout
         url: http://flagger-helmtester.flagger/
@@ -72,6 +73,7 @@ Spec:
       - name: "send to Slack"
         type: event
         url: http://event-recevier.notifications/slack
+        retries: 3
         metadata:
           environment: "test"
           cluster: "flagger-test"
@@ -121,6 +123,8 @@ Event payload (HTTP POST):
 
 The event receiver can create alerts based on the received phase 
 (possible values: `Initialized`, `Waiting`, `Progressing`, `Promoting`, `Finalising`, `Succeeded` or `Failed`).
+
+The webhook request can be retried by specifying a positive integer in the `retries` field.
 
 ## Load Testing
 
