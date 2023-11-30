@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.35.0
+
+**Release date:** 2023-11-30
+
+This release comes with support for Gateway API `v1`. Furthermore, following the
+deprecation period, support for the `v1alpha2` API has been dropped.
+A new field `.spec.webhooks[].retries` has been added to allow specifying the
+number of retry attempts to make if the webhook server returns an unsuccessful
+response.
+Another new field `.spec.service.trafficPolicy.loadBalancer.warmupDurationSeconds`
+has been added for the corresponding field in Istio's `DestinationRule` API.
+
+Lastly, two bugs related to deleting a Canary object with
+`.spec.revertOnDeletion: true` have been fixed.
+
+#### Improvements
+- Support istio Destination Dule WarmupDurationSecs
+  [#1540](https://github.com/fluxcd/flagger/pull/1540)
+- feat: Webhook retries
+  [#1541](https://github.com/fluxcd/flagger/pull/1541)
+- gatewayapi: add support for `v1`
+  [#1557](https://github.com/fluxcd/flagger/pull/1557)
+- Update Go dependencies
+  [#1558](https://github.com/fluxcd/flagger/pull/1558)
+
+#### Fixes
+- set original node selector value when finalizing service
+  [#1537](https://github.com/fluxcd/flagger/pull/1537)
+- controller: wait for canary deployment to be ready before removing finalizers
+  [#1552](https://github.com/fluxcd/flagger/pull/1552)
+
 ## 1.34.0
 
 **Release date:** 2023-10-04
