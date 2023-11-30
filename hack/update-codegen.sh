@@ -31,7 +31,7 @@ chmod +x ${CODEGEN_PKG}/generate-internal-groups.sh
 
 ${CODEGEN_PKG}/generate-groups.sh client,deepcopy,informer,lister \
     github.com/fluxcd/flagger/pkg/client github.com/fluxcd/flagger/pkg/apis \
-    "flagger:v1beta1 appmesh:v1beta2 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 smi:v1alpha2 smi:v1alpha3 gloo/gloo:v1 gloo/gateway:v1 projectcontour:v1 traefik:v1alpha1 kuma:v1alpha1 gatewayapi:v1alpha2 gatewayapi:v1beta1 keda:v1alpha1 apisix:v2" \
+    "flagger:v1beta1 appmesh:v1beta2 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 smi:v1alpha2 smi:v1alpha3 gloo/gloo:v1 gloo/gateway:v1 projectcontour:v1 traefik:v1alpha1 kuma:v1alpha1 gatewayapi:v1beta1 gatewayapi:v1 keda:v1alpha1 apisix:v2" \
     --output-base "${TEMP_DIR}" \
     --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
 

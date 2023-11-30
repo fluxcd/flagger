@@ -1,4 +1,4 @@
-package v1alpha2
+package v1
 
 import (
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi"
@@ -9,7 +9,7 @@ import (
 
 // SchemeGroupVersion is the identifier for the API which includes
 // the name of the group and the version of the API
-var SchemeGroupVersion = schema.GroupVersion{Group: gatewayapi.GroupName, Version: "v1alpha2"}
+var SchemeGroupVersion = schema.GroupVersion{Group: gatewayapi.GroupName, Version: "v1"}
 
 // Resource takes an unqualified resource and returns a Group qualified GroupResource
 func Resource(resource string) schema.GroupResource {

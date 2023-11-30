@@ -23,7 +23,7 @@ import (
 	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	gatewayapiv1alpha2 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
+	gatewayapiv1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
@@ -51,8 +51,8 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	appmeshv1beta1.AddToScheme,
 	flaggerv1beta1.AddToScheme,
 	gatewayv1.AddToScheme,
-	gatewayapiv1alpha2.AddToScheme,
 	gatewayapiv1beta1.AddToScheme,
+	gatewayapiv1.AddToScheme,
 	gloov1.AddToScheme,
 	networkingv1alpha3.AddToScheme,
 	kedav1alpha1.AddToScheme,

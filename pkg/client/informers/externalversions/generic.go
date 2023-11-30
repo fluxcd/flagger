@@ -25,7 +25,7 @@ import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1alpha2"
+	gatewayapiv1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
@@ -34,7 +34,7 @@ import (
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	smiv1alpha1 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha1"
-	smiv1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
+	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
 	smiv1alpha3 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha3"
 	traefikv1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -99,9 +99,9 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1.SchemeGroupVersion.WithResource("routetables"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gateway().V1().RouteTables().Informer()}, nil
 
-		// Group=gatewayapi, Version=v1alpha2
-	case v1alpha2.SchemeGroupVersion.WithResource("httproutes"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1alpha2().HTTPRoutes().Informer()}, nil
+		// Group=gatewayapi, Version=v1
+	case gatewayapiv1.SchemeGroupVersion.WithResource("httproutes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1().HTTPRoutes().Informer()}, nil
 
 		// Group=gatewayapi, Version=v1beta1
 	case gatewayapiv1beta1.SchemeGroupVersion.WithResource("httproutes"):
@@ -134,7 +134,7 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Split().V1alpha1().TrafficSplits().Informer()}, nil
 
 		// Group=split.smi-spec.io, Version=v1alpha2
-	case smiv1alpha2.SchemeGroupVersion.WithResource("trafficsplits"):
+	case v1alpha2.SchemeGroupVersion.WithResource("trafficsplits"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Split().V1alpha2().TrafficSplits().Informer()}, nil
 
 		// Group=split.smi-spec.io, Version=v1alpha3

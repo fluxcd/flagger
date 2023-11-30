@@ -1,12 +1,9 @@
 /*
 Copyright 2020 The Kubernetes Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha2
+package v1
 
 // LocalObjectReference identifies an API object within the namespace of the
 // referrer.
@@ -25,8 +22,8 @@ package v1alpha2
 // be rejected by the implementation, with appropriate Conditions set
 // on the containing object.
 type LocalObjectReference struct {
-	// Group is the group of the referent. For example, "networking.k8s.io".
-	// When unspecified (empty string), core API group is inferred.
+	// Group is the group of the referent. For example, "gateway.networking.k8s.io".
+	// When unspecified or empty string, core API group is inferred.
 	Group Group `json:"group"`
 
 	// Kind is kind of the referent. For example "HTTPRoute" or "Service".
@@ -46,8 +43,8 @@ type LocalObjectReference struct {
 // be rejected by the implementation, with appropriate Conditions set
 // on the containing object.
 type SecretObjectReference struct {
-	// Group is the group of the referent. For example, "networking.k8s.io".
-	// When unspecified (empty string), core API group is inferred.
+	// Group is the group of the referent. For example, "gateway.networking.k8s.io".
+	// When unspecified or empty string, core API group is inferred.
 	//
 	// +optional
 	// +kubebuilder:default=""
@@ -65,9 +62,9 @@ type SecretObjectReference struct {
 	// Namespace is the namespace of the backend. When unspecified, the local
 	// namespace is inferred.
 	//
-	// Note that when a namespace is specified, a ReferencePolicy object
+	// Note that when a namespace is specified, a ReferenceGrant object
 	// is required in the referent namespace to allow that namespace's
-	// owner to accept the reference. See the ReferencePolicy documentation
+	// owner to accept the reference. See the ReferenceGrant documentation
 	// for details.
 	//
 	// Support: Core
@@ -80,9 +77,9 @@ type SecretObjectReference struct {
 // specific to BackendRef. It includes a few additional fields and features
 // than a regular ObjectReference.
 //
-// Note that when a namespace is specified, a ReferencePolicy object
+// Note that when a namespace is specified, a ReferenceGrant object
 // is required in the referent namespace to allow that namespace's
-// owner to accept the reference. See the ReferencePolicy documentation
+// owner to accept the reference. See the ReferenceGrant documentation
 // for details.
 //
 // The API object must be valid in the cluster; the Group and Kind must
@@ -92,14 +89,15 @@ type SecretObjectReference struct {
 // be rejected by the implementation, with appropriate Conditions set
 // on the containing object.
 type BackendObjectReference struct {
-	// Group is the group of the referent. For example, "networking.k8s.io".
-	// When unspecified (empty string), core API group is inferred.
+	// Group is the group of the referent. For example, "gateway.networking.k8s.io".
+	// When unspecified or empty string, core API group is inferred.
 	//
 	// +optional
 	// +kubebuilder:default=""
 	Group *Group `json:"group,omitempty"`
 
 	// Kind is kind of the referent. For example "HTTPRoute" or "Service".
+	// Defaults to "Service" when not specified.
 	//
 	// +optional
 	// +kubebuilder:default=Service
@@ -111,9 +109,9 @@ type BackendObjectReference struct {
 	// Namespace is the namespace of the backend. When unspecified, the local
 	// namespace is inferred.
 	//
-	// Note that when a namespace is specified, a ReferencePolicy object
+	// Note that when a namespace is specified, a ReferenceGrant object
 	// is required in the referent namespace to allow that namespace's
-	// owner to accept the reference. See the ReferencePolicy documentation
+	// owner to accept the reference. See the ReferenceGrant documentation
 	// for details.
 	//
 	// Support: Core
@@ -122,7 +120,8 @@ type BackendObjectReference struct {
 	Namespace *Namespace `json:"namespace,omitempty"`
 
 	// Port specifies the destination port number to use for this resource.
-	// Port is required when the referent is a Kubernetes Service.
+	// Port is required when the referent is a Kubernetes Service. In this
+	// case, the port number is the service port number, not the target port.
 	// For other resources, destination port might be derived from the referent
 	// resource or this field.
 	//
