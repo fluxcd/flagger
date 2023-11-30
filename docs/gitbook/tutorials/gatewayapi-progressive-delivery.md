@@ -6,55 +6,64 @@ This guide shows you how to use [Gateway API](https://gateway-api.sigs.k8s.io/) 
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.19** or newer and any mesh/ingress that implements the `v1beta1` version of Gateway API. We'll be using Contour for the sake of this tutorial, but you can use any other implementation.
+Flagger requires a Kubernetes cluster **v1.19** or newer and any mesh/ingress that implements the `v1beta1` or the `v1` version of Gateway API.
+We'll be using Istio for the sake of this tutorial, but you can use any other implementation.
 
-> Note: Flagger supports `v1alpha2` version of Gateway API, but the alpha version has been deprecated and support will be dropped in a future release.
-
-Install Contour, its Gateway provisioner and Gateway API CRDs in the `projectcontour` namespace:
+Install the Gateway API CRDs
 
 ```bash
-https://raw.githubusercontent.com/projectcontour/contour/release-1.23/examples/render/contour-gateway-provisioner.yaml
+kubectl apply -k "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.0.0"
 ```
 
-> Alternatively, you can also install the Gateway API CRDs from the upstream project:
+Install Istio:
+
 ```bash
-kubectl apply -k github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.0
+istioctl install --set profile=minimal -y
+
+# Suggestion: Please change release-1.20 in below command, to your real istio version.
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
 ```
 
 Install Flagger in the `flagger-system` namespace:
 
 ```bash
-kubectl apply -k github.com/fluxcd/flagger//kustomize/gatewayapi
+kubectl create ns flagger-system
+
+helm repo add flagger https://flagger.app
+helm upgrade -i flagger flagger/flagger \
+  --namespace flagger-system \
+  --set prometheus.install=false \
+  --set meshProvider=gatewayapi:v1 \
+  --set metricsServer=http://prometheus.istio-system:9090
 ```
 
-Create a `GatewayClass` that specifies information about the Gateway controller:
+> Note: The above installation sets the mesh provider to be `gatewayapi:v1`. If your Gateway API implementation uses the `v1beta1` CRDs, then
+set the `--meshProvider` value to `gatewayapi:v1beta1`.
 
-```yaml
-kind: GatewayClass
-apiVersion: gateway.networking.k8s.io/v1beta1
-metadata:
-  name: contour
-spec:
-  controllerName: projectcontour.io/gateway-controller
+Create a namespace for the `Gateway`:
+
+```bash
+kubectl create ns istio-ingress
 ```
 
 Create a `Gateway` that configures load balancing, traffic ACL, etc:
 
 ```yaml
-kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
 metadata:
-  name: contour
-  namespace: projectcontour
+  name: gateway
+  namespace: istio-ingress
 spec:
-  gatewayClassName: contour
+  gatewayClassName: istio
   listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: All
+  - name: default
+    hostname: "*.example.com"
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All
 ```
 
 ## Bootstrap
@@ -90,13 +99,15 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://flagger-prometheus:9090
+    address: http://prometheus.istio-system:9090
   query: |
     histogram_quantile(0.99,
       sum(
         rate(
-          envoy_cluster_upstream_rq_time_bucket{
-            envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
+          istio_request_duration_milliseconds_bucket{
+            reporter="source",
+            destination_workload_namespace=~"{{ namespace }}",
+            destination_workload=~"{{ target }}",
           }[{{ interval }}]
         )
       ) by (le)
@@ -110,21 +121,25 @@ metadata:
 spec:
   provider:
     type: prometheus
-    address: http://flagger-prometheus:9090
+    address: http://prometheus.istio-system:9090
   query: |
     100 - sum(
       rate(
-        envoy_cluster_upstream_rq{
-          envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
-          envoy_response_code!~"5.*"
+        istio_requests_total{
+          reporter="source",
+          destination_workload_namespace=~"{{ namespace }}",
+          destination_workload=~"{{ target }}",
+          response_code!~"5.*"
         }[{{ interval }}]
       )
     )
     /
     sum(
       rate(
-        envoy_cluster_upstream_rq{
-          envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
+        istio_requests_total{
+          reporter="source",
+          destination_workload_namespace=~"{{ namespace }}",
+          destination_workload=~"{{ target }}",
         }[{{ interval }}]
       )
     )
@@ -137,7 +152,7 @@ Save the above resource as metric-templates.yaml and then apply it:
 kubectl apply -f metric-templates.yaml
 ```
 
-Create a canary custom resource \(replace "localproject.contour.io" with your own domain\):
+Create a canary custom resource \(replace "www.example.com" with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -166,11 +181,11 @@ spec:
     targetPort: 9898
     # Gateway API HTTPRoute host names
     hosts:
-     - localproject.contour.io
+     - www.example.com
     # Reference to the Gateway that the generated HTTPRoute would attach to.
     gatewayRefs:
-      - name: contour
-        namespace: projectcontour
+      - name: gateway
+        namespace: istio-ingress
   analysis:
     # schedule interval (default 60s)
     interval: 1m
@@ -213,7 +228,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host www.example.com http://gateway-istio.istio-ingress/"
 ```
 
 Save the above resource as podinfo-canary.yaml and then apply it:
@@ -243,26 +258,27 @@ httproutes.gateway.networking.k8s.io/podinfo
 
 ## Expose the app outside the cluster
 
-Find the external address of Contour's Envoy load balancer:
+Find the external address of Istio's load balancer:
 
 ```bash
-export ADDRESS="$(kubectl -n projectcontour get svc/envoy -ojson \
+export ADDRESS="$(kubectl -n istio-ingress get svc/gateway-istio -ojson \
 | jq -r ".status.loadBalancer.ingress[].hostname")"
 echo $ADDRESS
 ```
 
-Configure your DNS server with a CNAME record \(AWS\) or A record \(GKE/AKS/DOKS\) and point a domain e.g. `localproject.contour.io` to the LB address.
+Configure your DNS server with a CNAME record \(AWS\) or A record \(GKE/AKS/DOKS\) and point a domain e.g. `www.example.com` to the LB address.
 
 Now you can access the podinfo UI using your domain address.
 
-Note that you should be using HTTPS when exposing production workloads on internet. You can obtain free TLS certs from Let's Encrypt, read this [guide](https://github.com/stefanprodan/eks-contour-ingress) on how to configure cert-manager to secure Contour with TLS certificates.
+Note that you should be using HTTPS when exposing production workloads on internet. You can obtain free TLS certs from Let's Encrypt, read this
+[guide](https://github.com/stefanprodan/istio-gke) on how to configure cert-manager to secure Istio with TLS certificates.
 
 If you're using a local cluster via kind/k3s you can port forward the Envoy LoadBalancer service:
 ```bash
-kubectl port-forward -n projectcontour svc/envoy 8080:80
+kubectl port-forward -n istio-ingress svc/gateway-istio 8080:80
 ```
 
-Now you can access podinfo via `curl -H "Host: localproject.contour.io" localhost:8080`
+Now you can access podinfo via `curl -H "Host: www.example.com" localhost:8080`
 
 ## Automated canary promotion
 
@@ -390,7 +406,7 @@ For more information you can read the [deployment strategies docs](../usage/depl
 
 > **Note:** The implementation must have support for the [`ResponseHeaderModifier`](https://github.com/kubernetes-sigs/gateway-api/blob/3d22aa5a08413222cb79e6b2e245870360434614/apis/v1beta1/httproute_types.go#L651) API. 
 
-Create a canary custom resource \(replace localproject.contour.io with your own domain\):
+Create a canary custom resource \(replace www.example.com with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -419,11 +435,11 @@ spec:
     targetPort: 9898
     # Gateway API HTTPRoute host names
     hosts:
-     - localproject.contour.io
+     - www.example.com
     # Reference to the Gateway that the generated HTTPRoute would attach to.
     gatewayRefs:
-      - name: contour
-        namespace: projectcontour
+      - name: gateway
+        namespace: istio-ingress
   analysis:
     # schedule interval (default 60s)
     interval: 1m
@@ -473,7 +489,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host www.example.com http://gateway-istio.istio-ingress/"
 ```
 
 Save the above resource as podinfo-canary-session-affinity.yaml and then apply it:
@@ -489,7 +505,7 @@ kubectl -n test set image deployment/podinfo \
 podinfod=ghcr.io/stefanprodan/podinfo:6.0.1
 ```
 
-You can load `localproject.contour.io` in your browser and refresh it until you see the requests being served by `podinfo:6.0.1`.
+You can load `www.example.com` in your browser and refresh it until you see the requests being served by `podinfo:6.0.1`.
 All subsequent requests after that will be served by `podinfo:6.0.1` and not `podinfo:6.0.0` because of the session affinity
 configured by Flagger in the HTTPRoute object.
 
@@ -499,7 +515,7 @@ Besides weighted routing, Flagger can be configured to route traffic to the cana
 
 ![Flagger A/B Testing Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-abtest-steps.png)
 
-Create a canary custom resource \(replace "localproject.contour.io" with your own domain\):
+Create a canary custom resource \(replace "www.example.com" with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -528,11 +544,11 @@ spec:
     targetPort: 9898
     # Gateway API HTTPRoute host names
     hosts:
-     - localproject.contour.io
+     - www.example.com
     # Reference to the Gateway that the generated HTTPRoute would attach to.
     gatewayRefs:
-      - name: contour
-        namespace: projectcontour
+      - name: gateway
+        namespace: istio-ingress
   analysis:
     # schedule interval (default 60s)
     interval: 1m
@@ -575,7 +591,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io -H 'X-Canary: insider' http://envoy.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host www.example.com -H 'X-Canary: insider' http://gateway-istio.istio-ingress/"
 ```
 
 The above configuration will run an analysis for ten minutes targeting those users that have an insider cookie.
@@ -654,11 +670,11 @@ spec:
     targetPort: 9898
     # Gateway API HTTPRoute host names
     hosts:
-     - localproject.contour.io
+     - www.example.com
     # Reference to the Gateway that the generated HTTPRoute would attach to.
     gatewayRefs:
-      - name: contour
-        namespace: projectcontour
+      - name: gateway
+        namespace: istio-ingress
   analysis:
     # schedule interval
     interval: 1m
@@ -683,7 +699,7 @@ spec:
         url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
-          cmd: "hey -z 2m -q 10 -c 2 -host localproject.contour.io http://envoy.projectcontour/"
+          cmd: "hey -z 2m -q 10 -c 2 -host www.example.com http://gateway-istio.istio-ingress/"
 ```
 
 With the above configuration, Flagger will run a canary release with the following steps:
