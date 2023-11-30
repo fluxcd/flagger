@@ -29,9 +29,50 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
 	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
 )
+
+func TestUnmarshalVirtualService(t *testing.T) {
+	body := `
+	{
+		"apiVersion": "networking.istio.io/v1beta1",
+		"kind": "VirtualService",
+		"spec": {
+			"gateways": [
+				"default/gateway"
+			],
+			"hosts": [
+				"my.example.com"
+			],
+			"tcp": [
+				{
+					"match": [
+						{
+							"port": 9898
+						}
+					],
+					"route": [
+						{
+							"destination": {
+								"host": "my.example.com",
+								"port": {
+									"number": 9898
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	}
+	`
+
+	var vs istiov1alpha3.VirtualService
+	err := json.Unmarshal([]byte(body), &vs)
+	require.NoError(t, err)
+}
 
 func TestIstioRouter_Sync(t *testing.T) {
 	mocks := newFixture(nil)
@@ -726,4 +767,125 @@ func TestIstioRouter_Match(t *testing.T) {
 	require.Equal(t, vs.Spec.Http[0].Match[1].Headers["x-session-id"].Exact, "test")
 	assert.Len(t, vs.Spec.Http[1].Match, 1) // check for abtest-primary
 	require.Equal(t, vs.Spec.Http[1].Match[0].Uri.Prefix, "/podinfo")
+}
+
+// TCP Canary
+func newTestCanaryTCP() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.LocalObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Port:          9898,
+				PortDiscovery: true,
+				AppProtocol:   "TCP",
+				Match: []istiov1alpha3.HTTPMatchRequest{
+					{
+						Port: 9898,
+					},
+				},
+				Gateways: []string{
+					"istio/public-gateway",
+					"mesh",
+				},
+			}, Analysis: &flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func TestIstioRouter_SetRoutesTCP(t *testing.T) {
+	mocks := newFixture(newTestCanaryTCP())
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	pHost := fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name)
+	cHost := fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name)
+
+	t.Run("normal", func(t *testing.T) {
+		p, c := 60, 40
+		err := router.SetRoutes(mocks.canary, p, c, false)
+		require.NoError(t, err)
+
+		vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		var pRoute, cRoute istiov1alpha3.HTTPRouteDestination
+		for _, tcp := range vs.Spec.Tcp {
+			for _, route := range tcp.Route {
+				if route.Destination.Host == pHost {
+					pRoute = route
+				}
+				if route.Destination.Host == cHost {
+					cRoute = route
+				}
+			}
+		}
+
+		assert.Equal(t, p, pRoute.Weight)
+		assert.Equal(t, c, cRoute.Weight)
+	})
+}
+
+func TestIstioRouter_GetRoutesTCP(t *testing.T) {
+	mocks := newFixture(newTestCanaryTCP())
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	p, c, m, err := router.GetRoutes(mocks.canary)
+	require.NoError(t, err)
+	assert.Equal(t, 100, p)
+	assert.Equal(t, 0, c)
+	assert.False(t, m)
+
+	mocks.canary = newTestMirror()
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	p, c, m, err = router.GetRoutes(mocks.canary)
+	require.NoError(t, err)
+	assert.Equal(t, 100, p)
+	assert.Equal(t, 0, c)
+
+	// A TCP Canary resource has mirroring disabled
+	assert.False(t, m)
 }
