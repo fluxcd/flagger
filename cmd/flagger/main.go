@@ -86,6 +86,7 @@ var (
 	kubeconfigServiceMesh    string
 	clusterName              string
 	noCrossNamespaceRefs     bool
+	maxConcurrentCanaries    int
 )
 
 func init() {
@@ -121,6 +122,7 @@ func init() {
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
 	flag.StringVar(&clusterName, "cluster-name", "", "Cluster name to be included in alert msgs.")
 	flag.BoolVar(&noCrossNamespaceRefs, "no-cross-namespace-refs", false, "When set to true, Flagger can only refer to resources in the same namespace.")
+	flag.IntVar(&maxConcurrentCanaries, "max-concurrent-canaries", 0, "Limit parallel processing canaries. Unlimited if set to 0, which is default")
 }
 
 func main() {
@@ -253,6 +255,7 @@ func main() {
 		fromEnv("EVENT_WEBHOOK_URL", eventWebhook),
 		clusterName,
 		noCrossNamespaceRefs,
+		maxConcurrentCanaries,
 		cfg,
 	)
 
