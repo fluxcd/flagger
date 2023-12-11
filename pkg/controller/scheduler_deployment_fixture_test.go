@@ -149,6 +149,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 		recorder:         metrics.NewRecorder(controllerAgentName, false),
 		routerFactory:    rf,
 		notifier:         &notifier.NopNotifier{},
+		pendingCanaries:  map[string]bool{},
 	}
 	ctrl.flaggerSynced = alwaysReady
 	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
