@@ -12,20 +12,20 @@ and part of [Flux](https://fluxcd.io) family of GitOps tools.
 
 ## Prerequisites
 
-* Kubernetes >= 1.19
+- Kubernetes >= 1.19
 
 ## Installing the Chart
 
 Add Flagger Helm repository:
 
 ```console
-$ helm repo add flagger https://flagger.app
+helm repo add flagger https://flagger.app
 ```
 
 Install Flagger's custom resource definitions:
 
 ```console
-$ kubectl apply -f https://raw.githubusercontent.com/fluxcd/flagger/main/artifacts/flagger/crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/fluxcd/flagger/main/artifacts/flagger/crd.yaml
 ```
 
 To install Flagger for **Istio**:
@@ -57,7 +57,6 @@ $ helm upgrade -i flagger flagger/flagger \
     --set meshProvider=appmesh:v1beta2 \
     --set metricsServer=http://appmesh-prometheus:9090
 ```
-
 
 To install Flagger for **Open Service Mesh** (requires OSM to have been installed with Prometheus):
 
@@ -120,7 +119,7 @@ If you need to add labels to the flagger deployment or pods, you can pass the la
 helm upgrade -i flagger flagger/flagger \
 <other parameters> \
 --set podLabels.<labelName>=<labelValue> \
---set deploymentLabels.<labelName>=<labelValue> 
+--set deploymentLabels.<labelName>=<labelValue>
 ```
 
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -130,7 +129,7 @@ The [configuration](#configuration) section lists the parameters that can be con
 To uninstall/delete the `flagger` deployment:
 
 ```console
-$ helm delete flagger
+helm delete flagger
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -140,7 +139,7 @@ The command removes all the Kubernetes components associated with the chart and 
 The following tables lists the configurable parameters of the Flagger chart and their default values.
 
 | Parameter                            | Description                                                                                                                                        | Default                               |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | `image.repository`                   | Image repository                                                                                                                                   | `ghcr.io/fluxcd/flagger`              |
 | `image.tag`                          | Image tag                                                                                                                                          | `<VERSION>`                           |
 | `image.pullPolicy`                   | Image pull policy                                                                                                                                  | `IfNotPresent`                        |
@@ -173,7 +172,7 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `serviceAccount.name`                | The name of the service account to create or use. If not set and `serviceAccount.create` is `true`, a name is generated using the Flagger fullname | `""`                                  |
 | `serviceAccount.annotations`         | Annotations for service account                                                                                                                    | `{}`                                  |
 | `ingressAnnotationsPrefix`           | Annotations prefix for ingresses                                                                                                                   | `custom.ingress.kubernetes.io`        |
-| `includeLabelPrefix`                 | List of prefixes of labels that are copied when creating primary deployments or daemonsets. Use * to include all                                   | `""`                                  |
+| `includeLabelPrefix`                 | List of prefixes of labels that are copied when creating primary deployments or daemonsets. Use \* to include all                                  | `""`                                  |
 | `rbac.create`                        | If `true`, create and use RBAC resources                                                                                                           | `true`                                |
 | `rbac.pspEnabled`                    | If `true`, create and use a restricted pod security policy                                                                                         | `false`                               |
 | `crd.create`                         | If `true`, create Flagger's CRDs (should be enabled for Helm v2 only)                                                                              | `false`                               |
@@ -197,6 +196,7 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `namespace`                          | When specified, Flagger will restrict itself to watching Canary objects from that namespace                                                        | `""`                                  |
 | `deploymentLabels`                   | Labels to add to Flagger deployment                                                                                                                | `{}`                                  |
 | `podLabels`                          | Labels to add to pods of Flagger deployment                                                                                                        | `{}`                                  |
+| `maxConcurrentCanaries`              | Limits how many canaries can process in parallel. No limit if "0"                                                                                  | `0`                                   |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
