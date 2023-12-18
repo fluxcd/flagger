@@ -725,7 +725,7 @@ type HTTPRetry struct {
 	// REQUIRED. Number of retries for a given request. The interval
 	// between retries will be determined automatically (25ms+). Actual
 	// number of retries attempted depends on the httpReqTimeout.
-	Attempts int `json:"attempts,omitempty"`
+	Attempts int `json:"attempts"`
 
 	// Timeout per retry attempt for a given request. format: 1h/1m/1s/1ms. MUST BE >=1ms.
 	PerTryTimeout string `json:"perTryTimeout,omitempty"`
