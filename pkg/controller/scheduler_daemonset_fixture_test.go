@@ -356,6 +356,10 @@ func newDaemonSetTestCanaryAB() *flaggerv1.Canary {
 							Min: toFloatPtr(0),
 							Max: toFloatPtr(500000),
 						},
+						TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
+							Name:      "envoy",
+							Namespace: "default",
+						},
 						Interval: "1m",
 						Query:    "fake",
 					},
