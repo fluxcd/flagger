@@ -107,4 +107,36 @@ func TestController_runMetricChecks(t *testing.T) {
 		}
 		assert.Equal(t, true, ctrl.runMetricChecks(canary))
 	})
+
+	t.Run("undefined metric", func(t *testing.T) {
+		ctrl := newDeploymentFixture(nil).ctrl
+		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
+			Name: "undefined metric",
+			ThresholdRange: &flaggerv1.CanaryThresholdRange{
+				Min: toFloatPtr(0),
+				Max: toFloatPtr(100),
+			},
+		}}}
+		canary := &flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
+		}
+		assert.Equal(t, false, ctrl.runMetricChecks(canary))
+	})
+
+	t.Run("builtinMetric", func(t *testing.T) {
+		ctrl := newDeploymentFixture(nil).ctrl
+		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
+			Name: "request-success-rate",
+			ThresholdRange: &flaggerv1.CanaryThresholdRange{
+				Min: toFloatPtr(0),
+				Max: toFloatPtr(100),
+			},
+		}}}
+		canary := &flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
+		}
+		assert.Equal(t, true, ctrl.runMetricChecks(canary))
+	})
 }
