@@ -55,3 +55,6 @@ After installing Flagger, you can follow one of these tutorials to get started:
 * [Istio](https://github.com/stefanprodan/gitops-istio)
 * [Linkerd](https://helm.workshop.flagger.dev)
 * [AWS App Mesh](https://eks.handson.flagger.dev)
+
+The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, 
+please see our [Trademark Usage page](https://www.linuxfoundation.org/legal/trademark-usage).
