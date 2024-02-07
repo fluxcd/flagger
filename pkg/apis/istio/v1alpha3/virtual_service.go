@@ -597,7 +597,7 @@ type TCPRoute struct {
 	// Currently, only one destination is allowed for TCP services. When TCP
 	// weighted routing support is introduced in Envoy, multiple destinations
 	// with weights can be specified.
-	Route HTTPRouteDestination `json:"route"`
+	Route []HTTPRouteDestination `json:"route"`
 }
 
 // L4 connection match attributes. Note that L4 connection matching support

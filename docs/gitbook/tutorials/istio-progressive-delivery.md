@@ -480,3 +480,63 @@ With the above configuration, Flagger will run a canary release with the followi
 
 The above procedure can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
 
+
+## Canary Deployments for TCP Services
+
+Performing a Canary deployment on a TCP (non HTTP) service is nearly identical to an HTTP Canary. Besides updating your `Gateway` document to support the `TCP` routing, the only difference is you have to set the `appProtocol` field to `TCP` inside of the `service` section of your `Canary` document.
+
+#### Example:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: public-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 7070
+        name: tcp-service
+        protocol: TCP # <== set the protocol to tcp here
+      hosts:
+        - "*"
+```
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+...
+...
+service:
+  port: 7070
+  appProtocol: TCP # <== set the appProtocol here
+  targetPort: 7070
+  portName: "tcp-service-port"
+...
+...
+```
+
+If the `appProtocol` equals `TCP` then Flagger will treat this as a Canary deployment for a `TCP` service. When it creates the `VirtualService` document it will add a `TCP` section to route requests between the `primary` and `canary` services. See Istio documentation for more information on this [spec](https://istio.io/latest/docs/reference/config/networking/virtual-service/#TCPRoute).
+
+The resulting `VirtualService` will include a `tcp` section similar to what is shown below:
+```yaml
+tcp:
+  - route:
+    - destination:
+        host: tcp-service-primary
+        port:
+          number: 7070
+      weight: 100
+    - destination:
+        host: tcp-service-canary
+        port:
+          number: 7070
+      weight: 0
+```
+
+Once the Canary analysis begins, Flagger will be able to adjust the weights inside of this `tcp` section to advance the Canary deployment until it either runs into an error (and is halted) or it successfully reaches the end of the analysis and is Promoted.
+
+It is also important to note that if you set `appProtocol` to anything other than `TCP`, for example if you set it to `HTTP`, it will perform the Canary and treat it as an `HTTP` service. The same remains true if you do not set `appProtocol` at all. It will __ONLY__ treat a Canary as a `TCP` service if `appProtocal` equals `TCP`.

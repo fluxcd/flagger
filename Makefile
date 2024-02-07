@@ -29,6 +29,11 @@ test-codegen:
 test: test-fmt test-codegen
 	go test ./...
 
+test-coverage: test-fmt test-codegen
+	go test -coverprofile cover.out ./...
+	go tool cover -html=cover.out
+	rm cover.out
+
 crd:
 	cat artifacts/flagger/crd.yaml > charts/flagger/crds/crd.yaml
 	cat artifacts/flagger/crd.yaml > kustomize/base/flagger/crd.yaml

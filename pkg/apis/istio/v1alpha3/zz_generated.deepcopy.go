@@ -848,7 +848,13 @@ func (in *TCPRoute) DeepCopyInto(out *TCPRoute) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	in.Route.DeepCopyInto(&out.Route)
+	if in.Route != nil {
+		in, out := &in.Route, &out.Route
+		*out = make([]HTTPRouteDestination, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 

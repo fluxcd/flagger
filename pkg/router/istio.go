@@ -125,6 +125,23 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 	return nil
 }
 
+// return true if canary service has appProtocol == tcp
+func isTcp(canary *flaggerv1.Canary) bool {
+	return strings.ToLower(canary.Spec.Service.AppProtocol) == "tcp"
+}
+
+// map canary.spec.service.match into L4Match
+func canaryToL4Match(canary *flaggerv1.Canary) []istiov1alpha3.L4MatchAttributes {
+	var match []istiov1alpha3.L4MatchAttributes
+	for _, m := range canary.Spec.Service.Match {
+		match = append(match, istiov1alpha3.L4MatchAttributes{
+			Port: int(m.Port),
+		})
+	}
+
+	return match
+}
+
 func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
@@ -175,20 +192,35 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		gateways = []string{}
 	}
 
-	newSpec := istiov1alpha3.VirtualServiceSpec{
-		Hosts:    hosts,
-		Gateways: gateways,
-		Http: []istiov1alpha3.HTTPRoute{
-			{
-				Match:      canary.Spec.Service.Match,
-				Rewrite:    canary.Spec.Service.GetIstioRewrite(),
-				Timeout:    canary.Spec.Service.Timeout,
-				Retries:    canary.Spec.Service.Retries,
-				CorsPolicy: canary.Spec.Service.CorsPolicy,
-				Headers:    canary.Spec.Service.Headers,
-				Route:      canaryRoute,
+	var newSpec istiov1alpha3.VirtualServiceSpec
+
+	if isTcp(canary) {
+		newSpec = istiov1alpha3.VirtualServiceSpec{
+			Hosts:    hosts,
+			Gateways: gateways,
+			Tcp: []istiov1alpha3.TCPRoute{
+				{
+					Match: canaryToL4Match(canary),
+					Route: canaryRoute,
+				},
 			},
-		},
+		}
+	} else {
+		newSpec = istiov1alpha3.VirtualServiceSpec{
+			Hosts:    hosts,
+			Gateways: gateways,
+			Http: []istiov1alpha3.HTTPRoute{
+				{
+					Match:      canary.Spec.Service.Match,
+					Rewrite:    canary.Spec.Service.GetIstioRewrite(),
+					Timeout:    canary.Spec.Service.Timeout,
+					Retries:    canary.Spec.Service.Retries,
+					CorsPolicy: canary.Spec.Service.CorsPolicy,
+					Headers:    canary.Spec.Service.Headers,
+					Route:      canaryRoute,
+				},
+			},
+		}
 	}
 
 	newMetadata := canary.Spec.Service.Apex
@@ -203,7 +235,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	}
 	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
 
-	if len(canary.GetAnalysis().Match) > 0 {
+	if !isTcp(canary) && len(canary.GetAnalysis().Match) > 0 {
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
 		newSpec.Http = []istiov1alpha3.HTTPRoute{
 			{
@@ -349,6 +381,38 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 		return
 	}
 
+	if isTcp(canary) {
+		ir.logger.Infof("Canary %s.%s uses TCP service", canary.Name, canary.Namespace)
+		var tcpRoute istiov1alpha3.TCPRoute
+		for _, tcp := range vs.Spec.Tcp {
+			for _, r := range tcp.Route {
+				if r.Destination.Host == canaryName {
+					tcpRoute = tcp
+					break
+				}
+			}
+		}
+		for _, route := range tcpRoute.Route {
+			if route.Destination.Host == primaryName {
+				primaryWeight = route.Weight
+			}
+			if route.Destination.Host == canaryName {
+				canaryWeight = route.Weight
+			}
+		}
+
+		mirrored = false
+
+		if primaryWeight == 0 && canaryWeight == 0 {
+			err = fmt.Errorf("VirtualService %s.%s does not contain routes for %s-primary and %s-canary",
+				apexName, canary.Namespace, apexName, apexName)
+		}
+
+		return
+	}
+
+	ir.logger.Infof("Canary %s.%s uses HTTP service", canary.Name, canary.Namespace)
+
 	var httpRoute istiov1alpha3.HTTPRoute
 	for _, http := range vs.Spec.Http {
 		for _, r := range http.Route {
@@ -411,6 +475,26 @@ func (ir *IstioRouter) SetRoutes(
 	}
 
 	vsCopy := vs.DeepCopy()
+
+	if isTcp(canary) {
+		// weighted routing (progressive canary)
+		weightedRoute := istiov1alpha3.TCPRoute{
+			Match: canaryToL4Match(canary),
+			Route: []istiov1alpha3.HTTPRouteDestination{
+				makeDestination(canary, primaryName, primaryWeight),
+				makeDestination(canary, canaryName, canaryWeight),
+			},
+		}
+		vsCopy.Spec.Tcp = []istiov1alpha3.TCPRoute{
+			weightedRoute,
+		}
+
+		vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
+		}
+		return nil
+	}
 
 	// weighted routing (progressive canary)
 	weightedRoute := istiov1alpha3.HTTPRoute{
