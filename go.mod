@@ -1,6 +1,6 @@
 module github.com/fluxcd/flagger
 
-go 1.19
+go 1.21
 
 require (
 	cloud.google.com/go/monitoring v1.16.3
