@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.36.0
+
+**Release date:** 2024-02-07
+
+This release comes with support for canary releases with traffic shifting using
+Istio TCP routing. For more information on how to enable TCP routing please
+see the [Istio tutorial](hhttps://docs.flagger.app//tutorials/istio-progressive-delivery#canary-deployments-for-tcp-services).
+
+Both Flagger and the load tester Go dependencies have been updated to fix various CVEs.
+Flagger is now built with Go 1.21 and the container base image has been updated to Alpine 3.19.
+
+#### Improvements
+- Istio Canary TCP service support
+  [#1564](https://github.com/fluxcd/flagger/pull/1564)
+- Update Go dependencies
+  [#1595](https://github.com/fluxcd/flagger/pull/1595)
+- Build with Go 1.21 and Alpine 3.19
+  [#1594](https://github.com/fluxcd/flagger/pull/1594)
+
+#### Fixes
+- return an error for missing metric templates
+  [#1582](https://github.com/fluxcd/flagger/pull/1582)
+- istio: make retry attempts a mandatory field
+  [#1571](https://github.com/fluxcd/flagger/pull/1571)
+- fix(pdb): use the full capabilities comparison for PDBs
+  [#1511](https://github.com/fluxcd/flagger/pull/1511)
+
 ## 1.35.0
 
 **Release date:** 2023-11-30
@@ -18,7 +45,7 @@ Lastly, two bugs related to deleting a Canary object with
 `.spec.revertOnDeletion: true` have been fixed.
 
 #### Improvements
-- Support istio Destination Dule WarmupDurationSecs
+- Support Istio DestinationRule WarmupDurationSecs
   [#1540](https://github.com/fluxcd/flagger/pull/1540)
 - feat: Webhook retries
   [#1541](https://github.com/fluxcd/flagger/pull/1541)

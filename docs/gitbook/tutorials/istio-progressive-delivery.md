@@ -508,15 +508,13 @@ spec:
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: Canary
-...
-...
-service:
-  port: 7070
-  appProtocol: TCP # <== set the appProtocol here
-  targetPort: 7070
-  portName: "tcp-service-port"
-...
-...
+# omitted for brevity
+spec:
+  service:
+    port: 7070
+    appProtocol: TCP # <== set the appProtocol here
+    targetPort: 7070
+    portName: "tcp-service-port"
 ```
 
 If the `appProtocol` equals `TCP` then Flagger will treat this as a Canary deployment for a `TCP` service. When it creates the `VirtualService` document it will add a `TCP` section to route requests between the `primary` and `canary` services. See Istio documentation for more information on this [spec](https://istio.io/latest/docs/reference/config/networking/virtual-service/#TCPRoute).
