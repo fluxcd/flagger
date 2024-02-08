@@ -8,7 +8,7 @@ All notable changes to this project are documented in this file.
 
 This release comes with support for canary releases with traffic shifting using
 Istio TCP routing. For more information on how to enable TCP routing please
-see the [Istio tutorial](hhttps://docs.flagger.app//tutorials/istio-progressive-delivery#canary-deployments-for-tcp-services).
+see the [Istio tutorial](https://docs.flagger.app/tutorials/istio-progressive-delivery#canary-deployments-for-tcp-services).
 
 Both Flagger and the load tester Go dependencies have been updated to fix various CVEs.
 Flagger is now built with Go 1.21 and the container base image has been updated to Alpine 3.19.
