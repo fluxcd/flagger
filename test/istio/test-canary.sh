@@ -460,7 +460,7 @@ spec:
     app: podinfo
   type: ClusterIP
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: podinfo

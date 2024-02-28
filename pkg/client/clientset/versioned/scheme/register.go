@@ -27,7 +27,7 @@ import (
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
-	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	networkingv1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	kedav1alpha1 "github.com/fluxcd/flagger/pkg/apis/keda/v1alpha1"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
@@ -54,7 +54,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	gatewayapiv1beta1.AddToScheme,
 	gatewayapiv1.AddToScheme,
 	gloov1.AddToScheme,
-	networkingv1alpha3.AddToScheme,
+	networkingv1beta1.AddToScheme,
 	kedav1alpha1.AddToScheme,
 	kumav1alpha1.AddToScheme,
 	projectcontourv1.AddToScheme,

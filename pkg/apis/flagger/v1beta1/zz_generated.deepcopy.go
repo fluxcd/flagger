@@ -23,7 +23,7 @@ package v1beta1
 
 import (
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
-	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -263,7 +263,7 @@ func (in *CanaryAnalysis) DeepCopyInto(out *CanaryAnalysis) {
 	}
 	if in.Match != nil {
 		in, out := &in.Match, &out.Match
-		*out = make([]v1alpha3.HTTPMatchRequest, len(*in))
+		*out = make([]istiov1beta1.HTTPMatchRequest, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -393,12 +393,12 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 	}
 	if in.TrafficPolicy != nil {
 		in, out := &in.TrafficPolicy, &out.TrafficPolicy
-		*out = new(v1alpha3.TrafficPolicy)
+		*out = new(istiov1beta1.TrafficPolicy)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Match != nil {
 		in, out := &in.Match, &out.Match
-		*out = make([]v1alpha3.HTTPMatchRequest, len(*in))
+		*out = make([]istiov1beta1.HTTPMatchRequest, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -410,12 +410,12 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 	}
 	if in.Retries != nil {
 		in, out := &in.Retries, &out.Retries
-		*out = new(v1alpha3.HTTPRetry)
+		*out = new(istiov1beta1.HTTPRetry)
 		**out = **in
 	}
 	if in.Headers != nil {
 		in, out := &in.Headers, &out.Headers
-		*out = new(v1alpha3.Headers)
+		*out = new(istiov1beta1.Headers)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Mirror != nil {
@@ -427,7 +427,7 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 	}
 	if in.CorsPolicy != nil {
 		in, out := &in.CorsPolicy, &out.CorsPolicy
-		*out = new(v1alpha3.CorsPolicy)
+		*out = new(istiov1beta1.CorsPolicy)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Backends != nil {

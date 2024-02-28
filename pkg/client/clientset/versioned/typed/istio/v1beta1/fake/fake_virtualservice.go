@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	v1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	types "k8s.io/apimachinery/pkg/types"
@@ -31,29 +31,29 @@ import (
 
 // FakeVirtualServices implements VirtualServiceInterface
 type FakeVirtualServices struct {
-	Fake *FakeNetworkingV1alpha3
+	Fake *FakeNetworkingV1beta1
 	ns   string
 }
 
-var virtualservicesResource = v1alpha3.SchemeGroupVersion.WithResource("virtualservices")
+var virtualservicesResource = v1beta1.SchemeGroupVersion.WithResource("virtualservices")
 
-var virtualservicesKind = v1alpha3.SchemeGroupVersion.WithKind("VirtualService")
+var virtualservicesKind = v1beta1.SchemeGroupVersion.WithKind("VirtualService")
 
 // Get takes name of the virtualService, and returns the corresponding virtualService object, and an error if there is any.
-func (c *FakeVirtualServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha3.VirtualService, err error) {
+func (c *FakeVirtualServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(virtualservicesResource, c.ns, name), &v1alpha3.VirtualService{})
+		Invokes(testing.NewGetAction(virtualservicesResource, c.ns, name), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }
 
 // List takes label and field selectors, and returns the list of VirtualServices that match those selectors.
-func (c *FakeVirtualServices) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha3.VirtualServiceList, err error) {
+func (c *FakeVirtualServices) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.VirtualServiceList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(virtualservicesResource, virtualservicesKind, c.ns, opts), &v1alpha3.VirtualServiceList{})
+		Invokes(testing.NewListAction(virtualservicesResource, virtualservicesKind, c.ns, opts), &v1beta1.VirtualServiceList{})
 
 	if obj == nil {
 		return nil, err
@@ -63,8 +63,8 @@ func (c *FakeVirtualServices) List(ctx context.Context, opts v1.ListOptions) (re
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha3.VirtualServiceList{ListMeta: obj.(*v1alpha3.VirtualServiceList).ListMeta}
-	for _, item := range obj.(*v1alpha3.VirtualServiceList).Items {
+	list := &v1beta1.VirtualServiceList{ListMeta: obj.(*v1beta1.VirtualServiceList).ListMeta}
+	for _, item := range obj.(*v1beta1.VirtualServiceList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -80,31 +80,31 @@ func (c *FakeVirtualServices) Watch(ctx context.Context, opts v1.ListOptions) (w
 }
 
 // Create takes the representation of a virtualService and creates it.  Returns the server's representation of the virtualService, and an error, if there is any.
-func (c *FakeVirtualServices) Create(ctx context.Context, virtualService *v1alpha3.VirtualService, opts v1.CreateOptions) (result *v1alpha3.VirtualService, err error) {
+func (c *FakeVirtualServices) Create(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.CreateOptions) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(virtualservicesResource, c.ns, virtualService), &v1alpha3.VirtualService{})
+		Invokes(testing.NewCreateAction(virtualservicesResource, c.ns, virtualService), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }
 
 // Update takes the representation of a virtualService and updates it. Returns the server's representation of the virtualService, and an error, if there is any.
-func (c *FakeVirtualServices) Update(ctx context.Context, virtualService *v1alpha3.VirtualService, opts v1.UpdateOptions) (result *v1alpha3.VirtualService, err error) {
+func (c *FakeVirtualServices) Update(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.UpdateOptions) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(virtualservicesResource, c.ns, virtualService), &v1alpha3.VirtualService{})
+		Invokes(testing.NewUpdateAction(virtualservicesResource, c.ns, virtualService), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }
 
 // Delete takes name of the virtualService and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(virtualservicesResource, c.ns, name, opts), &v1alpha3.VirtualService{})
+		Invokes(testing.NewDeleteActionWithOptions(virtualservicesResource, c.ns, name, opts), &v1beta1.VirtualService{})
 
 	return err
 }
@@ -113,17 +113,17 @@ func (c *FakeVirtualServices) Delete(ctx context.Context, name string, opts v1.D
 func (c *FakeVirtualServices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(virtualservicesResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &v1alpha3.VirtualServiceList{})
+	_, err := c.Fake.Invokes(action, &v1beta1.VirtualServiceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched virtualService.
-func (c *FakeVirtualServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha3.VirtualService, err error) {
+func (c *FakeVirtualServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.VirtualService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(virtualservicesResource, c.ns, name, pt, data, subresources...), &v1alpha3.VirtualService{})
+		Invokes(testing.NewPatchSubresourceAction(virtualservicesResource, c.ns, name, pt, data, subresources...), &v1beta1.VirtualService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha3.VirtualService), err
+	return obj.(*v1beta1.VirtualService), err
 }

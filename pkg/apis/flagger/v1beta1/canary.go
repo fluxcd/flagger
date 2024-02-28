@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
-	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -173,11 +173,11 @@ type CanaryService struct {
 
 	// TrafficPolicy attached to the generated Istio destination rules
 	// +optional
-	TrafficPolicy *istiov1alpha3.TrafficPolicy `json:"trafficPolicy,omitempty"`
+	TrafficPolicy *istiov1beta1.TrafficPolicy `json:"trafficPolicy,omitempty"`
 
 	// URI match conditions for the generated service
 	// +optional
-	Match []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+	Match []istiov1beta1.HTTPMatchRequest `json:"match,omitempty"`
 
 	// Rewrite HTTP URIs for the generated service
 	// +optional
@@ -185,11 +185,11 @@ type CanaryService struct {
 
 	// Retries policy for the generated virtual service
 	// +optional
-	Retries *istiov1alpha3.HTTPRetry `json:"retries,omitempty"`
+	Retries *istiov1beta1.HTTPRetry `json:"retries,omitempty"`
 
 	// Headers operations for the generated Istio virtual service
 	// +optional
-	Headers *istiov1alpha3.Headers `json:"headers,omitempty"`
+	Headers *istiov1beta1.Headers `json:"headers,omitempty"`
 
 	// Mirror specifies the destination for request mirroring.
 	// Responses from this destination are dropped.
@@ -197,7 +197,7 @@ type CanaryService struct {
 
 	// Cross-Origin Resource Sharing policy for the generated Istio virtual service
 	// +optional
-	CorsPolicy *istiov1alpha3.CorsPolicy `json:"corsPolicy,omitempty"`
+	CorsPolicy *istiov1beta1.CorsPolicy `json:"corsPolicy,omitempty"`
 
 	// Mesh name of the generated App Mesh virtual nodes and virtual service
 	// +optional
@@ -275,7 +275,7 @@ type CanaryAnalysis struct {
 
 	// A/B testing HTTP header match conditions
 	// +optional
-	Match []istiov1alpha3.HTTPMatchRequest `json:"match,omitempty"`
+	Match []istiov1beta1.HTTPMatchRequest `json:"match,omitempty"`
 
 	// SessionAffinity represents the session affinity settings for a canary run.
 	// +optional
@@ -516,10 +516,10 @@ func (r *HTTPRewrite) GetType() string {
 	return string(v1beta1.FullPathHTTPPathModifier)
 }
 
-// GetIstioRewrite returns a istiov1alpha3.HTTPRewrite object.
-func (s *CanaryService) GetIstioRewrite() *istiov1alpha3.HTTPRewrite {
+// GetIstioRewrite returns a istiov1beta1.HTTPRewrite object.
+func (s *CanaryService) GetIstioRewrite() *istiov1beta1.HTTPRewrite {
 	if s.Rewrite != nil {
-		return &istiov1alpha3.HTTPRewrite{
+		return &istiov1beta1.HTTPRewrite{
 			Authority: s.Rewrite.Authority,
 			Uri:       s.Rewrite.Uri,
 		}

@@ -36,8 +36,8 @@ import (
 	fakegatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1/fake"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	fakegloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1/fake"
-	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
-	fakenetworkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3/fake"
+	networkingv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1beta1"
+	fakenetworkingv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1beta1/fake"
 	kedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1"
 	fakekedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1/fake"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
@@ -149,9 +149,9 @@ func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
 	return &fakegloov1.FakeGlooV1{Fake: &c.Fake}
 }
 
-// NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
-func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface {
-	return &fakenetworkingv1alpha3.FakeNetworkingV1alpha3{Fake: &c.Fake}
+// NetworkingV1beta1 retrieves the NetworkingV1beta1Client
+func (c *Clientset) NetworkingV1beta1() networkingv1beta1.NetworkingV1beta1Interface {
+	return &fakenetworkingv1beta1.FakeNetworkingV1beta1{Fake: &c.Fake}
 }
 
 // KedaV1alpha1 retrieves the KedaV1alpha1Client
