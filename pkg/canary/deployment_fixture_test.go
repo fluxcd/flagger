@@ -55,7 +55,7 @@ type deploymentConfigs struct {
 }
 
 func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
-	err := d.controller.Initialize(d.canary)
+	_, err := d.controller.Initialize(d.canary)
 	require.Error(t, err) // not ready yet
 
 	primaryName := fmt.Sprintf("%s-primary", d.canary.Spec.TargetRef.Name)
@@ -73,7 +73,8 @@ func (d deploymentControllerFixture) initializeCanary(t *testing.T) {
 	_, err = d.controller.kubeClient.AppsV1().Deployments(d.canary.Namespace).Update(context.TODO(), p, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	require.NoError(t, d.controller.Initialize(d.canary))
+	_, err = d.controller.Initialize(d.canary)
+	require.NoError(t, err)
 }
 
 func newDeploymentFixture(dc deploymentConfigs) deploymentControllerFixture {

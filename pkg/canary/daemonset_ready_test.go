@@ -30,10 +30,10 @@ import (
 func TestDaemonSetController_IsReady(t *testing.T) {
 	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
 	mocks := newDaemonSetFixture(dc)
-	err := mocks.controller.Initialize(mocks.canary)
+	_, err := mocks.controller.Initialize(mocks.canary)
 	require.NoError(t, err)
 
-	err = mocks.controller.IsPrimaryReady(mocks.canary)
+	_, err = mocks.controller.IsPrimaryReady(mocks.canary)
 	require.NoError(t, err)
 
 	_, err = mocks.controller.IsCanaryReady(mocks.canary)

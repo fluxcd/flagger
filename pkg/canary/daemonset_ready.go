@@ -29,21 +29,21 @@ import (
 
 // IsPrimaryReady checks the primary daemonset status and returns an error if
 // the daemonset is in the middle of a rolling update
-func (c *DaemonSetController) IsPrimaryReady(cd *flaggerv1.Canary) error {
+func (c *DaemonSetController) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		return true, fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
-	_, err = c.isDaemonSetReady(cd, primary, cd.GetAnalysisPrimaryReadyThreshold())
+	retriable, err := c.isDaemonSetReady(cd, primary, cd.GetAnalysisPrimaryReadyThreshold())
 	if err != nil {
-		return fmt.Errorf("primary daemonset %s.%s not ready: %w", primaryName, cd.Namespace, err)
+		return retriable, fmt.Errorf("primary daemonset %s.%s not ready: %w", primaryName, cd.Namespace, err)
 	}
-	return nil
+	return true, nil
 }
 
-// IsCanaryReady checks the primary daemonset and returns an error if
+// IsCanaryReady checks the canary daemonset and returns an error if
 // the daemonset is in the middle of a rolling update
 func (c *DaemonSetController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
