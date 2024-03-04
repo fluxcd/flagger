@@ -1308,7 +1308,7 @@ The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.a
 Two new resources were added to the API: `MetricTemplate` and `AlertProvider`.
 The analysis can reference [metric templates](https://docs.flagger.app//usage/metrics#custom-metrics)
 to query Prometheus, Datadog and AWS CloudWatch.
-[Alerting](https://docs.flagger.app/v/master/usage/alerting#canary-configuration) can be configured on a per
+[Alerting](https://docs.flagger.app/v/main/usage/alerting#canary-configuration) can be configured on a per
 canary basis for Slack, MS Teams, Discord and Rocket.
 
 #### Features
@@ -1472,7 +1472,7 @@ The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.a
 Two new resources were added to the API: `MetricTemplate` and `AlertProvider`.
 The analysis can reference [metric templates](https://docs.flagger.app//usage/metrics#custom-metrics)
 to query Prometheus, Datadog and AWS CloudWatch.
-[Alerting](https://docs.flagger.app/v/master/usage/alerting#canary-configuration) can be configured on a per
+[Alerting](https://docs.flagger.app/v/main/usage/alerting#canary-configuration) can be configured on a per
 canary basis for Slack, MS Teams, Discord and Rocket.
 
 #### Features
