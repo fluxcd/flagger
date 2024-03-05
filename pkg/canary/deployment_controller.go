@@ -44,20 +44,20 @@ type DeploymentController struct {
 }
 
 // Initialize creates the primary deployment if it does not exist.
-func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
+func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (bool, error) {
 	if err := c.createPrimaryDeployment(cd, c.includeLabelPrefix); err != nil {
-		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
+		return true, fmt.Errorf("createPrimaryDeployment failed: %w", err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !cd.SkipAnalysis() {
-			if err := c.IsPrimaryReady(cd); err != nil {
-				return fmt.Errorf("%w", err)
+			if retriable, err := c.IsPrimaryReady(cd); err != nil {
+				return retriable, fmt.Errorf("%w", err)
 			}
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary

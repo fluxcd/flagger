@@ -92,21 +92,21 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 }
 
 // Initialize creates the primary DaemonSet if it does not exist.
-func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (err error) {
-	err = c.createPrimaryDaemonSet(cd, c.includeLabelPrefix)
+func (c *DaemonSetController) Initialize(cd *flaggerv1.Canary) (bool, error) {
+	err := c.createPrimaryDaemonSet(cd, c.includeLabelPrefix)
 	if err != nil {
-		return fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
+		return true, fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !cd.SkipAnalysis() {
-			if err := c.IsPrimaryReady(cd); err != nil {
-				return fmt.Errorf("%w", err)
+			if retriable, err := c.IsPrimaryReady(cd); err != nil {
+				return retriable, fmt.Errorf("%w", err)
 			}
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary

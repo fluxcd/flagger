@@ -30,23 +30,23 @@ import (
 // IsPrimaryReady checks the primary deployment status and returns an error if
 // the deployment is in the middle of a rolling update or if the pods are unhealthy
 // it will return a non retryable error if the rolling update is stuck
-func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) error {
+func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error) {
 	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
 	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		return true, fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
-	_, err = c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds(), cd.GetAnalysisPrimaryReadyThreshold())
+	retriable, err := c.isDeploymentReady(primary, cd.GetProgressDeadlineSeconds(), cd.GetAnalysisPrimaryReadyThreshold())
 	if err != nil {
-		return fmt.Errorf("%s.%s not ready: %w", primaryName, cd.Namespace, err)
+		return retriable, fmt.Errorf("%s.%s not ready: %w", primaryName, cd.Namespace, err)
 	}
 
 	if primary.Spec.Replicas == int32p(0) {
-		return fmt.Errorf("halt %s.%s advancement: primary deployment is scaled to zero",
+		return false, fmt.Errorf("halt %s.%s advancement: primary deployment is scaled to zero",
 			cd.Name, cd.Namespace)
 	}
-	return nil
+	return true, nil
 }
 
 // IsCanaryReady checks the canary deployment status and returns an error if

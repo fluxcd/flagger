@@ -124,7 +124,7 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 		configMap := newDaemonSetControllerTestConfigMap()
 		configMapProjected := newDaemonSetControllerTestConfigProjected()
 
-		err := mocks.controller.Initialize(mocks.canary)
+		_, err := mocks.controller.Initialize(mocks.canary)
 		require.NoError(t, err)
 
 		daePrimary, err := mocks.kubeClient.AppsV1().DaemonSets("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
