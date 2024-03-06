@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.36.1
+
+**Release date:** 2024-03-06
+
+This release fixes a bug where `.spec..progressDeadlineSeconds` wasn't respected and the Canary
+was stuck forever waiting for the Deployment to be ready.
+
+Furthermore, the Go dependencies have been updated.
+
+#### Improvements
+- Update Go dependencies
+  [#1607](https://github.com/fluxcd/flagger/pull/1607)
+
+#### Fixes
+- Fix broken link in readme
+  [#1599](https://github.com/fluxcd/flagger/pull/1599)
+- scheduler: fail canary according to progress deadline
+  [#1603](https://github.com/fluxcd/flagger/pull/1603)
+- Actualize link to flux in-depth guide
+  [#1606](https://github.com/fluxcd/flagger/pull/1606)
+
 ## 1.36.0
 
 **Release date:** 2024-02-07
