@@ -88,7 +88,8 @@ func TestController_runMetricChecks(t *testing.T) {
 	t.Run("customVariables", func(t *testing.T) {
 		ctrl := newDeploymentFixture(nil).ctrl
 		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
-			Name: "", TemplateVariables: map[string]string{
+			Name: "",
+			TemplateVariables: map[string]string{
 				"first":  "abc",
 				"second": "def",
 			},
@@ -132,6 +133,48 @@ func TestController_runMetricChecks(t *testing.T) {
 				Min: toFloatPtr(0),
 				Max: toFloatPtr(100),
 			},
+		}}}
+		canary := &flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
+		}
+		assert.Equal(t, true, ctrl.runMetricChecks(canary))
+	})
+
+	t.Run("no metric Template is defined, but a query is specified", func(t *testing.T) {
+		ctrl := newDeploymentFixture(nil).ctrl
+		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
+			Name: "undefined metric",
+			ThresholdRange: &flaggerv1.CanaryThresholdRange{
+				Min: toFloatPtr(0),
+				Max: toFloatPtr(100),
+			},
+			Query: ">- sum(logback_events_total{level=\"error\", job=\"some-app\"}) <= bool 0",
+		}}}
+		canary := &flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+			Spec:       flaggerv1.CanarySpec{Analysis: analysis},
+		}
+		assert.Equal(t, true, ctrl.runMetricChecks(canary))
+	})
+
+	t.Run("both have metric Template and query", func(t *testing.T) {
+		ctrl := newDeploymentFixture(nil).ctrl
+		analysis := &flaggerv1.CanaryAnalysis{Metrics: []flaggerv1.CanaryMetric{{
+			Name: "",
+			TemplateVariables: map[string]string{
+				"first":  "abc",
+				"second": "def",
+			},
+			TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
+				Name:      "custom-vars",
+				Namespace: "default",
+			},
+			ThresholdRange: &flaggerv1.CanaryThresholdRange{
+				Min: toFloatPtr(0),
+				Max: toFloatPtr(100),
+			},
+			Query: ">- sum(logback_events_total{level=\"error\", job=\"some-app\"}) <= bool 0",
 		}}}
 		canary := &flaggerv1.Canary{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "default"},

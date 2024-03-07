@@ -306,8 +306,8 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 					canary.Name, canary.Namespace, metric.Name, val, metric.Threshold)
 				return false
 			}
-		} else if metric.Name != "request-success-rate" && metric.Name != "request-duration" {
-			c.recordEventErrorf(canary, "Metric query failed for no usable metrics template were configured")
+		} else if metric.Name != "request-success-rate" && metric.Name != "request-duration" && metric.Query == "" {
+			c.recordEventErrorf(canary, "Metric query failed for no usable metrics template and query were configured")
 			return false
 		}
 	}
