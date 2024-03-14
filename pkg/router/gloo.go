@@ -275,7 +275,8 @@ func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamNa
 	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", svcName, canary.Namespace, err)
 	}
-	_, err = upstreamClient.Get(context.TODO(), upstreamName, metav1.GetOptions{})
+	curUpstream, err := upstreamClient.Get(context.TODO(), upstreamName, metav1.GetOptions{})
+
 	if errors.IsNotFound(err) {
 		glooUpstreamWithConfig, err := gr.getGlooConfigUpstream(canary)
 		if err != nil {
@@ -288,7 +289,37 @@ func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamNa
 		}
 	} else if err != nil {
 		return fmt.Errorf("upstream %s.%s get query error: %w", upstreamName, canary.Namespace, err)
+	} else {
+		return gr.syncUpstreamSpec(curUpstream, canary)
 	}
+	return nil
+}
+
+func (gr *GlooRouter) syncUpstreamSpec(curUpstream *gloov1.Upstream, canary *flaggerv1.Canary) error {
+	glooUpstreamWithConfig, err := gr.getGlooConfigUpstream(canary)
+	if err != nil {
+		return err
+	}
+
+	if glooUpstreamWithConfig == nil {
+		return nil
+	}
+
+	glooUpstreamLB := glooUpstreamWithConfig.Spec.LoadBalancerConfig
+	loadBalancerDiff := cmp.Diff(glooUpstreamLB, curUpstream.Spec.LoadBalancerConfig)
+
+	if loadBalancerDiff != "" {
+		gr.logger.Debugf("detect diff in upstream spec %s.%s %s", curUpstream.Name, canary.Namespace, loadBalancerDiff)
+
+		cloneUpstream := curUpstream.DeepCopy()
+		cloneUpstream.Spec.LoadBalancerConfig = glooUpstreamLB
+
+		_, err = gr.glooClient.GlooV1().Upstreams(canary.Namespace).Update(context.TODO(), cloneUpstream, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("upstream %s.%s spec update error: %w", curUpstream.Name, canary.Namespace, err)
+		}
+	}
+
 	return nil
 }
 

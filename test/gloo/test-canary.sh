@@ -117,6 +117,47 @@ done
 
 echo '✔ Canary initialization test passed'
 
+echo '>>> Waiting for primary spec to be updated'
+
+# Update gloo upstream on slow start config which will trigger update on flagger upstreams
+cat <<EOF | kubectl apply -f -
+apiVersion: gloo.solo.io/v1
+kind: Upstream
+metadata:
+  name: config-upstream
+  namespace: gloo-system
+spec:
+  static:
+    hosts:
+    - addr: "example.com"
+      port: 80
+  connectionConfig:
+    connectTimeout: 2s
+    maxRequestsPerConnection: 51
+  loadBalancerConfig:
+    roundRobin:
+      slowStartConfig:
+        slowStartWindow: 2m
+        minWeightPercent: 20
+EOF
+
+retries=50
+count=0
+ok=false
+until ${ok}; do
+    kubectl -n test get upstream/test-podinfo-canaryupstream-80 -ojson | jq '.spec.loadBalancerConfig.roundRobin.slowStartConfig.minWeightPercent' | grep '20' && ok=true || ok=false
+    
+    sleep 5
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n gloo-system logs deployment/flagger
+        echo "No more retries left"
+        exit 1
+    fi
+done
+
+echo '✔ Canary reconcilation test passed'
+
 echo '>>> Triggering canary deployment'
 kubectl -n test set image deployment/podinfo podinfod=ghcr.io/stefanprodan/podinfo:6.0.1
 
