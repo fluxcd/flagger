@@ -668,3 +668,68 @@ Reference the template in the canary analysis:
           max: 1000
         interval: 1m
 ```
+
+## AppDynamicsCloud
+
+You can create custom metric checks using the AppDynamicsCloud provider.
+
+Create a secret with your AppDynamicsCloud service principal credential:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: appdynamicscloud-secret
+  namespace: istio-system
+data:
+  appdcloud_client_secret_id: your-appdcloud-service-principal-id
+  appdcloud_client_secret_key: your-appdcloud-service-principal-key
+```
+
+AppDynamics metric template examples:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: error-rate   
+  namespace: istio-system
+spec:
+  provider:
+    type: appdynamicscloud
+    address: https://tenant_name.observe.appdynamics.com
+    secretRef:
+      name: appdynamicscloud-secret
+  query: |
+    fetch epm: metrics(apm:errors_min) {timestamp, value} from entities(apm:service)[attributes(service.name) = '{{ target }}_backend'] since -10m
+```
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: response-time   
+  namespace: istio-system
+spec:
+  provider:
+    type: appdynamicscloud
+    address: https://tenant_name.observe.appdynamics.com
+    secretRef:
+      name: appdynamicscloud-secret
+  query: |
+    fetch art: metrics(apm:response_time) {timestamp, value} from entities(apm:service)[attributes(service.namespace) = '{{ namespace }}' && attributes(service.name) = '{{ target }}'] since -10m
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "error-rate"
+        templateRef:
+          name: error-rate
+          namespace: istio-system
+        thresholdRange:
+          max: 1
+        interval: 1m
+```
