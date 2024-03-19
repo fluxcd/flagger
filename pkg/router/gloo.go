@@ -18,6 +18,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -30,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -311,12 +313,17 @@ func (gr *GlooRouter) syncUpstreamSpec(curUpstream *gloov1.Upstream, canary *fla
 	if loadBalancerDiff != "" {
 		gr.logger.Debugf("detect diff in upstream spec %s.%s %s", curUpstream.Name, canary.Namespace, loadBalancerDiff)
 
-		cloneUpstream := curUpstream.DeepCopy()
-		cloneUpstream.Spec.LoadBalancerConfig = glooUpstreamLB
-
-		_, err = gr.glooClient.GlooV1().Upstreams(canary.Namespace).Update(context.TODO(), cloneUpstream, metav1.UpdateOptions{})
+		patchUpstream := gloov1.Upstream{}
+		patchUpstream.Spec = gloov1.UpstreamSpec{}
+		patchUpstream.Spec.LoadBalancerConfig = glooUpstreamLB
+		patchBytes, err := json.Marshal(patchUpstream)
 		if err != nil {
-			return fmt.Errorf("upstream %s.%s spec update error: %w", curUpstream.Name, canary.Namespace, err)
+			return fmt.Errorf("unable to marshal patch upstream from %s.%s with error: %w", glooUpstreamWithConfig.Name, glooUpstreamWithConfig.Namespace, err)
+		}
+
+		_, err = gr.glooClient.GlooV1().Upstreams(canary.Namespace).Patch(context.TODO(), curUpstream.Name, types.MergePatchType, patchBytes, metav1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("upstream %s.%s spec patch error: %w", curUpstream.Name, canary.Namespace, err)
 		}
 	}
 

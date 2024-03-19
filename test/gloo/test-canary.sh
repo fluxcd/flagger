@@ -120,26 +120,7 @@ echo '✔ Canary initialization test passed'
 echo '>>> Waiting for primary spec to be updated'
 
 # Update gloo upstream on slow start config which will trigger update on flagger upstreams
-cat <<EOF | kubectl apply -f -
-apiVersion: gloo.solo.io/v1
-kind: Upstream
-metadata:
-  name: config-upstream
-  namespace: gloo-system
-spec:
-  static:
-    hosts:
-    - addr: "example.com"
-      port: 80
-  connectionConfig:
-    connectTimeout: 2s
-    maxRequestsPerConnection: 51
-  loadBalancerConfig:
-    roundRobin:
-      slowStartConfig:
-        slowStartWindow: 2m
-        minWeightPercent: 20
-EOF
+kubectl -n gloo-system patch upstream config-upstream --type json --patch='[ { "op": "replace", "path": "/spec/loadBalancerConfig/roundRobin/slowStartConfig/minWeightPercent", "value": 20 } ]'
 
 retries=50
 count=0
