@@ -36,7 +36,7 @@ type MetricTemplate struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   MetricTemplateSpec   `json:"spec"`
-	Status MetricTemplateStatus `json:"status"`
+	Status MetricTemplateStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

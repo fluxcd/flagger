@@ -34,7 +34,7 @@ type AlertProvider struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   AlertProviderSpec   `json:"spec"`
-	Status AlertProviderStatus `json:"status"`
+	Status AlertProviderStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
