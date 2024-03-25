@@ -46,7 +46,7 @@ type Canary struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   CanarySpec   `json:"spec"`
-	Status CanaryStatus `json:"status"`
+	Status CanaryStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
