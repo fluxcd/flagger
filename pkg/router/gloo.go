@@ -18,6 +18,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -30,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -275,7 +277,8 @@ func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamNa
 	if err != nil {
 		return fmt.Errorf("service %s.%s get query error: %w", svcName, canary.Namespace, err)
 	}
-	_, err = upstreamClient.Get(context.TODO(), upstreamName, metav1.GetOptions{})
+	curUpstream, err := upstreamClient.Get(context.TODO(), upstreamName, metav1.GetOptions{})
+
 	if errors.IsNotFound(err) {
 		glooUpstreamWithConfig, err := gr.getGlooConfigUpstream(canary)
 		if err != nil {
@@ -288,7 +291,42 @@ func (gr *GlooRouter) createFlaggerUpstream(canary *flaggerv1.Canary, upstreamNa
 		}
 	} else if err != nil {
 		return fmt.Errorf("upstream %s.%s get query error: %w", upstreamName, canary.Namespace, err)
+	} else {
+		return gr.syncUpstreamSpec(curUpstream, canary)
 	}
+	return nil
+}
+
+func (gr *GlooRouter) syncUpstreamSpec(curUpstream *gloov1.Upstream, canary *flaggerv1.Canary) error {
+	glooUpstreamWithConfig, err := gr.getGlooConfigUpstream(canary)
+	if err != nil {
+		return err
+	}
+
+	if glooUpstreamWithConfig == nil {
+		return nil
+	}
+
+	glooUpstreamLB := glooUpstreamWithConfig.Spec.LoadBalancerConfig
+	loadBalancerDiff := cmp.Diff(glooUpstreamLB, curUpstream.Spec.LoadBalancerConfig)
+
+	if loadBalancerDiff != "" {
+		gr.logger.Debugf("detect diff in upstream spec %s.%s %s", curUpstream.Name, canary.Namespace, loadBalancerDiff)
+
+		patchUpstream := gloov1.Upstream{}
+		patchUpstream.Spec = gloov1.UpstreamSpec{}
+		patchUpstream.Spec.LoadBalancerConfig = glooUpstreamLB
+		patchBytes, err := json.Marshal(patchUpstream)
+		if err != nil {
+			return fmt.Errorf("unable to marshal patch upstream from %s.%s with error: %w", glooUpstreamWithConfig.Name, glooUpstreamWithConfig.Namespace, err)
+		}
+
+		_, err = gr.glooClient.GlooV1().Upstreams(canary.Namespace).Patch(context.TODO(), curUpstream.Name, types.MergePatchType, patchBytes, metav1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("upstream %s.%s spec patch error: %w", curUpstream.Name, canary.Namespace, err)
+		}
+	}
+
 	return nil
 }
 
