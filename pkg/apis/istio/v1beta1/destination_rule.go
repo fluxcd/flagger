@@ -1,5 +1,5 @@
-// proto: https://github.com/istio/api/blob/master/networking/v1alpha3/destination_rule.pb.go
-package v1alpha3
+// proto: https://github.com/istio/api/blob/master/networking/v1beta1/destination_rule.pb.go
+package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +21,7 @@ type DestinationRule struct {
 // balancing pool. For example, a simple load balancing policy for the
 // ratings service would look as follows:
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -40,7 +40,7 @@ type DestinationRule struct {
 // going to a subset named testversion that is composed of endpoints (e.g.,
 // pods) with labels (version:v3).
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -68,7 +68,7 @@ type DestinationRule struct {
 // traffic to port 80, while uses a round robin load balancing setting for
 // traffic to the port 9080.
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -172,7 +172,7 @@ type PortTrafficPolicy struct {
 // subset named testversion that is composed of endpoints (e.g., pods) with
 // labels (version:v3).
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -218,7 +218,7 @@ type Subset struct {
 // For example, the following rule uses a round robin load balancing policy
 // for all traffic going to the ratings service.
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -235,7 +235,7 @@ type Subset struct {
 // hashing-based load balancer for the same ratings service using the
 // the User cookie as the hash key.
 //
-//	apiVersion: networking.istio.io/v1alpha3
+//	apiVersion: networking.istio.io/v1beta1
 //	kind: DestinationRule
 //	metadata:
 //	  name: bookinfo-ratings
@@ -486,7 +486,7 @@ type HTTPCookie struct {
 // For example, the following rule sets a limit of 100 connections to redis
 // service called myredissrv with a connect timeout of 30ms
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -563,7 +563,7 @@ type HTTPSettings struct {
 // scanned every 5 mins, such that any host that fails 7 consecutive times
 // with 5XX error code will be ejected for 15 minutes.
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -652,7 +652,7 @@ type OutlierDetection struct {
 // For example, the following rule configures a client to use mutual TLS
 // for connections to upstream database cluster.
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -671,7 +671,7 @@ type OutlierDetection struct {
 // The following rule configures a client to use TLS when talking to a
 // foreign service whose domain matches *.foo.com.
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -687,7 +687,7 @@ type OutlierDetection struct {
 // The following rule configures a client to use Istio mutual TLS when talking
 // to rating services.
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //

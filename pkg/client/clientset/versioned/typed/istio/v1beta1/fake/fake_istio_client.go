@@ -19,26 +19,26 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	v1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1beta1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeNetworkingV1alpha3 struct {
+type FakeNetworkingV1beta1 struct {
 	*testing.Fake
 }
 
-func (c *FakeNetworkingV1alpha3) DestinationRules(namespace string) v1alpha3.DestinationRuleInterface {
+func (c *FakeNetworkingV1beta1) DestinationRules(namespace string) v1beta1.DestinationRuleInterface {
 	return &FakeDestinationRules{c, namespace}
 }
 
-func (c *FakeNetworkingV1alpha3) VirtualServices(namespace string) v1alpha3.VirtualServiceInterface {
+func (c *FakeNetworkingV1beta1) VirtualServices(namespace string) v1beta1.VirtualServiceInterface {
 	return &FakeVirtualServices{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeNetworkingV1alpha3) RESTClient() rest.Interface {
+func (c *FakeNetworkingV1beta1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

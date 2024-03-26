@@ -600,7 +600,7 @@ spec:
 For the above spec Flagger will generate the following virtual service:
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: frontend
@@ -653,7 +653,7 @@ spec:
 For each destination in the virtual service a rule is generated:
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: frontend-primary
@@ -664,7 +664,7 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: frontend-canary
@@ -751,7 +751,7 @@ spec:
 Based on the above spec, Flagger will create the following virtual service:
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: backend
@@ -777,7 +777,7 @@ spec:
 Therefore, the following virtual service forwards the traffic to `/podinfo` by the above delegate VirtualService.
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: frontend

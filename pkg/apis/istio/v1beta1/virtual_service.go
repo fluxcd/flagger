@@ -1,5 +1,5 @@
-// proto: https://github.com/istio/api/blob/master/networking/v1alpha3/virtual_service.proto
-package v1alpha3
+// proto: https://github.com/istio/api/blob/master/networking/v1beta1/virtual_service.proto
+package v1beta1
 
 import (
 	"github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
@@ -31,7 +31,7 @@ type VirtualService struct {
 // be rewritten to /newcatalog and sent to pods with label "version: v2".
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: VirtualService
 // metadata:
 //
@@ -65,7 +65,7 @@ type VirtualService struct {
 // `DestinationRule`.
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -156,7 +156,7 @@ type VirtualServiceSpec struct {
 // some to subset v2, in a kubernetes environment.
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: VirtualService
 // metadata:
 //
@@ -189,7 +189,7 @@ type VirtualServiceSpec struct {
 // # And the associated DestinationRule
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: DestinationRule
 // metadata:
 //
@@ -220,7 +220,7 @@ type VirtualServiceSpec struct {
 // not have an impact in resolving the name of the productpage service.
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: VirtualService
 // metadata:
 //
@@ -246,7 +246,7 @@ type VirtualServiceSpec struct {
 // Service for wikipedia.org and set a timeout of 5s for http requests.
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: ServiceEntry
 // metadata:
 //
@@ -263,7 +263,7 @@ type VirtualServiceSpec struct {
 //	  protocol: HTTP
 //	resolution: DNS
 //
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: VirtualService
 // metadata:
 //
@@ -403,7 +403,7 @@ type HeaderOperations struct {
 // starts with /ratings/v2/ and the request contains a "cookie" with value
 // "user=jason".
 //
-//	apiVersion: networking.istio.io/v1alpha3
+//	apiVersion: networking.istio.io/v1beta1
 //	kind: VirtualService
 //	metadata:
 //	  name: ratings-route
@@ -565,7 +565,7 @@ type PortSelector struct {
 // server on port 5555.
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: VirtualService
 // metadata:
 //
@@ -636,7 +636,7 @@ type L4MatchAttributes struct {
 // requests for /v1/getProductRatings API on the ratings service to
 // /v1/bookRatings provided by the bookratings service.
 //
-//	apiVersion: networking.istio.io/v1alpha3
+//	apiVersion: networking.istio.io/v1beta1
 //	kind: VirtualService
 //	metadata:
 //	  name: ratings-route
@@ -668,7 +668,7 @@ type HTTPRedirect struct {
 // demonstrates how to rewrite the URL prefix for api call (/ratings) to
 // ratings service before making the actual API call.
 //
-//	apiVersion: networking.istio.io/v1alpha3
+//	apiVersion: networking.istio.io/v1beta1
 //	kind: VirtualService
 //	metadata:
 //	  name: ratings-route
@@ -700,7 +700,7 @@ type HTTPRewrite struct {
 // calling ratings:v1 service, with a 2s timeout per retry attempt.
 //
 // ```yaml
-// apiVersion: networking.istio.io/v1alpha3
+// apiVersion: networking.istio.io/v1beta1
 // kind: VirtualService
 // metadata:
 //
@@ -747,7 +747,7 @@ type HTTPRetry struct {
 // Access-Control-Allow-Credentials header to false. In addition, it only
 // exposes X-Foo-bar header and sets an expiry period of 1 day.
 //
-//	apiVersion: networking.istio.io/v1alpha3
+//	apiVersion: networking.istio.io/v1beta1
 //	kind: VirtualService
 //	metadata:
 //	  name: ratings-route
@@ -826,7 +826,7 @@ type HTTPFaultInjection struct {
 // in 10% of the requests to the "v1" version of the "reviews"
 // service from all pods with label env: prod
 //
-//	apiVersion: networking.istio.io/v1alpha3
+//	apiVersion: networking.istio.io/v1beta1
 //	kind: VirtualService
 //	metadata:
 //	  name: reviews-route
@@ -868,7 +868,7 @@ type InjectDelay struct {
 // pre-specified error code. The following example will return an HTTP
 // 400 error code for 10% of the requests to the "ratings" service "v1".
 //
-//	apiVersion: networking.istio.io/v1alpha3
+//	apiVersion: networking.istio.io/v1beta1
 //	kind: VirtualService
 //	metadata:
 //	  name: ratings-route

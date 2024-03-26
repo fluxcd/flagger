@@ -30,7 +30,7 @@ import (
 	gatewayapiv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1"
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
-	networkingv1alpha3 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1alpha3"
+	networkingv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1beta1"
 	kedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/projectcontour/v1"
@@ -53,7 +53,7 @@ type Interface interface {
 	GatewayapiV1beta1() gatewayapiv1beta1.GatewayapiV1beta1Interface
 	GatewayapiV1() gatewayapiv1.GatewayapiV1Interface
 	GlooV1() gloov1.GlooV1Interface
-	NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface
+	NetworkingV1beta1() networkingv1beta1.NetworkingV1beta1Interface
 	KedaV1alpha1() kedav1alpha1.KedaV1alpha1Interface
 	KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface
 	ProjectcontourV1() projectcontourv1.ProjectcontourV1Interface
@@ -66,22 +66,22 @@ type Interface interface {
 // Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	apisixV2           *apisixv2.ApisixV2Client
-	appmeshV1beta2     *appmeshv1beta2.AppmeshV1beta2Client
-	appmeshV1beta1     *appmeshv1beta1.AppmeshV1beta1Client
-	flaggerV1beta1     *flaggerv1beta1.FlaggerV1beta1Client
-	gatewayV1          *gatewayv1.GatewayV1Client
-	gatewayapiV1beta1  *gatewayapiv1beta1.GatewayapiV1beta1Client
-	gatewayapiV1       *gatewayapiv1.GatewayapiV1Client
-	glooV1             *gloov1.GlooV1Client
-	networkingV1alpha3 *networkingv1alpha3.NetworkingV1alpha3Client
-	kedaV1alpha1       *kedav1alpha1.KedaV1alpha1Client
-	kumaV1alpha1       *kumav1alpha1.KumaV1alpha1Client
-	projectcontourV1   *projectcontourv1.ProjectcontourV1Client
-	splitV1alpha1      *splitv1alpha1.SplitV1alpha1Client
-	splitV1alpha2      *splitv1alpha2.SplitV1alpha2Client
-	splitV1alpha3      *splitv1alpha3.SplitV1alpha3Client
-	traefikV1alpha1    *traefikv1alpha1.TraefikV1alpha1Client
+	apisixV2          *apisixv2.ApisixV2Client
+	appmeshV1beta2    *appmeshv1beta2.AppmeshV1beta2Client
+	appmeshV1beta1    *appmeshv1beta1.AppmeshV1beta1Client
+	flaggerV1beta1    *flaggerv1beta1.FlaggerV1beta1Client
+	gatewayV1         *gatewayv1.GatewayV1Client
+	gatewayapiV1beta1 *gatewayapiv1beta1.GatewayapiV1beta1Client
+	gatewayapiV1      *gatewayapiv1.GatewayapiV1Client
+	glooV1            *gloov1.GlooV1Client
+	networkingV1beta1 *networkingv1beta1.NetworkingV1beta1Client
+	kedaV1alpha1      *kedav1alpha1.KedaV1alpha1Client
+	kumaV1alpha1      *kumav1alpha1.KumaV1alpha1Client
+	projectcontourV1  *projectcontourv1.ProjectcontourV1Client
+	splitV1alpha1     *splitv1alpha1.SplitV1alpha1Client
+	splitV1alpha2     *splitv1alpha2.SplitV1alpha2Client
+	splitV1alpha3     *splitv1alpha3.SplitV1alpha3Client
+	traefikV1alpha1   *traefikv1alpha1.TraefikV1alpha1Client
 }
 
 // ApisixV2 retrieves the ApisixV2Client
@@ -124,9 +124,9 @@ func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
 	return c.glooV1
 }
 
-// NetworkingV1alpha3 retrieves the NetworkingV1alpha3Client
-func (c *Clientset) NetworkingV1alpha3() networkingv1alpha3.NetworkingV1alpha3Interface {
-	return c.networkingV1alpha3
+// NetworkingV1beta1 retrieves the NetworkingV1beta1Client
+func (c *Clientset) NetworkingV1beta1() networkingv1beta1.NetworkingV1beta1Interface {
+	return c.networkingV1beta1
 }
 
 // KedaV1alpha1 retrieves the KedaV1alpha1Client
@@ -240,7 +240,7 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
-	cs.networkingV1alpha3, err = networkingv1alpha3.NewForConfigAndClient(&configShallowCopy, httpClient)
+	cs.networkingV1beta1, err = networkingv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func New(c rest.Interface) *Clientset {
 	cs.gatewayapiV1beta1 = gatewayapiv1beta1.New(c)
 	cs.gatewayapiV1 = gatewayapiv1.New(c)
 	cs.glooV1 = gloov1.New(c)
-	cs.networkingV1alpha3 = networkingv1alpha3.New(c)
+	cs.networkingV1beta1 = networkingv1beta1.New(c)
 	cs.kedaV1alpha1 = kedav1alpha1.New(c)
 	cs.kumaV1alpha1 = kumav1alpha1.New(c)
 	cs.projectcontourV1 = projectcontourv1.New(c)

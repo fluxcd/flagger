@@ -24,7 +24,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
-	"github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -493,7 +493,7 @@ func (gwr *GatewayAPIV1Beta1Router) getSessionAffinityRouteRules(canary *flagger
 	return []v1beta1.HTTPRouteRule{stickyRouteRule, *weightedRouteRule}, nil
 }
 
-func (gwr *GatewayAPIV1Beta1Router) mapRouteMatches(requestMatches []v1alpha3.HTTPMatchRequest) ([]v1beta1.HTTPRouteMatch, error) {
+func (gwr *GatewayAPIV1Beta1Router) mapRouteMatches(requestMatches []istiov1beta1.HTTPMatchRequest) ([]v1beta1.HTTPRouteMatch, error) {
 	matches := []v1beta1.HTTPRouteMatch{}
 
 	for _, requestMatch := range requestMatches {

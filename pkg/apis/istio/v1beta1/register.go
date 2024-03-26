@@ -1,4 +1,4 @@
-package v1alpha3
+package v1beta1
 
 import (
 	"github.com/fluxcd/flagger/pkg/apis/istio"
@@ -8,7 +8,7 @@ import (
 )
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: istio.GroupName, Version: "v1alpha3"}
+var SchemeGroupVersion = schema.GroupVersion{Group: istio.GroupName, Version: "v1beta1"}
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind
 func Kind(kind string) schema.GroupKind {
