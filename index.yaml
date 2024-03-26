@@ -3,9 +3,9 @@ entries:
   flagger:
   - apiVersion: v1
     appVersion: 1.37.0
-    created: "2024-03-26T13:01:02.58028277Z"
+    created: "2024-03-26T13:44:54.788882266Z"
     description: Flagger is a progressive delivery operator for Kubernetes
-    digest: 91c3eab70bf2482e7f06b245162728a22c74a3fce9ea0b0c2727e8ed9c2290d7
+    digest: 0c030be6ab4de80be9f43d29de5daa8cf030f98b35f334901b88a76fe2906768
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
     keywords:
@@ -2635,9 +2635,9 @@ entries:
   grafana:
   - apiVersion: v1
     appVersion: 7.2.0
-    created: "2024-03-26T13:01:02.580760872Z"
+    created: "2024-03-26T13:44:54.789390225Z"
     description: Grafana dashboards for monitoring Flagger canary deployments
-    digest: ac797def9456ab5165f5c82e276acc75058dd44e53745264572757b561dca734
+    digest: cc52ab5090ccac48f4899ce3a996cbdbe36c5eecb87b79ddb72d3065468fd34e
     home: https://flagger.app
     icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
     keywords:
@@ -2819,10 +2819,10 @@ entries:
   loadtester:
   - apiVersion: v1
     appVersion: 0.32.0
-    created: "2024-03-26T13:01:02.581251467Z"
+    created: "2024-03-26T13:44:54.789905708Z"
     description: Flagger's load testing services based on rakyll/hey and bojand/ghz
       that generates traffic during canary analysis when configured as a webhook.
-    digest: 09e22bca531509aac7ee27d45d9601b5857ec624fcd755c2e56ab6f10c72b36c
+    digest: b884c4ed500737476f909a3bcb1cc1fb4ac1bb465e0f273cbd5c5b220227e519
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
     keywords:
@@ -3722,9 +3722,9 @@ entries:
   podinfo:
   - apiVersion: v1
     appVersion: 6.1.3
-    created: "2024-03-26T13:01:02.581688192Z"
+    created: "2024-03-26T13:44:54.790502994Z"
     description: Flagger canary deployment demo application
-    digest: 39d1e823186ddc231e21eba1155c1ff0dda04f025612799fbf225b2b30704fae
+    digest: 578b1d2dd400b3c2a36ab26380ca83e9103ab270dd27a46fe53401ceb3290b04
     home: https://docs.flagger.app
     icon: https://raw.githubusercontent.com/fluxcd/flagger/main/docs/logo/flagger-icon.png
     maintainers:
@@ -3771,4 +3771,4 @@ entries:
     urls:
     - https://flagger.app/podinfo-5.0.0.tgz
     version: 5.0.0
-generated: "2024-03-26T13:01:02.578861554Z"
+generated: "2024-03-26T13:44:54.787512537Z"
