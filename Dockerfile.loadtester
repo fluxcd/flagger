@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine as builder
+FROM golang:1.22-alpine as builder
 
 ARG TARGETPLATFORM
 ARG TARGETARCH
@@ -6,7 +6,7 @@ ARG REVISION
 
 RUN apk --no-cache add alpine-sdk perl curl bash tar
 
-RUN HELM3_VERSION=3.12.0 && \
+RUN HELM3_VERSION=3.14.3 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
 chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
