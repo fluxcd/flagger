@@ -2,6 +2,32 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.37.0
+
+**Release date:** 2024-03-26
+
+This release updates the Istio APIs to `v1beta1` and fixes several issues related
+to Gloo routing and custom metrics.
+
+Both Flagger and the load tester Go dependencies have been updated to fix various CVEs.
+Flagger and the load tester are now built with Go 1.22.
+
+#### Improvements
+- Migrate Istio VirtualService/DestinationRule APIs to `v1beta1`
+  [#1602](https://github.com/fluxcd/flagger/pull/1602)
+- Add `omitempty` to CRD statuses to allow better marshalling
+  [#1621](https://github.com/fluxcd/flagger/pull/1621)
+- Update dependencies (Go 1.22)
+  [#1622](https://github.com/fluxcd/flagger/pull/1622)
+- Update `google.golang.org/protobuf` to v1.33.0
+  [#1614](https://github.com/fluxcd/flagger/pull/1614)
+
+#### Fixes
+- Update reconciler to detect change in Gloo upstream spec
+  [#1617](https://github.com/fluxcd/flagger/pull/1617)
+- Fix regression bug where query with no metric template returned an error
+  [#1611](https://github.com/fluxcd/flagger/pull/1611)
+
 ## 1.36.1
 
 **Release date:** 2024-03-06
