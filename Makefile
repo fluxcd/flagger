@@ -6,7 +6,7 @@ build:
 	CGO_ENABLED=0 go build -a -o ./bin/flagger ./cmd/flagger
 
 tidy:
-	rm -f go.sum; go mod tidy -compat=1.21
+	rm -f go.sum; go mod tidy -compat=1.22
 
 vet:
 	go vet ./...
