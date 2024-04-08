@@ -1298,6 +1298,7 @@ spec:
                         - newrelic
                         - graphite
                         - dynatrace
+                        - keptn
                     address:
                       description: API address of this provider
                       type: string
