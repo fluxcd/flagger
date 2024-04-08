@@ -668,3 +668,65 @@ Reference the template in the canary analysis:
           max: 1000
         interval: 1m
 ```
+
+## Keptn
+
+You can create custom metric checks using the Keptn provider.
+This Provider allows to verify either the value of a single [KeptnMetric](https://keptn.sh/stable/docs/reference/crd-reference/metric/),
+representing the value of a single metric,
+or of a [Keptn Analysis](https://keptn.sh/stable/docs/reference/crd-reference/analysis/),
+which provides a flexible grading logic for analysing and prioritising a number of different
+metric values coming from different data sources.
+
+This provider requires [Keptn](https://keptn.sh/stable/docs/installation/) to be installed in the cluster.
+
+Example for a Keptn metric template:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: response-time
+  namespace: istio-system
+spec:
+  provider:
+    type: keptn
+  query: keptnmetric/my-namespace/response-time/2m/reporter=destination
+```
+
+This will reference the `KeptnMetric` with the name `response-time` in
+the namespace `my-namespace`, which could look like the following:
+
+```yaml
+apiVersion: metrics.keptn.sh/v1beta1
+kind: KeptnMetric
+metadata:
+  name: response-time
+  namespace: my-namespace
+spec:
+  fetchIntervalSeconds: 10
+  provider:
+    name: my-prometheus-keptn-provider
+  query: histogram_quantile(0.8, sum by(le) (rate(http_server_request_latency_seconds_bucket{status_code='200',
+    job='simple-go-backend'}[5m[])))
+```
+
+The `query` contains the following components, which are divided by `/` characters:
+
+```
+<type>/<namespace>/<resource-name>/<timeframe>/<arguments>
+```
+
+* **type (required)**: Must be either `keptnmetric` or `analysis`.
+* **namespace (required)**: The namespace of the referenced `KeptnMetric`/`AnalysisDefinition`.
+* **resource-name (required):** The name of the referenced `KeptnMetric`/`AnalysisDefinition`.
+* **timeframe (optional)**: The timeframe used for the Analysis.
+This will usually be set to the same value as the analysis interval of a `Canary`.
+Only relevant if the `type` is set to `analysis`.
+* **arguments (optional)**: Arguments to be passed to an `Analysis`.
+Arguments are passed as a list of key value pairs, separated by `;` characters,
+e.g. `foo=bar;bar=foo`. 
+Only relevant if the `type` is set to `analysis`.
+
+For the type `analysis`, the value returned by the provider is either `0`
+(if the analysis failed), or `1` (analysis passed).

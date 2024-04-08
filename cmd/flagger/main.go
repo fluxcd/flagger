@@ -253,6 +253,7 @@ func main() {
 		fromEnv("EVENT_WEBHOOK_URL", eventWebhook),
 		clusterName,
 		noCrossNamespaceRefs,
+		cfg,
 	)
 
 	// leader election context
