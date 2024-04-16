@@ -10,6 +10,7 @@ To release a new Flagger version (e.g. `2.0.0`) follow these steps:
 
 * create a branch `git checkout -b release-2.0.0`
 * set the version in code and manifests `TAG=2.0.0 make version-set`
+  * (if running from Mac OS, modify the makefile -> `sed -i '' 's/foo/bar/' file  # Note the '' as a *separate argument*`)
 * commit changes and merge PR
 * checkout main `git checkout main && git pull`
 * tag main `make release`
