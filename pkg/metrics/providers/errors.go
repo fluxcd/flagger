@@ -19,5 +19,6 @@ package providers
 import "errors"
 
 var (
-	ErrNoValuesFound = errors.New("no values found")
+	ErrNoValuesFound          = errors.New("no values found")
+	ErrMultipleValuesReturned = errors.New("query returned multiple values")
 )

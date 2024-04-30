@@ -180,6 +180,39 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 		})
 	}
 
+	multipleResultTests := []struct {
+		name        string
+		queryResult string
+	}{
+		{name: "values instead of value", queryResult: `{"status": "success","data": {"resultType": "matrix","result": [{"metric": {"__name__": "processTime_seconds:avg"},"values": [[1714404069.294,"NaN"],[1714404071.3,"NaN"],[1714404099.294,"NaN"],[1714404101.3,"NaN"]]},{"metric": {"__name__": "processTime_seconds:avg"},"values": [[1714404069.294,"NaN"],[1714404071.3,"NaN"],[1714404099.294,"NaN"],[1714404101.3,"NaN"]]}]}}`},
+	}
+
+	for _, tt := range multipleResultTests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				json := tt.queryResult
+				w.Write([]byte(json))
+			}))
+			defer ts.Close()
+
+			clients := prometheusFake()
+
+			template, err := clients.flaggerClient.FlaggerV1beta1().
+				MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+			require.NoError(t, err)
+			template.Spec.Provider.Address = ts.URL
+
+			secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
+			require.NoError(t, err)
+
+			_, err = prom.RunQuery(template.Spec.Query)
+			require.True(t, errors.Is(err, ErrMultipleValuesReturned))
+		})
+	}
+
 }
 
 func TestPrometheusProvider_RunQueryWithBearerAuth(t *testing.T) {
