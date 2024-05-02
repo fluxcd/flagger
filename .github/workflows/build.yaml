@@ -31,7 +31,7 @@ jobs:
           go mod download
           go install golang.org/x/tools/cmd/goimports
       - name: Run linters
-        run: make test-fmt test-codegen
+        run: make fmt test-codegen
       - name: Verify CRDs
         run: make verify-crd
       - name: Run tests
