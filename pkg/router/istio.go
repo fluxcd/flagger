@@ -217,7 +217,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 					Retries:    canary.Spec.Service.Retries,
 					CorsPolicy: canary.Spec.Service.CorsPolicy,
 					Headers:    canary.Spec.Service.Headers,
-					Fault:		canary.Spec.Service.Fault,
+					Fault:      canary.Spec.Service.Fault,
 					Route:      canaryRoute,
 				},
 			},
@@ -246,7 +246,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Fault:		canary.Spec.Service.Fault,
+				Fault:      canary.Spec.Service.Fault,
 				Route:      canaryRoute,
 			},
 			{
@@ -256,7 +256,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Fault:		canary.Spec.Service.Fault,
+				Fault:      canary.Spec.Service.Fault,
 				Route: []istiov1beta1.HTTPRouteDestination{
 					makeDestination(canary, primaryName, 100),
 				},
@@ -507,7 +507,7 @@ func (ir *IstioRouter) SetRoutes(
 		Retries:    canary.Spec.Service.Retries,
 		CorsPolicy: canary.Spec.Service.CorsPolicy,
 		Headers:    canary.Spec.Service.Headers,
-		Fault:		canary.Spec.Service.Fault,
+		Fault:      canary.Spec.Service.Fault,
 		Route: []istiov1beta1.HTTPRouteDestination{
 			makeDestination(canary, primaryName, primaryWeight),
 			makeDestination(canary, canaryName, canaryWeight),
@@ -623,7 +623,7 @@ func (ir *IstioRouter) SetRoutes(
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Fault:		canary.Spec.Service.Fault,
+				Fault:      canary.Spec.Service.Fault,
 				Route: []istiov1beta1.HTTPRouteDestination{
 					makeDestination(canary, primaryName, primaryWeight),
 					makeDestination(canary, canaryName, canaryWeight),
@@ -636,7 +636,7 @@ func (ir *IstioRouter) SetRoutes(
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Fault:		canary.Spec.Service.Fault,
+				Fault:      canary.Spec.Service.Fault,
 				Route: []istiov1beta1.HTTPRouteDestination{
 					makeDestination(canary, primaryName, primaryWeight),
 				},
