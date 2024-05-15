@@ -450,6 +450,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(CustomMetadata)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Fault != nil {
+		in, out := &in.Fault, &out.Fault
+		*out = new(istiov1beta1.HTTPFaultInjection)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
