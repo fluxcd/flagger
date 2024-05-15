@@ -297,6 +297,8 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		// delegate VirtualService requires the hosts and gateway empty.
 		virtualService.Spec.Gateways = []string{}
 		virtualService.Spec.Hosts = []string{}
+		newSpec.Hosts = []string{}
+		newSpec.Gateways = []string{}
 	}
 
 	ignoreCmpOptions := []cmp.Option{
@@ -330,16 +332,15 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		)
 		labelsDiff := cmp.Diff(newMetadata.Labels, virtualService.Labels, cmpopts.EquateEmpty())
 		annotationsDiff := cmp.Diff(newMetadata.Annotations, virtualService.Annotations, cmpopts.EquateEmpty())
-		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" {
+		if specDiff != "" || labelsDiff != "" || annotationsDiff != "" || canary.Spec.Service.Delegation {
 			vtClone := virtualService.DeepCopy()
 			vtClone.Spec = newSpec
 			vtClone.ObjectMeta.Annotations = newMetadata.Annotations
 			vtClone.ObjectMeta.Labels = newMetadata.Labels
-
 			//If annotation kubectl.kubernetes.io/last-applied-configuration is present no need to duplicate
 			//serialization.  If not present store the serialized object in annotation
 			//flagger.kubernetes.app/original-configuration
-			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok && specDiff != "" {
+			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok && specDiff != "" || canary.Spec.Service.Delegation {
 				b, err := json.Marshal(virtualService.Spec)
 				if err != nil {
 					ir.logger.Warnf("Unable to marshal VS %s for orig-configuration annotation", virtualService.Name)
