@@ -293,7 +293,9 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	} else if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
+
 	if canary.Spec.Service.Delegation {
+		// delegate VirtualService requires the hosts and gateway empty.
 		virtualService.Spec.Gateways = []string{}
 		virtualService.Spec.Hosts = []string{}
 		if !reflect.DeepEqual(newSpec, istiov1beta1.VirtualServiceSpec{}) {
@@ -341,6 +343,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 			vtClone.Spec = newSpec
 			vtClone.ObjectMeta.Annotations = newMetadata.Annotations
 			vtClone.ObjectMeta.Labels = newMetadata.Labels
+
 			//If annotation kubectl.kubernetes.io/last-applied-configuration is present no need to duplicate
 			//serialization.  If not present store the serialized object in annotation
 			//flagger.kubernetes.app/original-configuration
