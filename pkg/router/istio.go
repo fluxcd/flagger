@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"reflect"
 	"strings"
 	"time"
 
@@ -142,6 +143,7 @@ func canaryToL4Match(canary *flaggerv1.Canary) []istiov1beta1.L4MatchAttributes 
 	return match
 }
 
+// TODO: aaa
 func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
@@ -292,13 +294,27 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	} else if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
-
-	if canary.Spec.Service.Delegation {
+	fmt.Println("aaa_bbb")
+	fmt.Println(canary.Spec.Service.Delegation)
+	fmt.Println(reflect.DeepEqual(newSpec, istiov1beta1.VirtualServiceSpec{}))
+	fmt.Println(virtualService.Spec.Gateways)
+	fmt.Println(virtualService.Spec.Hosts)
+	if (canary.Spec.Service.Delegation && reflect.DeepEqual(newSpec, istiov1beta1.VirtualServiceSpec{}) == false) &&
+		(virtualService.Spec.Gateways != nil || virtualService.Spec.Hosts != nil) {
 		// delegate VirtualService requires the hosts and gateway empty.
-		newSpec.Hosts = []string{}
-		newSpec.Gateways = []string{}
+		virtualService.Spec.Gateways = []string{}
+		virtualService.Spec.Hosts = []string{}
+		_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), virtualService, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
+		}
+		ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Infof("VirtualService %s.%s updated", virtualService.GetName(), canary.Namespace)
+	} else if canary.Spec.Service.Delegation {
+		// delegate VirtualService requires the hosts and gateway empty.
+		virtualService.Spec.Gateways = []string{}
+		virtualService.Spec.Hosts = []string{}
 	}
-
 	ignoreCmpOptions := []cmp.Option{
 		cmpopts.IgnoreFields(istiov1beta1.HTTPRouteDestination{}, "Weight"),
 		cmpopts.IgnoreFields(istiov1beta1.HTTPRoute{}, "Mirror", "MirrorPercentage"),
@@ -338,7 +354,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 			//If annotation kubectl.kubernetes.io/last-applied-configuration is present no need to duplicate
 			//serialization.  If not present store the serialized object in annotation
 			//flagger.kubernetes.app/original-configuration
-			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok && specDiff != ""{
+			if _, ok := vtClone.Annotations[kubectlAnnotation]; !ok && specDiff != "" {
 				b, err := json.Marshal(virtualService.Spec)
 				if err != nil {
 					ir.logger.Warnf("Unable to marshal VS %s for orig-configuration annotation", virtualService.Name)
