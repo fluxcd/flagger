@@ -307,6 +307,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Infof("VirtualService %s.%s updated", virtualService.GetName(), canary.Namespace)
 		}
 	}
+
 	ignoreCmpOptions := []cmp.Option{
 		cmpopts.IgnoreFields(istiov1beta1.HTTPRouteDestination{}, "Weight"),
 		cmpopts.IgnoreFields(istiov1beta1.HTTPRoute{}, "Mirror", "MirrorPercentage"),
