@@ -143,7 +143,6 @@ func canaryToL4Match(canary *flaggerv1.Canary) []istiov1beta1.L4MatchAttributes 
 	return match
 }
 
-// TODO: aaa
 func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
@@ -294,26 +293,17 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	} else if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
-	fmt.Println("aaa_bbb")
-	fmt.Println(canary.Spec.Service.Delegation)
-	fmt.Println(reflect.DeepEqual(newSpec, istiov1beta1.VirtualServiceSpec{}))
-	fmt.Println(virtualService.Spec.Gateways)
-	fmt.Println(virtualService.Spec.Hosts)
-	if (canary.Spec.Service.Delegation && reflect.DeepEqual(newSpec, istiov1beta1.VirtualServiceSpec{}) == false) &&
-		(virtualService.Spec.Gateways != nil || virtualService.Spec.Hosts != nil) {
-		// delegate VirtualService requires the hosts and gateway empty.
+	if canary.Spec.Service.Delegation {
 		virtualService.Spec.Gateways = []string{}
 		virtualService.Spec.Hosts = []string{}
-		_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), virtualService, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
+		if !reflect.DeepEqual(newSpec, istiov1beta1.VirtualServiceSpec{}) {
+			_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), virtualService, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
+			}
+			ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("VirtualService %s.%s updated", virtualService.GetName(), canary.Namespace)
 		}
-		ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-			Infof("VirtualService %s.%s updated", virtualService.GetName(), canary.Namespace)
-	} else if canary.Spec.Service.Delegation {
-		// delegate VirtualService requires the hosts and gateway empty.
-		virtualService.Spec.Gateways = []string{}
-		virtualService.Spec.Hosts = []string{}
 	}
 	ignoreCmpOptions := []cmp.Option{
 		cmpopts.IgnoreFields(istiov1beta1.HTTPRouteDestination{}, "Weight"),
