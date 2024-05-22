@@ -33,7 +33,7 @@ jobs:
         with:
           go-version: 1.22.x
       - uses: fluxcd/flux2/action@main
-      - uses: sigstore/cosign-installer@v3.4.0
+      - uses: sigstore/cosign-installer@v3.5.0
       - name: Prepare
         id: prep
         run: |
@@ -146,7 +146,7 @@ jobs:
       actions: read # for detecting the Github Actions environment.
       id-token: write # for creating OIDC tokens for signing.
       contents: write # for uploading attestations to GitHub releases.
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
       provenance-name: "provenance.intoto.jsonl"
       base64-subjects: "${{ needs.release-flagger.outputs.hashes }}"
