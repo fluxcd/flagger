@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
 
@@ -154,12 +155,10 @@ func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	depCopy := dep.DeepCopy()
-	depCopy.Spec.Replicas = int32p(0)
-
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, 0))
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s update query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s patch query error: %w", targetName, cd.Namespace, err)
 	}
 	return nil
 }
@@ -210,12 +209,11 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 			}
 		}
 	}
-	depCopy := dep.DeepCopy()
-	depCopy.Spec.Replicas = replicas
 
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, *replicas))
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("scaling up %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
+		return fmt.Errorf("scaling up %s.%s to %d failed: %v", dep.GetName(), dep.Namespace, *replicas, err)
 	}
 	return nil
 }
@@ -388,11 +386,10 @@ func (c *DeploymentController) scale(cd *flaggerv1.Canary, replicas int32) error
 		return fmt.Errorf("deployment %s.%s query error: %w", targetName, cd.Namespace, err)
 	}
 
-	depCopy := dep.DeepCopy()
-	depCopy.Spec.Replicas = int32p(replicas)
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, replicas))
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("scaling %s.%s to %v failed: %w", depCopy.GetName(), depCopy.Namespace, replicas, err)
+		return fmt.Errorf("scaling %s.%s to %d failed: %w", dep.GetName(), dep.Namespace, replicas, err)
 	}
 	return nil
 }
