@@ -54,6 +54,8 @@ rbac:
   #   resources: ["pods"]
   #   verbs: ["list", "get"]
   rules: []
+  # annotations to add to the service account
+  serviceAccountAnnotations: {}
 
 # name of an existing service account to use - if not creating rbac resources
 serviceAccountName: ""
