@@ -94,24 +94,40 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 
 		hr, err := mocks.meshClient.GatewayapiV1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
-		assert.Len(t, hr.Spec.Rules, 2)
+		assert.Len(t, hr.Spec.Rules, 3)
 
-		stickyRule := hr.Spec.Rules[0]
-		weightedRule := hr.Spec.Rules[1]
+		stickyCanaryRule := hr.Spec.Rules[0]
+		stickyPrimaryRule := hr.Spec.Rules[1]
+		weightedRule := hr.Spec.Rules[2]
 
-		// stickyRoute should match against a cookie and direct all traffic to the canary when a canary run is active.
-		cookieMatch := stickyRule.Matches[0].Headers[0]
+		// stickyCanaryRoute should match against a cookie and direct all traffic to the canary when a canary run is active.
+		cookieMatch := stickyCanaryRule.Matches[0].Headers[0]
 		assert.Equal(t, *cookieMatch.Type, v1.HeaderMatchRegularExpression)
 		assert.Equal(t, string(cookieMatch.Name), cookieHeader)
 		assert.Contains(t, cookieMatch.Value, cookieKey)
 
-		assert.Equal(t, len(stickyRule.BackendRefs), 2)
-		for _, backendRef := range stickyRule.BackendRefs {
+		assert.Equal(t, len(stickyCanaryRule.BackendRefs), 2)
+		for _, backendRef := range stickyCanaryRule.BackendRefs {
 			if string(backendRef.BackendRef.Name) == pSvcName {
 				assert.Equal(t, *backendRef.BackendRef.Weight, int32(0))
 			}
 			if string(backendRef.BackendRef.Name) == cSvcName {
 				assert.Equal(t, *backendRef.BackendRef.Weight, int32(100))
+			}
+		}
+
+		cookieMatch = stickyPrimaryRule.Matches[0].Headers[0]
+		assert.Equal(t, *cookieMatch.Type, v1.HeaderMatchRegularExpression)
+		assert.Equal(t, string(cookieMatch.Name), cookieHeader)
+		assert.Contains(t, cookieMatch.Value, cookieKey)
+
+		assert.Equal(t, len(stickyPrimaryRule.BackendRefs), 2)
+		for _, backendRef := range stickyPrimaryRule.BackendRefs {
+			if string(backendRef.BackendRef.Name) == pSvcName {
+				assert.Equal(t, *backendRef.BackendRef.Weight, int32(100))
+			}
+			if string(backendRef.BackendRef.Name) == cSvcName {
+				assert.Equal(t, *backendRef.BackendRef.Weight, int32(0))
 			}
 		}
 
@@ -142,9 +158,10 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 		// HTTPRoute should be unchanged
 		hr, err = mocks.meshClient.GatewayapiV1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
-		assert.Len(t, hr.Spec.Rules, 2)
-		assert.Empty(t, cmp.Diff(hr.Spec.Rules[0], stickyRule))
-		assert.Empty(t, cmp.Diff(hr.Spec.Rules[1], weightedRule))
+		assert.Len(t, hr.Spec.Rules, 3)
+		assert.Empty(t, cmp.Diff(hr.Spec.Rules[0], stickyCanaryRule))
+		assert.Empty(t, cmp.Diff(hr.Spec.Rules[1], stickyPrimaryRule))
+		assert.Empty(t, cmp.Diff(hr.Spec.Rules[2], weightedRule))
 
 		// further continue the canary run
 		err = router.SetRoutes(canary, 50, 50, false)
@@ -152,17 +169,17 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 		hr, err = mocks.meshClient.GatewayapiV1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		stickyRule = hr.Spec.Rules[0]
-		weightedRule = hr.Spec.Rules[1]
+		stickyCanaryRule = hr.Spec.Rules[0]
+		weightedRule = hr.Spec.Rules[2]
 
 		// stickyRoute should match against a cookie and direct all traffic to the canary when a canary run is active.
-		cookieMatch = stickyRule.Matches[0].Headers[0]
+		cookieMatch = stickyCanaryRule.Matches[0].Headers[0]
 		assert.Equal(t, *cookieMatch.Type, v1.HeaderMatchRegularExpression)
 		assert.Equal(t, string(cookieMatch.Name), cookieHeader)
 		assert.Contains(t, cookieMatch.Value, cookieKey)
 
-		assert.Equal(t, len(stickyRule.BackendRefs), 2)
-		for _, backendRef := range stickyRule.BackendRefs {
+		assert.Equal(t, len(stickyCanaryRule.BackendRefs), 2)
+		for _, backendRef := range stickyCanaryRule.BackendRefs {
 			if string(backendRef.BackendRef.Name) == pSvcName {
 				assert.Equal(t, *backendRef.BackendRef.Weight, int32(0))
 			}
@@ -200,22 +217,22 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 		assert.Empty(t, canary.Status.SessionAffinityCookie)
 		assert.Contains(t, canary.Status.PreviousSessionAffinityCookie, cookieKey)
 
-		stickyRule = hr.Spec.Rules[0]
-		weightedRule = hr.Spec.Rules[1]
+		stickyCanaryRule = hr.Spec.Rules[0]
+		weightedRule = hr.Spec.Rules[2]
 
 		// Assert that the stucky rule matches against the previous cookie and tells clients to delete it.
-		cookieMatch = stickyRule.Matches[0].Headers[0]
+		cookieMatch = stickyCanaryRule.Matches[0].Headers[0]
 		assert.Equal(t, *cookieMatch.Type, v1.HeaderMatchRegularExpression)
 		assert.Equal(t, string(cookieMatch.Name), cookieHeader)
 		assert.Contains(t, cookieMatch.Value, cookieKey)
 
-		assert.Equal(t, stickyRule.Filters[0].Type, v1.HTTPRouteFilterResponseHeaderModifier)
-		headerModifier := stickyRule.Filters[0].ResponseHeaderModifier
+		assert.Equal(t, stickyCanaryRule.Filters[0].Type, v1.HTTPRouteFilterResponseHeaderModifier)
+		headerModifier := stickyCanaryRule.Filters[0].ResponseHeaderModifier
 		assert.NotNil(t, headerModifier)
 		assert.Equal(t, string(headerModifier.Add[0].Name), setCookieHeader)
 		assert.Equal(t, headerModifier.Add[0].Value, fmt.Sprintf("%s; %s=%d", canary.Status.PreviousSessionAffinityCookie, maxAgeAttr, -1))
 
-		for _, backendRef := range stickyRule.BackendRefs {
+		for _, backendRef := range stickyCanaryRule.BackendRefs {
 			if string(backendRef.BackendRef.Name) == pSvcName {
 				assert.Equal(t, *backendRef.BackendRef.Weight, int32(100))
 			}
@@ -303,7 +320,7 @@ func TestGatewayAPIRouter_getSessionAffinityRouteRules(t *testing.T) {
 	}
 	rules, err := router.getSessionAffinityRouteRules(canary, 10, weightedRouteRule)
 	require.NoError(t, err)
-	assert.Equal(t, len(rules), 2)
+	assert.Equal(t, len(rules), 3)
 	assert.True(t, strings.HasPrefix(canary.Status.SessionAffinityCookie, cookieKey))
 
 	stickyRule := rules[0]
@@ -322,7 +339,7 @@ func TestGatewayAPIRouter_getSessionAffinityRouteRules(t *testing.T) {
 		}
 	}
 
-	weightedRule := rules[1]
+	weightedRule := rules[2]
 	var found bool
 	for _, backendRef := range weightedRule.BackendRefs {
 		if string(backendRef.Name) == cSvcName {
