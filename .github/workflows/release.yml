@@ -121,7 +121,7 @@ jobs:
       - uses: anchore/sbom-action/download-syft@v0
       - name: Create release and SBOM
         id: run-goreleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           version: latest
