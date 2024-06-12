@@ -18,15 +18,12 @@ package providers
 
 import (
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	rest "k8s.io/client-go/rest"
 )
 
 type Factory struct{}
 
-func (factory Factory) Provider(
-	metricInterval string,
-	provider flaggerv1.MetricTemplateProvider,
-	credentials map[string][]byte,
-) (Interface, error) {
+func (factory Factory) Provider(metricInterval string, provider flaggerv1.MetricTemplateProvider, credentials map[string][]byte, config *rest.Config) (Interface, error) {
 	switch provider.Type {
 	case "prometheus":
 		return NewPrometheusProvider(provider, credentials)
@@ -44,6 +41,8 @@ func (factory Factory) Provider(
 		return NewInfluxdbProvider(provider, credentials)
 	case "dynatrace":
 		return NewDynatraceProvider(metricInterval, provider, credentials)
+	case "keptn":
+		return NewKeptnProvider(config)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}
