@@ -2,12 +2,14 @@
 
 set -o errexit
 
-KUMA_VER="2.1.0"
+KUMA_VER="2.2.5"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 mkdir -p ${REPO_ROOT}/bin
 
 echo ">>> Downloading Kuma ${KUMA_VER}"
-curl -SsL https://download.konghq.com/mesh-alpine/kuma-${KUMA_VER}-ubuntu-amd64.tar.gz -o kuma-${KUMA_VER}.tar.gz
+curl -SsL \
+    https://packages.konghq.com/public/kuma-binaries-release/raw/names/kuma-linux-amd64/versions/${KUMA_VER}/kuma-${KUMA_VER}-linux-amd64.tar.gz \
+    -o kuma-${KUMA_VER}.tar.gz
 tar xvzf kuma-${KUMA_VER}.tar.gz
 cp kuma-${KUMA_VER}/bin/kumactl ${REPO_ROOT}/bin/kumactl
 chmod +x ${REPO_ROOT}/bin/kumactl
