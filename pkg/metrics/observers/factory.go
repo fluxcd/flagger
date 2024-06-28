@@ -21,6 +21,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/metrics/providers"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type Factory struct {
@@ -32,6 +33,27 @@ func NewFactory(metricsServer string) (*Factory, error) {
 		Type:      "prometheus",
 		Address:   metricsServer,
 		SecretRef: nil,
+	}, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Factory{
+		Client: client,
+	}, nil
+}
+
+func NewFactoryWithSecret(metricsServer string, metricsServerSecretRef string) (*Factory, error) {
+	var secretRef *corev1.LocalObjectReference
+	if metricsServerSecretRef != "" {
+		secretRef = &corev1.LocalObjectReference{Name: metricsServerSecretRef}
+	} else {
+		secretRef = nil
+	}
+	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
+		Type:      "prometheus",
+		Address:   metricsServer,
+		SecretRef: secretRef,
 	}, nil)
 	if err != nil {
 		return nil, err
