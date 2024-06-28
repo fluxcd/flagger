@@ -29,26 +29,13 @@ type Factory struct {
 }
 
 func NewFactory(metricsServer string) (*Factory, error) {
-	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
-		Type:      "prometheus",
-		Address:   metricsServer,
-		SecretRef: nil,
-	}, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Factory{
-		Client: client,
-	}, nil
+	return NewFactoryWithSecret(metricsServer, "")
 }
 
 func NewFactoryWithSecret(metricsServer string, metricsServerSecretRef string) (*Factory, error) {
 	var secretRef *corev1.LocalObjectReference
 	if metricsServerSecretRef != "" {
 		secretRef = &corev1.LocalObjectReference{Name: metricsServerSecretRef}
-	} else {
-		secretRef = nil
 	}
 	client, err := providers.NewPrometheusProvider(flaggerv1.MetricTemplateProvider{
 		Type:      "prometheus",
