@@ -20,6 +20,7 @@ Install Flagger:
 ```bash
 helm repo add flagger https://flagger.app
 
+kubectl create namespace flagger
 helm upgrade -i flagger flagger/flagger \
 --namespace flagger \
 --set prometheus.install=true \
@@ -68,7 +69,7 @@ spec:
   - type: prometheus
     metadata:
       name: prom-trigger
-      serverAddress: http://flagger-prometheus.flagger-system:9090
+      serverAddress: http://flagger-prometheus.flagger:9090
       metricName: http_requests_total
       query: sum(rate(http_requests_total{ app="podinfo" }[30s]))
       threshold: '5'
