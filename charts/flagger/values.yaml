@@ -82,6 +82,7 @@ podMonitor:
   namespace:
   interval: 15s
   additionalLabels: {}
+  honorLabels: false
 
 #env:
 #- name: SLACK_URL
