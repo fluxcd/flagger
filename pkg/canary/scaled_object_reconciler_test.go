@@ -29,6 +29,10 @@ func Test_reconcilePrimaryScaledObject(t *testing.T) {
 
 	primarySO, err := mocks.flaggerClient.KedaV1alpha1().ScaledObjects("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
+	// test that the hpa ownership annotation is added to the primarySO
+	assert.Equal(t, primarySO.ObjectMeta.Annotations["scaledobject.keda.sh/transfer-hpa-ownership"], "true")
+	// test that the horizontalpodautoscalerconfig is set to 'podinfo-primary', so that it takes over ownership of the HPA
+	assert.Equal(t, primarySO.Spec.Advanced.HorizontalPodAutoscalerConfig.Name, "podinfo-primary")
 	assert.Equal(t, primarySO.Spec.ScaleTargetRef.Name, fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name))
 	assert.Equal(t, int(*primarySO.Spec.PollingInterval), 10)
 	assert.Equal(t, int(*primarySO.Spec.MinReplicaCount), 1)
