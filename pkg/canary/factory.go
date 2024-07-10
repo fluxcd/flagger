@@ -19,6 +19,8 @@ package canary
 import (
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
+	knative "knative.dev/serving/pkg/client/clientset/versioned"
+	"strings"
 
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
@@ -26,6 +28,7 @@ import (
 type Factory struct {
 	kubeClient         kubernetes.Interface
 	flaggerClient      clientset.Interface
+	knativeClient      knative.Interface
 	logger             *zap.SugaredLogger
 	configTracker      Tracker
 	labels             []string
@@ -34,6 +37,7 @@ type Factory struct {
 
 func NewFactory(kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
+	knativeClient knative.Interface,
 	configTracker Tracker,
 	labels []string,
 	includeLabelPrefix []string,
@@ -41,6 +45,7 @@ func NewFactory(kubeClient kubernetes.Interface,
 	return &Factory{
 		kubeClient:         kubeClient,
 		flaggerClient:      flaggerClient,
+		knativeClient:      knativeClient,
 		logger:             logger,
 		configTracker:      configTracker,
 		labels:             labels,
@@ -48,7 +53,7 @@ func NewFactory(kubeClient kubernetes.Interface,
 	}
 }
 
-func (factory *Factory) Controller(kind string) Controller {
+func (factory *Factory) Controller(apiVersion string, kind string) Controller {
 	deploymentCtrl := &DeploymentController{
 		logger:             factory.logger,
 		kubeClient:         factory.kubeClient,
@@ -71,13 +76,20 @@ func (factory *Factory) Controller(kind string) Controller {
 		flaggerClient:      factory.flaggerClient,
 		includeLabelPrefix: factory.includeLabelPrefix,
 	}
+	knativeCtrl := &KnativeController{
+		kubeClient:    factory.kubeClient,
+		flaggerClient: factory.flaggerClient,
+		knativeClient: factory.knativeClient,
+	}
 
-	switch kind {
-	case "DaemonSet":
+	switch {
+	case kind == "DaemonSet":
 		return daemonSetCtrl
-	case "Deployment":
+	case kind == "Deployment":
 		return deploymentCtrl
-	case "Service":
+	case strings.HasPrefix(apiVersion, "serving.knative.dev") && kind == "Service":
+		return knativeCtrl
+	case kind == "Service":
 		return serviceCtrl
 	default:
 		return deploymentCtrl

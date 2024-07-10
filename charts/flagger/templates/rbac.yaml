@@ -276,6 +276,19 @@ rules:
       - /version
     verbs:
       - get
+  - apiGroups:
+      - serving.knative.dev
+    resources:
+      - services
+    verbs:
+      - get
+      - update
+  - apiGroups:
+      - serving.knative.dev
+    resources:
+      - revisions
+    verbs:
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

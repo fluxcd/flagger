@@ -17,6 +17,7 @@ limitations under the License.
 package router
 
 import (
+	knative "knative.dev/serving/pkg/client/clientset/versioned"
 	"strings"
 
 	"go.uber.org/zap"
@@ -31,6 +32,7 @@ type Factory struct {
 	kubeConfig               *restclient.Config
 	kubeClient               kubernetes.Interface
 	meshClient               clientset.Interface
+	knativeClient            knative.Interface
 	flaggerClient            clientset.Interface
 	ingressAnnotationsPrefix string
 	ingressClass             string
@@ -40,6 +42,7 @@ type Factory struct {
 
 func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
+	knativeClient knative.Interface,
 	ingressAnnotationsPrefix string,
 	ingressClass string,
 	logger *zap.SugaredLogger,
@@ -49,6 +52,7 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 		kubeConfig:               kubeConfig,
 		meshClient:               meshClient,
 		kubeClient:               kubeClient,
+		knativeClient:            knativeClient,
 		flaggerClient:            flaggerClient,
 		ingressAnnotationsPrefix: ingressAnnotationsPrefix,
 		ingressClass:             ingressClass,
@@ -149,6 +153,10 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			contourClient: factory.meshClient,
 			ingressClass:  factory.ingressClass,
 			setOwnerRefs:  factory.setOwnerRefs,
+		}
+	case provider == flaggerv1.KnativeProvider:
+		return &KnativeRouter{
+			knativeClient: factory.knativeClient,
 		}
 	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
 		return &GlooRouter{
