@@ -343,13 +343,15 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check canary status
-	retriable, err = canaryController.IsCanaryReady(cd)
-	if err != nil {
-		c.recordEventWarningf(cd, "%v", err)
-		if !retriable {
-			c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+	if !cd.Spec.SkipStatusCheck {
+		retriable, err = canaryController.IsCanaryReady(cd)
+		if err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			if !retriable {
+				c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+			}
+			return
 		}
-		return
 	}
 
 	// check if analysis should be skipped
@@ -884,17 +886,20 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		c.alert(canaryPhaseProgressing, "New revision detected, progressing canary analysis.",
 			true, flaggerv1.SeverityInfo)
 
-		if scalerReconciler != nil {
-			err = scalerReconciler.ResumeTargetScaler(canary)
-			if err != nil {
-				c.recordEventWarningf(canary, "%v", err)
+		if !canary.Spec.SkipStatusCheck {
+			if scalerReconciler != nil {
+				err = scalerReconciler.ResumeTargetScaler(canary)
+				if err != nil {
+					c.recordEventWarningf(canary, "%v", err)
+					return false
+				}
+			}
+			if err := canaryController.ScaleFromZero(canary); err != nil {
+				c.recordEventErrorf(canary, "%v", err)
 				return false
 			}
 		}
-		if err := canaryController.ScaleFromZero(canary); err != nil {
-			c.recordEventErrorf(canary, "%v", err)
-			return false
-		}
+
 		if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 			return false

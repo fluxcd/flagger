@@ -107,6 +107,10 @@ type CanarySpec struct {
 	// +optional
 	SkipAnalysis bool `json:"skipAnalysis,omitempty"`
 
+	// SkipStatusCheck promotes the canary without status check and analysis
+	// +optional
+	SkipStatusCheck bool `json:"skipStatusCheck,omitempty"`
+
 	// revert canary mutation on deletion of canary resource
 	// +optional
 	RevertOnDeletion bool `json:"revertOnDeletion,omitempty"`
@@ -615,6 +619,9 @@ func (c *Canary) GetMetricInterval() string {
 // SkipAnalysis returns true if the analysis is nil
 // or if spec.SkipAnalysis is true
 func (c *Canary) SkipAnalysis() bool {
+	if c.Spec.SkipStatusCheck {
+		return true
+	}
 	if c.Spec.Analysis == nil && c.Spec.CanaryAnalysis == nil {
 		return true
 	}

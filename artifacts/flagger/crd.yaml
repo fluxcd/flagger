@@ -908,6 +908,9 @@ spec:
                 skipAnalysis:
                   description: Skip analysis and promote canary
                   type: boolean
+                skipStatusCheck:
+                  description: Promote canary without analysis and status check
+                  type: boolean
                 revertOnDeletion:
                   description: Revert mutated resources to original spec on deletion
                   type: boolean
