@@ -7,6 +7,7 @@ const (
 	IstioProvider      string = "istio"
 	SMIProvider        string = "smi"
 	ContourProvider    string = "contour"
+	KnativeProvider    string = "knative"
 	GlooProvider       string = "gloo"
 	NGINXProvider      string = "nginx"
 	KubernetesProvider string = "kubernetes"
