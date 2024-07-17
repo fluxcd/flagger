@@ -8,4 +8,5 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 "$DIR"/install.sh
 
 "$REPO_ROOT"/test/workloads/init.sh
+kubectl label namespace test kuma.io/sidecar-injection=enabled
 "$DIR"/test-canary.sh

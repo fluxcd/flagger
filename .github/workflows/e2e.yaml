@@ -16,6 +16,7 @@ jobs:
   e2e-test:
     runs-on:
       group: "Default Larger Runners"
+      labels: ubuntu-latest-16-cores
     strategy:
       fail-fast: false
       matrix:

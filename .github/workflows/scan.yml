@@ -25,8 +25,7 @@ jobs:
           fossa-api-key: 5ee8bf422db1471e0bcf2bcb289185de
           github-token: ${{ github.token }}
   scan-codeql:
-    runs-on:
-      group: "Default Larger Runners"
+    runs-on: ubuntu-latest
     permissions:
       security-events: write
     steps:

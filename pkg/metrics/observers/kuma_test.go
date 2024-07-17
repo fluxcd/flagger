@@ -30,7 +30,7 @@ import (
 )
 
 func TestKumaObserver_GetRequestSuccessRate(t *testing.T) {
-	expected := ` sum( rate( envoy_cluster_upstream_rq{ envoy_cluster_name=~"podinfo-canary_default_svc_[0-9a-zA-Z-]+", envoy_response_code!~"5.*" }[1m] ) ) / sum( rate( envoy_cluster_upstream_rq{ envoy_cluster_name=~"podinfo-canary_default_svc_[0-9a-zA-Z-]+", }[1m] ) ) * 100`
+	expected := ` sum( rate( envoy_cluster_upstream_rq{ service=~"podinfo-canary_default_svc_[0-9a-zA-Z-]+", envoy_response_code!~"5.*" }[1m] ) ) / sum( rate( envoy_cluster_upstream_rq{ service=~"podinfo-canary_default_svc_[0-9a-zA-Z-]+", }[1m] ) ) * 100`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
@@ -65,7 +65,7 @@ func TestKumaObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestKumaObserver_GetRequestDuration(t *testing.T) {
-	expected := ` histogram_quantile( 0.99, sum( rate( envoy_cluster_upstream_rq_time_bucket{ envoy_cluster_name=~"podinfo-canary_default_svc_[0-9a-zA-Z-]+", }[1m] ) ) by (le) )`
+	expected := ` histogram_quantile( 0.99, sum( rate( envoy_cluster_upstream_rq_time_bucket{ service=~"podinfo-canary_default_svc_[0-9a-zA-Z-]+", }[1m] ) ) by (le) )`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
