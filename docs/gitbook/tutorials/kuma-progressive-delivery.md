@@ -15,7 +15,7 @@ kumactl install control-plane | kubectl apply -f -
 kumactl install observability --components "grafana,prometheus" | kubectl apply -f -
 ```
 
-Install Flagger in the `kuma-system` namespace:
+Install Flagger in the `kong-mesh-system` namespace:
 
 ```bash
 kubectl apply -k github.com/fluxcd/flagger//kustomize/kuma
