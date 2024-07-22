@@ -41,12 +41,18 @@ spec:
     apex:
       annotations:
         9898.service.kuma.io/protocol: "http"
+        ingress.kubernetes.io/service-upstream: "true"
+        nginx.ingress.kubernetes.io/service-upstream: "true"
     canary:
       annotations:
         9898.service.kuma.io/protocol: "http"
+        ingress.kubernetes.io/service-upstream: "true"
+        nginx.ingress.kubernetes.io/service-upstream: "true"
     primary:
       annotations:
         9898.service.kuma.io/protocol: "http"
+        ingress.kubernetes.io/service-upstream: "true"
+        nginx.ingress.kubernetes.io/service-upstream: "true"
   analysis:
     interval: 15s
     threshold: 15
@@ -156,15 +162,21 @@ spec:
     apex:
       annotations:
         9898.service.kuma.io/protocol: "http"
+        ingress.kubernetes.io/service-upstream: "true"
+        nginx.ingress.kubernetes.io/service-upstream: "true"
     canary:
       annotations:
         9898.service.kuma.io/protocol: "http"
+        ingress.kubernetes.io/service-upstream: "true"
+        nginx.ingress.kubernetes.io/service-upstream: "true"
     primary:
       annotations:
         9898.service.kuma.io/protocol: "http"
+        ingress.kubernetes.io/service-upstream: "true"
+        nginx.ingress.kubernetes.io/service-upstream: "true"
   analysis:
     interval: 15s
-    threshold: 15
+    threshold: 5
     maxWeight: 50
     stepWeight: 10
     metrics:
