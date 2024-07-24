@@ -18,21 +18,21 @@ package controller
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/canary"
 )
 
-func callWebhook(webhook string, payload interface{}, timeout string) error {
+func callWebhook(webhook string, payload interface{}, timeout string, retries int) error {
 	payloadBin, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -43,7 +43,11 @@ func callWebhook(webhook string, payload interface{}, timeout string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", hook.String(), bytes.NewBuffer(payloadBin))
+	httpClient := retryablehttp.NewClient()
+	httpClient.RetryMax = retries
+	httpClient.Logger = nil
+
+	req, err := retryablehttp.NewRequest("POST", hook.String(), bytes.NewBuffer(payloadBin))
 	if err != nil {
 		return err
 	}
@@ -53,16 +57,14 @@ func callWebhook(webhook string, payload interface{}, timeout string) error {
 	if timeout == "" {
 		timeout = "10s"
 	}
-
 	t, err := time.ParseDuration(timeout)
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), t)
-	defer cancel()
+	httpClient.HTTPClient.Timeout = t
 
-	r, err := http.DefaultClient.Do(req.WithContext(ctx))
+	r, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -98,7 +100,7 @@ func CallWebhook(canary flaggerv1.Canary, phase flaggerv1.CanaryPhase, w flagger
 		w.Timeout = "10s"
 	}
 
-	return callWebhook(w.URL, payload, w.Timeout)
+	return callWebhook(w.URL, payload, w.Timeout, w.Retries)
 }
 
 func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, eventtype string) error {
@@ -124,7 +126,7 @@ func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, e
 			payload.Metadata[key] = value
 		}
 	}
-	return callWebhook(w.URL, payload, "5s")
+	return callWebhook(w.URL, payload, "5s", w.Retries)
 }
 
 func canaryChecksum(c flaggerv1.Canary) string {

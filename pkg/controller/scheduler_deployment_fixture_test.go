@@ -37,7 +37,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	"github.com/fluxcd/flagger/pkg/canary"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/fluxcd/flagger/pkg/client/clientset/versioned/fake"
@@ -367,7 +367,7 @@ func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 10,
-				Match: []istiov1alpha3.HTTPMatchRequest{
+				Match: []istiov1beta1.HTTPMatchRequest{
 					{
 						Headers: map[string]istiov1alpha1.StringMatch{
 							"x-user-type": {
@@ -395,6 +395,10 @@ func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 						ThresholdRange: &flaggerv1.CanaryThresholdRange{
 							Min: toFloatPtr(0),
 							Max: toFloatPtr(500000),
+						},
+						TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
+							Name:      "envoy",
+							Namespace: "default",
 						},
 						Interval: "1m",
 						Query:    "fake",

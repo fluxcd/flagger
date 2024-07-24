@@ -27,7 +27,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 )
 
 func TestIngressRouter_Reconcile(t *testing.T) {
@@ -116,7 +116,7 @@ func TestIngressRouter_ABTest(t *testing.T) {
 		{
 			makeCanary: func() *flaggerv1.Canary {
 				mocks.ingressCanary.Spec.Analysis.Iterations = 1
-				mocks.ingressCanary.Spec.Analysis.Match = []istiov1alpha3.HTTPMatchRequest{
+				mocks.ingressCanary.Spec.Analysis.Match = []istiov1beta1.HTTPMatchRequest{
 					{
 						Headers: map[string]istiov1alpha1.StringMatch{
 							"x-user-type": {
@@ -133,7 +133,7 @@ func TestIngressRouter_ABTest(t *testing.T) {
 		{
 			makeCanary: func() *flaggerv1.Canary {
 				mocks.ingressCanary.Spec.Analysis.Iterations = 1
-				mocks.ingressCanary.Spec.Analysis.Match = []istiov1alpha3.HTTPMatchRequest{
+				mocks.ingressCanary.Spec.Analysis.Match = []istiov1beta1.HTTPMatchRequest{
 					{
 						Headers: map[string]istiov1alpha1.StringMatch{
 							"x-user-type": {
@@ -150,7 +150,7 @@ func TestIngressRouter_ABTest(t *testing.T) {
 		{
 			makeCanary: func() *flaggerv1.Canary {
 				mocks.ingressCanary.Spec.Analysis.Iterations = 1
-				mocks.ingressCanary.Spec.Analysis.Match = []istiov1alpha3.HTTPMatchRequest{
+				mocks.ingressCanary.Spec.Analysis.Match = []istiov1beta1.HTTPMatchRequest{
 					{
 						Headers: map[string]istiov1alpha1.StringMatch{
 							"cookie": {

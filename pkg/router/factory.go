@@ -199,15 +199,15 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			kubeClient:    factory.kubeClient,
 			kumaClient:    factory.meshClient,
 		}
-	case strings.HasPrefix(provider, flaggerv1.GatewayAPIProvider+":v1alpha2"):
-		return &GatewayAPIRouter{
+	case strings.HasPrefix(provider, flaggerv1.GatewayAPIProvider+":v1beta1"):
+		return &GatewayAPIV1Beta1Router{
 			logger:           factory.logger,
 			kubeClient:       factory.kubeClient,
 			gatewayAPIClient: factory.meshClient,
 			setOwnerRefs:     factory.setOwnerRefs,
 		}
-	case strings.HasPrefix(provider, flaggerv1.GatewayAPIProvider+":v1beta1"):
-		return &GatewayAPIV1Beta1Router{
+	case strings.HasPrefix(provider, flaggerv1.GatewayAPIProvider+":v1"):
+		return &GatewayAPIRouter{
 			logger:           factory.logger,
 			kubeClient:       factory.kubeClient,
 			gatewayAPIClient: factory.meshClient,

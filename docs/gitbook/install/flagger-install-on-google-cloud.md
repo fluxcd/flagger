@@ -374,7 +374,7 @@ helm upgrade -i flagger-grafana flagger/grafana \
 Expose Grafana through the public gateway by creating a virtual service \(replace `example.com` with your domain\):
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: grafana

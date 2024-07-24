@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
 # This script runs e2e tests for Blue/Green traffic shifting, Canary analysis and promotion
-# Prerequisites: Kubernetes Kind and Contour with GatewayAPI
+# Prerequisites: Kubernetes Kind and Istio with GatewayAPI
 
 set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 source ${REPO_ROOT}/test/gatewayapi/test-utils.sh
+
+create_request_duration_metric_template
 
 echo '>>> Deploy podinfo in bg-test namespace'
 kubectl create ns bg-test
@@ -30,20 +32,19 @@ spec:
     port: 9898
     portName: http
     hosts:
-     - localproject.contour.io
+     - www.example.com
     gatewayRefs:
-      - name: contour
-        namespace: projectcontour
+      - name: gateway
+        namespace: istio-ingress
   analysis:
     interval: 10s
     threshold: 5
     iterations: 5
     metrics:
-    - name: request-success-rate
-      thresholdRange:
-        min: 99
-      interval: 1m
-    - name: request-duration
+    - name: custom-requst-duration
+      templateRef:
+        name: request-duration
+        namespace: flagger-system
       threshold: 500
       interval: 30s
     webhooks:

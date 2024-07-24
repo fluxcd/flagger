@@ -2,6 +2,160 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.37.0
+
+**Release date:** 2024-03-26
+
+This release updates the Istio APIs to `v1beta1` and fixes several issues related
+to Gloo routing and custom metrics.
+
+Both Flagger and the load tester Go dependencies have been updated to fix various CVEs.
+Flagger and the load tester are now built with Go 1.22.
+
+#### Improvements
+- Migrate Istio VirtualService/DestinationRule APIs to `v1beta1`
+  [#1602](https://github.com/fluxcd/flagger/pull/1602)
+- Add `omitempty` to CRD statuses to allow better marshalling
+  [#1621](https://github.com/fluxcd/flagger/pull/1621)
+- Update dependencies (Go 1.22)
+  [#1622](https://github.com/fluxcd/flagger/pull/1622)
+- Update `google.golang.org/protobuf` to v1.33.0
+  [#1614](https://github.com/fluxcd/flagger/pull/1614)
+
+#### Fixes
+- Update reconciler to detect change in Gloo upstream spec
+  [#1617](https://github.com/fluxcd/flagger/pull/1617)
+- Fix regression bug where query with no metric template returned an error
+  [#1611](https://github.com/fluxcd/flagger/pull/1611)
+
+## 1.36.1
+
+**Release date:** 2024-03-06
+
+This release fixes a bug where `.spec..progressDeadlineSeconds` wasn't respected and the Canary
+was stuck forever waiting for the Deployment to be ready.
+
+Furthermore, the Go dependencies have been updated.
+
+#### Improvements
+- Update Go dependencies
+  [#1607](https://github.com/fluxcd/flagger/pull/1607)
+
+#### Fixes
+- Fix broken link in readme
+  [#1599](https://github.com/fluxcd/flagger/pull/1599)
+- scheduler: fail canary according to progress deadline
+  [#1603](https://github.com/fluxcd/flagger/pull/1603)
+- Actualize link to flux in-depth guide
+  [#1606](https://github.com/fluxcd/flagger/pull/1606)
+
+## 1.36.0
+
+**Release date:** 2024-02-07
+
+This release comes with support for canary releases with traffic shifting using
+Istio TCP routing. For more information on how to enable TCP routing please
+see the [Istio tutorial](https://docs.flagger.app/tutorials/istio-progressive-delivery#canary-deployments-for-tcp-services).
+
+Both Flagger and the load tester Go dependencies have been updated to fix various CVEs.
+Flagger is now built with Go 1.21 and the container base image has been updated to Alpine 3.19.
+
+#### Improvements
+- Istio Canary TCP service support
+  [#1564](https://github.com/fluxcd/flagger/pull/1564)
+- Update Go dependencies
+  [#1595](https://github.com/fluxcd/flagger/pull/1595)
+- Build with Go 1.21 and Alpine 3.19
+  [#1594](https://github.com/fluxcd/flagger/pull/1594)
+
+#### Fixes
+- return an error for missing metric templates
+  [#1582](https://github.com/fluxcd/flagger/pull/1582)
+- istio: make retry attempts a mandatory field
+  [#1571](https://github.com/fluxcd/flagger/pull/1571)
+- fix(pdb): use the full capabilities comparison for PDBs
+  [#1511](https://github.com/fluxcd/flagger/pull/1511)
+
+## 1.35.0
+
+**Release date:** 2023-11-30
+
+This release comes with support for Gateway API `v1`. Furthermore, following the
+deprecation period, support for the `v1alpha2` API has been dropped.
+A new field `.spec.webhooks[].retries` has been added to allow specifying the
+number of retry attempts to make if the webhook server returns an unsuccessful
+response.
+Another new field `.spec.service.trafficPolicy.loadBalancer.warmupDurationSeconds`
+has been added for the corresponding field in Istio's `DestinationRule` API.
+
+Lastly, two bugs related to deleting a Canary object with
+`.spec.revertOnDeletion: true` have been fixed.
+
+#### Improvements
+- Support Istio DestinationRule WarmupDurationSecs
+  [#1540](https://github.com/fluxcd/flagger/pull/1540)
+- feat: Webhook retries
+  [#1541](https://github.com/fluxcd/flagger/pull/1541)
+- gatewayapi: add support for `v1`
+  [#1557](https://github.com/fluxcd/flagger/pull/1557)
+- Update Go dependencies
+  [#1558](https://github.com/fluxcd/flagger/pull/1558)
+
+#### Fixes
+- set original node selector value when finalizing service
+  [#1537](https://github.com/fluxcd/flagger/pull/1537)
+- controller: wait for canary deployment to be ready before removing finalizers
+  [#1552](https://github.com/fluxcd/flagger/pull/1552)
+
+## 1.34.0
+
+**Release date:** 2023-10-04
+
+This release comes with several new features. The Gateway API integration
+has been significantly improved with support for
+* [Canary releases with session affinty](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery#session-affinty)
+* [B/G deployments with traffic mirroring](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery#traffic-mirroring)
+* Filters in the generated `HTTPRoute` (`.spec.rules[].filters`)
+
+Most of the Filters are derived from existing fields in the Canary spec like
+`.spec.service.headers`. To support arbitary request mirroring through the
+`RequestMirror` filter, a new field `.spec.service.mirror` has been introduced.
+
+A new field `checksum` has been added to the Canary webhook payload. This field
+is computed by hashing the `.status.lastAppliedSpec` and
+`.status.trackedConfigs`. It can be used to distinguish between Canary runs.
+
+Furthermore, the Gloo integration now uses strings for specifying time durations
+in order to be better compatible with protobuf duration parsing.
+
+Lastly, Kubernetes packages were updated to be on 1.27.
+
+#### Improvements
+- Update Kubernetes to v1.27
+  [#1506](https://github.com/fluxcd/flagger/pull/1506)
+- gatewayapi: add support for session affinity
+  [#1507](https://github.com/fluxcd/flagger/pull/1507)
+- gatewayapi: add support for route rule filters
+  [#1512](https://github.com/fluxcd/flagger/pull/1512)
+- Update Linkerd tutorial to use Kubernetes Gateway API
+  [#1516](https://github.com/fluxcd/flagger/pull/1516)
+- Add Checksum field to the Webhook payload to distinguish canary runs
+  [#1521](https://github.com/fluxcd/flagger/pull/1521)
+- gatewayapi: add support for b/g mirroring
+  [#1525](https://github.com/fluxcd/flagger/pull/1525)
+- Update Go dependencies
+  [#1528](https://github.com/fluxcd/flagger/pull/1528)
+
+#### Fixes
+- chore: fix incorrect canary name on document
+  [#1502](https://github.com/fluxcd/flagger/pull/1502)
+- fix: Support for queryParams in canary match condition #880
+  [#1505](https://github.com/fluxcd/flagger/pull/1505)
+- docs: fix error example in deployment strategies
+  [#1518](https://github.com/fluxcd/flagger/pull/1518)
+- Change Gloo Duration type to string
+  [#1524](https://github.com/fluxcd/flagger/pull/1524)
+
 ## 1.33.0
 
 **Release date:** 2023-08-29
@@ -1201,7 +1355,7 @@ The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.a
 Two new resources were added to the API: `MetricTemplate` and `AlertProvider`.
 The analysis can reference [metric templates](https://docs.flagger.app//usage/metrics#custom-metrics)
 to query Prometheus, Datadog and AWS CloudWatch.
-[Alerting](https://docs.flagger.app/v/master/usage/alerting#canary-configuration) can be configured on a per
+[Alerting](https://docs.flagger.app/v/main/usage/alerting#canary-configuration) can be configured on a per
 canary basis for Slack, MS Teams, Discord and Rocket.
 
 #### Features
@@ -1365,7 +1519,7 @@ The upgrade procedure from 0.x to 1.0 can be found [here](https://docs.flagger.a
 Two new resources were added to the API: `MetricTemplate` and `AlertProvider`.
 The analysis can reference [metric templates](https://docs.flagger.app//usage/metrics#custom-metrics)
 to query Prometheus, Datadog and AWS CloudWatch.
-[Alerting](https://docs.flagger.app/v/master/usage/alerting#canary-configuration) can be configured on a per
+[Alerting](https://docs.flagger.app/v/main/usage/alerting#canary-configuration) can be configured on a per
 canary basis for Slack, MS Teams, Discord and Rocket.
 
 #### Features

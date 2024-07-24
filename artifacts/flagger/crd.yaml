@@ -806,6 +806,9 @@ spec:
                                 - PASSTHROUGH
                                 - LEAST_REQUEST
                               type: string
+                            warmupDurationSecs:
+                              description: Represents the warmup duration of Service.
+                              type: string
                         outlierDetection:
                           description: Settings controlling eviction of unhealthy hosts from the load balancing pool.
                           type: object
@@ -1129,6 +1132,9 @@ spec:
                             description: Request timeout for this webhook
                             type: string
                             pattern: "^[0-9]+(m|s)"
+                          retries:
+                            description: Number of retries for this webhook
+                            type: number
                           metadata:
                             description: Metadata (key-value pairs) for this webhook
                             type: object
@@ -1292,6 +1298,7 @@ spec:
                         - newrelic
                         - graphite
                         - dynatrace
+                        - keptn
                     address:
                       description: API address of this provider
                       type: string

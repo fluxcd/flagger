@@ -91,23 +91,23 @@ type CircuitBreakerConfig struct {
 
 type ConnectionConfig struct {
 	MaxRequestsPerConnection      uint32                                `json:"maxRequestsPerConnection,omitempty"`
-	ConnectTimeout                *Duration                             `json:"connectTimeout,omitempty"`
+	ConnectTimeout                string                                `json:"connectTimeout,omitempty"`
 	TcpKeepalive                  *ConnectionConfig_TcpKeepAlive        `json:"tcpKeepalive,omitempty"`
 	PerConnectionBufferLimitBytes uint32                                `json:"perConnectionBufferLimitBytes,omitempty"`
 	CommonHttpProtocolOptions     *ConnectionConfig_HttpProtocolOptions `json:"commonHttpProtocolOptions,omitempty"`
 }
 
 type ConnectionConfig_TcpKeepAlive struct {
-	KeepaliveProbes   uint32    `json:"keepaliveProbes,omitempty"`
-	KeepaliveTime     *Duration `json:"keepaliveTime,omitempty"`
-	KeepaliveInterval *Duration `json:"keepaliveInterval,omitempty"`
+	KeepaliveProbes   uint32 `json:"keepaliveProbes,omitempty"`
+	KeepaliveTime     string `json:"keepaliveTime,omitempty"`
+	KeepaliveInterval string `json:"keepaliveInterval,omitempty"`
 }
 
 type ConnectionConfig_HttpProtocolOptions struct {
-	IdleTimeout                  *Duration `json:"idleTimeout,omitempty"`
-	MaxHeadersCount              uint32    `json:"maxHeadersCount,omitempty"`
-	MaxStreamDuration            *Duration `json:"maxStreamDuration,omitempty"`
-	HeadersWithUnderscoresAction uint32    `json:"headersWithUnderscoresAction,omitempty"`
+	IdleTimeout                  string `json:"idleTimeout,omitempty"`
+	MaxHeadersCount              uint32 `json:"maxHeadersCount,omitempty"`
+	MaxStreamDuration            string `json:"maxStreamDuration,omitempty"`
+	HeadersWithUnderscoresAction uint32 `json:"headersWithUnderscoresAction,omitempty"`
 }
 
 type LoadBalancerConfig struct {
@@ -128,11 +128,6 @@ type SlowStartConfig struct {
 	SlowStartWindow  string  `json:"slowStartWindow,omitempty"`
 	Aggression       float64 `json:"aggression,omitempty"`
 	MinWeightPercent float64 `json:"minWeightPercent,omitempty"`
-}
-
-type Duration struct {
-	Seconds int64 `json:"seconds,omitempty"`
-	Nanos   int32 `json:"nanos,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

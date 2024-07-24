@@ -66,25 +66,25 @@ func (c *ServiceController) GetMetadata(_ *flaggerv1.Canary) (string, string, ma
 }
 
 // Initialize creates or updates the primary and canary services to prepare for the canary release process targeted on the K8s service
-func (c *ServiceController) Initialize(cd *flaggerv1.Canary) (err error) {
+func (c *ServiceController) Initialize(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
 	primaryName := fmt.Sprintf("%s-primary", targetName)
 	canaryName := fmt.Sprintf("%s-canary", targetName)
 
 	svc, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("service %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		return true, fmt.Errorf("service %s.%s get query error: %w", primaryName, cd.Namespace, err)
 	}
 
 	if err = c.reconcileCanaryService(cd, canaryName, svc); err != nil {
-		return fmt.Errorf("reconcileCanaryService failed: %w", err)
+		return true, fmt.Errorf("reconcileCanaryService failed: %w", err)
 	}
 
 	if err = c.reconcilePrimaryService(cd, primaryName, svc); err != nil {
-		return fmt.Errorf("reconcilePrimaryService failed: %w", err)
+		return true, fmt.Errorf("reconcilePrimaryService failed: %w", err)
 	}
 
-	return nil
+	return true, nil
 }
 
 func (c *ServiceController) reconcileCanaryService(canary *flaggerv1.Canary, name string, src *corev1.Service) error {
@@ -249,8 +249,8 @@ func (c *ServiceController) HaveDependenciesChanged(_ *flaggerv1.Canary) (bool, 
 	return false, nil
 }
 
-func (c *ServiceController) IsPrimaryReady(_ *flaggerv1.Canary) error {
-	return nil
+func (c *ServiceController) IsPrimaryReady(_ *flaggerv1.Canary) (bool, error) {
+	return true, nil
 }
 
 func (c *ServiceController) IsCanaryReady(_ *flaggerv1.Canary) (bool, error) {

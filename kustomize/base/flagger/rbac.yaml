@@ -241,6 +241,19 @@ rules:
       - update
       - patch
       - delete
+  - apiGroups:
+      - metrics.keptn.sh
+    resources:
+      - keptnmetrics
+      - analyses
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
   - nonResourceURLs:
       - /version
     verbs:

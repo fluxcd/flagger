@@ -32,7 +32,7 @@ func TestDeploymentController_IsReady(t *testing.T) {
 	mocks := newDeploymentFixture(dc)
 	mocks.controller.Initialize(mocks.canary)
 
-	err := mocks.controller.IsPrimaryReady(mocks.canary)
+	_, err := mocks.controller.IsPrimaryReady(mocks.canary)
 	require.Error(t, err)
 
 	_, err = mocks.controller.IsCanaryReady(mocks.canary)

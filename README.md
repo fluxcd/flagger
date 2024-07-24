@@ -51,7 +51,7 @@ Flagger documentation can be found at [fluxcd.io/flagger](https://fluxcd.io/flag
 **Our list of production users has moved to <https://fluxcd.io/adopters/#flagger>**.
 
 If you are using Flagger, please
-[submit a PR to add your organization](https://github.com/fluxcd/website/tree/main/adopters#readme) to the list!
+[submit a PR to add your organization](https://github.com/fluxcd/website/blob/main/data/adopters/2-flagger.yaml) to the list!
 
 ### Canary CRD
 

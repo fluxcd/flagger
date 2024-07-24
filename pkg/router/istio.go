@@ -34,7 +34,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
@@ -73,15 +73,15 @@ func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
 }
 
 func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name string) error {
-	newSpec := istiov1alpha3.DestinationRuleSpec{
+	newSpec := istiov1beta1.DestinationRuleSpec{
 		Host:          name,
 		TrafficPolicy: canary.Spec.Service.TrafficPolicy,
 	}
 
-	destinationRule, err := ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	destinationRule, err := ir.istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
-		destinationRule = &istiov1alpha3.DestinationRule{
+		destinationRule = &istiov1beta1.DestinationRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: canary.Namespace,
@@ -97,7 +97,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 				}),
 			}
 		}
-		_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Create(context.TODO(), destinationRule, metav1.CreateOptions{})
+		_, err = ir.istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Create(context.TODO(), destinationRule, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("DestinationRule %s.%s create error: %w", name, canary.Namespace, err)
 		}
@@ -113,7 +113,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 		if diff := cmp.Diff(newSpec, destinationRule.Spec); diff != "" {
 			clone := destinationRule.DeepCopy()
 			clone.Spec = newSpec
-			_, err = ir.istioClient.NetworkingV1alpha3().DestinationRules(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
+			_, err = ir.istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("DestinationRule %s.%s update error: %w", name, canary.Namespace, err)
 			}
@@ -123,6 +123,23 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 	}
 
 	return nil
+}
+
+// return true if canary service has appProtocol == tcp
+func isTcp(canary *flaggerv1.Canary) bool {
+	return strings.ToLower(canary.Spec.Service.AppProtocol) == "tcp"
+}
+
+// map canary.spec.service.match into L4Match
+func canaryToL4Match(canary *flaggerv1.Canary) []istiov1beta1.L4MatchAttributes {
+	var match []istiov1beta1.L4MatchAttributes
+	for _, m := range canary.Spec.Service.Match {
+		match = append(match, istiov1beta1.L4MatchAttributes{
+			Port: int(m.Port),
+		})
+	}
+
+	return match
 }
 
 func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
@@ -164,7 +181,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	}
 
 	// create destinations with primary weight 100% and canary weight 0%
-	canaryRoute := []istiov1alpha3.HTTPRouteDestination{
+	canaryRoute := []istiov1beta1.HTTPRouteDestination{
 		makeDestination(canary, primaryName, 100),
 		makeDestination(canary, canaryName, 0),
 	}
@@ -175,20 +192,35 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		gateways = []string{}
 	}
 
-	newSpec := istiov1alpha3.VirtualServiceSpec{
-		Hosts:    hosts,
-		Gateways: gateways,
-		Http: []istiov1alpha3.HTTPRoute{
-			{
-				Match:      canary.Spec.Service.Match,
-				Rewrite:    canary.Spec.Service.GetIstioRewrite(),
-				Timeout:    canary.Spec.Service.Timeout,
-				Retries:    canary.Spec.Service.Retries,
-				CorsPolicy: canary.Spec.Service.CorsPolicy,
-				Headers:    canary.Spec.Service.Headers,
-				Route:      canaryRoute,
+	var newSpec istiov1beta1.VirtualServiceSpec
+
+	if isTcp(canary) {
+		newSpec = istiov1beta1.VirtualServiceSpec{
+			Hosts:    hosts,
+			Gateways: gateways,
+			Tcp: []istiov1beta1.TCPRoute{
+				{
+					Match: canaryToL4Match(canary),
+					Route: canaryRoute,
+				},
 			},
-		},
+		}
+	} else {
+		newSpec = istiov1beta1.VirtualServiceSpec{
+			Hosts:    hosts,
+			Gateways: gateways,
+			Http: []istiov1beta1.HTTPRoute{
+				{
+					Match:      canary.Spec.Service.Match,
+					Rewrite:    canary.Spec.Service.GetIstioRewrite(),
+					Timeout:    canary.Spec.Service.Timeout,
+					Retries:    canary.Spec.Service.Retries,
+					CorsPolicy: canary.Spec.Service.CorsPolicy,
+					Headers:    canary.Spec.Service.Headers,
+					Route:      canaryRoute,
+				},
+			},
+		}
 	}
 
 	newMetadata := canary.Spec.Service.Apex
@@ -203,9 +235,9 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	}
 	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
 
-	if len(canary.GetAnalysis().Match) > 0 {
+	if !isTcp(canary) && len(canary.GetAnalysis().Match) > 0 {
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
-		newSpec.Http = []istiov1alpha3.HTTPRoute{
+		newSpec.Http = []istiov1beta1.HTTPRoute{
 			{
 				Match:      canaryMatch,
 				Rewrite:    canary.Spec.Service.GetIstioRewrite(),
@@ -222,17 +254,17 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Route: []istiov1alpha3.HTTPRouteDestination{
+				Route: []istiov1beta1.HTTPRouteDestination{
 					makeDestination(canary, primaryName, 100),
 				},
 			},
 		}
 	}
 
-	virtualService, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	virtualService, err := ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
-		virtualService = &istiov1alpha3.VirtualService{
+		virtualService = &istiov1beta1.VirtualService{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexName,
 				Namespace:   canary.Namespace,
@@ -250,7 +282,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				}),
 			}
 		}
-		_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Create(context.TODO(), virtualService, metav1.CreateOptions{})
+		_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Create(context.TODO(), virtualService, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s create error: %w", apexName, canary.Namespace, err)
 		}
@@ -268,20 +300,20 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	}
 
 	ignoreCmpOptions := []cmp.Option{
-		cmpopts.IgnoreFields(istiov1alpha3.HTTPRouteDestination{}, "Weight"),
-		cmpopts.IgnoreFields(istiov1alpha3.HTTPRoute{}, "Mirror", "MirrorPercentage"),
+		cmpopts.IgnoreFields(istiov1beta1.HTTPRouteDestination{}, "Weight"),
+		cmpopts.IgnoreFields(istiov1beta1.HTTPRoute{}, "Mirror", "MirrorPercentage"),
 	}
 	if canary.Spec.Analysis.SessionAffinity != nil {
 		// We ignore this route as this does not do weighted routing and is handled exclusively
 		// by SetRoutes().
-		ignoreSlice := cmpopts.IgnoreSliceElements(func(t istiov1alpha3.HTTPRoute) bool {
+		ignoreSlice := cmpopts.IgnoreSliceElements(func(t istiov1beta1.HTTPRoute) bool {
 			if t.Name == stickyRouteName {
 				return true
 			}
 			return false
 		})
 		ignoreCmpOptions = append(ignoreCmpOptions, ignoreSlice)
-		ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(istiov1alpha3.HTTPRouteDestination{}, "Headers"))
+		ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(istiov1beta1.HTTPRouteDestination{}, "Headers"))
 	}
 	if v, ok := virtualService.Annotations[kubectlAnnotation]; ok {
 		newMetadata.Annotations[kubectlAnnotation] = v
@@ -322,7 +354,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				vtClone.ObjectMeta.Annotations[configAnnotation] = string(b)
 			}
 
-			_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vtClone, metav1.UpdateOptions{})
+			_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vtClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 			}
@@ -342,14 +374,46 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 	err error,
 ) {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
-	vs := &istiov1alpha3.VirtualService{}
-	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	vs := &istiov1beta1.VirtualService{}
+	vs, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 		return
 	}
 
-	var httpRoute istiov1alpha3.HTTPRoute
+	if isTcp(canary) {
+		ir.logger.Infof("Canary %s.%s uses TCP service", canary.Name, canary.Namespace)
+		var tcpRoute istiov1beta1.TCPRoute
+		for _, tcp := range vs.Spec.Tcp {
+			for _, r := range tcp.Route {
+				if r.Destination.Host == canaryName {
+					tcpRoute = tcp
+					break
+				}
+			}
+		}
+		for _, route := range tcpRoute.Route {
+			if route.Destination.Host == primaryName {
+				primaryWeight = route.Weight
+			}
+			if route.Destination.Host == canaryName {
+				canaryWeight = route.Weight
+			}
+		}
+
+		mirrored = false
+
+		if primaryWeight == 0 && canaryWeight == 0 {
+			err = fmt.Errorf("VirtualService %s.%s does not contain routes for %s-primary and %s-canary",
+				apexName, canary.Namespace, apexName, apexName)
+		}
+
+		return
+	}
+
+	ir.logger.Infof("Canary %s.%s uses HTTP service", canary.Name, canary.Namespace)
+
+	var httpRoute istiov1beta1.HTTPRoute
 	for _, http := range vs.Spec.Http {
 		for _, r := range http.Route {
 			if r.Destination.Host == canaryName {
@@ -405,27 +469,47 @@ func (ir *IstioRouter) SetRoutes(
 ) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
-	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	vs, err := ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
 
 	vsCopy := vs.DeepCopy()
 
+	if isTcp(canary) {
+		// weighted routing (progressive canary)
+		weightedRoute := istiov1beta1.TCPRoute{
+			Match: canaryToL4Match(canary),
+			Route: []istiov1beta1.HTTPRouteDestination{
+				makeDestination(canary, primaryName, primaryWeight),
+				makeDestination(canary, canaryName, canaryWeight),
+			},
+		}
+		vsCopy.Spec.Tcp = []istiov1beta1.TCPRoute{
+			weightedRoute,
+		}
+
+		vs, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
+		}
+		return nil
+	}
+
 	// weighted routing (progressive canary)
-	weightedRoute := istiov1alpha3.HTTPRoute{
+	weightedRoute := istiov1beta1.HTTPRoute{
 		Match:      canary.Spec.Service.Match,
 		Rewrite:    canary.Spec.Service.GetIstioRewrite(),
 		Timeout:    canary.Spec.Service.Timeout,
 		Retries:    canary.Spec.Service.Retries,
 		CorsPolicy: canary.Spec.Service.CorsPolicy,
 		Headers:    canary.Spec.Service.Headers,
-		Route: []istiov1alpha3.HTTPRouteDestination{
+		Route: []istiov1beta1.HTTPRouteDestination{
 			makeDestination(canary, primaryName, primaryWeight),
 			makeDestination(canary, canaryName, canaryWeight),
 		},
 	}
-	vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
+	vsCopy.Spec.Http = []istiov1beta1.HTTPRoute{
 		weightedRoute,
 	}
 
@@ -443,8 +527,8 @@ func (ir *IstioRouter) SetRoutes(
 			for i, routeDest := range weightedRoute.Route {
 				if routeDest.Destination.Host == canaryName {
 					if routeDest.Headers == nil {
-						routeDest.Headers = &istiov1alpha3.Headers{
-							Response: &istiov1alpha3.HeaderOperations{},
+						routeDest.Headers = &istiov1beta1.Headers{
+							Response: &istiov1beta1.HeaderOperations{},
 						}
 					}
 					routeDest.Headers.Response.Add = map[string]string{
@@ -457,16 +541,16 @@ func (ir *IstioRouter) SetRoutes(
 			}
 
 			cookieKeyAndVal := strings.Split(canary.Status.SessionAffinityCookie, "=")
-			cookieMatch := istiov1alpha3.HTTPMatchRequest{
+			cookieMatch := istiov1beta1.HTTPMatchRequest{
 				Headers: map[string]istiov1alpha1.StringMatch{
 					cookieHeader: {
 						Regex: fmt.Sprintf(".*%s.*%s.*", cookieKeyAndVal[0], cookieKeyAndVal[1]),
 					},
 				},
 			}
-			canaryMatch := mergeMatchConditions([]istiov1alpha3.HTTPMatchRequest{cookieMatch}, canary.Spec.Service.Match)
+			canaryMatch := mergeMatchConditions([]istiov1beta1.HTTPMatchRequest{cookieMatch}, canary.Spec.Service.Match)
 			stickyRoute.Match = canaryMatch
-			stickyRoute.Route = []istiov1alpha3.HTTPRouteDestination{
+			stickyRoute.Route = []istiov1beta1.HTTPRouteDestination{
 				makeDestination(canary, primaryName, 0),
 				makeDestination(canary, canaryName, 100),
 			}
@@ -480,24 +564,24 @@ func (ir *IstioRouter) SetRoutes(
 			// Match against the previous session cookie and delete that cookie
 			if previousCookie != "" {
 				cookieKeyAndVal := strings.Split(previousCookie, "=")
-				cookieMatch := istiov1alpha3.HTTPMatchRequest{
+				cookieMatch := istiov1beta1.HTTPMatchRequest{
 					Headers: map[string]istiov1alpha1.StringMatch{
 						cookieHeader: {
 							Regex: fmt.Sprintf(".*%s.*%s.*", cookieKeyAndVal[0], cookieKeyAndVal[1]),
 						},
 					},
 				}
-				canaryMatch := mergeMatchConditions([]istiov1alpha3.HTTPMatchRequest{cookieMatch}, canary.Spec.Service.Match)
+				canaryMatch := mergeMatchConditions([]istiov1beta1.HTTPMatchRequest{cookieMatch}, canary.Spec.Service.Match)
 				stickyRoute.Match = canaryMatch
 
 				if stickyRoute.Headers == nil {
-					stickyRoute.Headers = &istiov1alpha3.Headers{
-						Response: &istiov1alpha3.HeaderOperations{
+					stickyRoute.Headers = &istiov1beta1.Headers{
+						Response: &istiov1beta1.HeaderOperations{
 							Add: map[string]string{},
 						},
 					}
 				} else if stickyRoute.Headers.Response == nil {
-					stickyRoute.Headers.Response = &istiov1alpha3.HeaderOperations{
+					stickyRoute.Headers.Response = &istiov1beta1.HeaderOperations{
 						Add: map[string]string{},
 					}
 				} else if stickyRoute.Headers.Response.Add == nil {
@@ -508,18 +592,18 @@ func (ir *IstioRouter) SetRoutes(
 
 			canary.Status.SessionAffinityCookie = ""
 		}
-		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
+		vsCopy.Spec.Http = []istiov1beta1.HTTPRoute{
 			stickyRoute, weightedRoute,
 		}
 	}
 
 	if mirrored {
-		vsCopy.Spec.Http[0].Mirror = &istiov1alpha3.Destination{
+		vsCopy.Spec.Http[0].Mirror = &istiov1beta1.Destination{
 			Host: canaryName,
 		}
 
 		if mw := canary.GetAnalysis().MirrorWeight; mw > 0 {
-			vsCopy.Spec.Http[0].MirrorPercentage = &istiov1alpha3.Percent{Value: float64(mw)}
+			vsCopy.Spec.Http[0].MirrorPercentage = &istiov1beta1.Percent{Value: float64(mw)}
 		}
 	}
 
@@ -527,7 +611,7 @@ func (ir *IstioRouter) SetRoutes(
 	if len(canary.GetAnalysis().Match) > 0 {
 		// merge the common routes with the canary ones
 		canaryMatch := mergeMatchConditions(canary.GetAnalysis().Match, canary.Spec.Service.Match)
-		vsCopy.Spec.Http = []istiov1alpha3.HTTPRoute{
+		vsCopy.Spec.Http = []istiov1beta1.HTTPRoute{
 			{
 				Match:      canaryMatch,
 				Rewrite:    canary.Spec.Service.GetIstioRewrite(),
@@ -535,7 +619,7 @@ func (ir *IstioRouter) SetRoutes(
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Route: []istiov1alpha3.HTTPRouteDestination{
+				Route: []istiov1beta1.HTTPRouteDestination{
 					makeDestination(canary, primaryName, primaryWeight),
 					makeDestination(canary, canaryName, canaryWeight),
 				},
@@ -547,14 +631,14 @@ func (ir *IstioRouter) SetRoutes(
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Route: []istiov1alpha3.HTTPRouteDestination{
+				Route: []istiov1beta1.HTTPRouteDestination{
 					makeDestination(canary, primaryName, primaryWeight),
 				},
 			},
 		}
 	}
 
-	vs, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
+	vs, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
 	}
@@ -565,14 +649,14 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 	// Need to see if I can get the annotation orig-configuration
 	apexName, _, _ := canary.GetServiceNames()
 
-	vs, err := ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	vs, err := ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error: %w", apexName, canary.Namespace, err)
 	}
 
-	var storedSpec istiov1alpha3.VirtualServiceSpec
+	var storedSpec istiov1beta1.VirtualServiceSpec
 	if a, ok := vs.ObjectMeta.Annotations[kubectlAnnotation]; ok {
-		var storedVS istiov1alpha3.VirtualService
+		var storedVS istiov1beta1.VirtualService
 		if err := json.Unmarshal([]byte(a), &storedVS); err != nil {
 			return fmt.Errorf("VirtualService %s.%s failed to unMarshal annotation %s",
 				apexName, canary.Namespace, kubectlAnnotation)
@@ -591,7 +675,7 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 	clone := vs.DeepCopy()
 	clone.Spec = storedSpec
 
-	_, err = ir.istioClient.NetworkingV1alpha3().VirtualServices(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
+	_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 	}
@@ -599,12 +683,12 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 }
 
 // mergeMatchConditions appends the URI match rules to canary conditions
-func mergeMatchConditions(canary, defaults []istiov1alpha3.HTTPMatchRequest) []istiov1alpha3.HTTPMatchRequest {
+func mergeMatchConditions(canary, defaults []istiov1beta1.HTTPMatchRequest) []istiov1beta1.HTTPMatchRequest {
 	if len(defaults) == 0 {
 		return canary
 	}
 
-	merged := make([]istiov1alpha3.HTTPMatchRequest, len(canary)*len(defaults))
+	merged := make([]istiov1beta1.HTTPMatchRequest, len(canary)*len(defaults))
 	num := 0
 	for _, c := range canary {
 		for _, d := range defaults {
@@ -623,9 +707,9 @@ func mergeMatchConditions(canary, defaults []istiov1alpha3.HTTPMatchRequest) []i
 }
 
 // makeDestination returns a an destination weight for the specified host
-func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1alpha3.HTTPRouteDestination {
-	dest := istiov1alpha3.HTTPRouteDestination{
-		Destination: istiov1alpha3.Destination{
+func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1beta1.HTTPRouteDestination {
+	dest := istiov1beta1.HTTPRouteDestination{
+		Destination: istiov1beta1.Destination{
 			Host: host,
 		},
 		Weight: weight,
@@ -635,10 +719,10 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 	if canary.Spec.Service.PortDiscovery &&
 		(len(canary.Spec.Service.Gateways) > 0 &&
 			canary.Spec.Service.Gateways[0] != "mesh" || canary.Spec.Service.Delegation) {
-		dest = istiov1alpha3.HTTPRouteDestination{
-			Destination: istiov1alpha3.Destination{
+		dest = istiov1beta1.HTTPRouteDestination{
+			Destination: istiov1beta1.Destination{
 				Host: host,
-				Port: &istiov1alpha3.PortSelector{
+				Port: &istiov1beta1.PortSelector{
 					Number: uint32(canary.Spec.Service.Port),
 				},
 			},

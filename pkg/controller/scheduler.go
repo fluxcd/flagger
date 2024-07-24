@@ -221,9 +221,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// create primary workload
-	err = canaryController.Initialize(cd)
+	retriable, err := canaryController.Initialize(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
+		if !retriable {
+			c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+		}
 		return
 	}
 
@@ -289,8 +292,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// check primary status
 	if !cd.SkipAnalysis() {
-		if err := canaryController.IsPrimaryReady(cd); err != nil {
+		retriable, err := canaryController.IsPrimaryReady(cd)
+		if err != nil {
 			c.recordEventWarningf(cd, "%v", err)
+			if !retriable {
+				c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+			}
 			return
 		}
 	}
@@ -336,10 +343,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// check canary status
-	var retriable = true
 	retriable, err = canaryController.IsCanaryReady(cd)
-	if err != nil && retriable {
+	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
+		if !retriable {
+			c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+		}
 		return
 	}
 

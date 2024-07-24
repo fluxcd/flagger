@@ -51,4 +51,7 @@ metadata:
     app.kubernetes.io/name: {{ template "loadtester.name" . }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+  {{- if .Values.rbac.serviceAccountAnnotations }}
+  annotations: {{ tpl (toYaml .Values.rbac.serviceAccountAnnotations) . | nindent 4 }}
+  {{- end }}
 {{- end }}

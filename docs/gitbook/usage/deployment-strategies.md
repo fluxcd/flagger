@@ -9,7 +9,7 @@ Flagger can run automated application analysis, promotion and rollback for the f
 * **Blue/Green** \(traffic switching\)
   * Kubernetes CNI, Istio, Linkerd, App Mesh, NGINX, Contour, Gloo Edge, Open Service Mesh, Gateway API
 * **Blue/Green Mirroring** \(traffic shadowing\)
-  * Istio
+  * Istio, Gateway API
 * **Canary Release with Session Affinity** \(progressive traffic shifting combined with cookie based routing\)
   * Istio, Gateway API
 
@@ -353,8 +353,6 @@ you should consider what will happen if a write is duplicated and handled by the
 
 To use mirroring, set `spec.analysis.mirror` to `true`.
 
-Istio example:
-
 ```yaml
   analysis:
     # schedule interval (default 60s)
@@ -363,9 +361,10 @@ Istio example:
     iterations: 10
     # max number of failed iterations before rollback
     threshold: 2
-    # Traffic shadowing (compatible with Istio only)
+    # Traffic shadowing
     mirror: true
     # Weight of the traffic mirrored to your canary (defaults to 100%)
+    # Only applicable for Istio.
     mirrorWeight: 100
 ```
 

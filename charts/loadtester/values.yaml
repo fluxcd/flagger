@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/fluxcd/flagger-loadtester
-  tag: 0.29.0
+  tag: 0.32.0
   pullPolicy: IfNotPresent
   pullSecret:
 
@@ -54,6 +54,8 @@ rbac:
   #   resources: ["pods"]
   #   verbs: ["list", "get"]
   rules: []
+  # annotations to add to the service account
+  serviceAccountAnnotations: {}
 
 # name of an existing service account to use - if not creating rbac resources
 serviceAccountName: ""

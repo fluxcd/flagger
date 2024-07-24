@@ -253,6 +253,7 @@ func main() {
 		fromEnv("EVENT_WEBHOOK_URL", eventWebhook),
 		clusterName,
 		noCrossNamespaceRefs,
+		cfg,
 	)
 
 	// leader election context
@@ -327,7 +328,7 @@ func startLeaderElection(ctx context.Context, run func(), ns string, kubeClient 
 	id = id + "_" + string(uuid.NewUUID())
 
 	lock, err := resourcelock.New(
-		resourcelock.ConfigMapsLeasesResourceLock,
+		resourcelock.LeasesResourceLock,
 		ns,
 		configMapName,
 		kubeClient.CoreV1(),

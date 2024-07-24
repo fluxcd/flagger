@@ -4,8 +4,8 @@ kind: ServiceAccount
 metadata:
   name: {{ template "flagger.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
-  annotations:
   {{- if .Values.serviceAccount.annotations }}
+  annotations:
 {{ toYaml .Values.serviceAccount.annotations | indent 4 }}
   {{- end }}
   labels:

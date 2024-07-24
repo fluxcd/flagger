@@ -31,7 +31,7 @@ import (
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	gatewayapiv1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/fluxcd/flagger/pkg/client/clientset/versioned/fake"
 	"github.com/fluxcd/flagger/pkg/logger"
@@ -143,24 +143,24 @@ func newTestCanary() *flaggerv1.Canary {
 				Port:          9898,
 				PortDiscovery: true,
 				AppProtocol:   "http",
-				Headers: &istiov1alpha3.Headers{
-					Request: &istiov1alpha3.HeaderOperations{
+				Headers: &istiov1beta1.Headers{
+					Request: &istiov1beta1.HeaderOperations{
 						Add: map[string]string{
 							"x-envoy-upstream-rq-timeout-ms": "15000",
 						},
 						Remove: []string{"test"},
 					},
-					Response: &istiov1alpha3.HeaderOperations{
+					Response: &istiov1beta1.HeaderOperations{
 						Remove: []string{"token"},
 					},
 				},
-				CorsPolicy: &istiov1alpha3.CorsPolicy{
+				CorsPolicy: &istiov1beta1.CorsPolicy{
 					AllowMethods: []string{
 						"GET",
 						"POST",
 					},
 				},
-				Match: []istiov1alpha3.HTTPMatchRequest{
+				Match: []istiov1beta1.HTTPMatchRequest{
 					{
 						Name: "podinfo",
 						Uri: &istiov1alpha1.StringMatch{
@@ -172,7 +172,7 @@ func newTestCanary() *flaggerv1.Canary {
 						IgnoreUriCase: true,
 					},
 				},
-				Retries: &istiov1alpha3.HTTPRetry{
+				Retries: &istiov1beta1.HTTPRetry{
 					Attempts:      10,
 					PerTryTimeout: "30s",
 					RetryOn:       "connect-failure,gateway-error",
@@ -225,7 +225,7 @@ func newTestCanaryAppMesh() *flaggerv1.Canary {
 				Hosts:    []string{"*"},
 				Backends: []string{"backend.default"},
 				Timeout:  "30s",
-				Retries: &istiov1alpha3.HTTPRetry{
+				Retries: &istiov1beta1.HTTPRetry{
 					Attempts:      5,
 					PerTryTimeout: "gateway-error",
 					RetryOn:       "5s",
@@ -322,7 +322,7 @@ func newTestABTest() *flaggerv1.Canary {
 			}, Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
 				Iterations: 2,
-				Match: []istiov1alpha3.HTTPMatchRequest{
+				Match: []istiov1beta1.HTTPMatchRequest{
 					{
 						Headers: map[string]istiov1alpha1.StringMatch{
 							"x-user-type": {
@@ -554,6 +554,7 @@ func newTestGatewayAPICanary() *flaggerv1.Canary {
 						Name: "podinfo",
 					},
 				},
+				Timeout: "10s",
 			},
 			Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,

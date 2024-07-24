@@ -48,12 +48,12 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}
       {{- end }}
+      {{- if .Values.controlplane.kubeconfig.secretName }}
       volumes:
-        {{- if .Values.controlplane.kubeconfig.secretName }}
         - name: kubeconfig
           secret:
             secretName: "{{ .Values.controlplane.kubeconfig.secretName }}"
-        {{- end }}
+      {{- end }}
         {{- if .Values.additionalVolumes }}
           {{- toYaml .Values.additionalVolumes | nindent 8 -}}
         {{- end }}
@@ -66,11 +66,11 @@ spec:
           securityContext:
 {{ toYaml .Values.securityContext.context | indent 12 }}
           {{- end }}
+          {{- if .Values.controlplane.kubeconfig.secretName }}
           volumeMounts:
-            {{- if .Values.controlplane.kubeconfig.secretName }}
             - name: kubeconfig
               mountPath: "/tmp/controlplane"
-            {{- end }}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:

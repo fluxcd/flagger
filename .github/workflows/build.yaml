@@ -19,23 +19,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Restore Go cache
-        uses: actions/cache@v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.19.x
+          go-version: 1.22.x
+          cache-dependency-path: |
+            **/go.sum
+            **/go.mod
       - name: Download modules
         run: |
           go mod download
           go install golang.org/x/tools/cmd/goimports
       - name: Run linters
-        run: make test-fmt test-codegen
+        run: make fmt test-codegen
       - name: Verify CRDs
         run: make verify-crd
       - name: Run tests
@@ -48,7 +44,7 @@ jobs:
             exit 1
           fi
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.txt
       - name: Build container image

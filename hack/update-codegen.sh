@@ -25,15 +25,23 @@ trap "cleanup" EXIT SIGINT
 
 echo ">> Temporary output directory ${TEMP_DIR}"
 
-# Ensure we can execute.
-chmod +x ${CODEGEN_PKG}/generate-groups.sh
-chmod +x ${CODEGEN_PKG}/generate-internal-groups.sh
+PACKAGE_PATH_BASE="github.com/fluxcd/flagger"
 
-${CODEGEN_PKG}/generate-groups.sh client,deepcopy,informer,lister \
-    github.com/fluxcd/flagger/pkg/client github.com/fluxcd/flagger/pkg/apis \
-    "flagger:v1beta1 appmesh:v1beta2 appmesh:v1beta1 istio:v1alpha3 smi:v1alpha1 smi:v1alpha2 smi:v1alpha3 gloo/gloo:v1 gloo/gateway:v1 projectcontour:v1 traefik:v1alpha1 kuma:v1alpha1 gatewayapi:v1alpha2 gatewayapi:v1beta1 keda:v1alpha1 apisix:v2" \
-    --output-base "${TEMP_DIR}" \
-    --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
+mkdir -p "${TEMP_DIR}/${PACKAGE_PATH_BASE}/pkg/client/informers" \
+         "${TEMP_DIR}/${PACKAGE_PATH_BASE}/pkg/client/listers" \
+         "${TEMP_DIR}/${PACKAGE_PATH_BASE}/pkg/client/clientset"
+
+# Ensure we can execute.
+chmod +x ${CODEGEN_PKG}/kube_codegen.sh
+
+source ${CODEGEN_PKG}/kube_codegen.sh kube::codegen::gen_client \
+    --output-dir "${TEMP_DIR}" \
+    --output-pkg "${PACKAGE_PATH_BASE}/pkg/client" \
+    --with-watch \
+    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
+    ./pkgs/apis
+
+ls -lha $TEMP_DIR
 
 # Copy everything back.
-cp -r "${TEMP_DIR}/github.com/fluxcd/flagger/." "${SCRIPT_ROOT}/"
+cp -r "${TEMP_DIR}/${PACKAGE_PATH_BASE}/." "${SCRIPT_ROOT}/"

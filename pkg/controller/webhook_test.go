@@ -263,3 +263,29 @@ func TestCanaryChecksum(t *testing.T) {
 	require.NotEqual(t, canary3sum, canary1sum)
 	require.NotEqual(t, canary4sum, canary1sum)
 }
+
+func TestCallWebhook_Retries(t *testing.T) {
+	retries := 1
+	failures := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if failures <= retries-1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			failures++
+		} else {
+			w.WriteHeader(http.StatusAccepted)
+		}
+	}))
+	defer ts.Close()
+	hook := flaggerv1.CanaryWebhook{
+		Name:    "validation",
+		URL:     ts.URL,
+		Retries: retries,
+	}
+
+	err := CallWebhook(
+		flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "podinfo", Namespace: corev1.NamespaceDefault}},
+		flaggerv1.CanaryPhaseProgressing, hook)
+	require.NoError(t, err)
+}

@@ -36,6 +36,34 @@ display_httproute() {
     fi
 }
 
+create_request_duration_metric_template() {
+    if ! kubectl -n flagger-system get metrictemplates request-duration ; then
+        echo '>>> Create request-duration metric template'
+        cat <<EOF | kubectl apply -f -
+        apiVersion: flagger.app/v1beta1
+        kind: MetricTemplate
+        metadata:
+          name: request-duration
+          namespace: flagger-system
+        spec:
+          provider:
+            type: prometheus
+            address: http://prometheus.istio-system:9090
+          query: |
+            histogram_quantile(0.99,
+              sum(
+                rate(
+                  http_request_duration_seconds_bucket{
+                    namespace=~"{{ namespace }}",
+                    app="{{ target }}",
+                  }[{{ interval }}]
+                )
+              ) by (le)
+            )
+EOF
+    fi
+}
+
 create_latency_metric_template() {
     if ! kubectl -n flagger-system get metrictemplates latency; then
         echo '>>> Create latency metric template'
@@ -48,13 +76,15 @@ create_latency_metric_template() {
         spec:
           provider:
             type: prometheus
-            address: http://flagger-prometheus:9090
+            address: http://prometheus.istio-system:9090
           query: |
             histogram_quantile(0.99,
               sum(
                 rate(
-                  envoy_cluster_upstream_rq_time_bucket{
-                    envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
+                  istio_request_duration_milliseconds_bucket{
+                    reporter="source",
+                    destination_workload_namespace=~"{{ namespace }}",
+                    destination_workload=~"{{ target }}",
                   }[{{ interval }}]
                 )
               ) by (le)
@@ -75,21 +105,25 @@ create_error_rate_metric_template() {
         spec:
           provider:
             type: prometheus
-            address: http://flagger-prometheus:9090
+            address: http://prometheus.istio-system:9090
           query: |
             100 - sum(
               rate(
-                envoy_cluster_upstream_rq{
-                  envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
-                  envoy_response_code!~"5.*"
+                istio_requests_total{
+                  reporter="source",
+                  destination_workload_namespace=~"{{ namespace }}",
+                  destination_workload=~"{{ target }}",
+                  response_code!~"5.*"
                 }[{{ interval }}]
               )
             )
             /
             sum(
               rate(
-                envoy_cluster_upstream_rq{
-                  envoy_cluster_name=~"{{ namespace }}_{{ target }}-canary_[0-9a-zA-Z-]+",
+                istio_requests_total{
+                  reporter="source",
+                  destination_workload_namespace=~"{{ namespace }}",
+                  destination_workload=~"{{ target }}",
                 }[{{ interval }}]
               )
             )

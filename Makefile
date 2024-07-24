@@ -6,19 +6,13 @@ build:
 	CGO_ENABLED=0 go build -a -o ./bin/flagger ./cmd/flagger
 
 tidy:
-	rm -f go.sum; go mod tidy -compat=1.19
+	rm -f go.sum; go mod tidy -compat=1.22
 
 vet:
 	go vet ./...
 
 fmt:
-	go mod tidy
-	gofmt -l -s -w ./
-	goimports -l -w ./
-
-test-fmt:
-	gofmt -l -s ./ | grep ".*\.go"; if [ "$$?" = "0" ]; then exit 1; fi
-	goimports -l ./ | grep ".*\.go"; if [ "$$?" = "0" ]; then exit 1; fi
+	go fmt ./...
 
 codegen:
 	./hack/update-codegen.sh
@@ -26,8 +20,13 @@ codegen:
 test-codegen:
 	./hack/verify-codegen.sh
 
-test: test-fmt test-codegen
+test: fmt test-codegen
 	go test ./...
+
+test-coverage: fmt test-codegen
+	go test -coverprofile cover.out ./...
+	go tool cover -html=cover.out
+	rm cover.out
 
 crd:
 	cat artifacts/flagger/crd.yaml > charts/flagger/crds/crd.yaml

@@ -51,7 +51,8 @@ type prometheusResponse struct {
 			Metric struct {
 				Name string `json:"name"`
 			}
-			Value []interface{} `json:"value"`
+			Value  []interface{} `json:"value"`
+			Values []interface{} `json:"values"`
 		}
 	}
 }
@@ -147,6 +148,9 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 
 	var value *float64
 	for _, v := range result.Data.Result {
+		if v.Values != nil {
+			return 0, fmt.Errorf("%w", ErrMultipleValuesReturned)
+		}
 		metricValue := v.Value[1]
 		switch metricValue.(type) {
 		case string:

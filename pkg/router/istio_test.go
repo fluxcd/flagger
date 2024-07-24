@@ -29,9 +29,50 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1alpha3 "github.com/fluxcd/flagger/pkg/apis/istio/v1alpha3"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 )
+
+func TestUnmarshalVirtualService(t *testing.T) {
+	body := `
+	{
+		"apiVersion": "networking.istio.io/v1beta1",
+		"kind": "VirtualService",
+		"spec": {
+			"gateways": [
+				"default/gateway"
+			],
+			"hosts": [
+				"my.example.com"
+			],
+			"tcp": [
+				{
+					"match": [
+						{
+							"port": 9898
+						}
+					],
+					"route": [
+						{
+							"destination": {
+								"host": "my.example.com",
+								"port": {
+									"number": 9898
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	}
+	`
+
+	var vs istiov1beta1.VirtualService
+	err := json.Unmarshal([]byte(body), &vs)
+	require.NoError(t, err)
+}
 
 func TestIstioRouter_Sync(t *testing.T) {
 	mocks := newFixture(nil)
@@ -46,13 +87,13 @@ func TestIstioRouter_Sync(t *testing.T) {
 	require.NoError(t, err)
 
 	// test insert
-	_, err = mocks.meshClient.NetworkingV1alpha3().DestinationRules("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
+	_, err = mocks.meshClient.NetworkingV1beta1().DestinationRules("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	_, err = mocks.meshClient.NetworkingV1alpha3().DestinationRules("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	_, err = mocks.meshClient.NetworkingV1beta1().DestinationRules("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Len(t, vs.Spec.Http, 1)
 	require.Len(t, vs.Spec.Http[0].Route, 2)
@@ -73,7 +114,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	require.NoError(t, err)
 
 	// verify
-	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	vs, err = mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Len(t, vs.Spec.Hosts, 2)
 
@@ -84,7 +125,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	vsClone.Spec.Gateways = gateways
 	totalGateways := len(mocks.canary.Spec.Service.Gateways)
 
-	vsGateways, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Update(context.TODO(), vsClone, metav1.UpdateOptions{})
+	vsGateways, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Update(context.TODO(), vsClone, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	totalGateways++
@@ -96,7 +137,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	require.NoError(t, err)
 
 	// verify
-	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	vs, err = mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Len(t, vs.Spec.Gateways, totalGateways)
 }
@@ -121,11 +162,11 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		err := router.SetRoutes(mocks.canary, p, c, false)
 		require.NoError(t, err)
 
-		vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		var pRoute, cRoute istiov1alpha3.HTTPRouteDestination
-		var mirror *istiov1alpha3.Destination
+		var pRoute, cRoute istiov1beta1.HTTPRouteDestination
+		var mirror *istiov1beta1.Destination
 		for _, http := range vs.Spec.Http {
 			for _, route := range http.Route {
 				if route.Destination.Host == pHost {
@@ -154,7 +195,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		}
 		err := router.SetRoutes(canary, 0, 10, false)
 
-		vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		assert.Len(t, vs.Spec.Http, 2)
@@ -199,7 +240,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		err = router.Reconcile(canary)
 		require.NoError(t, err)
 
-		reconciledVS, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		reconciledVS, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		// routes should not be changed.
@@ -212,7 +253,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		err = router.SetRoutes(canary, 50, 50, false)
 		require.NoError(t, err)
 
-		vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		vs, err = mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		assert.Len(t, vs.Spec.Http, 2)
@@ -255,7 +296,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		err = router.SetRoutes(canary, 100, 0, false)
 		require.NoError(t, err)
 
-		vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		vs, err = mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		assert.Len(t, vs.Spec.Http, 2)
@@ -311,12 +352,12 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 			err := router.SetRoutes(mocks.canary, p, c, true)
 			require.NoError(t, err)
 
-			vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+			vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			var pRoute, cRoute istiov1alpha3.HTTPRouteDestination
-			var mirror *istiov1alpha3.Destination
-			var mirrorWeight *istiov1alpha3.Percent
+			var pRoute, cRoute istiov1beta1.HTTPRouteDestination
+			var mirror *istiov1beta1.Destination
+			var mirrorWeight *istiov1beta1.Percent
 			for _, http := range vs.Spec.Http {
 				for _, route := range http.Route {
 					if route.Destination.Host == pHost {
@@ -378,20 +419,20 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 	assert.False(t, m)
 
 	// Adjust vs to activate mirroring.
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	cHost := fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name)
 	for i, http := range vs.Spec.Http {
 		for _, route := range http.Route {
 			if route.Destination.Host == cHost {
-				vs.Spec.Http[i].Mirror = &istiov1alpha3.Destination{
+				vs.Spec.Http[i].Mirror = &istiov1beta1.Destination{
 					Host: cHost,
 				}
 			}
 		}
 	}
-	_, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices(mocks.canary.Namespace).Update(context.TODO(), vs, metav1.UpdateOptions{})
+	_, err = mocks.meshClient.NetworkingV1beta1().VirtualServices(mocks.canary.Namespace).Update(context.TODO(), vs, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	p, c, m, err = router.GetRoutes(mocks.canary)
@@ -413,7 +454,7 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 	err := router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Len(t, vs.Spec.Http, 1)
 	assert.Equal(t, "15000", vs.Spec.Http[0].Headers.Request.Add["x-envoy-upstream-rq-timeout-ms"])
@@ -433,7 +474,7 @@ func TestIstioRouter_CORS(t *testing.T) {
 	err := router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.NoError(t, err)
 	require.Len(t, vs.Spec.Http, 1)
@@ -454,7 +495,7 @@ func TestIstioRouter_ABTest(t *testing.T) {
 	require.NoError(t, err)
 
 	// test insert
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Len(t, vs.Spec.Http, 2)
 
@@ -465,14 +506,14 @@ func TestIstioRouter_ABTest(t *testing.T) {
 	err = router.SetRoutes(mocks.abtest, p, c, m)
 	require.NoError(t, err)
 
-	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
+	vs, err = mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	pHost := fmt.Sprintf("%s-primary", mocks.abtest.Spec.TargetRef.Name)
 	cHost := fmt.Sprintf("%s-canary", mocks.abtest.Spec.TargetRef.Name)
-	pRoute := istiov1alpha3.HTTPRouteDestination{}
-	cRoute := istiov1alpha3.HTTPRouteDestination{}
-	var mirror *istiov1alpha3.Destination
+	pRoute := istiov1beta1.HTTPRouteDestination{}
+	cRoute := istiov1beta1.HTTPRouteDestination{}
+	var mirror *istiov1beta1.Destination
 
 	for _, http := range vs.Spec.Http {
 		for _, route := range http.Route {
@@ -503,7 +544,7 @@ func TestIstioRouter_GatewayPort(t *testing.T) {
 	err := router.Reconcile(mocks.canary)
 	require.NoError(t, err)
 
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	port := vs.Spec.Http[0].Route[0].Destination.Port.Number
@@ -527,7 +568,7 @@ func TestIstioRouter_Delegate(t *testing.T) {
 		err := router.Reconcile(mocks.canary)
 		require.NoError(t, err)
 
-		vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, len(vs.Spec.Hosts))
@@ -569,8 +610,8 @@ func TestIstioRouter_Finalize(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 	}
 
-	flaggerSpec := &istiov1alpha3.VirtualServiceSpec{
-		Http: []istiov1alpha3.HTTPRoute{
+	flaggerSpec := &istiov1beta1.VirtualServiceSpec{
+		Http: []istiov1beta1.HTTPRoute{
 			{
 				Match:      mocks.canary.Spec.Service.Match,
 				Rewrite:    mocks.canary.Spec.Service.GetIstioRewrite(),
@@ -581,15 +622,15 @@ func TestIstioRouter_Finalize(t *testing.T) {
 		},
 	}
 
-	kubectlSpec := &istiov1alpha3.VirtualServiceSpec{
+	kubectlSpec := &istiov1beta1.VirtualServiceSpec{
 		Hosts:    []string{"podinfo"},
 		Gateways: []string{"istio-system/ingressgateway"},
-		Http: []istiov1alpha3.HTTPRoute{
+		Http: []istiov1beta1.HTTPRoute{
 			{
 				Match: nil,
-				Route: []istiov1alpha3.HTTPRouteDestination{
+				Route: []istiov1beta1.HTTPRouteDestination{
 					{
-						Destination: istiov1alpha3.Destination{Host: "podinfo"},
+						Destination: istiov1beta1.Destination{Host: "podinfo"},
 					},
 				},
 			},
@@ -598,7 +639,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 
 	tables := []struct {
 		router        *IstioRouter
-		spec          *istiov1alpha3.VirtualServiceSpec
+		spec          *istiov1beta1.VirtualServiceSpec
 		shouldError   bool
 		createVS      bool
 		canary        *v1beta1.Canary
@@ -618,7 +659,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 	for _, table := range tables {
 		var err error
 		if table.createVS {
-			vs, err := router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
+			vs, err := router.istioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
 			require.NoError(t, err)
 
 			if vs.Annotations == nil {
@@ -631,9 +672,9 @@ func TestIstioRouter_Finalize(t *testing.T) {
 				require.NoError(t, err)
 				vs.Annotations[configAnnotation] = string(b)
 			case "kubectl":
-				vs.Annotations[kubectlAnnotation] = `{"apiVersion": "networking.istio.io/v1alpha3","kind": "VirtualService","metadata": {"annotations": {},"name": "podinfo","namespace": "test"},  "spec": {"gateways": ["istio-system/ingressgateway"],"hosts": ["podinfo"],"http": [{"route": [{"destination": {"host": "podinfo"}}]}]}}`
+				vs.Annotations[kubectlAnnotation] = `{"apiVersion": "networking.istio.io/v1beta1","kind": "VirtualService","metadata": {"annotations": {},"name": "podinfo","namespace": "test"},  "spec": {"gateways": ["istio-system/ingressgateway"],"hosts": ["podinfo"],"http": [{"route": [{"destination": {"host": "podinfo"}}]}]}}`
 			}
-			_, err = router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Update(context.TODO(), vs, metav1.UpdateOptions{})
+			_, err = router.istioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Update(context.TODO(), vs, metav1.UpdateOptions{})
 			require.NoError(t, err)
 		}
 
@@ -650,7 +691,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 		}
 
 		if table.spec != nil {
-			vs, err := router.istioClient.NetworkingV1alpha3().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
+			vs, err := router.istioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
 			require.NoError(t, err)
 			require.Equal(t, *table.spec, vs.Spec)
 		}
@@ -671,7 +712,7 @@ func TestIstioRouter_Match(t *testing.T) {
 	require.NoError(t, err)
 
 	// test insert
-	vs, err := mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
+	vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Len(t, vs.Spec.Http, 2)
 	assert.Len(t, vs.Spec.Http[0].Match, 1) // check for abtest-canary
@@ -679,7 +720,7 @@ func TestIstioRouter_Match(t *testing.T) {
 	assert.Len(t, vs.Spec.Http[1].Match, 0) // check for abtest-primary
 
 	// Test Case that is service.match exists and multiple analysis.match
-	mocks.abtest.Spec.Service.Match = []istiov1alpha3.HTTPMatchRequest{
+	mocks.abtest.Spec.Service.Match = []istiov1beta1.HTTPMatchRequest{
 		{
 			Name: "podinfo",
 			Uri: &istiov1alpha1.StringMatch{
@@ -691,7 +732,7 @@ func TestIstioRouter_Match(t *testing.T) {
 			IgnoreUriCase: true,
 		},
 	}
-	mocks.abtest.Spec.Analysis.Match = []istiov1alpha3.HTTPMatchRequest{
+	mocks.abtest.Spec.Analysis.Match = []istiov1beta1.HTTPMatchRequest{
 		{
 			Headers: map[string]istiov1alpha1.StringMatch{
 				"x-user-type": {
@@ -715,7 +756,7 @@ func TestIstioRouter_Match(t *testing.T) {
 	err = router.Reconcile(mocks.abtest)
 	require.NoError(t, err)
 
-	vs, err = mocks.meshClient.NetworkingV1alpha3().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
+	vs, err = mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "abtest", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Len(t, vs.Spec.Http, 2)
 	assert.Len(t, vs.Spec.Http[0].Match, 2) // check for abtest-canary
@@ -726,4 +767,125 @@ func TestIstioRouter_Match(t *testing.T) {
 	require.Equal(t, vs.Spec.Http[0].Match[1].Headers["x-session-id"].Exact, "test")
 	assert.Len(t, vs.Spec.Http[1].Match, 1) // check for abtest-primary
 	require.Equal(t, vs.Spec.Http[1].Match[0].Uri.Prefix, "/podinfo")
+}
+
+// TCP Canary
+func newTestCanaryTCP() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.LocalObjectReference{
+				Name:       "podinfo",
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Service: flaggerv1.CanaryService{
+				Port:          9898,
+				PortDiscovery: true,
+				AppProtocol:   "TCP",
+				Match: []istiov1beta1.HTTPMatchRequest{
+					{
+						Port: 9898,
+					},
+				},
+				Gateways: []string{
+					"istio/public-gateway",
+					"mesh",
+				},
+			}, Analysis: &flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func TestIstioRouter_SetRoutesTCP(t *testing.T) {
+	mocks := newFixture(newTestCanaryTCP())
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	pHost := fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name)
+	cHost := fmt.Sprintf("%s-canary", mocks.canary.Spec.TargetRef.Name)
+
+	t.Run("normal", func(t *testing.T) {
+		p, c := 60, 40
+		err := router.SetRoutes(mocks.canary, p, c, false)
+		require.NoError(t, err)
+
+		vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		var pRoute, cRoute istiov1beta1.HTTPRouteDestination
+		for _, tcp := range vs.Spec.Tcp {
+			for _, route := range tcp.Route {
+				if route.Destination.Host == pHost {
+					pRoute = route
+				}
+				if route.Destination.Host == cHost {
+					cRoute = route
+				}
+			}
+		}
+
+		assert.Equal(t, p, pRoute.Weight)
+		assert.Equal(t, c, cRoute.Weight)
+	})
+}
+
+func TestIstioRouter_GetRoutesTCP(t *testing.T) {
+	mocks := newFixture(newTestCanaryTCP())
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	p, c, m, err := router.GetRoutes(mocks.canary)
+	require.NoError(t, err)
+	assert.Equal(t, 100, p)
+	assert.Equal(t, 0, c)
+	assert.False(t, m)
+
+	mocks.canary = newTestMirror()
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	p, c, m, err = router.GetRoutes(mocks.canary)
+	require.NoError(t, err)
+	assert.Equal(t, 100, p)
+	assert.Equal(t, 0, c)
+
+	// A TCP Canary resource has mirroring disabled
+	assert.False(t, m)
 }

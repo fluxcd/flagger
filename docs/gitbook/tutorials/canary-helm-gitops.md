@@ -343,5 +343,5 @@ A canary deployment can fail due to any of the following reasons:
 * the Istio telemetry service is unable to collect traffic metrics
 * the metrics server \(Prometheus\) can't be reached
 
-If you want to find out more about managing Helm releases with Flux here are two in-depth guides: [gitops-helm](https://github.com/stefanprodan/gitops-helm) and [gitops-istio](https://github.com/stefanprodan/gitops-istio).
+If you want to find out more about managing Helm releases with Flux here are two in-depth guides: [flux2-kustomize-helm-example](https://github.com/fluxcd/flux2-kustomize-helm-example) and [gitops-istio](https://github.com/stefanprodan/gitops-istio).
 

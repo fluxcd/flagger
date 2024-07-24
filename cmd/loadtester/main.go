@@ -22,13 +22,14 @@ import (
 	"regexp"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/fluxcd/flagger/pkg/loadtester"
 	"github.com/fluxcd/flagger/pkg/logger"
 	"github.com/fluxcd/flagger/pkg/signals"
-	"go.uber.org/zap"
 )
 
-var VERSION = "0.29.0"
+var VERSION = "0.32.0"
 var (
 	logLevel          string
 	port              string

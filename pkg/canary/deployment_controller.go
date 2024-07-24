@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
 
@@ -44,20 +45,20 @@ type DeploymentController struct {
 }
 
 // Initialize creates the primary deployment if it does not exist.
-func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (err error) {
+func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (bool, error) {
 	if err := c.createPrimaryDeployment(cd, c.includeLabelPrefix); err != nil {
-		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
+		return true, fmt.Errorf("createPrimaryDeployment failed: %w", err)
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
 		if !cd.SkipAnalysis() {
-			if err := c.IsPrimaryReady(cd); err != nil {
-				return fmt.Errorf("%w", err)
+			if retriable, err := c.IsPrimaryReady(cd); err != nil {
+				return retriable, fmt.Errorf("%w", err)
 			}
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 // Promote copies the pod spec, secrets and config maps from canary to primary
@@ -154,12 +155,10 @@ func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	depCopy := dep.DeepCopy()
-	depCopy.Spec.Replicas = int32p(0)
-
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, 0))
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s update query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("deployment %s.%s patch query error: %w", targetName, cd.Namespace, err)
 	}
 	return nil
 }
@@ -210,12 +209,11 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 			}
 		}
 	}
-	depCopy := dep.DeepCopy()
-	depCopy.Spec.Replicas = replicas
 
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, *replicas))
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("scaling up %s.%s to %v failed: %v", depCopy.GetName(), depCopy.Namespace, replicas, err)
+		return fmt.Errorf("scaling up %s.%s to %d failed: %v", dep.GetName(), dep.Namespace, *replicas, err)
 	}
 	return nil
 }
@@ -388,11 +386,10 @@ func (c *DeploymentController) scale(cd *flaggerv1.Canary, replicas int32) error
 		return fmt.Errorf("deployment %s.%s query error: %w", targetName, cd.Namespace, err)
 	}
 
-	depCopy := dep.DeepCopy()
-	depCopy.Spec.Replicas = int32p(replicas)
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
+	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, replicas))
+	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("scaling %s.%s to %v failed: %w", depCopy.GetName(), depCopy.Namespace, replicas, err)
+		return fmt.Errorf("scaling %s.%s to %d failed: %w", dep.GetName(), dep.Namespace, replicas, err)
 	}
 	return nil
 }
