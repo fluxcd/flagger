@@ -50,7 +50,7 @@ var nginxQueries = map[string]string{
 	"request-duration": `
 	sum(
 		rate(
-			nginx_ingress_controller_ingress_upstream_latency_seconds_sum{
+			nginx_ingress_controller_response_duration_seconds_sum{
 				namespace="{{ namespace }}",
 				ingress="{{ ingress }}",
 				canary!=""
@@ -60,7 +60,7 @@ var nginxQueries = map[string]string{
 	/ 
 	sum(
 		rate(
-			nginx_ingress_controller_ingress_upstream_latency_seconds_count{
+			nginx_ingress_controller_response_duration_seconds_count{
 				namespace="{{ namespace }}",
 				ingress="{{ ingress }}",
 				canary!=""

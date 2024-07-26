@@ -89,7 +89,7 @@ func TestNginxObserver_GetRequestSuccessRate(t *testing.T) {
 }
 
 func TestNginxObserver_GetRequestDuration(t *testing.T) {
-	expected := ` sum( rate( nginx_ingress_controller_ingress_upstream_latency_seconds_sum{ namespace="nginx", ingress="podinfo", canary!="" }[1m] ) ) / sum( rate( nginx_ingress_controller_ingress_upstream_latency_seconds_count{ namespace="nginx", ingress="podinfo", canary!="" }[1m] ) ) * 1000`
+	expected := ` sum( rate( nginx_ingress_controller_response_duration_seconds_sum{ namespace="nginx", ingress="podinfo", canary!="" }[1m] ) ) / sum( rate( nginx_ingress_controller_response_duration_seconds_count{ namespace="nginx", ingress="podinfo", canary!="" }[1m] ) ) * 1000`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		promql := r.URL.Query()["query"][0]
