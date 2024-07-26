@@ -1,4 +1,4 @@
-namespace: kuma-system
+namespace: kong-mesh-system
 bases:
   - ../base/flagger/
 patchesStrategicMerge:

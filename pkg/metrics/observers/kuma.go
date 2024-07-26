@@ -33,7 +33,7 @@ var kumaQueries = map[string]string{
 	sum(
 		rate(
 			envoy_cluster_upstream_rq{
-				envoy_cluster_name=~"{{ target }}-canary_{{ namespace }}_svc_[0-9a-zA-Z-]+",
+				service=~"{{ target }}-canary_{{ namespace }}_svc_[0-9a-zA-Z-]+",
 				envoy_response_code!~"5.*"
 			}[{{ interval }}]
 		)
@@ -42,7 +42,7 @@ var kumaQueries = map[string]string{
 	sum(
 		rate(
 			envoy_cluster_upstream_rq{
-				envoy_cluster_name=~"{{ target }}-canary_{{ namespace }}_svc_[0-9a-zA-Z-]+",
+				service=~"{{ target }}-canary_{{ namespace }}_svc_[0-9a-zA-Z-]+",
 			}[{{ interval }}]
 		)
 	) 
@@ -53,7 +53,7 @@ var kumaQueries = map[string]string{
 		sum(
 			rate(
 				envoy_cluster_upstream_rq_time_bucket{
-					envoy_cluster_name=~"{{ target }}-canary_{{ namespace }}_svc_[0-9a-zA-Z-]+",
+					service=~"{{ target }}-canary_{{ namespace }}_svc_[0-9a-zA-Z-]+",
 				}[{{ interval }}]
 			)
 		) by (le)

@@ -16,6 +16,7 @@ jobs:
   build-flagger:
     runs-on:
       group: "Default Larger Runners"
+      labels: ubuntu-latest-16-cores
     steps:
       - name: Checkout
         uses: actions/checkout@v4

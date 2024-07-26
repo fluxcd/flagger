@@ -13,7 +13,7 @@ echo '>>> Creating test namespace'
 kubectl create namespace test
 kubectl label namespace test istio-injection=enabled
 kubectl annotate namespace test linkerd.io/inject=enabled
-kubectl annotate namespace test kuma.io/sidecar-injection=enabled
+kubectl label namespace test kuma.io/sidecar-injection=enabled
 
 echo '>>> Installing the load tester'
 kubectl apply -k ${REPO_ROOT}/kustomize/tester
