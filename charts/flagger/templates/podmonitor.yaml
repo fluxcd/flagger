@@ -17,6 +17,7 @@ spec:
   - interval: {{ .Values.podMonitor.interval }}
     path: /metrics
     port: http
+    honorLabels: {{ .Values.podMonitor.honorLabels }}
   namespaceSelector:
     matchNames:
     - {{ .Release.Namespace }}
