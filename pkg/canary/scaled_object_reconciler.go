@@ -17,6 +17,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // ScaledObjectReconciler is a ScalerReconciler that reconciles KEDA ScaledObjects.
@@ -47,6 +48,8 @@ func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, 
 
 	setPrimaryScaledObjectQueries(cd, targetSoClone.Spec.Triggers)
 
+	initializeTargetSoClone(targetSoClone)
+
 	soSpec := keda.ScaledObjectSpec{
 		ScaleTargetRef: &keda.ScaleTarget{
 			Name:                   primaryName,
@@ -54,11 +57,18 @@ func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, 
 			APIVersion:             targetSoClone.Spec.ScaleTargetRef.APIVersion,
 			EnvSourceContainerName: targetSoClone.Spec.ScaleTargetRef.EnvSourceContainerName,
 		},
-		PollingInterval:  targetSoClone.Spec.PollingInterval,
-		CooldownPeriod:   targetSoClone.Spec.CooldownPeriod,
-		MinReplicaCount:  targetSoClone.Spec.MinReplicaCount,
-		MaxReplicaCount:  targetSoClone.Spec.MaxReplicaCount,
-		Advanced:         targetSoClone.Spec.Advanced,
+		PollingInterval: targetSoClone.Spec.PollingInterval,
+		CooldownPeriod:  targetSoClone.Spec.CooldownPeriod,
+		MinReplicaCount: targetSoClone.Spec.MinReplicaCount,
+		MaxReplicaCount: targetSoClone.Spec.MaxReplicaCount,
+		// Allow the hpa name to be set in the target scaled object, so that it can be used in the primary scaled object
+		Advanced: &keda.AdvancedConfig{
+			RestoreToOriginalReplicaCount: targetSoClone.Spec.Advanced.RestoreToOriginalReplicaCount,
+			HorizontalPodAutoscalerConfig: &keda.HorizontalPodAutoscalerConfig{
+				Name:     targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig.Name,
+				Behavior: targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior,
+			},
+		},
 		Triggers:         targetSoClone.Spec.Triggers,
 		Fallback:         targetSoClone.Spec.Fallback,
 		IdleReplicaCount: targetSoClone.Spec.IdleReplicaCount,
@@ -77,7 +87,8 @@ func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, 
 	primarySo, err := sor.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Get(context.TODO(), primarySoName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		primarySo = &keda.ScaledObject{
-			ObjectMeta: makeObjectMeta(primarySoName, targetSoClone.Labels, cd),
+			// Passing in the annotations from the targetSo so that they are carried over to the primarySo. This is required so that the transfer ownership annotation can be added.
+			ObjectMeta: makeObjectMetaSo(primarySoName, targetSoClone.Labels, targetSoClone.Annotations, cd),
 			Spec:       soSpec,
 		}
 		_, err = sor.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Create(context.TODO(), primarySo, metav1.CreateOptions{})
@@ -204,5 +215,35 @@ func setPrimaryScaledObjectQueries(cd *flaggerv1.Canary, triggers []keda.ScaleTr
 				}
 			}
 		}
+	}
+}
+
+func makeObjectMetaSo(name string, labels map[string]string, annotations map[string]string, cd *flaggerv1.Canary) metav1.ObjectMeta {
+	return metav1.ObjectMeta{
+		Name:        name,
+		Namespace:   cd.Namespace,
+		Labels:      filterMetadata(labels),
+		Annotations: filterMetadata(annotations),
+		OwnerReferences: []metav1.OwnerReference{
+			*metav1.NewControllerRef(cd, schema.GroupVersionKind{
+				Group:   flaggerv1.SchemeGroupVersion.Group,
+				Version: flaggerv1.SchemeGroupVersion.Version,
+				Kind:    flaggerv1.CanaryKind,
+			}),
+		},
+	}
+}
+
+func initializeTargetSoClone(targetSoClone *keda.ScaledObject) {
+	if targetSoClone.Spec.Advanced == nil {
+		targetSoClone.Spec.Advanced = &keda.AdvancedConfig{}
+	}
+	if targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig == nil {
+		targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig = &keda.HorizontalPodAutoscalerConfig{}
+	}
+	if targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig.Name != "" {
+		// if the target scaled object has the hpa name set, then append "-primary" to the primary scaled object hpa name
+		// if the target scaled object does not have the hpa name set, then it will use the default set by keda
+		targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig.Name = fmt.Sprintf("%s-primary", targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig.Name)
 	}
 }
