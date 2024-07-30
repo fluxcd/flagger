@@ -218,6 +218,10 @@ type CanaryService struct {
 	// Canary is the metadata to add to the canary service
 	// +optional
 	Canary *CustomMetadata `json:"canary,omitempty"`
+
+	// fault injection policy for the generated virtual service
+	// +optional
+	Fault *istiov1beta1.HTTPFaultInjection `json:"FaultInjection,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done
