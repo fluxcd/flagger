@@ -2,6 +2,68 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.38.0
+
+**Release date:** 2024-07-30
+
+This release comes with several fixes and improvements. There is a new [Keptn
+metrics provider](https://docs.flagger.app/usage/metrics#keptn) that can be used
+for flexible grading logic and analysis.
+The loadtester chart now supports ServiceAccount annotations and the Flagger
+chart now supports specifying `honorLabels` for the PodMonitor.
+
+Support for Kuma has been fixed and verified against Kuma 2.7.5. Also, the
+Deployment scaling has been updated to use `Patch` instead of `Update` to avoid
+intermittent conflict errors. Furthermore, a potential panic that could be
+caused due to Prometheus returning a range vector has been fixed. Also, the
+`request-duration` inbuilt query for Nginx has been updated to be more accurate.
+
+Lastly, all Go dependencies, Alpine and Kubernetes libraries were updated.
+
+#### Important
+
+The update to Kubernetes libraries also brings an unwanted side-effect. Due to
+a change in upstream Kubernetes, sidecar support is done through a new field,
+which may be utilized by other services in your cluster. This would change the
+hash calculated by Flagger between runs and trigger an unwanted Canary
+analysis. Unfortunately, this is unavoidable. To get around this, users could
+set the `.spec.suspend` field to be true before updating to this version and
+switch it back when they update their application.
+
+#### Improvements
+- Bumps golang.org/x/net to v0.23.0
+  [#1628](https://github.com/fluxcd/flagger/pull/1628)
+- feat: implement a Keptn metrics provider
+  [#1630](https://github.com/fluxcd/flagger/pull/1630)
+- Update dependencies to Kubernetes 1.30
+  [#1638](https://github.com/fluxcd/flagger/pull/1638)
+- loadtester: add support for annotation on service account
+  [#1649](https://github.com/fluxcd/flagger/pull/1649)
+- Bump golang.org/x/net to v0.25.0 and other deps.
+  [#1653](https://github.com/fluxcd/flagger/pull/1653)
+- Update Go dependencies and Alpine
+  [#1656](https://github.com/fluxcd/flagger/pull/1656)
+- Helm - Add podMonitor.honor labels
+  [#1676](https://github.com/fluxcd/flagger/pull/1676)
+- kuma: bump e2e version to 2.7.5
+  [#1683](https://github.com/fluxcd/flagger/pull/1683)
+- Release loadtester 0.33.0
+  [#1690](https://github.com/fluxcd/flagger/pull/1690)
+- Bump google.golang.org/grpc from 1.64.0 to 1.64.1
+  [#1675](https://github.com/fluxcd/flagger/pull/1675)
+
+#### Fixes
+- Use `Patch` instead of `Update` for Deployment scaling
+  [#1634](https://github.com/fluxcd/flagger/pull/1634)
+- block panic when prom returns range vector
+  [#1637](https://github.com/fluxcd/flagger/pull/1637)
+- Fix removal of empty keys from flagger chart
+  [#1657](https://github.com/fluxcd/flagger/pull/1657)
+- doc: fix KEDA doc regarding namespaces
+  [#1666](https://github.com/fluxcd/flagger/pull/1666)
+- Fix Nginx request-duration query
+  [#1686](https://github.com/fluxcd/flagger/pull/1686)
+
 ## 1.37.0
 
 **Release date:** 2024-03-26
