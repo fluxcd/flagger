@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"slices"
 	"strings"
 	"time"
 
@@ -721,8 +720,7 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1b
 
 	// set destination port when an ingress gateway is specified
 	if canary.Spec.Service.PortDiscovery &&
-		(len(canary.Spec.Service.Gateways) > 0 &&
-			!slices.Contains(canary.Spec.Service.Gateways, "mesh") || canary.Spec.Service.Delegation) {
+		!slices.Contains(canary.Spec.Service.Gateways, "mesh") || canary.Spec.Service.Delegation) {
 		dest = istiov1beta1.HTTPRouteDestination{
 			Destination: istiov1beta1.Destination{
 				Host: host,
