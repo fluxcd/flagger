@@ -709,7 +709,7 @@ func mergeMatchConditions(canary, defaults []istiov1beta1.HTTPMatchRequest) []is
 	return merged
 }
 
-// makeDestination returns a destination weight for the specified host
+// makeDestination returns a an destination weight for the specified host
 func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1beta1.HTTPRouteDestination {
 	dest := istiov1beta1.HTTPRouteDestination{
 		Destination: istiov1beta1.Destination{
@@ -720,7 +720,8 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1b
 
 	// set destination port when an ingress gateway is specified
 	if canary.Spec.Service.PortDiscovery &&
-		!slices.Contains(canary.Spec.Service.Gateways, "mesh") || canary.Spec.Service.Delegation) {
+		(len(canary.Spec.Service.Gateways) > 0 &&
+			canary.Spec.Service.Gateways[0] != "mesh" || canary.Spec.Service.Delegation) {
 		dest = istiov1beta1.HTTPRouteDestination{
 			Destination: istiov1beta1.Destination{
 				Host: host,
