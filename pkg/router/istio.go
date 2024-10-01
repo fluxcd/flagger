@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 	"time"
 
@@ -246,7 +247,8 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
 				Route: []istiov1beta1.HTTPRouteDestination{
-					makeDestination(canary, canaryName, 0),
+					makeDestination(canary, primaryName, 0),
+					makeDestination(canary, canaryName, 100),
 				},
 			},
 			{
@@ -454,19 +456,6 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 		}
 	}
 
-	if !isTcp(canary) && len(canary.GetAnalysis().Match) > 0 {
-		for _, http := range vs.Spec.Http {
-			for _, routeDest := range http.Route {
-				if routeDest.Destination.Host == primaryName {
-					primaryWeight = routeDest.Weight
-				}
-				if routeDest.Destination.Host == canaryName {
-					canaryWeight = routeDest.Weight
-				}
-			}
-		}
-	}
-
 	if primaryWeight == 0 && canaryWeight == 0 {
 		err = fmt.Errorf("VirtualService %s.%s does not contain routes for %s-primary and %s-canary",
 			apexName, canary.Namespace, apexName, apexName)
@@ -635,6 +624,7 @@ func (ir *IstioRouter) SetRoutes(
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
 				Route: []istiov1beta1.HTTPRouteDestination{
+					makeDestination(canary, primaryName, primaryWeight),
 					makeDestination(canary, canaryName, canaryWeight),
 				},
 			},
@@ -720,7 +710,7 @@ func mergeMatchConditions(canary, defaults []istiov1beta1.HTTPMatchRequest) []is
 	return merged
 }
 
-// makeDestination returns a an destination weight for the specified host
+// makeDestination returns a destination weight for the specified host
 func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1beta1.HTTPRouteDestination {
 	dest := istiov1beta1.HTTPRouteDestination{
 		Destination: istiov1beta1.Destination{
@@ -732,7 +722,7 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1b
 	// set destination port when an ingress gateway is specified
 	if canary.Spec.Service.PortDiscovery &&
 		(len(canary.Spec.Service.Gateways) > 0 &&
-			canary.Spec.Service.Gateways[0] != "mesh" || canary.Spec.Service.Delegation) {
+			!slices.Contains(canary.Spec.Service.Gateways, "mesh") || canary.Spec.Service.Delegation) {
 		dest = istiov1beta1.HTTPRouteDestination{
 			Destination: istiov1beta1.Destination{
 				Host: host,
