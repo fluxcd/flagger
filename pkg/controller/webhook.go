@@ -18,10 +18,12 @@ package controller
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -32,7 +34,22 @@ import (
 	"github.com/fluxcd/flagger/pkg/canary"
 )
 
-func callWebhook(webhook string, payload interface{}, timeout string, retries int) error {
+func newHTTPClient(retries int, timeout time.Duration, disableTls bool) *retryablehttp.Client {
+	httpClient := retryablehttp.NewClient()
+	httpClient.RetryMax = retries
+	httpClient.Logger = nil
+	httpClient.HTTPClient.Timeout = timeout
+
+	if disableTls {
+		httpClient.HTTPClient.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	return httpClient
+}
+
+func callWebhook(webhook string, payload interface{}, timeout string, retries int, disableTls bool) error {
 	payloadBin, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -43,17 +60,6 @@ func callWebhook(webhook string, payload interface{}, timeout string, retries in
 		return err
 	}
 
-	httpClient := retryablehttp.NewClient()
-	httpClient.RetryMax = retries
-	httpClient.Logger = nil
-
-	req, err := retryablehttp.NewRequest("POST", hook.String(), bytes.NewBuffer(payloadBin))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
 	if timeout == "" {
 		timeout = "10s"
 	}
@@ -62,7 +68,13 @@ func callWebhook(webhook string, payload interface{}, timeout string, retries in
 		return err
 	}
 
-	httpClient.HTTPClient.Timeout = t
+	httpClient := newHTTPClient(retries, t, disableTls)
+
+	req, err := retryablehttp.NewRequest("POST", hook.String(), bytes.NewBuffer(payloadBin))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
 
 	r, err := httpClient.Do(req)
 	if err != nil {
@@ -100,7 +112,7 @@ func CallWebhook(canary flaggerv1.Canary, phase flaggerv1.CanaryPhase, w flagger
 		w.Timeout = "10s"
 	}
 
-	return callWebhook(w.URL, payload, w.Timeout, w.Retries)
+	return callWebhook(w.URL, payload, w.Timeout, w.Retries, w.DisableTLS)
 }
 
 func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, eventtype string) error {
@@ -126,7 +138,7 @@ func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, e
 			payload.Metadata[key] = value
 		}
 	}
-	return callWebhook(w.URL, payload, "5s", w.Retries)
+	return callWebhook(w.URL, payload, "5s", w.Retries, w.DisableTLS)
 }
 
 func canaryChecksum(c flaggerv1.Canary) string {
