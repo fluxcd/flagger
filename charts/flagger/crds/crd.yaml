@@ -1135,6 +1135,9 @@ spec:
                           retries:
                             description: Number of retries for this webhook
                             type: number
+                          disableTLS:
+                            description: Disable TLS verification for this webhook
+                            type: boolean
                           metadata:
                             description: Metadata (key-value pairs) for this webhook
                             type: object
