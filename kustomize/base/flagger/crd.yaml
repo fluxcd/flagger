@@ -707,6 +707,45 @@ spec:
                                 maxRetries:
                                   format: int32
                                   type: integer
+                            tcp:
+                              description: TCP connection pool settings.
+                              type: object
+                              properties:
+                                maxConnections:
+                                  description: The maximum number of HTTP1 /TCP connections
+                                    to a destination.
+                                  format: int32
+                                  type: integer
+                                connectTimeout:
+                                  description: The timeout for new TCP connections
+                                    to hosts in the cluster.
+                                  type: string
+                                tcpKeepalive:
+                                  description: TCP keepalive
+                                  type: object
+                                  properties:
+                                    time:
+                                      description: The time duration a connection needs
+                                        to be idle before TCP starts sending keepalive
+                                        probes.
+                                      type: string
+                                    interval:
+                                      description: The time duration between TCP keepalive
+                                        probes.
+                                      type: string
+                                    probes:
+                                      description: The number of unacknowledged probes
+                                        to send before considering the connection dead.
+                                      format: int32
+                                      type: integer
+                                maxConnectionDuration:
+                                  description: The maximum duration a connection may
+                                    exist before it is closed.
+                                  type: string
+                                idleTimeout:
+                                  description: The idle timeout for upstream connection
+                                    pool connections.
+                                  type: string
                         loadBalancer:
                           description: Settings controlling the load balancer algorithms.
                           type: object
