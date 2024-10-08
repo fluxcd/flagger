@@ -48,7 +48,7 @@ func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, 
 
 	setPrimaryScaledObjectQueries(cd, targetSoClone.Spec.Triggers)
 
-	initializeTargetSoClone(targetSoClone)
+	setPrimaryScaledObjectHPA(targetSoClone)
 
 	soSpec := keda.ScaledObjectSpec{
 		ScaleTargetRef: &keda.ScaleTarget{
@@ -57,18 +57,11 @@ func (sor *ScaledObjectReconciler) reconcilePrimaryScaler(cd *flaggerv1.Canary, 
 			APIVersion:             targetSoClone.Spec.ScaleTargetRef.APIVersion,
 			EnvSourceContainerName: targetSoClone.Spec.ScaleTargetRef.EnvSourceContainerName,
 		},
-		PollingInterval: targetSoClone.Spec.PollingInterval,
-		CooldownPeriod:  targetSoClone.Spec.CooldownPeriod,
-		MinReplicaCount: targetSoClone.Spec.MinReplicaCount,
-		MaxReplicaCount: targetSoClone.Spec.MaxReplicaCount,
-		// Allow the hpa name to be set in the target scaled object, so that it can be used in the primary scaled object
-		Advanced: &keda.AdvancedConfig{
-			RestoreToOriginalReplicaCount: targetSoClone.Spec.Advanced.RestoreToOriginalReplicaCount,
-			HorizontalPodAutoscalerConfig: &keda.HorizontalPodAutoscalerConfig{
-				Name:     targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig.Name,
-				Behavior: targetSoClone.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior,
-			},
-		},
+		PollingInterval:  targetSoClone.Spec.PollingInterval,
+		CooldownPeriod:   targetSoClone.Spec.CooldownPeriod,
+		MinReplicaCount:  targetSoClone.Spec.MinReplicaCount,
+		MaxReplicaCount:  targetSoClone.Spec.MaxReplicaCount,
+		Advanced:         targetSoClone.Spec.Advanced,
 		Triggers:         targetSoClone.Spec.Triggers,
 		Fallback:         targetSoClone.Spec.Fallback,
 		IdleReplicaCount: targetSoClone.Spec.IdleReplicaCount,
@@ -234,7 +227,7 @@ func makeObjectMetaSo(name string, labels map[string]string, annotations map[str
 	}
 }
 
-func initializeTargetSoClone(targetSoClone *keda.ScaledObject) {
+func setPrimaryScaledObjectHPA(targetSoClone *keda.ScaledObject) {
 	if targetSoClone.Spec.Advanced == nil {
 		targetSoClone.Spec.Advanced = &keda.AdvancedConfig{}
 	}
