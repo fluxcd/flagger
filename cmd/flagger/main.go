@@ -59,6 +59,7 @@ var (
 	kubeconfigQPS            int
 	kubeconfigBurst          int
 	metricsServer            string
+	metricsServerSecretRef   string
 	controlLoopInterval      time.Duration
 	logLevel                 string
 	port                     string
@@ -94,6 +95,7 @@ func init() {
 	flag.IntVar(&kubeconfigBurst, "kubeconfig-burst", 250, "Set Burst for kubeconfig.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&metricsServer, "metrics-server", "http://prometheus:9090", "Prometheus URL.")
+	flag.StringVar(&metricsServerSecretRef, "metrics-server-secret-ref", "", "Prometheus Secret Reference.")
 	flag.DurationVar(&controlLoopInterval, "control-loop-interval", 10*time.Second, "Kubernetes API sync interval.")
 	flag.StringVar(&logLevel, "log-level", "debug", "Log level can be: debug, info, warning, error.")
 	flag.StringVar(&port, "port", "8080", "Port to listen on.")
@@ -196,7 +198,7 @@ func main() {
 		logger.Infof("Watching namespace %s", namespace)
 	}
 
-	observerFactory, err := observers.NewFactory(metricsServer)
+	observerFactory, err := observers.NewFactoryWithSecret(metricsServer, metricsServerSecretRef)
 	if err != nil {
 		logger.Fatalf("Error building prometheus client: %s", err.Error())
 	}
