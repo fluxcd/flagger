@@ -104,6 +104,8 @@ type AdvancedConfig struct {
 // HorizontalPodAutoscalerConfig specifies horizontal scale config
 type HorizontalPodAutoscalerConfig struct {
 	// +optional
+	Name string `json:"name,omitempty"`
+	// +optional
 	Behavior *autoscalingv2beta2.HorizontalPodAutoscalerBehavior `json:"behavior,omitempty"`
 }
 
