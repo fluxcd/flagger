@@ -17,7 +17,7 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - uses: sigstore/cosign-installer@v3.5.0
+      - uses: sigstore/cosign-installer@v3.7.0
       - name: Prepare
         id: prep
         run: |
@@ -45,7 +45,7 @@ jobs:
             type=raw,value=${{ steps.prep.outputs.VERSION }}
       - name: Publish image
         id: build-push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           builder: ${{ steps.buildx.outputs.name }}
