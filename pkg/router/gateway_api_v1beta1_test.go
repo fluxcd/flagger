@@ -23,8 +23,11 @@ import (
 	"testing"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -348,4 +351,41 @@ func TestGatewayAPIV1Beta1Router_getSessionAffinityRouteRules(t *testing.T) {
 	assert.NotNil(t, headerModifier)
 	assert.Equal(t, string(headerModifier.Add[0].Name), setCookieHeader)
 	assert.Equal(t, headerModifier.Add[0].Value, fmt.Sprintf("%s; %s=%d", canary.Status.PreviousSessionAffinityCookie, maxAgeAttr, -1))
+}
+
+func TestGatewayAPIV1Beta1Router_makeFilters(t *testing.T) {
+	canary := newTestGatewayAPICanary()
+	mocks := newFixture(canary)
+	canary.Spec.Service.Headers = &istiov1beta1.Headers{
+		Response: &istiov1beta1.HeaderOperations{
+			Set: map[string]string{"h1": "v1", "h2": "v2", "h3": "v3"},
+			Add: map[string]string{"h1": "v1", "h2": "v2", "h3": "v3"},
+		},
+		Request: &istiov1beta1.HeaderOperations{
+			Set: map[string]string{"h1": "v1", "h2": "v2", "h3": "v3"},
+			Add: map[string]string{"h1": "v1", "h2": "v2", "h3": "v3"},
+		},
+	}
+
+	router := &GatewayAPIV1Beta1Router{
+		gatewayAPIClient: mocks.meshClient,
+		kubeClient:       mocks.kubeClient,
+		logger:           mocks.logger,
+	}
+
+	ignoreCmpOptions := []cmp.Option{
+		cmpopts.IgnoreFields(v1.BackendRef{}, "Weight"),
+		cmpopts.EquateEmpty(),
+	}
+
+	filters := router.makeFilters(canary)
+
+	for i := 0; i < 10; i++ {
+		newFilters := router.makeFilters(canary)
+		filtersDiff := cmp.Diff(
+			filters, newFilters,
+			ignoreCmpOptions...,
+		)
+		assert.Equal(t, "", filtersDiff)
+	}
 }
