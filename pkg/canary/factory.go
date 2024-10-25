@@ -99,11 +99,20 @@ func (factory *Factory) ScalerReconciler(kind string) ScalerReconciler {
 		includeLabelPrefix: factory.includeLabelPrefix,
 	}
 
+	httpsoReconciler := &HTTPScaledObjectReconciler{
+		logger:             factory.logger,
+		kubeClient:         factory.kubeClient,
+		flaggerClient:      factory.flaggerClient,
+		includeLabelPrefix: factory.includeLabelPrefix,
+	}
+
 	switch kind {
 	case "HorizontalPodAutoscaler":
 		return hpaReconciler
 	case "ScaledObject":
 		return soReconciler
+	case "HTTPScaledObject":
+		return httpsoReconciler
 	default:
 		return nil
 	}
