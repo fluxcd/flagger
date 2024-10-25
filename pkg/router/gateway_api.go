@@ -60,16 +60,64 @@ type GatewayAPIRouter struct {
 	setOwnerRefs     bool
 }
 
+func (gwr *GatewayAPIRouter) getServiceRef(canary *flaggerv1.Canary) (hostNames []v1.Hostname, apexSvcName, primarySvcName, primarySvcNamespace, canarySvcName, canarySvcNamespace string, err error) {
+	apexSvcName, primarySvcName, canarySvcName = canary.GetServiceNames()
+	canarySvcNamespace = canary.Namespace
+	primarySvcNamespace = canary.Namespace
+	err = nil
+
+	for _, host := range canary.Spec.Service.Hosts {
+		hostNames = append(hostNames, v1.Hostname(host))
+	}
+
+	if canary.IsHTTPScaledObject() {
+		canarySvcName = "keda-http-add-on-interceptor-proxy"
+		canarySvcNamespace = "keda"
+		primarySvcNamespace = "keda"
+		targetHTTPSo, getErr := gwr.gatewayAPIClient.HttpV1alpha1().HTTPScaledObjects(canary.Namespace).Get(context.TODO(), canary.Spec.AutoscalerRef.Name, metav1.GetOptions{})
+		if getErr != nil {
+			err = fmt.Errorf("HTTPScaledObject %s.%s get error: %w", canary.Spec.AutoscalerRef.Name, canary.Namespace, getErr)
+			return
+		}
+		for _, host := range targetHTTPSo.Spec.Hosts {
+			hostNames = append(hostNames, v1.Hostname(host))
+		}
+		if canary.Spec.AutoscalerRef.CanaryInterceptorProxyService != nil {
+			canarySvcName = canary.Spec.AutoscalerRef.CanaryInterceptorProxyService.Name
+			if canary.Spec.AutoscalerRef.CanaryInterceptorProxyService.Namespace != "" {
+				canarySvcNamespace = canary.Spec.AutoscalerRef.CanaryInterceptorProxyService.Namespace
+			}
+		}
+
+		if canary.Spec.AutoscalerRef.PrimaryScalingSet == nil {
+			err = fmt.Errorf("PrimaryScalingSet must be specified when using HTTPScaledObject as a Autoscaler.")
+			return
+		}
+		primarySvcName = fmt.Sprintf("%s-interceptor-proxy", canary.Spec.AutoscalerRef.PrimaryScalingSet.Name)
+		if canary.Spec.AutoscalerRef.PrimaryScalingSet.Namespace == "" {
+			if canary.Spec.AutoscalerRef.CanaryInterceptorProxyService != nil {
+				primarySvcNamespace = canary.Spec.AutoscalerRef.CanaryInterceptorProxyService.Namespace
+			}
+		}
+		if canary.Spec.AutoscalerRef.PrimaryScalingSet.Namespace != "" {
+			primarySvcNamespace = canary.Spec.AutoscalerRef.PrimaryScalingSet.Namespace
+		}
+	}
+	return
+}
+
 func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	if len(canary.Spec.Service.GatewayRefs) == 0 {
 		return fmt.Errorf("GatewayRefs must be specified when using Gateway API as a provider.")
 	}
 
-	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
+	hostNames, apexSvcName, primarySvcName, primarySvcNamespace, canarySvcName, canarySvcNamespace, err := gwr.getServiceRef(canary)
+	if err != nil {
+		return fmt.Errorf("getServiceRef error: %w", err)
+	}
 
 	hrNamespace := canary.Namespace
 
-	var hostNames []v1.Hostname
 	for _, host := range canary.Spec.Service.Hosts {
 		hostNames = append(hostNames, v1.Hostname(host))
 	}
@@ -97,10 +145,10 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Filters: gwr.makeFilters(canary),
 				BackendRefs: []v1.HTTPBackendRef{
 					{
-						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+						BackendRef: gwr.makeBackendRef(primarySvcName, primarySvcNamespace, initialPrimaryWeight, canary.Spec.Service.Port),
 					},
 					{
-						BackendRef: gwr.makeBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port),
+						BackendRef: gwr.makeBackendRef(canarySvcName, canarySvcNamespace, initialCanaryWeight, canary.Spec.Service.Port),
 					},
 				},
 			},
@@ -123,7 +171,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
 				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+					BackendRef: gwr.makeBackendRef(primarySvcName, primarySvcNamespace, initialPrimaryWeight, canary.Spec.Service.Port),
 				},
 			},
 		})
@@ -248,7 +296,10 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 	mirrored bool,
 	err error,
 ) {
-	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
+	_, apexSvcName, primarySvcName, primarySvcNamespace, canarySvcName, canarySvcNamespace, err := gwr.getServiceRef(canary)
+	if err != nil {
+		return 0, 0, false, err
+	}
 	hrNamespace := canary.Namespace
 	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
 	if err != nil {
@@ -271,10 +322,14 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 		// A/B testing: Avoid reading the rule with only for backendRef.
 		if len(rule.BackendRefs) == 2 {
 			for _, backendRef := range rule.BackendRefs {
-				if backendRef.Name == v1.ObjectName(primarySvcName) {
+				ns := httpRoute.Namespace
+				if backendRef.Namespace != nil {
+					ns = string(*backendRef.Namespace)
+				}
+				if backendRef.Name == v1.ObjectName(primarySvcName) && ns == primarySvcNamespace {
 					primaryWeight = int(*backendRef.Weight)
 				}
-				if backendRef.Name == v1.ObjectName(canarySvcName) {
+				if backendRef.Name == v1.ObjectName(canarySvcName) && ns == canarySvcNamespace {
 					canaryWeight = int(*backendRef.Weight)
 				}
 			}
@@ -306,19 +361,16 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	canaryWeight int,
 	mirrored bool,
 ) error {
+	hostNames, apexSvcName, primarySvcName, primarySvcNamespace, canarySvcName, canarySvcNamespace, err := gwr.getServiceRef(canary)
+
 	pWeight := int32(primaryWeight)
 	cWeight := int32(canaryWeight)
-	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
 	hrNamespace := canary.Namespace
 	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 	}
 	hrClone := httpRoute.DeepCopy()
-	hostNames := []v1.Hostname{}
-	for _, host := range canary.Spec.Service.Hosts {
-		hostNames = append(hostNames, v1.Hostname(host))
-	}
 	matches, err := gwr.mapRouteMatches(canary.Spec.Service.Match)
 	if err != nil {
 		return fmt.Errorf("Invalid request matching selectors: %w", err)
@@ -341,10 +393,10 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 		Filters: gwr.makeFilters(canary),
 		BackendRefs: []v1.HTTPBackendRef{
 			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(primarySvcName, primarySvcNamespace, pWeight, canary.Spec.Service.Port),
 			},
 			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(canarySvcName, canarySvcNamespace, cWeight, canary.Spec.Service.Port),
 			},
 		},
 	}
@@ -400,7 +452,7 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
 				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+					BackendRef: gwr.makeBackendRef(primarySvcName, primarySvcNamespace, pWeight, canary.Spec.Service.Port),
 				},
 			},
 			Timeouts: &v1.HTTPRouteTimeouts{
@@ -432,7 +484,10 @@ func (gwr *GatewayAPIRouter) Finalize(_ *flaggerv1.Canary) error {
 // session affinity based Canary releases.
 func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Canary, canaryWeight int,
 	weightedRouteRule *v1.HTTPRouteRule) ([]v1.HTTPRouteRule, error) {
-	_, primarySvcName, canarySvcName := canary.GetServiceNames()
+	_, _, primarySvcName, primarySvcNamespace, canarySvcName, canarySvcNamespace, err := gwr.getServiceRef(canary)
+	if err != nil {
+		return nil, err
+	}
 	stickyRouteRule := *weightedRouteRule
 
 	// If a canary run is active, we want all responses corresponding to requests hitting the canary deployment
@@ -485,10 +540,10 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 		stickyRouteRule.Matches = mergedMatches
 		stickyRouteRule.BackendRefs = []v1.HTTPBackendRef{
 			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, 0, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(primarySvcName, primarySvcNamespace, 0, canary.Spec.Service.Port),
 			},
 			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, 100, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(canarySvcName, canarySvcNamespace, 100, canary.Spec.Service.Port),
 			},
 		}
 	} else {
@@ -612,13 +667,14 @@ func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []istiov1beta1.HTTPM
 	return matches, nil
 }
 
-func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32) v1.BackendRef {
+func (gwr *GatewayAPIRouter) makeBackendRef(svcName, namespace string, weight, port int32) v1.BackendRef {
 	return v1.BackendRef{
 		BackendObjectReference: v1.BackendObjectReference{
-			Group: (*v1.Group)(&backendRefGroup),
-			Kind:  (*v1.Kind)(&backendRefKind),
-			Name:  v1.ObjectName(svcName),
-			Port:  (*v1.PortNumber)(&port),
+			Group:     (*v1.Group)(&backendRefGroup),
+			Kind:      (*v1.Kind)(&backendRefKind),
+			Name:      v1.ObjectName(svcName),
+			Namespace: (*v1.Namespace)(&namespace),
+			Port:      (*v1.PortNumber)(&port),
 		},
 		Weight: &weight,
 	}
