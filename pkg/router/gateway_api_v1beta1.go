@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -612,11 +612,11 @@ func (gwr *GatewayAPIV1Beta1Router) mergeMatchConditions(analysis, service []v1b
 func sortFiltersV1beta1(headers []v1beta1.HTTPHeader) {
 
 	if headers != nil {
-		sort.Slice(headers, func(i, j int) bool {
-			if headers[i].Name == headers[j].Name {
-				return headers[i].Value < headers[j].Value
+		slices.SortFunc(headers, func(a, b v1beta1.HTTPHeader) int {
+			if a.Name == b.Name {
+				return strings.Compare(a.Value, b.Value)
 			}
-			return headers[i].Name < headers[j].Name
+			return strings.Compare(string(a.Name), string(b.Name))
 		})
 	}
 }

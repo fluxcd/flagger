@@ -278,6 +278,83 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 	})
 }
 
+func TestGatewayAPIRouter_getSessionAffinityRouteRules(t *testing.T) {
+	canary := newTestGatewayAPICanary()
+	mocks := newFixture(canary)
+	cookieKey := "flagger-cookie"
+	canary.Spec.Analysis.SessionAffinity = &flaggerv1.SessionAffinity{
+		CookieName: cookieKey,
+		MaxAge:     300,
+	}
+
+	router := &GatewayAPIRouter{
+		gatewayAPIClient: mocks.meshClient,
+		kubeClient:       mocks.kubeClient,
+		logger:           mocks.logger,
+	}
+	_, pSvcName, cSvcName := canary.GetServiceNames()
+	weightedRouteRule := &v1.HTTPRouteRule{
+		BackendRefs: []v1.HTTPBackendRef{
+			{
+				BackendRef: router.makeBackendRef(pSvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+			},
+			{
+				BackendRef: router.makeBackendRef(cSvcName, initialCanaryWeight, canary.Spec.Service.Port),
+			},
+		},
+	}
+	rules, err := router.getSessionAffinityRouteRules(canary, 10, weightedRouteRule)
+	require.NoError(t, err)
+	assert.Equal(t, len(rules), 2)
+	assert.True(t, strings.HasPrefix(canary.Status.SessionAffinityCookie, cookieKey))
+
+	stickyRule := rules[0]
+	cookieMatch := stickyRule.Matches[0].Headers[0]
+	assert.Equal(t, *cookieMatch.Type, v1.HeaderMatchRegularExpression)
+	assert.Equal(t, string(cookieMatch.Name), cookieHeader)
+	assert.Contains(t, cookieMatch.Value, cookieKey)
+
+	assert.Equal(t, len(stickyRule.BackendRefs), 2)
+	for _, backendRef := range stickyRule.BackendRefs {
+		if string(backendRef.BackendRef.Name) == pSvcName {
+			assert.Equal(t, *backendRef.BackendRef.Weight, int32(0))
+		}
+		if string(backendRef.BackendRef.Name) == cSvcName {
+			assert.Equal(t, *backendRef.BackendRef.Weight, int32(100))
+		}
+	}
+
+	weightedRule := rules[1]
+	var found bool
+	for _, backendRef := range weightedRule.BackendRefs {
+		if string(backendRef.Name) == cSvcName {
+			found = true
+			filter := backendRef.Filters[0]
+			assert.Equal(t, filter.Type, v1.HTTPRouteFilterResponseHeaderModifier)
+			assert.NotNil(t, filter.ResponseHeaderModifier)
+			assert.Equal(t, string(filter.ResponseHeaderModifier.Add[0].Name), setCookieHeader)
+			assert.Equal(t, filter.ResponseHeaderModifier.Add[0].Value, fmt.Sprintf("%s; %s=%d", canary.Status.SessionAffinityCookie, maxAgeAttr, 300))
+		}
+	}
+	assert.True(t, found)
+
+	rules, err = router.getSessionAffinityRouteRules(canary, 0, weightedRouteRule)
+	assert.Empty(t, canary.Status.SessionAffinityCookie)
+	assert.Contains(t, canary.Status.PreviousSessionAffinityCookie, cookieKey)
+
+	stickyRule = rules[0]
+	cookieMatch = stickyRule.Matches[0].Headers[0]
+	assert.Equal(t, *cookieMatch.Type, v1.HeaderMatchRegularExpression)
+	assert.Equal(t, string(cookieMatch.Name), cookieHeader)
+	assert.Contains(t, cookieMatch.Value, cookieKey)
+
+	assert.Equal(t, stickyRule.Filters[0].Type, v1.HTTPRouteFilterResponseHeaderModifier)
+	headerModifier := stickyRule.Filters[0].ResponseHeaderModifier
+	assert.NotNil(t, headerModifier)
+	assert.Equal(t, string(headerModifier.Add[0].Name), setCookieHeader)
+	assert.Equal(t, headerModifier.Add[0].Value, fmt.Sprintf("%s; %s=%d", canary.Status.PreviousSessionAffinityCookie, maxAgeAttr, -1))
+}
+
 func TestGatewayAPIRouter_makeFilters(t *testing.T) {
 	canary := newTestGatewayAPICanary()
 	mocks := newFixture(canary)
