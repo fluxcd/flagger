@@ -2,7 +2,7 @@
 
 This guide shows you how to use Flagger with KEDA HTTPScaledObjects which will automatically scale (including to/from zero) based on incoming HTTP traffic a Canary analysis run.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-keda-http-add-on.png)
+![Flagger Canary Stages](https://github.com/fluxcd/flagger/blob/dbde37581e052e74e3456cafaf8ec37d3a9e8c77/docs/diagrams/flagger-keda-http-add-on.png)
 
 ## Prerequisites
 
@@ -28,13 +28,20 @@ Install KEDA:
 ```bash
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update
-helm install keda kedacore/keda --namespace keda --create-namespace
+helm upgrade -i keda kedacore/keda --namespace keda --create-namespace --version 2.15.1
 ```
 
 Install KEDA HTTP Add-on:
 
 ```bash
-helm install http-add-on kedacore/keda-add-ons-http --namespace keda
+helm upgrade -i http-add-on oci://quay.io/kahirokunn/keda/keda-add-ons-http \
+  --version 0.9.0 \
+  -n keda \
+  --create-namespace \
+  --set images.tag=0.9.0 \
+  --set images.operator=quay.io/kahirokunn/http-add-on-operator \
+  --set images.interceptor=quay.io/kahirokunn/http-add-on-interceptor \
+  --set images.scaler=quay.io/kahirokunn/http-add-on-scaler
 ```
 
 Install Flagger:
@@ -43,12 +50,14 @@ Install Flagger:
 helm repo add flagger https://flagger.app
 helm repo update
 
-helm upgrade -i flagger flagger/flagger \
+helm upgrade -i flagger oci://quay.io/kahirokunn/flagger/flagger \
   --namespace flagger-system \
   --create-namespace \
   --set prometheus.install=false \
   --set meshProvider=gatewayapi:v1 \
-  --set metricsServer=http://prometheus.istio-system:9090
+  --set metricsServer=http://prometheus.istio-system:9090 \
+  --set image.repository=quay.io/kahirokunn/flagger \
+  --set image.tag=latest
 ```
 
 > Note: The above installation sets the mesh provider to be `gatewayapi:v1`. If your Gateway API implementation uses the `v1beta1` CRDs, then
@@ -89,6 +98,7 @@ metadata:
   name: primary
 spec:
   interceptor:
+    image: quay.io/kahirokunn/http-add-on-interceptor:0.9.0
     config:
       adminPort: 9090
       connectTimeout: 500ms
@@ -106,6 +116,7 @@ spec:
     resources: {}
     serviceAccountName: keda-add-ons-http-interceptor
   scaler:
+    image: quay.io/kahirokunn/http-add-on-scaler:0.9.0
     serviceAccountName: keda-add-ons-http-external-scaler
 ```
 
