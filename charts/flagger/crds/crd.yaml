@@ -1299,6 +1299,7 @@ spec:
                         - graphite
                         - dynatrace
                         - keptn
+                        - splunk
                     address:
                       description: API address of this provider
                       type: string
