@@ -730,3 +730,54 @@ Only relevant if the `type` is set to `analysis`.
 
 For the type `analysis`, the value returned by the provider is either `0`
 (if the analysis failed), or `1` (analysis passed).
+
+## Splunk
+
+You can create custom metric checks using the Splunk provider.
+
+Create a secret that contains your authentication token that can be found in the Splunk o11y UI.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: splunk
+  namespace: istio-system
+data:
+  sf_token_key: your-access-token
+```
+
+Splunk template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: success-rate
+  namespace: istio-system
+spec:
+  provider:
+    type: splunk
+    address: https://api.<REALM>.signalfx.com
+    secretRef:
+      name: splunk
+  query: |
+    total = data('traces.count', filter=filter('sf_service', '{{target}}')).sum().publish(enable=False)
+    success = data('traces.count', filter=filter('sf_service', '{{target}}') and filter('sf_error', 'false')).sum().publish(enable=False)
+    ((success/total) * 100).publish()
+```
+The query format documentation can be found [here](https://dev.splunk.com/observability/docs/signalflow).
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "success rate"
+        templateRef:
+          name: success-rate
+          namespace: istio-system
+        thresholdRange:
+          max: 99
+        interval: 1m
+```
