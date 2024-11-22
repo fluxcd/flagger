@@ -30,6 +30,7 @@ import (
 	gateway "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gateway"
 	gatewayapi "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gatewayapi"
 	gloo "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gloo"
+	http "github.com/fluxcd/flagger/pkg/client/informers/externalversions/http"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/fluxcd/flagger/pkg/client/informers/externalversions/istio"
 	keda "github.com/fluxcd/flagger/pkg/client/informers/externalversions/keda"
@@ -260,6 +261,7 @@ type SharedInformerFactory interface {
 	Gateway() gateway.Interface
 	Gatewayapi() gatewayapi.Interface
 	Gloo() gloo.Interface
+	Http() http.Interface
 	Networking() istio.Interface
 	Keda() keda.Interface
 	Kuma() kuma.Interface
@@ -290,6 +292,10 @@ func (f *sharedInformerFactory) Gatewayapi() gatewayapi.Interface {
 
 func (f *sharedInformerFactory) Gloo() gloo.Interface {
 	return gloo.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Http() http.Interface {
+	return http.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Networking() istio.Interface {
