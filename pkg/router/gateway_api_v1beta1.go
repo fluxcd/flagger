@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -608,6 +609,18 @@ func (gwr *GatewayAPIV1Beta1Router) mergeMatchConditions(analysis, service []v1b
 	return merged
 }
 
+func sortFiltersV1beta1(headers []v1beta1.HTTPHeader) {
+
+	if headers != nil {
+		slices.SortFunc(headers, func(a, b v1beta1.HTTPHeader) int {
+			if a.Name == b.Name {
+				return strings.Compare(a.Value, b.Value)
+			}
+			return strings.Compare(string(a.Name), string(b.Name))
+		})
+	}
+}
+
 func (gwr *GatewayAPIV1Beta1Router) makeFilters(canary *flaggerv1.Canary) []v1beta1.HTTPRouteFilter {
 	var filters []v1beta1.HTTPRouteFilter
 
@@ -624,12 +637,14 @@ func (gwr *GatewayAPIV1Beta1Router) makeFilters(canary *flaggerv1.Canary) []v1be
 					Value: val,
 				})
 			}
+			sortFiltersV1beta1(requestHeaderFilter.RequestHeaderModifier.Add)
 			for name, val := range canary.Spec.Service.Headers.Request.Set {
 				requestHeaderFilter.RequestHeaderModifier.Set = append(requestHeaderFilter.RequestHeaderModifier.Set, v1beta1.HTTPHeader{
 					Name:  v1beta1.HTTPHeaderName(name),
 					Value: val,
 				})
 			}
+			sortFiltersV1beta1(requestHeaderFilter.RequestHeaderModifier.Set)
 
 			for _, name := range canary.Spec.Service.Headers.Request.Remove {
 				requestHeaderFilter.RequestHeaderModifier.Remove = append(requestHeaderFilter.RequestHeaderModifier.Remove, name)
@@ -649,12 +664,14 @@ func (gwr *GatewayAPIV1Beta1Router) makeFilters(canary *flaggerv1.Canary) []v1be
 					Value: val,
 				})
 			}
+			sortFiltersV1beta1(responseHeaderFilter.ResponseHeaderModifier.Add)
 			for name, val := range canary.Spec.Service.Headers.Response.Set {
 				responseHeaderFilter.ResponseHeaderModifier.Set = append(responseHeaderFilter.ResponseHeaderModifier.Set, v1beta1.HTTPHeader{
 					Name:  v1beta1.HTTPHeaderName(name),
 					Value: val,
 				})
 			}
+			sortFiltersV1beta1(responseHeaderFilter.ResponseHeaderModifier.Set)
 
 			for _, name := range canary.Spec.Service.Headers.Response.Remove {
 				responseHeaderFilter.ResponseHeaderModifier.Remove = append(responseHeaderFilter.ResponseHeaderModifier.Remove, name)
