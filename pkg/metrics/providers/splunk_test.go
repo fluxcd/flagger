@@ -45,7 +45,7 @@ func TestNewSplunkProvider(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "https://api.us1.signalfx.com/v1/timeserieswindow", sp.metricsQueryEndpoint)
 	assert.Equal(t, "https://api.us1.signalfx.com/v2/metric?limit=1", sp.apiValidationEndpoint)
-	assert.Equal(t, int64(md.Seconds()*signalFxFromDeltaMultiplierOnMetricInterval), sp.fromDelta)
+	assert.Equal(t, int64(md.Milliseconds()*signalFxFromDeltaMultiplierOnMetricInterval), sp.fromDelta)
 	assert.Equal(t, token, sp.token)
 }
 
@@ -54,7 +54,7 @@ func TestSplunkProvider_RunQuery(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		expected := 1.11111
 		eq := `sf_metric:service.request.count AND http_status_code:*`
-		now := time.Now().Unix()
+		now := time.Now().UnixMilli()
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			aq := r.URL.Query().Get("query")
 			assert.Equal(t, eq, aq)

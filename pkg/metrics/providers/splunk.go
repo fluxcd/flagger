@@ -82,7 +82,7 @@ func NewSplunkProvider(metricInterval string,
 		return nil, fmt.Errorf("error parsing metric interval: %w", err)
 	}
 
-	sp.fromDelta = int64(signalFxFromDeltaMultiplierOnMetricInterval * md.Seconds())
+	sp.fromDelta = int64(signalFxFromDeltaMultiplierOnMetricInterval * md.Milliseconds())
 	return &sp, nil
 }
 
@@ -95,7 +95,7 @@ func (p *SplunkProvider) RunQuery(query string) (float64, error) {
 	}
 
 	req.Header.Set(signalFxTokenHeaderKey, p.token)
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	q := req.URL.Query()
 	q.Add("query", query)
 	q.Add("startMS", strconv.FormatInt(now-p.fromDelta, 10))
