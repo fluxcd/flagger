@@ -114,6 +114,15 @@ $ helm upgrade -i flagger flagger/flagger \
     --set meshProvider=traefik
 ```
 
+If you need to add labels to the flagger deployment or pods, you can pass the labels as parameters as shown below.
+
+```console
+helm upgrade -i flagger flagger/flagger \
+<other parameters> \
+--set podLabels.<labelName>=<labelValue> \
+--set deploymentLabels.<labelName>=<labelValue> 
+```
+
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
 ## Uninstalling the Chart
