@@ -129,9 +129,11 @@ spec:
                       type: object
                       properties:
                         minReplicas:
-                          type: number
+                          type: integer
+                          minimum: 1
                         maxReplicas:
-                          type: number
+                          type: integer
+                          minimum: 1
                 ingressRef:
                   description: Ingress selector
                   type: object
