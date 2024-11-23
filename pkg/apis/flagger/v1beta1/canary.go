@@ -398,6 +398,10 @@ type CanaryWebhook struct {
 	// Number of retries for this webhook
 	// +optional
 	Retries int `json:"retries,omitempty"`
+
+	// Disable TLS verification for this webhook
+	// +optional
+	DisableTLS bool `json:"disableTLS,omitempty"`
 }
 
 // CanaryWebhookPayload holds the deployment info and metadata sent to webhooks
