@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
+	v1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloogateway/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

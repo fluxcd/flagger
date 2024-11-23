@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"testing"
 
-	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
