@@ -41,22 +41,24 @@ var trafficsplitsKind = v1alpha2.SchemeGroupVersion.WithKind("TrafficSplit")
 
 // Get takes name of the trafficSplit, and returns the corresponding trafficSplit object, and an error if there is any.
 func (c *FakeTrafficSplits) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.TrafficSplit, err error) {
+	emptyResult := &v1alpha2.TrafficSplit{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(trafficsplitsResource, c.ns, name), &v1alpha2.TrafficSplit{})
+		Invokes(testing.NewGetActionWithOptions(trafficsplitsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.TrafficSplit), err
 }
 
 // List takes label and field selectors, and returns the list of TrafficSplits that match those selectors.
 func (c *FakeTrafficSplits) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.TrafficSplitList, err error) {
+	emptyResult := &v1alpha2.TrafficSplitList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(trafficsplitsResource, trafficsplitsKind, c.ns, opts), &v1alpha2.TrafficSplitList{})
+		Invokes(testing.NewListActionWithOptions(trafficsplitsResource, trafficsplitsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,28 +77,30 @@ func (c *FakeTrafficSplits) List(ctx context.Context, opts v1.ListOptions) (resu
 // Watch returns a watch.Interface that watches the requested trafficSplits.
 func (c *FakeTrafficSplits) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(trafficsplitsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(trafficsplitsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a trafficSplit and creates it.  Returns the server's representation of the trafficSplit, and an error, if there is any.
 func (c *FakeTrafficSplits) Create(ctx context.Context, trafficSplit *v1alpha2.TrafficSplit, opts v1.CreateOptions) (result *v1alpha2.TrafficSplit, err error) {
+	emptyResult := &v1alpha2.TrafficSplit{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(trafficsplitsResource, c.ns, trafficSplit), &v1alpha2.TrafficSplit{})
+		Invokes(testing.NewCreateActionWithOptions(trafficsplitsResource, c.ns, trafficSplit, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.TrafficSplit), err
 }
 
 // Update takes the representation of a trafficSplit and updates it. Returns the server's representation of the trafficSplit, and an error, if there is any.
 func (c *FakeTrafficSplits) Update(ctx context.Context, trafficSplit *v1alpha2.TrafficSplit, opts v1.UpdateOptions) (result *v1alpha2.TrafficSplit, err error) {
+	emptyResult := &v1alpha2.TrafficSplit{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(trafficsplitsResource, c.ns, trafficSplit), &v1alpha2.TrafficSplit{})
+		Invokes(testing.NewUpdateActionWithOptions(trafficsplitsResource, c.ns, trafficSplit, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.TrafficSplit), err
 }
@@ -111,7 +115,7 @@ func (c *FakeTrafficSplits) Delete(ctx context.Context, name string, opts v1.Del
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeTrafficSplits) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(trafficsplitsResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(trafficsplitsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha2.TrafficSplitList{})
 	return err
@@ -119,11 +123,12 @@ func (c *FakeTrafficSplits) DeleteCollection(ctx context.Context, opts v1.Delete
 
 // Patch applies the patch and returns the patched trafficSplit.
 func (c *FakeTrafficSplits) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.TrafficSplit, err error) {
+	emptyResult := &v1alpha2.TrafficSplit{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(trafficsplitsResource, c.ns, name, pt, data, subresources...), &v1alpha2.TrafficSplit{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(trafficsplitsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.TrafficSplit), err
 }

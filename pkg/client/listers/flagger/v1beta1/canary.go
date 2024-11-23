@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type CanaryLister interface {
 
 // canaryLister implements the CanaryLister interface.
 type canaryLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.Canary]
 }
 
 // NewCanaryLister returns a new CanaryLister.
 func NewCanaryLister(indexer cache.Indexer) CanaryLister {
-	return &canaryLister{indexer: indexer}
-}
-
-// List lists all Canaries in the indexer.
-func (s *canaryLister) List(selector labels.Selector) (ret []*v1beta1.Canary, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.Canary))
-	})
-	return ret, err
+	return &canaryLister{listers.New[*v1beta1.Canary](indexer, v1beta1.Resource("canary"))}
 }
 
 // Canaries returns an object that can list and get Canaries.
 func (s *canaryLister) Canaries(namespace string) CanaryNamespaceLister {
-	return canaryNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return canaryNamespaceLister{listers.NewNamespaced[*v1beta1.Canary](s.ResourceIndexer, namespace)}
 }
 
 // CanaryNamespaceLister helps list and get Canaries.
@@ -74,26 +66,5 @@ type CanaryNamespaceLister interface {
 // canaryNamespaceLister implements the CanaryNamespaceLister
 // interface.
 type canaryNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Canaries in the indexer for a given namespace.
-func (s canaryNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.Canary, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.Canary))
-	})
-	return ret, err
-}
-
-// Get retrieves the Canary from the indexer for a given namespace and name.
-func (s canaryNamespaceLister) Get(name string) (*v1beta1.Canary, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("canary"), name)
-	}
-	return obj.(*v1beta1.Canary), nil
+	listers.ResourceIndexer[*v1beta1.Canary]
 }

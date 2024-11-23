@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type DestinationRuleLister interface {
 
 // destinationRuleLister implements the DestinationRuleLister interface.
 type destinationRuleLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.DestinationRule]
 }
 
 // NewDestinationRuleLister returns a new DestinationRuleLister.
 func NewDestinationRuleLister(indexer cache.Indexer) DestinationRuleLister {
-	return &destinationRuleLister{indexer: indexer}
-}
-
-// List lists all DestinationRules in the indexer.
-func (s *destinationRuleLister) List(selector labels.Selector) (ret []*v1beta1.DestinationRule, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.DestinationRule))
-	})
-	return ret, err
+	return &destinationRuleLister{listers.New[*v1beta1.DestinationRule](indexer, v1beta1.Resource("destinationrule"))}
 }
 
 // DestinationRules returns an object that can list and get DestinationRules.
 func (s *destinationRuleLister) DestinationRules(namespace string) DestinationRuleNamespaceLister {
-	return destinationRuleNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return destinationRuleNamespaceLister{listers.NewNamespaced[*v1beta1.DestinationRule](s.ResourceIndexer, namespace)}
 }
 
 // DestinationRuleNamespaceLister helps list and get DestinationRules.
@@ -74,26 +66,5 @@ type DestinationRuleNamespaceLister interface {
 // destinationRuleNamespaceLister implements the DestinationRuleNamespaceLister
 // interface.
 type destinationRuleNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all DestinationRules in the indexer for a given namespace.
-func (s destinationRuleNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.DestinationRule, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.DestinationRule))
-	})
-	return ret, err
-}
-
-// Get retrieves the DestinationRule from the indexer for a given namespace and name.
-func (s destinationRuleNamespaceLister) Get(name string) (*v1beta1.DestinationRule, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("destinationrule"), name)
-	}
-	return obj.(*v1beta1.DestinationRule), nil
+	listers.ResourceIndexer[*v1beta1.DestinationRule]
 }

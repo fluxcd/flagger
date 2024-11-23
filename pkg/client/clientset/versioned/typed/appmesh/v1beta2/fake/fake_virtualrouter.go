@@ -41,22 +41,24 @@ var virtualroutersKind = v1beta2.SchemeGroupVersion.WithKind("VirtualRouter")
 
 // Get takes name of the virtualRouter, and returns the corresponding virtualRouter object, and an error if there is any.
 func (c *FakeVirtualRouters) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.VirtualRouter, err error) {
+	emptyResult := &v1beta2.VirtualRouter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(virtualroutersResource, c.ns, name), &v1beta2.VirtualRouter{})
+		Invokes(testing.NewGetActionWithOptions(virtualroutersResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.VirtualRouter), err
 }
 
 // List takes label and field selectors, and returns the list of VirtualRouters that match those selectors.
 func (c *FakeVirtualRouters) List(ctx context.Context, opts v1.ListOptions) (result *v1beta2.VirtualRouterList, err error) {
+	emptyResult := &v1beta2.VirtualRouterList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(virtualroutersResource, virtualroutersKind, c.ns, opts), &v1beta2.VirtualRouterList{})
+		Invokes(testing.NewListActionWithOptions(virtualroutersResource, virtualroutersKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeVirtualRouters) List(ctx context.Context, opts v1.ListOptions) (res
 // Watch returns a watch.Interface that watches the requested virtualRouters.
 func (c *FakeVirtualRouters) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(virtualroutersResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(virtualroutersResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a virtualRouter and creates it.  Returns the server's representation of the virtualRouter, and an error, if there is any.
 func (c *FakeVirtualRouters) Create(ctx context.Context, virtualRouter *v1beta2.VirtualRouter, opts v1.CreateOptions) (result *v1beta2.VirtualRouter, err error) {
+	emptyResult := &v1beta2.VirtualRouter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(virtualroutersResource, c.ns, virtualRouter), &v1beta2.VirtualRouter{})
+		Invokes(testing.NewCreateActionWithOptions(virtualroutersResource, c.ns, virtualRouter, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.VirtualRouter), err
 }
 
 // Update takes the representation of a virtualRouter and updates it. Returns the server's representation of the virtualRouter, and an error, if there is any.
 func (c *FakeVirtualRouters) Update(ctx context.Context, virtualRouter *v1beta2.VirtualRouter, opts v1.UpdateOptions) (result *v1beta2.VirtualRouter, err error) {
+	emptyResult := &v1beta2.VirtualRouter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(virtualroutersResource, c.ns, virtualRouter), &v1beta2.VirtualRouter{})
+		Invokes(testing.NewUpdateActionWithOptions(virtualroutersResource, c.ns, virtualRouter, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.VirtualRouter), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeVirtualRouters) UpdateStatus(ctx context.Context, virtualRouter *v1beta2.VirtualRouter, opts v1.UpdateOptions) (*v1beta2.VirtualRouter, error) {
+func (c *FakeVirtualRouters) UpdateStatus(ctx context.Context, virtualRouter *v1beta2.VirtualRouter, opts v1.UpdateOptions) (result *v1beta2.VirtualRouter, err error) {
+	emptyResult := &v1beta2.VirtualRouter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(virtualroutersResource, "status", c.ns, virtualRouter), &v1beta2.VirtualRouter{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(virtualroutersResource, "status", c.ns, virtualRouter, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.VirtualRouter), err
 }
@@ -123,7 +128,7 @@ func (c *FakeVirtualRouters) Delete(ctx context.Context, name string, opts v1.De
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeVirtualRouters) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(virtualroutersResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(virtualroutersResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta2.VirtualRouterList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeVirtualRouters) DeleteCollection(ctx context.Context, opts v1.Delet
 
 // Patch applies the patch and returns the patched virtualRouter.
 func (c *FakeVirtualRouters) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta2.VirtualRouter, err error) {
+	emptyResult := &v1beta2.VirtualRouter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(virtualroutersResource, c.ns, name, pt, data, subresources...), &v1beta2.VirtualRouter{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(virtualroutersResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.VirtualRouter), err
 }

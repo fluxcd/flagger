@@ -41,22 +41,24 @@ var destinationrulesKind = v1beta1.SchemeGroupVersion.WithKind("DestinationRule"
 
 // Get takes name of the destinationRule, and returns the corresponding destinationRule object, and an error if there is any.
 func (c *FakeDestinationRules) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.DestinationRule, err error) {
+	emptyResult := &v1beta1.DestinationRule{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(destinationrulesResource, c.ns, name), &v1beta1.DestinationRule{})
+		Invokes(testing.NewGetActionWithOptions(destinationrulesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.DestinationRule), err
 }
 
 // List takes label and field selectors, and returns the list of DestinationRules that match those selectors.
 func (c *FakeDestinationRules) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.DestinationRuleList, err error) {
+	emptyResult := &v1beta1.DestinationRuleList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(destinationrulesResource, destinationrulesKind, c.ns, opts), &v1beta1.DestinationRuleList{})
+		Invokes(testing.NewListActionWithOptions(destinationrulesResource, destinationrulesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,28 +77,30 @@ func (c *FakeDestinationRules) List(ctx context.Context, opts v1.ListOptions) (r
 // Watch returns a watch.Interface that watches the requested destinationRules.
 func (c *FakeDestinationRules) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(destinationrulesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(destinationrulesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a destinationRule and creates it.  Returns the server's representation of the destinationRule, and an error, if there is any.
 func (c *FakeDestinationRules) Create(ctx context.Context, destinationRule *v1beta1.DestinationRule, opts v1.CreateOptions) (result *v1beta1.DestinationRule, err error) {
+	emptyResult := &v1beta1.DestinationRule{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(destinationrulesResource, c.ns, destinationRule), &v1beta1.DestinationRule{})
+		Invokes(testing.NewCreateActionWithOptions(destinationrulesResource, c.ns, destinationRule, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.DestinationRule), err
 }
 
 // Update takes the representation of a destinationRule and updates it. Returns the server's representation of the destinationRule, and an error, if there is any.
 func (c *FakeDestinationRules) Update(ctx context.Context, destinationRule *v1beta1.DestinationRule, opts v1.UpdateOptions) (result *v1beta1.DestinationRule, err error) {
+	emptyResult := &v1beta1.DestinationRule{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(destinationrulesResource, c.ns, destinationRule), &v1beta1.DestinationRule{})
+		Invokes(testing.NewUpdateActionWithOptions(destinationrulesResource, c.ns, destinationRule, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.DestinationRule), err
 }
@@ -111,7 +115,7 @@ func (c *FakeDestinationRules) Delete(ctx context.Context, name string, opts v1.
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeDestinationRules) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(destinationrulesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(destinationrulesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.DestinationRuleList{})
 	return err
@@ -119,11 +123,12 @@ func (c *FakeDestinationRules) DeleteCollection(ctx context.Context, opts v1.Del
 
 // Patch applies the patch and returns the patched destinationRule.
 func (c *FakeDestinationRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.DestinationRule, err error) {
+	emptyResult := &v1beta1.DestinationRule{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(destinationrulesResource, c.ns, name, pt, data, subresources...), &v1beta1.DestinationRule{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(destinationrulesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.DestinationRule), err
 }
