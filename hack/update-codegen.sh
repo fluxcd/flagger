@@ -34,14 +34,16 @@ mkdir -p "${TEMP_DIR}/${PACKAGE_PATH_BASE}/pkg/client/informers" \
 # Ensure we can execute.
 chmod +x ${CODEGEN_PKG}/kube_codegen.sh
 
-source ${CODEGEN_PKG}/kube_codegen.sh kube::codegen::gen_client \
-    --output-dir "${TEMP_DIR}" \
+source ${CODEGEN_PKG}/kube_codegen.sh
+
+kube::codegen::gen_client \
+    --output-dir "${TEMP_DIR}/${PACKAGE_PATH_BASE}/pkg/client" \
     --output-pkg "${PACKAGE_PATH_BASE}/pkg/client" \
     --with-watch \
     --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
-    ./pkgs/apis
+    ./pkg/apis
 
-ls -lha $TEMP_DIR
+tree $TEMP_DIR/${PACKAGE_PATH_BASE/pkg/client}/
 
 # Copy everything back.
 cp -r "${TEMP_DIR}/${PACKAGE_PATH_BASE}/." "${SCRIPT_ROOT}/"

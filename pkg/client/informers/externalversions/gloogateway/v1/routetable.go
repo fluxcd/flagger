@@ -22,10 +22,10 @@ import (
 	"context"
 	time "time"
 
-	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
+	gloogatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/fluxcd/flagger/pkg/client/listers/gateway/v1"
+	v1 "github.com/fluxcd/flagger/pkg/client/listers/gloogateway/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -71,7 +71,7 @@ func NewFilteredRouteTableInformer(client versioned.Interface, namespace string,
 				return client.GatewayV1().RouteTables(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&gatewayv1.RouteTable{},
+		&gloogatewayv1.RouteTable{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,7 +82,7 @@ func (f *routeTableInformer) defaultInformer(client versioned.Interface, resyncP
 }
 
 func (f *routeTableInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&gatewayv1.RouteTable{}, f.defaultInformer)
+	return f.factory.InformerFor(&gloogatewayv1.RouteTable{}, f.defaultInformer)
 }
 
 func (f *routeTableInformer) Lister() v1.RouteTableLister {
