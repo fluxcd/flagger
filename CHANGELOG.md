@@ -2,6 +2,38 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.39.0
+
+**Release date:** 2024-07-30
+
+This release comes with fixes and improvements. There is a new
+`.spec.analysis.webhooks[].disableTLS` field which disables TLS verification
+for that webhook request.
+A bug in the Gateway API provider was fixed which could lead to unecessary restarts.
+
+This release is built with Go 1.23. Lastly, all Go dependencies, Alpine and
+Kubernetes libraries were updated.
+
+#### Improvements
+- Add validation for `primaryScalerReplicas` field in the CRD
+  [#1702](https://github.com/fluxcd/flagger/pull/1702)
+- feat: add `disableTLS` option for webhooks request
+  [#1709](https://github.com/fluxcd/flagger/pull/1709)
+- Update dependencies to Kubernetes v1.31.3
+  [#1723](https://github.com/fluxcd/flagger/pull/1723)
+- Update generated client for Kubernetes 1.31
+  [#1725](https://github.com/fluxcd/flagger/pull/1725)
+- Build with Go 1.23
+  [#1726](https://github.com/fluxcd/flagger/pull/1726)
+
+#### Fixes
+- Gateway API: Sort header filters to avoid canary restarts
+  [#1713](https://github.com/fluxcd/flagger/pull/1713)
+- fix: fix codegen script and update generated code
+  [#1724](https://github.com/fluxcd/flagger/pull/1724)
+- fix(helm): podinfo fails to create the hpa object
+  [#1721](https://github.com/fluxcd/flagger/pull/1721)
+
 ## 1.38.0
 
 **Release date:** 2024-07-30
