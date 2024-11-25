@@ -41,22 +41,24 @@ var canariesKind = v1beta1.SchemeGroupVersion.WithKind("Canary")
 
 // Get takes name of the canary, and returns the corresponding canary object, and an error if there is any.
 func (c *FakeCanaries) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Canary, err error) {
+	emptyResult := &v1beta1.Canary{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(canariesResource, c.ns, name), &v1beta1.Canary{})
+		Invokes(testing.NewGetActionWithOptions(canariesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Canary), err
 }
 
 // List takes label and field selectors, and returns the list of Canaries that match those selectors.
 func (c *FakeCanaries) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.CanaryList, err error) {
+	emptyResult := &v1beta1.CanaryList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(canariesResource, canariesKind, c.ns, opts), &v1beta1.CanaryList{})
+		Invokes(testing.NewListActionWithOptions(canariesResource, canariesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeCanaries) List(ctx context.Context, opts v1.ListOptions) (result *v
 // Watch returns a watch.Interface that watches the requested canaries.
 func (c *FakeCanaries) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(canariesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(canariesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a canary and creates it.  Returns the server's representation of the canary, and an error, if there is any.
 func (c *FakeCanaries) Create(ctx context.Context, canary *v1beta1.Canary, opts v1.CreateOptions) (result *v1beta1.Canary, err error) {
+	emptyResult := &v1beta1.Canary{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(canariesResource, c.ns, canary), &v1beta1.Canary{})
+		Invokes(testing.NewCreateActionWithOptions(canariesResource, c.ns, canary, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Canary), err
 }
 
 // Update takes the representation of a canary and updates it. Returns the server's representation of the canary, and an error, if there is any.
 func (c *FakeCanaries) Update(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (result *v1beta1.Canary, err error) {
+	emptyResult := &v1beta1.Canary{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(canariesResource, c.ns, canary), &v1beta1.Canary{})
+		Invokes(testing.NewUpdateActionWithOptions(canariesResource, c.ns, canary, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Canary), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeCanaries) UpdateStatus(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (*v1beta1.Canary, error) {
+func (c *FakeCanaries) UpdateStatus(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (result *v1beta1.Canary, err error) {
+	emptyResult := &v1beta1.Canary{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(canariesResource, "status", c.ns, canary), &v1beta1.Canary{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(canariesResource, "status", c.ns, canary, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Canary), err
 }
@@ -123,7 +128,7 @@ func (c *FakeCanaries) Delete(ctx context.Context, name string, opts v1.DeleteOp
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeCanaries) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(canariesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(canariesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.CanaryList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeCanaries) DeleteCollection(ctx context.Context, opts v1.DeleteOptio
 
 // Patch applies the patch and returns the patched canary.
 func (c *FakeCanaries) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Canary, err error) {
+	emptyResult := &v1beta1.Canary{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(canariesResource, c.ns, name, pt, data, subresources...), &v1beta1.Canary{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(canariesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Canary), err
 }

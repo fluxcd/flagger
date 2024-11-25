@@ -41,22 +41,24 @@ var alertprovidersKind = v1beta1.SchemeGroupVersion.WithKind("AlertProvider")
 
 // Get takes name of the alertProvider, and returns the corresponding alertProvider object, and an error if there is any.
 func (c *FakeAlertProviders) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.AlertProvider, err error) {
+	emptyResult := &v1beta1.AlertProvider{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(alertprovidersResource, c.ns, name), &v1beta1.AlertProvider{})
+		Invokes(testing.NewGetActionWithOptions(alertprovidersResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.AlertProvider), err
 }
 
 // List takes label and field selectors, and returns the list of AlertProviders that match those selectors.
 func (c *FakeAlertProviders) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.AlertProviderList, err error) {
+	emptyResult := &v1beta1.AlertProviderList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(alertprovidersResource, alertprovidersKind, c.ns, opts), &v1beta1.AlertProviderList{})
+		Invokes(testing.NewListActionWithOptions(alertprovidersResource, alertprovidersKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeAlertProviders) List(ctx context.Context, opts v1.ListOptions) (res
 // Watch returns a watch.Interface that watches the requested alertProviders.
 func (c *FakeAlertProviders) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(alertprovidersResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(alertprovidersResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a alertProvider and creates it.  Returns the server's representation of the alertProvider, and an error, if there is any.
 func (c *FakeAlertProviders) Create(ctx context.Context, alertProvider *v1beta1.AlertProvider, opts v1.CreateOptions) (result *v1beta1.AlertProvider, err error) {
+	emptyResult := &v1beta1.AlertProvider{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(alertprovidersResource, c.ns, alertProvider), &v1beta1.AlertProvider{})
+		Invokes(testing.NewCreateActionWithOptions(alertprovidersResource, c.ns, alertProvider, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.AlertProvider), err
 }
 
 // Update takes the representation of a alertProvider and updates it. Returns the server's representation of the alertProvider, and an error, if there is any.
 func (c *FakeAlertProviders) Update(ctx context.Context, alertProvider *v1beta1.AlertProvider, opts v1.UpdateOptions) (result *v1beta1.AlertProvider, err error) {
+	emptyResult := &v1beta1.AlertProvider{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(alertprovidersResource, c.ns, alertProvider), &v1beta1.AlertProvider{})
+		Invokes(testing.NewUpdateActionWithOptions(alertprovidersResource, c.ns, alertProvider, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.AlertProvider), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeAlertProviders) UpdateStatus(ctx context.Context, alertProvider *v1beta1.AlertProvider, opts v1.UpdateOptions) (*v1beta1.AlertProvider, error) {
+func (c *FakeAlertProviders) UpdateStatus(ctx context.Context, alertProvider *v1beta1.AlertProvider, opts v1.UpdateOptions) (result *v1beta1.AlertProvider, err error) {
+	emptyResult := &v1beta1.AlertProvider{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(alertprovidersResource, "status", c.ns, alertProvider), &v1beta1.AlertProvider{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(alertprovidersResource, "status", c.ns, alertProvider, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.AlertProvider), err
 }
@@ -123,7 +128,7 @@ func (c *FakeAlertProviders) Delete(ctx context.Context, name string, opts v1.De
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeAlertProviders) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(alertprovidersResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(alertprovidersResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.AlertProviderList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeAlertProviders) DeleteCollection(ctx context.Context, opts v1.Delet
 
 // Patch applies the patch and returns the patched alertProvider.
 func (c *FakeAlertProviders) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.AlertProvider, err error) {
+	emptyResult := &v1beta1.AlertProvider{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(alertprovidersResource, c.ns, name, pt, data, subresources...), &v1beta1.AlertProvider{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(alertprovidersResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.AlertProvider), err
 }

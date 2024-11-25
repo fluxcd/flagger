@@ -40,20 +40,22 @@ var meshesKind = v1beta1.SchemeGroupVersion.WithKind("Mesh")
 
 // Get takes name of the mesh, and returns the corresponding mesh object, and an error if there is any.
 func (c *FakeMeshes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Mesh, err error) {
+	emptyResult := &v1beta1.Mesh{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(meshesResource, name), &v1beta1.Mesh{})
+		Invokes(testing.NewRootGetActionWithOptions(meshesResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Mesh), err
 }
 
 // List takes label and field selectors, and returns the list of Meshes that match those selectors.
 func (c *FakeMeshes) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.MeshList, err error) {
+	emptyResult := &v1beta1.MeshList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(meshesResource, meshesKind, opts), &v1beta1.MeshList{})
+		Invokes(testing.NewRootListActionWithOptions(meshesResource, meshesKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,36 +74,39 @@ func (c *FakeMeshes) List(ctx context.Context, opts v1.ListOptions) (result *v1b
 // Watch returns a watch.Interface that watches the requested meshes.
 func (c *FakeMeshes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(meshesResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(meshesResource, opts))
 }
 
 // Create takes the representation of a mesh and creates it.  Returns the server's representation of the mesh, and an error, if there is any.
 func (c *FakeMeshes) Create(ctx context.Context, mesh *v1beta1.Mesh, opts v1.CreateOptions) (result *v1beta1.Mesh, err error) {
+	emptyResult := &v1beta1.Mesh{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(meshesResource, mesh), &v1beta1.Mesh{})
+		Invokes(testing.NewRootCreateActionWithOptions(meshesResource, mesh, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Mesh), err
 }
 
 // Update takes the representation of a mesh and updates it. Returns the server's representation of the mesh, and an error, if there is any.
 func (c *FakeMeshes) Update(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (result *v1beta1.Mesh, err error) {
+	emptyResult := &v1beta1.Mesh{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(meshesResource, mesh), &v1beta1.Mesh{})
+		Invokes(testing.NewRootUpdateActionWithOptions(meshesResource, mesh, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Mesh), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMeshes) UpdateStatus(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (*v1beta1.Mesh, error) {
+func (c *FakeMeshes) UpdateStatus(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (result *v1beta1.Mesh, err error) {
+	emptyResult := &v1beta1.Mesh{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(meshesResource, "status", mesh), &v1beta1.Mesh{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(meshesResource, "status", mesh, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Mesh), err
 }
@@ -115,7 +120,7 @@ func (c *FakeMeshes) Delete(ctx context.Context, name string, opts v1.DeleteOpti
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeMeshes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(meshesResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(meshesResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.MeshList{})
 	return err
@@ -123,10 +128,11 @@ func (c *FakeMeshes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions
 
 // Patch applies the patch and returns the patched mesh.
 func (c *FakeMeshes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Mesh, err error) {
+	emptyResult := &v1beta1.Mesh{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(meshesResource, name, pt, data, subresources...), &v1beta1.Mesh{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(meshesResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Mesh), err
 }

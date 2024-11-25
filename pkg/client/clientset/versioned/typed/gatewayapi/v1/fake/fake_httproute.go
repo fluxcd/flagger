@@ -41,22 +41,24 @@ var httproutesKind = v1.SchemeGroupVersion.WithKind("HTTPRoute")
 
 // Get takes name of the hTTPRoute, and returns the corresponding hTTPRoute object, and an error if there is any.
 func (c *FakeHTTPRoutes) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.HTTPRoute, err error) {
+	emptyResult := &v1.HTTPRoute{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(httproutesResource, c.ns, name), &v1.HTTPRoute{})
+		Invokes(testing.NewGetActionWithOptions(httproutesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPRoute), err
 }
 
 // List takes label and field selectors, and returns the list of HTTPRoutes that match those selectors.
 func (c *FakeHTTPRoutes) List(ctx context.Context, opts metav1.ListOptions) (result *v1.HTTPRouteList, err error) {
+	emptyResult := &v1.HTTPRouteList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(httproutesResource, httproutesKind, c.ns, opts), &v1.HTTPRouteList{})
+		Invokes(testing.NewListActionWithOptions(httproutesResource, httproutesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeHTTPRoutes) List(ctx context.Context, opts metav1.ListOptions) (res
 // Watch returns a watch.Interface that watches the requested hTTPRoutes.
 func (c *FakeHTTPRoutes) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(httproutesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(httproutesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a hTTPRoute and creates it.  Returns the server's representation of the hTTPRoute, and an error, if there is any.
 func (c *FakeHTTPRoutes) Create(ctx context.Context, hTTPRoute *v1.HTTPRoute, opts metav1.CreateOptions) (result *v1.HTTPRoute, err error) {
+	emptyResult := &v1.HTTPRoute{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(httproutesResource, c.ns, hTTPRoute), &v1.HTTPRoute{})
+		Invokes(testing.NewCreateActionWithOptions(httproutesResource, c.ns, hTTPRoute, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPRoute), err
 }
 
 // Update takes the representation of a hTTPRoute and updates it. Returns the server's representation of the hTTPRoute, and an error, if there is any.
 func (c *FakeHTTPRoutes) Update(ctx context.Context, hTTPRoute *v1.HTTPRoute, opts metav1.UpdateOptions) (result *v1.HTTPRoute, err error) {
+	emptyResult := &v1.HTTPRoute{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(httproutesResource, c.ns, hTTPRoute), &v1.HTTPRoute{})
+		Invokes(testing.NewUpdateActionWithOptions(httproutesResource, c.ns, hTTPRoute, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPRoute), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeHTTPRoutes) UpdateStatus(ctx context.Context, hTTPRoute *v1.HTTPRoute, opts metav1.UpdateOptions) (*v1.HTTPRoute, error) {
+func (c *FakeHTTPRoutes) UpdateStatus(ctx context.Context, hTTPRoute *v1.HTTPRoute, opts metav1.UpdateOptions) (result *v1.HTTPRoute, err error) {
+	emptyResult := &v1.HTTPRoute{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(httproutesResource, "status", c.ns, hTTPRoute), &v1.HTTPRoute{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(httproutesResource, "status", c.ns, hTTPRoute, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPRoute), err
 }
@@ -123,7 +128,7 @@ func (c *FakeHTTPRoutes) Delete(ctx context.Context, name string, opts metav1.De
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeHTTPRoutes) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(httproutesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(httproutesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.HTTPRouteList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeHTTPRoutes) DeleteCollection(ctx context.Context, opts metav1.Delet
 
 // Patch applies the patch and returns the patched hTTPRoute.
 func (c *FakeHTTPRoutes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.HTTPRoute, err error) {
+	emptyResult := &v1.HTTPRoute{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(httproutesResource, c.ns, name, pt, data, subresources...), &v1.HTTPRoute{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(httproutesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPRoute), err
 }
