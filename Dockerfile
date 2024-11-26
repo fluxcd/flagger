@@ -1,4 +1,11 @@
-FROM golang:1.23-alpine as builder
+ARG GO_VERSION=1.23
+ARG XX_VERSION=1.4.0
+
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine as builder
+
+# copy build utilities
+COPY --from=xx / /
 
 ARG TARGETPLATFORM
 ARG REVISON
@@ -17,7 +24,8 @@ COPY cmd/ cmd/
 COPY pkg/ pkg/
 
 # build
-RUN CGO_ENABLED=0 go build \
+ENV CGO_ENABLED=0
+RUN xx-go build \
     -ldflags "-s -w -X github.com/fluxcd/flagger/pkg/version.REVISION=${REVISON}" \
     -a -o flagger ./cmd/flagger
 
