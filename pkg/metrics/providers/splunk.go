@@ -17,20 +17,24 @@ limitations under the License.
 package providers
 
 import (
+	"cmp"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
+	"slices"
+	"strings"
 	"time"
+
+	"github.com/signalfx/signalflow-client-go/signalflow"
+	"github.com/signalfx/signalflow-client-go/signalflow/messages"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
 // https://docs.datadoghq.com/api/
 const (
-	signalFxMTSQueryPath   = "/v1/timeserieswindow"
+	signalFxMTSQueryPath   = "/v2/signalflow/execute"
 	signalFxValidationPath = "/v2/metric?limit=1"
 
 	signalFxTokenSecretKey = "sf_token_key"
@@ -51,7 +55,6 @@ type SplunkProvider struct {
 }
 
 type splunkResponse struct {
-	Data map[string][][]float64 `json:"data"`
 }
 
 // NewSplunkProvider takes a canary spec, a provider spec and the credentials map, and
@@ -67,8 +70,8 @@ func NewSplunkProvider(metricInterval string,
 
 	sp := SplunkProvider{
 		timeout:               5 * time.Second,
-		metricsQueryEndpoint:  address + signalFxMTSQueryPath,
-		apiValidationEndpoint: address + signalFxValidationPath,
+		metricsQueryEndpoint:  strings.Replace(strings.Replace(address+signalFxMTSQueryPath, "http", "ws", 1), "api", "stream", 1),
+		apiValidationEndpoint: strings.Replace(strings.Replace(address+signalFxValidationPath, "ws", "http", 1), "stream", "api", 1),
 	}
 
 	if b, ok := credentials[signalFxTokenSecretKey]; ok {
@@ -88,58 +91,48 @@ func NewSplunkProvider(metricInterval string,
 
 // RunQuery executes the query and converts the first result to float64
 func (p *SplunkProvider) RunQuery(query string) (float64, error) {
-
-	req, err := http.NewRequest("GET", p.metricsQueryEndpoint, nil)
+	c, err := signalflow.NewClient(signalflow.StreamURL(p.metricsQueryEndpoint), signalflow.AccessToken(p.token))
 	if err != nil {
-		return 0, fmt.Errorf("error http.NewRequest: %w", err)
+		return 0, fmt.Errorf("error creating signalflow client: %w", err)
 	}
 
-	req.Header.Set(signalFxTokenHeaderKey, p.token)
-	now := time.Now().UnixMilli()
-	q := req.URL.Query()
-	q.Add("query", query)
-	q.Add("startMS", strconv.FormatInt(now-p.fromDelta, 10))
-	q.Add("endMS", strconv.FormatInt(now, 10))
-	req.URL.RawQuery = q.Encode()
-
-	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
-	r, err := http.DefaultClient.Do(req.WithContext(ctx))
+
+	now := time.Now().UnixMilli()
+	comp, err := c.Execute(ctx, &signalflow.ExecuteRequest{
+		Program:   query,
+		Start:     time.Unix(0, (now-p.fromDelta)*time.Millisecond.Nanoseconds()),
+		Stop:      time.Unix(0, now*time.Millisecond.Nanoseconds()),
+		Immediate: true,
+	})
 	if err != nil {
-		return 0, fmt.Errorf("request failed: %w", err)
+		return 0, fmt.Errorf("error executing query: %w", err)
 	}
 
-	defer r.Body.Close()
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		return 0, fmt.Errorf("error reading body: %w", err)
-	}
-
-	if r.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("error response: %s: %w", string(b), err)
-	}
-
-	var res splunkResponse
-	if err := json.Unmarshal(b, &res); err != nil {
-		return 0, fmt.Errorf("error unmarshaling result: %w, '%s'", err, string(b))
-	}
-
-	if len(res.Data) < 1 {
-		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
-	}
-
-	if len(res.Data) > 1 {
-		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrMultipleValuesReturned)
-	}
-
-	for _, v := range res.Data {
-		vs := v[len(v)-1]
-		if len(vs) < 1 {
-			return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
+	select {
+	case dataMsg := <-comp.Data():
+		payloads := slices.DeleteFunc(dataMsg.Payloads, func(msg messages.DataPayload) bool {
+			return msg.Value() == nil
+		})
+		if len(payloads) < 1 {
+			return 0, fmt.Errorf("invalid response: %w", ErrNoValuesFound)
 		}
-		return vs[1], nil
+		_payloads := slices.Clone(payloads)
+		slices.SortFunc(_payloads, func(i, j messages.DataPayload) int {
+			return cmp.Compare(i.TSID, j.TSID)
+		})
+		if len(slices.CompactFunc(_payloads, func(i, j messages.DataPayload) bool { return i.TSID == j.TSID })) > 1 {
+			return 0, fmt.Errorf("invalid response: %w", ErrMultipleValuesReturned)
+		}
+		return payloads[len(payloads)-1].Value().(float64), nil
+	case <-time.After(p.timeout):
+		err := comp.Stop(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("error stopping query: %w", err)
+		}
+		return 0, fmt.Errorf("timeout waiting for query result")
 	}
-	return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
 }
 
 // IsOnline calls the provider endpoint and returns an error if the API is unreachable

@@ -14,6 +14,8 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/prometheus/client_golang v1.19.1
+	github.com/signalfx/signalflow-client-go v0.1.0
+	github.com/signalfx/signalfx-go v1.34.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.7.0
@@ -50,6 +52,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
+	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect

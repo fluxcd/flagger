@@ -19,12 +19,16 @@ package providers
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
+	"net/url"
 	"testing"
 	"time"
 
+	"github.com/signalfx/signalflow-client-go/signalflow"
+	"github.com/signalfx/signalflow-client-go/signalflow/messages"
+	"github.com/signalfx/signalfx-go/idtool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -43,84 +47,99 @@ func TestNewSplunkProvider(t *testing.T) {
 
 	sp, err := NewSplunkProvider("100s", flaggerv1.MetricTemplateProvider{Address: "https://api.us1.signalfx.com"}, cs)
 	require.NoError(t, err)
-	assert.Equal(t, "https://api.us1.signalfx.com/v1/timeserieswindow", sp.metricsQueryEndpoint)
+	assert.Equal(t, "wss://stream.us1.signalfx.com/v2/signalflow/execute", sp.metricsQueryEndpoint)
 	assert.Equal(t, "https://api.us1.signalfx.com/v2/metric?limit=1", sp.apiValidationEndpoint)
 	assert.Equal(t, int64(md.Milliseconds()*signalFxFromDeltaMultiplierOnMetricInterval), sp.fromDelta)
 	assert.Equal(t, token, sp.token)
 }
 
 func TestSplunkProvider_RunQuery(t *testing.T) {
-	token := "token"
 	t.Run("ok", func(t *testing.T) {
-		expected := 1.11111
-		eq := `sf_metric:service.request.count AND http_status_code:*`
-		now := time.Now().UnixMilli()
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			aq := r.URL.Query().Get("query")
-			assert.Equal(t, eq, aq)
-			assert.Equal(t, token, r.Header.Get(signalFxTokenHeaderKey))
+		fakeBackend := signalflow.NewRunningFakeBackend()
+		defer fakeBackend.Stop()
 
-			from, err := strconv.ParseInt(r.URL.Query().Get("startMS"), 10, 64)
-			if assert.NoError(t, err) {
-				assert.Less(t, from, now)
-			}
+		tsids := []idtool.ID{idtool.ID(rand.Int63())}
+		var expected float64 = float64(len(tsids))
 
-			to, err := strconv.ParseInt(r.URL.Query().Get("endMS"), 10, 64)
-			if assert.NoError(t, err) {
-				assert.GreaterOrEqual(t, to, now)
-			}
+		for i, tsid := range tsids {
+			fakeBackend.AddTSIDMetadata(tsid, &messages.MetadataProperties{
+				Metric: "service.request.count",
+			})
+			fakeBackend.SetTSIDFloatData(tsid, float64(i+1))
+		}
 
-			json := fmt.Sprintf(`{"data":{"AAAAAAAAAAA":[[1731643210000,%f]]},"errors":[]}`, expected)
-			w.Write([]byte(json))
-		}))
-		defer ts.Close()
+		pg := `data('service.request.count', filter=filter('service.name', 'myservice')).sum().publish()`
+		fakeBackend.AddProgramTSIDs(pg, tsids)
+
+		parsedUrl, err := url.Parse(fakeBackend.URL())
+		require.NoError(t, err)
 
 		sp, err := NewSplunkProvider("1m",
-			flaggerv1.MetricTemplateProvider{Address: ts.URL},
+			flaggerv1.MetricTemplateProvider{Address: fmt.Sprintf("http://%s", parsedUrl.Host)},
 			map[string][]byte{
-				signalFxTokenSecretKey: []byte(token),
+				signalFxTokenSecretKey: []byte(fakeBackend.AccessToken),
 			},
 		)
 		require.NoError(t, err)
 
-		f, err := sp.RunQuery(eq)
+		f, err := sp.RunQuery(pg)
 		require.NoError(t, err)
 		assert.Equal(t, expected, f)
 	})
 
 	t.Run("no values", func(t *testing.T) {
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			json := fmt.Sprintf(`{"data": {}, "errors": []}`)
-			w.Write([]byte(json))
-		}))
-		defer ts.Close()
+		fakeBackend := signalflow.NewRunningFakeBackend()
+		defer fakeBackend.Stop()
+
+		tsids := []idtool.ID{idtool.ID(rand.Int63()), idtool.ID(rand.Int63()), idtool.ID(rand.Int63())}
+		for _, tsid := range tsids {
+			fakeBackend.AddTSIDMetadata(tsid, &messages.MetadataProperties{
+				Metric: "service.request.count",
+			})
+		}
+
+		pg := `data('service.request.count', filter=filter('service.name', 'myservice')).sum().publish()`
+		fakeBackend.AddProgramTSIDs(pg, tsids)
+
+		parsedUrl, err := url.Parse(fakeBackend.URL())
+		require.NoError(t, err)
 
 		sp, err := NewSplunkProvider("1m",
-			flaggerv1.MetricTemplateProvider{Address: ts.URL},
+			flaggerv1.MetricTemplateProvider{Address: fmt.Sprintf("http://%s", parsedUrl.Host)},
 			map[string][]byte{
-				signalFxTokenSecretKey: []byte(token),
+				signalFxTokenSecretKey: []byte(fakeBackend.AccessToken),
 			},
 		)
 		require.NoError(t, err)
-		_, err = sp.RunQuery("")
+		_, err = sp.RunQuery(pg)
 		require.True(t, errors.Is(err, ErrNoValuesFound))
 	})
 
 	t.Run("multiple values", func(t *testing.T) {
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			json := fmt.Sprintf(`{"data":{"AAAAAAAAAAA":[[1731643210000,6]],"AAAAAAAAAAE":[[1731643210000,6]]},"errors":[]}`)
-			w.Write([]byte(json))
-		}))
-		defer ts.Close()
+		fakeBackend := signalflow.NewRunningFakeBackend()
+		defer fakeBackend.Stop()
+
+		tsids := []idtool.ID{idtool.ID(rand.Int63()), idtool.ID(rand.Int63()), idtool.ID(rand.Int63())}
+		for i, tsid := range tsids {
+			fakeBackend.AddTSIDMetadata(tsid, &messages.MetadataProperties{
+				Metric: "service.request.count",
+			})
+			fakeBackend.SetTSIDFloatData(tsid, float64(i+1))
+		}
+		pg := `data('service.request.count', filter=filter('service.name', 'myservice')).sum().publish(); data('service.request.count', filter=filter('service.name', 'myservice2')).sum().publish()`
+		fakeBackend.AddProgramTSIDs(pg, tsids)
+
+		parsedUrl, err := url.Parse(fakeBackend.URL())
+		require.NoError(t, err)
 
 		sp, err := NewSplunkProvider("1m",
-			flaggerv1.MetricTemplateProvider{Address: ts.URL},
+			flaggerv1.MetricTemplateProvider{Address: fmt.Sprintf("http://%s", parsedUrl.Host)},
 			map[string][]byte{
-				signalFxTokenSecretKey: []byte(token),
+				signalFxTokenSecretKey: []byte(fakeBackend.AccessToken),
 			},
 		)
 		require.NoError(t, err)
-		_, err = sp.RunQuery("")
+		_, err = sp.RunQuery(pg)
 		require.True(t, errors.Is(err, ErrMultipleValuesReturned))
 	})
 }
