@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ## 1.39.0
 
-**Release date:** 2024-07-30
+**Release date:** 2024-11-26
 
 This release comes with fixes and improvements. There is a new
 `.spec.analysis.webhooks[].disableTLS` field which disables TLS verification
