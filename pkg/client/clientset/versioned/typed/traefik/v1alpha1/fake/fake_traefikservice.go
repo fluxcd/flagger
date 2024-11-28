@@ -41,22 +41,24 @@ var traefikservicesKind = v1alpha1.SchemeGroupVersion.WithKind("TraefikService")
 
 // Get takes name of the traefikService, and returns the corresponding traefikService object, and an error if there is any.
 func (c *FakeTraefikServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
+	emptyResult := &v1alpha1.TraefikService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(traefikservicesResource, c.ns, name), &v1alpha1.TraefikService{})
+		Invokes(testing.NewGetActionWithOptions(traefikservicesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.TraefikService), err
 }
 
 // List takes label and field selectors, and returns the list of TraefikServices that match those selectors.
 func (c *FakeTraefikServices) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.TraefikServiceList, err error) {
+	emptyResult := &v1alpha1.TraefikServiceList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(traefikservicesResource, traefikservicesKind, c.ns, opts), &v1alpha1.TraefikServiceList{})
+		Invokes(testing.NewListActionWithOptions(traefikservicesResource, traefikservicesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,28 +77,30 @@ func (c *FakeTraefikServices) List(ctx context.Context, opts v1.ListOptions) (re
 // Watch returns a watch.Interface that watches the requested traefikServices.
 func (c *FakeTraefikServices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(traefikservicesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(traefikservicesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a traefikService and creates it.  Returns the server's representation of the traefikService, and an error, if there is any.
 func (c *FakeTraefikServices) Create(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.CreateOptions) (result *v1alpha1.TraefikService, err error) {
+	emptyResult := &v1alpha1.TraefikService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(traefikservicesResource, c.ns, traefikService), &v1alpha1.TraefikService{})
+		Invokes(testing.NewCreateActionWithOptions(traefikservicesResource, c.ns, traefikService, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.TraefikService), err
 }
 
 // Update takes the representation of a traefikService and updates it. Returns the server's representation of the traefikService, and an error, if there is any.
 func (c *FakeTraefikServices) Update(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.UpdateOptions) (result *v1alpha1.TraefikService, err error) {
+	emptyResult := &v1alpha1.TraefikService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(traefikservicesResource, c.ns, traefikService), &v1alpha1.TraefikService{})
+		Invokes(testing.NewUpdateActionWithOptions(traefikservicesResource, c.ns, traefikService, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.TraefikService), err
 }
@@ -111,7 +115,7 @@ func (c *FakeTraefikServices) Delete(ctx context.Context, name string, opts v1.D
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeTraefikServices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(traefikservicesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(traefikservicesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.TraefikServiceList{})
 	return err
@@ -119,11 +123,12 @@ func (c *FakeTraefikServices) DeleteCollection(ctx context.Context, opts v1.Dele
 
 // Patch applies the patch and returns the patched traefikService.
 func (c *FakeTraefikServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TraefikService, err error) {
+	emptyResult := &v1alpha1.TraefikService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(traefikservicesResource, c.ns, name, pt, data, subresources...), &v1alpha1.TraefikService{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(traefikservicesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.TraefikService), err
 }

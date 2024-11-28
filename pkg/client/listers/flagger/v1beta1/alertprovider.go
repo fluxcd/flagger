@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type AlertProviderLister interface {
 
 // alertProviderLister implements the AlertProviderLister interface.
 type alertProviderLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.AlertProvider]
 }
 
 // NewAlertProviderLister returns a new AlertProviderLister.
 func NewAlertProviderLister(indexer cache.Indexer) AlertProviderLister {
-	return &alertProviderLister{indexer: indexer}
-}
-
-// List lists all AlertProviders in the indexer.
-func (s *alertProviderLister) List(selector labels.Selector) (ret []*v1beta1.AlertProvider, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.AlertProvider))
-	})
-	return ret, err
+	return &alertProviderLister{listers.New[*v1beta1.AlertProvider](indexer, v1beta1.Resource("alertprovider"))}
 }
 
 // AlertProviders returns an object that can list and get AlertProviders.
 func (s *alertProviderLister) AlertProviders(namespace string) AlertProviderNamespaceLister {
-	return alertProviderNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return alertProviderNamespaceLister{listers.NewNamespaced[*v1beta1.AlertProvider](s.ResourceIndexer, namespace)}
 }
 
 // AlertProviderNamespaceLister helps list and get AlertProviders.
@@ -74,26 +66,5 @@ type AlertProviderNamespaceLister interface {
 // alertProviderNamespaceLister implements the AlertProviderNamespaceLister
 // interface.
 type alertProviderNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all AlertProviders in the indexer for a given namespace.
-func (s alertProviderNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.AlertProvider, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.AlertProvider))
-	})
-	return ret, err
-}
-
-// Get retrieves the AlertProvider from the indexer for a given namespace and name.
-func (s alertProviderNamespaceLister) Get(name string) (*v1beta1.AlertProvider, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("alertprovider"), name)
-	}
-	return obj.(*v1beta1.AlertProvider), nil
+	listers.ResourceIndexer[*v1beta1.AlertProvider]
 }

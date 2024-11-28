@@ -20,8 +20,8 @@ package v1
 
 import (
 	v1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type HTTPProxyLister interface {
 
 // hTTPProxyLister implements the HTTPProxyLister interface.
 type hTTPProxyLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1.HTTPProxy]
 }
 
 // NewHTTPProxyLister returns a new HTTPProxyLister.
 func NewHTTPProxyLister(indexer cache.Indexer) HTTPProxyLister {
-	return &hTTPProxyLister{indexer: indexer}
-}
-
-// List lists all HTTPProxies in the indexer.
-func (s *hTTPProxyLister) List(selector labels.Selector) (ret []*v1.HTTPProxy, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.HTTPProxy))
-	})
-	return ret, err
+	return &hTTPProxyLister{listers.New[*v1.HTTPProxy](indexer, v1.Resource("httpproxy"))}
 }
 
 // HTTPProxies returns an object that can list and get HTTPProxies.
 func (s *hTTPProxyLister) HTTPProxies(namespace string) HTTPProxyNamespaceLister {
-	return hTTPProxyNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return hTTPProxyNamespaceLister{listers.NewNamespaced[*v1.HTTPProxy](s.ResourceIndexer, namespace)}
 }
 
 // HTTPProxyNamespaceLister helps list and get HTTPProxies.
@@ -74,26 +66,5 @@ type HTTPProxyNamespaceLister interface {
 // hTTPProxyNamespaceLister implements the HTTPProxyNamespaceLister
 // interface.
 type hTTPProxyNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all HTTPProxies in the indexer for a given namespace.
-func (s hTTPProxyNamespaceLister) List(selector labels.Selector) (ret []*v1.HTTPProxy, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.HTTPProxy))
-	})
-	return ret, err
-}
-
-// Get retrieves the HTTPProxy from the indexer for a given namespace and name.
-func (s hTTPProxyNamespaceLister) Get(name string) (*v1.HTTPProxy, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("httpproxy"), name)
-	}
-	return obj.(*v1.HTTPProxy), nil
+	listers.ResourceIndexer[*v1.HTTPProxy]
 }

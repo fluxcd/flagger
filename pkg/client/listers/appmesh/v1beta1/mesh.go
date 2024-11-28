@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -39,30 +39,10 @@ type MeshLister interface {
 
 // meshLister implements the MeshLister interface.
 type meshLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.Mesh]
 }
 
 // NewMeshLister returns a new MeshLister.
 func NewMeshLister(indexer cache.Indexer) MeshLister {
-	return &meshLister{indexer: indexer}
-}
-
-// List lists all Meshes in the indexer.
-func (s *meshLister) List(selector labels.Selector) (ret []*v1beta1.Mesh, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.Mesh))
-	})
-	return ret, err
-}
-
-// Get retrieves the Mesh from the index for a given name.
-func (s *meshLister) Get(name string) (*v1beta1.Mesh, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("mesh"), name)
-	}
-	return obj.(*v1beta1.Mesh), nil
+	return &meshLister{listers.New[*v1beta1.Mesh](indexer, v1beta1.Resource("mesh"))}
 }

@@ -124,7 +124,10 @@ Event payload (HTTP POST):
 The event receiver can create alerts based on the received phase 
 (possible values: `Initialized`, `Waiting`, `Progressing`, `Promoting`, `Finalising`, `Succeeded` or `Failed`).
 
-The webhook request can be retried by specifying a positive integer in the `retries` field.
+Options:
+* retries: The webhook request can be retried by specifying a positive integer in the `retries` field. This helps ensure reliability if the webhook fails due to transient network issues.
+
+* disable TLS: Set `disableTLS` to `true` in the webhook spec to bypass TLS verification. This is useful in cases where the target service uses self-signed certificates, or you need to connect to an insecure service for testing purposes.
 
 ## Load Testing
 

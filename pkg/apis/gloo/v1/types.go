@@ -1,7 +1,6 @@
 package v1
 
 import (
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,7 +43,7 @@ type UpstreamSslConfig struct {
 
 	/** SSLSecrets -- only one of these should be set */
 	*UpstreamSslConfig_Sds      `json:"sds,omitempty"`
-	SecretRef                   *v1.ResourceRef `json:"secretRef,omitempty"`
+	SecretRef                   *ResourceRef `json:"secretRef,omitempty"`
 	*UpstreamSslConfig_SslFiles `json:"sslFiles,omitempty"`
 }
 
@@ -138,4 +137,10 @@ type UpstreamList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []Upstream `json:"items"`
+}
+
+// ResourceRef references resources across namespaces
+type ResourceRef struct {
+	Name      string `json:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
 }

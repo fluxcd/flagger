@@ -289,3 +289,22 @@ func TestCallWebhook_Retries(t *testing.T) {
 		flaggerv1.CanaryPhaseProgressing, hook)
 	require.NoError(t, err)
 }
+
+func TestCallWebhook_DisableTLS(t *testing.T) {
+	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer ts.Close()
+	hook := flaggerv1.CanaryWebhook{
+		Name:       "validation",
+		URL:        ts.URL,
+		DisableTLS: true,
+	}
+
+	err := CallWebhook(
+		flaggerv1.Canary{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "podinfo", Namespace: corev1.NamespaceDefault}},
+		flaggerv1.CanaryPhaseProgressing, hook)
+	require.NoError(t, err)
+}

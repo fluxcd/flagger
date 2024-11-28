@@ -41,22 +41,24 @@ var httpproxiesKind = v1.SchemeGroupVersion.WithKind("HTTPProxy")
 
 // Get takes name of the hTTPProxy, and returns the corresponding hTTPProxy object, and an error if there is any.
 func (c *FakeHTTPProxies) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.HTTPProxy, err error) {
+	emptyResult := &v1.HTTPProxy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(httpproxiesResource, c.ns, name), &v1.HTTPProxy{})
+		Invokes(testing.NewGetActionWithOptions(httpproxiesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPProxy), err
 }
 
 // List takes label and field selectors, and returns the list of HTTPProxies that match those selectors.
 func (c *FakeHTTPProxies) List(ctx context.Context, opts metav1.ListOptions) (result *v1.HTTPProxyList, err error) {
+	emptyResult := &v1.HTTPProxyList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(httpproxiesResource, httpproxiesKind, c.ns, opts), &v1.HTTPProxyList{})
+		Invokes(testing.NewListActionWithOptions(httpproxiesResource, httpproxiesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeHTTPProxies) List(ctx context.Context, opts metav1.ListOptions) (re
 // Watch returns a watch.Interface that watches the requested hTTPProxies.
 func (c *FakeHTTPProxies) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(httpproxiesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(httpproxiesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a hTTPProxy and creates it.  Returns the server's representation of the hTTPProxy, and an error, if there is any.
 func (c *FakeHTTPProxies) Create(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.CreateOptions) (result *v1.HTTPProxy, err error) {
+	emptyResult := &v1.HTTPProxy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(httpproxiesResource, c.ns, hTTPProxy), &v1.HTTPProxy{})
+		Invokes(testing.NewCreateActionWithOptions(httpproxiesResource, c.ns, hTTPProxy, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPProxy), err
 }
 
 // Update takes the representation of a hTTPProxy and updates it. Returns the server's representation of the hTTPProxy, and an error, if there is any.
 func (c *FakeHTTPProxies) Update(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (result *v1.HTTPProxy, err error) {
+	emptyResult := &v1.HTTPProxy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(httpproxiesResource, c.ns, hTTPProxy), &v1.HTTPProxy{})
+		Invokes(testing.NewUpdateActionWithOptions(httpproxiesResource, c.ns, hTTPProxy, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPProxy), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeHTTPProxies) UpdateStatus(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (*v1.HTTPProxy, error) {
+func (c *FakeHTTPProxies) UpdateStatus(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (result *v1.HTTPProxy, err error) {
+	emptyResult := &v1.HTTPProxy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(httpproxiesResource, "status", c.ns, hTTPProxy), &v1.HTTPProxy{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(httpproxiesResource, "status", c.ns, hTTPProxy, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPProxy), err
 }
@@ -123,7 +128,7 @@ func (c *FakeHTTPProxies) Delete(ctx context.Context, name string, opts metav1.D
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeHTTPProxies) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(httpproxiesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(httpproxiesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.HTTPProxyList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeHTTPProxies) DeleteCollection(ctx context.Context, opts metav1.Dele
 
 // Patch applies the patch and returns the patched hTTPProxy.
 func (c *FakeHTTPProxies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.HTTPProxy, err error) {
+	emptyResult := &v1.HTTPProxy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(httpproxiesResource, c.ns, name, pt, data, subresources...), &v1.HTTPProxy{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(httpproxiesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.HTTPProxy), err
 }

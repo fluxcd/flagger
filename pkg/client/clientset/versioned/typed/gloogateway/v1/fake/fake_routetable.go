@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	types "k8s.io/apimachinery/pkg/types"
@@ -41,22 +41,24 @@ var routetablesKind = v1.SchemeGroupVersion.WithKind("RouteTable")
 
 // Get takes name of the routeTable, and returns the corresponding routeTable object, and an error if there is any.
 func (c *FakeRouteTables) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.RouteTable, err error) {
+	emptyResult := &v1.RouteTable{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(routetablesResource, c.ns, name), &v1.RouteTable{})
+		Invokes(testing.NewGetActionWithOptions(routetablesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.RouteTable), err
 }
 
 // List takes label and field selectors, and returns the list of RouteTables that match those selectors.
 func (c *FakeRouteTables) List(ctx context.Context, opts metav1.ListOptions) (result *v1.RouteTableList, err error) {
+	emptyResult := &v1.RouteTableList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(routetablesResource, routetablesKind, c.ns, opts), &v1.RouteTableList{})
+		Invokes(testing.NewListActionWithOptions(routetablesResource, routetablesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,28 +77,30 @@ func (c *FakeRouteTables) List(ctx context.Context, opts metav1.ListOptions) (re
 // Watch returns a watch.Interface that watches the requested routeTables.
 func (c *FakeRouteTables) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(routetablesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(routetablesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a routeTable and creates it.  Returns the server's representation of the routeTable, and an error, if there is any.
 func (c *FakeRouteTables) Create(ctx context.Context, routeTable *v1.RouteTable, opts metav1.CreateOptions) (result *v1.RouteTable, err error) {
+	emptyResult := &v1.RouteTable{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(routetablesResource, c.ns, routeTable), &v1.RouteTable{})
+		Invokes(testing.NewCreateActionWithOptions(routetablesResource, c.ns, routeTable, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.RouteTable), err
 }
 
 // Update takes the representation of a routeTable and updates it. Returns the server's representation of the routeTable, and an error, if there is any.
 func (c *FakeRouteTables) Update(ctx context.Context, routeTable *v1.RouteTable, opts metav1.UpdateOptions) (result *v1.RouteTable, err error) {
+	emptyResult := &v1.RouteTable{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(routetablesResource, c.ns, routeTable), &v1.RouteTable{})
+		Invokes(testing.NewUpdateActionWithOptions(routetablesResource, c.ns, routeTable, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.RouteTable), err
 }
@@ -111,7 +115,7 @@ func (c *FakeRouteTables) Delete(ctx context.Context, name string, opts metav1.D
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeRouteTables) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(routetablesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(routetablesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.RouteTableList{})
 	return err
@@ -119,11 +123,12 @@ func (c *FakeRouteTables) DeleteCollection(ctx context.Context, opts metav1.Dele
 
 // Patch applies the patch and returns the patched routeTable.
 func (c *FakeRouteTables) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.RouteTable, err error) {
+	emptyResult := &v1.RouteTable{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(routetablesResource, c.ns, name, pt, data, subresources...), &v1.RouteTable{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(routetablesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.RouteTable), err
 }

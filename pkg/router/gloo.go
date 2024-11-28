@@ -23,8 +23,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloo/gateway/v1"
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"

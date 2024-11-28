@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -179,6 +180,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		}
 		gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 			Infof("HTTPRoute %s.%s created", route.GetName(), hrNamespace)
+		return nil
 	} else if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 	}
@@ -647,10 +649,23 @@ func (gwr *GatewayAPIRouter) mergeMatchConditions(analysis, service []v1.HTTPRou
 	return merged
 }
 
+func sortFiltersV1(headers []v1.HTTPHeader) {
+
+	if headers != nil {
+		slices.SortFunc(headers, func(a, b v1.HTTPHeader) int {
+			if a.Name == b.Name {
+				return strings.Compare(a.Value, b.Value)
+			}
+			return strings.Compare(string(a.Name), string(b.Name))
+		})
+	}
+}
+
 func (gwr *GatewayAPIRouter) makeFilters(canary *flaggerv1.Canary) []v1.HTTPRouteFilter {
 	var filters []v1.HTTPRouteFilter
 
 	if canary.Spec.Service.Headers != nil {
+
 		if canary.Spec.Service.Headers.Request != nil {
 			requestHeaderFilter := v1.HTTPRouteFilter{
 				Type:                  v1.HTTPRouteFilterRequestHeaderModifier,
@@ -663,6 +678,7 @@ func (gwr *GatewayAPIRouter) makeFilters(canary *flaggerv1.Canary) []v1.HTTPRout
 					Value: val,
 				})
 			}
+			sortFiltersV1(requestHeaderFilter.RequestHeaderModifier.Add)
 			for name, val := range canary.Spec.Service.Headers.Request.Set {
 				requestHeaderFilter.RequestHeaderModifier.Set = append(requestHeaderFilter.RequestHeaderModifier.Set, v1.HTTPHeader{
 					Name:  v1.HTTPHeaderName(name),
@@ -670,6 +686,7 @@ func (gwr *GatewayAPIRouter) makeFilters(canary *flaggerv1.Canary) []v1.HTTPRout
 				})
 			}
 
+			sortFiltersV1(requestHeaderFilter.RequestHeaderModifier.Set)
 			for _, name := range canary.Spec.Service.Headers.Request.Remove {
 				requestHeaderFilter.RequestHeaderModifier.Remove = append(requestHeaderFilter.RequestHeaderModifier.Remove, name)
 			}
@@ -688,12 +705,14 @@ func (gwr *GatewayAPIRouter) makeFilters(canary *flaggerv1.Canary) []v1.HTTPRout
 					Value: val,
 				})
 			}
+			sortFiltersV1(responseHeaderFilter.ResponseHeaderModifier.Add)
 			for name, val := range canary.Spec.Service.Headers.Response.Set {
 				responseHeaderFilter.ResponseHeaderModifier.Set = append(responseHeaderFilter.ResponseHeaderModifier.Set, v1.HTTPHeader{
 					Name:  v1.HTTPHeaderName(name),
 					Value: val,
 				})
 			}
+			sortFiltersV1(responseHeaderFilter.ResponseHeaderModifier.Set)
 
 			for _, name := range canary.Spec.Service.Headers.Response.Remove {
 				responseHeaderFilter.ResponseHeaderModifier.Remove = append(responseHeaderFilter.ResponseHeaderModifier.Remove, name)

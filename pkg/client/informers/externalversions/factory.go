@@ -27,9 +27,9 @@ import (
 	apisix "github.com/fluxcd/flagger/pkg/client/informers/externalversions/apisix"
 	appmesh "github.com/fluxcd/flagger/pkg/client/informers/externalversions/appmesh"
 	flagger "github.com/fluxcd/flagger/pkg/client/informers/externalversions/flagger"
-	gateway "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gateway"
 	gatewayapi "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gatewayapi"
 	gloo "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gloo"
+	gloogateway "github.com/fluxcd/flagger/pkg/client/informers/externalversions/gloogateway"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	istio "github.com/fluxcd/flagger/pkg/client/informers/externalversions/istio"
 	keda "github.com/fluxcd/flagger/pkg/client/informers/externalversions/keda"
@@ -53,6 +53,7 @@ type sharedInformerFactory struct {
 	lock             sync.Mutex
 	defaultResync    time.Duration
 	customResync     map[reflect.Type]time.Duration
+	transform        cache.TransformFunc
 
 	informers map[reflect.Type]cache.SharedIndexInformer
 	// startedInformers is used for tracking which informers have been started.
@@ -87,6 +88,14 @@ func WithTweakListOptions(tweakListOptions internalinterfaces.TweakListOptionsFu
 func WithNamespace(namespace string) SharedInformerOption {
 	return func(factory *sharedInformerFactory) *sharedInformerFactory {
 		factory.namespace = namespace
+		return factory
+	}
+}
+
+// WithTransform sets a transform on all informers.
+func WithTransform(transform cache.TransformFunc) SharedInformerOption {
+	return func(factory *sharedInformerFactory) *sharedInformerFactory {
+		factory.transform = transform
 		return factory
 	}
 }
@@ -177,7 +186,7 @@ func (f *sharedInformerFactory) WaitForCacheSync(stopCh <-chan struct{}) map[ref
 	return res
 }
 
-// InternalInformerFor returns the SharedIndexInformer for obj using an internal
+// InformerFor returns the SharedIndexInformer for obj using an internal
 // client.
 func (f *sharedInformerFactory) InformerFor(obj runtime.Object, newFunc internalinterfaces.NewInformerFunc) cache.SharedIndexInformer {
 	f.lock.Lock()
@@ -195,6 +204,7 @@ func (f *sharedInformerFactory) InformerFor(obj runtime.Object, newFunc internal
 	}
 
 	informer = newFunc(f.client, resyncPeriod)
+	informer.SetTransform(f.transform)
 	f.informers[informerType] = informer
 
 	return informer
@@ -229,6 +239,7 @@ type SharedInformerFactory interface {
 
 	// Start initializes all requested informers. They are handled in goroutines
 	// which run until the stop channel gets closed.
+	// Warning: Start does not block. When run in a go-routine, it will race with a later WaitForCacheSync.
 	Start(stopCh <-chan struct{})
 
 	// Shutdown marks a factory as shutting down. At that point no new
@@ -250,16 +261,16 @@ type SharedInformerFactory interface {
 	// ForResource gives generic access to a shared informer of the matching type.
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 
-	// InternalInformerFor returns the SharedIndexInformer for obj using an internal
+	// InformerFor returns the SharedIndexInformer for obj using an internal
 	// client.
 	InformerFor(obj runtime.Object, newFunc internalinterfaces.NewInformerFunc) cache.SharedIndexInformer
 
 	Apisix() apisix.Interface
 	Appmesh() appmesh.Interface
 	Flagger() flagger.Interface
-	Gateway() gateway.Interface
 	Gatewayapi() gatewayapi.Interface
 	Gloo() gloo.Interface
+	Gateway() gloogateway.Interface
 	Networking() istio.Interface
 	Keda() keda.Interface
 	Kuma() kuma.Interface
@@ -280,16 +291,16 @@ func (f *sharedInformerFactory) Flagger() flagger.Interface {
 	return flagger.New(f, f.namespace, f.tweakListOptions)
 }
 
-func (f *sharedInformerFactory) Gateway() gateway.Interface {
-	return gateway.New(f, f.namespace, f.tweakListOptions)
-}
-
 func (f *sharedInformerFactory) Gatewayapi() gatewayapi.Interface {
 	return gatewayapi.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Gloo() gloo.Interface {
 	return gloo.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Gateway() gloogateway.Interface {
+	return gloogateway.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Networking() istio.Interface {

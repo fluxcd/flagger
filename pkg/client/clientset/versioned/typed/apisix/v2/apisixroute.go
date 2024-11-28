@@ -20,14 +20,13 @@ package v2
 
 import (
 	"context"
-	"time"
 
 	v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // ApisixRoutesGetter has a method to return a ApisixRouteInterface.
@@ -40,6 +39,7 @@ type ApisixRoutesGetter interface {
 type ApisixRouteInterface interface {
 	Create(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.CreateOptions) (*v2.ApisixRoute, error)
 	Update(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (*v2.ApisixRoute, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 	UpdateStatus(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (*v2.ApisixRoute, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
@@ -52,144 +52,18 @@ type ApisixRouteInterface interface {
 
 // apisixRoutes implements ApisixRouteInterface
 type apisixRoutes struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*v2.ApisixRoute, *v2.ApisixRouteList]
 }
 
 // newApisixRoutes returns a ApisixRoutes
 func newApisixRoutes(c *ApisixV2Client, namespace string) *apisixRoutes {
 	return &apisixRoutes{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*v2.ApisixRoute, *v2.ApisixRouteList](
+			"apisixroutes",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *v2.ApisixRoute { return &v2.ApisixRoute{} },
+			func() *v2.ApisixRouteList { return &v2.ApisixRouteList{} }),
 	}
-}
-
-// Get takes name of the apisixRoute, and returns the corresponding apisixRoute object, and an error if there is any.
-func (c *apisixRoutes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v2.ApisixRoute, err error) {
-	result = &v2.ApisixRoute{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of ApisixRoutes that match those selectors.
-func (c *apisixRoutes) List(ctx context.Context, opts v1.ListOptions) (result *v2.ApisixRouteList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v2.ApisixRouteList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested apisixRoutes.
-func (c *apisixRoutes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a apisixRoute and creates it.  Returns the server's representation of the apisixRoute, and an error, if there is any.
-func (c *apisixRoutes) Create(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.CreateOptions) (result *v2.ApisixRoute, err error) {
-	result = &v2.ApisixRoute{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(apisixRoute).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a apisixRoute and updates it. Returns the server's representation of the apisixRoute, and an error, if there is any.
-func (c *apisixRoutes) Update(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (result *v2.ApisixRoute, err error) {
-	result = &v2.ApisixRoute{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		Name(apisixRoute.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(apisixRoute).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *apisixRoutes) UpdateStatus(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (result *v2.ApisixRoute, err error) {
-	result = &v2.ApisixRoute{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		Name(apisixRoute.Name).
-		SubResource("status").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(apisixRoute).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the apisixRoute and deletes it. Returns an error if one occurs.
-func (c *apisixRoutes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *apisixRoutes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched apisixRoute.
-func (c *apisixRoutes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v2.ApisixRoute, err error) {
-	result = &v2.ApisixRoute{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("apisixroutes").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

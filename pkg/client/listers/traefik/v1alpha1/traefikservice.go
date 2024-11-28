@@ -20,8 +20,8 @@ package v1alpha1
 
 import (
 	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type TraefikServiceLister interface {
 
 // traefikServiceLister implements the TraefikServiceLister interface.
 type traefikServiceLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1alpha1.TraefikService]
 }
 
 // NewTraefikServiceLister returns a new TraefikServiceLister.
 func NewTraefikServiceLister(indexer cache.Indexer) TraefikServiceLister {
-	return &traefikServiceLister{indexer: indexer}
-}
-
-// List lists all TraefikServices in the indexer.
-func (s *traefikServiceLister) List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TraefikService))
-	})
-	return ret, err
+	return &traefikServiceLister{listers.New[*v1alpha1.TraefikService](indexer, v1alpha1.Resource("traefikservice"))}
 }
 
 // TraefikServices returns an object that can list and get TraefikServices.
 func (s *traefikServiceLister) TraefikServices(namespace string) TraefikServiceNamespaceLister {
-	return traefikServiceNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return traefikServiceNamespaceLister{listers.NewNamespaced[*v1alpha1.TraefikService](s.ResourceIndexer, namespace)}
 }
 
 // TraefikServiceNamespaceLister helps list and get TraefikServices.
@@ -74,26 +66,5 @@ type TraefikServiceNamespaceLister interface {
 // traefikServiceNamespaceLister implements the TraefikServiceNamespaceLister
 // interface.
 type traefikServiceNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all TraefikServices in the indexer for a given namespace.
-func (s traefikServiceNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TraefikService))
-	})
-	return ret, err
-}
-
-// Get retrieves the TraefikService from the indexer for a given namespace and name.
-func (s traefikServiceNamespaceLister) Get(name string) (*v1alpha1.TraefikService, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("traefikservice"), name)
-	}
-	return obj.(*v1alpha1.TraefikService), nil
+	listers.ResourceIndexer[*v1alpha1.TraefikService]
 }

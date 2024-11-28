@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type VirtualNodeLister interface {
 
 // virtualNodeLister implements the VirtualNodeLister interface.
 type virtualNodeLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.VirtualNode]
 }
 
 // NewVirtualNodeLister returns a new VirtualNodeLister.
 func NewVirtualNodeLister(indexer cache.Indexer) VirtualNodeLister {
-	return &virtualNodeLister{indexer: indexer}
-}
-
-// List lists all VirtualNodes in the indexer.
-func (s *virtualNodeLister) List(selector labels.Selector) (ret []*v1beta1.VirtualNode, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.VirtualNode))
-	})
-	return ret, err
+	return &virtualNodeLister{listers.New[*v1beta1.VirtualNode](indexer, v1beta1.Resource("virtualnode"))}
 }
 
 // VirtualNodes returns an object that can list and get VirtualNodes.
 func (s *virtualNodeLister) VirtualNodes(namespace string) VirtualNodeNamespaceLister {
-	return virtualNodeNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return virtualNodeNamespaceLister{listers.NewNamespaced[*v1beta1.VirtualNode](s.ResourceIndexer, namespace)}
 }
 
 // VirtualNodeNamespaceLister helps list and get VirtualNodes.
@@ -74,26 +66,5 @@ type VirtualNodeNamespaceLister interface {
 // virtualNodeNamespaceLister implements the VirtualNodeNamespaceLister
 // interface.
 type virtualNodeNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all VirtualNodes in the indexer for a given namespace.
-func (s virtualNodeNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.VirtualNode, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.VirtualNode))
-	})
-	return ret, err
-}
-
-// Get retrieves the VirtualNode from the indexer for a given namespace and name.
-func (s virtualNodeNamespaceLister) Get(name string) (*v1beta1.VirtualNode, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("virtualnode"), name)
-	}
-	return obj.(*v1beta1.VirtualNode), nil
+	listers.ResourceIndexer[*v1beta1.VirtualNode]
 }

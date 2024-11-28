@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	types "k8s.io/apimachinery/pkg/types"
@@ -41,22 +41,24 @@ var upstreamsKind = v1.SchemeGroupVersion.WithKind("Upstream")
 
 // Get takes name of the upstream, and returns the corresponding upstream object, and an error if there is any.
 func (c *FakeUpstreams) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.Upstream, err error) {
+	emptyResult := &v1.Upstream{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(upstreamsResource, c.ns, name), &v1.Upstream{})
+		Invokes(testing.NewGetActionWithOptions(upstreamsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Upstream), err
 }
 
 // List takes label and field selectors, and returns the list of Upstreams that match those selectors.
 func (c *FakeUpstreams) List(ctx context.Context, opts metav1.ListOptions) (result *v1.UpstreamList, err error) {
+	emptyResult := &v1.UpstreamList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(upstreamsResource, upstreamsKind, c.ns, opts), &v1.UpstreamList{})
+		Invokes(testing.NewListActionWithOptions(upstreamsResource, upstreamsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,28 +77,30 @@ func (c *FakeUpstreams) List(ctx context.Context, opts metav1.ListOptions) (resu
 // Watch returns a watch.Interface that watches the requested upstreams.
 func (c *FakeUpstreams) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(upstreamsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(upstreamsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a upstream and creates it.  Returns the server's representation of the upstream, and an error, if there is any.
 func (c *FakeUpstreams) Create(ctx context.Context, upstream *v1.Upstream, opts metav1.CreateOptions) (result *v1.Upstream, err error) {
+	emptyResult := &v1.Upstream{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(upstreamsResource, c.ns, upstream), &v1.Upstream{})
+		Invokes(testing.NewCreateActionWithOptions(upstreamsResource, c.ns, upstream, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Upstream), err
 }
 
 // Update takes the representation of a upstream and updates it. Returns the server's representation of the upstream, and an error, if there is any.
 func (c *FakeUpstreams) Update(ctx context.Context, upstream *v1.Upstream, opts metav1.UpdateOptions) (result *v1.Upstream, err error) {
+	emptyResult := &v1.Upstream{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(upstreamsResource, c.ns, upstream), &v1.Upstream{})
+		Invokes(testing.NewUpdateActionWithOptions(upstreamsResource, c.ns, upstream, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Upstream), err
 }
@@ -111,7 +115,7 @@ func (c *FakeUpstreams) Delete(ctx context.Context, name string, opts metav1.Del
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeUpstreams) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(upstreamsResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(upstreamsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.UpstreamList{})
 	return err
@@ -119,11 +123,12 @@ func (c *FakeUpstreams) DeleteCollection(ctx context.Context, opts metav1.Delete
 
 // Patch applies the patch and returns the patched upstream.
 func (c *FakeUpstreams) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Upstream, err error) {
+	emptyResult := &v1.Upstream{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(upstreamsResource, c.ns, name, pt, data, subresources...), &v1.Upstream{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(upstreamsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Upstream), err
 }

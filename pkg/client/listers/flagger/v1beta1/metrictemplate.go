@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type MetricTemplateLister interface {
 
 // metricTemplateLister implements the MetricTemplateLister interface.
 type metricTemplateLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.MetricTemplate]
 }
 
 // NewMetricTemplateLister returns a new MetricTemplateLister.
 func NewMetricTemplateLister(indexer cache.Indexer) MetricTemplateLister {
-	return &metricTemplateLister{indexer: indexer}
-}
-
-// List lists all MetricTemplates in the indexer.
-func (s *metricTemplateLister) List(selector labels.Selector) (ret []*v1beta1.MetricTemplate, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.MetricTemplate))
-	})
-	return ret, err
+	return &metricTemplateLister{listers.New[*v1beta1.MetricTemplate](indexer, v1beta1.Resource("metrictemplate"))}
 }
 
 // MetricTemplates returns an object that can list and get MetricTemplates.
 func (s *metricTemplateLister) MetricTemplates(namespace string) MetricTemplateNamespaceLister {
-	return metricTemplateNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return metricTemplateNamespaceLister{listers.NewNamespaced[*v1beta1.MetricTemplate](s.ResourceIndexer, namespace)}
 }
 
 // MetricTemplateNamespaceLister helps list and get MetricTemplates.
@@ -74,26 +66,5 @@ type MetricTemplateNamespaceLister interface {
 // metricTemplateNamespaceLister implements the MetricTemplateNamespaceLister
 // interface.
 type metricTemplateNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all MetricTemplates in the indexer for a given namespace.
-func (s metricTemplateNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.MetricTemplate, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.MetricTemplate))
-	})
-	return ret, err
-}
-
-// Get retrieves the MetricTemplate from the indexer for a given namespace and name.
-func (s metricTemplateNamespaceLister) Get(name string) (*v1beta1.MetricTemplate, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("metrictemplate"), name)
-	}
-	return obj.(*v1beta1.MetricTemplate), nil
+	listers.ResourceIndexer[*v1beta1.MetricTemplate]
 }

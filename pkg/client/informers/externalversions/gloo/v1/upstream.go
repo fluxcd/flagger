@@ -22,7 +22,7 @@ import (
 	"context"
 	time "time"
 
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "github.com/fluxcd/flagger/pkg/client/listers/gloo/v1"

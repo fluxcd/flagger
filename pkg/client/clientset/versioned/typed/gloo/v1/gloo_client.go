@@ -21,7 +21,7 @@ package v1
 import (
 	"net/http"
 
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/gloo/v1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 	"github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )

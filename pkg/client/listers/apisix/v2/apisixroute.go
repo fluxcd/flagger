@@ -20,8 +20,8 @@ package v2
 
 import (
 	v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type ApisixRouteLister interface {
 
 // apisixRouteLister implements the ApisixRouteLister interface.
 type apisixRouteLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v2.ApisixRoute]
 }
 
 // NewApisixRouteLister returns a new ApisixRouteLister.
 func NewApisixRouteLister(indexer cache.Indexer) ApisixRouteLister {
-	return &apisixRouteLister{indexer: indexer}
-}
-
-// List lists all ApisixRoutes in the indexer.
-func (s *apisixRouteLister) List(selector labels.Selector) (ret []*v2.ApisixRoute, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v2.ApisixRoute))
-	})
-	return ret, err
+	return &apisixRouteLister{listers.New[*v2.ApisixRoute](indexer, v2.Resource("apisixroute"))}
 }
 
 // ApisixRoutes returns an object that can list and get ApisixRoutes.
 func (s *apisixRouteLister) ApisixRoutes(namespace string) ApisixRouteNamespaceLister {
-	return apisixRouteNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return apisixRouteNamespaceLister{listers.NewNamespaced[*v2.ApisixRoute](s.ResourceIndexer, namespace)}
 }
 
 // ApisixRouteNamespaceLister helps list and get ApisixRoutes.
@@ -74,26 +66,5 @@ type ApisixRouteNamespaceLister interface {
 // apisixRouteNamespaceLister implements the ApisixRouteNamespaceLister
 // interface.
 type apisixRouteNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all ApisixRoutes in the indexer for a given namespace.
-func (s apisixRouteNamespaceLister) List(selector labels.Selector) (ret []*v2.ApisixRoute, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v2.ApisixRoute))
-	})
-	return ret, err
-}
-
-// Get retrieves the ApisixRoute from the indexer for a given namespace and name.
-func (s apisixRouteNamespaceLister) Get(name string) (*v2.ApisixRoute, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v2.Resource("apisixroute"), name)
-	}
-	return obj.(*v2.ApisixRoute), nil
+	listers.ResourceIndexer[*v2.ApisixRoute]
 }

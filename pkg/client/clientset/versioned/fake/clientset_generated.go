@@ -28,14 +28,14 @@ import (
 	fakeappmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/appmesh/v1beta2/fake"
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
 	fakeflaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1/fake"
-	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1"
-	fakegatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gateway/v1/fake"
 	gatewayapiv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1"
 	fakegatewayapiv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1/fake"
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1"
 	fakegatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1/fake"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	fakegloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1/fake"
+	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloogateway/v1"
+	fakegatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloogateway/v1/fake"
 	networkingv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1beta1"
 	fakenetworkingv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1beta1/fake"
 	kedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1"
@@ -61,8 +61,12 @@ import (
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.
 // It's backed by a very simple object tracker that processes creates, updates and deletions as-is,
-// without applying any validations and/or defaults. It shouldn't be considered a replacement
+// without applying any field management, validations and/or defaults. It shouldn't be considered a replacement
 // for a real clientset and is mostly useful in simple unit tests.
+//
+// DEPRECATED: NewClientset replaces this with support for field management, which significantly improves
+// server side apply testing. NewClientset is only available when apply configurations are generated (e.g.
+// via --with-applyconfig).
 func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 	o := testing.NewObjectTracker(scheme, codecs.UniversalDecoder())
 	for _, obj := range objects {
@@ -114,14 +118,14 @@ func (c *Clientset) ApisixV2() apisixv2.ApisixV2Interface {
 	return &fakeapisixv2.FakeApisixV2{Fake: &c.Fake}
 }
 
-// AppmeshV1beta2 retrieves the AppmeshV1beta2Client
-func (c *Clientset) AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface {
-	return &fakeappmeshv1beta2.FakeAppmeshV1beta2{Fake: &c.Fake}
-}
-
 // AppmeshV1beta1 retrieves the AppmeshV1beta1Client
 func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
 	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
+}
+
+// AppmeshV1beta2 retrieves the AppmeshV1beta2Client
+func (c *Clientset) AppmeshV1beta2() appmeshv1beta2.AppmeshV1beta2Interface {
+	return &fakeappmeshv1beta2.FakeAppmeshV1beta2{Fake: &c.Fake}
 }
 
 // FlaggerV1beta1 retrieves the FlaggerV1beta1Client
@@ -129,9 +133,9 @@ func (c *Clientset) FlaggerV1beta1() flaggerv1beta1.FlaggerV1beta1Interface {
 	return &fakeflaggerv1beta1.FakeFlaggerV1beta1{Fake: &c.Fake}
 }
 
-// GatewayV1 retrieves the GatewayV1Client
-func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
-	return &fakegatewayv1.FakeGatewayV1{Fake: &c.Fake}
+// GatewayapiV1 retrieves the GatewayapiV1Client
+func (c *Clientset) GatewayapiV1() gatewayapiv1.GatewayapiV1Interface {
+	return &fakegatewayapiv1.FakeGatewayapiV1{Fake: &c.Fake}
 }
 
 // GatewayapiV1beta1 retrieves the GatewayapiV1beta1Client
@@ -139,14 +143,14 @@ func (c *Clientset) GatewayapiV1beta1() gatewayapiv1beta1.GatewayapiV1beta1Inter
 	return &fakegatewayapiv1beta1.FakeGatewayapiV1beta1{Fake: &c.Fake}
 }
 
-// GatewayapiV1 retrieves the GatewayapiV1Client
-func (c *Clientset) GatewayapiV1() gatewayapiv1.GatewayapiV1Interface {
-	return &fakegatewayapiv1.FakeGatewayapiV1{Fake: &c.Fake}
-}
-
 // GlooV1 retrieves the GlooV1Client
 func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
 	return &fakegloov1.FakeGlooV1{Fake: &c.Fake}
+}
+
+// GatewayV1 retrieves the GatewayV1Client
+func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
+	return &fakegatewayv1.FakeGatewayV1{Fake: &c.Fake}
 }
 
 // NetworkingV1beta1 retrieves the NetworkingV1beta1Client

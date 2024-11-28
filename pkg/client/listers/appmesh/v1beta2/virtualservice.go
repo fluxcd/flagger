@@ -20,8 +20,8 @@ package v1beta2
 
 import (
 	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type VirtualServiceLister interface {
 
 // virtualServiceLister implements the VirtualServiceLister interface.
 type virtualServiceLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta2.VirtualService]
 }
 
 // NewVirtualServiceLister returns a new VirtualServiceLister.
 func NewVirtualServiceLister(indexer cache.Indexer) VirtualServiceLister {
-	return &virtualServiceLister{indexer: indexer}
-}
-
-// List lists all VirtualServices in the indexer.
-func (s *virtualServiceLister) List(selector labels.Selector) (ret []*v1beta2.VirtualService, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta2.VirtualService))
-	})
-	return ret, err
+	return &virtualServiceLister{listers.New[*v1beta2.VirtualService](indexer, v1beta2.Resource("virtualservice"))}
 }
 
 // VirtualServices returns an object that can list and get VirtualServices.
 func (s *virtualServiceLister) VirtualServices(namespace string) VirtualServiceNamespaceLister {
-	return virtualServiceNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return virtualServiceNamespaceLister{listers.NewNamespaced[*v1beta2.VirtualService](s.ResourceIndexer, namespace)}
 }
 
 // VirtualServiceNamespaceLister helps list and get VirtualServices.
@@ -74,26 +66,5 @@ type VirtualServiceNamespaceLister interface {
 // virtualServiceNamespaceLister implements the VirtualServiceNamespaceLister
 // interface.
 type virtualServiceNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all VirtualServices in the indexer for a given namespace.
-func (s virtualServiceNamespaceLister) List(selector labels.Selector) (ret []*v1beta2.VirtualService, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta2.VirtualService))
-	})
-	return ret, err
-}
-
-// Get retrieves the VirtualService from the indexer for a given namespace and name.
-func (s virtualServiceNamespaceLister) Get(name string) (*v1beta2.VirtualService, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta2.Resource("virtualservice"), name)
-	}
-	return obj.(*v1beta2.VirtualService), nil
+	listers.ResourceIndexer[*v1beta2.VirtualService]
 }
