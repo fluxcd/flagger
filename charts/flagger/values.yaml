@@ -199,8 +199,7 @@ podDisruptionBudget:
 podLabels: {}
 
 # Additional labels to be added to deployments
-deploymentLabels:
-  mylabel: value
+deploymentLabels: { }
 
 noCrossNamespaceRefs: false
 
