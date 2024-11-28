@@ -34,8 +34,8 @@ import (
 
 // https://docs.datadoghq.com/api/
 const (
-	signalFxMTSQueryPath   = "/v2/signalflow/execute"
-	signalFxValidationPath = "/v2/metric?limit=1"
+	signalFxSignalFlowApiPath = "/v2/signalflow"
+	signalFxValidationPath    = "/v2/metric?limit=1"
 
 	signalFxTokenSecretKey = "sf_token_key"
 
@@ -70,7 +70,7 @@ func NewSplunkProvider(metricInterval string,
 
 	sp := SplunkProvider{
 		timeout:               5 * time.Second,
-		metricsQueryEndpoint:  strings.Replace(strings.Replace(address+signalFxMTSQueryPath, "http", "ws", 1), "api", "stream", 1),
+		metricsQueryEndpoint:  strings.Replace(strings.Replace(address+signalFxSignalFlowApiPath, "http", "ws", 1), "api", "stream", 1),
 		apiValidationEndpoint: strings.Replace(strings.Replace(address+signalFxValidationPath, "ws", "http", 1), "stream", "api", 1),
 	}
 
@@ -102,37 +102,54 @@ func (p *SplunkProvider) RunQuery(query string) (float64, error) {
 	now := time.Now().UnixMilli()
 	comp, err := c.Execute(ctx, &signalflow.ExecuteRequest{
 		Program:   query,
-		Start:     time.Unix(0, (now-p.fromDelta)*time.Millisecond.Nanoseconds()),
-		Stop:      time.Unix(0, now*time.Millisecond.Nanoseconds()),
+		Start:     time.UnixMilli(now - p.fromDelta),
+		Stop:      time.UnixMilli(now),
 		Immediate: true,
 	})
 	if err != nil {
 		return 0, fmt.Errorf("error executing query: %w", err)
 	}
 
-	select {
-	case dataMsg := <-comp.Data():
-		payloads := slices.DeleteFunc(dataMsg.Payloads, func(msg messages.DataPayload) bool {
-			return msg.Value() == nil
-		})
-		if len(payloads) < 1 {
-			return 0, fmt.Errorf("invalid response: %w", ErrNoValuesFound)
-		}
-		_payloads := slices.Clone(payloads)
-		slices.SortFunc(_payloads, func(i, j messages.DataPayload) int {
-			return cmp.Compare(i.TSID, j.TSID)
-		})
-		if len(slices.CompactFunc(_payloads, func(i, j messages.DataPayload) bool { return i.TSID == j.TSID })) > 1 {
-			return 0, fmt.Errorf("invalid response: %w", ErrMultipleValuesReturned)
-		}
-		return payloads[len(payloads)-1].Value().(float64), nil
-	case <-time.After(p.timeout):
-		err := comp.Stop(ctx)
-		if err != nil {
-			return 0, fmt.Errorf("error stopping query: %w", err)
-		}
-		return 0, fmt.Errorf("timeout waiting for query result")
+	payloads := p.receivePaylods(comp)
+
+	if comp.Err() != nil {
+		return 0, fmt.Errorf("error executing query: %w", comp.Err())
 	}
+	payloads = slices.DeleteFunc(payloads, func(msg messages.DataPayload) bool {
+		return msg.Value() == nil
+	})
+	if len(payloads) < 1 {
+		return 0, fmt.Errorf("invalid response: %w", ErrNoValuesFound)
+	}
+	_payloads := slices.Clone(payloads)
+	slices.SortFunc(_payloads, func(i, j messages.DataPayload) int {
+		return cmp.Compare(i.TSID, j.TSID)
+	})
+	if len(slices.CompactFunc(_payloads, func(i, j messages.DataPayload) bool { return i.TSID == j.TSID })) > 1 {
+		return 0, fmt.Errorf("invalid response: %w", ErrMultipleValuesReturned)
+	}
+	payload := payloads[len(payloads)-1]
+	switch payload.Type {
+	case messages.ValTypeLong:
+		return float64(payload.Int64()), nil
+	case messages.ValTypeDouble:
+		return payload.Float64(), nil
+	case messages.ValTypeInt:
+		return float64(payload.Int32()), nil
+	default:
+		return 0, fmt.Errorf("invalid response: UnsupportedValueType")
+	}
+}
+
+func (p *SplunkProvider) receivePaylods(comp *signalflow.Computation) []messages.DataPayload {
+	payloads := []messages.DataPayload{}
+	for dataMsg := range comp.Data() {
+		if dataMsg == nil {
+			continue
+		}
+		payloads = append(payloads, dataMsg.Payloads...)
+	}
+	return payloads
 }
 
 // IsOnline calls the provider endpoint and returns an error if the API is unreachable

@@ -47,7 +47,7 @@ func TestNewSplunkProvider(t *testing.T) {
 
 	sp, err := NewSplunkProvider("100s", flaggerv1.MetricTemplateProvider{Address: "https://api.us1.signalfx.com"}, cs)
 	require.NoError(t, err)
-	assert.Equal(t, "wss://stream.us1.signalfx.com/v2/signalflow/execute", sp.metricsQueryEndpoint)
+	assert.Equal(t, "wss://stream.us1.signalfx.com/v2/signalflow", sp.metricsQueryEndpoint)
 	assert.Equal(t, "https://api.us1.signalfx.com/v2/metric?limit=1", sp.apiValidationEndpoint)
 	assert.Equal(t, int64(md.Milliseconds()*signalFxFromDeltaMultiplierOnMetricInterval), sp.fromDelta)
 	assert.Equal(t, token, sp.token)
@@ -56,7 +56,10 @@ func TestNewSplunkProvider(t *testing.T) {
 func TestSplunkProvider_RunQuery(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		fakeBackend := signalflow.NewRunningFakeBackend()
-		defer fakeBackend.Stop()
+		go func() {
+			<-time.After(3 * time.Second)
+			fakeBackend.Stop()
+		}()
 
 		tsids := []idtool.ID{idtool.ID(rand.Int63())}
 		var expected float64 = float64(len(tsids))
@@ -89,7 +92,10 @@ func TestSplunkProvider_RunQuery(t *testing.T) {
 
 	t.Run("no values", func(t *testing.T) {
 		fakeBackend := signalflow.NewRunningFakeBackend()
-		defer fakeBackend.Stop()
+		go func() {
+			<-time.After(3 * time.Second)
+			fakeBackend.Stop()
+		}()
 
 		tsids := []idtool.ID{idtool.ID(rand.Int63()), idtool.ID(rand.Int63()), idtool.ID(rand.Int63())}
 		for _, tsid := range tsids {
@@ -117,7 +123,10 @@ func TestSplunkProvider_RunQuery(t *testing.T) {
 
 	t.Run("multiple values", func(t *testing.T) {
 		fakeBackend := signalflow.NewRunningFakeBackend()
-		defer fakeBackend.Stop()
+		go func() {
+			<-time.After(3 * time.Second)
+			fakeBackend.Stop()
+		}()
 
 		tsids := []idtool.ID{idtool.ID(rand.Int63()), idtool.ID(rand.Int63()), idtool.ID(rand.Int63())}
 		for i, tsid := range tsids {
