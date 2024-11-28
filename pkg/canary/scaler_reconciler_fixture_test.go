@@ -154,10 +154,18 @@ func newScaledObject() *keda.ScaledObject {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
+			Annotations: map[string]string{
+				"scaledobject.keda.sh/transfer-hpa-ownership": "true",
+			},
 		},
 		Spec: keda.ScaledObjectSpec{
 			ScaleTargetRef: &keda.ScaleTarget{
 				Name: "podinfo",
+			},
+			Advanced: &keda.AdvancedConfig{
+				HorizontalPodAutoscalerConfig: &keda.HorizontalPodAutoscalerConfig{
+					Name: "podinfo",
+				},
 			},
 			PollingInterval: int32p(10),
 			MinReplicaCount: int32p(1),
