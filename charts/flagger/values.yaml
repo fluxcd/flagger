@@ -195,7 +195,11 @@ podDisruptionBudget:
   enabled: false
   minAvailable: 1
 
+# Additional labels to be added to pods
 podLabels: {}
+
+# Additional labels to be added to deployments
+deploymentLabels: { }
 
 noCrossNamespaceRefs: false
 

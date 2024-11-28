@@ -81,6 +81,15 @@ $ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://osm-prometheus.osm-system.svc:7070
 ```
 
+If you need to add labels to the flagger deployment or pods, you can pass the labels as parameters as shown below.
+
+```console
+helm upgrade -i flagger flagger/flagger \
+<other parameters> \
+--set podLabels.<labelName>=<labelValue> \
+--set deploymentLabels.<labelName>=<labelValue> 
+```
+
 You can install Flagger in any namespace as long as it can talk to the Prometheus service on port 9090.
 
 For ingress controllers, the install instructions are:
