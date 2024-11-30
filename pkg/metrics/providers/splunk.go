@@ -32,7 +32,7 @@ import (
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
-// https://docs.datadoghq.com/api/
+// https://dev.splunk.com/observability/reference
 const (
 	signalFxSignalFlowApiPath = "/v2/signalflow"
 	signalFxValidationPath    = "/v2/metric?limit=1"
@@ -69,8 +69,15 @@ func NewSplunkProvider(metricInterval string,
 	}
 
 	sp := SplunkProvider{
-		timeout:               5 * time.Second,
-		metricsQueryEndpoint:  strings.Replace(strings.Replace(address+signalFxSignalFlowApiPath, "http", "ws", 1), "api", "stream", 1),
+		timeout: 5 * time.Second,
+		// Convert the configured address to match the protocol of the respective API
+		// ex.
+		// https://api.<REALM>.signalfx.com -> wss://stream.<REALM>.signalfx.com
+		// wss://stream.<REALM>.signalfx.com -> wss://stream.<REALM>.signalfx.com
+		metricsQueryEndpoint: strings.Replace(strings.Replace(address+signalFxSignalFlowApiPath, "http", "ws", 1), "api", "stream", 1),
+		// ex.
+		// https://api.<REALM>.signalfx.com -> https://api.<REALM>.signalfx.com
+		// wss://stream.<REALM>.signalfx.com -> https://api.<REALM>.signalfx.com
 		apiValidationEndpoint: strings.Replace(strings.Replace(address+signalFxValidationPath, "ws", "http", 1), "stream", "api", 1),
 	}
 
@@ -115,12 +122,16 @@ func (p *SplunkProvider) RunQuery(query string) (float64, error) {
 	if comp.Err() != nil {
 		return 0, fmt.Errorf("error executing query: %w", comp.Err())
 	}
+
 	payloads = slices.DeleteFunc(payloads, func(msg messages.DataPayload) bool {
 		return msg.Value() == nil
 	})
 	if len(payloads) < 1 {
 		return 0, fmt.Errorf("invalid response: %w", ErrNoValuesFound)
 	}
+
+	// Error when a SignalFlow query returns two or more results.
+	// Since a different TSID is set for each metrics to be retrieved, eliminate duplicate TSIDs and determine if two or more TSIDs exist.
 	_payloads := slices.Clone(payloads)
 	slices.SortFunc(_payloads, func(i, j messages.DataPayload) int {
 		return cmp.Compare(i.TSID, j.TSID)
@@ -128,6 +139,7 @@ func (p *SplunkProvider) RunQuery(query string) (float64, error) {
 	if len(slices.CompactFunc(_payloads, func(i, j messages.DataPayload) bool { return i.TSID == j.TSID })) > 1 {
 		return 0, fmt.Errorf("invalid response: %w", ErrMultipleValuesReturned)
 	}
+
 	payload := payloads[len(payloads)-1]
 	switch payload.Type {
 	case messages.ValTypeLong:
