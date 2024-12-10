@@ -25,7 +25,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
-	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	v1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	"github.com/google/go-cmp/cmp"
@@ -217,6 +217,57 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion
 		if inProgress {
 			ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1.HTTPRouteRule{}, "Filters"))
+		}
+	}
+
+	// auto create reference grants
+	svcNamespaces := []string{}
+
+	for _, rule := range httpRouteSpec.Rules {
+		for _, backendRef := range rule.BackendRefs {
+			svcNamespaces = append(svcNamespaces, string(*backendRef.Namespace))
+		}
+	}
+
+	// sort and remove duplicates
+	slices.Sort(svcNamespaces)
+	svcNamespaces = slices.Compact(svcNamespaces)
+
+	referenceGrants := []*v1beta1.ReferenceGrant{}
+
+	for _, svcNamespace := range svcNamespaces {
+		if svcNamespace != hrNamespace {
+			rg := &v1beta1.ReferenceGrant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      canarySvcName,
+					Namespace: svcNamespace,
+				},
+				Spec: v1beta1.ReferenceGrantSpec{
+					From: []v1beta1.ReferenceGrantFrom{
+						{
+							Group:     "gateway.networking.k8s.io",
+							Kind:      "HTTPRoute",
+							Namespace: v1beta1.Namespace(hrNamespace),
+						},
+					},
+					To: []v1beta1.ReferenceGrantTo{
+						{
+							Group: "",
+							Kind:  "Service",
+						},
+					},
+				},
+			}
+			referenceGrants = append(referenceGrants, rg)
+		}
+	}
+
+	for _, rg := range referenceGrants {
+		_, err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Create(context.TODO(), rg, metav1.CreateOptions{})
+		if err == nil {
+			gwr.logger.Infof("ReferenceGrant %s.%s has been created", rg.Name, rg.Namespace)
+		} else if !errors.IsAlreadyExists(err) {
+			return fmt.Errorf("ReferenceGrant %s.%s creation error: %w", rg.Name, rg.Namespace, err)
 		}
 	}
 
