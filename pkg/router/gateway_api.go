@@ -25,7 +25,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
-	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	v1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	"github.com/google/go-cmp/cmp"
@@ -284,6 +284,89 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			}
 			gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 				Infof("HTTPRoute %s.%s updated", hrClone.GetName(), hrNamespace)
+		}
+	}
+
+	if hrNamespace != primarySvcNamespace || hrNamespace != canarySvcNamespace {
+		var referenceGrants []*v1beta1.ReferenceGrant
+
+		if primarySvcNamespace == canarySvcNamespace {
+			rg := &v1beta1.ReferenceGrant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "keda-primary",
+					Namespace: canarySvcNamespace,
+				},
+				Spec: v1beta1.ReferenceGrantSpec{
+					From: []v1beta1.ReferenceGrantFrom{
+						{
+							Group:     "gateway.networking.k8s.io",
+							Kind:      "HTTPRoute",
+							Namespace: v1beta1.Namespace(hrNamespace),
+						},
+					},
+					To: []v1beta1.ReferenceGrantTo{
+						{
+							Group: "",
+							Kind:  "Service",
+						},
+					},
+				},
+			}
+			referenceGrants = append(referenceGrants, rg)
+		} else {
+			rgPrimary := &v1beta1.ReferenceGrant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "keda-primary",
+					Namespace: primarySvcNamespace,
+				},
+				Spec: v1beta1.ReferenceGrantSpec{
+					From: []v1beta1.ReferenceGrantFrom{
+						{
+							Group:     "gateway.networking.k8s.io",
+							Kind:      "HTTPRoute",
+							Namespace: v1beta1.Namespace(hrNamespace),
+						},
+					},
+					To: []v1beta1.ReferenceGrantTo{
+						{
+							Group: "",
+							Kind:  "Service",
+						},
+					},
+				},
+			}
+			rgCanary := &v1beta1.ReferenceGrant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "keda-canary",
+					Namespace: canarySvcNamespace,
+				},
+				Spec: v1beta1.ReferenceGrantSpec{
+					From: []v1beta1.ReferenceGrantFrom{
+						{
+							Group:     "gateway.networking.k8s.io",
+							Kind:      "HTTPRoute",
+							Namespace: v1beta1.Namespace(hrNamespace),
+						},
+					},
+					To: []v1beta1.ReferenceGrantTo{
+						{
+							Group: "",
+							Kind:  "Service",
+						},
+					},
+				},
+			}
+			referenceGrants = append(referenceGrants, rgPrimary, rgCanary)
+		}
+
+		for _, rg := range referenceGrants {
+			_, err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Create(context.TODO(), rg, metav1.CreateOptions{})
+			if err == nil {
+				gwr.logger.Infof("ReferenceGrant %s.%s has been created", rg.Name, rg.Namespace)
+			} else if !errors.IsAlreadyExists(err) {
+				gwr.logger.Errorf("ReferenceGrant %s.%s creation error: %v", rg.Name, rg.Namespace, err)
+				return fmt.Errorf("ReferenceGrant %s.%s creation error: %w", rg.Name, rg.Namespace, err)
+			}
 		}
 	}
 

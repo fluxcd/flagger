@@ -107,6 +107,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=gatewayapi, Version=v1beta1
 	case gatewayapiv1beta1.SchemeGroupVersion.WithResource("httproutes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1beta1().HTTPRoutes().Informer()}, nil
+	case gatewayapiv1beta1.SchemeGroupVersion.WithResource("referencegrants"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1beta1().ReferenceGrants().Informer()}, nil
 
 		// Group=gloo.solo.io, Version=v1
 	case gloov1.SchemeGroupVersion.WithResource("upstreams"):
