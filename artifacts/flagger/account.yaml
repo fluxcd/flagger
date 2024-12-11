@@ -240,6 +240,19 @@ rules:
       - patch
       - delete
   - apiGroups:
+      - http.keda.sh
+    resources:
+      - httpscaledobjects
+      - httpscaledobjects/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
       - apisix.apache.org
     resources:
       - apisixroutes

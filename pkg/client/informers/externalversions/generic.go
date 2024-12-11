@@ -29,8 +29,9 @@ import (
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 	v1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
+	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/http/v1alpha1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
-	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/keda/v1alpha1"
+	kedav1alpha1 "github.com/fluxcd/flagger/pkg/apis/keda/v1alpha1"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
 	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	smiv1alpha1 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha1"
@@ -106,13 +107,23 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=gatewayapi, Version=v1beta1
 	case gatewayapiv1beta1.SchemeGroupVersion.WithResource("httproutes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1beta1().HTTPRoutes().Informer()}, nil
+	case gatewayapiv1beta1.SchemeGroupVersion.WithResource("referencegrants"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Gatewayapi().V1beta1().ReferenceGrants().Informer()}, nil
 
 		// Group=gloo.solo.io, Version=v1
 	case gloov1.SchemeGroupVersion.WithResource("upstreams"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Gloo().V1().Upstreams().Informer()}, nil
 
+		// Group=http.keda.sh, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("clusterhttpscalingsets"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Http().V1alpha1().ClusterHTTPScalingSets().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("httpscaledobjects"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Http().V1alpha1().HTTPScaledObjects().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("httpscalingsets"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Http().V1alpha1().HTTPScalingSets().Informer()}, nil
+
 		// Group=keda.sh, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("scaledobjects"):
+	case kedav1alpha1.SchemeGroupVersion.WithResource("scaledobjects"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Keda().V1alpha1().ScaledObjects().Informer()}, nil
 
 		// Group=kuma.io, Version=v1alpha1

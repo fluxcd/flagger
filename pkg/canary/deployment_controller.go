@@ -170,6 +170,10 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
+	if cd.IsHTTPScaledObject() {
+		return nil
+	}
+
 	replicas := int32p(1)
 	if dep.Spec.Replicas != nil && *dep.Spec.Replicas > 0 {
 		replicas = dep.Spec.Replicas
@@ -272,9 +276,12 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 			return fmt.Errorf("makeAnnotations failed: %w", err)
 		}
 
-		replicas := int32(1)
+		replicas := int32p(int32(1))
 		if canaryDep.Spec.Replicas != nil && *canaryDep.Spec.Replicas > 0 {
-			replicas = *canaryDep.Spec.Replicas
+			replicas = int32p(*canaryDep.Spec.Replicas)
+		}
+		if cd.IsHTTPScaledObject() {
+			replicas = nil
 		}
 
 		// create primary deployment
@@ -296,7 +303,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 				ProgressDeadlineSeconds: canaryDep.Spec.ProgressDeadlineSeconds,
 				MinReadySeconds:         canaryDep.Spec.MinReadySeconds,
 				RevisionHistoryLimit:    canaryDep.Spec.RevisionHistoryLimit,
-				Replicas:                int32p(replicas),
+				Replicas:                replicas,
 				Strategy:                canaryDep.Spec.Strategy,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
@@ -380,6 +387,9 @@ func (c *DeploymentController) Finalize(cd *flaggerv1.Canary) error {
 
 // Scale sets the canary deployment replicas
 func (c *DeploymentController) scale(cd *flaggerv1.Canary, replicas int32) error {
+	if cd.IsHTTPScaledObject() {
+		return nil
+	}
 	targetName := cd.Spec.TargetRef.Name
 	dep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {

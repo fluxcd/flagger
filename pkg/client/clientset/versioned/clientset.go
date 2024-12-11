@@ -30,6 +30,7 @@ import (
 	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gatewayapi/v1beta1"
 	gloov1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloo/v1"
 	gatewayv1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/gloogateway/v1"
+	httpv1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/http/v1alpha1"
 	networkingv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/istio/v1beta1"
 	kedav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/keda/v1alpha1"
 	kumav1alpha1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/kuma/v1alpha1"
@@ -53,6 +54,7 @@ type Interface interface {
 	GatewayapiV1beta1() gatewayapiv1beta1.GatewayapiV1beta1Interface
 	GlooV1() gloov1.GlooV1Interface
 	GatewayV1() gatewayv1.GatewayV1Interface
+	HttpV1alpha1() httpv1alpha1.HttpV1alpha1Interface
 	NetworkingV1beta1() networkingv1beta1.NetworkingV1beta1Interface
 	KedaV1alpha1() kedav1alpha1.KedaV1alpha1Interface
 	KumaV1alpha1() kumav1alpha1.KumaV1alpha1Interface
@@ -74,6 +76,7 @@ type Clientset struct {
 	gatewayapiV1beta1 *gatewayapiv1beta1.GatewayapiV1beta1Client
 	glooV1            *gloov1.GlooV1Client
 	gatewayV1         *gatewayv1.GatewayV1Client
+	httpV1alpha1      *httpv1alpha1.HttpV1alpha1Client
 	networkingV1beta1 *networkingv1beta1.NetworkingV1beta1Client
 	kedaV1alpha1      *kedav1alpha1.KedaV1alpha1Client
 	kumaV1alpha1      *kumav1alpha1.KumaV1alpha1Client
@@ -122,6 +125,11 @@ func (c *Clientset) GlooV1() gloov1.GlooV1Interface {
 // GatewayV1 retrieves the GatewayV1Client
 func (c *Clientset) GatewayV1() gatewayv1.GatewayV1Interface {
 	return c.gatewayV1
+}
+
+// HttpV1alpha1 retrieves the HttpV1alpha1Client
+func (c *Clientset) HttpV1alpha1() httpv1alpha1.HttpV1alpha1Interface {
+	return c.httpV1alpha1
 }
 
 // NetworkingV1beta1 retrieves the NetworkingV1beta1Client
@@ -240,6 +248,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.httpV1alpha1, err = httpv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.networkingV1beta1, err = networkingv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -301,6 +313,7 @@ func New(c rest.Interface) *Clientset {
 	cs.gatewayapiV1beta1 = gatewayapiv1beta1.New(c)
 	cs.glooV1 = gloov1.New(c)
 	cs.gatewayV1 = gatewayv1.New(c)
+	cs.httpV1alpha1 = httpv1alpha1.New(c)
 	cs.networkingV1beta1 = networkingv1beta1.New(c)
 	cs.kedaV1alpha1 = kedav1alpha1.New(c)
 	cs.kumaV1alpha1 = kumav1alpha1.New(c)

@@ -36,6 +36,10 @@ chmod +x ${CODEGEN_PKG}/kube_codegen.sh
 
 source ${CODEGEN_PKG}/kube_codegen.sh
 
+kube::codegen::gen_helpers \
+    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
+    ./pkg/apis
+
 kube::codegen::gen_client \
     --output-dir "${TEMP_DIR}/${PACKAGE_PATH_BASE}/pkg/client" \
     --output-pkg "${PACKAGE_PATH_BASE}/pkg/client" \

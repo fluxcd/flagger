@@ -18,6 +18,7 @@ import (
 )
 
 // +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:categories=gateway-api
 // +kubebuilder:storageversion
@@ -40,6 +41,7 @@ type HTTPRoute struct {
 	Status HTTPRouteStatus `json:"status,omitempty"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 
 // HTTPRouteList contains a list of HTTPRoute.
