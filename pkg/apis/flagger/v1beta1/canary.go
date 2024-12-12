@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -213,11 +214,11 @@ type CanaryService struct {
 
 	// Primary is the metadata to add to the primary service
 	// +optional
-	Primary *CustomMetadata `json:"primary,omitempty"`
+	Primary *Custom `json:"primary,omitempty"`
 
 	// Canary is the metadata to add to the canary service
 	// +optional
-	Canary *CustomMetadata `json:"canary,omitempty"`
+	Canary *Custom `json:"canary,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done
@@ -494,6 +495,16 @@ type ScalerReplicas struct {
 type CustomMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// Custom holds labels, annotations, and proxyRef to set on generated objects.
+type Custom struct {
+	CustomMetadata
+
+	// BackendRef is a reference to a backend to forward matched requests to.
+	// Defaults to the primary or canary service.
+	// +optional
+	BackendRef *v1.HTTPBackendRef `json:"backendRef,omitempty"`
 }
 
 // HTTPRewrite holds information about how to modify a request URI during

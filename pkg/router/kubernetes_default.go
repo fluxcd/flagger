@@ -50,13 +50,13 @@ func (c *KubernetesDefaultRouter) Initialize(canary *flaggerv1.Canary) error {
 	_, primaryName, canaryName := canary.GetServiceNames()
 
 	// canary svc
-	err := c.reconcileService(canary, canaryName, c.labelValue, canary.Spec.Service.Canary)
+	err := c.reconcileService(canary, canaryName, c.labelValue, &canary.Spec.Service.Canary.CustomMetadata)
 	if err != nil {
 		return fmt.Errorf("reconcileService failed: %w", err)
 	}
 
 	// primary svc
-	err = c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", c.labelValue), canary.Spec.Service.Primary)
+	err = c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", c.labelValue), &canary.Spec.Service.Primary.CustomMetadata)
 	if err != nil {
 		return fmt.Errorf("reconcileService failed: %w", err)
 	}

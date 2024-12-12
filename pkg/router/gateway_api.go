@@ -97,10 +97,12 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Filters: gwr.makeFilters(canary),
 				BackendRefs: []v1.HTTPBackendRef{
 					{
-						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, &canary.Spec.Service.Primary.BackendRef.BackendRef),
+						Filters:    canary.Spec.Service.Primary.BackendRef.Filters,
 					},
 					{
-						BackendRef: gwr.makeBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port),
+						BackendRef: gwr.makeBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port, &canary.Spec.Service.Canary.BackendRef.BackendRef),
+						Filters:    canary.Spec.Service.Canary.BackendRef.Filters,
 					},
 				},
 			},
@@ -123,7 +125,8 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
 				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, &canary.Spec.Service.Primary.BackendRef.BackendRef),
+					Filters:    canary.Spec.Service.Primary.BackendRef.Filters,
 				},
 			},
 		})
@@ -341,10 +344,12 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 		Filters: gwr.makeFilters(canary),
 		BackendRefs: []v1.HTTPBackendRef{
 			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port, &canary.Spec.Service.Primary.BackendRef.BackendRef),
+				Filters:    canary.Spec.Service.Primary.BackendRef.Filters,
 			},
 			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port, &canary.Spec.Service.Canary.BackendRef.BackendRef),
+				Filters:    canary.Spec.Service.Canary.BackendRef.Filters,
 			},
 		},
 	}
@@ -400,7 +405,8 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
 				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, &canary.Spec.Service.Primary.BackendRef.BackendRef),
+					Filters:    canary.Spec.Service.Primary.BackendRef.Filters,
 				},
 			},
 			Timeouts: &v1.HTTPRouteTimeouts{
@@ -485,10 +491,12 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 		stickyRouteRule.Matches = mergedMatches
 		stickyRouteRule.BackendRefs = []v1.HTTPBackendRef{
 			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, 0, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(primarySvcName, 0, canary.Spec.Service.Port, &canary.Spec.Service.Primary.BackendRef.BackendRef),
+				Filters:    canary.Spec.Service.Primary.BackendRef.Filters,
 			},
 			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, 100, canary.Spec.Service.Port),
+				BackendRef: gwr.makeBackendRef(canarySvcName, 100, canary.Spec.Service.Port, &canary.Spec.Service.Canary.BackendRef.BackendRef),
+				Filters:    canary.Spec.Service.Canary.BackendRef.Filters,
 			},
 		}
 	} else {
@@ -612,7 +620,12 @@ func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []istiov1beta1.HTTPM
 	return matches, nil
 }
 
-func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32) v1.BackendRef {
+func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32, backendRefTemplate *v1.BackendRef) v1.BackendRef {
+	if backendRefTemplate != nil {
+		backendRefTemplate.Weight = &weight
+		return *backendRefTemplate
+	}
+
 	return v1.BackendRef{
 		BackendObjectReference: v1.BackendObjectReference{
 			Group: (*v1.Group)(&backendRefGroup),

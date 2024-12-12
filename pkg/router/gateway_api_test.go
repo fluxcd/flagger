@@ -296,10 +296,10 @@ func TestGatewayAPIRouter_getSessionAffinityRouteRules(t *testing.T) {
 	weightedRouteRule := &v1.HTTPRouteRule{
 		BackendRefs: []v1.HTTPBackendRef{
 			{
-				BackendRef: router.makeBackendRef(pSvcName, initialPrimaryWeight, canary.Spec.Service.Port),
+				BackendRef: router.makeBackendRef(pSvcName, initialPrimaryWeight, canary.Spec.Service.Port, &canary.Spec.Service.Primary.BackendRef.BackendRef),
 			},
 			{
-				BackendRef: router.makeBackendRef(cSvcName, initialCanaryWeight, canary.Spec.Service.Port),
+				BackendRef: router.makeBackendRef(cSvcName, initialCanaryWeight, canary.Spec.Service.Port, &canary.Spec.Service.Canary.BackendRef.BackendRef),
 			},
 		},
 	}
