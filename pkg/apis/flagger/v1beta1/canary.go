@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	http "github.com/fluxcd/flagger/pkg/apis/http/v1alpha1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -74,7 +75,7 @@ type CanarySpec struct {
 
 	// AutoscalerRef references an autoscaling resource
 	// +optional
-	AutoscalerRef *AutoscalerRefernce `json:"autoscalerRef,omitempty"`
+	AutoscalerRef *AutoscalerReference `json:"autoscalerRef,omitempty"`
 
 	// Reference to NGINX ingress resource
 	// +optional
@@ -458,7 +459,36 @@ type LocalObjectReference struct {
 	Name string `json:"name"`
 }
 
-type AutoscalerRefernce struct {
+// CanaryInterceptorProxyService specifies the service if you want to change
+// the Canary interceptor proxy service from its default value.
+type CanaryInterceptorProxyService struct {
+	// Name of the canary interceptor proxy service.
+	// Defaults to "keda-http-add-on-interceptor-proxy".
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the canary interceptor proxy service.
+	// Defaults to "keda".
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// PrimaryScalingSet defines the desired scaling set to be used
+type PrimaryScalingSet struct {
+	// Kind of the resource being referred to. Defaults to HTTPScalingSet.
+	// +optional
+	Kind http.ScalingSetKind `json:"kind,omitempty"`
+
+	// Name of the scaling set
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the scaling set
+	// Defaults to "keda".
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
+type AutoscalerReference struct {
 	// API version of the scaler
 	// +required
 	APIVersion string `json:"apiVersion,omitempty"`
@@ -480,6 +510,16 @@ type AutoscalerRefernce struct {
 	// autoscaler replicas.
 	// +optional
 	PrimaryScalerReplicas *ScalerReplicas `json:"primaryScalerReplicas,omitempty"`
+
+	// CanaryInterceptorProxyService specifies the service if you want to change
+	// the Canary interceptor proxy service from its default value.
+	// +optional
+	CanaryInterceptorProxyService *CanaryInterceptorProxyService `json:"canaryInterceptorProxyService,omitempty"`
+
+	// PrimaryScalingSet is the scaling set to be used for the primary
+	// scaler, if a scaler supports scaling using queries.
+	// +optional
+	PrimaryScalingSet *PrimaryScalingSet `json:"primaryScalingSet,omitempty"`
 }
 
 // ScalerReplicas holds overrides for autoscaler replicas
@@ -623,4 +663,9 @@ func (c *Canary) SkipAnalysis() bool {
 		return true
 	}
 	return c.Spec.SkipAnalysis
+}
+
+// IsHTTPScaledObject returns true if the autoscalerRef is a HTTPScaledObject
+func (c *Canary) IsHTTPScaledObject() bool {
+	return c.Spec.AutoscalerRef != nil && c.Spec.AutoscalerRef.Kind == "HTTPScaledObject"
 }

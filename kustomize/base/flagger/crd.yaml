@@ -119,6 +119,7 @@ spec:
                       enum:
                         - HorizontalPodAutoscaler
                         - ScaledObject
+                        - HTTPScaledObject
                     name:
                       type: string
                     primaryScalerQueries:
@@ -134,6 +135,38 @@ spec:
                         maxReplicas:
                           type: integer
                           minimum: 1
+                    canaryInterceptorProxyService:
+                      type: object
+                      description: Specify this service if you want to change the Canary interceptor proxy service from its default value.
+                      properties:
+                        name:
+                          default: keda-http-add-on-interceptor-proxy
+                          maxLength: 253
+                          minLength: 1
+                          type: string
+                        namespace:
+                          default: keda
+                          maxLength: 63
+                          minLength: 1
+                          type: string
+                    primaryScalingSet:
+                      type: object
+                      description: |-
+                        PrimaryScalingSet to be used for primary HTTPScaledObject, if empty, default interceptor and scaler will be used.
+                      properties:
+                        kind:
+                          description: Kind of the resource being referred to. Defaults to HTTPScalingSet.
+                          enum:
+                            - HTTPScalingSet
+                            - ClusterHTTPScalingSet
+                          type: string
+                        name:
+                          description: Name of the scaling set
+                          type: string
+                        namespace:
+                          maxLength: 63
+                          minLength: 1
+                          type: string
                 ingressRef:
                   description: Ingress selector
                   type: object

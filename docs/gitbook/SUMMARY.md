@@ -38,6 +38,7 @@
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
 * [Canary analysis with KEDA ScaledObjects](tutorials/keda-scaledobject.md)
+* [Canary analysis with KEDA HTTPScaledObjects](tutorials/keda-httpscaledobject.md)
 * [Zero downtime deployments](tutorials/zero-downtime-deployments.md)
 
 ## Dev
