@@ -64,14 +64,16 @@ spec:
           type: object
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description:
+                "APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description:
+                "Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
               type: string
             metadata:
               type: object
@@ -150,7 +152,7 @@ spec:
                 routeRef:
                   description: APISIX route selector
                   type: object
-                  required: [ "apiVersion", "kind", "name" ]
+                  required: ["apiVersion", "kind", "name"]
                   properties:
                     apiVersion:
                       type: string
@@ -163,7 +165,7 @@ spec:
                 upstreamRef:
                   description: Gloo Upstream selector
                   type: object
-                  required: [ "apiVersion", "kind", "name" ]
+                  required: ["apiVersion", "kind", "name"]
                   properties:
                     apiVersion:
                       type: string
@@ -524,14 +526,15 @@ spec:
                                 minimum: 1
                                 type: integer
                             required:
-                            - name
+                              - name
                             type: object
                             x-kubernetes-validations:
-                            - message: Must have port for Service reference
-                              rule: '(size(self.group) == 0 && self.kind == ''Service'')
-                                ? has(self.port) : true'
+                              - message: Must have port for Service reference
+                                rule:
+                                  "(size(self.group) == 0 && self.kind == 'Service')
+                                  ? has(self.port) : true"
                       required:
-                      - backendRef
+                        - backendRef
                     headers:
                       description: Headers operations
                       type: object
@@ -583,7 +586,7 @@ spec:
                       type: array
                       items:
                         required:
-                        - name
+                          - name
                         type: object
                         properties:
                           group:
@@ -634,7 +637,8 @@ spec:
                             type: string
                           type: array
                         allowOrigin:
-                          description: The list of origins that are allowed to perform
+                          description:
+                            The list of origins that are allowed to perform
                             CORS requests.
                           items:
                             format: string
@@ -681,7 +685,8 @@ spec:
                               type: object
                               properties:
                                 h2UpgradePolicy:
-                                  description: Specify if http1.1 connection should
+                                  description:
+                                    Specify if http1.1 connection should
                                     be upgraded to http2 for the associated destination.
                                   enum:
                                     - DEFAULT
@@ -689,7 +694,8 @@ spec:
                                     - UPGRADE
                                   type: string
                                 http1MaxPendingRequests:
-                                  description: Maximum number of pending HTTP requests
+                                  description:
+                                    Maximum number of pending HTTP requests
                                     to a destination.
                                   format: int32
                                   type: integer
@@ -698,11 +704,13 @@ spec:
                                   format: int32
                                   type: integer
                                 idleTimeout:
-                                  description: The idle timeout for upstream connection
+                                  description:
+                                    The idle timeout for upstream connection
                                     pool connections.
                                   type: string
                                 maxRequestsPerConnection:
-                                  description: Maximum number of requests per connection
+                                  description:
+                                    Maximum number of requests per connection
                                     to a backend.
                                   format: int32
                                   type: integer
@@ -763,31 +771,36 @@ spec:
                             localityLbSetting:
                               properties:
                                 distribute:
-                                  description: 'Optional: only one of distribute or
-                                    failover can be set.'
+                                  description:
+                                    "Optional: only one of distribute or
+                                    failover can be set."
                                   items:
                                     properties:
                                       from:
-                                        description: Originating locality, '/' separated,
+                                        description:
+                                          Originating locality, '/' separated,
                                           e.g.
                                         format: string
                                         type: string
                                       to:
                                         additionalProperties:
                                           type: integer
-                                        description: Map of upstream localities to traffic
+                                        description:
+                                          Map of upstream localities to traffic
                                           distribution weights.
                                         type: object
                                     type: object
                                   type: array
                                 enabled:
-                                  description: enable locality load balancing, this
+                                  description:
+                                    enable locality load balancing, this
                                     is DestinationRule-level and will override mesh
                                     wide settings in entirety.
                                   type: boolean
                                 failover:
-                                  description: 'Optional: only failover or distribute
-                                    can be set.'
+                                  description:
+                                    "Optional: only failover or distribute
+                                    can be set."
                                   items:
                                     properties:
                                       from:
@@ -819,14 +832,16 @@ spec:
                               description: Minimum ejection duration.
                               type: string
                             consecutive5xxErrors:
-                              description: Number of 5xx errors before a host is ejected
+                              description:
+                                Number of 5xx errors before a host is ejected
                                 from the connection pool.
                               type: integer
                             consecutiveErrors:
                               format: int32
                               type: integer
                             consecutiveGatewayErrors:
-                              description: Number of gateway errors before a host is
+                              description:
+                                Number of gateway errors before a host is
                                 ejected from the connection pool.
                               format: int32
                               type: integer
@@ -994,20 +1009,20 @@ spec:
                             type: object
                             additionalProperties:
                               oneOf:
-                              - not:
-                                  anyOf:
-                                  - required:
+                                - not:
+                                    anyOf:
+                                      - required:
+                                          - exact
+                                      - required:
+                                          - prefix
+                                      - required:
+                                          - regex
+                                - required:
                                     - exact
-                                  - required:
+                                - required:
                                     - prefix
-                                  - required:
+                                - required:
                                     - regex
-                              - required:
-                                - exact
-                              - required:
-                                - prefix
-                              - required:
-                                - regex
                               properties:
                                 exact:
                                   type: string
@@ -1148,7 +1163,7 @@ spec:
                     sessionAffinity:
                       description: SessionAffinity represents the session affinity settings for a canary run.
                       type: object
-                      required: [ "cookieName" ]
+                      required: ["cookieName"]
                       properties:
                         cookieName:
                           description: CookieName is the key that will be used for the session affinity cookie.
@@ -1212,7 +1227,7 @@ spec:
                   type: array
                   items:
                     type: object
-                    required: [ "type", "status", "reason" ]
+                    required: ["type", "status", "reason"]
                     properties:
                       lastTransitionTime:
                         description: LastTransitionTime of this condition
@@ -1267,14 +1282,16 @@ spec:
           type: object
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description:
+                "APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description:
+                "Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
               type: string
             metadata:
               type: object
@@ -1358,14 +1375,16 @@ spec:
           type: object
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description:
+                "APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description:
+                "Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
               type: string
             metadata:
               type: object
