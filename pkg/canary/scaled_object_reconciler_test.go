@@ -99,7 +99,7 @@ func Test_setPrimaryScaledObjectQueries(t *testing.T) {
 			TargetRef: flaggerv1.LocalObjectReference{
 				Name: "podinfo",
 			},
-			AutoscalerRef: &flaggerv1.AutoscalerRefernce{
+			AutoscalerRef: &flaggerv1.AutoscalerReference{
 				Name: "podinfo",
 			},
 		},
