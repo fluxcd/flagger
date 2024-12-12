@@ -375,12 +375,12 @@ func TestServiceRouter_InitializeMetadata(t *testing.T) {
 		labelSelector: "app",
 	}
 
-	metadata := &flaggerv1.CustomMetadata{
-		Labels:      map[string]string{"test": "test"},
-		Annotations: map[string]string{"test": "test"},
+	mocks.canary.Spec.Service.Canary = &flaggerv1.CustomBackend{
+		CustomMetadata: flaggerv1.CustomMetadata{
+			Labels:      map[string]string{"test": "test"},
+			Annotations: map[string]string{"test": "test"},
+		},
 	}
-
-	mocks.canary.Spec.Service.Canary = metadata
 
 	err := router.Initialize(mocks.canary)
 	require.NoError(t, err)
