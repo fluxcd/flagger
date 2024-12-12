@@ -74,7 +74,7 @@ type CanarySpec struct {
 
 	// AutoscalerRef references an autoscaling resource
 	// +optional
-	AutoscalerRef *AutoscalerRefernce `json:"autoscalerRef,omitempty"`
+	AutoscalerRef *AutoscalerReference `json:"autoscalerRef,omitempty"`
 
 	// Reference to NGINX ingress resource
 	// +optional
@@ -474,7 +474,7 @@ func (l *LocalObjectReference) IsKnativeService() bool {
 	return false
 }
 
-type AutoscalerRefernce struct {
+type AutoscalerReference struct {
 	// API version of the scaler
 	// +required
 	APIVersion string `json:"apiVersion,omitempty"`
