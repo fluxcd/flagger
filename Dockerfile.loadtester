@@ -6,15 +6,15 @@ ARG REVISION
 
 RUN apk --no-cache add alpine-sdk perl curl bash tar
 
-RUN HELM3_VERSION=3.15.3 && \
+RUN HELM3_VERSION=3.16.3 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
 chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
-RUN KUBECTL_VERSION=v1.29.7 &&  \
+RUN KUBECTL_VERSION=v1.31.3 &&  \
 curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
 chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 
-RUN GRPC_HEALTH_PROBE_VERSION=v0.4.28 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.35 && \
 wget -qO /usr/local/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-${TARGETARCH} && \
 chmod +x /usr/local/bin/grpc_health_probe
 
@@ -39,7 +39,7 @@ COPY pkg/ pkg/
 # build
 RUN CGO_ENABLED=0 go build -o loadtester ./cmd/loadtester/*
 
-FROM bash:5.0
+FROM bash:5.2
 
 ARG TARGETPLATFORM
 
@@ -49,7 +49,7 @@ apk --no-cache add ca-certificates curl jq libgcc wrk hey git
 
 WORKDIR /home/app
 
-COPY --from=bats/bats:v1.1.0 /opt/bats/ /opt/bats/
+COPY --from=bats/bats:v1.1.1 /opt/bats/ /opt/bats/
 RUN ln -s /opt/bats/bin/bats /usr/local/bin/
 
 COPY --from=builder /usr/local/bin/helm /usr/local/bin/
