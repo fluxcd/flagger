@@ -1,8 +1,8 @@
 ARG GO_VERSION=1.23
-ARG XX_VERSION=1.4.0
+ARG XX_VERSION=1.6.1
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine as builder
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder
 
 # copy build utilities
 COPY --from=xx / /
@@ -29,7 +29,7 @@ RUN xx-go build \
     -ldflags "-s -w -X github.com/fluxcd/flagger/pkg/version.REVISION=${REVISON}" \
     -a -o flagger ./cmd/flagger
 
-FROM alpine:3.20
+FROM alpine:3.21
 
 RUN apk --no-cache add ca-certificates
 
