@@ -43,6 +43,8 @@ func (factory Factory) Provider(metricInterval string, provider flaggerv1.Metric
 		return NewDynatraceProvider(metricInterval, provider, credentials)
 	case "keptn":
 		return NewKeptnProvider(config)
+	case "splunk":
+		return NewSplunkProvider(metricInterval, provider, credentials)
 	default:
 		return NewPrometheusProvider(provider, credentials)
 	}
