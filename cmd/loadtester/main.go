@@ -29,7 +29,7 @@ import (
 	"github.com/fluxcd/flagger/pkg/signals"
 )
 
-var VERSION = "0.33.0"
+var VERSION = "0.34.0"
 var (
 	logLevel          string
 	port              string
