@@ -23,11 +23,6 @@ import (
 	"slices"
 	"strings"
 
-	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
-	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
-	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
-	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"
@@ -35,6 +30,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
+	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
 var (
@@ -218,16 +219,26 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 
 	if httpRoute != nil {
+		// Preserve the existing annotations added by other controllers such as AWS Gateway API Controller.
+		mergedAnnotations := newMetadata.Annotations
+		for key, val := range httpRoute.Annotations {
+			if _, ok := mergedAnnotations[key]; !ok {
+				mergedAnnotations[key] = val
+			}
+		}
+
+		// Compare the existing HTTPRoute spec and metadata with the desired state.
+		// If there are differences, update the HTTPRoute object.
 		specDiff := cmp.Diff(
 			httpRoute.Spec, httpRouteSpec,
 			ignoreCmpOptions...,
 		)
 		labelsDiff := cmp.Diff(newMetadata.Labels, httpRoute.Labels, cmpopts.EquateEmpty())
-		annotationsDiff := cmp.Diff(newMetadata.Annotations, httpRoute.Annotations, cmpopts.EquateEmpty())
+		annotationsDiff := cmp.Diff(mergedAnnotations, httpRoute.Annotations, cmpopts.EquateEmpty())
 		if (specDiff != "" && httpRoute.Name != "") || labelsDiff != "" || annotationsDiff != "" {
 			hrClone := httpRoute.DeepCopy()
 			hrClone.Spec = httpRouteSpec
-			hrClone.ObjectMeta.Annotations = newMetadata.Annotations
+			hrClone.ObjectMeta.Annotations = mergedAnnotations
 			hrClone.ObjectMeta.Labels = newMetadata.Labels
 			_, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).
 				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
