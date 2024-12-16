@@ -55,6 +55,17 @@ func TestGatewayAPIV1Beta1Router_Reconcile(t *testing.T) {
 	require.Equal(t, len(backendRefs), 2)
 	assert.Equal(t, int32(100), *backendRefs[0].Weight)
 	assert.Equal(t, int32(0), *backendRefs[1].Weight)
+
+	// assert that http route annotations injected by the networking controller is preserved.
+	httpRoute.Annotations["foo"] = "bar"
+	_, err = router.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes("default").Update(context.TODO(), httpRoute, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	err = router.Reconcile(canary)
+	require.NoError(t, err)
+
+	httpRoute, err = router.gatewayAPIClient.GatewayapiV1beta1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, httpRoute.Annotations["foo"], "bar")
 }
 
 func TestGatewayAPIV1Beta1Router_Routes(t *testing.T) {

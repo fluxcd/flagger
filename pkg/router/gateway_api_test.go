@@ -57,6 +57,17 @@ func TestGatewayAPIRouter_Reconcile(t *testing.T) {
 
 	timeout := routeRules[0].Timeouts
 	assert.Equal(t, string(*timeout.Request), canary.Spec.Service.Timeout)
+
+	// assert that http route annotations injected by the networking controller is preserved.
+	httpRoute.Annotations["foo"] = "bar"
+	_, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Update(context.TODO(), httpRoute, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	err = router.Reconcile(canary)
+	require.NoError(t, err)
+
+	httpRoute, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, httpRoute.Annotations["foo"], "bar")
 }
 
 func TestGatewayAPIRouter_Routes(t *testing.T) {
