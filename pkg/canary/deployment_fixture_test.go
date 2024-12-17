@@ -396,7 +396,7 @@ func newDeploymentControllerTestCanary(cc canaryConfigs) *flaggerv1.Canary {
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
 			},
-			AutoscalerRef: &flaggerv1.AutoscalerRefernce{
+			AutoscalerRef: &flaggerv1.AutoscalerReference{
 				Name:       "podinfo",
 				APIVersion: "autoscaling/v2beta2",
 				Kind:       "HorizontalPodAutoscaler",

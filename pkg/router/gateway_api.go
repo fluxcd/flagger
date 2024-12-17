@@ -97,12 +97,8 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Matches: matches,
 				Filters: gwr.makeFilters(canary),
 				BackendRefs: []v1.HTTPBackendRef{
-					{
-						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-					},
-					{
-						BackendRef: gwr.makeBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port),
-					},
+					gwr.makeHTTPBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, canary.Spec.Service.Primary),
+					gwr.makeHTTPBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port, canary.Spec.Service.Canary),
 				},
 			},
 		},
@@ -123,9 +119,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			Matches: matches,
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
-				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-				},
+				gwr.makeHTTPBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, canary.Spec.Service.Primary),
 			},
 		})
 		if canary.Spec.Service.Timeout != "" {
@@ -153,6 +147,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
 
 	if errors.IsNotFound(err) {
+		// create http route
 		route := &v1.HTTPRoute{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        apexSvcName,
@@ -181,72 +176,130 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		}
 		gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 			Infof("HTTPRoute %s.%s created", route.GetName(), hrNamespace)
-		return nil
 	} else if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
-	}
-
-	ignoreCmpOptions := []cmp.Option{
-		cmpopts.IgnoreFields(v1.BackendRef{}, "Weight"),
-		cmpopts.EquateEmpty(),
-	}
-	if canary.Spec.Analysis.SessionAffinity != nil {
-		ignoreRoute := cmpopts.IgnoreSliceElements(func(r v1.HTTPRouteRule) bool {
-			// Ignore the rule that does sticky routing, i.e. matches against the `Cookie` header.
-			for _, match := range r.Matches {
-				for _, headerMatch := range match.Headers {
-					if *headerMatch.Type == headerMatchRegex && headerMatch.Name == cookieHeader &&
-						strings.Contains(headerMatch.Value, canary.Spec.Analysis.SessionAffinity.CookieName) {
-						return true
+	} else {
+		// update http route
+		ignoreCmpOptions := []cmp.Option{
+			cmpopts.IgnoreFields(v1.BackendRef{}, "Weight"),
+			cmpopts.EquateEmpty(),
+		}
+		if canary.Spec.Analysis.SessionAffinity != nil {
+			ignoreRoute := cmpopts.IgnoreSliceElements(func(r v1.HTTPRouteRule) bool {
+				// Ignore the rule that does sticky routing, i.e. matches against the `Cookie` header.
+				for _, match := range r.Matches {
+					for _, headerMatch := range match.Headers {
+						if *headerMatch.Type == headerMatchRegex && headerMatch.Name == cookieHeader &&
+							strings.Contains(headerMatch.Value, canary.Spec.Analysis.SessionAffinity.CookieName) {
+							return true
+						}
 					}
 				}
-			}
-			return false
-		})
-		ignoreCmpOptions = append(ignoreCmpOptions, ignoreRoute)
-		// Ignore backend specific filters, since we use that to insert the `Set-Cookie` header in responses.
-		ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1.HTTPBackendRef{}, "Filters"))
-	}
-
-	if canary.GetAnalysis().Mirror {
-		// If a Canary run is in progress, the HTTPRoute rule will have an extra filter of type RequestMirror
-		// which needs to be ignored so that the requests are mirrored to the canary deployment.
-		inProgress := canary.Status.Phase == flaggerv1.CanaryPhaseWaiting || canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
-			canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion
-		if inProgress {
-			ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1.HTTPRouteRule{}, "Filters"))
+				return false
+			})
+			ignoreCmpOptions = append(ignoreCmpOptions, ignoreRoute)
+			// Ignore backend specific filters, since we use that to insert the `Set-Cookie` header in responses.
+			ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1.HTTPBackendRef{}, "Filters"))
 		}
-	}
 
-	if httpRoute != nil {
-		// Preserve the existing annotations added by other controllers such as AWS Gateway API Controller.
-		mergedAnnotations := newMetadata.Annotations
-		for key, val := range httpRoute.Annotations {
-			if _, ok := mergedAnnotations[key]; !ok {
-				mergedAnnotations[key] = val
+		if canary.GetAnalysis().Mirror {
+			// If a Canary run is in progress, the HTTPRoute rule will have an extra filter of type RequestMirror
+			// which needs to be ignored so that the requests are mirrored to the canary deployment.
+			inProgress := canary.Status.Phase == flaggerv1.CanaryPhaseWaiting || canary.Status.Phase == flaggerv1.CanaryPhaseProgressing ||
+				canary.Status.Phase == flaggerv1.CanaryPhaseWaitingPromotion
+			if inProgress {
+				ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1.HTTPRouteRule{}, "Filters"))
 			}
 		}
 
-		// Compare the existing HTTPRoute spec and metadata with the desired state.
-		// If there are differences, update the HTTPRoute object.
-		specDiff := cmp.Diff(
-			httpRoute.Spec, httpRouteSpec,
-			ignoreCmpOptions...,
-		)
-		labelsDiff := cmp.Diff(newMetadata.Labels, httpRoute.Labels, cmpopts.EquateEmpty())
-		annotationsDiff := cmp.Diff(mergedAnnotations, httpRoute.Annotations, cmpopts.EquateEmpty())
-		if (specDiff != "" && httpRoute.Name != "") || labelsDiff != "" || annotationsDiff != "" {
-			hrClone := httpRoute.DeepCopy()
-			hrClone.Spec = httpRouteSpec
-			hrClone.ObjectMeta.Annotations = mergedAnnotations
-			hrClone.ObjectMeta.Labels = newMetadata.Labels
-			_, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).
-				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
-			if err != nil {
-				return fmt.Errorf("HTTPRoute %s.%s update error: %w while reconciling", hrClone.GetName(), hrNamespace, err)
+		if httpRoute != nil {
+			// Preserve the existing annotations added by other controllers such as AWS Gateway API Controller.
+			mergedAnnotations := newMetadata.Annotations
+			for key, val := range httpRoute.Annotations {
+				if _, ok := mergedAnnotations[key]; !ok {
+					mergedAnnotations[key] = val
+				}
 			}
-			gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-				Infof("HTTPRoute %s.%s updated", hrClone.GetName(), hrNamespace)
+
+			// Compare the existing HTTPRoute spec and metadata with the desired state.
+			// If there are differences, update the HTTPRoute object.
+			specDiff := cmp.Diff(
+				httpRoute.Spec, httpRouteSpec,
+				ignoreCmpOptions...,
+			)
+			labelsDiff := cmp.Diff(newMetadata.Labels, httpRoute.Labels, cmpopts.EquateEmpty())
+			annotationsDiff := cmp.Diff(mergedAnnotations, httpRoute.Annotations, cmpopts.EquateEmpty())
+			if (specDiff != "" && httpRoute.Name != "") || labelsDiff != "" || annotationsDiff != "" {
+				hrClone := httpRoute.DeepCopy()
+				hrClone.Spec = httpRouteSpec
+				hrClone.ObjectMeta.Annotations = mergedAnnotations
+				hrClone.ObjectMeta.Labels = newMetadata.Labels
+				_, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).
+					Update(context.TODO(), hrClone, metav1.UpdateOptions{})
+				if err != nil {
+					return fmt.Errorf("HTTPRoute %s.%s update error: %w while reconciling", hrClone.GetName(), hrNamespace, err)
+				}
+				gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+					Infof("HTTPRoute %s.%s updated", hrClone.GetName(), hrNamespace)
+			}
+		}
+	}
+
+	// create reference grants if not exists
+	referenceGrants := []*v1beta1.ReferenceGrant{}
+
+	for _, rule := range httpRouteSpec.Rules {
+		for _, backendRef := range rule.BackendRefs {
+			if backendRef.Namespace != nil {
+				svcNamespace := string(*backendRef.Namespace)
+				if svcNamespace != hrNamespace {
+					group := v1beta1.Group("")
+					kind := v1beta1.Kind("Service")
+					if backendRef.Group != nil {
+						group = v1beta1.Group(*backendRef.Group)
+					}
+					if backendRef.Kind != nil {
+						kind = v1beta1.Kind(*backendRef.Kind)
+					}
+					name := (*v1beta1.ObjectName)(&backendRef.Name)
+
+					rg := &v1beta1.ReferenceGrant{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      canary.Name,
+							Namespace: svcNamespace,
+						},
+						Spec: v1beta1.ReferenceGrantSpec{
+							From: []v1beta1.ReferenceGrantFrom{
+								{
+									Group:     "gateway.networking.k8s.io",
+									Kind:      "HTTPRoute",
+									Namespace: v1beta1.Namespace(hrNamespace),
+								},
+							},
+							To: []v1beta1.ReferenceGrantTo{
+								{
+									Group: group,
+									Kind:  kind,
+									Name:  name,
+								},
+							},
+						},
+					}
+					referenceGrants = append(referenceGrants, rg)
+				}
+			}
+		}
+	}
+
+	for _, rg := range referenceGrants {
+		_, err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Get(context.TODO(), rg.Name, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			_, err = gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Create(context.TODO(), rg, metav1.CreateOptions{})
+			if err == nil {
+				gwr.logger.Infof("ReferenceGrant %s.%s has been created", rg.Name, rg.Namespace)
+			} else if !errors.IsAlreadyExists(err) {
+				return fmt.Errorf("ReferenceGrant %s.%s creation error: %w", rg.Name, rg.Namespace, err)
+			}
 		}
 	}
 
@@ -351,12 +404,8 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 		Matches: matches,
 		Filters: gwr.makeFilters(canary),
 		BackendRefs: []v1.HTTPBackendRef{
-			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
-			},
-			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port),
-			},
+			gwr.makeHTTPBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port, canary.Spec.Service.Primary),
+			gwr.makeHTTPBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port, canary.Spec.Service.Canary),
 		},
 	}
 	if canary.Spec.Service.Timeout != "" {
@@ -410,9 +459,7 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			Matches: matches,
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
-				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-				},
+				gwr.makeHTTPBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, canary.Spec.Service.Primary),
 			},
 			Timeouts: &v1.HTTPRouteTimeouts{
 				Request: &timeout,
@@ -495,12 +542,8 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 		mergedMatches := gwr.mergeMatchConditions([]v1.HTTPRouteMatch{cookieMatch}, svcMatches)
 		stickyRouteRule.Matches = mergedMatches
 		stickyRouteRule.BackendRefs = []v1.HTTPBackendRef{
-			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, 0, canary.Spec.Service.Port),
-			},
-			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, 100, canary.Spec.Service.Port),
-			},
+			gwr.makeHTTPBackendRef(primarySvcName, 0, canary.Spec.Service.Port, canary.Spec.Service.Primary),
+			gwr.makeHTTPBackendRef(canarySvcName, 100, canary.Spec.Service.Port, canary.Spec.Service.Canary),
 		}
 	} else {
 		// If canary weight is 0 and SessionAffinityCookie is non-blank, then it belongs to a previous canary run.
@@ -623,16 +666,28 @@ func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []istiov1beta1.HTTPM
 	return matches, nil
 }
 
-func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32) v1.BackendRef {
-	return v1.BackendRef{
-		BackendObjectReference: v1.BackendObjectReference{
-			Group: (*v1.Group)(&backendRefGroup),
-			Kind:  (*v1.Kind)(&backendRefKind),
-			Name:  v1.ObjectName(svcName),
-			Port:  (*v1.PortNumber)(&port),
+func (gwr *GatewayAPIRouter) makeHTTPBackendRef(svcName string, weight, port int32, customBackend *flaggerv1.CustomBackend) v1.HTTPBackendRef {
+	httpBackendRef := v1.HTTPBackendRef{
+		BackendRef: v1.BackendRef{
+			BackendObjectReference: v1.BackendObjectReference{
+				Group: (*v1.Group)(&backendRefGroup),
+				Kind:  (*v1.Kind)(&backendRefKind),
+				Name:  v1.ObjectName(svcName),
+				Port:  (*v1.PortNumber)(&port),
+			},
+			Weight: &weight,
 		},
-		Weight: &weight,
 	}
+	if customBackend != nil {
+		if customBackend.BackendObjectReference != nil {
+			httpBackendRef.BackendObjectReference = *customBackend.BackendObjectReference
+		}
+		if customBackend.Filters != nil {
+			httpBackendRef.Filters = customBackend.Filters
+		}
+	}
+
+	return httpBackendRef
 }
 
 func (gwr *GatewayAPIRouter) mergeMatchConditions(analysis, service []v1.HTTPRouteMatch) []v1.HTTPRouteMatch {

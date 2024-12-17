@@ -226,6 +226,8 @@ rules:
     resources:
       - httproutes
       - httproutes/finalizers
+      - referencegrants
+      - referencegrants/finalizers
     verbs:
       - get
       - list
@@ -239,6 +241,19 @@ rules:
     resources:
       - scaledobjects
       - scaledobjects/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - http.keda.sh
+    resources:
+      - httpscaledobjects
+      - httpscaledobjects/finalizers
     verbs:
       - get
       - list
