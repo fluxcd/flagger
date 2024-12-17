@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.40.0
+
+**Release date:** 2024-12-17
+
+This release comes with support for Splunk Observability (formerly SignalFx) as a metrics provider.
+For more information on how to write `MetricTemplates` for Splunk, please see the
+[Splunk metrics tutorial](https://docs.flagger.app/usage/metrics#s#splunk).
+
+Starting with this version, Flagger is compatible with the
+[AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/).
+
+Both Flagger and the load tester Go dependencies have been updated to fix various CVEs.
+
+#### Improvements
+- Add Splunk as a metrics provider
+  [#1733](https://github.com/fluxcd/flagger/pull/1733)
+- Preserve HTTPRoute annotations injected by AWS Gateway API
+  [#1746](https://github.com/fluxcd/flagger/pull/1746)
+- Automate `zz_generated.deepcopy.go` updates with make codegen
+  [#1735](https://github.com/fluxcd/flagger/pull/1735)
+- Update dependencies
+  [#1744](https://github.com/fluxcd/flagger/pull/1744)
+
 ## 1.39.0
 
 **Release date:** 2024-11-26
@@ -503,7 +526,7 @@ routed to the canary workload pods.
 
 **Release date:** 2022-12-15
 
-This release comes with support for Apachae APISIX. For more details see the
+This release comes with support for Apache APISIX. For more details see the
 [tutorial](https://fluxcd.io/flagger/tutorials/apisix-progressive-delivery).
 
 #### Improvements
