@@ -54,9 +54,15 @@ func (c *KubernetesDefaultRouter) Initialize(canary *flaggerv1.Canary) error {
 	if canary.Spec.Service.Canary != nil {
 		canaryCustomMetadata = &canary.Spec.Service.Canary.CustomMetadata
 	}
-	err := c.reconcileService(canary, canaryName, c.labelValue, canaryCustomMetadata)
-	if err != nil {
-		return fmt.Errorf("reconcileService failed: %w", err)
+
+	isHTTPScaledObject := canary.Spec.AutoscalerRef != nil && canary.Spec.AutoscalerRef.Kind == "HTTPScaledObject"
+	// For HTTPScaledObject, we do not create a Service for canary as it is not used.
+	if !isHTTPScaledObject {
+		// canary svc
+		err := c.reconcileService(canary, canaryName, c.labelValue, canaryCustomMetadata)
+		if err != nil {
+			return fmt.Errorf("reconcileService failed: %w", err)
+		}
 	}
 
 	// primary svc
@@ -64,7 +70,7 @@ func (c *KubernetesDefaultRouter) Initialize(canary *flaggerv1.Canary) error {
 	if canary.Spec.Service.Primary != nil {
 		primaryCustomMetadata = &canary.Spec.Service.Primary.CustomMetadata
 	}
-	err = c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", c.labelValue), primaryCustomMetadata)
+	err := c.reconcileService(canary, primaryName, fmt.Sprintf("%s-primary", c.labelValue), primaryCustomMetadata)
 	if err != nil {
 		return fmt.Errorf("reconcileService failed: %w", err)
 	}
@@ -75,6 +81,10 @@ func (c *KubernetesDefaultRouter) Initialize(canary *flaggerv1.Canary) error {
 // Reconcile creates or updates the main service
 func (c *KubernetesDefaultRouter) Reconcile(canary *flaggerv1.Canary) error {
 	apexName, _, _ := canary.GetServiceNames()
+
+	if canary.Spec.AutoscalerRef != nil && canary.Spec.AutoscalerRef.Kind == "HTTPScaledObject" {
+		return nil
+	}
 
 	// main svc
 	err := c.reconcileService(canary, apexName, fmt.Sprintf("%s-primary", c.labelValue), canary.Spec.Service.Apex)

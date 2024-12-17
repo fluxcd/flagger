@@ -22,6 +22,7 @@ import (
 
 	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	http "github.com/fluxcd/flagger/pkg/apis/http/v1alpha1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -459,6 +460,35 @@ type LocalObjectReference struct {
 	Name string `json:"name"`
 }
 
+// CanaryInterceptorProxyService specifies the service if you want to change
+// the Canary interceptor proxy service from its default value.
+type CanaryInterceptorProxyService struct {
+	// Name of the canary interceptor proxy service.
+	// Defaults to "keda-http-add-on-interceptor-proxy".
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the canary interceptor proxy service.
+	// Defaults to "keda".
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// ScalingSetRef defines the desired scaling set to be used
+type ScalingSetRef struct {
+	// Kind of the resource being referred to. Defaults to HTTPScalingSet.
+	// +optional
+	Kind http.ScalingSetKind `json:"kind,omitempty"`
+
+	// Name of the scaling set
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the scaling set
+	// Defaults to "keda".
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
 type AutoscalerReference struct {
 	// API version of the scaler
 	// +required
@@ -481,6 +511,11 @@ type AutoscalerReference struct {
 	// autoscaler replicas.
 	// +optional
 	PrimaryScalerReplicas *ScalerReplicas `json:"primaryScalerReplicas,omitempty"`
+
+	// PrimaryScalingSet is the scaling set to be used for the primary
+	// scaler, if a scaler supports scaling using queries.
+	// +optional
+	PrimaryScalingSet *ScalingSetRef `json:"primaryScalingSet,omitempty"`
 }
 
 // ScalerReplicas holds overrides for autoscaler replicas
@@ -648,4 +683,9 @@ func (c *Canary) SkipAnalysis() bool {
 		return true
 	}
 	return c.Spec.SkipAnalysis
+}
+
+// IsHTTPScaledObject returns true if the autoscalerRef is a HTTPScaledObject
+func (c *Canary) IsHTTPScaledObject() bool {
+	return c.Spec.AutoscalerRef != nil && c.Spec.AutoscalerRef.Kind == "HTTPScaledObject"
 }
