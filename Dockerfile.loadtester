@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine as builder
+FROM golang:1.23-alpine AS builder
 
 ARG TARGETPLATFORM
 ARG TARGETARCH
@@ -49,7 +49,7 @@ apk --no-cache add ca-certificates curl jq libgcc wrk hey git
 
 WORKDIR /home/app
 
-COPY --from=bats/bats:v1.1.1 /opt/bats/ /opt/bats/
+COPY --from=bats/bats:1.11.1 /opt/bats/ /opt/bats/
 RUN ln -s /opt/bats/bin/bats /usr/local/bin/
 
 COPY --from=builder /usr/local/bin/helm /usr/local/bin/
