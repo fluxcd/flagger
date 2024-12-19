@@ -483,6 +483,7 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 }
 
 func (gwr *GatewayAPIRouter) Finalize(_ *flaggerv1.Canary) error {
+	// TODO: Remove reference grants
 	return nil
 }
 
