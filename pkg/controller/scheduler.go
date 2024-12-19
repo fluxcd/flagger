@@ -193,7 +193,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// init Kubernetes router
-	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, labelValue, ports)
+	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.APIVersion, cd.Spec.TargetRef.Kind, labelSelector, labelValue, ports)
 
 	// reconcile the canary/primary services
 	if err := kubeRouter.Initialize(cd); err != nil {
