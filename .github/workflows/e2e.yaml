@@ -39,14 +39,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Kubernetes
-        uses: helm/kind-action@v1.11.0
+        uses: helm/kind-action@v1.12.0
         if: matrix.provider != 'skipper'
         with:
           version: v0.23.0
           cluster_name: kind
           node_image: kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
       - name: Setup Kubernetes for skipper
-        uses: helm/kind-action@v1.11.0
+        uses: helm/kind-action@v1.12.0
         if: matrix.provider == 'skipper'
         with:
           version: v0.23.0
