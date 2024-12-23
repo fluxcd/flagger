@@ -99,7 +99,7 @@ func (c *Controller) finalize(old interface{}) error {
 	}
 
 	// Revert the Kubernetes service
-	router := c.routerFactory.KubernetesRouter(canary.Spec.TargetRef.Kind, labelSelector, labelValue, ports)
+	router := c.routerFactory.KubernetesRouter(canary.Spec.TargetRef.APIVersion, canary.Spec.TargetRef.Kind, labelSelector, labelValue, ports)
 	if err := router.Finalize(canary); err != nil {
 		return fmt.Errorf("failed revert router: %w", err)
 	}
