@@ -198,6 +198,9 @@ spec:
                     portDiscovery:
                       description: Enable port dicovery
                       type: boolean
+                    headless:
+                      description: Headless if set to true, generates headless Kubernetes services.
+                      type: boolean
                     timeout:
                       description: HTTP or gRPC request timeout
                       type: string

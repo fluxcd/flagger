@@ -113,6 +113,9 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			},
 		},
 	}
+	if canary.Spec.Service.Headless {
+		svcSpec.ClusterIP = "None"
+	}
 
 	if v := canary.Spec.Service.AppProtocol; v != "" {
 		svcSpec.Ports[0].AppProtocol = &v

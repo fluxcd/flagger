@@ -147,6 +147,7 @@ spec:
     appProtocol: http
     targetPort: 9898
     portDiscovery: true
+    headless: false
 ```
 
 The container port from the target workload should match the `service.port` or `service.targetPort`.
@@ -154,6 +155,7 @@ The `service.name` is optional, defaults to `spec.targetRef.name`.
 The `service.targetPort` can be a container port number or name.
 The `service.portName` is optional (defaults to `http`), if your workload uses gRPC then set the port name to `grpc`.
 The `service.appProtocol` is optional, more details can be found [here](https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol).
+
 
 If port discovery is enabled, Flagger scans the target workload and extracts the containers ports
 excluding the port specified in the canary service and service mesh sidecar ports.
@@ -203,6 +205,9 @@ spec:
 Note that the `apex` annotations are added to both the generated Kubernetes Service and the
 generated service mesh/ingress object. This allows using external-dns with Istio `VirtualServices`
 and `TraefikServices`. Beware of configuration conflicts [here](../faq.md#ExternalDNS).
+
+If you want for the generated Kubernetes ClusterIP services to be [headless](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services),
+then set `service.headless` to true.
 
 Besides port mapping and metadata, the service specification can
 contain URI match and rewrite rules, timeout and retry polices:
