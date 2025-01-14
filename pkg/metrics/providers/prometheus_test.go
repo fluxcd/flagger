@@ -307,3 +307,40 @@ func TestPrometheusProvider_IsOnline(t *testing.T) {
 		assert.Equal(t, true, ok)
 	})
 }
+
+func TestPrometheusProvider_RunQueryWithProviderHeaders(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		expected := `sum(envoy_cluster_upstream_rq)`
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			promql := r.URL.Query()["query"][0]
+			assert.Equal(t, expected, promql)
+
+			assert.Equal(t, []string{"tenant1"}, r.Header.Values("X-Scope-Orgid"))
+
+			json := `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1545905245.458,"100"]}]}}`
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
+
+		clients := prometheusFake()
+
+		template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		template.Spec.Provider.Address = ts.URL
+		template.Spec.Provider.Headers = http.Header{
+			"X-Scope-OrgID": []string{"tenant1"},
+		}
+
+		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "prometheus", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		prom, err := NewPrometheusProvider(template.Spec.Provider, secret.Data)
+		require.NoError(t, err)
+
+		val, err := prom.RunQuery(template.Spec.Query)
+		require.NoError(t, err)
+
+		assert.Equal(t, float64(100), val)
+	})
+}

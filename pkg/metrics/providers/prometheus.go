@@ -39,6 +39,7 @@ const prometheusOnlineQuery = "vector(1)"
 type PrometheusProvider struct {
 	timeout  time.Duration
 	url      url.URL
+	headers  http.Header
 	username string
 	password string
 	token    string
@@ -69,6 +70,7 @@ func NewPrometheusProvider(provider flaggerv1.MetricTemplateProvider, credential
 	prom := PrometheusProvider{
 		timeout: 5 * time.Second,
 		url:     *promURL,
+		headers: provider.Headers,
 		client:  http.DefaultClient,
 	}
 
@@ -114,6 +116,10 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return 0, fmt.Errorf("http.NewRequest failed: %w", err)
+	}
+
+	if p.headers != nil {
+		req.Header = p.headers
 	}
 
 	if p.token != "" {
