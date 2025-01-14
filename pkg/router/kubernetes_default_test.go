@@ -34,6 +34,8 @@ import (
 
 func TestServiceRouter_Create(t *testing.T) {
 	mocks := newFixture(nil)
+	mocks.canary.Spec.Service.Headless = true
+
 	router := &KubernetesDefaultRouter{
 		kubeClient:    mocks.kubeClient,
 		flaggerClient: mocks.flaggerClient,
@@ -53,11 +55,13 @@ func TestServiceRouter_Create(t *testing.T) {
 	assert.Equal(t, &appProtocol, canarySvc.Spec.Ports[0].AppProtocol)
 	assert.Equal(t, "http", canarySvc.Spec.Ports[0].Name)
 	assert.Equal(t, int32(9898), canarySvc.Spec.Ports[0].Port)
+	assert.Equal(t, "None", canarySvc.Spec.ClusterIP)
 
 	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "http", primarySvc.Spec.Ports[0].Name)
 	assert.Equal(t, int32(9898), primarySvc.Spec.Ports[0].Port)
+	assert.Equal(t, "None", primarySvc.Spec.ClusterIP)
 }
 
 func TestServiceRouter_Update(t *testing.T) {

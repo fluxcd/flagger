@@ -146,6 +146,11 @@ type CanaryService struct {
 	// PortDiscovery adds all container ports to the generated Kubernetes service
 	PortDiscovery bool `json:"portDiscovery"`
 
+	// Headless if set to true, generates headless Kubernetes services.
+	// ref: https://kubernetes.io/docs/concepts/services-networking/service/#headless-services
+	// +optional
+	Headless bool `json:"headless,omitempty"`
+
 	// Timeout of the HTTP or gRPC request
 	// +optional
 	Timeout string `json:"timeout,omitempty"`
