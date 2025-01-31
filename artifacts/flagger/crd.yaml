@@ -80,7 +80,6 @@ spec:
               type: object
               required:
                 - targetRef
-                - service
                 - analysis
               properties:
                 provider:

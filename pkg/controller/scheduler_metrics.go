@@ -28,6 +28,7 @@ import (
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
 	"github.com/fluxcd/flagger/pkg/metrics/providers"
+	serving "knative.dev/serving/pkg/apis/serving/v1"
 )
 
 const (
@@ -110,8 +111,18 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		}
 	}
 	// set the metrics provider to query Prometheus for the canary Kubernetes service if the canary target is Service
-	if canary.Spec.TargetRef.Kind == "Service" {
+	if canary.Spec.TargetRef.Kind == "Service" && !canary.Spec.TargetRef.IsKnativeService() {
 		metricsProvider = metricsProvider + MetricsProviderServiceSuffix
+	}
+
+	var knativeService *serving.Service
+	if canary.Spec.Provider == flaggerv1.KnativeProvider || c.meshProvider == flaggerv1.KnativeProvider {
+		var err error
+		knativeService, err = c.knativeClient.ServingV1().Services(canary.Namespace).Get(context.TODO(), canary.Spec.TargetRef.Name, metav1.GetOptions{})
+		if err != nil {
+			c.recordEventErrorf(canary, "Error fetching Knative service %s/%s %v", canary.Namespace, canary.Spec.TargetRef.Name, err)
+			return false
+		}
 	}
 
 	// create observer based on the mesh provider
@@ -135,7 +146,11 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		}
 
 		if metric.Name == "request-success-rate" {
-			val, err := observer.GetRequestSuccessRate(toMetricModel(canary, metric.Interval, metric.TemplateVariables))
+			model := toMetricModel(canary, metric.Interval, metric.TemplateVariables)
+			if knativeService != nil {
+				model.Route = knativeService.Status.LatestCreatedRevisionName
+			}
+			val, err := observer.GetRequestSuccessRate(model)
 			if err != nil {
 				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary,
@@ -167,7 +182,11 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 		}
 
 		if metric.Name == "request-duration" {
-			val, err := observer.GetRequestDuration(toMetricModel(canary, metric.Interval, metric.TemplateVariables))
+			model := toMetricModel(canary, metric.Interval, metric.TemplateVariables)
+			if knativeService != nil {
+				model.Route = knativeService.Status.LatestCreatedRevisionName
+			}
+			val, err := observer.GetRequestDuration(model)
 			if err != nil {
 				if errors.Is(err, providers.ErrNoValuesFound) {
 					c.recordEventWarningf(canary, "Halt advancement no values found for %s metric %s probably %s.%s is not receiving traffic",
@@ -199,7 +218,11 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 
 		// in-line PromQL
 		if metric.Query != "" {
-			query, err := observers.RenderQuery(metric.Query, toMetricModel(canary, metric.Interval, metric.TemplateVariables))
+			model := toMetricModel(canary, metric.Interval, metric.TemplateVariables)
+			if knativeService != nil {
+				model.Route = knativeService.Status.LatestCreatedRevisionName
+			}
+			query, err := observers.RenderQuery(metric.Query, model)
 			val, err := observerFactory.Client.RunQuery(query)
 			if err != nil {
 				if errors.Is(err, providers.ErrNoValuesFound) {
@@ -235,6 +258,16 @@ func (c *Controller) runBuiltinMetricChecks(canary *flaggerv1.Canary) bool {
 }
 
 func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
+	var knativeService *serving.Service
+	if canary.Spec.Provider == flaggerv1.KnativeProvider || c.meshProvider == flaggerv1.KnativeProvider {
+		var err error
+		knativeService, err = c.knativeClient.ServingV1().Services(canary.Namespace).Get(context.TODO(), canary.Spec.TargetRef.Name, metav1.GetOptions{})
+		if err != nil {
+			c.recordEventErrorf(canary, "Error fetching Knative service %s/%s %v", canary.Namespace, canary.Spec.TargetRef.Name, err)
+			return false
+		}
+	}
+
 	for _, metric := range canary.GetAnalysis().Metrics {
 		if metric.TemplateRef != nil {
 			namespace := canary.Namespace
@@ -267,7 +300,11 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 				return false
 			}
 
-			query, err := observers.RenderQuery(template.Spec.Query, toMetricModel(canary, metric.Interval, metric.TemplateVariables))
+			model := toMetricModel(canary, metric.Interval, metric.TemplateVariables)
+			if knativeService != nil {
+				model.Route = knativeService.Status.LatestCreatedRevisionName
+			}
+			query, err := observers.RenderQuery(template.Spec.Query, model)
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, namespace)).
 				Debugf("Metric template %s.%s query: %s", metric.TemplateRef.Name, namespace, query)
 			if err != nil {

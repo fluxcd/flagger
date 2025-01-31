@@ -179,7 +179,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// init controller based on target kind
-	canaryController := c.canaryFactory.Controller(cd.Spec.TargetRef.Kind)
+	canaryController := c.canaryFactory.Controller(cd.Spec.TargetRef)
 
 	labelSelector, labelValue, ports, err := canaryController.GetMetadata(cd)
 	if err != nil {

@@ -92,6 +92,10 @@ func (factory Factory) Observer(provider string) Interface {
 		return &ApisixObserver{
 			client: factory.Client,
 		}
+	case provider == flaggerv1.KnativeProvider:
+		return &KnativeObserver{
+			client: factory.Client,
+		}
 	default:
 		return &IstioObserver{
 			client: factory.Client,

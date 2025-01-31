@@ -35,6 +35,7 @@ jobs:
           - gatewayapi
           - keda
           - apisix
+          - knative
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -92,7 +92,7 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 	}
 
 	// init router
-	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", "", logger, flaggerClient, true)
+	rf := router.NewFactory(nil, kubeClient, flaggerClient, nil, "annotationsPrefix", "", logger, flaggerClient, true)
 
 	// init observer
 	observerFactory, _ := observers.NewFactory(testMetricsServerURL)
@@ -103,7 +103,7 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 		KubeClient:    kubeClient,
 		FlaggerClient: flaggerClient,
 	}
-	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, []string{"app", "name"}, []string{""}, logger)
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, nil, configTracker, []string{"app", "name"}, []string{""}, logger)
 
 	ctrl := &Controller{
 		kubeClient:       kubeClient,
@@ -129,8 +129,10 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 	meshRouter := rf.MeshRouter("istio", "")
 
 	return daemonSetFixture{
-		canary:        c,
-		deployer:      canaryFactory.Controller("DaemonSet"),
+		canary: c,
+		deployer: canaryFactory.Controller(flaggerv1.LocalObjectReference{
+			Kind: "DaemonSet",
+		}),
 		logger:        logger,
 		flaggerClient: flaggerClient,
 		meshClient:    flaggerClient,

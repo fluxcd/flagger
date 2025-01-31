@@ -20,12 +20,15 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
+	knative "knative.dev/serving/pkg/client/clientset/versioned"
 )
 
 type Factory struct {
 	kubeClient         kubernetes.Interface
 	flaggerClient      clientset.Interface
+	knativeClient      knative.Interface
 	logger             *zap.SugaredLogger
 	configTracker      Tracker
 	labels             []string
@@ -34,6 +37,7 @@ type Factory struct {
 
 func NewFactory(kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
+	knativeClient knative.Interface,
 	configTracker Tracker,
 	labels []string,
 	includeLabelPrefix []string,
@@ -41,6 +45,7 @@ func NewFactory(kubeClient kubernetes.Interface,
 	return &Factory{
 		kubeClient:         kubeClient,
 		flaggerClient:      flaggerClient,
+		knativeClient:      knativeClient,
 		logger:             logger,
 		configTracker:      configTracker,
 		labels:             labels,
@@ -48,7 +53,7 @@ func NewFactory(kubeClient kubernetes.Interface,
 	}
 }
 
-func (factory *Factory) Controller(kind string) Controller {
+func (factory *Factory) Controller(obj v1beta1.LocalObjectReference) Controller {
 	deploymentCtrl := &DeploymentController{
 		logger:             factory.logger,
 		kubeClient:         factory.kubeClient,
@@ -71,14 +76,22 @@ func (factory *Factory) Controller(kind string) Controller {
 		flaggerClient:      factory.flaggerClient,
 		includeLabelPrefix: factory.includeLabelPrefix,
 	}
+	knativeCtrl := &KnativeController{
+		flaggerClient: factory.flaggerClient,
+		knativeClient: factory.knativeClient,
+	}
 
-	switch kind {
+	switch obj.Kind {
 	case "DaemonSet":
 		return daemonSetCtrl
 	case "Deployment":
 		return deploymentCtrl
 	case "Service":
-		return serviceCtrl
+		if obj.IsKnativeService() {
+			return knativeCtrl
+		} else {
+			return serviceCtrl
+		}
 	default:
 		return deploymentCtrl
 	}

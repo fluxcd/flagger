@@ -25,6 +25,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
+	knative "knative.dev/serving/pkg/client/clientset/versioned"
 )
 
 type Factory struct {
@@ -32,6 +33,7 @@ type Factory struct {
 	kubeClient               kubernetes.Interface
 	meshClient               clientset.Interface
 	flaggerClient            clientset.Interface
+	knativeClient            knative.Interface
 	ingressAnnotationsPrefix string
 	ingressClass             string
 	logger                   *zap.SugaredLogger
@@ -40,6 +42,7 @@ type Factory struct {
 
 func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	flaggerClient clientset.Interface,
+	knativeClient knative.Interface,
 	ingressAnnotationsPrefix string,
 	ingressClass string,
 	logger *zap.SugaredLogger,
@@ -50,6 +53,7 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 		meshClient:               meshClient,
 		kubeClient:               kubeClient,
 		flaggerClient:            flaggerClient,
+		knativeClient:            knativeClient,
 		ingressAnnotationsPrefix: ingressAnnotationsPrefix,
 		ingressClass:             ingressClass,
 		logger:                   logger,
@@ -149,6 +153,10 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 			contourClient: factory.meshClient,
 			ingressClass:  factory.ingressClass,
 			setOwnerRefs:  factory.setOwnerRefs,
+		}
+	case provider == flaggerv1.KnativeProvider:
+		return &KnativeRouter{
+			knativeClient: factory.knativeClient,
 		}
 	case strings.HasPrefix(provider, flaggerv1.GlooProvider):
 		return &GlooRouter{

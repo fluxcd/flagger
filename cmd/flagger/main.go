@@ -51,6 +51,8 @@ import (
 	"github.com/fluxcd/flagger/pkg/server"
 	"github.com/fluxcd/flagger/pkg/signals"
 	"github.com/fluxcd/flagger/pkg/version"
+
+	knative "knative.dev/serving/pkg/client/clientset/versioned"
 )
 
 var (
@@ -110,7 +112,7 @@ func init() {
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object.")
-	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, contour, gloo, nginx, skipper, traefik, apisix, osm or kuma.")
+	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, contour, knative, gloo, nginx, skipper, traefik, apisix, osm or kuma.")
 	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors.")
 	flag.StringVar(&ingressAnnotationsPrefix, "ingress-annotations-prefix", "nginx.ingress.kubernetes.io", "Annotations prefix for NGINX ingresses.")
 	flag.StringVar(&ingressClass, "ingress-class", "", "Ingress class used for annotating HTTPProxy objects.")
@@ -164,6 +166,11 @@ func main() {
 	flaggerClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building flagger clientset: %s", err.Error())
+	}
+
+	knativeClient, err := knative.NewForConfig(cfg)
+	if err != nil {
+		logger.Fatalf("Error building knative clientset: %s", err.Error())
 	}
 
 	// use a remote cluster for routing if a service mesh kubeconfig is specified
@@ -221,7 +228,7 @@ func main() {
 		setOwnerRefs = false
 	}
 
-	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, ingressAnnotationsPrefix, ingressClass, logger, meshClient, setOwnerRefs)
+	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, knativeClient, ingressAnnotationsPrefix, ingressClass, logger, meshClient, setOwnerRefs)
 
 	var configTracker canary.Tracker
 	if enableConfigTracking {
@@ -236,10 +243,11 @@ func main() {
 
 	includeLabelPrefixArray := strings.Split(includeLabelPrefix, ",")
 
-	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, labels, includeLabelPrefixArray, logger)
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, knativeClient, configTracker, labels, includeLabelPrefixArray, logger)
 
 	c := controller.NewController(
 		kubeClient,
+		knativeClient,
 		flaggerClient,
 		infos,
 		controlLoopInterval,
