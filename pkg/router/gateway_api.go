@@ -24,6 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"crypto/sha256"
+	"encoding/json"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.uber.org/zap"
@@ -53,6 +56,10 @@ var (
 	headerMatchRegex     = v1.HeaderMatchRegularExpression
 	queryMatchExact      = v1.QueryParamMatchExact
 	queryMatchRegex      = v1.QueryParamMatchRegularExpression
+	annotationPrefix     = "gateway.flagger.app/"
+	labelPrefix          = "gateway.flagger.app/"
+	hashAnnotation       = annotationPrefix + "hash"
+	ownerLabel           = labelPrefix + "owner"
 )
 
 type GatewayAPIRouter struct {
@@ -98,12 +105,8 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				Matches: matches,
 				Filters: gwr.makeFilters(canary),
 				BackendRefs: []v1.HTTPBackendRef{
-					{
-						BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-					},
-					{
-						BackendRef: gwr.makeBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port),
-					},
+					gwr.makeHTTPBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, canary.Spec.Service.PrimaryBackend),
+					gwr.makeHTTPBackendRef(canarySvcName, initialCanaryWeight, canary.Spec.Service.Port, canary.Spec.Service.CanaryBackend),
 				},
 			},
 		},
@@ -124,9 +127,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			Matches: matches,
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
-				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-				},
+				gwr.makeHTTPBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, canary.Spec.Service.PrimaryBackend),
 			},
 		})
 		if canary.Spec.Service.Timeout != "" {
@@ -182,6 +183,10 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		}
 		gwr.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 			Infof("HTTPRoute %s.%s created", route.GetName(), hrNamespace)
+
+		if err := gwr.ensureReferenceGrants(canary, httpRouteSpec, hrNamespace); err != nil {
+			return err
+		}
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
@@ -257,6 +262,9 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 		}
 	}
 
+	if err := gwr.ensureReferenceGrants(canary, httpRouteSpec, hrNamespace); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -358,12 +366,8 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 		Matches: matches,
 		Filters: gwr.makeFilters(canary),
 		BackendRefs: []v1.HTTPBackendRef{
-			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port),
-			},
-			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port),
-			},
+			gwr.makeHTTPBackendRef(primarySvcName, pWeight, canary.Spec.Service.Port, canary.Spec.Service.PrimaryBackend),
+			gwr.makeHTTPBackendRef(canarySvcName, cWeight, canary.Spec.Service.Port, canary.Spec.Service.CanaryBackend),
 		},
 	}
 	if canary.Spec.Service.Timeout != "" {
@@ -417,9 +421,7 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			Matches: matches,
 			Filters: gwr.makeFilters(canary),
 			BackendRefs: []v1.HTTPBackendRef{
-				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-				},
+				gwr.makeHTTPBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port, canary.Spec.Service.PrimaryBackend),
 			},
 			Timeouts: &v1.HTTPRouteTimeouts{
 				Request: &timeout,
@@ -442,8 +444,26 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	return nil
 }
 
-func (gwr *GatewayAPIRouter) Finalize(_ *flaggerv1.Canary) error {
-	return nil
+func (gwr *GatewayAPIRouter) Finalize(canary *flaggerv1.Canary) error {
+	// remove reference grants
+	lastError := error(nil)
+	ownerLabelValue := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+	rgs, err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", ownerLabel, ownerLabelValue),
+	})
+	if err != nil {
+		return fmt.Errorf("ReferenceGrants %s get error: %w", canary.Name, err)
+	}
+
+	for _, rg := range rgs.Items {
+		err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Delete(context.TODO(), rg.Name, metav1.DeleteOptions{})
+		if err != nil {
+			// If an error occurs while deleting the ReferenceGrant, record it and continue processing without blocking other operations.
+			lastError = fmt.Errorf("ReferenceGrant %s.%s delete error: %w", rg.Name, rg.Namespace, err)
+		}
+	}
+
+	return lastError
 }
 
 func getBackendByServiceName(rule *v1.HTTPRouteRule, svcName string) *v1.HTTPBackendRef {
@@ -534,12 +554,8 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 		mergedMatches := gwr.mergeMatchConditions([]v1.HTTPRouteMatch{cookieMatch}, svcMatches)
 		stickyCanaryRouteRule.Matches = mergedMatches
 		stickyCanaryRouteRule.BackendRefs = []v1.HTTPBackendRef{
-			{
-				BackendRef: gwr.makeBackendRef(primarySvcName, 0, canary.Spec.Service.Port),
-			},
-			{
-				BackendRef: gwr.makeBackendRef(canarySvcName, 100, canary.Spec.Service.Port),
-			},
+			gwr.makeHTTPBackendRef(primarySvcName, 0, canary.Spec.Service.Port, canary.Spec.Service.PrimaryBackend),
+			gwr.makeHTTPBackendRef(canarySvcName, 100, canary.Spec.Service.Port, canary.Spec.Service.CanaryBackend),
 		}
 
 		// add a sticky primary rule to match against requests that match against the
@@ -566,12 +582,8 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 			mergedMatches = gwr.mergeMatchConditions([]v1.HTTPRouteMatch{primaryCookieMatch}, svcMatches)
 			stickyPrimaryRouteRule.Matches = mergedMatches
 			stickyPrimaryRouteRule.BackendRefs = []v1.HTTPBackendRef{
-				{
-					BackendRef: gwr.makeBackendRef(primarySvcName, 100, canary.Spec.Service.Port),
-				},
-				{
-					BackendRef: gwr.makeBackendRef(canarySvcName, 0, canary.Spec.Service.Port),
-				},
+				gwr.makeHTTPBackendRef(primarySvcName, 100, canary.Spec.Service.Port, canary.Spec.Service.PrimaryBackend),
+				gwr.makeHTTPBackendRef(canarySvcName, 0, canary.Spec.Service.Port, canary.Spec.Service.CanaryBackend),
 			}
 			return []v1.HTTPRouteRule{stickyCanaryRouteRule, stickyPrimaryRouteRule, *weightedRouteRule}, nil
 		}
@@ -697,16 +709,28 @@ func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []istiov1beta1.HTTPM
 	return matches, nil
 }
 
-func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32) v1.BackendRef {
-	return v1.BackendRef{
-		BackendObjectReference: v1.BackendObjectReference{
-			Group: (*v1.Group)(&backendRefGroup),
-			Kind:  (*v1.Kind)(&backendRefKind),
-			Name:  v1.ObjectName(svcName),
-			Port:  (*v1.PortNumber)(&port),
+func (gwr *GatewayAPIRouter) makeHTTPBackendRef(svcName string, weight, port int32, customBackend *flaggerv1.CustomBackend) v1.HTTPBackendRef {
+	httpBackendRef := v1.HTTPBackendRef{
+		BackendRef: v1.BackendRef{
+			BackendObjectReference: v1.BackendObjectReference{
+				Group: (*v1.Group)(&backendRefGroup),
+				Kind:  (*v1.Kind)(&backendRefKind),
+				Name:  v1.ObjectName(svcName),
+				Port:  (*v1.PortNumber)(&port),
+			},
+			Weight: &weight,
 		},
-		Weight: &weight,
 	}
+	if customBackend != nil {
+		if customBackend.BackendObjectReference != nil {
+			httpBackendRef.BackendObjectReference = *customBackend.BackendObjectReference
+		}
+		if customBackend.Filters != nil {
+			httpBackendRef.Filters = customBackend.Filters
+		}
+	}
+
+	return httpBackendRef
 }
 
 func (gwr *GatewayAPIRouter) mergeMatchConditions(analysis, service []v1.HTTPRouteMatch) []v1.HTTPRouteMatch {
@@ -772,9 +796,7 @@ func (gwr *GatewayAPIRouter) makeFilters(canary *flaggerv1.Canary) []v1.HTTPRout
 			}
 
 			sortFiltersV1(requestHeaderFilter.RequestHeaderModifier.Set)
-			for _, name := range canary.Spec.Service.Headers.Request.Remove {
-				requestHeaderFilter.RequestHeaderModifier.Remove = append(requestHeaderFilter.RequestHeaderModifier.Remove, name)
-			}
+			requestHeaderFilter.RequestHeaderModifier.Remove = append(requestHeaderFilter.RequestHeaderModifier.Remove, canary.Spec.Service.Headers.Request.Remove...)
 
 			filters = append(filters, requestHeaderFilter)
 		}
@@ -799,9 +821,7 @@ func (gwr *GatewayAPIRouter) makeFilters(canary *flaggerv1.Canary) []v1.HTTPRout
 			}
 			sortFiltersV1(responseHeaderFilter.ResponseHeaderModifier.Set)
 
-			for _, name := range canary.Spec.Service.Headers.Response.Remove {
-				responseHeaderFilter.ResponseHeaderModifier.Remove = append(responseHeaderFilter.ResponseHeaderModifier.Remove, name)
-			}
+			responseHeaderFilter.ResponseHeaderModifier.Remove = append(responseHeaderFilter.ResponseHeaderModifier.Remove, canary.Spec.Service.Headers.Response.Remove...)
 
 			filters = append(filters, responseHeaderFilter)
 		}
@@ -932,4 +952,135 @@ func toV1ParentRefs(gatewayRefs []v1beta1.ParentReference) []v1.ParentReference 
 		})
 	}
 	return parentRefs
+}
+
+func checksum(data interface{}) string {
+	jsonBytes, _ := json.Marshal(data)
+	hashBytes := sha256.Sum256(jsonBytes)
+
+	return fmt.Sprintf("%x", hashBytes[:8])
+}
+
+// ensureReferenceGrants creates or updates ReferenceGrants required for cross-namespace backends.
+func (gwr *GatewayAPIRouter) ensureReferenceGrants(canary *flaggerv1.Canary, httpRouteSpec v1.HTTPRouteSpec, hrNamespace string) error {
+	referenceGrants := []*v1beta1.ReferenceGrant{}
+	// Owner label value used across create/update/prune
+	ownerLabelValue := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+	desired := map[string]struct{}{}
+	for _, rule := range httpRouteSpec.Rules {
+		for _, backendRef := range rule.BackendRefs {
+			if backendRef.Namespace != nil {
+				svcNamespace := string(*backendRef.Namespace)
+				if svcNamespace != hrNamespace {
+					group := v1beta1.Group("")
+					kind := v1beta1.Kind("Service")
+					if backendRef.Group != nil {
+						group = v1beta1.Group(*backendRef.Group)
+					}
+					if backendRef.Kind != nil {
+						kind = v1beta1.Kind(*backendRef.Kind)
+					}
+					name := (*v1beta1.ObjectName)(&backendRef.Name)
+
+					// Build spec first so that checksum is based on rg.Spec (not canary.Spec).
+					spec := v1beta1.ReferenceGrantSpec{
+						From: []v1beta1.ReferenceGrantFrom{
+							{
+								Group:     "gateway.networking.k8s.io",
+								Kind:      "HTTPRoute",
+								Namespace: v1beta1.Namespace(hrNamespace),
+							},
+						},
+						To: []v1beta1.ReferenceGrantTo{
+							{
+								Group: group,
+								Kind:  kind,
+								Name:  name,
+							},
+						},
+					}
+
+					rg := &v1beta1.ReferenceGrant{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      canary.Name,
+							Namespace: svcNamespace,
+							Annotations: map[string]string{
+								hashAnnotation: checksum(spec),
+							},
+							Labels: map[string]string{
+								ownerLabel: ownerLabelValue,
+							},
+						},
+						Spec: spec,
+					}
+
+					referenceGrants = append(referenceGrants, rg)
+					desired[fmt.Sprintf("%s/%s", rg.Namespace, rg.Name)] = struct{}{}
+				}
+			}
+		}
+	}
+
+	for _, rg := range referenceGrants {
+		realRg, err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Get(context.TODO(), rg.Name, metav1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				_, err = gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Create(context.TODO(), rg, metav1.CreateOptions{})
+				if err == nil {
+					gwr.logger.Infof("ReferenceGrant %s.%s has been created", rg.Name, rg.Namespace)
+				} else if !errors.IsAlreadyExists(err) {
+					return fmt.Errorf("ReferenceGrant %s.%s creation error: %w", rg.Name, rg.Namespace, err)
+				}
+			} else {
+				return fmt.Errorf("ReferenceGrant %s.%s get error: %w", rg.Name, rg.Namespace, err)
+			}
+		} else {
+			// Ensure annotations/labels are set and up to date.
+			if realRg.Annotations == nil {
+				realRg.Annotations = make(map[string]string)
+			}
+			if realRg.Labels == nil {
+				realRg.Labels = make(map[string]string)
+			}
+			needsUpdate := false
+			if realRg.Annotations[hashAnnotation] != checksum(rg.Spec) {
+				realRg.Annotations[hashAnnotation] = checksum(rg.Spec)
+				realRg.Spec = rg.Spec
+				needsUpdate = true
+			}
+			if realRg.Labels[ownerLabel] != ownerLabelValue {
+				realRg.Labels[ownerLabel] = ownerLabelValue
+				needsUpdate = true
+			}
+			if needsUpdate {
+				_, err = gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(rg.Namespace).Update(context.TODO(), realRg, metav1.UpdateOptions{})
+				if err == nil {
+					gwr.logger.Infof("ReferenceGrant %s.%s has been updated", rg.Name, rg.Namespace)
+				} else if !errors.IsAlreadyExists(err) {
+					return fmt.Errorf("ReferenceGrant %s.%s update error: %w", rg.Name, rg.Namespace, err)
+				}
+			}
+		}
+	}
+	// Prune ReferenceGrants that belong to this canary but are no longer desired.
+	rgs, err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(metav1.NamespaceAll).List(
+		context.TODO(),
+		metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", ownerLabel, ownerLabelValue)},
+	)
+	if err != nil {
+		return fmt.Errorf("ReferenceGrants %s get error: %w", canary.Name, err)
+	}
+	for _, existing := range rgs.Items {
+		key := fmt.Sprintf("%s/%s", existing.Namespace, existing.Name)
+		if _, ok := desired[key]; !ok {
+			// Delete stale grant; ignore NotFound to be idempotent.
+			if err := gwr.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(existing.Namespace).Delete(
+				context.TODO(), existing.Name, metav1.DeleteOptions{},
+			); err != nil && !errors.IsNotFound(err) {
+				return fmt.Errorf("ReferenceGrant %s.%s delete error: %w", existing.Name, existing.Namespace, err)
+			}
+			gwr.logger.Infof("ReferenceGrant %s.%s has been deleted", existing.Name, existing.Namespace)
+		}
+	}
+	return nil
 }

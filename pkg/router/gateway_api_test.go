@@ -313,6 +313,63 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 		assert.Len(t, hr.Spec.Rules, 1)
 		assert.Len(t, hr.Spec.Rules[0].Filters, 0)
 	})
+
+	t.Run("custom backend filters", func(t *testing.T) {
+		canary := mocks.canary.DeepCopy()
+		primaryHostName := v1.PreciseHostname("primary.example.com")
+		canary.Spec.Service.PrimaryBackend = &flaggerv1.CustomBackend{
+			Filters: []v1.HTTPRouteFilter{
+				{
+					Type: v1.HTTPRouteFilterURLRewrite,
+					URLRewrite: &v1.HTTPURLRewriteFilter{
+						Hostname: &primaryHostName,
+					},
+				},
+			},
+		}
+
+		name := v1.ObjectName("canary")
+		unmanagedSvcNamespace := "kube-system"
+		namespace := v1.Namespace(unmanagedSvcNamespace)
+		port := v1.PortNumber(30080)
+		objRef := v1.BackendObjectReference{
+			Name:      name,
+			Namespace: &namespace,
+			Port:      &port,
+		}
+
+		canary.Spec.Service.CanaryBackend = &flaggerv1.CustomBackend{
+			BackendObjectReference: &objRef,
+		}
+		err = router.SetRoutes(canary, 50, 50, false)
+		require.NoError(t, err)
+
+		httpRoute, err := router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		primary := httpRoute.Spec.Rules[0].BackendRefs[0]
+		assert.Equal(t, int32(50), *primary.Weight)
+
+		canaryBackend := httpRoute.Spec.Rules[0].BackendRefs[1]
+		assert.Equal(t, canaryBackend.Name, name)
+		assert.Equal(t, canaryBackend.Namespace, &namespace)
+		assert.Equal(t, canaryBackend.Port, &port)
+
+		primaryBackend := httpRoute.Spec.Rules[0].BackendRefs[0].Filters[0].URLRewrite
+		assert.Equal(t, primaryBackend.Hostname, &primaryHostName)
+
+		err = router.Reconcile(canary)
+		require.NoError(t, err)
+
+		referenceGrant, err := router.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(unmanagedSvcNamespace).Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, unmanagedSvcNamespace, string(referenceGrant.Namespace))
+		assert.Equal(t, "HTTPRoute", string(referenceGrant.Spec.From[0].Kind))
+		assert.Equal(t, canary.Namespace, string(referenceGrant.Spec.From[0].Namespace))
+		assert.Equal(t, "Service", string(referenceGrant.Spec.To[0].Kind))
+		assert.Equal(t, "", string(referenceGrant.Spec.To[0].Group))
+		assert.Equal(t, string(name), string(*referenceGrant.Spec.To[0].Name))
+	})
 }
 
 func TestGatewayAPIRouter_getSessionAffinityRouteRules(t *testing.T) {
@@ -333,12 +390,8 @@ func TestGatewayAPIRouter_getSessionAffinityRouteRules(t *testing.T) {
 		_, pSvcName, cSvcName := canary.GetServiceNames()
 		weightedRouteRule := &v1.HTTPRouteRule{
 			BackendRefs: []v1.HTTPBackendRef{
-				{
-					BackendRef: router.makeBackendRef(pSvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-				},
-				{
-					BackendRef: router.makeBackendRef(cSvcName, initialCanaryWeight, canary.Spec.Service.Port),
-				},
+				router.makeHTTPBackendRef(pSvcName, initialPrimaryWeight, canary.Spec.Service.Port, nil),
+				router.makeHTTPBackendRef(cSvcName, initialCanaryWeight, canary.Spec.Service.Port, nil),
 			},
 		}
 		rules, err := router.getSessionAffinityRouteRules(canary, 10, weightedRouteRule)
@@ -414,12 +467,8 @@ func TestGatewayAPIRouter_getSessionAffinityRouteRules(t *testing.T) {
 		_, pSvcName, cSvcName := canary.GetServiceNames()
 		weightedRouteRule := &v1.HTTPRouteRule{
 			BackendRefs: []v1.HTTPBackendRef{
-				{
-					BackendRef: router.makeBackendRef(pSvcName, initialPrimaryWeight, canary.Spec.Service.Port),
-				},
-				{
-					BackendRef: router.makeBackendRef(cSvcName, initialCanaryWeight, canary.Spec.Service.Port),
-				},
+				router.makeHTTPBackendRef(pSvcName, initialPrimaryWeight, canary.Spec.Service.Port, nil),
+				router.makeHTTPBackendRef(cSvcName, initialCanaryWeight, canary.Spec.Service.Port, nil),
 			},
 		}
 		rules, err := router.getSessionAffinityRouteRules(canary, 10, weightedRouteRule)

@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
+	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -236,6 +236,14 @@ type CanaryService struct {
 	// Canary is the metadata to add to the canary service
 	// +optional
 	Canary *CustomMetadata `json:"canary,omitempty"`
+
+	// PrimaryBackend is the backend to add to the primary service
+	// +optional
+	PrimaryBackend *CustomBackend `json:"primaryBackend,omitempty"`
+
+	// CanaryBackend is the backend to add to the canary service
+	// +optional
+	CanaryBackend *CustomBackend `json:"canaryBackend,omitempty"`
 
 	// UnmanagedMetadata is a list of metadata keys that should be ignored by Flagger.
 	// Flagger will not add, remove or change the value of these annotations.
@@ -553,6 +561,28 @@ type ScalerReplicas struct {
 type CustomMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// CustomBackend holds labels, annotations, and proxyRef to set on generated objects.
+type CustomBackend struct {
+	// Ref references a Kubernetes object.
+	BackendObjectReference *v1.BackendObjectReference `json:"backendRef,omitempty"`
+
+	// Filters defined at this level should be executed if and only if the
+	// request is being forwarded to the backend defined here.
+	//
+	// Support: Implementation-specific (For broader support of filters, use the
+	// Filters field in HTTPRouteRule.)
+	//
+	// +optional
+	// +kubebuilder:validation:MaxItems=16
+	// +kubebuilder:validation:XValidation:message="May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both",rule="!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite'))"
+	// +kubebuilder:validation:XValidation:message="May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both",rule="!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite'))"
+	// +kubebuilder:validation:XValidation:message="RequestHeaderModifier filter cannot be repeated",rule="self.filter(f, f.type == 'RequestHeaderModifier').size() <= 1"
+	// +kubebuilder:validation:XValidation:message="ResponseHeaderModifier filter cannot be repeated",rule="self.filter(f, f.type == 'ResponseHeaderModifier').size() <= 1"
+	// +kubebuilder:validation:XValidation:message="RequestRedirect filter cannot be repeated",rule="self.filter(f, f.type == 'RequestRedirect').size() <= 1"
+	// +kubebuilder:validation:XValidation:message="URLRewrite filter cannot be repeated",rule="self.filter(f, f.type == 'URLRewrite').size() <= 1"
+	Filters []v1.HTTPRouteFilter `json:"filters,omitempty"`
 }
 
 // HTTPRewrite holds information about how to modify a request URI during
