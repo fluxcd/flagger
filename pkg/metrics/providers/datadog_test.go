@@ -75,7 +75,7 @@ func TestDatadogProvider_RunQuery(t *testing.T) {
 				assert.GreaterOrEqual(t, to, now)
 			}
 
-			json := fmt.Sprintf(`{"series": [{"pointlist": [[1577232000000,29325.102158814265],[1577318400000,56294.46758591842],[1577404800000,%f]]}]}`, expected)
+			json := fmt.Sprintf(`{"series": [{"pointlist": [[1577232000000,%f],[1577318400000,56294.46758591842],[1577404800000,29325.102158814265]]}]}`, expected)
 			w.Write([]byte(json))
 		}))
 		defer ts.Close()

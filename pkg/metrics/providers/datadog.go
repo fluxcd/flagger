@@ -143,16 +143,20 @@ func (p *DatadogProvider) RunQuery(query string) (float64, error) {
 		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
 	}
 
+	// in case of more than one series in the response, pick the first time series from the response
 	pl := res.Series[0].Pointlist
 	if len(pl) < 1 {
 		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
 	}
 
-	vs := pl[len(pl)-1]
+	// pick the first (oldest) timestamp/value pair from the time series, at the beginning of the interval
+	// must not pick the newest one from the end of the interval, since it almost always contains an incomplete bucket
+	vs := pl[0]
 	if len(vs) < 1 {
 		return 0, fmt.Errorf("invalid response: %s: %w", string(b), ErrNoValuesFound)
 	}
 
+	// return the second element of the pair: the value
 	return vs[1], nil
 }
 
