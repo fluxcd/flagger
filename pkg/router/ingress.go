@@ -135,7 +135,7 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 	}
 
 	// A/B testing
-	if len(canary.GetAnalysis().Match) > 0 {
+	if len(canary.GetAnalysis().Match) > 0 && canary.GetAnalysis().Iterations > 0 {
 		for k := range canaryIngress.Annotations {
 			if k == i.GetAnnotationWithPrefix("canary-by-cookie") || k == i.GetAnnotationWithPrefix("canary-by-header") {
 				return 0, 100, false, nil
@@ -156,7 +156,6 @@ func (i *IngressRouter) GetRoutes(canary *flaggerv1.Canary) (
 			break
 		}
 	}
-
 	primaryWeight = 100 - canaryWeight
 	mirrored = false
 	return
@@ -176,7 +175,8 @@ func (i *IngressRouter) SetRoutes(
 
 	iClone := canaryIngress.DeepCopy()
 
-	// A/B testing
+	// if iterations > 0 ,it's A/B testing.
+	// else it's a weight canary with match header
 	if len(canary.GetAnalysis().Match) > 0 {
 		var cookie, header, headerValue, headerRegex string
 		for _, m := range canary.GetAnalysis().Match {
@@ -192,7 +192,8 @@ func (i *IngressRouter) SetRoutes(
 		}
 
 		iClone.Annotations = i.makeHeaderAnnotations(iClone.Annotations, header, headerValue, headerRegex, cookie)
-	} else {
+	}
+	if canary.GetAnalysis().Iterations == 0 {
 		// canary
 		iClone.Annotations[i.GetAnnotationWithPrefix("canary-weight")] = fmt.Sprintf("%v", canaryWeight)
 	}
