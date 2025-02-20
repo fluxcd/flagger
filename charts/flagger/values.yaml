@@ -167,6 +167,17 @@ affinity:
               app.kubernetes.io/instance: '{{ .Release.Name }}'
           topologyKey: kubernetes.io/hostname
 
+topologySpreadConstraints:
+  - labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: '{{ template "flagger.name" . }}'
+        app.kubernetes.io/instance: '{{ .Release.Name }}'
+    matchLabelKeys:
+      - pod-template-hash
+    topologyKey: topology.kubernetes.io/zone
+    maxSkew: 1
+    whenUnsatisfiable: ScheduleAnyway
+
 prometheus:
   # to be used with ingress controllers
   install: false
