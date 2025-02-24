@@ -33,7 +33,7 @@ jobs:
         with:
           go-version: 1.23.x
       - uses: fluxcd/flux2/action@main
-      - uses: sigstore/cosign-installer@v3.7.0
+      - uses: sigstore/cosign-installer@v3.8.1
       - name: Prepare
         id: prep
         run: |
