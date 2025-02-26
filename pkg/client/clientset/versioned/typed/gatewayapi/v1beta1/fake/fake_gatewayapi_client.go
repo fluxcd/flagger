@@ -32,6 +32,10 @@ func (c *FakeGatewayapiV1beta1) HTTPRoutes(namespace string) v1beta1.HTTPRouteIn
 	return &FakeHTTPRoutes{c, namespace}
 }
 
+func (c *FakeGatewayapiV1beta1) ReferenceGrants(namespace string) v1beta1.ReferenceGrantInterface {
+	return &FakeReferenceGrants{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeGatewayapiV1beta1) RESTClient() rest.Interface {
