@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"net/http"
 	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
@@ -66,6 +67,10 @@ type MetricTemplateProvider struct {
 	// HTTP(S) address of this provider
 	// +optional
 	Address string `json:"address,omitempty"`
+
+	// Headers to be supplied to HTTP(S) request of this provider
+	// +optional
+	Headers http.Header `json:"headers,omitempty"`
 
 	// Secret reference containing the provider credentials
 	// +optional
