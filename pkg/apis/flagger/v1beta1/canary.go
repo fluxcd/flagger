@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"time"
 
+	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
 	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	http "github.com/fluxcd/flagger/pkg/apis/http/v1alpha1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -74,7 +76,7 @@ type CanarySpec struct {
 
 	// AutoscalerRef references an autoscaling resource
 	// +optional
-	AutoscalerRef *AutoscalerRefernce `json:"autoscalerRef,omitempty"`
+	AutoscalerRef *AutoscalerReference `json:"autoscalerRef,omitempty"`
 
 	// Reference to NGINX ingress resource
 	// +optional
@@ -218,11 +220,11 @@ type CanaryService struct {
 
 	// Primary is the metadata to add to the primary service
 	// +optional
-	Primary *CustomMetadata `json:"primary,omitempty"`
+	Primary *CustomBackend `json:"primary,omitempty"`
 
 	// Canary is the metadata to add to the canary service
 	// +optional
-	Canary *CustomMetadata `json:"canary,omitempty"`
+	Canary *CustomBackend `json:"canary,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done
@@ -463,7 +465,36 @@ type LocalObjectReference struct {
 	Name string `json:"name"`
 }
 
-type AutoscalerRefernce struct {
+// CanaryInterceptorProxyService specifies the service if you want to change
+// the Canary interceptor proxy service from its default value.
+type CanaryInterceptorProxyService struct {
+	// Name of the canary interceptor proxy service.
+	// Defaults to "keda-http-add-on-interceptor-proxy".
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the canary interceptor proxy service.
+	// Defaults to "keda".
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// ScalingSetRef defines the desired scaling set to be used
+type ScalingSetRef struct {
+	// Kind of the resource being referred to. Defaults to HTTPScalingSet.
+	// +optional
+	Kind http.ScalingSetKind `json:"kind,omitempty"`
+
+	// Name of the scaling set
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the scaling set
+	// Defaults to "keda".
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
+type AutoscalerReference struct {
 	// API version of the scaler
 	// +required
 	APIVersion string `json:"apiVersion,omitempty"`
@@ -485,6 +516,11 @@ type AutoscalerRefernce struct {
 	// autoscaler replicas.
 	// +optional
 	PrimaryScalerReplicas *ScalerReplicas `json:"primaryScalerReplicas,omitempty"`
+
+	// PrimaryScalingSet is the scaling set to be used for the primary
+	// scaler, if a scaler supports scaling using queries.
+	// +optional
+	PrimaryScalingSet *ScalingSetRef `json:"primaryScalingSet,omitempty"`
 }
 
 // ScalerReplicas holds overrides for autoscaler replicas
@@ -499,6 +535,30 @@ type ScalerReplicas struct {
 type CustomMetadata struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// CustomBackend holds labels, annotations, and proxyRef to set on generated objects.
+type CustomBackend struct {
+	CustomMetadata
+
+	// Ref references a Kubernetes object.
+	BackendObjectReference *v1.BackendObjectReference `json:"backendRef,omitempty"`
+
+	// Filters defined at this level should be executed if and only if the
+	// request is being forwarded to the backend defined here.
+	//
+	// Support: Implementation-specific (For broader support of filters, use the
+	// Filters field in HTTPRouteRule.)
+	//
+	// +optional
+	// +kubebuilder:validation:MaxItems=16
+	// +kubebuilder:validation:XValidation:message="May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both",rule="!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite'))"
+	// +kubebuilder:validation:XValidation:message="May specify either httpRouteFilterRequestRedirect or httpRouteFilterRequestRewrite, but not both",rule="!(self.exists(f, f.type == 'RequestRedirect') && self.exists(f, f.type == 'URLRewrite'))"
+	// +kubebuilder:validation:XValidation:message="RequestHeaderModifier filter cannot be repeated",rule="self.filter(f, f.type == 'RequestHeaderModifier').size() <= 1"
+	// +kubebuilder:validation:XValidation:message="ResponseHeaderModifier filter cannot be repeated",rule="self.filter(f, f.type == 'ResponseHeaderModifier').size() <= 1"
+	// +kubebuilder:validation:XValidation:message="RequestRedirect filter cannot be repeated",rule="self.filter(f, f.type == 'RequestRedirect').size() <= 1"
+	// +kubebuilder:validation:XValidation:message="URLRewrite filter cannot be repeated",rule="self.filter(f, f.type == 'URLRewrite').size() <= 1"
+	Filters []v1.HTTPRouteFilter `json:"filters,omitempty"`
 }
 
 // HTTPRewrite holds information about how to modify a request URI during
@@ -628,4 +688,9 @@ func (c *Canary) SkipAnalysis() bool {
 		return true
 	}
 	return c.Spec.SkipAnalysis
+}
+
+// IsHTTPScaledObject returns true if the autoscalerRef is a HTTPScaledObject
+func (c *Canary) IsHTTPScaledObject() bool {
+	return c.Spec.AutoscalerRef != nil && c.Spec.AutoscalerRef.Kind == "HTTPScaledObject"
 }

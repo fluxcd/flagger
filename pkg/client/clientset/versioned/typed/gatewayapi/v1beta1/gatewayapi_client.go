@@ -29,6 +29,7 @@ import (
 type GatewayapiV1beta1Interface interface {
 	RESTClient() rest.Interface
 	HTTPRoutesGetter
+	ReferenceGrantsGetter
 }
 
 // GatewayapiV1beta1Client is used to interact with features provided by the gatewayapi group.
@@ -38,6 +39,10 @@ type GatewayapiV1beta1Client struct {
 
 func (c *GatewayapiV1beta1Client) HTTPRoutes(namespace string) HTTPRouteInterface {
 	return newHTTPRoutes(c, namespace)
+}
+
+func (c *GatewayapiV1beta1Client) ReferenceGrants(namespace string) ReferenceGrantInterface {
+	return newReferenceGrants(c, namespace)
 }
 
 // NewForConfig creates a new GatewayapiV1beta1Client for the given config.
