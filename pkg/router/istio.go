@@ -245,7 +245,10 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Retries:    canary.Spec.Service.Retries,
 				CorsPolicy: canary.Spec.Service.CorsPolicy,
 				Headers:    canary.Spec.Service.Headers,
-				Route:      canaryRoute,
+				Route: []istiov1beta1.HTTPRouteDestination{
+					makeDestination(canary, primaryName, 0),
+					makeDestination(canary, canaryName, 100),
+				},
 			},
 			{
 				Match:      canary.Spec.Service.Match,
