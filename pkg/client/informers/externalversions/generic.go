@@ -141,7 +141,7 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1alpha3.SchemeGroupVersion.WithResource("trafficsplits"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Split().V1alpha3().TrafficSplits().Informer()}, nil
 
-		// Group=traefik.containo.us, Version=v1alpha1
+		// Group=traefik.io, Version=v1alpha1
 	case traefikv1alpha1.SchemeGroupVersion.WithResource("traefikservices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().TraefikServices().Informer()}, nil
 

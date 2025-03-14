@@ -8,7 +8,7 @@ set -o errexit
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 cat <<EOF | kubectl apply -f -
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: podinfo
