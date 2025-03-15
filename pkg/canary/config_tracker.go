@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 
 	"go.uber.org/zap"
@@ -88,7 +89,7 @@ func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*Co
 	return &ConfigRef{
 		Name:     config.Name,
 		Type:     ConfigRefMap,
-		Checksum: checksum(config.Data),
+		Checksum: checksum(ct.getFullDataFromConfigMap(*config)),
 	}, nil
 }
 
@@ -116,8 +117,33 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 	return &ConfigRef{
 		Name:     secret.Name,
 		Type:     ConfigRefSecret,
-		Checksum: checksum(secret.Data),
+		Checksum: checksum(ct.getFullDataFromSecret(*secret)),
 	}, nil
+}
+
+// getFullDataFromConfigMap fetches both data and binaryData in the configmap
+func (ct *ConfigTracker) getFullDataFromConfigMap(config corev1.ConfigMap) map[string]string {
+	fullData := make(map[string]string)
+	maps.Copy(fullData, config.Data)
+
+	for k, v := range config.BinaryData {
+		fullData[k] = string(v)
+
+	}
+
+	return fullData
+}
+
+// getFullDataFromSecret fetches both data and stringData in the secret
+func (ct *ConfigTracker) getFullDataFromSecret(secret corev1.Secret) map[string]string {
+	fullData := make(map[string]string)
+	maps.Copy(fullData, secret.StringData)
+
+	for k, v := range secret.Data {
+		fullData[k] = string(v)
+	}
+
+	return fullData
 }
 
 // GetTargetConfigs scans the target deployment for Kubernetes ConfigMaps and Secrets
@@ -332,7 +358,8 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 					Labels:          labels,
 					OwnerReferences: ownerReferences,
 				},
-				Data: config.Data,
+				Data:       config.Data,
+				BinaryData: config.BinaryData,
 			}
 
 			// update or insert primary ConfigMap
@@ -385,8 +412,9 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 					Labels:          labels,
 					OwnerReferences: ownerReferences,
 				},
-				Type: secret.Type,
-				Data: secret.Data,
+				Type:       secret.Type,
+				Data:       secret.Data,
+				StringData: secret.StringData,
 			}
 
 			// update or insert primary Secret
