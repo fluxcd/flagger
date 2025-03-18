@@ -35,6 +35,7 @@
 * [Open Service Mesh Deployments](tutorials/osm-progressive-delivery.md)
 * [Kuma Canary Deployments](tutorials/kuma-progressive-delivery.md)
 * [Gateway API Canary Deployments](tutorials/gatewayapi-progressive-delivery.md)
+* [Knative Canary Deployments](tutorials/knative-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
 * [Canary analysis with KEDA ScaledObjects](tutorials/keda-scaledobject.md)

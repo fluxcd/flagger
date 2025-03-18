@@ -17,3 +17,4 @@ redirects:
   usage/kuma-progressive-delivery: tutorials/kuma-progressive-delivery.md
   usage/gatewayapi-progressive-delivery: tutorials/gatewayapi-progressive-delivery.md
   usage/apisix-progressive-delivery: tutorials/apisix-progressive-delivery.md
+  usage/knative-progressive-delivery: tutorials/knative-progressive-delivery.md
