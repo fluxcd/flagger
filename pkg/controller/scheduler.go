@@ -318,22 +318,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// check if canary revision changed during analysis
 	if restart := c.hasCanaryRevisionChanged(cd, canaryController); restart {
-		// update canary status to ensure checksum is up to date in all webhooks
-		if err := canaryController.SyncStatus(cd, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
-			return
-		}
-
-		// Get updated version of canary
-		cd, err = c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(context.TODO(), cd.Name, metav1.GetOptions{})
-		if err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
-			return
-		}
-
-		c.recordEventInfof(cd, "New revision detected! Restarting analysis for %s.%s",
-			cd.Spec.TargetRef.Name, cd.Namespace)
-
 		// route all traffic back to primary
 		primaryWeight = c.totalWeight(cd)
 		canaryWeight = 0
@@ -352,6 +336,17 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		if err := canaryController.SyncStatus(cd, status); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 		}
+
+		// Get updated status object
+		cd, err = c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(context.TODO(), cd.Name, metav1.GetOptions{})
+		if err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
+			return
+		}
+		
+		c.recordEventInfof(cd, "New revision detected! Restarting analysis for %s.%s",
+			cd.Spec.TargetRef.Name, cd.Namespace)
+		
 		return
 	}
 
@@ -751,7 +746,7 @@ func (c *Controller) runAnalysis(canary *flaggerv1.Canary) bool {
 		if webhook.Type == "" || webhook.Type == flaggerv1.RolloutHook {
 			err := CallWebhook(*canary, flaggerv1.CanaryPhaseProgressing, webhook)
 			if err != nil {
-				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed: %v",
+				c.recordEventWarningf(canary, "Halt %s.%s advancement external check %s failed %v",
 					canary.Name, canary.Namespace, webhook.Name, err)
 				return false
 			}
