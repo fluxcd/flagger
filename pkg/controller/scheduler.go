@@ -337,10 +337,9 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.recordEventWarningf(cd, "%v", err)
 		}
 
-		// Get updated status object
 		cd, err = c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(context.TODO(), cd.Name, metav1.GetOptions{})
 		if err != nil {
-			c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Errorf("%v", err)
+			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
 		
