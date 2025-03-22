@@ -337,6 +337,9 @@ func (c *Controller) verifyCanary(canary *flaggerv1.Canary) error {
 	if err := verifyKnativeCanary(canary); err != nil {
 		return err
 	}
+	if err := verifySessionAffinity(canary); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -372,6 +375,16 @@ func verifyKnativeCanary(canary *flaggerv1.Canary) error {
 	if canary.Spec.TargetRef.IsKnativeService() {
 		if canary.Spec.AutoscalerRef != nil {
 			return fmt.Errorf("can't use autoscaler with Knative Service")
+		}
+	}
+
+	return nil
+}
+
+func verifySessionAffinity(canary *flaggerv1.Canary) error {
+	if canary.Spec.Analysis.SessionAffinity != nil {
+		if canary.Spec.Analysis.SessionAffinity.CookieName == canary.Spec.Analysis.SessionAffinity.PrimaryCookieName {
+			return fmt.Errorf("can't use the same cookie name for both primary and cookie name; please update them to be different")
 		}
 	}
 

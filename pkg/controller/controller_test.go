@@ -26,6 +26,7 @@ func TestController_verifyCanary(t *testing.T) {
 						Name:      "upstream",
 						Namespace: "test",
 					},
+					Analysis: &flaggerv1.CanaryAnalysis{},
 				},
 			},
 			wantErr: true,
@@ -42,6 +43,7 @@ func TestController_verifyCanary(t *testing.T) {
 						Name:      "upstream",
 						Namespace: "default",
 					},
+					Analysis: &flaggerv1.CanaryAnalysis{},
 				},
 			},
 			wantErr: false,
@@ -103,6 +105,7 @@ func TestController_verifyCanary(t *testing.T) {
 						Kind: "Deployment",
 						Name: "podinfo",
 					},
+					Analysis: &flaggerv1.CanaryAnalysis{},
 				},
 			},
 			wantErr: true,
@@ -121,6 +124,7 @@ func TestController_verifyCanary(t *testing.T) {
 						APIVersion: "serving.knative.dev/v1",
 						Name:       "podinfo",
 					},
+					Analysis: &flaggerv1.CanaryAnalysis{},
 				},
 			},
 			wantErr: true,
@@ -140,6 +144,7 @@ func TestController_verifyCanary(t *testing.T) {
 						APIVersion: "serving.knative.dev/v1",
 						Name:       "podinfo",
 					},
+					Analysis: &flaggerv1.CanaryAnalysis{},
 				},
 			},
 			wantErr: true,
@@ -158,9 +163,28 @@ func TestController_verifyCanary(t *testing.T) {
 						APIVersion: "serving.knative.dev/v1",
 						Name:       "podinfo",
 					},
+					Analysis: &flaggerv1.CanaryAnalysis{},
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "session affinity with same cookie names should return an error",
+			canary: flaggerv1.Canary{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cd-1",
+					Namespace: "default",
+				},
+				Spec: flaggerv1.CanarySpec{
+					Analysis: &flaggerv1.CanaryAnalysis{
+						SessionAffinity: &flaggerv1.SessionAffinity{
+							CookieName:        "smth",
+							PrimaryCookieName: "smth",
+						},
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 

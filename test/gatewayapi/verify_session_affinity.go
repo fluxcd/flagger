@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,30 +11,39 @@ import (
 	"time"
 )
 
-var c = make(chan string, 1)
-var mu sync.Mutex
-var try = true
+// channel for canary cookie
+var cc = make(chan string, 1)
+
+// channel for primary cookie
+var pc = make(chan string, 1)
 var timeout = time.Second * 10
 
 func main() {
 	url := os.Getenv("URL")
 	host := os.Getenv("HOST")
-	version := os.Getenv("VERSION")
-	cookieName := os.Getenv("COOKIE_NAME")
+	canaryVersion := os.Getenv("CANARY_VERSION")
+	canaryCookieName := os.Getenv("CANARY_COOKIE_NAME")
+	primaryVersion := os.Getenv("PRIMARY_VERSION")
+	primaryCookieName := os.Getenv("PRIMARY_COOKIE_NAME")
 
-	// Generate traffic
-	for i := 0; i < 10; i++ {
-		go tryUntilCanaryIsHit(url, host, version, cookieName)
-	}
+	go tryUntilWorkloadIsHit(url, host, canaryVersion, canaryCookieName, cc)
+	go tryUntilWorkloadIsHit(url, host, primaryVersion, primaryCookieName, pc)
 
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	go verifySessionAffinity(cc, wg, url, host, primaryVersion)
+	go verifySessionAffinity(pc, wg, url, host, canaryVersion)
+
+	wg.Wait()
+	log.Println("✔ successfully verified session affinity")
+}
+
+func verifySessionAffinity(cc chan string, wg *sync.WaitGroup, url, host, wrongVersion string) {
 	select {
 	// If we receive a cookie, then try to verify that we are always routed to the
 	// Canary deployment based on the cookie.
-	case cookie := <-c:
-		mu.Lock()
-		try = false
-		mu.Unlock()
-
+	case cookie := <-cc:
 		for i := 0; i < 5; i++ {
 			headers := map[string]string{
 				"Cookie": cookie,
@@ -43,15 +52,15 @@ func main() {
 			if err != nil {
 				log.Fatalf("failed to send request to verify cookie based routing: %v", err)
 			}
-			if !strings.Contains(body, version) {
-				log.Fatalf("received response from primary deployment instead of canary deployment")
+			if strings.Contains(body, wrongVersion) {
+				log.Fatalf("received response from the wrong deployment")
 			}
 		}
-
-		log.Println("✔ successfully verified session affinity")
+		wg.Done()
 	case <-time.After(timeout):
-		log.Fatal("timed out waiting for canary hit")
+		log.Fatal("timed out waiting for workload hit")
 	}
+
 }
 
 // sendRequest sends a request to the URL with the provided host and headers.
@@ -74,7 +83,7 @@ func sendRequest(url, host string, headers map[string]string) (string, []*http.C
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", nil, err
 	}
@@ -82,17 +91,10 @@ func sendRequest(url, host string, headers map[string]string) (string, []*http.C
 	return string(body), resp.Cookies(), nil
 }
 
-// tryUntilCanaryIsHit is a recursive function that tries to send request and
+// tryUntilWorkloadIsHit is a recursive function that tries to send request and
 // either sends the cookie back to the main thread (if received) or re-sends
 // the request.
-func tryUntilCanaryIsHit(url, host, version, cookieName string) {
-	mu.Lock()
-	if !try {
-		mu.Unlock()
-		return
-	}
-	mu.Unlock()
-
+func tryUntilWorkloadIsHit(url, host, version, cookieName string, c chan string) {
 	body, cookies, err := sendRequest(url, host, nil)
 	if err != nil {
 		log.Printf("warning: failed to send request: %s", err)
@@ -105,6 +107,5 @@ func tryUntilCanaryIsHit(url, host, version, cookieName string) {
 		}
 	}
 
-	tryUntilCanaryIsHit(url, host, version, cookieName)
-	return
+	tryUntilWorkloadIsHit(url, host, version, cookieName, c)
 }

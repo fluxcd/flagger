@@ -44,7 +44,8 @@ spec:
     maxWeight: 50
     stepWeight: 10
     sessionAffinity:
-      cookieName: flagger-cookie
+      cookieName: canary-flagger-cookie
+      primaryCookieName: primary-flagger-cookie
     metrics:
       - name: error-rate
         templateRef:
@@ -63,7 +64,7 @@ spec:
     webhooks:
       - name: load-test
         type: rollout
-        url: http://flagger-loadtester.test/
+        url: http://localhost:8080
         timeout: 5s
         metadata:
           cmd: "hey -z 2m -q 10 -c 2 -host www.example.com http://gateway-istio.istio-ingress"
@@ -104,7 +105,8 @@ until ${ok}; do
 done
 
 echo '>>> Verifying session affinity'
-if ! URL=http://localhost:8888 HOST=www.example.com VERSION=6.1.0 COOKIE_NAME=flagger-cookie \
+if ! URL=http://localhost:8888 HOST=www.example.com CANARY_VERSION=6.1.0 \
+  CANARY_COOKIE_NAME=canary-flagger-cookie PRIMARY_VERSION=6.0.4 PRIMARY_COOKIE_NAME=primary-flagger-cookie \
     go run ${REPO_ROOT}/test/gatewayapi/verify_session_affinity.go; then
     echo "failed to verify session affinity"
     exit $?
