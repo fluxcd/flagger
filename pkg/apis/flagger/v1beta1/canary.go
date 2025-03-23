@@ -463,6 +463,14 @@ type LocalObjectReference struct {
 	Name string `json:"name"`
 }
 
+func (l *LocalObjectReference) IsKnativeService() bool {
+	if l.Kind == "Service" && l.APIVersion == "serving.knative.dev/v1" {
+		return true
+	}
+
+	return false
+}
+
 type AutoscalerRefernce struct {
 	// API version of the scaler
 	// +required

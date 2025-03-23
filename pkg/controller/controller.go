@@ -45,6 +45,7 @@ import (
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
 	"github.com/fluxcd/flagger/pkg/notifier"
 	"github.com/fluxcd/flagger/pkg/router"
+	knative "knative.dev/serving/pkg/client/clientset/versioned"
 )
 
 const controllerAgentName = "flagger"
@@ -53,6 +54,7 @@ const controllerAgentName = "flagger"
 type Controller struct {
 	kubeConfig           *rest.Config
 	kubeClient           kubernetes.Interface
+	knativeClient        knative.Interface
 	flaggerClient        clientset.Interface
 	flaggerInformers     Informers
 	flaggerSynced        cache.InformerSynced
@@ -81,6 +83,7 @@ type Informers struct {
 
 func NewController(
 	kubeClient kubernetes.Interface,
+	knativeClient knative.Interface,
 	flaggerClient clientset.Interface,
 	flaggerInformers Informers,
 	flaggerWindow time.Duration,
@@ -111,6 +114,7 @@ func NewController(
 	ctrl := &Controller{
 		kubeConfig:           kubeConfig,
 		kubeClient:           kubeClient,
+		knativeClient:        knativeClient,
 		flaggerClient:        flaggerClient,
 		flaggerInformers:     flaggerInformers,
 		flaggerSynced:        flaggerInformers.CanaryInformer.Informer().HasSynced,
@@ -330,6 +334,10 @@ func (c *Controller) verifyCanary(canary *flaggerv1.Canary) error {
 			return err
 		}
 	}
+	if err := verifyKnativeCanary(canary); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -349,6 +357,24 @@ func verifyNoCrossNamespaceRefs(canary *flaggerv1.Canary) error {
 			}
 		}
 	}
+	return nil
+}
+
+func verifyKnativeCanary(canary *flaggerv1.Canary) error {
+	if canary.Spec.TargetRef.IsKnativeService() != (canary.Spec.Provider == flaggerv1.KnativeProvider) {
+		if canary.Spec.TargetRef.IsKnativeService() {
+			return fmt.Errorf("can't use %s provider with Knative Service as target", canary.Spec.Provider)
+		}
+		return fmt.Errorf("can't use %s/%s as target if provider is set to knative",
+			canary.Spec.TargetRef.APIVersion, canary.Spec.TargetRef.Kind)
+	}
+
+	if canary.Spec.TargetRef.IsKnativeService() {
+		if canary.Spec.AutoscalerRef != nil {
+			return fmt.Errorf("can't use autoscaler with Knative Service")
+		}
+	}
+
 	return nil
 }
 

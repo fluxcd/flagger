@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger
+spec:
+  template:
+    spec:
+      containers:
+        - name: flagger
+          args:
+            - -log-level=info
+            - -include-label-prefix=app.kubernetes.io
+            - -mesh-provider=knative
+            - -metrics-server=http://flagger-prometheus:9090

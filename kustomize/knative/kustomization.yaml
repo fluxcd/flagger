@@ -1,0 +1,8 @@
+namespace: flagger-system
+resources:
+  - namespace.yaml
+bases:
+  - ../base/flagger/
+  - ../base/prometheus/
+patchesStrategicMerge:
+  - patch.yaml

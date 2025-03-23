@@ -90,6 +90,78 @@ func TestController_verifyCanary(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "knative provider with non-knative service should return an error",
+			canary: flaggerv1.Canary{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cd-1",
+					Namespace: "default",
+				},
+				Spec: flaggerv1.CanarySpec{
+					Provider: "knative",
+					TargetRef: flaggerv1.LocalObjectReference{
+						Kind: "Deployment",
+						Name: "podinfo",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "knative service with non-knative provider should return an error",
+			canary: flaggerv1.Canary{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cd-1",
+					Namespace: "default",
+				},
+				Spec: flaggerv1.CanarySpec{
+					Provider: "istio",
+					TargetRef: flaggerv1.LocalObjectReference{
+						Kind:       "Service",
+						APIVersion: "serving.knative.dev/v1",
+						Name:       "podinfo",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "knative service with autoscaler ref should return an error",
+			canary: flaggerv1.Canary{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cd-1",
+					Namespace: "default",
+				},
+				Spec: flaggerv1.CanarySpec{
+					Provider:      "knative",
+					AutoscalerRef: &flaggerv1.AutoscalerRefernce{},
+					TargetRef: flaggerv1.LocalObjectReference{
+						Kind:       "Service",
+						APIVersion: "serving.knative.dev/v1",
+						Name:       "podinfo",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "knative service with knative provider is okay",
+			canary: flaggerv1.Canary{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cd-1",
+					Namespace: "default",
+				},
+				Spec: flaggerv1.CanarySpec{
+					Provider: "knative",
+					TargetRef: flaggerv1.LocalObjectReference{
+						Kind:       "Service",
+						APIVersion: "serving.knative.dev/v1",
+						Name:       "podinfo",
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	ctrl := &Controller{

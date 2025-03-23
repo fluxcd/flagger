@@ -21,11 +21,15 @@ import (
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	serving "knative.dev/serving/pkg/apis/serving/v1"
+	knative "knative.dev/serving/pkg/client/clientset/versioned"
+	fakeKnative "knative.dev/serving/pkg/client/clientset/versioned/fake"
 
 	appmesh "github.com/fluxcd/flagger/pkg/apis/appmesh"
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -43,6 +47,7 @@ type fixture struct {
 	appmeshCanary *flaggerv1.Canary
 	ingressCanary *flaggerv1.Canary
 	kubeClient    kubernetes.Interface
+	knativeClient knative.Interface
 	meshClient    clientset.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
@@ -83,6 +88,7 @@ func newFixture(c *flaggerv1.Canary) fixture {
 		kubeClient:    kubeClient,
 		meshClient:    meshClient,
 		flaggerClient: flaggerClient,
+		knativeClient: fakeKnative.NewSimpleClientset(newTestKnativeService()),
 		logger:        logger,
 	}
 }
@@ -124,6 +130,39 @@ func newTestApisixRoute() *a6v2.ApisixRoute {
 		},
 	}
 	return ar
+}
+
+func newTestKnativeService() *serving.Service {
+	s := &serving.Service{
+		TypeMeta: metav1.TypeMeta{APIVersion: serving.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "podinfo",
+			Namespace: "default",
+		},
+		Spec: serving.ServiceSpec{
+			ConfigurationSpec: serving.ConfigurationSpec{
+				Template: serving.RevisionTemplateSpec{
+					Spec: serving.RevisionSpec{
+						PodSpec: v1.PodSpec{
+							Containers: []v1.Container{
+								{
+									Name:  "podinfo",
+									Image: "quay.io/stefanprodan/podinfo:1.2.0",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Status: serving.ServiceStatus{
+			ConfigurationStatusFields: serving.ConfigurationStatusFields{
+				LatestCreatedRevisionName: "podinfo-00001",
+			},
+		},
+	}
+
+	return s
 }
 
 func newTestCanary() *flaggerv1.Canary {
@@ -555,6 +594,42 @@ func newTestGatewayAPICanary() *flaggerv1.Canary {
 					},
 				},
 				Timeout: "10s",
+			},
+			Analysis: &flaggerv1.CanaryAnalysis{
+				Threshold:  10,
+				StepWeight: 10,
+				MaxWeight:  50,
+				Metrics: []flaggerv1.CanaryMetric{
+					{
+						Name:      "request-success-rate",
+						Threshold: 99,
+						Interval:  "1m",
+					},
+					{
+						Name:      "request-duration",
+						Threshold: 500,
+						Interval:  "1m",
+					},
+				},
+			},
+		},
+	}
+	return cd
+}
+
+func newTestKnativeCanary() *flaggerv1.Canary {
+	cd := &flaggerv1.Canary{
+		TypeMeta: metav1.TypeMeta{APIVersion: flaggerv1.SchemeGroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "podinfo",
+		},
+		Spec: flaggerv1.CanarySpec{
+			Provider: "knative",
+			TargetRef: flaggerv1.LocalObjectReference{
+				Name:       "podinfo",
+				APIVersion: "serving.knative.dev/v1",
+				Kind:       "Service",
 			},
 			Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,

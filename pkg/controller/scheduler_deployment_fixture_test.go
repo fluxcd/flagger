@@ -121,7 +121,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	}
 
 	// init router
-	rf := router.NewFactory(nil, kubeClient, flaggerClient, "annotationsPrefix", "", logger, flaggerClient, true)
+	rf := router.NewFactory(nil, kubeClient, flaggerClient, nil, "annotationsPrefix", "", logger, flaggerClient, true)
 
 	// init observer
 	observerFactory, _ := observers.NewFactory(testMetricsServerURL)
@@ -132,7 +132,7 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 		KubeClient:    kubeClient,
 		FlaggerClient: flaggerClient,
 	}
-	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, configTracker, []string{"app", "name"}, []string{""}, logger)
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, nil, configTracker, []string{"app", "name"}, []string{""}, logger)
 
 	ctrl := &Controller{
 		kubeClient:       kubeClient,
@@ -159,8 +159,10 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	meshRouter := rf.MeshRouter("istio", "")
 
 	return fixture{
-		canary:        c,
-		deployer:      canaryFactory.Controller("Deployment"),
+		canary: c,
+		deployer: canaryFactory.Controller(flaggerv1.LocalObjectReference{
+			Kind: "Deployment",
+		}),
 		logger:        logger,
 		flaggerClient: flaggerClient,
 		meshClient:    flaggerClient,
