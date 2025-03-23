@@ -168,7 +168,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		msg := "skipping canary run as object is suspended"
 		c.logger.With("canary", fmt.Sprintf("%s.%s", name, namespace)).
 			Debug(msg)
-		c.recordEventInfof(cd, msg)
+		c.recordEventInfof(cd, "%s", msg)
 		return
 	}
 
