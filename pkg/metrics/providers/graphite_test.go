@@ -300,7 +300,7 @@ func TestGraphiteProvider_IsOnline(t *testing.T) {
 				}
 
 				w.WriteHeader(test.code)
-				fmt.Fprintf(w, test.body)
+				fmt.Fprintf(w, "%s", test.body)
 			}))
 			defer ts.Close()
 

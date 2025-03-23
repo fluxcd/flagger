@@ -31,7 +31,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23.x
+          go-version: 1.24.x
       - uses: fluxcd/flux2/action@main
       - uses: sigstore/cosign-installer@v3.7.0
       - name: Prepare
