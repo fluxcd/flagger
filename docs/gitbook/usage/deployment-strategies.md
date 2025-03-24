@@ -407,7 +407,7 @@ cookie based routing with regular weight based routing. This means once a user i
 version of our application (based on the traffic weights), they're always routed to that version, i.e.
 they're never routed back to the old version of our application.
 
-You can enable this, by specifying `.spec.analsyis.sessionAffinity` in the Canary:
+You can enable this, by specifying `.spec.analysis.sessionAffinity` in the Canary:
 
 ```yaml
   analysis:
@@ -450,3 +450,47 @@ the Canary deployment:
 ```
 Set-Cookie: flagger-cookie=McxKdLQoIN; Max-Age=21600
 ```
+
+### Configuring stickiness for Primary deployment
+
+The above strategy is helpful because it makes sure that any user that's routed to the Canary deployment
+once is always routed to that deployment. But, this can results in an imbalance in the traffic shifting,
+as over time, most of the traffic flows to the Canary deployment. To ensure fair traffic distribution, we
+can also configure stickiness for the Primary deployment. You can configure this by specifying a
+`primaryCookieName` field:
+
+```yaml
+  analysis:
+    # schedule interval (default 60s)
+    interval: 1m
+    sessionAffinity:
+      # name of the cookie used
+      cookieName: flagger-cookie
+      # max age of the cookie (in seconds)
+      # optional; defaults to 86400
+      maxAge: 21600
+      # name of the cookie to use for the primary backend
+      # optional; unset means no primary stickiness
+      primaryCookieName: primary-flagger-cookie
+```
+
+> Note: This is only supported for the Gateway API provider for now.
+
+Let's understand what the above configuration does. All the session affinity stuff in the above section
+still occurs, but now the response header for requests routed to the primary deployment also include a
+`Set-Cookie` header:
+```
+Set-Cookie: primary-flagger-cookie=ApvLdqCoMF; Max-Age=60
+```
+
+Note that the age of the cookie is the same as the Canary analysis's interval. This means that the cookie
+expires when a new steps of the analysis begins and a new cookie is generated like so:
+```
+Set-Cookie: primary-flagger-cookie=BRtlVaQoPC; Max-Age=60
+```
+
+This ensures that, if the first request of a user during a particular step is routed to the primary deployment,
+then all subsequent requests will be routed to the same until the next step starts. During a new step, a new cookie 
+value is generated which is then included in the headers of responses from the primary workload. This allows for
+weighted traffic routing to happen while ensuring that users don't ever switch back to the primary deployment from
+the canary deployment during a Canary analysis.

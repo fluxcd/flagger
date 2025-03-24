@@ -295,6 +295,9 @@ type SessionAffinity struct {
 	// The default value is 86,400 seconds, i.e. a day.
 	// +optional
 	MaxAge int `json:"maxAge,omitempty"`
+	// PrimaryCookieName is the key that will be used for the primary session affinity cookie.
+	// +optional
+	PrimaryCookieName string `json:"primaryCookieName,omitempty"`
 }
 
 // CanaryMetric holds the reference to metrics used for canary analysis

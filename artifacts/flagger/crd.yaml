@@ -1155,6 +1155,9 @@ spec:
                         cookieName:
                           description: CookieName is the key that will be used for the session affinity cookie.
                           type: string
+                        primaryCookieName:
+                          description: CookieName is the key that will be used for the session affinity cookie.
+                          type: string
                         maxAge:
                           description: MaxAge indicates the number of seconds until the session affinity cookie will expire.
                           default: 86400
