@@ -303,7 +303,7 @@ spec:
         destination_workload:{{ target }},
         !response_code:404
       }.as_count()
-      / 
+      /
       sum:istio.mesh.request.count{
         reporter:destination,
         destination_workload_namespace:{{ namespace }},
@@ -325,6 +325,61 @@ Reference the template in the canary analysis:
           max: 5
         interval: 1m
 ```
+
+### Common Pitfalls for Datadog
+
+The following examples use a ingress-nginx replicaset of three web servers, and a client that performs approximately
+5 requests per second, constantly. Each of the three nginx web servers report their metrics every 15 seconds.
+
+#### Pitfall 1: Converting metrics to rates (using `.as_rate()`) can have high sampling noise
+
+Example query `sum:nginx_ingress.controller.requests{env:development, ingress:my-ingress} by {env}.as_rate()`
+for the past 5 minutes.
+
+![Sample Datadog time series showing high sampling noise](./images/datadog-sampling-noise.png)
+
+Datadog does an automatic rollup (up/downsampling) of a timeseries, and the time resolution is based on the
+requested interval. The longer the interval, the coarser the time resolution and vice versa. This means, for short
+intervals, the time resolution of the query response can be higher than the reporting rate of the app, leading to
+a spiky rate graph that oscillates erratically, not even close to the real rate.
+
+This amplifies even more when applying e.g. `default_zero()`, where Datadog inserts zeros for every empty time interval
+in the response.
+
+Example query `default_zero(sum:nginx_ingress.controller.requests{env:development, ingress:my-ingress} by {env}.as_rate())`
+for the past 5 minutes.
+
+![Sample Datadog time series showing incorrect zeros inserted](./images/datadog-default-zero.png)
+
+To overcome this, you should manually apply a `rollup()` to your query, aggregating at least one complete reporting
+interval of your application (in this case: 15 seconds).
+
+#### Pitfall 2: Datadog metrics tend to return incomplete (thus usually too small) values for the most recent time intervals
+
+Example query: `sum:nginx_ingress.controller.requests{env:development, ingress:my-ingress} by {env}.as_rate().rollup(15)`
+
+![Sample Datadog time series showing incomplete recent samples](./images/datadog-recent-samples.png)
+
+The rightmost bar displays a smaller value, because not all targets contributing to the metric have reported
+the most recent time interval yet. In extreme cases, the value will be zero. As time goes by, this bar will fill,
+but the most recent bar(s) are almost always incomplete. Sometimes, the Datadog UI shades the last bucket in the
+example as incomplete, but, this "incomplete data" information is not part of the returned time series, so Flagger
+cannot know which samples to trust.
+
+#### Recommendations on Datadog metrics evaluations
+
+Flagger queries Datadog for an interval between and `analysis.metrics.interval` ago and `now` , and
+then (since release (TODO: unreleased)) takes the **first** sample of the result set. It cannot take the
+last one, because recent samples might be incomplete. So, for an interval of e.g. `2m`, Flagger evaluates
+the value from 2 minutes ago.
+
+- In order to have a result that is not oscillating, you should apply a rollup of at least the reporting interval of
+  the observed target
+- In order to have a recent result, you should use a small interval, but...
+- In order to have a complete result, you must take a query interval that contains at least one full rollup window.
+  This should be the case if the interval is at least two times the rollup window
+- In order to always have a metric result, you can apply functions like `default_zero()`, but you must
+  make sure that receiving a zero does not fail your evaluation
 
 ## Amazon CloudWatch
 
@@ -438,11 +493,11 @@ spec:
     secretRef:
       name: newrelic
   query: |
-    SELECT 
-        filter(sum(nginx_ingress_controller_requests), WHERE status >= '500') / 
+    SELECT
+        filter(sum(nginx_ingress_controller_requests), WHERE status >= '500') /
         sum(nginx_ingress_controller_requests) * 100
-    FROM Metric 
-    WHERE metricName = 'nginx_ingress_controller_requests' 
+    FROM Metric
+    WHERE metricName = 'nginx_ingress_controller_requests'
     AND ingress = '{{ ingress }}' AND  namespace = '{{ namespace }}'
 ```
 
@@ -538,7 +593,7 @@ spec:
 ## Google Cloud Monitoring (Stackdriver)
 
 Enable Workload Identity on your cluster, create a service account key that has read access to the
-Cloud Monitoring API and then create an IAM policy binding between the GCP service account and the Flagger 
+Cloud Monitoring API and then create an IAM policy binding between the GCP service account and the Flagger
 service account on Kubernetes. You can take a look at this [guide](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity)
 
 Annotate the flagger service account
@@ -557,7 +612,7 @@ your [service account json](https://cloud.google.com/docs/authentication/product
  kubectl create secret generic gcloud-sa --from-literal=project=<project-id>
 ```
 
-Then reference the secret in the metric template. 
+Then reference the secret in the metric template.
 Note: The particular MQL query used here works if [Istio is installed on GKE](https://cloud.google.com/istio/docs/istio-on-gke/installing).
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -568,7 +623,7 @@ metadata:
 spec:
   provider:
     type: stackdriver
-    secretRef: 
+    secretRef:
       name: gcloud-sa
   query: |
     fetch k8s_container
@@ -725,7 +780,7 @@ This will usually be set to the same value as the analysis interval of a `Canary
 Only relevant if the `type` is set to `analysis`.
 * **arguments (optional)**: Arguments to be passed to an `Analysis`.
 Arguments are passed as a list of key value pairs, separated by `;` characters,
-e.g. `foo=bar;bar=foo`. 
+e.g. `foo=bar;bar=foo`.
 Only relevant if the `type` is set to `analysis`.
 
 For the type `analysis`, the value returned by the provider is either `0`
