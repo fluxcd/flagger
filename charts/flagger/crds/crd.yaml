@@ -1313,6 +1313,13 @@ spec:
                     address:
                       description: API address of this provider
                       type: string
+                    headers:
+                      description: Headers to add to HTTP(S) requests
+                      type: object
+                      additionalProperties:
+                        type: array
+                        items:
+                          type: string
                     secretRef:
                       description: Kubernetes secret reference containing the provider credentials
                       type: object
