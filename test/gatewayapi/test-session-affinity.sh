@@ -64,7 +64,7 @@ spec:
     webhooks:
       - name: load-test
         type: rollout
-        url: http://localhost:8080
+        url: http://flagger-loadtester.test/
         timeout: 5s
         metadata:
           cmd: "hey -z 2m -q 10 -c 2 -host www.example.com http://gateway-istio.istio-ingress"
