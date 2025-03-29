@@ -474,15 +474,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// strategy: Canary progressive traffic increase
 	if c.nextStepWeight(cd, canaryWeight) > 0 {
-		// run hook only if traffic is not mirrored
-		if !mirrored &&
-			(cd.Status.Phase != flaggerv1.CanaryPhasePromoting &&
-				cd.Status.Phase != flaggerv1.CanaryPhaseWaitingPromotion &&
-				cd.Status.Phase != flaggerv1.CanaryPhaseFinalising) {
-			if promote := c.runConfirmTrafficIncreaseHooks(cd); !promote {
-				return
-			}
-		}
 		c.runCanary(cd, canaryController, meshRouter, mirrored, canaryWeight, primaryWeight, maxWeight)
 	}
 
@@ -551,6 +542,16 @@ func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary
 
 	// increase traffic weight
 	if canaryWeight < maxWeight {
+		// check trafic increace hook, only if traffic is not mirrored
+		if !mirrored &&
+			(canary.Status.Phase != flaggerv1.CanaryPhasePromoting &&
+				canary.Status.Phase != flaggerv1.CanaryPhaseWaitingPromotion &&
+				canary.Status.Phase != flaggerv1.CanaryPhaseFinalising) {
+			if promote := c.runConfirmTrafficIncreaseHooks(canary); !promote {
+				return
+			}
+		}
+
 		// If in "mirror" mode, do one step of mirroring before shifting traffic to canary.
 		// When mirroring, all requests go to primary and canary, but only responses from
 		// primary go back to the user.
