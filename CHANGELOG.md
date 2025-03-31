@@ -2,6 +2,54 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.41.0
+
+**Release date:** 2025-04-02
+
+This release comes with major features and minor bug fixes.
+
+Flagger now supports Knative as a networking provider. This works a bit
+differently than compared to other service meshes/ingresses. Flagger does not
+generate any Kubernetes objects. It instead modifies the Knative service itself
+to configure weighted traffic routing. To learn more, please see the [tutorial](https://docs.flagger.app/tutorials/knative-progressive-delivery).
+
+The session affinity canary release strategy has also been improved. Flagger can
+now configure Gateway API HTTPRoutes to also set a cookie for the primary
+deployment's response. For more info, see the [strategy docs](https://docs.flagger.app/usage/deployment-strategies#canary-release-with-session-affinity).
+
+Furthermore, there's a new `.spec.service.headless` field which when set to
+true, tells Flagger to generate headless Kubernetes services. Also, support has
+been added for adding headers to the request Flagger sends to Prometheus for
+collecting metrics during an analysis via the `.spec.headers` field in the
+`MetricTemplate` object.
+
+Finally, both Flagger and the load tester have been updated to use Go 1.24 and
+their dependencies have been updated as well.
+
+#### Improvements 
+- Allow headers to be added to Prometheus requests
+  [#1757](https://github.com/fluxcd/flagger/pull/1757)
+- feat: Add support for primary backend cookies in session affinity (Gateway API)
+  [#1783](https://github.com/fluxcd/flagger/pull/1783)
+- Update Go dependencies
+  [#1787](https://github.com/fluxcd/flagger/pull/1787)
+- Build with Go 1.24
+  [#1784](https://github.com/fluxcd/flagger/pull/1784)
+- Add support for Knative
+  [#1682](https://github.com/fluxcd/flagger/pull/1682)
+- chart: add support for deploymentLabels
+  [#1707](https://github.com/fluxcd/flagger/pull/1707)
+- chart: add support for deploymentLabels
+  [#1707](https://github.com/fluxcd/flagger/pull/1707)
+- feat: add option to generate headless services
+  [#1755](https://github.com/fluxcd/flagger/pull/1755)
+
+#### Fixes
+- Fix: Do not evaluate incomplete samples from Datadog
+  [#1763](https://github.com/fluxcd/flagger/pull/1763)
+- Prevent primary HPA collision for KEDA scaled objects when migrating from an HPA
+  [#1677](https://github.com/fluxcd/flagger/pull/1677)
+
 ## 1.40.0
 
 **Release date:** 2024-12-17
