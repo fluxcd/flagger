@@ -1,0 +1,4 @@
+{{- range .Values.extraDeploy }}
+---
+{{ include "loadtester.render" (dict "value" . "context" $) }}
+{{- end }}
