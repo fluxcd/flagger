@@ -81,3 +81,6 @@ faults:
 
 httpServer:
   timeout: 30s
+
+# Array of extra objects to deploy with the release
+extraDeploy: []

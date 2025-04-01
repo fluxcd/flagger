@@ -37,3 +37,6 @@ url: http://prometheus:9090
 
 # Weave Cloud instance token
 token:
+
+# Array of extra objects to deploy with the release
+extraDeploy: []
