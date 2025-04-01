@@ -394,6 +394,83 @@ func TestScheduler_DeploymentPromotion(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseSucceeded, c.Status.Phase)
 }
 
+func TestScheduler_DeploymentMaxConcurrent(t *testing.T) {
+	mocks := newDeploymentFixture(nil)
+
+	secondCanary := newDeploymentTestCanary()
+	secondCanary.Name = "podinfo2"
+
+	mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Create(context.TODO(), secondCanary, metav1.CreateOptions{})
+	mocks.ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(secondCanary)
+
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo2", "default")
+
+	// make primary ready
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo2", "default")
+
+	// update
+	dep2 := newDeploymentTestDeploymentV2()
+	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// detect pod spec changes
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo2", "default")
+
+	// if no maxConcurrentCanaries is set, all canaries should proceed
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
+
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo2", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
+
+	// delete second canary and set maxConcurrency. Then add it again
+	delete(mocks.ctrl.pendingCanaries, "podinfo2.default")
+	mocks.ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Delete(secondCanary)
+	mocks.ctrl.maxConcurrentCanaries = 1
+	mocks.ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(secondCanary)
+
+	mocks.ctrl.advanceCanary("podinfo2", "default")
+	mocks.ctrl.advanceCanary("podinfo2", "default")
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// check if second canary is waiting now
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo2", metav1.GetOptions{})
+	mocks.ctrl.advanceCanary("podinfo2", "default")
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseWaiting, c.Status.Phase)
+
+	// make first deployment succeeded
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// after succeeded it should get removed from pendingCanaries
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// second canary should start with next call
+	mocks.ctrl.advanceCanary("podinfo2", "default")
+
+	// check if second canary is starting
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo2", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
+}
+
 func TestScheduler_DeploymentMirroring(t *testing.T) {
 	mocks := newDeploymentFixture(newDeploymentTestCanaryMirror())
 

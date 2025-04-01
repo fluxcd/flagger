@@ -203,6 +203,8 @@ deploymentLabels: { }
 
 noCrossNamespaceRefs: false
 
+maxConcurrentCanaries: 0
+
 #Placeholder to supply additional volumes to the flagger pod
 additionalVolumes: {}
   # - name: tmpfs
