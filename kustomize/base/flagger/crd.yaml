@@ -671,6 +671,41 @@ spec:
                           type: array
                         maxAge:
                           type: string
+                    FaultInjection:
+                      description: Istio HTTP FaultInjection
+                      type: object
+                      properties:
+                        delay:
+                          description: Delay HTTP requests
+                          type: object
+                          properties:
+                            fixedDelay:
+                              description: The fixed delay to wait before returning a response
+                              type: string
+                            percent:
+                              type: integer
+                              minimum: 0
+                              maximum: 100
+                            percentage:
+                              type: object
+                              properties:
+                                value:
+                                  type: number
+                        abort:
+                          description: Abort HTTP requests
+                          type: object
+                          properties:
+                            httpStatus:
+                              description: The HTTP status code to return
+                              type: integer
+                            grpcStatus:
+                              description: The gRPC status code to return
+                              type: string
+                            percentage:
+                              type: object
+                              properties:
+                                value:
+                                  type: number
                     trafficPolicy:
                       description: Istio traffic policy
                       type: object

@@ -850,9 +850,18 @@ type HTTPFaultInjection struct {
 // seconds. An optional _percent_ field, a value between 0 and 100, can
 // be used to only delay a certain percentage of requests. If left
 // unspecified, all request will be delayed.
+
+type PercentagePercent struct {
+	Value float64 `json:"value,omitempty"`
+}
+
 type InjectDelay struct {
 	// Percentage of requests on which the delay will be injected (0-100).
 	Percent int `json:"percent,omitempty"`
+	// Percentage of the traffic to be mirrored by the `mirror` field.
+	// If this field is absent, all the traffic (100%) will be mirrored.
+	// Max value is 100.
+	Percentage *PercentagePercent `json:"percentage,omitempty"`
 
 	// REQUIRED. Add a fixed delay before forwarding the request. Format:
 	// 1h/1m/1s/1ms. MUST be >=1ms.
@@ -890,11 +899,12 @@ type InjectDelay struct {
 // and 100, is used to only abort a certain percentage of requests. If
 // not specified, all requests are aborted.
 type InjectAbort struct {
-	// Percentage of requests to be aborted with the error code provided (0-100).
-	Perecent int `json:"percent,omitempty"`
-
 	// REQUIRED. HTTP status code to use to abort the Http request.
 	HttpStatus int `json:"httpStatus"`
+	// GRPC status code to use to abort the request
+	GrpcStatus string `json:"grpcstatus,omitempty"`
+	// Percentage of requests to be aborted with the error code provided.
+	Percentage *PercentagePercent `json:"percentage,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
