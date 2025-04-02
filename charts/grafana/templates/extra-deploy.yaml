@@ -1,0 +1,4 @@
+{{- range .Values.extraDeploy }}
+---
+{{ include "grafana.render" (dict "value" . "context" $) }}
+{{- end }}
