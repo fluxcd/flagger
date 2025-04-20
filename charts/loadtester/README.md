@@ -69,8 +69,10 @@ The following tables lists the configurable parameters of the load tester chart 
 | `istio.tls.enabled`                | Enable TLS in gateway ( TLS secrets should be in namespace )                         | `false`                             |
 | `istio.tls.httpsRedirect`          | Redirect traffic to TLS port                                                         | `false`                             |
 | `podPriorityClassName`             | PriorityClass name for pod priority configuration                                    | ""                                  |
-| `securityContext.enabled`          | Add securityContext to container                                                     | ""                                  |
-| `securityContext.context`          | securityContext to add                                                               | ""                                  |
+| `securityContext.enabled`          | Add securityContext to container                                                     | `false`                             |
+| `SecurityContext.context`          | securityContext to add                                                               | ""                                  |
+| `podSecurityContext.enabled`       | Add securityContext to pod                                                           | `false`                             |
+| `podSecurityContext.context`       | securityContext to add                                                               | ""                                  |
 | `podDisruptionBudget.enabled`      | A PodDisruptionBudget will be created if `true`                                      | `false`                             |
 | `podDisruptionBudget.minAvailable` | The minimal number of available replicas that will be set in the PodDisruptionBudget | `1`                                 |
 
