@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 func TestGatewayAPIRouter_Reconcile(t *testing.T) {
@@ -515,4 +516,107 @@ func TestGatewayAPIRouter_makeFilters(t *testing.T) {
 		)
 		assert.Equal(t, "", filtersDiff)
 	}
+}
+
+func TestGatewayAPIRouter_GetRoutes(t *testing.T) {
+	canary := newTestGatewayAPICanary()
+	mocks := newFixture(canary)
+	router := &GatewayAPIRouter{
+		gatewayAPIClient: mocks.meshClient,
+		kubeClient:       mocks.kubeClient,
+		logger:           mocks.logger,
+	}
+
+	httpRoute := &v1.HTTPRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "podinfo",
+			Generation: 1,
+		},
+		Spec: v1.HTTPRouteSpec{
+			Rules: []v1.HTTPRouteRule{
+				{
+					BackendRefs: []v1.HTTPBackendRef{
+						{
+							BackendRef: v1.BackendRef{
+								BackendObjectReference: v1.BackendObjectReference{
+									Name: "podinfo-canary",
+								},
+								Weight: ptr.To(int32(10)),
+							},
+						},
+						{
+							BackendRef: v1.BackendRef{
+								BackendObjectReference: v1.BackendObjectReference{
+									Name: "podinfo-primary",
+								},
+								Weight: ptr.To(int32(90)),
+							},
+						},
+					},
+				},
+			},
+			CommonRouteSpec: v1.CommonRouteSpec{
+				ParentRefs: []v1.ParentReference{
+					{
+						Name: "podinfo",
+					},
+				},
+			},
+		},
+	}
+	httpRoute, err := router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Create(context.TODO(), httpRoute, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	t.Run("httproute generation", func(t *testing.T) {
+		httpRoute.ObjectMeta.Generation = 5
+		httpRoute.Status.Parents = []v1.RouteParentStatus{
+			{
+				ParentRef: v1.ParentReference{
+					Name:        "podinfo",
+					SectionName: ptr.To(v1.SectionName("https")),
+				},
+				Conditions: []metav1.Condition{
+					{
+						Type:               string(v1.RouteConditionAccepted),
+						Status:             metav1.ConditionTrue,
+						ObservedGeneration: 1,
+					},
+				},
+			},
+			{
+				ParentRef: v1.ParentReference{
+					Name: "podinfo",
+				},
+				Conditions: []metav1.Condition{
+					{
+						Type:               string(v1.RouteConditionAccepted),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: 4,
+					},
+				},
+			},
+		}
+		httpRoute, err := router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Update(context.TODO(), httpRoute, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		_, _, _, err = router.GetRoutes(canary)
+		require.Error(t, err)
+
+		httpRoute.Status.Parents[1].Conditions[0].ObservedGeneration = 5
+		_, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Update(context.TODO(), httpRoute, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		_, _, _, err = router.GetRoutes(canary)
+		require.Error(t, err)
+
+		httpRoute.Status.Parents[1].Conditions[0].Status = metav1.ConditionTrue
+		_, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Update(context.TODO(), httpRoute, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		primaryWeight, canaryWeight, mirrored, err := router.GetRoutes(canary)
+		require.NoError(t, err)
+		assert.Equal(t, 90, primaryWeight)
+		assert.Equal(t, 10, canaryWeight)
+		assert.False(t, mirrored)
+	})
 }

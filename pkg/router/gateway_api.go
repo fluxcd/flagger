@@ -273,6 +273,26 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 		err = fmt.Errorf("HTTPRoute %s.%s get error: %w", apexSvcName, hrNamespace, err)
 		return
 	}
+
+	currentGeneration := httpRoute.GetGeneration()
+	for _, parentRef := range httpRoute.Spec.CommonRouteSpec.ParentRefs {
+		for _, parentStatus := range httpRoute.Status.Parents {
+			if !reflect.DeepEqual(parentStatus.ParentRef, parentRef) {
+				continue
+			}
+
+			for _, condition := range parentStatus.Conditions {
+				if condition.Type == string(v1.RouteConditionAccepted) && (condition.Status != metav1.ConditionTrue || condition.ObservedGeneration < currentGeneration) {
+					err = fmt.Errorf(
+						"HTTPRoute %s.%s parent %s is not ready (status: %s, observed generation: %d, current generation: %d)",
+						apexSvcName, hrNamespace, parentRef.Name, string(condition.Status), condition.ObservedGeneration, currentGeneration,
+					)
+					return 0, 0, false, err
+				}
+			}
+		}
+	}
+
 	var weightedRule *v1.HTTPRouteRule
 	for _, rule := range httpRoute.Spec.Rules {
 		// If session affinity is enabled, then we are only interested in the rule
