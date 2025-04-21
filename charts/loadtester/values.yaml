@@ -91,6 +91,12 @@ securityContext:
     runAsUser: 100
     runAsGroup: 101
 
+podSecurityContext:
+  enabled: false
+  context:
+    fsGroup: 101
+    fsGroupChangePolicy: "OnRootMismatch"
+
 podDisruptionBudget:
   enabled: false
   minAvailable: 1

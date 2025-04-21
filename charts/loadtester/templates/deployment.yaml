@@ -24,7 +24,7 @@ spec:
         appmesh.k8s.aws/ports: "444"
         openservicemesh.io/inbound-port-exclusion-list: "80, 8080"
         {{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
+          {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
       {{- if .Values.serviceAccountName }}
@@ -39,7 +39,7 @@ spec:
         - name: {{ .Chart.Name }}
           {{- if .Values.securityContext.enabled }}
           securityContext:
-{{ toYaml .Values.securityContext.context | indent 12 }}
+            {{- toYaml .Values.securityContext.context | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -101,4 +101,8 @@ spec:
     {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext.context | nindent 12 }}
     {{- end }}
