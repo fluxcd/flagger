@@ -138,7 +138,7 @@ func CallEventWebhook(r *flaggerv1.Canary, w flaggerv1.CanaryWebhook, message, e
 			payload.Metadata[key] = value
 		}
 	}
-	return callWebhook(w.URL, payload, "5s", w.Retries, w.DisableTLS)
+	return callWebhook(w.URL, payload, w.Timeout, w.Retries, w.DisableTLS)
 }
 
 func canaryChecksum(c flaggerv1.Canary) string {
