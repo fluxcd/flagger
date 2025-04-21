@@ -399,11 +399,16 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			c.recordEventWarningf(cd, "%v", err)
 			return
 		}
+
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
-		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
-		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
-		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
+
+		canarySucceeded := cd.DeepCopy()
+		canarySucceeded.Status.Phase = flaggerv1.CanaryPhaseSucceeded
+		c.runPostRolloutHooks(canarySucceeded, flaggerv1.CanaryPhaseSucceeded)
+		c.recordEventInfof(canarySucceeded, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
+		c.alert(canarySucceeded, "Canary analysis completed successfully, promotion finished.",
 			false, flaggerv1.SeverityInfo)
+
 		return
 	}
 
@@ -814,9 +819,11 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 
 	// notify
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
-	c.recordEventInfof(canary, "Promotion completed! Canary analysis was skipped for %s.%s",
+	canarySucceeded := canary.DeepCopy()
+	canarySucceeded.Status.Phase = flaggerv1.CanaryPhaseSucceeded
+	c.recordEventInfof(canarySucceeded, "Promotion completed! Canary analysis was skipped for %s.%s",
 		canary.Spec.TargetRef.Name, canary.Namespace)
-	c.alert(canary, "Canary analysis was skipped, promotion finished.",
+	c.alert(canarySucceeded, "Canary analysis was skipped, promotion finished.",
 		false, flaggerv1.SeverityInfo)
 
 	return true
