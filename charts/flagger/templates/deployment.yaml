@@ -153,6 +153,9 @@ spec:
           {{- if .Values.noCrossNamespaceRefs }}
           - -no-cross-namespace-refs={{ .Values.noCrossNamespaceRefs }}
           {{- end }}
+          {{- if .Values.maxConcurrentCanaries }}
+          - -max-concurrent-canaries={{ .Values.maxConcurrentCanaries }}
+          {{- end }}
           livenessProbe:
             exec:
               command:

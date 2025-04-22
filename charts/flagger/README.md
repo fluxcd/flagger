@@ -58,7 +58,6 @@ $ helm upgrade -i flagger flagger/flagger \
     --set metricsServer=http://appmesh-prometheus:9090
 ```
 
-
 To install Flagger for **Open Service Mesh** (requires OSM to have been installed with Prometheus):
 
 ```console
@@ -197,6 +196,7 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `namespace`                          | When specified, Flagger will restrict itself to watching Canary objects from that namespace                                                        | `""`                                  |
 | `deploymentLabels`                   | Labels to add to Flagger deployment                                                                                                                | `{}`                                  |
 | `podLabels`                          | Labels to add to pods of Flagger deployment                                                                                                        | `{}`                                  |
+| `maxConcurrentCanaries`              | Limits how many canaries can process in parallel. No limit if "0"                                                                                  | `0`                                   |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 

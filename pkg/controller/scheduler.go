@@ -134,6 +134,7 @@ func (c *Controller) scheduleCanaries() {
 	for job := range c.jobs {
 		if _, exists := current[job]; !exists {
 			c.jobs[job].Stop()
+			delete(c.pendingCanaries, job)
 			delete(c.jobs, job)
 		}
 	}
@@ -283,10 +284,21 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		return
 	}
 
+	key := fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)
+
 	if !shouldAdvance {
+		delete(c.pendingCanaries, key)
 		c.recorder.SetStatus(cd, cd.Status.Phase)
 		return
 	}
+
+	if _, exists := c.pendingCanaries[key]; c.maxConcurrentCanaries > 0 && len(c.pendingCanaries) >= c.maxConcurrentCanaries && !exists {
+		canaryController.SetStatusPhase(cd, flaggerv1.CanaryPhaseWaiting)
+		c.recordEventInfof(cd, "waiting with canary %v.%v %v to process, because maximum of concurrent canaries reached", cd.Name, cd.Namespace, cd.UID)
+		return
+	}
+
+	c.pendingCanaries[key] = true
 
 	maxWeight := c.maxWeight(cd)
 
