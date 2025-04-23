@@ -130,7 +130,8 @@ func TestScheduler_DeploymentSkipAnalysis(t *testing.T) {
 	// enable skip
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
-	cd.Spec.SkipAnalysis = true
+	skipAnalysis := true
+	cd.Spec.SkipAnalysis = &skipAnalysis
 	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), cd, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
@@ -148,7 +149,7 @@ func TestScheduler_DeploymentSkipAnalysis(t *testing.T) {
 
 	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.True(t, c.Spec.SkipAnalysis)
+	assert.True(t, c.SkipAnalysis())
 	assert.Equal(t, flaggerv1.CanaryPhaseSucceeded, c.Status.Phase)
 }
 
