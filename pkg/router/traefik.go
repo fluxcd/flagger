@@ -108,7 +108,7 @@ func (tr *TraefikRouter) Reconcile(canary *flaggerv1.Canary) error {
 					Name:      canaryName,
 					Namespace: canary.Namespace,
 					Port:      canary.Spec.Service.Port,
-					Weight:    100,
+					Weight:    0,
 				},
 			)
 		}
