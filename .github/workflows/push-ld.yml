@@ -17,7 +17,7 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - uses: sigstore/cosign-installer@v3.8.1
+      - uses: sigstore/cosign-installer@v3.8.2
       - name: Prepare
         id: prep
         run: |
