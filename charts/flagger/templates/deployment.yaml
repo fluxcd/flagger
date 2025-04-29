@@ -49,6 +49,10 @@ spec:
       affinity:
         {{- tpl (toYaml .Values.affinity) . | nindent 8 }}
       {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- tpl (toYaml .Values.topologySpreadConstraints) . | nindent 8 }}
+      {{- end }}
       {{- if .Values.image.pullSecret }}
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}
@@ -64,7 +68,7 @@ spec:
         {{- end }}
       {{- if .Values.podPriorityClassName }}
       priorityClassName: {{ .Values.podPriorityClassName }}
-      {{- end }}                  
+      {{- end }}
       containers:
         - name: flagger
           {{- if .Values.securityContext.enabled }}
