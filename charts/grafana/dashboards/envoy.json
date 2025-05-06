@@ -1146,7 +1146,6 @@
     "list": [
       {
         "allValue": null,
-        "current": null,
         "datasource": "prometheus",
         "definition": "query_result(sum(envoy_cluster_upstream_rq) by (kubernetes_namespace))",
         "hide": 0,
@@ -1168,7 +1167,6 @@
       },
       {
         "allValue": null,
-        "current": null,
         "datasource": "prometheus",
         "definition": "query_result(sum(envoy_cluster_upstream_rq{kubernetes_namespace=\"$namespace\",envoy_cluster_name=~\".*-primary\"}) by (envoy_cluster_name))",
         "hide": 0,
