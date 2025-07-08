@@ -90,6 +90,26 @@ func TestRecorder_GetterMethodsWithData(t *testing.T) {
 			expected:   99.5,
 			checkValue: true,
 		},
+		{
+			name: "IncAndGetSuccesses",
+			setupFunc: func(r Recorder) {
+				r.IncSuccesses(CanaryMetricLabels{Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
+			},
+			getterFunc: func(r Recorder) interface{} { return r.GetSuccessesMetric() },
+			labels:     []string{"podinfo", "default", "canary", "completed"},
+			expected:   1.0,
+			checkValue: true,
+		},
+		{
+			name: "IncAndGetFailures",
+			setupFunc: func(r Recorder) {
+				r.IncFailures(CanaryMetricLabels{Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
+			},
+			getterFunc: func(r Recorder) interface{} { return r.GetFailuresMetric() },
+			labels:     []string{"podinfo", "default", "canary", "completed"},
+			expected:   1.0,
+			checkValue: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -102,6 +122,9 @@ func TestRecorder_GetterMethodsWithData(t *testing.T) {
 			if tt.checkValue {
 				if gaugeVec, ok := metric.(*prometheus.GaugeVec); ok {
 					value := testutil.ToFloat64(gaugeVec.WithLabelValues(tt.labels...))
+					assert.Equal(t, tt.expected, value)
+				} else if counterVec, ok := metric.(*prometheus.CounterVec); ok {
+					value := testutil.ToFloat64(counterVec.WithLabelValues(tt.labels...))
 					assert.Equal(t, tt.expected, value)
 				}
 			}

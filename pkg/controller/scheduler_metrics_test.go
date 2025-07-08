@@ -28,9 +28,6 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
-	"github.com/fluxcd/flagger/pkg/metrics"
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
 )
 
@@ -190,7 +187,7 @@ func TestController_runMetricChecks(t *testing.T) {
 }
 
 func TestController_MetricsStateTransition(t *testing.T) {
-	t.Run("initialization and progression metrics", func(t *testing.T) {
+	t.Run("successful canary promotion with count metrics", func(t *testing.T) {
 		mocks := newDeploymentFixture(nil)
 
 		mocks.ctrl.advanceCanary("podinfo", "default")
@@ -224,9 +221,22 @@ func TestController_MetricsStateTransition(t *testing.T) {
 
 		totalWeight := actualPrimaryWeight + actualCanaryWeight
 		assert.InDelta(t, 100.0, totalWeight, 1.0)
+
+		const maxAdvanceAttempts = 10 // sufficient attempts to reach canary completion
+		for range maxAdvanceAttempts {
+			mocks.ctrl.advanceCanary("podinfo", "default")
+			c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+			require.NoError(t, err)
+			if c.Status.Phase == flaggerv1.CanaryPhaseSucceeded {
+				break
+			}
+		}
+
+		successCount := testutil.ToFloat64(mocks.ctrl.recorder.GetSuccessesMetric().WithLabelValues("podinfo", "default", "canary", "completed"))
+		assert.Equal(t, float64(1), successCount)
 	})
 
-	t.Run("failed canary rollback", func(t *testing.T) {
+	t.Run("failed canary rollback with count metrics", func(t *testing.T) {
 		mocks := newDeploymentFixture(nil)
 
 		mocks.ctrl.advanceCanary("podinfo", "default")
@@ -264,6 +274,37 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "default"))
 		assert.Equal(t, float64(100), actualPrimaryWeight)
 		assert.Equal(t, float64(0), actualCanaryWeight)
+
+		failureCount := testutil.ToFloat64(mocks.ctrl.recorder.GetFailuresMetric().WithLabelValues("podinfo", "default", "canary", "completed"))
+		assert.Equal(t, float64(1), failureCount)
+	})
+
+	t.Run("skipped analysis with count metrics", func(t *testing.T) {
+		mocks := newDeploymentFixture(nil)
+
+		mocks.ctrl.advanceCanary("podinfo", "default")
+		mocks.makePrimaryReady(t)
+		mocks.ctrl.advanceCanary("podinfo", "default")
+
+		// Enable skip analysis
+		cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+		cd.Spec.SkipAnalysis = true
+		_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), cd, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Trigger deployment update
+		dep2 := newDeploymentTestDeploymentV2()
+		_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Skip analysis should succeed immediately
+		mocks.ctrl.advanceCanary("podinfo", "default")
+		mocks.makeCanaryReady(t)
+		mocks.ctrl.advanceCanary("podinfo", "default")
+
+		successCount := testutil.ToFloat64(mocks.ctrl.recorder.GetSuccessesMetric().WithLabelValues("podinfo", "default", "canary", "skipped"))
+		assert.Equal(t, float64(1), successCount)
 	})
 }
 
@@ -312,75 +353,4 @@ func TestController_AnalysisMetricsRecording(t *testing.T) {
 		durationMetric := mocks.ctrl.recorder.GetAnalysisMetric().WithLabelValues("podinfo", "default", "request-duration")
 		assert.NotNil(t, durationMetric)
 	})
-}
-
-func TestController_getDeploymentStrategy(t *testing.T) {
-	ctrl := newDeploymentFixture(nil).ctrl
-
-	tests := []struct {
-		name     string
-		analysis *flaggerv1.CanaryAnalysis
-		expected string
-	}{
-		{
-			name: "canary strategy with maxWeight",
-			analysis: &flaggerv1.CanaryAnalysis{
-				MaxWeight:  30,
-				StepWeight: 10,
-			},
-			expected: metrics.CanaryStrategy,
-		},
-		{
-			name: "canary strategy with stepWeights",
-			analysis: &flaggerv1.CanaryAnalysis{
-				StepWeights: []int{10, 20, 30},
-			},
-			expected: metrics.CanaryStrategy,
-		},
-		{
-			name: "blue_green strategy with iterations",
-			analysis: &flaggerv1.CanaryAnalysis{
-				Iterations: 5,
-			},
-			expected: metrics.BlueGreenStrategy,
-		},
-		{
-			name: "ab_testing strategy with iterations and match",
-			analysis: &flaggerv1.CanaryAnalysis{
-				Iterations: 10,
-				Match: []istiov1beta1.HTTPMatchRequest{
-					{
-						Headers: map[string]istiov1alpha1.StringMatch{
-							"x-canary": {
-								Exact: "insider",
-							},
-						},
-					},
-				},
-			},
-			expected: metrics.ABTestingStrategy,
-		},
-		{
-			name:     "default to canary when analysis is nil",
-			analysis: nil,
-			expected: metrics.CanaryStrategy,
-		},
-		{
-			name:     "default to canary when analysis is empty",
-			analysis: &flaggerv1.CanaryAnalysis{},
-			expected: metrics.CanaryStrategy,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			canary := &flaggerv1.Canary{
-				Spec: flaggerv1.CanarySpec{
-					Analysis: tt.analysis,
-				},
-			}
-			result := ctrl.getDeploymentStrategy(canary)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
 }

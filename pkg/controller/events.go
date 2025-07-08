@@ -209,30 +209,35 @@ func alertMetadata(canary *flaggerv1.Canary) []notifier.Field {
 		},
 	)
 
-	if canary.GetAnalysis().StepWeight > 0 {
-		fields = append(fields, notifier.Field{
-			Name: "Traffic routing",
-			Value: fmt.Sprintf("Weight step: %v max: %v",
-				canary.GetAnalysis().StepWeight,
-				canary.GetAnalysis().MaxWeight),
-		})
-	} else if len(canary.GetAnalysis().StepWeights) > 0 {
-		fields = append(fields, notifier.Field{
-			Name: "Traffic routing",
-			Value: fmt.Sprintf("Weight steps: %s max: %v",
-				strings.Trim(strings.Join(strings.Fields(fmt.Sprint(canary.GetAnalysis().StepWeights)), ","), "[]"),
-				canary.GetAnalysis().MaxWeight),
-		})
-	} else if len(canary.GetAnalysis().Match) > 0 {
+	strategy := canary.DeploymentStrategy()
+	switch strategy {
+	case flaggerv1.DeploymentStrategyABTesting:
 		fields = append(fields, notifier.Field{
 			Name:  "Traffic routing",
 			Value: "A/B Testing",
 		})
-	} else if canary.GetAnalysis().Iterations > 0 {
+	case flaggerv1.DeploymentStrategyBlueGreen:
 		fields = append(fields, notifier.Field{
 			Name:  "Traffic routing",
 			Value: "Blue/Green",
 		})
+	default:
+		// Canary strategy
+		if canary.GetAnalysis().StepWeight > 0 {
+			fields = append(fields, notifier.Field{
+				Name: "Traffic routing",
+				Value: fmt.Sprintf("Weight step: %v max: %v",
+					canary.GetAnalysis().StepWeight,
+					canary.GetAnalysis().MaxWeight),
+			})
+		} else if len(canary.GetAnalysis().StepWeights) > 0 {
+			fields = append(fields, notifier.Field{
+				Name: "Traffic routing",
+				Value: fmt.Sprintf("Weight steps: %s max: %v",
+					strings.Trim(strings.Join(strings.Fields(fmt.Sprint(canary.GetAnalysis().StepWeights)), ","), "[]"),
+					canary.GetAnalysis().MaxWeight),
+			})
+		}
 	}
 	return fields
 }

@@ -121,4 +121,10 @@ flagger_canary_duration_seconds_count{name="podinfo",namespace="test"} 6
 # Last canary metric analysis result per different metrics
 flagger_canary_metric_analysis{metric="podinfo-http-successful-rate",name="podinfo",namespace="test"} 1
 flagger_canary_metric_analysis{metric="podinfo-custom-metric",name="podinfo",namespace="test"} 0.918223108974359
+
+# Canary successes total counter
+flagger_canary_successes_total{name="podinfo",namespace="test",deployment_strategy="canary",analysis_status="completed"} 5
+
+# Canary failures total counter
+flagger_canary_failures_total{name="podinfo",namespace="test",deployment_strategy="canary",analysis_status="completed"} 1
 ```

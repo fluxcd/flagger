@@ -27,8 +27,8 @@ import (
 // Deployment strategies
 const (
 	CanaryStrategy    = "canary"
-	BlueGreenStrategy = "blue_green"
-	ABTestingStrategy = "ab_testing"
+	BlueGreenStrategy = "blue-green"
+	ABTestingStrategy = "ab-testing"
 )
 
 // Analysis status

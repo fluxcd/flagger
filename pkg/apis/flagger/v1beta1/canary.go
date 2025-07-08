@@ -35,6 +35,13 @@ const (
 	MetricInterval          = "1m"
 )
 
+// Deployment strategies
+const (
+	DeploymentStrategyCanary    = "canary"
+	DeploymentStrategyBlueGreen = "blue-green"
+	DeploymentStrategyABTesting = "ab-testing"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -639,4 +646,25 @@ func (c *Canary) SkipAnalysis() bool {
 		return true
 	}
 	return c.Spec.SkipAnalysis
+}
+
+// DeploymentStrategy returns the deployment strategy based on canary analysis configuration
+func (c *Canary) DeploymentStrategy() string {
+	analysis := c.GetAnalysis()
+	if analysis == nil {
+		return DeploymentStrategyCanary
+	}
+
+	// A/B Testing: has match conditions and iterations
+	if len(analysis.Match) > 0 && analysis.Iterations > 0 {
+		return DeploymentStrategyABTesting
+	}
+
+	// Blue/Green: has iterations but no match conditions
+	if analysis.Iterations > 0 {
+		return DeploymentStrategyBlueGreen
+	}
+
+	// Canary Release: default (has maxWeight, stepWeight, or stepWeights)
+	return DeploymentStrategyCanary
 }
