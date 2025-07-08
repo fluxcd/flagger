@@ -27,6 +27,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/canary"
+	"github.com/fluxcd/flagger/pkg/metrics"
 	"github.com/fluxcd/flagger/pkg/router"
 )
 
@@ -35,6 +36,27 @@ func (c *Controller) min(a int, b int) int {
 		return a
 	}
 	return b
+}
+
+// getDeploymentStrategy determines the deployment strategy based on canary analysis configuration
+func (c *Controller) getDeploymentStrategy(canary *flaggerv1.Canary) string {
+	analysis := canary.GetAnalysis()
+	if analysis == nil {
+		return metrics.CanaryStrategy
+	}
+
+	// A/B Testing: has match conditions and iterations
+	if len(analysis.Match) > 0 && analysis.Iterations > 0 {
+		return metrics.ABTestingStrategy
+	}
+
+	// Blue/Green: has iterations but no match conditions
+	if analysis.Iterations > 0 {
+		return metrics.BlueGreenStrategy
+	}
+
+	// Canary Release: default (has maxWeight, stepWeight, or stepWeights)
+	return metrics.CanaryStrategy
 }
 
 func (c *Controller) maxWeight(canary *flaggerv1.Canary) int {
@@ -400,6 +422,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+		c.recorder.IncSuccesses(metrics.CanaryMetricLabels{
+			Name:               cd.Spec.TargetRef.Name,
+			Namespace:          cd.Namespace,
+			DeploymentStrategy: c.getDeploymentStrategy(cd),
+			AnalysisStatus:     metrics.AnalysisStatusCompleted,
+		})
 		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
@@ -814,6 +842,12 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 
 	// notify
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
+	c.recorder.IncSuccesses(metrics.CanaryMetricLabels{
+		Name:               canary.Spec.TargetRef.Name,
+		Namespace:          canary.Namespace,
+		DeploymentStrategy: c.getDeploymentStrategy(canary),
+		AnalysisStatus:     metrics.AnalysisStatusSkipped,
+	})
 	c.recordEventInfof(canary, "Promotion completed! Canary analysis was skipped for %s.%s",
 		canary.Spec.TargetRef.Name, canary.Namespace)
 	c.alert(canary, "Canary analysis was skipped, promotion finished.",
@@ -961,6 +995,12 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	}
 
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
+	c.recorder.IncFailures(metrics.CanaryMetricLabels{
+		Name:               canary.Spec.TargetRef.Name,
+		Namespace:          canary.Namespace,
+		DeploymentStrategy: c.getDeploymentStrategy(canary),
+		AnalysisStatus:     metrics.AnalysisStatusCompleted,
+	})
 	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
 }
 

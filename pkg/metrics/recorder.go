@@ -24,14 +24,42 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// Deployment strategies
+const (
+	CanaryStrategy    = "canary"
+	BlueGreenStrategy = "blue_green"
+	ABTestingStrategy = "ab_testing"
+)
+
+// Analysis status
+const (
+	AnalysisStatusCompleted = "completed"
+	AnalysisStatusSkipped   = "skipped"
+)
+
+// CanaryMetricLabels holds labels for canary metrics
+type CanaryMetricLabels struct {
+	Name               string
+	Namespace          string
+	DeploymentStrategy string
+	AnalysisStatus     string
+}
+
+// Values returns label values as a slice for Prometheus metrics
+func (c CanaryMetricLabels) Values() []string {
+	return []string{c.Name, c.Namespace, c.DeploymentStrategy, c.AnalysisStatus}
+}
+
 // Recorder records the canary analysis as Prometheus metrics
 type Recorder struct {
-	info     *prometheus.GaugeVec
-	duration *prometheus.HistogramVec
-	total    *prometheus.GaugeVec
-	status   *prometheus.GaugeVec
-	weight   *prometheus.GaugeVec
-	analysis *prometheus.GaugeVec
+	info      *prometheus.GaugeVec
+	duration  *prometheus.HistogramVec
+	total     *prometheus.GaugeVec
+	status    *prometheus.GaugeVec
+	weight    *prometheus.GaugeVec
+	analysis  *prometheus.GaugeVec
+	successes *prometheus.CounterVec
+	failures  *prometheus.CounterVec
 }
 
 // NewRecorder creates a new recorder and registers the Prometheus metrics
@@ -74,6 +102,18 @@ func NewRecorder(controller string, register bool) Recorder {
 		Help:      "Last canary analysis result per metric",
 	}, []string{"name", "namespace", "metric"})
 
+	successes := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: controller,
+		Name:      "canary_successes_total",
+		Help:      "Total number of canary successes",
+	}, []string{"name", "namespace", "deployment_strategy", "analysis_status"})
+
+	failures := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: controller,
+		Name:      "canary_failures_total",
+		Help:      "Total number of canary failures",
+	}, []string{"name", "namespace", "deployment_strategy", "analysis_status"})
+
 	if register {
 		prometheus.MustRegister(info)
 		prometheus.MustRegister(duration)
@@ -81,15 +121,19 @@ func NewRecorder(controller string, register bool) Recorder {
 		prometheus.MustRegister(status)
 		prometheus.MustRegister(weight)
 		prometheus.MustRegister(analysis)
+		prometheus.MustRegister(successes)
+		prometheus.MustRegister(failures)
 	}
 
 	return Recorder{
-		info:     info,
-		duration: duration,
-		total:    total,
-		status:   status,
-		weight:   weight,
-		analysis: analysis,
+		info:      info,
+		duration:  duration,
+		total:     total,
+		status:    status,
+		weight:    weight,
+		analysis:  analysis,
+		successes: successes,
+		failures:  failures,
 	}
 }
 
@@ -130,4 +174,54 @@ func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase)
 func (cr *Recorder) SetWeight(cd *flaggerv1.Canary, primary int, canary int) {
 	cr.weight.WithLabelValues(fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name), cd.Namespace).Set(float64(primary))
 	cr.weight.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(canary))
+}
+
+// IncSuccesses increments the total number of canary successes
+func (cr *Recorder) IncSuccesses(labels CanaryMetricLabels) {
+	cr.successes.WithLabelValues(labels.Values()...).Inc()
+}
+
+// IncFailures increments the total number of canary failures
+func (cr *Recorder) IncFailures(labels CanaryMetricLabels) {
+	cr.failures.WithLabelValues(labels.Values()...).Inc()
+}
+
+// GetStatusMetric returns the status metric
+func (cr *Recorder) GetStatusMetric() *prometheus.GaugeVec {
+	return cr.status
+}
+
+// GetWeightMetric returns the weight metric
+func (cr *Recorder) GetWeightMetric() *prometheus.GaugeVec {
+	return cr.weight
+}
+
+// GetTotalMetric returns the total metric
+func (cr *Recorder) GetTotalMetric() *prometheus.GaugeVec {
+	return cr.total
+}
+
+// GetInfoMetric returns the info metric
+func (cr *Recorder) GetInfoMetric() *prometheus.GaugeVec {
+	return cr.info
+}
+
+// GetDurationMetric returns the duration metric
+func (cr *Recorder) GetDurationMetric() *prometheus.HistogramVec {
+	return cr.duration
+}
+
+// GetAnalysisMetric returns the analysis metric
+func (cr *Recorder) GetAnalysisMetric() *prometheus.GaugeVec {
+	return cr.analysis
+}
+
+// GetSuccessesMetric returns the successes metric
+func (cr *Recorder) GetSuccessesMetric() *prometheus.CounterVec {
+	return cr.successes
+}
+
+// GetFailuresMetric returns the failures metric
+func (cr *Recorder) GetFailuresMetric() *prometheus.CounterVec {
+	return cr.failures
 }
