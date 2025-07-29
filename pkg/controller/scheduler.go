@@ -348,6 +348,8 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		if !retriable {
+			c.recordEventWarningf(cd, "Rolling back since %s.%s canary is not ready", cd.Name, cd.Namespace)
+			c.alert(cd, "Rolling back since canary is not ready", false, flaggerv1.SeverityError)
 			c.rollback(cd, canaryController, meshRouter, scalerReconciler)
 		}
 		return
