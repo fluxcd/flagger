@@ -909,6 +909,18 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
+                    unmanagedMetadata:
+                      description: UnmanagedMetadata is a list of metadata keys that should be ignored by Flagger.
+                      type: object
+                      properties:
+                        annotations:
+                          type: array
+                          items:
+                            type: string
+                        labels:
+                          type: array
+                          items:
+                            type: string
                 skipAnalysis:
                   description: Skip analysis and promote canary
                   type: boolean

@@ -223,6 +223,17 @@ type CanaryService struct {
 	// Canary is the metadata to add to the canary service
 	// +optional
 	Canary *CustomMetadata `json:"canary,omitempty"`
+
+	// UnmanagedMetadata is a list of metadata keys that should be ignored by Flagger.
+	// Flagger will not add, remove or change the value of these annotations.
+	// +optional
+	UnmanagedMetadata *UnmanagedMetadata `json:"unmanagedMetadata,omitempty"`
+}
+
+// UnmanagedMetadata is a list of metadata keys that should be ignored by Flagger.
+type UnmanagedMetadata struct {
+	Annotations []string `json:"annotations,omitempty"`
+	Labels      []string `json:"labels,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done

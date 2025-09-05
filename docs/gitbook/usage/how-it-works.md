@@ -206,6 +206,10 @@ Note that the `apex` annotations are added to both the generated Kubernetes Serv
 generated service mesh/ingress object. This allows using external-dns with Istio `VirtualServices`
 and `TraefikServices`. Beware of configuration conflicts [here](../faq.md#ExternalDNS).
 
+Note that if any annotations or labels are added that are not specified here,
+Flagger will remove them during reconciliation. To specify metadata
+that should be ignored by Flagger, configure `unmanagedMetadata`.
+
 If you want for the generated Kubernetes ClusterIP services to be [headless](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services),
 then set `service.headless` to true.
 
