@@ -38,7 +38,7 @@ jobs:
           - knative
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Kubernetes
         uses: helm/kind-action@v1.12.0
         if: matrix.provider != 'skipper'
