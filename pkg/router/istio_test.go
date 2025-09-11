@@ -190,8 +190,14 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 		cookieKey := "flagger-cookie"
 		// enable session affinity and start canary run
 		canary.Spec.Analysis.SessionAffinity = &v1beta1.SessionAffinity{
-			CookieName: cookieKey,
-			MaxAge:     300,
+			CookieName:  cookieKey,
+			Domain:      "flagger.app",
+			HttpOnly:    true,
+			MaxAge:      300,
+			Partitioned: true,
+			Path:        "/app",
+			SameSite:    "Strict",
+			Secure:      true,
 		}
 		err := router.SetRoutes(canary, 0, 10, false)
 
@@ -231,7 +237,13 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 				val, ok := routeDest.Headers.Response.Add[setCookieHeader]
 				assert.True(t, ok)
 				assert.True(t, strings.HasPrefix(val, cookieKey))
+				assert.True(t, strings.Contains(val, "Domain=flagger.app"))
+				assert.True(t, strings.Contains(val, "HttpOnly"))
 				assert.True(t, strings.Contains(val, "Max-Age=300"))
+				assert.True(t, strings.Contains(val, "Partitioned"))
+				assert.True(t, strings.Contains(val, "Path=/app"))
+				assert.True(t, strings.Contains(val, "SameSite=Strict"))
+				assert.True(t, strings.Contains(val, "Secure"))
 			}
 		}
 		assert.True(t, strings.HasPrefix(canary.Status.SessionAffinityCookie, cookieKey))
@@ -286,7 +298,13 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 				val, ok := routeDest.Headers.Response.Add[setCookieHeader]
 				assert.True(t, ok)
 				assert.True(t, strings.HasPrefix(val, cookieKey))
+				assert.True(t, strings.Contains(val, "Domain=flagger.app"))
+				assert.True(t, strings.Contains(val, "HttpOnly"))
 				assert.True(t, strings.Contains(val, "Max-Age=300"))
+				assert.True(t, strings.Contains(val, "Partitioned"))
+				assert.True(t, strings.Contains(val, "Path=/app"))
+				assert.True(t, strings.Contains(val, "SameSite=Strict"))
+				assert.True(t, strings.Contains(val, "Secure"))
 			}
 		}
 		assert.True(t, strings.HasPrefix(canary.Status.SessionAffinityCookie, cookieKey))
