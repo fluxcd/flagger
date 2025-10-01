@@ -19,6 +19,7 @@ package canary
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -120,7 +121,7 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("damonset %s.%s get query error: %v", targetName, cd.Namespace, err)
 		}
 
-		label, labelValue, err := c.getSelectorLabel(canary)
+		matchLabels, label, labelValue, err := c.getSelectorLabel(canary)
 		primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 		if err != nil {
 			return fmt.Errorf("getSelectorLabel failed: %w", err)
@@ -129,6 +130,10 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 		primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
+
+		if !maps.Equal(primary.Spec.Selector.MatchLabels, matchLabels) {
+			c.recreatePrimaryDaemonSet(cd, c.includeLabelPrefix)
 		}
 
 		// promote secrets and config maps
@@ -206,24 +211,24 @@ func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, erro
 }
 
 // GetMetadata returns the pod label selector and svc ports
-func (c *DaemonSetController) GetMetadata(cd *flaggerv1.Canary) (string, string, map[string]int32, error) {
+func (c *DaemonSetController) GetMetadata(cd *flaggerv1.Canary) (map[string]string, string, string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 
 	canaryDae, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return "", "", nil, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return nil, "", "", nil, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	label, labelValue, err := c.getSelectorLabel(canaryDae)
+	matchLabels, label, labelValue, err := c.getSelectorLabel(canaryDae)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("getSelectorLabel failed: %w", err)
+		return nil, "", "", nil, fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
 	var ports map[string]int32
 	if cd.Spec.Service.PortDiscovery {
 		ports = getPorts(cd, canaryDae.Spec.Template.Spec.Containers)
 	}
-	return label, labelValue, ports, nil
+	return matchLabels, label, labelValue, ports, nil
 }
 
 func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
@@ -244,7 +249,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, inclu
 	// Create the labels map but filter unwanted labels
 	labels := includeLabelsByPrefix(canaryDae.Labels, includeLabelPrefix)
 
-	label, labelValue, err := c.getSelectorLabel(canaryDae)
+	matchLabels, label, labelValue, err := c.getSelectorLabel(canaryDae)
 	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
@@ -264,6 +269,8 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, inclu
 		if err != nil {
 			return fmt.Errorf("makeAnnotations failed: %w", err)
 		}
+
+		matchLabels[label] = primaryLabelValue
 
 		// create primary daemonset
 		primaryDae = &appsv1.DaemonSet{
@@ -285,9 +292,7 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, inclu
 				RevisionHistoryLimit: canaryDae.Spec.RevisionHistoryLimit,
 				UpdateStrategy:       canaryDae.Spec.UpdateStrategy,
 				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						label: primaryLabelValue,
-					},
+					MatchLabels: matchLabels,
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -310,18 +315,45 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, inclu
 	return nil
 }
 
+func (c *DaemonSetController) recreatePrimaryDaemonSet(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
+	targetName := cd.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+
+	// TODO: Check if primary daemonset is scaled to zero and not receiving any traffic
+
+	if err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Delete(context.TODO(), primaryName, metav1.DeleteOptions{}); err != nil {
+		return fmt.Errorf("daemonset %s.%s delete error: %w", primaryName, cd.Namespace, err)
+	}
+
+	if err := c.createPrimaryDaemonSet(cd, includeLabelPrefix); err != nil {
+		return fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
+	}
+
+	return nil
+}
+
 // getSelectorLabel returns the selector match label
-func (c *DaemonSetController) getSelectorLabel(daemonSet *appsv1.DaemonSet) (string, string, error) {
+func (c *DaemonSetController) getSelectorLabel(daemonSet *appsv1.DaemonSet) (map[string]string, string, string, error) {
+	label, labelValue := "", ""
 	for _, l := range c.labels {
 		if _, ok := daemonSet.Spec.Selector.MatchLabels[l]; ok {
-			return l, daemonSet.Spec.Selector.MatchLabels[l], nil
+			label, labelValue = l, daemonSet.Spec.Selector.MatchLabels[l]
 		}
 	}
 
-	return "", "", fmt.Errorf(
-		"daemonset %s.%s spec.selector.matchLabels must contain one of %v'",
-		daemonSet.Name, daemonSet.Namespace, c.labels,
-	)
+	if label == "" {
+		return nil, "", "", fmt.Errorf(
+			"daemonset %s.%s spec.selector.matchLabels must contain one of %v",
+			daemonSet.Name, daemonSet.Namespace, c.labels,
+		)
+	}
+
+	matchLabels := map[string]string{}
+	for key, value := range daemonSet.Spec.Selector.MatchLabels {
+		matchLabels[key] = value
+	}
+
+	return matchLabels, label, labelValue, nil
 }
 
 func (c *DaemonSetController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {

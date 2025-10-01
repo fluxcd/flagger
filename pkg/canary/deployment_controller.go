@@ -19,6 +19,7 @@ package canary
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -72,7 +73,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 		}
 
-		label, labelValue, err := c.getSelectorLabel(canary)
+		matchLabels, label, labelValue, err := c.getSelectorLabel(canary)
 		primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 		if err != nil {
 			return fmt.Errorf("getSelectorLabel failed: %w", err)
@@ -81,6 +82,10 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
+
+		if !maps.Equal(primary.Spec.Selector.MatchLabels, matchLabels) {
+			c.recreatePrimaryDeployment(cd, c.includeLabelPrefix)
 		}
 
 		// promote secrets and config maps
@@ -219,17 +224,17 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 }
 
 // GetMetadata returns the pod label selector and svc ports
-func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, string, map[string]int32, error) {
+func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (map[string]string, string, string, map[string]int32, error) {
 	targetName := cd.Spec.TargetRef.Name
 
 	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
-		return "", "", nil, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return nil, "", "", nil, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	label, labelValue, err := c.getSelectorLabel(canaryDep)
+	matchLabels, label, labelValue, err := c.getSelectorLabel(canaryDep)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("getSelectorLabel failed: %w", err)
+		return nil, "", "", nil, fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
 	var ports map[string]int32
@@ -237,7 +242,7 @@ func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (string, string
 		ports = getPorts(cd, canaryDep.Spec.Template.Spec.Containers)
 	}
 
-	return label, labelValue, ports, nil
+	return matchLabels, label, labelValue, ports, nil
 }
 func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
 	targetName := cd.Spec.TargetRef.Name
@@ -251,7 +256,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 	// Create the labels map but filter unwanted labels
 	labels := includeLabelsByPrefix(canaryDep.Labels, includeLabelPrefix)
 
-	label, labelValue, err := c.getSelectorLabel(canaryDep)
+	matchLabels, label, labelValue, err := c.getSelectorLabel(canaryDep)
 	primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 	if err != nil {
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
@@ -277,6 +282,8 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 			replicas = *canaryDep.Spec.Replicas
 		}
 
+		matchLabels[label] = primaryLabelValue
+
 		// create primary deployment
 		primaryDep = &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -299,9 +306,7 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 				Replicas:                int32p(replicas),
 				Strategy:                canaryDep.Spec.Strategy,
 				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						label: primaryLabelValue,
-					},
+					MatchLabels: matchLabels,
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -326,18 +331,45 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 	return nil
 }
 
+func (c *DeploymentController) recreatePrimaryDeployment(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
+	targetName := cd.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", targetName)
+
+	// TODO: Check if primary deployment is scaled to zero and not receiving any traffic
+
+	if err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Delete(context.TODO(), primaryName, metav1.DeleteOptions{}); err != nil {
+		return fmt.Errorf("deployment %s.%s delete error: %w", primaryName, cd.Namespace, err)
+	}
+
+	if err := c.createPrimaryDeployment(cd, includeLabelPrefix); err != nil {
+		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
+	}
+
+	return nil
+}
+
 // getSelectorLabel returns the selector match label
-func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (string, string, error) {
+func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (map[string]string, string, string, error) {
+	label, labelValue := "", ""
 	for _, l := range c.labels {
 		if _, ok := deployment.Spec.Selector.MatchLabels[l]; ok {
-			return l, deployment.Spec.Selector.MatchLabels[l], nil
+			label, labelValue = l, deployment.Spec.Selector.MatchLabels[l]
 		}
 	}
 
-	return "", "", fmt.Errorf(
-		"deployment %s.%s spec.selector.matchLabels must contain one of %v",
-		deployment.Name, deployment.Namespace, c.labels,
-	)
+	if label == "" {
+		return nil, "", "", fmt.Errorf(
+			"deployment %s.%s spec.selector.matchLabels must contain one of %v",
+			deployment.Name, deployment.Namespace, c.labels,
+		)
+	}
+
+	matchLabels := map[string]string{}
+	for key, value := range deployment.Spec.Selector.MatchLabels {
+		matchLabels[key] = value
+	}
+
+	return matchLabels, label, labelValue, nil
 }
 
 func (c *DeploymentController) HaveDependenciesChanged(cd *flaggerv1.Canary) (bool, error) {
