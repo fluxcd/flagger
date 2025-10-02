@@ -79,6 +79,8 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("getSelectorLabel failed: %w", err)
 		}
 
+		matchLabels[label] = primaryLabelValue
+
 		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
