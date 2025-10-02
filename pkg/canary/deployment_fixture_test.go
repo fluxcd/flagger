@@ -776,6 +776,7 @@ func newDeploymentControllerTestV2() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"name": "podinfo",
+					"test-label-1": "test-label-value-1",
 				},
 			},
 			Template: corev1.PodTemplateSpec{

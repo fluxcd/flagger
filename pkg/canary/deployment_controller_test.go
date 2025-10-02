@@ -75,7 +75,9 @@ func TestDeploymentController_Promote(t *testing.T) {
 	mocks.initializeCanary(t)
 
 	dep2 := newDeploymentControllerTestV2()
-	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	err := mocks.kubeClient.AppsV1().Deployments("default").Delete(context.TODO(), dep2.ObjectMeta.Name, metav1.DeleteOptions{})
+	require.NoError(t, err)
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Create(context.TODO(), dep2, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	config2 := newDeploymentControllerTestConfigMapV2()
@@ -100,6 +102,12 @@ func TestDeploymentController_Promote(t *testing.T) {
 	depPrimaryAnnotations := depPrimary.ObjectMeta.Annotations
 	depSourceAnnotations := dep2.ObjectMeta.Annotations
 	assert.Equal(t, depSourceAnnotations["app.kubernetes.io/test-annotation-1"], depPrimaryAnnotations["app.kubernetes.io/test-annotation-1"])
+
+	depPrimaryMatchLabels := depPrimary.Spec.Selector.MatchLabels
+	depSourceMatchLabels := dep2.Spec.Selector.MatchLabels
+	assert.Equal(t, len(depSourceMatchLabels), len(depPrimaryMatchLabels))
+	assert.Equal(t, depSourceMatchLabels["app.kubernetes.io/test-label-1"], depPrimaryMatchLabels["app.kubernetes.io/test-label-1"])
+	assert.Equal(t, "podinfo-primary", depPrimaryMatchLabels["name"])
 
 	configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 	require.NoError(t, err)

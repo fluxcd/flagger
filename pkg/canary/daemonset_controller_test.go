@@ -79,7 +79,9 @@ func TestDaemonSetController_Promote(t *testing.T) {
 	require.NoError(t, err)
 
 	dae2 := newDaemonSetControllerTestPodInfoV2()
-	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Update(context.TODO(), dae2, metav1.UpdateOptions{})
+	err = mocks.kubeClient.AppsV1().DaemonSets("default").Delete(context.TODO(), dae2.ObjectMeta.Name, metav1.DeleteOptions{})
+	require.NoError(t, err)
+	_, err = mocks.kubeClient.AppsV1().DaemonSets("default").Create(context.TODO(), dae2, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	config2 := newDaemonSetControllerTestConfigMapV2()
@@ -100,6 +102,12 @@ func TestDaemonSetController_Promote(t *testing.T) {
 	daeSourceLabels := dae2.ObjectMeta.Labels
 	assert.Equal(t, daeSourceLabels["app.kubernetes.io/test-label-1"], daePrimaryLabels["app.kubernetes.io/test-label-1"])
 	assert.Equal(t, "podinfo-primary", daePrimaryLabels["name"])
+
+	daePrimaryMatchLabels := daePrimary.Spec.Selector.MatchLabels
+	daeSourceMatchLabels := dae2.Spec.Selector.MatchLabels
+	assert.Equal(t, len(daeSourceMatchLabels), len(daePrimaryMatchLabels))
+	assert.Equal(t, daeSourceMatchLabels["app.kubernetes.io/test-label-1"], daePrimaryMatchLabels["app.kubernetes.io/test-label-1"])
+	assert.Equal(t, "podinfo-primary", daePrimaryMatchLabels["name"])
 
 	daePrimaryAnnotations := daePrimary.ObjectMeta.Annotations
 	daeSourceAnnotations := dae2.ObjectMeta.Annotations
