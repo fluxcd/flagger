@@ -138,6 +138,12 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 			c.recreatePrimaryDaemonSet(cd, c.includeLabelPrefix)
 		}
 
+		// Get primary daemonset again, in case it has changed
+		primary, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
+		}
+
 		// promote secrets and config maps
 		configRefs, err := c.configTracker.GetTargetConfigs(cd)
 		if err != nil {
