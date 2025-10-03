@@ -87,6 +87,14 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 		}
 
 		if !maps.Equal(primary.Spec.Selector.MatchLabels, matchLabels) {
+			c.logger.With("canary", fmt.Sprintf(cd.Name, cd.Namespace)).
+				Infof(
+					"Primary deployment %s.%s matchLabels does not match canary deployment %s.%s, recreating...",
+					primaryName,
+					cd.Namespace,
+					targetName,
+					cd.Namespace,
+				)
 			c.recreatePrimaryDeployment(cd, c.includeLabelPrefix)
 		}
 
