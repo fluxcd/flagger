@@ -19,7 +19,6 @@ package canary
 import (
 	"context"
 	"fmt"
-	"maps"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -121,25 +120,13 @@ func (c *DaemonSetController) Promote(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("damonset %s.%s get query error: %v", targetName, cd.Namespace, err)
 		}
 
-		matchLabels, label, labelValue, err := c.getSelectorLabel(canary)
+		_, label, labelValue, err := c.getSelectorLabel(canary)
 		primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 		if err != nil {
 			return fmt.Errorf("getSelectorLabel failed: %w", err)
 		}
 
-		matchLabels[label] = primaryLabelValue
-
 		primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
-		}
-
-		if !maps.Equal(primary.Spec.Selector.MatchLabels, matchLabels) {
-			c.recreatePrimaryDaemonSet(cd, c.includeLabelPrefix)
-		}
-
-		// Get primary daemonset again, in case it has changed
-		primary, err = c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
 		}
@@ -320,23 +307,6 @@ func (c *DaemonSetController) createPrimaryDaemonSet(cd *flaggerv1.Canary, inclu
 
 		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof("DaemonSet %s.%s created", primaryDae.GetName(), cd.Namespace)
 	}
-	return nil
-}
-
-func (c *DaemonSetController) recreatePrimaryDaemonSet(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
-	targetName := cd.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", targetName)
-
-	// TODO: Check if primary daemonset is scaled to zero and not receiving any traffic
-
-	if err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Delete(context.TODO(), primaryName, metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("daemonset %s.%s delete error: %w", primaryName, cd.Namespace, err)
-	}
-
-	if err := c.createPrimaryDaemonSet(cd, includeLabelPrefix); err != nil {
-		return fmt.Errorf("createPrimaryDaemonSet failed: %w", err)
-	}
-
 	return nil
 }
 

@@ -19,7 +19,6 @@ package canary
 import (
 	"context"
 	"fmt"
-	"maps"
 
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -83,33 +82,13 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 			return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 		}
 
-		matchLabels, label, labelValue, err := c.getSelectorLabel(canary)
+		_, label, labelValue, err := c.getSelectorLabel(canary)
 		primaryLabelValue := fmt.Sprintf("%s-primary", labelValue)
 		if err != nil {
 			return fmt.Errorf("getSelectorLabel failed: %w", err)
 		}
 
-		matchLabels[label] = primaryLabelValue
-
 		primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
-		}
-
-		if !maps.Equal(primary.Spec.Selector.MatchLabels, matchLabels) {
-			c.logger.With("canary", fmt.Sprintf(cd.Name, cd.Namespace)).
-				Infof(
-					"Primary deployment %s.%s matchLabels does not match canary deployment %s.%s, recreating...",
-					primaryName,
-					cd.Namespace,
-					targetName,
-					cd.Namespace,
-				)
-			c.recreatePrimaryDeployment(cd, canary, primaryName, c.includeLabelPrefix)
-		}
-
-		// Get primary deployment again, in case it has changes
-		primary, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
 		}
@@ -342,20 +321,6 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, can
 
 	c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
 		Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
-
-	return nil
-}
-
-func (c *DeploymentController) recreatePrimaryDeployment(cd *flaggerv1.Canary, canary *appsv1.Deployment, name string, includeLabelPrefix []string) error {
-	// TODO: Make sure primary deployment is not receiving any traffic
-
-	if err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("deployment %s.%s delete error: %w", name, cd.Namespace, err)
-	}
-
-	if err := c.createPrimaryDeployment(cd, canary, name, includeLabelPrefix); err != nil {
-		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
-	}
 
 	return nil
 }

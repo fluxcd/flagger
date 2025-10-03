@@ -637,28 +637,17 @@ func newDaemonSetControllerTestPodInfoV2() *appsv1.DaemonSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "podinfo",
-			Annotations: map[string]string{
-				"test-annotation-1": "test-annotation-value-1",
-			},
-			Labels: map[string]string{
-				"test-label-1": "test-label-value-1",
-			},
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"name":         "podinfo",
-					"test-label-1": "test-label-value-1",
+					"name": "podinfo",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"name":         "podinfo",
-						"test-label-1": "test-label-value-1",
-					},
-					Annotations: map[string]string{
-						"test-annotation-1": "test-annotation-value-1",
+						"name": "podinfo",
 					},
 				},
 				Spec: corev1.PodSpec{
