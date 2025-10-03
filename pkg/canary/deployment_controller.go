@@ -47,8 +47,18 @@ type DeploymentController struct {
 
 // Initialize creates the primary deployment if it does not exist.
 func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (bool, error) {
-	if err := c.createPrimaryDeployment(cd, c.includeLabelPrefix); err != nil {
-		return true, fmt.Errorf("createPrimaryDeployment failed: %w", err)
+	targetName := cd.Spec.TargetRef.Name
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+
+	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+	if err != nil {
+		return true, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+	}
+
+	if _, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{}); errors.IsNotFound(err) {
+		if err := c.createPrimaryDeployment(cd, canaryDep, primaryName, c.includeLabelPrefix); err != nil {
+			return true, fmt.Errorf("createPrimaryDeployment failed: %w", err)
+		}
 	}
 
 	if cd.Status.Phase == "" || cd.Status.Phase == flaggerv1.CanaryPhaseInitializing {
@@ -95,7 +105,7 @@ func (c *DeploymentController) Promote(cd *flaggerv1.Canary) error {
 					targetName,
 					cd.Namespace,
 				)
-			c.recreatePrimaryDeployment(cd, c.includeLabelPrefix)
+			c.recreatePrimaryDeployment(cd, canary, primaryName, c.includeLabelPrefix)
 		}
 
 		// Get primary deployment again, in case it has changes
@@ -260,13 +270,23 @@ func (c *DeploymentController) GetMetadata(cd *flaggerv1.Canary) (map[string]str
 
 	return matchLabels, label, labelValue, ports, nil
 }
-func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
-	targetName := cd.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
-
-	canaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
+func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, canaryDep *appsv1.Deployment, name string, includeLabelPrefix []string) error {
+	// create primary secrets and config maps
+	configRefs, err := c.configTracker.GetTargetConfigs(cd)
 	if err != nil {
-		return fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
+		return fmt.Errorf("GetTargetConfigs failed: %w", err)
+	}
+	if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
+		return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
+	}
+	annotations, err := makeAnnotations(canaryDep.Spec.Template.Annotations)
+	if err != nil {
+		return fmt.Errorf("makeAnnotations failed: %w", err)
+	}
+
+	replicas := int32(1)
+	if canaryDep.Spec.Replicas != nil && *canaryDep.Spec.Replicas > 0 {
+		replicas = *canaryDep.Spec.Replicas
 	}
 
 	// Create the labels map but filter unwanted labels
@@ -278,86 +298,62 @@ func (c *DeploymentController) createPrimaryDeployment(cd *flaggerv1.Canary, inc
 		return fmt.Errorf("getSelectorLabel failed: %w", err)
 	}
 
-	primaryDep, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
-		// create primary secrets and config maps
-		configRefs, err := c.configTracker.GetTargetConfigs(cd)
-		if err != nil {
-			return fmt.Errorf("GetTargetConfigs failed: %w", err)
-		}
-		if err := c.configTracker.CreatePrimaryConfigs(cd, configRefs, c.includeLabelPrefix); err != nil {
-			return fmt.Errorf("CreatePrimaryConfigs failed: %w", err)
-		}
-		annotations, err := makeAnnotations(canaryDep.Spec.Template.Annotations)
-		if err != nil {
-			return fmt.Errorf("makeAnnotations failed: %w", err)
-		}
+	matchLabels[label] = primaryLabelValue
 
-		replicas := int32(1)
-		if canaryDep.Spec.Replicas != nil && *canaryDep.Spec.Replicas > 0 {
-			replicas = *canaryDep.Spec.Replicas
-		}
-
-		matchLabels[label] = primaryLabelValue
-
-		// create primary deployment
-		primaryDep = &appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        primaryName,
-				Namespace:   cd.Namespace,
-				Labels:      makePrimaryLabels(labels, primaryLabelValue, label),
-				Annotations: filterMetadata(canaryDep.Annotations),
-				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(cd, schema.GroupVersionKind{
-						Group:   flaggerv1.SchemeGroupVersion.Group,
-						Version: flaggerv1.SchemeGroupVersion.Version,
-						Kind:    flaggerv1.CanaryKind,
-					}),
-				},
+	// create primary deployment
+	primaryDep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Namespace:   cd.Namespace,
+			Labels:      makePrimaryLabels(labels, primaryLabelValue, label),
+			Annotations: filterMetadata(canaryDep.Annotations),
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(cd, schema.GroupVersionKind{
+					Group:   flaggerv1.SchemeGroupVersion.Group,
+					Version: flaggerv1.SchemeGroupVersion.Version,
+					Kind:    flaggerv1.CanaryKind,
+				}),
 			},
-			Spec: appsv1.DeploymentSpec{
-				ProgressDeadlineSeconds: canaryDep.Spec.ProgressDeadlineSeconds,
-				MinReadySeconds:         canaryDep.Spec.MinReadySeconds,
-				RevisionHistoryLimit:    canaryDep.Spec.RevisionHistoryLimit,
-				Replicas:                int32p(replicas),
-				Strategy:                canaryDep.Spec.Strategy,
-				Selector: &metav1.LabelSelector{
-					MatchLabels: matchLabels,
-				},
-				Template: corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
-						Labels:      makePrimaryLabels(canaryDep.Spec.Template.Labels, primaryLabelValue, label),
-						Annotations: annotations,
-					},
-					// update spec with the primary secrets and config maps
-					Spec: c.getPrimaryDeploymentTemplateSpec(canaryDep, configRefs),
-				},
+		},
+		Spec: appsv1.DeploymentSpec{
+			ProgressDeadlineSeconds: canaryDep.Spec.ProgressDeadlineSeconds,
+			MinReadySeconds:         canaryDep.Spec.MinReadySeconds,
+			RevisionHistoryLimit:    canaryDep.Spec.RevisionHistoryLimit,
+			Replicas:                int32p(replicas),
+			Strategy:                canaryDep.Spec.Strategy,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: matchLabels,
 			},
-		}
-
-		_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Create(context.TODO(), primaryDep, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("creating deployment %s.%s failed: %w", primaryDep.Name, cd.Namespace, err)
-		}
-
-		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
-			Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      makePrimaryLabels(canaryDep.Spec.Template.Labels, primaryLabelValue, label),
+					Annotations: annotations,
+				},
+				// update spec with the primary secrets and config maps
+				Spec: c.getPrimaryDeploymentTemplateSpec(canaryDep, configRefs),
+			},
+		},
 	}
+
+	_, err = c.kubeClient.AppsV1().Deployments(cd.Namespace).Create(context.TODO(), primaryDep, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("creating deployment %s.%s failed: %w", primaryDep.Name, cd.Namespace, err)
+	}
+
+	c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+		Infof("Deployment %s.%s created", primaryDep.GetName(), cd.Namespace)
 
 	return nil
 }
 
-func (c *DeploymentController) recreatePrimaryDeployment(cd *flaggerv1.Canary, includeLabelPrefix []string) error {
-	targetName := cd.Spec.TargetRef.Name
-	primaryName := fmt.Sprintf("%s-primary", targetName)
+func (c *DeploymentController) recreatePrimaryDeployment(cd *flaggerv1.Canary, canary *appsv1.Deployment, name string, includeLabelPrefix []string) error {
+	// TODO: Make sure primary deployment is not receiving any traffic
 
-	// TODO: Check if primary deployment is scaled to zero and not receiving any traffic
-
-	if err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Delete(context.TODO(), primaryName, metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("deployment %s.%s delete error: %w", primaryName, cd.Namespace, err)
+	if err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
+		return fmt.Errorf("deployment %s.%s delete error: %w", name, cd.Namespace, err)
 	}
 
-	if err := c.createPrimaryDeployment(cd, includeLabelPrefix); err != nil {
+	if err := c.createPrimaryDeployment(cd, canary, name, includeLabelPrefix); err != nil {
 		return fmt.Errorf("createPrimaryDeployment failed: %w", err)
 	}
 
