@@ -332,6 +332,7 @@ func (c *DeploymentController) getSelectorLabel(deployment *appsv1.Deployment) (
 	for _, l := range c.labels {
 		if _, ok := deployment.Spec.Selector.MatchLabels[l]; ok {
 			label, labelValue = l, deployment.Spec.Selector.MatchLabels[l]
+			break
 		}
 	}
 

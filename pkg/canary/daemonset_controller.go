@@ -316,6 +316,7 @@ func (c *DaemonSetController) getSelectorLabel(daemonSet *appsv1.DaemonSet) (map
 	for _, l := range c.labels {
 		if _, ok := daemonSet.Spec.Selector.MatchLabels[l]; ok {
 			label, labelValue = l, daemonSet.Spec.Selector.MatchLabels[l]
+			break
 		}
 	}
 

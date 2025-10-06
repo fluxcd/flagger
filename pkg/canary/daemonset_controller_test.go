@@ -72,6 +72,29 @@ func TestDaemonSetController_Sync_InconsistentNaming(t *testing.T) {
 	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", sourceSelectorValue))
 }
 
+func TestDaemonSetController_GetMetadata(t *testing.T) {
+	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDaemonSetFixture(dc)
+	_, err := mocks.controller.Initialize(mocks.canary)
+	require.NoError(t, err)
+
+	matchLabels, label, labelValue, _, err := mocks.controller.GetMetadata(mocks.canary)
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]string{"name": "podinfo", "test-label-1": "test-label-value-1"}, matchLabels)
+	assert.Equal(t, "name", label)
+	assert.Equal(t, "podinfo", labelValue)
+
+	mocks.controller.labels = []string{"app", "name", "test-label-1"}
+
+	matchLabels, label, labelValue, _, err = mocks.controller.GetMetadata(mocks.canary)
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]string{"name": "podinfo", "test-label-1": "test-label-value-1"}, matchLabels)
+	assert.Equal(t, "name", label)
+	assert.Equal(t, "podinfo", labelValue)
+}
+
 func TestDaemonSetController_Initialize(t *testing.T) {
 	dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
 	mocks := newDaemonSetFixture(dc)
