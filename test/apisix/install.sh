@@ -15,6 +15,7 @@ helm repo add apisix https://charts.apiseven.com
 
 helm upgrade -i apisix apisix/apisix --version=${APISIX_CHART_VERSION} \
 --namespace apisix \
+--set etcd.image.repository=bitnamilegacy/etcd \
 --set apisix.podAnnotations."prometheus\.io/scrape"=true \
 --set apisix.podAnnotations."prometheus\.io/port"=9091 \
 --set apisix.podAnnotations."prometheus\.io/path"=/apisix/prometheus/metrics \
