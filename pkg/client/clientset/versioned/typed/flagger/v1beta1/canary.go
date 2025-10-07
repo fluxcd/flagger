@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type CanariesGetter interface {
 
 // CanaryInterface has methods to work with Canary resources.
 type CanaryInterface interface {
-	Create(ctx context.Context, canary *v1beta1.Canary, opts v1.CreateOptions) (*v1beta1.Canary, error)
-	Update(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (*v1beta1.Canary, error)
+	Create(ctx context.Context, canary *flaggerv1beta1.Canary, opts v1.CreateOptions) (*flaggerv1beta1.Canary, error)
+	Update(ctx context.Context, canary *flaggerv1beta1.Canary, opts v1.UpdateOptions) (*flaggerv1beta1.Canary, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (*v1beta1.Canary, error)
+	UpdateStatus(ctx context.Context, canary *flaggerv1beta1.Canary, opts v1.UpdateOptions) (*flaggerv1beta1.Canary, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.Canary, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.CanaryList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*flaggerv1beta1.Canary, error)
+	List(ctx context.Context, opts v1.ListOptions) (*flaggerv1beta1.CanaryList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Canary, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *flaggerv1beta1.Canary, err error)
 	CanaryExpansion
 }
 
 // canaries implements CanaryInterface
 type canaries struct {
-	*gentype.ClientWithList[*v1beta1.Canary, *v1beta1.CanaryList]
+	*gentype.ClientWithList[*flaggerv1beta1.Canary, *flaggerv1beta1.CanaryList]
 }
 
 // newCanaries returns a Canaries
 func newCanaries(c *FlaggerV1beta1Client, namespace string) *canaries {
 	return &canaries{
-		gentype.NewClientWithList[*v1beta1.Canary, *v1beta1.CanaryList](
+		gentype.NewClientWithList[*flaggerv1beta1.Canary, *flaggerv1beta1.CanaryList](
 			"canaries",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta1.Canary { return &v1beta1.Canary{} },
-			func() *v1beta1.CanaryList { return &v1beta1.CanaryList{} }),
+			func() *flaggerv1beta1.Canary { return &flaggerv1beta1.Canary{} },
+			func() *flaggerv1beta1.CanaryList { return &flaggerv1beta1.CanaryList{} },
+		),
 	}
 }

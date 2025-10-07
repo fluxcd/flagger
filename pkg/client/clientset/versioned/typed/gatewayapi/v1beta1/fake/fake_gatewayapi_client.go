@@ -29,7 +29,7 @@ type FakeGatewayapiV1beta1 struct {
 }
 
 func (c *FakeGatewayapiV1beta1) HTTPRoutes(namespace string) v1beta1.HTTPRouteInterface {
-	return &FakeHTTPRoutes{c, namespace}
+	return newFakeHTTPRoutes(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

@@ -19,129 +19,34 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeMetricTemplates implements MetricTemplateInterface
-type FakeMetricTemplates struct {
+// fakeMetricTemplates implements MetricTemplateInterface
+type fakeMetricTemplates struct {
+	*gentype.FakeClientWithList[*v1beta1.MetricTemplate, *v1beta1.MetricTemplateList]
 	Fake *FakeFlaggerV1beta1
-	ns   string
 }
 
-var metrictemplatesResource = v1beta1.SchemeGroupVersion.WithResource("metrictemplates")
-
-var metrictemplatesKind = v1beta1.SchemeGroupVersion.WithKind("MetricTemplate")
-
-// Get takes name of the metricTemplate, and returns the corresponding metricTemplate object, and an error if there is any.
-func (c *FakeMetricTemplates) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.MetricTemplate, err error) {
-	emptyResult := &v1beta1.MetricTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(metrictemplatesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeMetricTemplates(fake *FakeFlaggerV1beta1, namespace string) flaggerv1beta1.MetricTemplateInterface {
+	return &fakeMetricTemplates{
+		gentype.NewFakeClientWithList[*v1beta1.MetricTemplate, *v1beta1.MetricTemplateList](
+			fake.Fake,
+			namespace,
+			v1beta1.SchemeGroupVersion.WithResource("metrictemplates"),
+			v1beta1.SchemeGroupVersion.WithKind("MetricTemplate"),
+			func() *v1beta1.MetricTemplate { return &v1beta1.MetricTemplate{} },
+			func() *v1beta1.MetricTemplateList { return &v1beta1.MetricTemplateList{} },
+			func(dst, src *v1beta1.MetricTemplateList) { dst.ListMeta = src.ListMeta },
+			func(list *v1beta1.MetricTemplateList) []*v1beta1.MetricTemplate {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1beta1.MetricTemplateList, items []*v1beta1.MetricTemplate) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1beta1.MetricTemplate), err
-}
-
-// List takes label and field selectors, and returns the list of MetricTemplates that match those selectors.
-func (c *FakeMetricTemplates) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.MetricTemplateList, err error) {
-	emptyResult := &v1beta1.MetricTemplateList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(metrictemplatesResource, metrictemplatesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1beta1.MetricTemplateList{ListMeta: obj.(*v1beta1.MetricTemplateList).ListMeta}
-	for _, item := range obj.(*v1beta1.MetricTemplateList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested metricTemplates.
-func (c *FakeMetricTemplates) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(metrictemplatesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a metricTemplate and creates it.  Returns the server's representation of the metricTemplate, and an error, if there is any.
-func (c *FakeMetricTemplates) Create(ctx context.Context, metricTemplate *v1beta1.MetricTemplate, opts v1.CreateOptions) (result *v1beta1.MetricTemplate, err error) {
-	emptyResult := &v1beta1.MetricTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(metrictemplatesResource, c.ns, metricTemplate, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.MetricTemplate), err
-}
-
-// Update takes the representation of a metricTemplate and updates it. Returns the server's representation of the metricTemplate, and an error, if there is any.
-func (c *FakeMetricTemplates) Update(ctx context.Context, metricTemplate *v1beta1.MetricTemplate, opts v1.UpdateOptions) (result *v1beta1.MetricTemplate, err error) {
-	emptyResult := &v1beta1.MetricTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(metrictemplatesResource, c.ns, metricTemplate, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.MetricTemplate), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMetricTemplates) UpdateStatus(ctx context.Context, metricTemplate *v1beta1.MetricTemplate, opts v1.UpdateOptions) (result *v1beta1.MetricTemplate, err error) {
-	emptyResult := &v1beta1.MetricTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(metrictemplatesResource, "status", c.ns, metricTemplate, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.MetricTemplate), err
-}
-
-// Delete takes name of the metricTemplate and deletes it. Returns an error if one occurs.
-func (c *FakeMetricTemplates) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(metrictemplatesResource, c.ns, name, opts), &v1beta1.MetricTemplate{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeMetricTemplates) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(metrictemplatesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1beta1.MetricTemplateList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched metricTemplate.
-func (c *FakeMetricTemplates) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.MetricTemplate, err error) {
-	emptyResult := &v1beta1.MetricTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(metrictemplatesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.MetricTemplate), err
 }

@@ -19,13 +19,13 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	apisgloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/fluxcd/flagger/pkg/client/listers/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/client/listers/gloo/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // Upstreams.
 type UpstreamInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.UpstreamLister
+	Lister() gloov1.UpstreamLister
 }
 
 type upstreamInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredUpstreamInformer(client versioned.Interface, namespace string, r
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GlooV1().Upstreams(namespace).List(context.TODO(), options)
+				return client.GlooV1().Upstreams(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GlooV1().Upstreams(namespace).Watch(context.TODO(), options)
+				return client.GlooV1().Upstreams(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.GlooV1().Upstreams(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.GlooV1().Upstreams(namespace).Watch(ctx, options)
 			},
 		},
-		&gloov1.Upstream{},
+		&apisgloov1.Upstream{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *upstreamInformer) defaultInformer(client versioned.Interface, resyncPer
 }
 
 func (f *upstreamInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&gloov1.Upstream{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisgloov1.Upstream{}, f.defaultInformer)
 }
 
-func (f *upstreamInformer) Lister() v1.UpstreamLister {
-	return v1.NewUpstreamLister(f.Informer().GetIndexer())
+func (f *upstreamInformer) Lister() gloov1.UpstreamLister {
+	return gloov1.NewUpstreamLister(f.Informer().GetIndexer())
 }

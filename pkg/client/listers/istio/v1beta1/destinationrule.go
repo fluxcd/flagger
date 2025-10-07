@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // DestinationRuleLister helps list DestinationRules.
@@ -30,7 +30,7 @@ import (
 type DestinationRuleLister interface {
 	// List lists all DestinationRules in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.DestinationRule, err error)
+	List(selector labels.Selector) (ret []*istiov1beta1.DestinationRule, err error)
 	// DestinationRules returns an object that can list and get DestinationRules.
 	DestinationRules(namespace string) DestinationRuleNamespaceLister
 	DestinationRuleListerExpansion
@@ -38,17 +38,17 @@ type DestinationRuleLister interface {
 
 // destinationRuleLister implements the DestinationRuleLister interface.
 type destinationRuleLister struct {
-	listers.ResourceIndexer[*v1beta1.DestinationRule]
+	listers.ResourceIndexer[*istiov1beta1.DestinationRule]
 }
 
 // NewDestinationRuleLister returns a new DestinationRuleLister.
 func NewDestinationRuleLister(indexer cache.Indexer) DestinationRuleLister {
-	return &destinationRuleLister{listers.New[*v1beta1.DestinationRule](indexer, v1beta1.Resource("destinationrule"))}
+	return &destinationRuleLister{listers.New[*istiov1beta1.DestinationRule](indexer, istiov1beta1.Resource("destinationrule"))}
 }
 
 // DestinationRules returns an object that can list and get DestinationRules.
 func (s *destinationRuleLister) DestinationRules(namespace string) DestinationRuleNamespaceLister {
-	return destinationRuleNamespaceLister{listers.NewNamespaced[*v1beta1.DestinationRule](s.ResourceIndexer, namespace)}
+	return destinationRuleNamespaceLister{listers.NewNamespaced[*istiov1beta1.DestinationRule](s.ResourceIndexer, namespace)}
 }
 
 // DestinationRuleNamespaceLister helps list and get DestinationRules.
@@ -56,15 +56,15 @@ func (s *destinationRuleLister) DestinationRules(namespace string) DestinationRu
 type DestinationRuleNamespaceLister interface {
 	// List lists all DestinationRules in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.DestinationRule, err error)
+	List(selector labels.Selector) (ret []*istiov1beta1.DestinationRule, err error)
 	// Get retrieves the DestinationRule from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.DestinationRule, error)
+	Get(name string) (*istiov1beta1.DestinationRule, error)
 	DestinationRuleNamespaceListerExpansion
 }
 
 // destinationRuleNamespaceLister implements the DestinationRuleNamespaceLister
 // interface.
 type destinationRuleNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.DestinationRule]
+	listers.ResourceIndexer[*istiov1beta1.DestinationRule]
 }

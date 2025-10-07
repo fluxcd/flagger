@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha2
 
 import (
-	"context"
+	context "context"
 
-	v1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
+	smiv1alpha2 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha2"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type TrafficSplitsGetter interface {
 
 // TrafficSplitInterface has methods to work with TrafficSplit resources.
 type TrafficSplitInterface interface {
-	Create(ctx context.Context, trafficSplit *v1alpha2.TrafficSplit, opts v1.CreateOptions) (*v1alpha2.TrafficSplit, error)
-	Update(ctx context.Context, trafficSplit *v1alpha2.TrafficSplit, opts v1.UpdateOptions) (*v1alpha2.TrafficSplit, error)
+	Create(ctx context.Context, trafficSplit *smiv1alpha2.TrafficSplit, opts v1.CreateOptions) (*smiv1alpha2.TrafficSplit, error)
+	Update(ctx context.Context, trafficSplit *smiv1alpha2.TrafficSplit, opts v1.UpdateOptions) (*smiv1alpha2.TrafficSplit, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha2.TrafficSplit, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha2.TrafficSplitList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*smiv1alpha2.TrafficSplit, error)
+	List(ctx context.Context, opts v1.ListOptions) (*smiv1alpha2.TrafficSplitList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.TrafficSplit, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *smiv1alpha2.TrafficSplit, err error)
 	TrafficSplitExpansion
 }
 
 // trafficSplits implements TrafficSplitInterface
 type trafficSplits struct {
-	*gentype.ClientWithList[*v1alpha2.TrafficSplit, *v1alpha2.TrafficSplitList]
+	*gentype.ClientWithList[*smiv1alpha2.TrafficSplit, *smiv1alpha2.TrafficSplitList]
 }
 
 // newTrafficSplits returns a TrafficSplits
 func newTrafficSplits(c *SplitV1alpha2Client, namespace string) *trafficSplits {
 	return &trafficSplits{
-		gentype.NewClientWithList[*v1alpha2.TrafficSplit, *v1alpha2.TrafficSplitList](
+		gentype.NewClientWithList[*smiv1alpha2.TrafficSplit, *smiv1alpha2.TrafficSplitList](
 			"trafficsplits",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha2.TrafficSplit { return &v1alpha2.TrafficSplit{} },
-			func() *v1alpha2.TrafficSplitList { return &v1alpha2.TrafficSplitList{} }),
+			func() *smiv1alpha2.TrafficSplit { return &smiv1alpha2.TrafficSplit{} },
+			func() *smiv1alpha2.TrafficSplitList { return &smiv1alpha2.TrafficSplitList{} },
+		),
 	}
 }

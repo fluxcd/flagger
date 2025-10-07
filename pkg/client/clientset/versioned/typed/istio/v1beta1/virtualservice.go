@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type VirtualServicesGetter interface {
 
 // VirtualServiceInterface has methods to work with VirtualService resources.
 type VirtualServiceInterface interface {
-	Create(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.CreateOptions) (*v1beta1.VirtualService, error)
-	Update(ctx context.Context, virtualService *v1beta1.VirtualService, opts v1.UpdateOptions) (*v1beta1.VirtualService, error)
+	Create(ctx context.Context, virtualService *istiov1beta1.VirtualService, opts v1.CreateOptions) (*istiov1beta1.VirtualService, error)
+	Update(ctx context.Context, virtualService *istiov1beta1.VirtualService, opts v1.UpdateOptions) (*istiov1beta1.VirtualService, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.VirtualService, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.VirtualServiceList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*istiov1beta1.VirtualService, error)
+	List(ctx context.Context, opts v1.ListOptions) (*istiov1beta1.VirtualServiceList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.VirtualService, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *istiov1beta1.VirtualService, err error)
 	VirtualServiceExpansion
 }
 
 // virtualServices implements VirtualServiceInterface
 type virtualServices struct {
-	*gentype.ClientWithList[*v1beta1.VirtualService, *v1beta1.VirtualServiceList]
+	*gentype.ClientWithList[*istiov1beta1.VirtualService, *istiov1beta1.VirtualServiceList]
 }
 
 // newVirtualServices returns a VirtualServices
 func newVirtualServices(c *NetworkingV1beta1Client, namespace string) *virtualServices {
 	return &virtualServices{
-		gentype.NewClientWithList[*v1beta1.VirtualService, *v1beta1.VirtualServiceList](
+		gentype.NewClientWithList[*istiov1beta1.VirtualService, *istiov1beta1.VirtualServiceList](
 			"virtualservices",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta1.VirtualService { return &v1beta1.VirtualService{} },
-			func() *v1beta1.VirtualServiceList { return &v1beta1.VirtualServiceList{} }),
+			func() *istiov1beta1.VirtualService { return &istiov1beta1.VirtualService{} },
+			func() *istiov1beta1.VirtualServiceList { return &istiov1beta1.VirtualServiceList{} },
+		),
 	}
 }

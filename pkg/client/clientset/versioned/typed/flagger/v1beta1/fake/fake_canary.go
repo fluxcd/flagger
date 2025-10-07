@@ -19,129 +19,30 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/flagger/v1beta1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeCanaries implements CanaryInterface
-type FakeCanaries struct {
+// fakeCanaries implements CanaryInterface
+type fakeCanaries struct {
+	*gentype.FakeClientWithList[*v1beta1.Canary, *v1beta1.CanaryList]
 	Fake *FakeFlaggerV1beta1
-	ns   string
 }
 
-var canariesResource = v1beta1.SchemeGroupVersion.WithResource("canaries")
-
-var canariesKind = v1beta1.SchemeGroupVersion.WithKind("Canary")
-
-// Get takes name of the canary, and returns the corresponding canary object, and an error if there is any.
-func (c *FakeCanaries) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Canary, err error) {
-	emptyResult := &v1beta1.Canary{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(canariesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeCanaries(fake *FakeFlaggerV1beta1, namespace string) flaggerv1beta1.CanaryInterface {
+	return &fakeCanaries{
+		gentype.NewFakeClientWithList[*v1beta1.Canary, *v1beta1.CanaryList](
+			fake.Fake,
+			namespace,
+			v1beta1.SchemeGroupVersion.WithResource("canaries"),
+			v1beta1.SchemeGroupVersion.WithKind("Canary"),
+			func() *v1beta1.Canary { return &v1beta1.Canary{} },
+			func() *v1beta1.CanaryList { return &v1beta1.CanaryList{} },
+			func(dst, src *v1beta1.CanaryList) { dst.ListMeta = src.ListMeta },
+			func(list *v1beta1.CanaryList) []*v1beta1.Canary { return gentype.ToPointerSlice(list.Items) },
+			func(list *v1beta1.CanaryList, items []*v1beta1.Canary) { list.Items = gentype.FromPointerSlice(items) },
+		),
+		fake,
 	}
-	return obj.(*v1beta1.Canary), err
-}
-
-// List takes label and field selectors, and returns the list of Canaries that match those selectors.
-func (c *FakeCanaries) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.CanaryList, err error) {
-	emptyResult := &v1beta1.CanaryList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(canariesResource, canariesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1beta1.CanaryList{ListMeta: obj.(*v1beta1.CanaryList).ListMeta}
-	for _, item := range obj.(*v1beta1.CanaryList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested canaries.
-func (c *FakeCanaries) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(canariesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a canary and creates it.  Returns the server's representation of the canary, and an error, if there is any.
-func (c *FakeCanaries) Create(ctx context.Context, canary *v1beta1.Canary, opts v1.CreateOptions) (result *v1beta1.Canary, err error) {
-	emptyResult := &v1beta1.Canary{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(canariesResource, c.ns, canary, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.Canary), err
-}
-
-// Update takes the representation of a canary and updates it. Returns the server's representation of the canary, and an error, if there is any.
-func (c *FakeCanaries) Update(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (result *v1beta1.Canary, err error) {
-	emptyResult := &v1beta1.Canary{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(canariesResource, c.ns, canary, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.Canary), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeCanaries) UpdateStatus(ctx context.Context, canary *v1beta1.Canary, opts v1.UpdateOptions) (result *v1beta1.Canary, err error) {
-	emptyResult := &v1beta1.Canary{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(canariesResource, "status", c.ns, canary, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.Canary), err
-}
-
-// Delete takes name of the canary and deletes it. Returns an error if one occurs.
-func (c *FakeCanaries) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(canariesResource, c.ns, name, opts), &v1beta1.Canary{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeCanaries) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(canariesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1beta1.CanaryList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched canary.
-func (c *FakeCanaries) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Canary, err error) {
-	emptyResult := &v1beta1.Canary{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(canariesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.Canary), err
 }

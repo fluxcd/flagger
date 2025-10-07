@@ -1,4 +1,4 @@
-ARG GO_VERSION=1.24
+ARG GO_VERSION=1.25
 ARG XX_VERSION=1.6.1
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
@@ -29,7 +29,7 @@ RUN xx-go build \
     -ldflags "-s -w -X github.com/fluxcd/flagger/pkg/version.REVISION=${REVISON}" \
     -a -o flagger ./cmd/flagger
 
-FROM alpine:3.21
+FROM alpine:3.22
 
 RUN apk --no-cache add ca-certificates
 

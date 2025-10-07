@@ -19,9 +19,9 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 
-	v1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
+	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type HTTPProxiesGetter interface {
 
 // HTTPProxyInterface has methods to work with HTTPProxy resources.
 type HTTPProxyInterface interface {
-	Create(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.CreateOptions) (*v1.HTTPProxy, error)
-	Update(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (*v1.HTTPProxy, error)
+	Create(ctx context.Context, hTTPProxy *projectcontourv1.HTTPProxy, opts metav1.CreateOptions) (*projectcontourv1.HTTPProxy, error)
+	Update(ctx context.Context, hTTPProxy *projectcontourv1.HTTPProxy, opts metav1.UpdateOptions) (*projectcontourv1.HTTPProxy, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, hTTPProxy *v1.HTTPProxy, opts metav1.UpdateOptions) (*v1.HTTPProxy, error)
+	UpdateStatus(ctx context.Context, hTTPProxy *projectcontourv1.HTTPProxy, opts metav1.UpdateOptions) (*projectcontourv1.HTTPProxy, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.HTTPProxy, error)
-	List(ctx context.Context, opts metav1.ListOptions) (*v1.HTTPProxyList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*projectcontourv1.HTTPProxy, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*projectcontourv1.HTTPProxyList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.HTTPProxy, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *projectcontourv1.HTTPProxy, err error)
 	HTTPProxyExpansion
 }
 
 // hTTPProxies implements HTTPProxyInterface
 type hTTPProxies struct {
-	*gentype.ClientWithList[*v1.HTTPProxy, *v1.HTTPProxyList]
+	*gentype.ClientWithList[*projectcontourv1.HTTPProxy, *projectcontourv1.HTTPProxyList]
 }
 
 // newHTTPProxies returns a HTTPProxies
 func newHTTPProxies(c *ProjectcontourV1Client, namespace string) *hTTPProxies {
 	return &hTTPProxies{
-		gentype.NewClientWithList[*v1.HTTPProxy, *v1.HTTPProxyList](
+		gentype.NewClientWithList[*projectcontourv1.HTTPProxy, *projectcontourv1.HTTPProxyList](
 			"httpproxies",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1.HTTPProxy { return &v1.HTTPProxy{} },
-			func() *v1.HTTPProxyList { return &v1.HTTPProxyList{} }),
+			func() *projectcontourv1.HTTPProxy { return &projectcontourv1.HTTPProxy{} },
+			func() *projectcontourv1.HTTPProxyList { return &projectcontourv1.HTTPProxyList{} },
+		),
 	}
 }

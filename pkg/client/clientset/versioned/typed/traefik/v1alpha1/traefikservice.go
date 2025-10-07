@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
+	traefikv1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type TraefikServicesGetter interface {
 
 // TraefikServiceInterface has methods to work with TraefikService resources.
 type TraefikServiceInterface interface {
-	Create(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.CreateOptions) (*v1alpha1.TraefikService, error)
-	Update(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.UpdateOptions) (*v1alpha1.TraefikService, error)
+	Create(ctx context.Context, traefikService *traefikv1alpha1.TraefikService, opts v1.CreateOptions) (*traefikv1alpha1.TraefikService, error)
+	Update(ctx context.Context, traefikService *traefikv1alpha1.TraefikService, opts v1.UpdateOptions) (*traefikv1alpha1.TraefikService, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.TraefikService, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.TraefikServiceList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*traefikv1alpha1.TraefikService, error)
+	List(ctx context.Context, opts v1.ListOptions) (*traefikv1alpha1.TraefikServiceList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TraefikService, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikv1alpha1.TraefikService, err error)
 	TraefikServiceExpansion
 }
 
 // traefikServices implements TraefikServiceInterface
 type traefikServices struct {
-	*gentype.ClientWithList[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList]
+	*gentype.ClientWithList[*traefikv1alpha1.TraefikService, *traefikv1alpha1.TraefikServiceList]
 }
 
 // newTraefikServices returns a TraefikServices
 func newTraefikServices(c *TraefikV1alpha1Client, namespace string) *traefikServices {
 	return &traefikServices{
-		gentype.NewClientWithList[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList](
+		gentype.NewClientWithList[*traefikv1alpha1.TraefikService, *traefikv1alpha1.TraefikServiceList](
 			"traefikservices",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.TraefikService { return &v1alpha1.TraefikService{} },
-			func() *v1alpha1.TraefikServiceList { return &v1alpha1.TraefikServiceList{} }),
+			func() *traefikv1alpha1.TraefikService { return &traefikv1alpha1.TraefikService{} },
+			func() *traefikv1alpha1.TraefikServiceList { return &traefikv1alpha1.TraefikServiceList{} },
+		),
 	}
 }

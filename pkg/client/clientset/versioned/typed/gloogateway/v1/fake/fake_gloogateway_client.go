@@ -29,7 +29,7 @@ type FakeGatewayV1 struct {
 }
 
 func (c *FakeGatewayV1) RouteTables(namespace string) v1.RouteTableInterface {
-	return &FakeRouteTables{c, namespace}
+	return newFakeRouteTables(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
