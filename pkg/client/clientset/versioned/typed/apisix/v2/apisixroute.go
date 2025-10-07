@@ -19,9 +19,9 @@ limitations under the License.
 package v2
 
 import (
-	"context"
+	context "context"
 
-	v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
+	apisixv2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type ApisixRoutesGetter interface {
 
 // ApisixRouteInterface has methods to work with ApisixRoute resources.
 type ApisixRouteInterface interface {
-	Create(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.CreateOptions) (*v2.ApisixRoute, error)
-	Update(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (*v2.ApisixRoute, error)
+	Create(ctx context.Context, apisixRoute *apisixv2.ApisixRoute, opts v1.CreateOptions) (*apisixv2.ApisixRoute, error)
+	Update(ctx context.Context, apisixRoute *apisixv2.ApisixRoute, opts v1.UpdateOptions) (*apisixv2.ApisixRoute, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (*v2.ApisixRoute, error)
+	UpdateStatus(ctx context.Context, apisixRoute *apisixv2.ApisixRoute, opts v1.UpdateOptions) (*apisixv2.ApisixRoute, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v2.ApisixRoute, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v2.ApisixRouteList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisixv2.ApisixRoute, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisixv2.ApisixRouteList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v2.ApisixRoute, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisixv2.ApisixRoute, err error)
 	ApisixRouteExpansion
 }
 
 // apisixRoutes implements ApisixRouteInterface
 type apisixRoutes struct {
-	*gentype.ClientWithList[*v2.ApisixRoute, *v2.ApisixRouteList]
+	*gentype.ClientWithList[*apisixv2.ApisixRoute, *apisixv2.ApisixRouteList]
 }
 
 // newApisixRoutes returns a ApisixRoutes
 func newApisixRoutes(c *ApisixV2Client, namespace string) *apisixRoutes {
 	return &apisixRoutes{
-		gentype.NewClientWithList[*v2.ApisixRoute, *v2.ApisixRouteList](
+		gentype.NewClientWithList[*apisixv2.ApisixRoute, *apisixv2.ApisixRouteList](
 			"apisixroutes",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v2.ApisixRoute { return &v2.ApisixRoute{} },
-			func() *v2.ApisixRouteList { return &v2.ApisixRouteList{} }),
+			func() *apisixv2.ApisixRoute { return &apisixv2.ApisixRoute{} },
+			func() *apisixv2.ApisixRouteList { return &apisixv2.ApisixRouteList{} },
+		),
 	}
 }

@@ -19,129 +19,30 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	apisixv2 "github.com/fluxcd/flagger/pkg/client/clientset/versioned/typed/apisix/v2"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeApisixRoutes implements ApisixRouteInterface
-type FakeApisixRoutes struct {
+// fakeApisixRoutes implements ApisixRouteInterface
+type fakeApisixRoutes struct {
+	*gentype.FakeClientWithList[*v2.ApisixRoute, *v2.ApisixRouteList]
 	Fake *FakeApisixV2
-	ns   string
 }
 
-var apisixroutesResource = v2.SchemeGroupVersion.WithResource("apisixroutes")
-
-var apisixroutesKind = v2.SchemeGroupVersion.WithKind("ApisixRoute")
-
-// Get takes name of the apisixRoute, and returns the corresponding apisixRoute object, and an error if there is any.
-func (c *FakeApisixRoutes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v2.ApisixRoute, err error) {
-	emptyResult := &v2.ApisixRoute{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(apisixroutesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeApisixRoutes(fake *FakeApisixV2, namespace string) apisixv2.ApisixRouteInterface {
+	return &fakeApisixRoutes{
+		gentype.NewFakeClientWithList[*v2.ApisixRoute, *v2.ApisixRouteList](
+			fake.Fake,
+			namespace,
+			v2.SchemeGroupVersion.WithResource("apisixroutes"),
+			v2.SchemeGroupVersion.WithKind("ApisixRoute"),
+			func() *v2.ApisixRoute { return &v2.ApisixRoute{} },
+			func() *v2.ApisixRouteList { return &v2.ApisixRouteList{} },
+			func(dst, src *v2.ApisixRouteList) { dst.ListMeta = src.ListMeta },
+			func(list *v2.ApisixRouteList) []*v2.ApisixRoute { return gentype.ToPointerSlice(list.Items) },
+			func(list *v2.ApisixRouteList, items []*v2.ApisixRoute) { list.Items = gentype.FromPointerSlice(items) },
+		),
+		fake,
 	}
-	return obj.(*v2.ApisixRoute), err
-}
-
-// List takes label and field selectors, and returns the list of ApisixRoutes that match those selectors.
-func (c *FakeApisixRoutes) List(ctx context.Context, opts v1.ListOptions) (result *v2.ApisixRouteList, err error) {
-	emptyResult := &v2.ApisixRouteList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(apisixroutesResource, apisixroutesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v2.ApisixRouteList{ListMeta: obj.(*v2.ApisixRouteList).ListMeta}
-	for _, item := range obj.(*v2.ApisixRouteList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested apisixRoutes.
-func (c *FakeApisixRoutes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(apisixroutesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a apisixRoute and creates it.  Returns the server's representation of the apisixRoute, and an error, if there is any.
-func (c *FakeApisixRoutes) Create(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.CreateOptions) (result *v2.ApisixRoute, err error) {
-	emptyResult := &v2.ApisixRoute{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(apisixroutesResource, c.ns, apisixRoute, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v2.ApisixRoute), err
-}
-
-// Update takes the representation of a apisixRoute and updates it. Returns the server's representation of the apisixRoute, and an error, if there is any.
-func (c *FakeApisixRoutes) Update(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (result *v2.ApisixRoute, err error) {
-	emptyResult := &v2.ApisixRoute{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(apisixroutesResource, c.ns, apisixRoute, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v2.ApisixRoute), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeApisixRoutes) UpdateStatus(ctx context.Context, apisixRoute *v2.ApisixRoute, opts v1.UpdateOptions) (result *v2.ApisixRoute, err error) {
-	emptyResult := &v2.ApisixRoute{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(apisixroutesResource, "status", c.ns, apisixRoute, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v2.ApisixRoute), err
-}
-
-// Delete takes name of the apisixRoute and deletes it. Returns an error if one occurs.
-func (c *FakeApisixRoutes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(apisixroutesResource, c.ns, name, opts), &v2.ApisixRoute{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeApisixRoutes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(apisixroutesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v2.ApisixRouteList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched apisixRoute.
-func (c *FakeApisixRoutes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v2.ApisixRoute, err error) {
-	emptyResult := &v2.ApisixRoute{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(apisixroutesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v2.ApisixRoute), err
 }

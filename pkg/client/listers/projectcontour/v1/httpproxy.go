@@ -19,10 +19,10 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // HTTPProxyLister helps list HTTPProxies.
@@ -30,7 +30,7 @@ import (
 type HTTPProxyLister interface {
 	// List lists all HTTPProxies in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.HTTPProxy, err error)
+	List(selector labels.Selector) (ret []*projectcontourv1.HTTPProxy, err error)
 	// HTTPProxies returns an object that can list and get HTTPProxies.
 	HTTPProxies(namespace string) HTTPProxyNamespaceLister
 	HTTPProxyListerExpansion
@@ -38,17 +38,17 @@ type HTTPProxyLister interface {
 
 // hTTPProxyLister implements the HTTPProxyLister interface.
 type hTTPProxyLister struct {
-	listers.ResourceIndexer[*v1.HTTPProxy]
+	listers.ResourceIndexer[*projectcontourv1.HTTPProxy]
 }
 
 // NewHTTPProxyLister returns a new HTTPProxyLister.
 func NewHTTPProxyLister(indexer cache.Indexer) HTTPProxyLister {
-	return &hTTPProxyLister{listers.New[*v1.HTTPProxy](indexer, v1.Resource("httpproxy"))}
+	return &hTTPProxyLister{listers.New[*projectcontourv1.HTTPProxy](indexer, projectcontourv1.Resource("httpproxy"))}
 }
 
 // HTTPProxies returns an object that can list and get HTTPProxies.
 func (s *hTTPProxyLister) HTTPProxies(namespace string) HTTPProxyNamespaceLister {
-	return hTTPProxyNamespaceLister{listers.NewNamespaced[*v1.HTTPProxy](s.ResourceIndexer, namespace)}
+	return hTTPProxyNamespaceLister{listers.NewNamespaced[*projectcontourv1.HTTPProxy](s.ResourceIndexer, namespace)}
 }
 
 // HTTPProxyNamespaceLister helps list and get HTTPProxies.
@@ -56,15 +56,15 @@ func (s *hTTPProxyLister) HTTPProxies(namespace string) HTTPProxyNamespaceLister
 type HTTPProxyNamespaceLister interface {
 	// List lists all HTTPProxies in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.HTTPProxy, err error)
+	List(selector labels.Selector) (ret []*projectcontourv1.HTTPProxy, err error)
 	// Get retrieves the HTTPProxy from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.HTTPProxy, error)
+	Get(name string) (*projectcontourv1.HTTPProxy, error)
 	HTTPProxyNamespaceListerExpansion
 }
 
 // hTTPProxyNamespaceLister implements the HTTPProxyNamespaceLister
 // interface.
 type hTTPProxyNamespaceLister struct {
-	listers.ResourceIndexer[*v1.HTTPProxy]
+	listers.ResourceIndexer[*projectcontourv1.HTTPProxy]
 }

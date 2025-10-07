@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	apisappmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1beta2 "github.com/fluxcd/flagger/pkg/client/listers/appmesh/v1beta2"
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/listers/appmesh/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // VirtualRouters.
 type VirtualRouterInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta2.VirtualRouterLister
+	Lister() appmeshv1beta2.VirtualRouterLister
 }
 
 type virtualRouterInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredVirtualRouterInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta2().VirtualRouters(namespace).List(context.TODO(), options)
+				return client.AppmeshV1beta2().VirtualRouters(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta2().VirtualRouters(namespace).Watch(context.TODO(), options)
+				return client.AppmeshV1beta2().VirtualRouters(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AppmeshV1beta2().VirtualRouters(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AppmeshV1beta2().VirtualRouters(namespace).Watch(ctx, options)
 			},
 		},
-		&appmeshv1beta2.VirtualRouter{},
+		&apisappmeshv1beta2.VirtualRouter{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *virtualRouterInformer) defaultInformer(client versioned.Interface, resy
 }
 
 func (f *virtualRouterInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&appmeshv1beta2.VirtualRouter{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisappmeshv1beta2.VirtualRouter{}, f.defaultInformer)
 }
 
-func (f *virtualRouterInformer) Lister() v1beta2.VirtualRouterLister {
-	return v1beta2.NewVirtualRouterLister(f.Informer().GetIndexer())
+func (f *virtualRouterInformer) Lister() appmeshv1beta2.VirtualRouterLister {
+	return appmeshv1beta2.NewVirtualRouterLister(f.Informer().GetIndexer())
 }

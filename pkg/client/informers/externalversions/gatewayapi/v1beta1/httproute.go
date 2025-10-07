@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	apisgatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/fluxcd/flagger/pkg/client/listers/gatewayapi/v1beta1"
+	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/client/listers/gatewayapi/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // HTTPRoutes.
 type HTTPRouteInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.HTTPRouteLister
+	Lister() gatewayapiv1beta1.HTTPRouteLister
 }
 
 type hTTPRouteInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredHTTPRouteInformer(client versioned.Interface, namespace string, 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayapiV1beta1().HTTPRoutes(namespace).List(context.TODO(), options)
+				return client.GatewayapiV1beta1().HTTPRoutes(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayapiV1beta1().HTTPRoutes(namespace).Watch(context.TODO(), options)
+				return client.GatewayapiV1beta1().HTTPRoutes(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.GatewayapiV1beta1().HTTPRoutes(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.GatewayapiV1beta1().HTTPRoutes(namespace).Watch(ctx, options)
 			},
 		},
-		&gatewayapiv1beta1.HTTPRoute{},
+		&apisgatewayapiv1beta1.HTTPRoute{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *hTTPRouteInformer) defaultInformer(client versioned.Interface, resyncPe
 }
 
 func (f *hTTPRouteInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&gatewayapiv1beta1.HTTPRoute{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisgatewayapiv1beta1.HTTPRoute{}, f.defaultInformer)
 }
 
-func (f *hTTPRouteInformer) Lister() v1beta1.HTTPRouteLister {
-	return v1beta1.NewHTTPRouteLister(f.Informer().GetIndexer())
+func (f *hTTPRouteInformer) Lister() gatewayapiv1beta1.HTTPRouteLister {
+	return gatewayapiv1beta1.NewHTTPRouteLister(f.Informer().GetIndexer())
 }

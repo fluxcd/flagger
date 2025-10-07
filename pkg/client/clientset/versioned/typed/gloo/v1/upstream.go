@@ -19,9 +19,9 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type UpstreamsGetter interface {
 
 // UpstreamInterface has methods to work with Upstream resources.
 type UpstreamInterface interface {
-	Create(ctx context.Context, upstream *v1.Upstream, opts metav1.CreateOptions) (*v1.Upstream, error)
-	Update(ctx context.Context, upstream *v1.Upstream, opts metav1.UpdateOptions) (*v1.Upstream, error)
+	Create(ctx context.Context, upstream *gloov1.Upstream, opts metav1.CreateOptions) (*gloov1.Upstream, error)
+	Update(ctx context.Context, upstream *gloov1.Upstream, opts metav1.UpdateOptions) (*gloov1.Upstream, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Upstream, error)
-	List(ctx context.Context, opts metav1.ListOptions) (*v1.UpstreamList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*gloov1.Upstream, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*gloov1.UpstreamList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Upstream, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *gloov1.Upstream, err error)
 	UpstreamExpansion
 }
 
 // upstreams implements UpstreamInterface
 type upstreams struct {
-	*gentype.ClientWithList[*v1.Upstream, *v1.UpstreamList]
+	*gentype.ClientWithList[*gloov1.Upstream, *gloov1.UpstreamList]
 }
 
 // newUpstreams returns a Upstreams
 func newUpstreams(c *GlooV1Client, namespace string) *upstreams {
 	return &upstreams{
-		gentype.NewClientWithList[*v1.Upstream, *v1.UpstreamList](
+		gentype.NewClientWithList[*gloov1.Upstream, *gloov1.UpstreamList](
 			"upstreams",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1.Upstream { return &v1.Upstream{} },
-			func() *v1.UpstreamList { return &v1.UpstreamList{} }),
+			func() *gloov1.Upstream { return &gloov1.Upstream{} },
+			func() *gloov1.UpstreamList { return &gloov1.UpstreamList{} },
+		),
 	}
 }

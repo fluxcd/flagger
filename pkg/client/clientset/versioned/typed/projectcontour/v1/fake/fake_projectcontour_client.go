@@ -29,7 +29,7 @@ type FakeProjectcontourV1 struct {
 }
 
 func (c *FakeProjectcontourV1) HTTPProxies(namespace string) v1.HTTPProxyInterface {
-	return &FakeHTTPProxies{c, namespace}
+	return newFakeHTTPProxies(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

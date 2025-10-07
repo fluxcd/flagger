@@ -29,7 +29,7 @@ type FakeSplitV1alpha3 struct {
 }
 
 func (c *FakeSplitV1alpha3) TrafficSplits(namespace string) v1alpha3.TrafficSplitInterface {
-	return &FakeTrafficSplits{c, namespace}
+	return newFakeTrafficSplits(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

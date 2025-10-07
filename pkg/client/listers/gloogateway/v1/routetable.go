@@ -19,10 +19,10 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	gloogatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // RouteTableLister helps list RouteTables.
@@ -30,7 +30,7 @@ import (
 type RouteTableLister interface {
 	// List lists all RouteTables in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.RouteTable, err error)
+	List(selector labels.Selector) (ret []*gloogatewayv1.RouteTable, err error)
 	// RouteTables returns an object that can list and get RouteTables.
 	RouteTables(namespace string) RouteTableNamespaceLister
 	RouteTableListerExpansion
@@ -38,17 +38,17 @@ type RouteTableLister interface {
 
 // routeTableLister implements the RouteTableLister interface.
 type routeTableLister struct {
-	listers.ResourceIndexer[*v1.RouteTable]
+	listers.ResourceIndexer[*gloogatewayv1.RouteTable]
 }
 
 // NewRouteTableLister returns a new RouteTableLister.
 func NewRouteTableLister(indexer cache.Indexer) RouteTableLister {
-	return &routeTableLister{listers.New[*v1.RouteTable](indexer, v1.Resource("routetable"))}
+	return &routeTableLister{listers.New[*gloogatewayv1.RouteTable](indexer, gloogatewayv1.Resource("routetable"))}
 }
 
 // RouteTables returns an object that can list and get RouteTables.
 func (s *routeTableLister) RouteTables(namespace string) RouteTableNamespaceLister {
-	return routeTableNamespaceLister{listers.NewNamespaced[*v1.RouteTable](s.ResourceIndexer, namespace)}
+	return routeTableNamespaceLister{listers.NewNamespaced[*gloogatewayv1.RouteTable](s.ResourceIndexer, namespace)}
 }
 
 // RouteTableNamespaceLister helps list and get RouteTables.
@@ -56,15 +56,15 @@ func (s *routeTableLister) RouteTables(namespace string) RouteTableNamespaceList
 type RouteTableNamespaceLister interface {
 	// List lists all RouteTables in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.RouteTable, err error)
+	List(selector labels.Selector) (ret []*gloogatewayv1.RouteTable, err error)
 	// Get retrieves the RouteTable from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.RouteTable, error)
+	Get(name string) (*gloogatewayv1.RouteTable, error)
 	RouteTableNamespaceListerExpansion
 }
 
 // routeTableNamespaceLister implements the RouteTableNamespaceLister
 // interface.
 type routeTableNamespaceLister struct {
-	listers.ResourceIndexer[*v1.RouteTable]
+	listers.ResourceIndexer[*gloogatewayv1.RouteTable]
 }

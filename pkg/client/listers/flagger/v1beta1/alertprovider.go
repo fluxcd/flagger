@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // AlertProviderLister helps list AlertProviders.
@@ -30,7 +30,7 @@ import (
 type AlertProviderLister interface {
 	// List lists all AlertProviders in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.AlertProvider, err error)
+	List(selector labels.Selector) (ret []*flaggerv1beta1.AlertProvider, err error)
 	// AlertProviders returns an object that can list and get AlertProviders.
 	AlertProviders(namespace string) AlertProviderNamespaceLister
 	AlertProviderListerExpansion
@@ -38,17 +38,17 @@ type AlertProviderLister interface {
 
 // alertProviderLister implements the AlertProviderLister interface.
 type alertProviderLister struct {
-	listers.ResourceIndexer[*v1beta1.AlertProvider]
+	listers.ResourceIndexer[*flaggerv1beta1.AlertProvider]
 }
 
 // NewAlertProviderLister returns a new AlertProviderLister.
 func NewAlertProviderLister(indexer cache.Indexer) AlertProviderLister {
-	return &alertProviderLister{listers.New[*v1beta1.AlertProvider](indexer, v1beta1.Resource("alertprovider"))}
+	return &alertProviderLister{listers.New[*flaggerv1beta1.AlertProvider](indexer, flaggerv1beta1.Resource("alertprovider"))}
 }
 
 // AlertProviders returns an object that can list and get AlertProviders.
 func (s *alertProviderLister) AlertProviders(namespace string) AlertProviderNamespaceLister {
-	return alertProviderNamespaceLister{listers.NewNamespaced[*v1beta1.AlertProvider](s.ResourceIndexer, namespace)}
+	return alertProviderNamespaceLister{listers.NewNamespaced[*flaggerv1beta1.AlertProvider](s.ResourceIndexer, namespace)}
 }
 
 // AlertProviderNamespaceLister helps list and get AlertProviders.
@@ -56,15 +56,15 @@ func (s *alertProviderLister) AlertProviders(namespace string) AlertProviderName
 type AlertProviderNamespaceLister interface {
 	// List lists all AlertProviders in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.AlertProvider, err error)
+	List(selector labels.Selector) (ret []*flaggerv1beta1.AlertProvider, err error)
 	// Get retrieves the AlertProvider from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.AlertProvider, error)
+	Get(name string) (*flaggerv1beta1.AlertProvider, error)
 	AlertProviderNamespaceListerExpansion
 }
 
 // alertProviderNamespaceLister implements the AlertProviderNamespaceLister
 // interface.
 type alertProviderNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.AlertProvider]
+	listers.ResourceIndexer[*flaggerv1beta1.AlertProvider]
 }

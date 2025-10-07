@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
+	apisistiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/fluxcd/flagger/pkg/client/listers/istio/v1beta1"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/client/listers/istio/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // DestinationRules.
 type DestinationRuleInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.DestinationRuleLister
+	Lister() istiov1beta1.DestinationRuleLister
 }
 
 type destinationRuleInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredDestinationRuleInformer(client versioned.Interface, namespace st
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1beta1().DestinationRules(namespace).List(context.TODO(), options)
+				return client.NetworkingV1beta1().DestinationRules(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1beta1().DestinationRules(namespace).Watch(context.TODO(), options)
+				return client.NetworkingV1beta1().DestinationRules(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1beta1().DestinationRules(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1beta1().DestinationRules(namespace).Watch(ctx, options)
 			},
 		},
-		&istiov1beta1.DestinationRule{},
+		&apisistiov1beta1.DestinationRule{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *destinationRuleInformer) defaultInformer(client versioned.Interface, re
 }
 
 func (f *destinationRuleInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&istiov1beta1.DestinationRule{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisistiov1beta1.DestinationRule{}, f.defaultInformer)
 }
 
-func (f *destinationRuleInformer) Lister() v1beta1.DestinationRuleLister {
-	return v1beta1.NewDestinationRuleLister(f.Informer().GetIndexer())
+func (f *destinationRuleInformer) Lister() istiov1beta1.DestinationRuleLister {
+	return istiov1beta1.NewDestinationRuleLister(f.Informer().GetIndexer())
 }

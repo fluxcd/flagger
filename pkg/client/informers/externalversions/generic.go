@@ -19,7 +19,7 @@ limitations under the License.
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
 	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"

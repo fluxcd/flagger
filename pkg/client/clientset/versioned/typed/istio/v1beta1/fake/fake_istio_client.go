@@ -29,11 +29,11 @@ type FakeNetworkingV1beta1 struct {
 }
 
 func (c *FakeNetworkingV1beta1) DestinationRules(namespace string) v1beta1.DestinationRuleInterface {
-	return &FakeDestinationRules{c, namespace}
+	return newFakeDestinationRules(c, namespace)
 }
 
 func (c *FakeNetworkingV1beta1) VirtualServices(namespace string) v1beta1.VirtualServiceInterface {
-	return &FakeVirtualServices{c, namespace}
+	return newFakeVirtualServices(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

@@ -19,13 +19,13 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	projectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
+	apisprojectcontourv1 "github.com/fluxcd/flagger/pkg/apis/projectcontour/v1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/fluxcd/flagger/pkg/client/listers/projectcontour/v1"
+	projectcontourv1 "github.com/fluxcd/flagger/pkg/client/listers/projectcontour/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // HTTPProxies.
 type HTTPProxyInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.HTTPProxyLister
+	Lister() projectcontourv1.HTTPProxyLister
 }
 
 type hTTPProxyInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredHTTPProxyInformer(client versioned.Interface, namespace string, 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ProjectcontourV1().HTTPProxies(namespace).List(context.TODO(), options)
+				return client.ProjectcontourV1().HTTPProxies(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ProjectcontourV1().HTTPProxies(namespace).Watch(context.TODO(), options)
+				return client.ProjectcontourV1().HTTPProxies(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ProjectcontourV1().HTTPProxies(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ProjectcontourV1().HTTPProxies(namespace).Watch(ctx, options)
 			},
 		},
-		&projectcontourv1.HTTPProxy{},
+		&apisprojectcontourv1.HTTPProxy{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *hTTPProxyInformer) defaultInformer(client versioned.Interface, resyncPe
 }
 
 func (f *hTTPProxyInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&projectcontourv1.HTTPProxy{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisprojectcontourv1.HTTPProxy{}, f.defaultInformer)
 }
 
-func (f *hTTPProxyInformer) Lister() v1.HTTPProxyLister {
-	return v1.NewHTTPProxyLister(f.Informer().GetIndexer())
+func (f *hTTPProxyInformer) Lister() projectcontourv1.HTTPProxyLister {
+	return projectcontourv1.NewHTTPProxyLister(f.Informer().GetIndexer())
 }

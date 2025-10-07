@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // MetricTemplateLister helps list MetricTemplates.
@@ -30,7 +30,7 @@ import (
 type MetricTemplateLister interface {
 	// List lists all MetricTemplates in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.MetricTemplate, err error)
+	List(selector labels.Selector) (ret []*flaggerv1beta1.MetricTemplate, err error)
 	// MetricTemplates returns an object that can list and get MetricTemplates.
 	MetricTemplates(namespace string) MetricTemplateNamespaceLister
 	MetricTemplateListerExpansion
@@ -38,17 +38,17 @@ type MetricTemplateLister interface {
 
 // metricTemplateLister implements the MetricTemplateLister interface.
 type metricTemplateLister struct {
-	listers.ResourceIndexer[*v1beta1.MetricTemplate]
+	listers.ResourceIndexer[*flaggerv1beta1.MetricTemplate]
 }
 
 // NewMetricTemplateLister returns a new MetricTemplateLister.
 func NewMetricTemplateLister(indexer cache.Indexer) MetricTemplateLister {
-	return &metricTemplateLister{listers.New[*v1beta1.MetricTemplate](indexer, v1beta1.Resource("metrictemplate"))}
+	return &metricTemplateLister{listers.New[*flaggerv1beta1.MetricTemplate](indexer, flaggerv1beta1.Resource("metrictemplate"))}
 }
 
 // MetricTemplates returns an object that can list and get MetricTemplates.
 func (s *metricTemplateLister) MetricTemplates(namespace string) MetricTemplateNamespaceLister {
-	return metricTemplateNamespaceLister{listers.NewNamespaced[*v1beta1.MetricTemplate](s.ResourceIndexer, namespace)}
+	return metricTemplateNamespaceLister{listers.NewNamespaced[*flaggerv1beta1.MetricTemplate](s.ResourceIndexer, namespace)}
 }
 
 // MetricTemplateNamespaceLister helps list and get MetricTemplates.
@@ -56,15 +56,15 @@ func (s *metricTemplateLister) MetricTemplates(namespace string) MetricTemplateN
 type MetricTemplateNamespaceLister interface {
 	// List lists all MetricTemplates in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.MetricTemplate, err error)
+	List(selector labels.Selector) (ret []*flaggerv1beta1.MetricTemplate, err error)
 	// Get retrieves the MetricTemplate from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.MetricTemplate, error)
+	Get(name string) (*flaggerv1beta1.MetricTemplate, error)
 	MetricTemplateNamespaceListerExpansion
 }
 
 // metricTemplateNamespaceLister implements the MetricTemplateNamespaceLister
 // interface.
 type metricTemplateNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.MetricTemplate]
+	listers.ResourceIndexer[*flaggerv1beta1.MetricTemplate]
 }

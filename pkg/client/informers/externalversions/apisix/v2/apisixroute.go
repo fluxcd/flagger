@@ -19,13 +19,13 @@ limitations under the License.
 package v2
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	apisixv2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
+	apisapisixv2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v2 "github.com/fluxcd/flagger/pkg/client/listers/apisix/v2"
+	apisixv2 "github.com/fluxcd/flagger/pkg/client/listers/apisix/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // ApisixRoutes.
 type ApisixRouteInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v2.ApisixRouteLister
+	Lister() apisixv2.ApisixRouteLister
 }
 
 type apisixRouteInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredApisixRouteInformer(client versioned.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ApisixV2().ApisixRoutes(namespace).List(context.TODO(), options)
+				return client.ApisixV2().ApisixRoutes(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ApisixV2().ApisixRoutes(namespace).Watch(context.TODO(), options)
+				return client.ApisixV2().ApisixRoutes(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ApisixV2().ApisixRoutes(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ApisixV2().ApisixRoutes(namespace).Watch(ctx, options)
 			},
 		},
-		&apisixv2.ApisixRoute{},
+		&apisapisixv2.ApisixRoute{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *apisixRouteInformer) defaultInformer(client versioned.Interface, resync
 }
 
 func (f *apisixRouteInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apisixv2.ApisixRoute{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisapisixv2.ApisixRoute{}, f.defaultInformer)
 }
 
-func (f *apisixRouteInformer) Lister() v2.ApisixRouteLister {
-	return v2.NewApisixRouteLister(f.Informer().GetIndexer())
+func (f *apisixRouteInformer) Lister() apisixv2.ApisixRouteLister {
+	return apisixv2.NewApisixRouteLister(f.Informer().GetIndexer())
 }

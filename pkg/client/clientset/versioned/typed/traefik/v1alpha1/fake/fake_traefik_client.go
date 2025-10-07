@@ -29,7 +29,7 @@ type FakeTraefikV1alpha1 struct {
 }
 
 func (c *FakeTraefikV1alpha1) TraefikServices(namespace string) v1alpha1.TraefikServiceInterface {
-	return &FakeTraefikServices{c, namespace}
+	return newFakeTraefikServices(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
