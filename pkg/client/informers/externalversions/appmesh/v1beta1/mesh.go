@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
+	apisappmeshv1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/fluxcd/flagger/pkg/client/listers/appmesh/v1beta1"
+	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/client/listers/appmesh/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // Meshes.
 type MeshInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.MeshLister
+	Lister() appmeshv1beta1.MeshLister
 }
 
 type meshInformer struct {
@@ -61,16 +61,28 @@ func NewFilteredMeshInformer(client versioned.Interface, resyncPeriod time.Durat
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta1().Meshes().List(context.TODO(), options)
+				return client.AppmeshV1beta1().Meshes().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta1().Meshes().Watch(context.TODO(), options)
+				return client.AppmeshV1beta1().Meshes().Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AppmeshV1beta1().Meshes().List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AppmeshV1beta1().Meshes().Watch(ctx, options)
 			},
 		},
-		&appmeshv1beta1.Mesh{},
+		&apisappmeshv1beta1.Mesh{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +93,9 @@ func (f *meshInformer) defaultInformer(client versioned.Interface, resyncPeriod 
 }
 
 func (f *meshInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&appmeshv1beta1.Mesh{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisappmeshv1beta1.Mesh{}, f.defaultInformer)
 }
 
-func (f *meshInformer) Lister() v1beta1.MeshLister {
-	return v1beta1.NewMeshLister(f.Informer().GetIndexer())
+func (f *meshInformer) Lister() appmeshv1beta1.MeshLister {
+	return appmeshv1beta1.NewMeshLister(f.Informer().GetIndexer())
 }

@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	traefikv1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // TraefikServiceLister helps list TraefikServices.
@@ -30,7 +30,7 @@ import (
 type TraefikServiceLister interface {
 	// List lists all TraefikServices in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error)
+	List(selector labels.Selector) (ret []*traefikv1alpha1.TraefikService, err error)
 	// TraefikServices returns an object that can list and get TraefikServices.
 	TraefikServices(namespace string) TraefikServiceNamespaceLister
 	TraefikServiceListerExpansion
@@ -38,17 +38,17 @@ type TraefikServiceLister interface {
 
 // traefikServiceLister implements the TraefikServiceLister interface.
 type traefikServiceLister struct {
-	listers.ResourceIndexer[*v1alpha1.TraefikService]
+	listers.ResourceIndexer[*traefikv1alpha1.TraefikService]
 }
 
 // NewTraefikServiceLister returns a new TraefikServiceLister.
 func NewTraefikServiceLister(indexer cache.Indexer) TraefikServiceLister {
-	return &traefikServiceLister{listers.New[*v1alpha1.TraefikService](indexer, v1alpha1.Resource("traefikservice"))}
+	return &traefikServiceLister{listers.New[*traefikv1alpha1.TraefikService](indexer, traefikv1alpha1.Resource("traefikservice"))}
 }
 
 // TraefikServices returns an object that can list and get TraefikServices.
 func (s *traefikServiceLister) TraefikServices(namespace string) TraefikServiceNamespaceLister {
-	return traefikServiceNamespaceLister{listers.NewNamespaced[*v1alpha1.TraefikService](s.ResourceIndexer, namespace)}
+	return traefikServiceNamespaceLister{listers.NewNamespaced[*traefikv1alpha1.TraefikService](s.ResourceIndexer, namespace)}
 }
 
 // TraefikServiceNamespaceLister helps list and get TraefikServices.
@@ -56,15 +56,15 @@ func (s *traefikServiceLister) TraefikServices(namespace string) TraefikServiceN
 type TraefikServiceNamespaceLister interface {
 	// List lists all TraefikServices in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error)
+	List(selector labels.Selector) (ret []*traefikv1alpha1.TraefikService, err error)
 	// Get retrieves the TraefikService from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.TraefikService, error)
+	Get(name string) (*traefikv1alpha1.TraefikService, error)
 	TraefikServiceNamespaceListerExpansion
 }
 
 // traefikServiceNamespaceLister implements the TraefikServiceNamespaceLister
 // interface.
 type traefikServiceNamespaceLister struct {
-	listers.ResourceIndexer[*v1alpha1.TraefikService]
+	listers.ResourceIndexer[*traefikv1alpha1.TraefikService]
 }

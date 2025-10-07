@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // VirtualServiceLister helps list VirtualServices.
@@ -30,7 +30,7 @@ import (
 type VirtualServiceLister interface {
 	// List lists all VirtualServices in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.VirtualService, err error)
+	List(selector labels.Selector) (ret []*istiov1beta1.VirtualService, err error)
 	// VirtualServices returns an object that can list and get VirtualServices.
 	VirtualServices(namespace string) VirtualServiceNamespaceLister
 	VirtualServiceListerExpansion
@@ -38,17 +38,17 @@ type VirtualServiceLister interface {
 
 // virtualServiceLister implements the VirtualServiceLister interface.
 type virtualServiceLister struct {
-	listers.ResourceIndexer[*v1beta1.VirtualService]
+	listers.ResourceIndexer[*istiov1beta1.VirtualService]
 }
 
 // NewVirtualServiceLister returns a new VirtualServiceLister.
 func NewVirtualServiceLister(indexer cache.Indexer) VirtualServiceLister {
-	return &virtualServiceLister{listers.New[*v1beta1.VirtualService](indexer, v1beta1.Resource("virtualservice"))}
+	return &virtualServiceLister{listers.New[*istiov1beta1.VirtualService](indexer, istiov1beta1.Resource("virtualservice"))}
 }
 
 // VirtualServices returns an object that can list and get VirtualServices.
 func (s *virtualServiceLister) VirtualServices(namespace string) VirtualServiceNamespaceLister {
-	return virtualServiceNamespaceLister{listers.NewNamespaced[*v1beta1.VirtualService](s.ResourceIndexer, namespace)}
+	return virtualServiceNamespaceLister{listers.NewNamespaced[*istiov1beta1.VirtualService](s.ResourceIndexer, namespace)}
 }
 
 // VirtualServiceNamespaceLister helps list and get VirtualServices.
@@ -56,15 +56,15 @@ func (s *virtualServiceLister) VirtualServices(namespace string) VirtualServiceN
 type VirtualServiceNamespaceLister interface {
 	// List lists all VirtualServices in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.VirtualService, err error)
+	List(selector labels.Selector) (ret []*istiov1beta1.VirtualService, err error)
 	// Get retrieves the VirtualService from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.VirtualService, error)
+	Get(name string) (*istiov1beta1.VirtualService, error)
 	VirtualServiceNamespaceListerExpansion
 }
 
 // virtualServiceNamespaceLister implements the VirtualServiceNamespaceLister
 // interface.
 type virtualServiceNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.VirtualService]
+	listers.ResourceIndexer[*istiov1beta1.VirtualService]
 }

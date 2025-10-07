@@ -29,7 +29,7 @@ type FakeKumaV1alpha1 struct {
 }
 
 func (c *FakeKumaV1alpha1) TrafficRoutes() v1alpha1.TrafficRouteInterface {
-	return &FakeTrafficRoutes{c}
+	return newFakeTrafficRoutes(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

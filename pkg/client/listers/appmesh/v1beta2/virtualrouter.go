@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta2
 
 import (
-	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // VirtualRouterLister helps list VirtualRouters.
@@ -30,7 +30,7 @@ import (
 type VirtualRouterLister interface {
 	// List lists all VirtualRouters in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta2.VirtualRouter, err error)
+	List(selector labels.Selector) (ret []*appmeshv1beta2.VirtualRouter, err error)
 	// VirtualRouters returns an object that can list and get VirtualRouters.
 	VirtualRouters(namespace string) VirtualRouterNamespaceLister
 	VirtualRouterListerExpansion
@@ -38,17 +38,17 @@ type VirtualRouterLister interface {
 
 // virtualRouterLister implements the VirtualRouterLister interface.
 type virtualRouterLister struct {
-	listers.ResourceIndexer[*v1beta2.VirtualRouter]
+	listers.ResourceIndexer[*appmeshv1beta2.VirtualRouter]
 }
 
 // NewVirtualRouterLister returns a new VirtualRouterLister.
 func NewVirtualRouterLister(indexer cache.Indexer) VirtualRouterLister {
-	return &virtualRouterLister{listers.New[*v1beta2.VirtualRouter](indexer, v1beta2.Resource("virtualrouter"))}
+	return &virtualRouterLister{listers.New[*appmeshv1beta2.VirtualRouter](indexer, appmeshv1beta2.Resource("virtualrouter"))}
 }
 
 // VirtualRouters returns an object that can list and get VirtualRouters.
 func (s *virtualRouterLister) VirtualRouters(namespace string) VirtualRouterNamespaceLister {
-	return virtualRouterNamespaceLister{listers.NewNamespaced[*v1beta2.VirtualRouter](s.ResourceIndexer, namespace)}
+	return virtualRouterNamespaceLister{listers.NewNamespaced[*appmeshv1beta2.VirtualRouter](s.ResourceIndexer, namespace)}
 }
 
 // VirtualRouterNamespaceLister helps list and get VirtualRouters.
@@ -56,15 +56,15 @@ func (s *virtualRouterLister) VirtualRouters(namespace string) VirtualRouterName
 type VirtualRouterNamespaceLister interface {
 	// List lists all VirtualRouters in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta2.VirtualRouter, err error)
+	List(selector labels.Selector) (ret []*appmeshv1beta2.VirtualRouter, err error)
 	// Get retrieves the VirtualRouter from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta2.VirtualRouter, error)
+	Get(name string) (*appmeshv1beta2.VirtualRouter, error)
 	VirtualRouterNamespaceListerExpansion
 }
 
 // virtualRouterNamespaceLister implements the VirtualRouterNamespaceLister
 // interface.
 type virtualRouterNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta2.VirtualRouter]
+	listers.ResourceIndexer[*appmeshv1beta2.VirtualRouter]
 }

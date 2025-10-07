@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	apisflaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/fluxcd/flagger/pkg/client/listers/flagger/v1beta1"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/listers/flagger/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // MetricTemplates.
 type MetricTemplateInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.MetricTemplateLister
+	Lister() flaggerv1beta1.MetricTemplateLister
 }
 
 type metricTemplateInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredMetricTemplateInformer(client versioned.Interface, namespace str
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().MetricTemplates(namespace).List(context.TODO(), options)
+				return client.FlaggerV1beta1().MetricTemplates(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().MetricTemplates(namespace).Watch(context.TODO(), options)
+				return client.FlaggerV1beta1().MetricTemplates(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.FlaggerV1beta1().MetricTemplates(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.FlaggerV1beta1().MetricTemplates(namespace).Watch(ctx, options)
 			},
 		},
-		&flaggerv1beta1.MetricTemplate{},
+		&apisflaggerv1beta1.MetricTemplate{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *metricTemplateInformer) defaultInformer(client versioned.Interface, res
 }
 
 func (f *metricTemplateInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&flaggerv1beta1.MetricTemplate{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisflaggerv1beta1.MetricTemplate{}, f.defaultInformer)
 }
 
-func (f *metricTemplateInformer) Lister() v1beta1.MetricTemplateLister {
-	return v1beta1.NewMetricTemplateLister(f.Informer().GetIndexer())
+func (f *metricTemplateInformer) Lister() flaggerv1beta1.MetricTemplateLister {
+	return flaggerv1beta1.NewMetricTemplateLister(f.Informer().GetIndexer())
 }

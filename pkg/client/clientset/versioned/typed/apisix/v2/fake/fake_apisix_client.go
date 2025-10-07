@@ -29,7 +29,7 @@ type FakeApisixV2 struct {
 }
 
 func (c *FakeApisixV2) ApisixRoutes(namespace string) v2.ApisixRouteInterface {
-	return &FakeApisixRoutes{c, namespace}
+	return newFakeApisixRoutes(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

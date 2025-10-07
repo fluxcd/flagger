@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
+	kumav1alpha1 "github.com/fluxcd/flagger/pkg/apis/kuma/v1alpha1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type TrafficRoutesGetter interface {
 
 // TrafficRouteInterface has methods to work with TrafficRoute resources.
 type TrafficRouteInterface interface {
-	Create(ctx context.Context, trafficRoute *v1alpha1.TrafficRoute, opts v1.CreateOptions) (*v1alpha1.TrafficRoute, error)
-	Update(ctx context.Context, trafficRoute *v1alpha1.TrafficRoute, opts v1.UpdateOptions) (*v1alpha1.TrafficRoute, error)
+	Create(ctx context.Context, trafficRoute *kumav1alpha1.TrafficRoute, opts v1.CreateOptions) (*kumav1alpha1.TrafficRoute, error)
+	Update(ctx context.Context, trafficRoute *kumav1alpha1.TrafficRoute, opts v1.UpdateOptions) (*kumav1alpha1.TrafficRoute, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.TrafficRoute, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.TrafficRouteList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*kumav1alpha1.TrafficRoute, error)
+	List(ctx context.Context, opts v1.ListOptions) (*kumav1alpha1.TrafficRouteList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TrafficRoute, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *kumav1alpha1.TrafficRoute, err error)
 	TrafficRouteExpansion
 }
 
 // trafficRoutes implements TrafficRouteInterface
 type trafficRoutes struct {
-	*gentype.ClientWithList[*v1alpha1.TrafficRoute, *v1alpha1.TrafficRouteList]
+	*gentype.ClientWithList[*kumav1alpha1.TrafficRoute, *kumav1alpha1.TrafficRouteList]
 }
 
 // newTrafficRoutes returns a TrafficRoutes
 func newTrafficRoutes(c *KumaV1alpha1Client) *trafficRoutes {
 	return &trafficRoutes{
-		gentype.NewClientWithList[*v1alpha1.TrafficRoute, *v1alpha1.TrafficRouteList](
+		gentype.NewClientWithList[*kumav1alpha1.TrafficRoute, *kumav1alpha1.TrafficRouteList](
 			"trafficroutes",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1alpha1.TrafficRoute { return &v1alpha1.TrafficRoute{} },
-			func() *v1alpha1.TrafficRouteList { return &v1alpha1.TrafficRouteList{} }),
+			func() *kumav1alpha1.TrafficRoute { return &kumav1alpha1.TrafficRoute{} },
+			func() *kumav1alpha1.TrafficRouteList { return &kumav1alpha1.TrafficRouteList{} },
+		),
 	}
 }

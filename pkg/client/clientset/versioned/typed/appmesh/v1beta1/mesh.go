@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
+	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type MeshesGetter interface {
 
 // MeshInterface has methods to work with Mesh resources.
 type MeshInterface interface {
-	Create(ctx context.Context, mesh *v1beta1.Mesh, opts v1.CreateOptions) (*v1beta1.Mesh, error)
-	Update(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (*v1beta1.Mesh, error)
+	Create(ctx context.Context, mesh *appmeshv1beta1.Mesh, opts v1.CreateOptions) (*appmeshv1beta1.Mesh, error)
+	Update(ctx context.Context, mesh *appmeshv1beta1.Mesh, opts v1.UpdateOptions) (*appmeshv1beta1.Mesh, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, mesh *v1beta1.Mesh, opts v1.UpdateOptions) (*v1beta1.Mesh, error)
+	UpdateStatus(ctx context.Context, mesh *appmeshv1beta1.Mesh, opts v1.UpdateOptions) (*appmeshv1beta1.Mesh, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.Mesh, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.MeshList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*appmeshv1beta1.Mesh, error)
+	List(ctx context.Context, opts v1.ListOptions) (*appmeshv1beta1.MeshList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Mesh, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *appmeshv1beta1.Mesh, err error)
 	MeshExpansion
 }
 
 // meshes implements MeshInterface
 type meshes struct {
-	*gentype.ClientWithList[*v1beta1.Mesh, *v1beta1.MeshList]
+	*gentype.ClientWithList[*appmeshv1beta1.Mesh, *appmeshv1beta1.MeshList]
 }
 
 // newMeshes returns a Meshes
 func newMeshes(c *AppmeshV1beta1Client) *meshes {
 	return &meshes{
-		gentype.NewClientWithList[*v1beta1.Mesh, *v1beta1.MeshList](
+		gentype.NewClientWithList[*appmeshv1beta1.Mesh, *appmeshv1beta1.MeshList](
 			"meshes",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1beta1.Mesh { return &v1beta1.Mesh{} },
-			func() *v1beta1.MeshList { return &v1beta1.MeshList{} }),
+			func() *appmeshv1beta1.Mesh { return &appmeshv1beta1.Mesh{} },
+			func() *appmeshv1beta1.MeshList { return &appmeshv1beta1.MeshList{} },
+		),
 	}
 }

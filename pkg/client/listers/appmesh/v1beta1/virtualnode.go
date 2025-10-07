@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // VirtualNodeLister helps list VirtualNodes.
@@ -30,7 +30,7 @@ import (
 type VirtualNodeLister interface {
 	// List lists all VirtualNodes in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.VirtualNode, err error)
+	List(selector labels.Selector) (ret []*appmeshv1beta1.VirtualNode, err error)
 	// VirtualNodes returns an object that can list and get VirtualNodes.
 	VirtualNodes(namespace string) VirtualNodeNamespaceLister
 	VirtualNodeListerExpansion
@@ -38,17 +38,17 @@ type VirtualNodeLister interface {
 
 // virtualNodeLister implements the VirtualNodeLister interface.
 type virtualNodeLister struct {
-	listers.ResourceIndexer[*v1beta1.VirtualNode]
+	listers.ResourceIndexer[*appmeshv1beta1.VirtualNode]
 }
 
 // NewVirtualNodeLister returns a new VirtualNodeLister.
 func NewVirtualNodeLister(indexer cache.Indexer) VirtualNodeLister {
-	return &virtualNodeLister{listers.New[*v1beta1.VirtualNode](indexer, v1beta1.Resource("virtualnode"))}
+	return &virtualNodeLister{listers.New[*appmeshv1beta1.VirtualNode](indexer, appmeshv1beta1.Resource("virtualnode"))}
 }
 
 // VirtualNodes returns an object that can list and get VirtualNodes.
 func (s *virtualNodeLister) VirtualNodes(namespace string) VirtualNodeNamespaceLister {
-	return virtualNodeNamespaceLister{listers.NewNamespaced[*v1beta1.VirtualNode](s.ResourceIndexer, namespace)}
+	return virtualNodeNamespaceLister{listers.NewNamespaced[*appmeshv1beta1.VirtualNode](s.ResourceIndexer, namespace)}
 }
 
 // VirtualNodeNamespaceLister helps list and get VirtualNodes.
@@ -56,15 +56,15 @@ func (s *virtualNodeLister) VirtualNodes(namespace string) VirtualNodeNamespaceL
 type VirtualNodeNamespaceLister interface {
 	// List lists all VirtualNodes in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.VirtualNode, err error)
+	List(selector labels.Selector) (ret []*appmeshv1beta1.VirtualNode, err error)
 	// Get retrieves the VirtualNode from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.VirtualNode, error)
+	Get(name string) (*appmeshv1beta1.VirtualNode, error)
 	VirtualNodeNamespaceListerExpansion
 }
 
 // virtualNodeNamespaceLister implements the VirtualNodeNamespaceLister
 // interface.
 type virtualNodeNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.VirtualNode]
+	listers.ResourceIndexer[*appmeshv1beta1.VirtualNode]
 }

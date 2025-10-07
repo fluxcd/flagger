@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
+	context "context"
 
-	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type VirtualNodesGetter interface {
 
 // VirtualNodeInterface has methods to work with VirtualNode resources.
 type VirtualNodeInterface interface {
-	Create(ctx context.Context, virtualNode *v1beta2.VirtualNode, opts v1.CreateOptions) (*v1beta2.VirtualNode, error)
-	Update(ctx context.Context, virtualNode *v1beta2.VirtualNode, opts v1.UpdateOptions) (*v1beta2.VirtualNode, error)
+	Create(ctx context.Context, virtualNode *appmeshv1beta2.VirtualNode, opts v1.CreateOptions) (*appmeshv1beta2.VirtualNode, error)
+	Update(ctx context.Context, virtualNode *appmeshv1beta2.VirtualNode, opts v1.UpdateOptions) (*appmeshv1beta2.VirtualNode, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, virtualNode *v1beta2.VirtualNode, opts v1.UpdateOptions) (*v1beta2.VirtualNode, error)
+	UpdateStatus(ctx context.Context, virtualNode *appmeshv1beta2.VirtualNode, opts v1.UpdateOptions) (*appmeshv1beta2.VirtualNode, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta2.VirtualNode, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta2.VirtualNodeList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*appmeshv1beta2.VirtualNode, error)
+	List(ctx context.Context, opts v1.ListOptions) (*appmeshv1beta2.VirtualNodeList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta2.VirtualNode, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *appmeshv1beta2.VirtualNode, err error)
 	VirtualNodeExpansion
 }
 
 // virtualNodes implements VirtualNodeInterface
 type virtualNodes struct {
-	*gentype.ClientWithList[*v1beta2.VirtualNode, *v1beta2.VirtualNodeList]
+	*gentype.ClientWithList[*appmeshv1beta2.VirtualNode, *appmeshv1beta2.VirtualNodeList]
 }
 
 // newVirtualNodes returns a VirtualNodes
 func newVirtualNodes(c *AppmeshV1beta2Client, namespace string) *virtualNodes {
 	return &virtualNodes{
-		gentype.NewClientWithList[*v1beta2.VirtualNode, *v1beta2.VirtualNodeList](
+		gentype.NewClientWithList[*appmeshv1beta2.VirtualNode, *appmeshv1beta2.VirtualNodeList](
 			"virtualnodes",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta2.VirtualNode { return &v1beta2.VirtualNode{} },
-			func() *v1beta2.VirtualNodeList { return &v1beta2.VirtualNodeList{} }),
+			func() *appmeshv1beta2.VirtualNode { return &appmeshv1beta2.VirtualNode{} },
+			func() *appmeshv1beta2.VirtualNodeList { return &appmeshv1beta2.VirtualNodeList{} },
+		),
 	}
 }

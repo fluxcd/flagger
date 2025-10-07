@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	apisflaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/fluxcd/flagger/pkg/client/listers/flagger/v1beta1"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/client/listers/flagger/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // Canaries.
 type CanaryInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.CanaryLister
+	Lister() flaggerv1beta1.CanaryLister
 }
 
 type canaryInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredCanaryInformer(client versioned.Interface, namespace string, res
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().Canaries(namespace).List(context.TODO(), options)
+				return client.FlaggerV1beta1().Canaries(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlaggerV1beta1().Canaries(namespace).Watch(context.TODO(), options)
+				return client.FlaggerV1beta1().Canaries(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.FlaggerV1beta1().Canaries(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.FlaggerV1beta1().Canaries(namespace).Watch(ctx, options)
 			},
 		},
-		&flaggerv1beta1.Canary{},
+		&apisflaggerv1beta1.Canary{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *canaryInformer) defaultInformer(client versioned.Interface, resyncPerio
 }
 
 func (f *canaryInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&flaggerv1beta1.Canary{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisflaggerv1beta1.Canary{}, f.defaultInformer)
 }
 
-func (f *canaryInformer) Lister() v1beta1.CanaryLister {
-	return v1beta1.NewCanaryLister(f.Informer().GetIndexer())
+func (f *canaryInformer) Lister() flaggerv1beta1.CanaryLister {
+	return flaggerv1beta1.NewCanaryLister(f.Informer().GetIndexer())
 }

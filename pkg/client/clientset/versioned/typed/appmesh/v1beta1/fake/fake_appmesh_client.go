@@ -29,15 +29,15 @@ type FakeAppmeshV1beta1 struct {
 }
 
 func (c *FakeAppmeshV1beta1) Meshes() v1beta1.MeshInterface {
-	return &FakeMeshes{c}
+	return newFakeMeshes(c)
 }
 
 func (c *FakeAppmeshV1beta1) VirtualNodes(namespace string) v1beta1.VirtualNodeInterface {
-	return &FakeVirtualNodes{c, namespace}
+	return newFakeVirtualNodes(c, namespace)
 }
 
 func (c *FakeAppmeshV1beta1) VirtualServices(namespace string) v1beta1.VirtualServiceInterface {
-	return &FakeVirtualServices{c, namespace}
+	return newFakeVirtualServices(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

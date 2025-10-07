@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha3
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	smiv1alpha3 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha3"
+	apissmiv1alpha3 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha3"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha3 "github.com/fluxcd/flagger/pkg/client/listers/smi/v1alpha3"
+	smiv1alpha3 "github.com/fluxcd/flagger/pkg/client/listers/smi/v1alpha3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // TrafficSplits.
 type TrafficSplitInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha3.TrafficSplitLister
+	Lister() smiv1alpha3.TrafficSplitLister
 }
 
 type trafficSplitInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredTrafficSplitInformer(client versioned.Interface, namespace strin
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SplitV1alpha3().TrafficSplits(namespace).List(context.TODO(), options)
+				return client.SplitV1alpha3().TrafficSplits(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SplitV1alpha3().TrafficSplits(namespace).Watch(context.TODO(), options)
+				return client.SplitV1alpha3().TrafficSplits(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.SplitV1alpha3().TrafficSplits(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.SplitV1alpha3().TrafficSplits(namespace).Watch(ctx, options)
 			},
 		},
-		&smiv1alpha3.TrafficSplit{},
+		&apissmiv1alpha3.TrafficSplit{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *trafficSplitInformer) defaultInformer(client versioned.Interface, resyn
 }
 
 func (f *trafficSplitInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&smiv1alpha3.TrafficSplit{}, f.defaultInformer)
+	return f.factory.InformerFor(&apissmiv1alpha3.TrafficSplit{}, f.defaultInformer)
 }
 
-func (f *trafficSplitInformer) Lister() v1alpha3.TrafficSplitLister {
-	return v1alpha3.NewTrafficSplitLister(f.Informer().GetIndexer())
+func (f *trafficSplitInformer) Lister() smiv1alpha3.TrafficSplitLister {
+	return smiv1alpha3.NewTrafficSplitLister(f.Informer().GetIndexer())
 }

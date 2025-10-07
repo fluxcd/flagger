@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	gatewayapiv1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type HTTPRoutesGetter interface {
 
 // HTTPRouteInterface has methods to work with HTTPRoute resources.
 type HTTPRouteInterface interface {
-	Create(ctx context.Context, hTTPRoute *v1beta1.HTTPRoute, opts v1.CreateOptions) (*v1beta1.HTTPRoute, error)
-	Update(ctx context.Context, hTTPRoute *v1beta1.HTTPRoute, opts v1.UpdateOptions) (*v1beta1.HTTPRoute, error)
+	Create(ctx context.Context, hTTPRoute *gatewayapiv1beta1.HTTPRoute, opts v1.CreateOptions) (*gatewayapiv1beta1.HTTPRoute, error)
+	Update(ctx context.Context, hTTPRoute *gatewayapiv1beta1.HTTPRoute, opts v1.UpdateOptions) (*gatewayapiv1beta1.HTTPRoute, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, hTTPRoute *v1beta1.HTTPRoute, opts v1.UpdateOptions) (*v1beta1.HTTPRoute, error)
+	UpdateStatus(ctx context.Context, hTTPRoute *gatewayapiv1beta1.HTTPRoute, opts v1.UpdateOptions) (*gatewayapiv1beta1.HTTPRoute, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.HTTPRoute, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.HTTPRouteList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*gatewayapiv1beta1.HTTPRoute, error)
+	List(ctx context.Context, opts v1.ListOptions) (*gatewayapiv1beta1.HTTPRouteList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.HTTPRoute, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *gatewayapiv1beta1.HTTPRoute, err error)
 	HTTPRouteExpansion
 }
 
 // hTTPRoutes implements HTTPRouteInterface
 type hTTPRoutes struct {
-	*gentype.ClientWithList[*v1beta1.HTTPRoute, *v1beta1.HTTPRouteList]
+	*gentype.ClientWithList[*gatewayapiv1beta1.HTTPRoute, *gatewayapiv1beta1.HTTPRouteList]
 }
 
 // newHTTPRoutes returns a HTTPRoutes
 func newHTTPRoutes(c *GatewayapiV1beta1Client, namespace string) *hTTPRoutes {
 	return &hTTPRoutes{
-		gentype.NewClientWithList[*v1beta1.HTTPRoute, *v1beta1.HTTPRouteList](
+		gentype.NewClientWithList[*gatewayapiv1beta1.HTTPRoute, *gatewayapiv1beta1.HTTPRouteList](
 			"httproutes",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta1.HTTPRoute { return &v1beta1.HTTPRoute{} },
-			func() *v1beta1.HTTPRouteList { return &v1beta1.HTTPRouteList{} }),
+			func() *gatewayapiv1beta1.HTTPRoute { return &gatewayapiv1beta1.HTTPRoute{} },
+			func() *gatewayapiv1beta1.HTTPRouteList { return &gatewayapiv1beta1.HTTPRouteList{} },
+		),
 	}
 }
