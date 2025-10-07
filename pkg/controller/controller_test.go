@@ -138,7 +138,7 @@ func TestController_verifyCanary(t *testing.T) {
 				},
 				Spec: flaggerv1.CanarySpec{
 					Provider:      "knative",
-					AutoscalerRef: &flaggerv1.AutoscalerRefernce{},
+					AutoscalerRef: &flaggerv1.AutoscalerReference{},
 					TargetRef: flaggerv1.LocalObjectReference{
 						Kind:       "Service",
 						APIVersion: "serving.knative.dev/v1",
