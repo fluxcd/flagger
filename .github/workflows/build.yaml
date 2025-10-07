@@ -23,14 +23,14 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24.x
+          go-version: 1.25.x
           cache-dependency-path: |
             **/go.sum
             **/go.mod
       - name: Download modules
         run: |
           go mod download
-          go install golang.org/x/tools/cmd/goimports
+          go install golang.org/x/tools/cmd/goimports@latest
       - name: Run linters
         run: make fmt test-codegen
       - name: Verify CRDs
