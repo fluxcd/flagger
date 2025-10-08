@@ -64,7 +64,7 @@ spec:
         {{- end }}
       {{- if .Values.podPriorityClassName }}
       priorityClassName: {{ .Values.podPriorityClassName }}
-      {{- end }}                  
+      {{- end }}
       containers:
         - name: flagger
           {{- if .Values.securityContext.enabled }}
