@@ -109,6 +109,7 @@ In addition to `app`, Flagger supports `name` and `app.kubernetes.io/name` selec
 If you use a different convention you can specify your label with the `-selector-labels=my-app-label`
 command flag in the Flagger deployment manifest under containers args
 or by setting `--set selectorLabels=my-app-label` when installing Flagger with Helm.
+Flagger will only use the first matching label it finds from the selector labels.
 
 If the target deployment uses secrets and/or configmaps,
 Flagger will create a copy of each object using the `-primary` suffix
