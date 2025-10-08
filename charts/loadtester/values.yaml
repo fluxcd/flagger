@@ -100,3 +100,6 @@ podSecurityContext:
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
+
+# Array of extra objects to deploy with the release
+extraDeploy: []
