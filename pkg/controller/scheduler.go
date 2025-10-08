@@ -27,6 +27,7 @@ import (
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/canary"
+	"github.com/fluxcd/flagger/pkg/metrics"
 	"github.com/fluxcd/flagger/pkg/router"
 )
 
@@ -400,6 +401,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 			return
 		}
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
+		c.recorder.IncSuccesses(metrics.CanaryMetricLabels{
+			Name:               cd.Spec.TargetRef.Name,
+			Namespace:          cd.Namespace,
+			DeploymentStrategy: cd.DeploymentStrategy(),
+			AnalysisStatus:     metrics.AnalysisStatusCompleted,
+		})
 		c.runPostRolloutHooks(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.recordEventInfof(cd, "Promotion completed! Scaling down %s.%s", cd.Spec.TargetRef.Name, cd.Namespace)
 		c.alert(cd, "Canary analysis completed successfully, promotion finished.",
@@ -460,14 +467,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		}
 	}
 
-	// strategy: A/B testing
-	if len(cd.GetAnalysis().Match) > 0 && cd.GetAnalysis().Iterations > 0 {
+	strategy := cd.DeploymentStrategy()
+	switch strategy {
+	case flaggerv1.DeploymentStrategyABTesting:
 		c.runAB(cd, canaryController, meshRouter)
 		return
-	}
-
-	// strategy: Blue/Green
-	if cd.GetAnalysis().Iterations > 0 {
+	case flaggerv1.DeploymentStrategyBlueGreen:
 		c.runBlueGreen(cd, canaryController, meshRouter, provider, mirrored)
 		return
 	}
@@ -814,6 +819,12 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 
 	// notify
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
+	c.recorder.IncSuccesses(metrics.CanaryMetricLabels{
+		Name:               canary.Spec.TargetRef.Name,
+		Namespace:          canary.Namespace,
+		DeploymentStrategy: canary.DeploymentStrategy(),
+		AnalysisStatus:     metrics.AnalysisStatusSkipped,
+	})
 	c.recordEventInfof(canary, "Promotion completed! Canary analysis was skipped for %s.%s",
 		canary.Spec.TargetRef.Name, canary.Namespace)
 	c.alert(canary, "Canary analysis was skipped, promotion finished.",
@@ -961,6 +972,12 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 	}
 
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
+	c.recorder.IncFailures(metrics.CanaryMetricLabels{
+		Name:               canary.Spec.TargetRef.Name,
+		Namespace:          canary.Namespace,
+		DeploymentStrategy: canary.DeploymentStrategy(),
+		AnalysisStatus:     metrics.AnalysisStatusCompleted,
+	})
 	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
 }
 
