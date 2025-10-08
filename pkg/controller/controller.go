@@ -345,17 +345,36 @@ func (c *Controller) verifyCanary(canary *flaggerv1.Canary) error {
 }
 
 func verifyNoCrossNamespaceRefs(canary *flaggerv1.Canary) error {
-	if canary.Spec.UpstreamRef != nil && canary.Spec.UpstreamRef.Namespace != canary.Namespace {
-		return fmt.Errorf("can't access gloo upstream %s.%s, cross-namespace references are blocked", canary.Spec.UpstreamRef.Name, canary.Spec.UpstreamRef.Namespace)
+	if canary.Spec.UpstreamRef != nil {
+		// Default to canary namespace if upstreamRef namespace is empty
+		namespace := canary.Spec.UpstreamRef.Namespace
+		if namespace == "" {
+			namespace = canary.Namespace
+		}
+		if namespace != canary.Namespace {
+			return fmt.Errorf("can't access gloo upstream %s.%s, cross-namespace references are blocked", canary.Spec.UpstreamRef.Name, canary.Spec.UpstreamRef.Namespace)
+		}
 	}
 	if canary.Spec.Analysis != nil {
 		for _, metric := range canary.Spec.Analysis.Metrics {
-			if metric.TemplateRef != nil && metric.TemplateRef.Namespace != canary.Namespace {
-				return fmt.Errorf("can't access metric template %s.%s, cross-namespace references are blocked", metric.TemplateRef.Name, metric.TemplateRef.Namespace)
+			if metric.TemplateRef != nil {
+				// Default to canary namespace if templateRef namespace is empty
+				namespace := metric.TemplateRef.Namespace
+				if namespace == "" {
+					namespace = canary.Namespace
+				}
+				if namespace != canary.Namespace {
+					return fmt.Errorf("can't access metric template %s.%s, cross-namespace references are blocked", metric.TemplateRef.Name, metric.TemplateRef.Namespace)
+				}
 			}
 		}
 		for _, alert := range canary.Spec.Analysis.Alerts {
-			if alert.ProviderRef.Namespace != canary.Namespace {
+			// Default to canary namespace if providerRef namespace is empty
+			namespace := alert.ProviderRef.Namespace
+			if namespace == "" {
+				namespace = canary.Namespace
+			}
+			if namespace != canary.Namespace {
 				return fmt.Errorf("can't access alert provider %s.%s, cross-namespace references are blocked", alert.ProviderRef.Name, alert.ProviderRef.Namespace)
 			}
 		}

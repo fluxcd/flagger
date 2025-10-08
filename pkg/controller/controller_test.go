@@ -71,6 +71,28 @@ func TestController_verifyCanary(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "MetricTemplate in same namespace with no namespace specified should not return an error",
+			canary: flaggerv1.Canary{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cd-1",
+					Namespace: "default",
+				},
+				Spec: flaggerv1.CanarySpec{
+					Analysis: &flaggerv1.CanaryAnalysis{
+						Metrics: []flaggerv1.CanaryMetric{
+							{
+								TemplateRef: &flaggerv1.CrossNamespaceObjectReference{
+									Name:      "mt-1",
+									Namespace: "",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "AlertProvider in a different namespace should return an error",
 			canary: flaggerv1.Canary{
 				ObjectMeta: metav1.ObjectMeta{
