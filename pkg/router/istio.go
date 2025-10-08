@@ -294,9 +294,19 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 	}
 
 	if canary.Spec.Service.Delegation {
+		updateVS := len(virtualService.Spec.Hosts) > 0 || len(virtualService.Spec.Gateways) > 0
 		// delegate VirtualService requires the hosts and gateway empty.
 		virtualService.Spec.Gateways = []string{}
 		virtualService.Spec.Hosts = []string{}
+
+		if updateVS {
+			_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), virtualService, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
+			}
+			ir.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Infof("VirtualService %s.%s updated for delegation", virtualService.GetName(), canary.Namespace)
+		}
 	}
 
 	ignoreCmpOptions := []cmp.Option{
