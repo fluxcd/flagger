@@ -1,5 +1,5 @@
 package traefik
 
 const (
-	GroupName = "traefik.containo.us"
+	GroupName = "traefik.io"
 )
