@@ -909,6 +909,11 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
+                    unmanagedAnnotations:
+                      description: list of annotation keys that should be ignored by Flagger.
+                      type: array
+                      items:
+                        type: string
                 skipAnalysis:
                   description: Skip analysis and promote canary
                   type: boolean

@@ -452,6 +452,11 @@ func (in *CanaryService) DeepCopyInto(out *CanaryService) {
 		*out = new(CustomMetadata)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.UnmanagedAnnotations != nil {
+		in, out := &in.UnmanagedAnnotations, &out.UnmanagedAnnotations
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

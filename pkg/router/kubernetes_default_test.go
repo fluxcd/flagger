@@ -451,3 +451,47 @@ func TestServiceRouter_ReconcileMetadata(t *testing.T) {
 	assert.Equal(t, "test1", apexSvc.Labels["test"])
 	assert.Equal(t, "podinfo", apexSvc.Labels["app"])
 }
+
+func TestServiceRouter_UnmanagedAnnotations(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+		labelSelector: "app",
+	}
+
+	mocks.canary.Spec.Service.Apex = &flaggerv1.CustomMetadata{
+		Annotations: map[string]string{"test": "expectedvalue"},
+	}
+	mocks.canary.Spec.Service.UnmanagedAnnotations = []string{"unmanaged"}
+
+	err := router.Initialize(mocks.canary)
+	require.NoError(t, err)
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	apexSvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	clone := apexSvc.DeepCopy()
+	clone.Annotations["unmanaged"] = "true"
+	clone.Annotations["test"] = "newvalue"
+	clone.Annotations["removable"] = "true"
+	_, err = mocks.kubeClient.CoreV1().Services("default").Update(context.TODO(), clone, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	apexSvc, err = mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	// The result should be that the canary spec annotations should be changed back to configured canary value,
+	// and the unmanaged annotation should remain unchanged.
+	assert.Equal(t, "expectedvalue", apexSvc.Annotations["test"])
+	assert.Equal(t, "true", apexSvc.Annotations["unmanaged"])
+	_, ok := apexSvc.Annotations["removable"]
+	assert.False(t, ok)
+}

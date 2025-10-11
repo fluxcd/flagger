@@ -213,8 +213,24 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			if svc.ObjectMeta.Annotations == nil {
 				svc.ObjectMeta.Annotations = make(map[string]string)
 			}
-			if diff := cmp.Diff(filterMetadata(metadata.Annotations), svc.ObjectMeta.Annotations); diff != "" {
-				svcClone.ObjectMeta.Annotations = filterMetadata(metadata.Annotations)
+
+			// Preserve unmanaged annotations
+			unmanagedAnnotations := make(map[string]string)
+			if canary.Spec.Service.UnmanagedAnnotations != nil {
+				for _, key := range canary.Spec.Service.UnmanagedAnnotations {
+					if value, ok := svc.ObjectMeta.Annotations[key]; ok {
+						unmanagedAnnotations[key] = value
+					}
+				}
+			}
+
+			newAnnotations := filterMetadata(metadata.Annotations)
+			for k, v := range unmanagedAnnotations {
+				newAnnotations[k] = v
+			}
+
+			if diff := cmp.Diff(newAnnotations, svc.ObjectMeta.Annotations); diff != "" {
+				svcClone.ObjectMeta.Annotations = newAnnotations
 				updateService = true
 			}
 			if diff := cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels); diff != "" {
