@@ -238,10 +238,12 @@ type CanaryService struct {
 	Canary *CustomMetadata `json:"canary,omitempty"`
 
 	// PrimaryBackend is the backend to add to the primary service
+	// Only supported while using the Gateway API as a provider.
 	// +optional
 	PrimaryBackend *CustomBackend `json:"primaryBackend,omitempty"`
 
 	// CanaryBackend is the backend to add to the canary service
+	// Only supported while using the Gateway API as a provider.
 	// +optional
 	CanaryBackend *CustomBackend `json:"canaryBackend,omitempty"`
 
