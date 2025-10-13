@@ -73,6 +73,76 @@ func TestGatewayAPIRouter_Reconcile(t *testing.T) {
 	assert.Equal(t, httpRoute.Annotations["foo"], "bar")
 }
 
+func TestGatewayAPIRouter_Reconcile_CustomBackend(t *testing.T) {
+	canary := newTestGatewayAPICanary()
+	mocks := newFixture(canary)
+	router := &GatewayAPIRouter{
+		gatewayAPIClient: mocks.meshClient,
+		kubeClient:       mocks.kubeClient,
+		logger:           mocks.logger,
+	}
+
+	// Set custom filters for primary backend
+	primaryHostName := v1.PreciseHostname("primary.example.com")
+	canary.Spec.Service.PrimaryBackend = &flaggerv1.CustomBackend{
+		Filters: []v1.HTTPRouteFilter{
+			{
+				Type: v1.HTTPRouteFilterURLRewrite,
+				URLRewrite: &v1.HTTPURLRewriteFilter{
+					Hostname: &primaryHostName,
+				},
+			},
+		},
+	}
+
+	// Set custom backend object reference for canary backend
+	name := v1.ObjectName("canary")
+	unmanagedSvcNamespace := "kube-system"
+	namespace := v1.Namespace(unmanagedSvcNamespace)
+	port := v1.PortNumber(30080)
+	objRef := v1.BackendObjectReference{
+		Name:      name,
+		Namespace: &namespace,
+		Port:      &port,
+	}
+	canary.Spec.Service.CanaryBackend = &flaggerv1.CustomBackend{
+		BackendObjectReference: &objRef,
+	}
+
+	err := router.Reconcile(canary)
+	require.NoError(t, err)
+
+	hr, err := router.gatewayAPIClient.GatewayapiV1().HTTPRoutes("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	require.GreaterOrEqual(t, len(hr.Spec.Rules), 1)
+	rule := hr.Spec.Rules[0]
+	require.Equal(t, 2, len(rule.BackendRefs))
+
+	// Primary backend should keep default Service ref but include custom filters
+	primary := rule.BackendRefs[0]
+	require.GreaterOrEqual(t, len(primary.Filters), 1)
+	assert.Equal(t, v1.HTTPRouteFilterURLRewrite, primary.Filters[0].Type)
+	assert.NotNil(t, primary.Filters[0].URLRewrite)
+	assert.Equal(t, &primaryHostName, primary.Filters[0].URLRewrite.Hostname)
+
+	// Canary backend should use the overridden BackendObjectReference
+	canaryBackend := rule.BackendRefs[1]
+	assert.Equal(t, name, canaryBackend.Name)
+	assert.Equal(t, &namespace, canaryBackend.Namespace)
+	assert.Equal(t, &port, canaryBackend.Port)
+
+	// ReferenceGrant for cross-namespace canary backend should be created
+	referenceGrant, err := router.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(unmanagedSvcNamespace).Get(context.TODO(), canary.Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, unmanagedSvcNamespace, string(referenceGrant.Namespace))
+	assert.Equal(t, "HTTPRoute", string(referenceGrant.Spec.From[0].Kind))
+	assert.Equal(t, canary.Namespace, string(referenceGrant.Spec.From[0].Namespace))
+	assert.Equal(t, "Service", string(referenceGrant.Spec.To[0].Kind))
+	assert.Equal(t, "", string(referenceGrant.Spec.To[0].Group))
+	assert.Equal(t, string(name), string(*referenceGrant.Spec.To[0].Name))
+}
+
 func TestGatewayAPIRouter_Routes(t *testing.T) {
 	canary := newTestGatewayAPICanary()
 	mocks := newFixture(canary)
