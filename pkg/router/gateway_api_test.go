@@ -23,16 +23,17 @@ import (
 	"testing"
 	"time"
 
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
+	v1beta1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
-	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
-	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 )
 
 func TestGatewayAPIRouter_Reconcile(t *testing.T) {
@@ -721,4 +722,119 @@ func TestGatewayAPIRouter_makeFilters_CORS(t *testing.T) {
 
 	// Assert MaxAge (24h = 86400 seconds)
 	assert.Equal(t, int32(86400), corsFilter.CORS.MaxAge)
+}
+
+func TestGatewayAPIRouter_EnsureReferenceGrants(t *testing.T) {
+	canary := newTestGatewayAPICanary()
+	mocks := newFixture(canary)
+	router := &GatewayAPIRouter{
+		gatewayAPIClient: mocks.meshClient,
+		kubeClient:       mocks.kubeClient,
+		logger:           mocks.logger,
+	}
+
+	hrNamespace := "default"
+
+	// build HTTPRouteSpec with one same-namespace and one cross-namespace backend
+	sameName := v1.ObjectName("primary")
+	sameNs := v1.Namespace(hrNamespace)
+	crossName := v1.ObjectName("crossns-svc")
+	crossNs := v1.Namespace("kube-system")
+
+	httpRouteSpec := v1.HTTPRouteSpec{
+		Rules: []v1.HTTPRouteRule{
+			{
+				BackendRefs: []v1.HTTPBackendRef{
+					{BackendRef: v1.BackendRef{BackendObjectReference: v1.BackendObjectReference{Name: sameName, Namespace: &sameNs}}},
+					{BackendRef: v1.BackendRef{BackendObjectReference: v1.BackendObjectReference{Name: crossName, Namespace: &crossNs}}},
+				},
+			},
+		},
+	}
+
+	t.Run("create", func(t *testing.T) {
+		err := router.ensureReferenceGrants(canary, httpRouteSpec, hrNamespace)
+		require.NoError(t, err)
+
+		rg, err := router.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(string(crossNs)).Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, string(crossNs), string(rg.Namespace))
+		assert.Equal(t, "HTTPRoute", string(rg.Spec.From[0].Kind))
+		assert.Equal(t, hrNamespace, string(rg.Spec.From[0].Namespace))
+		assert.Equal(t, "Service", string(rg.Spec.To[0].Kind))
+		assert.Equal(t, "", string(rg.Spec.To[0].Group))
+		require.NotNil(t, rg.Spec.To[0].Name)
+		assert.Equal(t, string(crossName), string(*rg.Spec.To[0].Name))
+
+		expectedOwner := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		assert.Equal(t, expectedOwner, rg.Labels[ownerLabel])
+		require.NotEmpty(t, rg.Annotations[hashAnnotation])
+	})
+
+	t.Run("update", func(t *testing.T) {
+		// first ensure created
+		err := router.ensureReferenceGrants(canary, httpRouteSpec, hrNamespace)
+		require.NoError(t, err)
+
+		rg, err := router.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(string(crossNs)).Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		oldHash := rg.Annotations[hashAnnotation]
+
+		// change backend group/name to force checksum and spec update
+		newGroup := "example.com"
+		newName := v1.ObjectName("crossns-svc-2")
+		httpRouteSpecUpdated := v1.HTTPRouteSpec{
+			Rules: []v1.HTTPRouteRule{
+				{
+					BackendRefs: []v1.HTTPBackendRef{
+						{BackendRef: v1.BackendRef{BackendObjectReference: v1.BackendObjectReference{Name: sameName, Namespace: &sameNs}}},
+						{BackendRef: v1.BackendRef{BackendObjectReference: v1.BackendObjectReference{Group: (*v1.Group)(&newGroup), Name: newName, Namespace: &crossNs}}},
+					},
+				},
+			},
+		}
+
+		err = router.ensureReferenceGrants(canary, httpRouteSpecUpdated, hrNamespace)
+		require.NoError(t, err)
+
+		rg, err = router.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(string(crossNs)).Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		// spec updated
+		assert.Equal(t, newGroup, string(rg.Spec.To[0].Group))
+		require.NotNil(t, rg.Spec.To[0].Name)
+		assert.Equal(t, string(newName), string(*rg.Spec.To[0].Name))
+		// hash/label updated
+		assert.NotEqual(t, oldHash, rg.Annotations[hashAnnotation])
+		expectedOwner := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		assert.Equal(t, expectedOwner, rg.Labels[ownerLabel])
+	})
+
+	t.Run("prune", func(t *testing.T) {
+		// create a stale ReferenceGrant labeled as owned by this canary, in a different namespace
+		pruneNs := "other-ns"
+		expectedOwner := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		stale := &v1beta1.ReferenceGrant{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      canary.Name,
+				Namespace: pruneNs,
+				Labels: map[string]string{
+					ownerLabel: expectedOwner,
+				},
+			},
+			Spec: v1beta1.ReferenceGrantSpec{
+				From: []v1beta1.ReferenceGrantFrom{{Group: "gateway.networking.k8s.io", Kind: "HTTPRoute", Namespace: v1beta1.Namespace(hrNamespace)}},
+				To:   []v1beta1.ReferenceGrantTo{{Kind: v1beta1.Kind("Service")}},
+			},
+		}
+		_, err := router.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(pruneNs).Create(context.TODO(), stale, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// desired set only contains the crossNs grant; ensure() should prune the stale one
+		err = router.ensureReferenceGrants(canary, httpRouteSpec, hrNamespace)
+		require.NoError(t, err)
+
+		_, err = router.gatewayAPIClient.GatewayapiV1beta1().ReferenceGrants(pruneNs).Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.Error(t, err)
+		assert.True(t, errors.IsNotFound(err))
+	})
 }
