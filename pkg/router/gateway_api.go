@@ -940,7 +940,7 @@ func (gwr *GatewayAPIRouter) toV1CORSFilter(corsPolicy *istiov1beta1.CorsPolicy)
 
 func toV1ParentRefs(gatewayRefs []v1beta1.ParentReference) []v1.ParentReference {
 	parentRefs := make([]v1.ParentReference, 0)
-	for i := 0; i < len(gatewayRefs); i++ {
+	for i := range gatewayRefs {
 		gatewayRef := gatewayRefs[i]
 		parentRefs = append(parentRefs, v1.ParentReference{
 			Group:       (*v1.Group)(gatewayRef.Group),
