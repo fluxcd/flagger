@@ -247,12 +247,12 @@ The canary analysis will run for five minutes while validating the HTTP metrics 
 After a couple of seconds Flagger will create the canary objects:
 
 ```bash
-# applied 
+# applied
 deployment.apps/podinfo
 horizontalpodautoscaler.autoscaling/podinfo
 canary.flagger.app/podinfo
 
-# generated 
+# generated
 deployment.apps/podinfo-primary
 horizontalpodautoscaler.autoscaling/podinfo-primary
 service/podinfo
@@ -753,3 +753,72 @@ spec:
         - Authorization
       maxAge: 24h
 ```
+
+## Custom backends and backend-specific filters (Gateway API)
+
+Flagger can configure custom `backendRef` and backend-specific `filters` on the generated `HTTPRoute` when using the Gateway API provider. This allows you to:
+
+* override the default `Service` backend with an arbitrary backend object reference
+* attach filters that are executed only when a specific backend is selected by routing (e.g., per-backend header modifiers)
+
+This is controlled via `spec.service.primaryBackend` and `spec.service.canaryBackend` fields of the `Canary` resource. When set, Flagger will use these values to populate `rules[].backendRefs[]` for the primary and canary targets respectively.
+
+Example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  service:
+    port: 9898
+    hosts:
+      - www.example.com
+    gatewayRefs:
+      - name: gateway
+        namespace: istio-ingress
+    # Optional: override backends and add backend-specific filters
+    primaryBackend:
+      backendRef:
+        group: ""
+        kind: Service
+        name: podinfo-primary
+        port: 9898
+      filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            add:
+              - name: X-Primary-Backend
+                value: "true"
+    canaryBackend:
+      backendRef:
+        group: ""
+        kind: Service
+        name: podinfo-canary
+        port: 9898
+      filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            add:
+              - name: X-Canary-Backend
+                value: "true"
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+```
+
+Notes:
+
+* Backend-specific filters attached via `primaryBackend.filters` and `canaryBackend.filters` are only evaluated when requests are forwarded to that particular backend.
+* If the backend references a cross-namespace resource, Flagger will automatically create and maintain `ReferenceGrant` objects to allow the `HTTPRoute` to reference it across namespaces.
+* You can continue to use route-level filters through the existing `service.headers`, `service.rewrite`, and `service.mirror` fields; those apply regardless of which backend is selected.
+
+This feature is supported only with the Gateway API provider. Other providers ignore `primaryBackend` and `canaryBackend`.
