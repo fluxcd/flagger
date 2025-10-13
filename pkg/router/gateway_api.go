@@ -954,7 +954,7 @@ func toV1ParentRefs(gatewayRefs []v1beta1.ParentReference) []v1.ParentReference 
 	return parentRefs
 }
 
-func checksum(data interface{}) string {
+func checksum(data any) string {
 	jsonBytes, _ := json.Marshal(data)
 	hashBytes := sha256.Sum256(jsonBytes)
 
