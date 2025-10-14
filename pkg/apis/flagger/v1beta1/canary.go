@@ -297,11 +297,30 @@ type CanaryAnalysis struct {
 type SessionAffinity struct {
 	// CookieName is the key that will be used for the session affinity cookie.
 	CookieName string `json:"cookieName,omitempty"`
-	// MaxAge indicates the number of seconds until the session affinity cookie will expire.
 	// ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#attributes
+	// Domain defines the host to which the cookie will be sent.
+	// +optional
+	Domain string `json:"domain,omitempty"`
+	// HttpOnly forbids JavaScript from accessing the cookie, for example, through the Document.cookie property.
+	// +optional
+	HttpOnly bool `json:"httpOnly,omitempty"`
+	// MaxAge indicates the number of seconds until the session affinity cookie will expire.
 	// The default value is 86,400 seconds, i.e. a day.
 	// +optional
 	MaxAge int `json:"maxAge,omitempty"`
+	// Partitioned indicates that the cookie should be stored using partitioned storage.
+	// +optional
+	Partitioned bool `json:"partitioned,omitempty"`
+	// Path indicates the path that must exist in the requested URL for the browser to send the Cookie header.
+	// +optional
+	Path string `json:"path,omitempty"`
+	// SameSite controls whether or not a cookie is sent with cross-site requests.
+	// +optional
+	// +kubebuilder:validation:Enum=Strict;Lax;None
+	SameSite string `json:"sameSite,omitempty"`
+	// Secure indicates that the cookie is sent to the server only when a request is made with the https: scheme (except on localhost)
+	// +optional
+	Secure bool `json:"secure,omitempty"`
 	// PrimaryCookieName is the key that will be used for the primary session affinity cookie.
 	// +optional
 	PrimaryCookieName string `json:"primaryCookieName,omitempty"`
@@ -667,4 +686,37 @@ func (c *Canary) DeploymentStrategy() string {
 
 	// Canary Release: default (has maxWeight, stepWeight, or stepWeights)
 	return DeploymentStrategyCanary
+}
+
+// BuildCookie returns the cookie that should be used as the value of a Set-Cookie header
+func (s *SessionAffinity) BuildCookie(cookieName string) string {
+	cookie := fmt.Sprintf("%s; %s=%d", cookieName, "Max-Age",
+		s.GetMaxAge(),
+	)
+
+	if s.Domain != "" {
+		cookie += fmt.Sprintf("; %s=%s", "Domain", s.Domain)
+	}
+
+	if s.HttpOnly {
+		cookie += fmt.Sprintf("; %s", "HttpOnly")
+	}
+
+	if s.Partitioned {
+		cookie += fmt.Sprintf("; %s", "Partitioned")
+	}
+
+	if s.Path != "" {
+		cookie += fmt.Sprintf("; %s=%s", "Path", s.Path)
+	}
+
+	if s.SameSite != "" {
+		cookie += fmt.Sprintf("; %s=%s", "SameSite", s.SameSite)
+	}
+
+	if s.Secure {
+		cookie += fmt.Sprintf("; %s", "Secure")
+	}
+
+	return cookie
 }

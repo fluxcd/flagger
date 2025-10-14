@@ -532,9 +532,7 @@ func (ir *IstioRouter) SetRoutes(
 						}
 					}
 					routeDest.Headers.Response.Add = map[string]string{
-						setCookieHeader: fmt.Sprintf("%s; %s=%d", canary.Status.SessionAffinityCookie, maxAgeAttr,
-							canary.Spec.Analysis.SessionAffinity.GetMaxAge(),
-						),
+						setCookieHeader: canary.Spec.Analysis.SessionAffinity.BuildCookie(canary.Status.SessionAffinityCookie),
 					}
 				}
 				weightedRoute.Route[i] = routeDest

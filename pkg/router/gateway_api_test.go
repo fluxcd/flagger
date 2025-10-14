@@ -99,8 +99,14 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 		cookieKey := "flagger-cookie"
 		// enable session affinity and start canary run
 		canary.Spec.Analysis.SessionAffinity = &flaggerv1.SessionAffinity{
-			CookieName: cookieKey,
-			MaxAge:     300,
+			CookieName:  cookieKey,
+			Domain:      "flagger.app",
+			HttpOnly:    true,
+			MaxAge:      300,
+			Partitioned: true,
+			Path:        "/app",
+			SameSite:    "Strict",
+			Secure:      true,
 		}
 		_, pSvcName, cSvcName := canary.GetServiceNames()
 
@@ -137,10 +143,18 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 			if string(backendRef.Name) == cSvcName {
 				found = true
 				filter := backendRef.Filters[0]
+				val := filter.ResponseHeaderModifier.Add[0].Value
 				assert.Equal(t, filter.Type, v1.HTTPRouteFilterResponseHeaderModifier)
 				assert.NotNil(t, filter.ResponseHeaderModifier)
 				assert.Equal(t, string(filter.ResponseHeaderModifier.Add[0].Name), setCookieHeader)
-				assert.Equal(t, filter.ResponseHeaderModifier.Add[0].Value, fmt.Sprintf("%s; %s=%d", canary.Status.SessionAffinityCookie, maxAgeAttr, 300))
+				assert.True(t, strings.HasPrefix(val, cookieKey))
+				assert.True(t, strings.Contains(val, "Domain=flagger.app"))
+				assert.True(t, strings.Contains(val, "HttpOnly"))
+				assert.True(t, strings.Contains(val, "Max-Age=300"))
+				assert.True(t, strings.Contains(val, "Partitioned"))
+				assert.True(t, strings.Contains(val, "Path=/app"))
+				assert.True(t, strings.Contains(val, "SameSite=Strict"))
+				assert.True(t, strings.Contains(val, "Secure"))
 				assert.Equal(t, *backendRef.Weight, int32(10))
 			}
 			if string(backendRef.Name) == pSvcName {
@@ -193,10 +207,18 @@ func TestGatewayAPIRouter_Routes(t *testing.T) {
 			if string(backendRef.Name) == cSvcName {
 				found = true
 				filter := backendRef.Filters[0]
+				val := filter.ResponseHeaderModifier.Add[0].Value
 				assert.Equal(t, filter.Type, v1.HTTPRouteFilterResponseHeaderModifier)
 				assert.NotNil(t, filter.ResponseHeaderModifier)
 				assert.Equal(t, string(filter.ResponseHeaderModifier.Add[0].Name), setCookieHeader)
-				assert.Equal(t, filter.ResponseHeaderModifier.Add[0].Value, fmt.Sprintf("%s; %s=%d", canary.Status.SessionAffinityCookie, maxAgeAttr, 300))
+				assert.True(t, strings.HasPrefix(val, cookieKey))
+				assert.True(t, strings.Contains(val, "Domain=flagger.app"))
+				assert.True(t, strings.Contains(val, "HttpOnly"))
+				assert.True(t, strings.Contains(val, "Max-Age=300"))
+				assert.True(t, strings.Contains(val, "Partitioned"))
+				assert.True(t, strings.Contains(val, "Path=/app"))
+				assert.True(t, strings.Contains(val, "SameSite=Strict"))
+				assert.True(t, strings.Contains(val, "Secure"))
 
 				assert.Equal(t, *backendRef.Weight, int32(50))
 			}
