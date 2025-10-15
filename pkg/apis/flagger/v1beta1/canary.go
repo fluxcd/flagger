@@ -230,6 +230,32 @@ type CanaryService struct {
 	// Canary is the metadata to add to the canary service
 	// +optional
 	Canary *CustomMetadata `json:"canary,omitempty"`
+
+	// For service with more than 1 port->targetPort mappings, which can't be done
+	// with `PortDiscovery`. Should work with providers that support multiple
+	// ports, e.g. Istio and Linkerd.
+	// When this field is set, it will override the fields `Port` / `PortName` /
+	// `TargetPort` / `AppProtocol` / `PortDiscovery`.
+	// +optional
+	Ports []ServicePort `json:"ports,omitempty"`
+}
+
+type ServicePort struct {
+	// Port of the generated Kubernetes service
+	Port int32 `json:"port"`
+
+	// Port name of the generated Kubernetes service
+	PortName string `json:"portName"`
+
+	// Target port number or name of the generated Kubernetes service
+	// Defaults to CanaryService.Port
+	// +optional
+	TargetPort intstr.IntOrString `json:"targetPort,omitempty"`
+
+	// AppProtocol of the service
+	// https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol
+	// +optional
+	AppProtocol string `json:"appProtocol,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done
