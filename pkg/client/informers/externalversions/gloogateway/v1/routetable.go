@@ -19,13 +19,13 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	gloogatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
+	apisgloogatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/fluxcd/flagger/pkg/client/listers/gloogateway/v1"
+	gloogatewayv1 "github.com/fluxcd/flagger/pkg/client/listers/gloogateway/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // RouteTables.
 type RouteTableInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.RouteTableLister
+	Lister() gloogatewayv1.RouteTableLister
 }
 
 type routeTableInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredRouteTableInformer(client versioned.Interface, namespace string,
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayV1().RouteTables(namespace).List(context.TODO(), options)
+				return client.GatewayV1().RouteTables(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GatewayV1().RouteTables(namespace).Watch(context.TODO(), options)
+				return client.GatewayV1().RouteTables(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.GatewayV1().RouteTables(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.GatewayV1().RouteTables(namespace).Watch(ctx, options)
 			},
 		},
-		&gloogatewayv1.RouteTable{},
+		&apisgloogatewayv1.RouteTable{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *routeTableInformer) defaultInformer(client versioned.Interface, resyncP
 }
 
 func (f *routeTableInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&gloogatewayv1.RouteTable{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisgloogatewayv1.RouteTable{}, f.defaultInformer)
 }
 
-func (f *routeTableInformer) Lister() v1.RouteTableLister {
-	return v1.NewRouteTableLister(f.Informer().GetIndexer())
+func (f *routeTableInformer) Lister() gloogatewayv1.RouteTableLister {
+	return gloogatewayv1.NewRouteTableLister(f.Informer().GetIndexer())
 }

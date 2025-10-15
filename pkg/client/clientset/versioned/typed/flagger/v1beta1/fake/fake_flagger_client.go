@@ -29,15 +29,15 @@ type FakeFlaggerV1beta1 struct {
 }
 
 func (c *FakeFlaggerV1beta1) AlertProviders(namespace string) v1beta1.AlertProviderInterface {
-	return &FakeAlertProviders{c, namespace}
+	return newFakeAlertProviders(c, namespace)
 }
 
 func (c *FakeFlaggerV1beta1) Canaries(namespace string) v1beta1.CanaryInterface {
-	return &FakeCanaries{c, namespace}
+	return newFakeCanaries(c, namespace)
 }
 
 func (c *FakeFlaggerV1beta1) MetricTemplates(namespace string) v1beta1.MetricTemplateInterface {
-	return &FakeMetricTemplates{c, namespace}
+	return newFakeMetricTemplates(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

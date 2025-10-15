@@ -29,7 +29,7 @@ type FakeGlooV1 struct {
 }
 
 func (c *FakeGlooV1) Upstreams(namespace string) v1.UpstreamInterface {
-	return &FakeUpstreams{c, namespace}
+	return newFakeUpstreams(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

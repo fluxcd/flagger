@@ -19,10 +19,10 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	gloov1 "github.com/fluxcd/flagger/pkg/apis/gloo/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // UpstreamLister helps list Upstreams.
@@ -30,7 +30,7 @@ import (
 type UpstreamLister interface {
 	// List lists all Upstreams in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.Upstream, err error)
+	List(selector labels.Selector) (ret []*gloov1.Upstream, err error)
 	// Upstreams returns an object that can list and get Upstreams.
 	Upstreams(namespace string) UpstreamNamespaceLister
 	UpstreamListerExpansion
@@ -38,17 +38,17 @@ type UpstreamLister interface {
 
 // upstreamLister implements the UpstreamLister interface.
 type upstreamLister struct {
-	listers.ResourceIndexer[*v1.Upstream]
+	listers.ResourceIndexer[*gloov1.Upstream]
 }
 
 // NewUpstreamLister returns a new UpstreamLister.
 func NewUpstreamLister(indexer cache.Indexer) UpstreamLister {
-	return &upstreamLister{listers.New[*v1.Upstream](indexer, v1.Resource("upstream"))}
+	return &upstreamLister{listers.New[*gloov1.Upstream](indexer, gloov1.Resource("upstream"))}
 }
 
 // Upstreams returns an object that can list and get Upstreams.
 func (s *upstreamLister) Upstreams(namespace string) UpstreamNamespaceLister {
-	return upstreamNamespaceLister{listers.NewNamespaced[*v1.Upstream](s.ResourceIndexer, namespace)}
+	return upstreamNamespaceLister{listers.NewNamespaced[*gloov1.Upstream](s.ResourceIndexer, namespace)}
 }
 
 // UpstreamNamespaceLister helps list and get Upstreams.
@@ -56,15 +56,15 @@ func (s *upstreamLister) Upstreams(namespace string) UpstreamNamespaceLister {
 type UpstreamNamespaceLister interface {
 	// List lists all Upstreams in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.Upstream, err error)
+	List(selector labels.Selector) (ret []*gloov1.Upstream, err error)
 	// Get retrieves the Upstream from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.Upstream, error)
+	Get(name string) (*gloov1.Upstream, error)
 	UpstreamNamespaceListerExpansion
 }
 
 // upstreamNamespaceLister implements the UpstreamNamespaceLister
 // interface.
 type upstreamNamespaceLister struct {
-	listers.ResourceIndexer[*v1.Upstream]
+	listers.ResourceIndexer[*gloov1.Upstream]
 }

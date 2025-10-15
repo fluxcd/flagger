@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha3
 
 import (
-	v1alpha3 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha3"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	smiv1alpha3 "github.com/fluxcd/flagger/pkg/apis/smi/v1alpha3"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // TrafficSplitLister helps list TrafficSplits.
@@ -30,7 +30,7 @@ import (
 type TrafficSplitLister interface {
 	// List lists all TrafficSplits in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha3.TrafficSplit, err error)
+	List(selector labels.Selector) (ret []*smiv1alpha3.TrafficSplit, err error)
 	// TrafficSplits returns an object that can list and get TrafficSplits.
 	TrafficSplits(namespace string) TrafficSplitNamespaceLister
 	TrafficSplitListerExpansion
@@ -38,17 +38,17 @@ type TrafficSplitLister interface {
 
 // trafficSplitLister implements the TrafficSplitLister interface.
 type trafficSplitLister struct {
-	listers.ResourceIndexer[*v1alpha3.TrafficSplit]
+	listers.ResourceIndexer[*smiv1alpha3.TrafficSplit]
 }
 
 // NewTrafficSplitLister returns a new TrafficSplitLister.
 func NewTrafficSplitLister(indexer cache.Indexer) TrafficSplitLister {
-	return &trafficSplitLister{listers.New[*v1alpha3.TrafficSplit](indexer, v1alpha3.Resource("trafficsplit"))}
+	return &trafficSplitLister{listers.New[*smiv1alpha3.TrafficSplit](indexer, smiv1alpha3.Resource("trafficsplit"))}
 }
 
 // TrafficSplits returns an object that can list and get TrafficSplits.
 func (s *trafficSplitLister) TrafficSplits(namespace string) TrafficSplitNamespaceLister {
-	return trafficSplitNamespaceLister{listers.NewNamespaced[*v1alpha3.TrafficSplit](s.ResourceIndexer, namespace)}
+	return trafficSplitNamespaceLister{listers.NewNamespaced[*smiv1alpha3.TrafficSplit](s.ResourceIndexer, namespace)}
 }
 
 // TrafficSplitNamespaceLister helps list and get TrafficSplits.
@@ -56,15 +56,15 @@ func (s *trafficSplitLister) TrafficSplits(namespace string) TrafficSplitNamespa
 type TrafficSplitNamespaceLister interface {
 	// List lists all TrafficSplits in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha3.TrafficSplit, err error)
+	List(selector labels.Selector) (ret []*smiv1alpha3.TrafficSplit, err error)
 	// Get retrieves the TrafficSplit from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha3.TrafficSplit, error)
+	Get(name string) (*smiv1alpha3.TrafficSplit, error)
 	TrafficSplitNamespaceListerExpansion
 }
 
 // trafficSplitNamespaceLister implements the TrafficSplitNamespaceLister
 // interface.
 type trafficSplitNamespaceLister struct {
-	listers.ResourceIndexer[*v1alpha3.TrafficSplit]
+	listers.ResourceIndexer[*smiv1alpha3.TrafficSplit]
 }

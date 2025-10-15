@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	traefikv1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
+	apistraefikv1alpha1 "github.com/fluxcd/flagger/pkg/apis/traefik/v1alpha1"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/fluxcd/flagger/pkg/client/listers/traefik/v1alpha1"
+	traefikv1alpha1 "github.com/fluxcd/flagger/pkg/client/listers/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // TraefikServices.
 type TraefikServiceInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.TraefikServiceLister
+	Lister() traefikv1alpha1.TraefikServiceLister
 }
 
 type traefikServiceInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredTraefikServiceInformer(client versioned.Interface, namespace str
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().TraefikServices(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(ctx, options)
 			},
 		},
-		&traefikv1alpha1.TraefikService{},
+		&apistraefikv1alpha1.TraefikService{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *traefikServiceInformer) defaultInformer(client versioned.Interface, res
 }
 
 func (f *traefikServiceInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikv1alpha1.TraefikService{}, f.defaultInformer)
+	return f.factory.InformerFor(&apistraefikv1alpha1.TraefikService{}, f.defaultInformer)
 }
 
-func (f *traefikServiceInformer) Lister() v1alpha1.TraefikServiceLister {
-	return v1alpha1.NewTraefikServiceLister(f.Informer().GetIndexer())
+func (f *traefikServiceInformer) Lister() traefikv1alpha1.TraefikServiceLister {
+	return traefikv1alpha1.NewTraefikServiceLister(f.Informer().GetIndexer())
 }

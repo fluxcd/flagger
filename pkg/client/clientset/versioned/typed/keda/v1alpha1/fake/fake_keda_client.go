@@ -29,7 +29,7 @@ type FakeKedaV1alpha1 struct {
 }
 
 func (c *FakeKedaV1alpha1) ScaledObjects(namespace string) v1alpha1.ScaledObjectInterface {
-	return &FakeScaledObjects{c, namespace}
+	return newFakeScaledObjects(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

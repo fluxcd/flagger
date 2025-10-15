@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
+	context "context"
 
-	v1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type VirtualRoutersGetter interface {
 
 // VirtualRouterInterface has methods to work with VirtualRouter resources.
 type VirtualRouterInterface interface {
-	Create(ctx context.Context, virtualRouter *v1beta2.VirtualRouter, opts v1.CreateOptions) (*v1beta2.VirtualRouter, error)
-	Update(ctx context.Context, virtualRouter *v1beta2.VirtualRouter, opts v1.UpdateOptions) (*v1beta2.VirtualRouter, error)
+	Create(ctx context.Context, virtualRouter *appmeshv1beta2.VirtualRouter, opts v1.CreateOptions) (*appmeshv1beta2.VirtualRouter, error)
+	Update(ctx context.Context, virtualRouter *appmeshv1beta2.VirtualRouter, opts v1.UpdateOptions) (*appmeshv1beta2.VirtualRouter, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, virtualRouter *v1beta2.VirtualRouter, opts v1.UpdateOptions) (*v1beta2.VirtualRouter, error)
+	UpdateStatus(ctx context.Context, virtualRouter *appmeshv1beta2.VirtualRouter, opts v1.UpdateOptions) (*appmeshv1beta2.VirtualRouter, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta2.VirtualRouter, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta2.VirtualRouterList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*appmeshv1beta2.VirtualRouter, error)
+	List(ctx context.Context, opts v1.ListOptions) (*appmeshv1beta2.VirtualRouterList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta2.VirtualRouter, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *appmeshv1beta2.VirtualRouter, err error)
 	VirtualRouterExpansion
 }
 
 // virtualRouters implements VirtualRouterInterface
 type virtualRouters struct {
-	*gentype.ClientWithList[*v1beta2.VirtualRouter, *v1beta2.VirtualRouterList]
+	*gentype.ClientWithList[*appmeshv1beta2.VirtualRouter, *appmeshv1beta2.VirtualRouterList]
 }
 
 // newVirtualRouters returns a VirtualRouters
 func newVirtualRouters(c *AppmeshV1beta2Client, namespace string) *virtualRouters {
 	return &virtualRouters{
-		gentype.NewClientWithList[*v1beta2.VirtualRouter, *v1beta2.VirtualRouterList](
+		gentype.NewClientWithList[*appmeshv1beta2.VirtualRouter, *appmeshv1beta2.VirtualRouterList](
 			"virtualrouters",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta2.VirtualRouter { return &v1beta2.VirtualRouter{} },
-			func() *v1beta2.VirtualRouterList { return &v1beta2.VirtualRouterList{} }),
+			func() *appmeshv1beta2.VirtualRouter { return &appmeshv1beta2.VirtualRouter{} },
+			func() *appmeshv1beta2.VirtualRouterList { return &appmeshv1beta2.VirtualRouterList{} },
+		),
 	}
 }

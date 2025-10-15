@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	appmeshv1beta1 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // MeshLister helps list Meshes.
@@ -30,19 +30,19 @@ import (
 type MeshLister interface {
 	// List lists all Meshes in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.Mesh, err error)
+	List(selector labels.Selector) (ret []*appmeshv1beta1.Mesh, err error)
 	// Get retrieves the Mesh from the index for a given name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.Mesh, error)
+	Get(name string) (*appmeshv1beta1.Mesh, error)
 	MeshListerExpansion
 }
 
 // meshLister implements the MeshLister interface.
 type meshLister struct {
-	listers.ResourceIndexer[*v1beta1.Mesh]
+	listers.ResourceIndexer[*appmeshv1beta1.Mesh]
 }
 
 // NewMeshLister returns a new MeshLister.
 func NewMeshLister(indexer cache.Indexer) MeshLister {
-	return &meshLister{listers.New[*v1beta1.Mesh](indexer, v1beta1.Resource("mesh"))}
+	return &meshLister{listers.New[*appmeshv1beta1.Mesh](indexer, appmeshv1beta1.Resource("mesh"))}
 }

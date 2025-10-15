@@ -19,9 +19,9 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 
-	v1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
+	gloogatewayv1 "github.com/fluxcd/flagger/pkg/apis/gloogateway/v1"
 	scheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type RouteTablesGetter interface {
 
 // RouteTableInterface has methods to work with RouteTable resources.
 type RouteTableInterface interface {
-	Create(ctx context.Context, routeTable *v1.RouteTable, opts metav1.CreateOptions) (*v1.RouteTable, error)
-	Update(ctx context.Context, routeTable *v1.RouteTable, opts metav1.UpdateOptions) (*v1.RouteTable, error)
+	Create(ctx context.Context, routeTable *gloogatewayv1.RouteTable, opts metav1.CreateOptions) (*gloogatewayv1.RouteTable, error)
+	Update(ctx context.Context, routeTable *gloogatewayv1.RouteTable, opts metav1.UpdateOptions) (*gloogatewayv1.RouteTable, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.RouteTable, error)
-	List(ctx context.Context, opts metav1.ListOptions) (*v1.RouteTableList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*gloogatewayv1.RouteTable, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*gloogatewayv1.RouteTableList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.RouteTable, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *gloogatewayv1.RouteTable, err error)
 	RouteTableExpansion
 }
 
 // routeTables implements RouteTableInterface
 type routeTables struct {
-	*gentype.ClientWithList[*v1.RouteTable, *v1.RouteTableList]
+	*gentype.ClientWithList[*gloogatewayv1.RouteTable, *gloogatewayv1.RouteTableList]
 }
 
 // newRouteTables returns a RouteTables
 func newRouteTables(c *GatewayV1Client, namespace string) *routeTables {
 	return &routeTables{
-		gentype.NewClientWithList[*v1.RouteTable, *v1.RouteTableList](
+		gentype.NewClientWithList[*gloogatewayv1.RouteTable, *gloogatewayv1.RouteTableList](
 			"routetables",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1.RouteTable { return &v1.RouteTable{} },
-			func() *v1.RouteTableList { return &v1.RouteTableList{} }),
+			func() *gloogatewayv1.RouteTable { return &gloogatewayv1.RouteTable{} },
+			func() *gloogatewayv1.RouteTableList { return &gloogatewayv1.RouteTableList{} },
+		),
 	}
 }

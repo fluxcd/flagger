@@ -19,10 +19,10 @@ limitations under the License.
 package v2
 
 import (
-	v2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	apisixv2 "github.com/fluxcd/flagger/pkg/apis/apisix/v2"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // ApisixRouteLister helps list ApisixRoutes.
@@ -30,7 +30,7 @@ import (
 type ApisixRouteLister interface {
 	// List lists all ApisixRoutes in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v2.ApisixRoute, err error)
+	List(selector labels.Selector) (ret []*apisixv2.ApisixRoute, err error)
 	// ApisixRoutes returns an object that can list and get ApisixRoutes.
 	ApisixRoutes(namespace string) ApisixRouteNamespaceLister
 	ApisixRouteListerExpansion
@@ -38,17 +38,17 @@ type ApisixRouteLister interface {
 
 // apisixRouteLister implements the ApisixRouteLister interface.
 type apisixRouteLister struct {
-	listers.ResourceIndexer[*v2.ApisixRoute]
+	listers.ResourceIndexer[*apisixv2.ApisixRoute]
 }
 
 // NewApisixRouteLister returns a new ApisixRouteLister.
 func NewApisixRouteLister(indexer cache.Indexer) ApisixRouteLister {
-	return &apisixRouteLister{listers.New[*v2.ApisixRoute](indexer, v2.Resource("apisixroute"))}
+	return &apisixRouteLister{listers.New[*apisixv2.ApisixRoute](indexer, apisixv2.Resource("apisixroute"))}
 }
 
 // ApisixRoutes returns an object that can list and get ApisixRoutes.
 func (s *apisixRouteLister) ApisixRoutes(namespace string) ApisixRouteNamespaceLister {
-	return apisixRouteNamespaceLister{listers.NewNamespaced[*v2.ApisixRoute](s.ResourceIndexer, namespace)}
+	return apisixRouteNamespaceLister{listers.NewNamespaced[*apisixv2.ApisixRoute](s.ResourceIndexer, namespace)}
 }
 
 // ApisixRouteNamespaceLister helps list and get ApisixRoutes.
@@ -56,15 +56,15 @@ func (s *apisixRouteLister) ApisixRoutes(namespace string) ApisixRouteNamespaceL
 type ApisixRouteNamespaceLister interface {
 	// List lists all ApisixRoutes in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v2.ApisixRoute, err error)
+	List(selector labels.Selector) (ret []*apisixv2.ApisixRoute, err error)
 	// Get retrieves the ApisixRoute from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v2.ApisixRoute, error)
+	Get(name string) (*apisixv2.ApisixRoute, error)
 	ApisixRouteNamespaceListerExpansion
 }
 
 // apisixRouteNamespaceLister implements the ApisixRouteNamespaceLister
 // interface.
 type apisixRouteNamespaceLister struct {
-	listers.ResourceIndexer[*v2.ApisixRoute]
+	listers.ResourceIndexer[*apisixv2.ApisixRoute]
 }

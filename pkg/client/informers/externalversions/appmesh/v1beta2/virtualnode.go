@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
+	apisappmeshv1beta2 "github.com/fluxcd/flagger/pkg/apis/appmesh/v1beta2"
 	versioned "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/fluxcd/flagger/pkg/client/informers/externalversions/internalinterfaces"
-	v1beta2 "github.com/fluxcd/flagger/pkg/client/listers/appmesh/v1beta2"
+	appmeshv1beta2 "github.com/fluxcd/flagger/pkg/client/listers/appmesh/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // VirtualNodes.
 type VirtualNodeInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta2.VirtualNodeLister
+	Lister() appmeshv1beta2.VirtualNodeLister
 }
 
 type virtualNodeInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredVirtualNodeInformer(client versioned.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta2().VirtualNodes(namespace).List(context.TODO(), options)
+				return client.AppmeshV1beta2().VirtualNodes(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppmeshV1beta2().VirtualNodes(namespace).Watch(context.TODO(), options)
+				return client.AppmeshV1beta2().VirtualNodes(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AppmeshV1beta2().VirtualNodes(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AppmeshV1beta2().VirtualNodes(namespace).Watch(ctx, options)
 			},
 		},
-		&appmeshv1beta2.VirtualNode{},
+		&apisappmeshv1beta2.VirtualNode{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *virtualNodeInformer) defaultInformer(client versioned.Interface, resync
 }
 
 func (f *virtualNodeInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&appmeshv1beta2.VirtualNode{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisappmeshv1beta2.VirtualNode{}, f.defaultInformer)
 }
 
-func (f *virtualNodeInformer) Lister() v1beta2.VirtualNodeLister {
-	return v1beta2.NewVirtualNodeLister(f.Informer().GetIndexer())
+func (f *virtualNodeInformer) Lister() appmeshv1beta2.VirtualNodeLister {
+	return appmeshv1beta2.NewVirtualNodeLister(f.Informer().GetIndexer())
 }
