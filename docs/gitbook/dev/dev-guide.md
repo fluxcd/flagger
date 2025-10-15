@@ -8,17 +8,13 @@ Flagger is written in Go and uses Go modules for dependency management.
 
 On your dev machine install the following tools:
 
-* go >= 1.19
-* git >;= 2.20
-* bash >= 5.0
-* make >= 3.81
-* kubectl >= 1.22
-* kustomize >= 4.4
+* go >= 1.25
+* kubectl >= 1.30
+* kustomize >= 5.0
 * helm >= 3.0
-* docker >= 19.03
 
 You'll also need a Kubernetes cluster for testing Flagger.
-You can use Minikube, Kind, Docker desktop or any remote cluster (AKS/EKS/GKE/etc) Kubernetes version 1.22 or newer.
+You can use Minikube, Kind, Docker desktop or any remote cluster (AKS/EKS/GKE/etc).
 
 To start contributing to Flagger, fork the [repository](https://github.com/fluxcd/flagger) on GitHub.
 
@@ -194,7 +190,6 @@ make build
 docker build -t test/flagger:latest .
 kind load docker-image test/flagger:latest
 ```
-
 
 Run the Istio e2e tests:
 

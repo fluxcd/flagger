@@ -140,8 +140,8 @@ After a couple of seconds Flagger will make the following changes the Knative Se
 Trigger a canary deployment by updating the container image:
 
 ```bash
-kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:6.0.1
+kubectl -n test patch services.serving podinfo --type=json \
+-p '[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "ghcr.io/stefanprodan/podinfo:6.0.1"}]'
 ```
 
 Flagger detects that the deployment revision changed and starts a new rollout:
@@ -200,8 +200,8 @@ During the canary analysis you can generate HTTP 500 errors and high latency to 
 Trigger another canary deployment:
 
 ```bash
-kubectl -n test set image deployment/podinfo \
-podinfod=stefanprodan/podinfo:6.0.2
+kubectl -n test patch services.serving podinfo --type=json \
+-p '[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "ghcr.io/stefanprodan/podinfo:6.0.2"}]'
 ```
 
 Exec into the load tester pod with:

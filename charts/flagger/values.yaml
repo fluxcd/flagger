@@ -32,7 +32,7 @@ serviceMonitor:
   # Set labels for the ServiceMonitor, use this to define your scrape label for Prometheus Operator
   # labels:
 
-# accepted values are kubernetes, istio, linkerd, appmesh, contour, nginx, gloo, skipper, traefik, apisix, osm
+# accepted values are kubernetes, istio, linkerd, appmesh, contour, nginx, gloo, skipper, traefik, apisix
 meshProvider: ""
 
 # single namespace restriction

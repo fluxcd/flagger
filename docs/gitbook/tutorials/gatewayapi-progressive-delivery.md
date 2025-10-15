@@ -6,12 +6,11 @@ This guide shows you how to use [Gateway API](https://gateway-api.sigs.k8s.io/) 
 
 ## Prerequisites
 
-Flagger requires a Kubernetes cluster **v1.29** or newer and any mesh/ingress that
-implements the `v1` version of Gateway API.
+Flagger requires an ingress controller or service mesh that implements the Gateway API **HTTPRoute** (`v1` or `v1beta1`).
 
 We'll be using Istio for the sake of this tutorial, but you can use any other implementation.
 
-Install the Gateway API CRDs
+Install the Gateway API CRDs:
 
 ```bash
 # Suggestion: Change v1.4.0 in to the latest Gateway API version
@@ -156,7 +155,7 @@ Save the above resource as metric-templates.yaml and then apply it:
 kubectl apply -f metric-templates.yaml
 ```
 
-Create a canary custom resource \(replace "www.example.com" with your own domain\):
+Create a Canary custom resource \(replace "www.example.com" with your own domain\):
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -277,10 +276,7 @@ point a domain e.g. `www.example.com` to the LB address.
 Now you can access the podinfo UI using your domain address.
 
 Note that you should be using HTTPS when exposing production workloads on internet.
-You can obtain free TLS certs from Let's Encrypt, read this
-[guide](https://github.com/stefanprodan/istio-gke) on how to configure cert-manager to secure Istio with TLS certificates.
-
-If you're using a local cluster via kind/k3s you can port forward the Envoy LoadBalancer service:
+If you're using a local cluster you can port forward to the Envoy LoadBalancer service:
 
 ```bash
 kubectl port-forward -n istio-ingress svc/gateway-istio 8080:80
@@ -714,7 +710,97 @@ Metrics are collected on both requests so that the deployment will only proceed 
 
 The above procedures can be extended with [custom metrics](../usage/metrics.md) checks, [webhooks](../usage/webhooks.md), [manual promotion](../usage/webhooks.md#manual-gating) approval and [Slack or MS Teams](../usage/alerting.md) notifications.
 
-## CORS Support
+## Customising the HTTPRoute
+
+Besides the `hosts` and `gatewayRefs` fields, you can customize the generated HTTPRoute with various options
+exposed under the `spec.service` field of the Canary.
+
+### Header Manipulation
+
+You can configure request and response header manipulation using the `spec.service.headers` field of the Canary.
+
+> **Note:** Header manipulation requires a Gateway API implementation that supports
+> the [`RequestHeaderModifier`](https://gateway-api.sigs.k8s.io/guides/http-header-modifier/) and [`ResponseHeaderModifier`](https://gateway-api.sigs.k8s.io/guides/http-header-modifier/) filters.
+
+Example configuration:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  service:
+    headers:
+      request:
+        add:
+          x-custom-header: "custom-value"
+        set:
+          x-api-version: "v1"
+        remove:
+          - x-debug-header
+      response:
+        add:
+          x-frame-options: "DENY"
+          x-content-type-options: "nosniff"
+        set:
+          cache-control: "no-cache"
+        remove:
+          - x-powered-by
+```
+
+### URL Rewriting
+
+You can configure URL rewriting using the `spec.service.rewrite` field of the Canary to modify the path or hostname of requests.
+
+> **Note:** URL rewriting requires a Gateway API implementation that supports
+> the [`URLRewrite`](https://gateway-api.sigs.k8s.io/guides/http-redirect-rewrite/?h=urlrewrite#rewrites) filter.
+
+Example configuration:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  service:
+    rewrite:
+      # Rewrite the URI path
+      uri: "/v2/api"
+      # Optionally specify the rewrite type: "ReplaceFullPath" or "ReplacePrefixMatch"
+      # Defaults to "ReplaceFullPath" if not specified
+      type: "ReplaceFullPath"
+      # Rewrite the hostname/authority header
+      authority: "api.example.com"
+```
+
+The `type` field determines how the URI rewriting is performed:
+
+- **ReplaceFullPath**: Replaces the entire request path with the specified `uri` value
+- **ReplacePrefixMatch**: Replaces only the prefix portion of the path that was matched
+
+Example with prefix replacement:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  service:
+    rewrite:
+      uri: "/api/v2"
+      type: "ReplacePrefixMatch"
+```
+
+When using `ReplacePrefixMatch`, if a request comes to `/old/path`, and the HTTPRoute matches the prefix `/old`,
+the request will be rewritten to `/api/v2/path`.
+
+### CORS Policy
 
 The cross-origin resource sharing policy can be configured the `spec.service.corsPolicy` field of the Canary.
 

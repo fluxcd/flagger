@@ -72,7 +72,6 @@ metadata:
   name: podinfo
   namespace: test
 spec:
-  # service mesh provider can be: kubernetes, istio, appmesh, nginx, gloo
   provider: kubernetes
   # deployment reference
   targetRef:

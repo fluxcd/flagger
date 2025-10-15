@@ -1,10 +1,8 @@
 # Flagger Install on Kubernetes
 
-This guide walks you through setting up Flagger on a Kubernetes cluster with Helm v3 or Kustomize.
+This guide walks you through setting up Flagger on a Kubernetes cluster with Helm or Kubectl.
 
-## Prerequisites
-
-Flagger requires a Kubernetes cluster **v1.16** or newer.
+See the [Flux install guide](flagger-install-with-flux.md) for installing Flagger and keeping it up to date the GitOps way.
 
 ## Install Flagger with Helm
 
@@ -61,26 +59,6 @@ helm upgrade -i flagger flagger/flagger \
 --set metricsServer=http://linkerd-prometheus:9090
 ```
 
-Deploy Flagger for App Mesh:
-
-```bash
-helm upgrade -i flagger flagger/flagger \
---namespace=appmesh-system \
---set crd.create=false \
---set meshProvider=appmesh \
---set metricsServer=http://appmesh-prometheus:9090
-```
-
-Deploy Flagger for **Open Service Mesh (OSM)** (requires OSM to have been installed with Prometheus):
-
-```console
-$ helm upgrade -i flagger flagger/flagger \
---namespace=osm-system \
---set crd.create=false \
---set meshProvider=osm \
---set metricsServer=http://osm-prometheus.osm-system.svc:7070
-```
-
 If you need to add labels to the flagger deployment or pods, you can pass the labels as parameters as shown below.
 
 ```console
@@ -92,7 +70,7 @@ helm upgrade -i flagger flagger/flagger \
 
 You can install Flagger in any namespace as long as it can talk to the Prometheus service on port 9090.
 
-For ingress controllers, the install instructions are:
+For ingress controllers, the installation instructions are:
 
 * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery)
 * [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery)
@@ -100,20 +78,6 @@ For ingress controllers, the install instructions are:
 * [Skipper](https://docs.flagger.app/tutorials/skipper-progressive-delivery)
 * [Traefik](https://docs.flagger.app/tutorials/traefik-progressive-delivery)
 * [APISIX](https://docs.flagger.app/tutorials/apisix-progressive-delivery)
-
-You can use the helm template command and apply the generated yaml with kubectl:
-
-```bash
-# generate
-helm fetch --untar --untardir . flagger/flagger &&
-helm template flagger ./flagger \
---namespace=istio-system \
---set metricsServer=http://prometheus.istio-system:9090 \
-> flagger.yaml
-
-# apply
-kubectl apply -f flagger.yaml
-```
 
 To uninstall the Flagger release with Helm run:
 
@@ -126,7 +90,7 @@ The command removes all the Kubernetes components associated with the chart and 
 > **Note** that on uninstall the Canary CRD will not be removed. Deleting the CRD will make Kubernetes
 > remove all the objects owned by Flagger like Istio virtual services, Kubernetes deployments and ClusterIP services.
 
-If you want to remove all the objects created by Flagger you have delete the Canary CRD with kubectl:
+If you want to remove all the objects created by Flagger you have to delete the Canary CRD with kubectl:
 
 ```text
 kubectl delete crd canaries.flagger.app
@@ -146,73 +110,18 @@ helm upgrade -i flagger-grafana flagger/grafana \
 --set password=change-me
 ```
 
-Or use helm template command and apply the generated yaml with kubectl:
-
-```bash
-# generate
-helm fetch --untar --untardir . flagger/grafana &&
-helm template flagger-grafana ./grafana \
---namespace=istio-system \
-> flagger-grafana.yaml
-
-# apply
-kubectl apply -f flagger-grafana.yaml
-```
-
 You can access Grafana using port forwarding:
 
 ```bash
 kubectl -n istio-system port-forward svc/flagger-grafana 3000:80
 ```
 
-## Install Flagger with Kustomize
+## Install Flagger with Kubectl
 
-As an alternative to Helm, Flagger can be installed with Kustomize **3.5.0** or newer.
-
-**Service mesh specific installers**
-
-Install Flagger for Istio:
+Install Flagger and Prometheus using the Kustomize overlay from the GitHub repository:
 
 ```bash
-kustomize build https://github.com/fluxcd/flagger/kustomize/istio?ref=main | kubectl apply -f -
-```
-
-Install Flagger for AWS App Mesh:
-
-```bash
-kustomize build https://github.com/fluxcd/flagger/kustomize/appmesh?ref=main | kubectl apply -f -
-```
-
-This deploys Flagger and sets the metrics server URL to App Mesh's Prometheus instance.
-
-Install Flagger for Linkerd:
-
-```bash
-kustomize build https://github.com/fluxcd/flagger/kustomize/linkerd?ref=main | kubectl apply -f -
-```
-
-This deploys Flagger in the `linkerd` namespace and sets the metrics server URL to Linkerd's Prometheus instance.
-
-Install Flagger for Open Service Mesh:
-
-```bash
-kustomize build https://github.com/fluxcd/flagger/kustomize/osm?ref=main | kubectl apply -f -
-```
-
-This deploys Flagger in the `osm-system` namespace and sets the metrics server URL to OSM's Prometheus instance.
-
-If you want to install a specific Flagger release, add the version number to the URL:
-
-```bash
-kustomize build https://github.com/fluxcd/flagger/kustomize/linkerd?ref=v1.0.0 | kubectl apply -f -
-```
-
-**Generic installer**
-
-Install Flagger and Prometheus for Contour, Gloo, NGINX, Skipper, APISIX or Traefik ingress:
-
-```bash
-kustomize build https://github.com/fluxcd/flagger/kustomize/kubernetes?ref=main | kubectl apply -f -
+kubectl apply -k https://github.com/fluxcd/flagger/kustomize/kubernetes?ref=main
 ```
 
 This deploys Flagger and Prometheus in the `flagger-system` namespace,
@@ -220,20 +129,6 @@ sets the metrics server URL to `http://flagger-prometheus.flagger-system:9090` a
 
 The Prometheus instance has a two hours data retention and is configured to scrape all pods in your cluster
 that have the `prometheus.io/scrape: "true"` annotation.
-
-To target a different provider you can specify it in the canary custom resource:
-
-```yaml
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: app
-  namespace: test
-spec:
-  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, gloo, traefik, osm, apisix
-  # use the kubernetes provider for Blue/Green style deployments
-  provider: nginx
-```
 
 **Customized installer**
 

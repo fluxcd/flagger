@@ -1,4 +1,4 @@
- # flaggerreadme
+ # Flagger
 
 [![release](https://img.shields.io/github/release/fluxcd/flagger/all.svg)](https://github.com/fluxcd/flagger/releases)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4783/badge)](https://bestpractices.coreinfrastructure.org/projects/4783)
@@ -16,39 +16,26 @@ by gradually shifting traffic to the new version while measuring metrics and run
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
 and integrates with various Kubernetes ingress controllers, service mesh, and monitoring solutions.
 
-Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
+Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) graduated project
 and part of the [Flux](https://fluxcd.io) family of GitOps tools.
 
 ### Documentation
 
-Flagger documentation can be found at [fluxcd.io/flagger](https://fluxcd.io/flagger/).
+The Flagger documentation can be found at [docs.flagger.app](https://docs.flagger.app/main).
 
 * Install
-  * [Flagger install on Kubernetes](https://fluxcd.io/flagger/install/flagger-install-on-kubernetes)
+  * [Flagger Install with Flux](https://docs.flagger.app/main/install/flagger-install-with-flux)
 * Usage
-  * [How it works](https://fluxcd.io/flagger/usage/how-it-works)
-  * [Deployment strategies](https://fluxcd.io/flagger/usage/deployment-strategies)
-  * [Metrics analysis](https://fluxcd.io/flagger/usage/metrics)
-  * [Webhooks](https://fluxcd.io/flagger/usage/webhooks)
-  * [Alerting](https://fluxcd.io/flagger/usage/alerting)
-  * [Monitoring](https://fluxcd.io/flagger/usage/monitoring)
-* Tutorials
-  * [App Mesh](https://fluxcd.io/flagger/tutorials/appmesh-progressive-delivery)
-  * [Istio](https://fluxcd.io/flagger/tutorials/istio-progressive-delivery)
-  * [Linkerd](https://fluxcd.io/flagger/tutorials/linkerd-progressive-delivery)
-  * [Open Service Mesh (OSM)](https://dfluxcd.io/flagger/tutorials/osm-progressive-delivery)
-  * [Kuma Service Mesh](https://fluxcd.io/flagger/tutorials/kuma-progressive-delivery)
-  * [Contour](https://fluxcd.io/flagger/tutorials/contour-progressive-delivery)
-  * [Gloo](https://fluxcd.io/flagger/tutorials/gloo-progressive-delivery)
-  * [NGINX Ingress](https://fluxcd.io/flagger/tutorials/nginx-progressive-delivery)
-  * [Skipper](https://fluxcd.io/flagger/tutorials/skipper-progressive-delivery)
-  * [Traefik](https://fluxcd.io/flagger/tutorials/traefik-progressive-delivery)
-  * [Gateway API](https://fluxcd.io/flagger/tutorials/gatewayapi-progressive-delivery/)
-  * [Kubernetes Blue/Green](https://fluxcd.io/flagger/tutorials/kubernetes-blue-green)
+  * [How it works](https://docs.flagger.app/main/usage/how-it-works)
+  * [Deployment strategies](https://docs.flagger.app/main/usage/deployment-strategies)
+  * [Metrics analysis](https://docs.flagger.app/main/usage/metrics)
+  * [Webhooks](https://docs.flagger.app/main/usage/webhooks)
+  * [Alerting](https://docs.flagger.app/main/usage/alerting)
+  * [Monitoring](https://docs.flagger.app/main/usage/monitoring)
 
 ### Adopters
 
-**Our list of production users has moved to <https://fluxcd.io/adopters/#flagger>**.
+The list of production users can be found at [fluxcd.io/adopters/#flagger](https://fluxcd.io/adopters/#flagger).
 
 If you are using Flagger, please
 [submit a PR to add your organization](https://github.com/fluxcd/website/blob/main/data/adopters/2-flagger.yaml) to the list!
@@ -72,8 +59,8 @@ metadata:
   namespace: test
 spec:
   # service mesh provider (optional)
-  # can be: kubernetes, istio, linkerd, appmesh, nginx, skipper, contour, gloo, supergloo, traefik, osm
-  # for SMI TrafficSplit can be: smi:v1alpha1, smi:v1alpha2, smi:v1alpha3
+  # can be: kubernetes, istio, linkerd, kuma, knative, nginx, contour, gloo, traefik, skipper
+  # for Gateway API implementations: gatewayapi:v1 and gatewayapi:v1beta1
   provider: istio
   # deployment reference
   targetRef:
@@ -178,23 +165,23 @@ spec:
           name: on-call-msteams
 ```
 
-For more details on how the canary analysis and promotion works please [read the docs](https://fluxcd.io/flagger/usage/how-it-works).
+For more details on how the canary analysis and promotion works please [read the docs](https://docs.flagger.app/usage/how-it-works).
 
 ### Features
 
 **Service Mesh**
 
-| Feature                                    | App Mesh           | Istio              | Linkerd            | Kuma               | OSM                | Knative            | Kubernetes CNI     |
-|--------------------------------------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
-| Canary deployments (weighted traffic)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
-| A/B testing (headers and cookies routing)  | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Blue/Green deployments (traffic switch)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
-| Blue/Green deployments (traffic mirroring) | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
-| Webhooks (acceptance/load testing)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Manual gating (approve/pause/resume)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
-| Request duration check (L7 metric)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
-| Custom metric checks                       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Feature                                    | Istio              | Linkerd            | Kuma               | Knative            | Kubernetes CNI     |
+|--------------------------------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
+| Canary deployments (weighted traffic)      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: |
+| A/B testing (headers and cookies routing)  | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
+| Blue/Green deployments (traffic mirroring) | :heavy_check_mark: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: |
+| Webhooks (acceptance/load testing)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
+| Request duration check (L7 metric)         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_minus_sign: | :heavy_check_mark: |
+| Custom metric checks                       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 **Ingress**
 
@@ -211,29 +198,26 @@ For more details on how the canary analysis and promotion works please [read the
 
 **Networking Interface**
 
-| Feature                                       | Gateway API        | SMI                |
-|-----------------------------------------------|--------------------|--------------------|
-| Canary deployments (weighted traffic)         | :heavy_check_mark: | :heavy_check_mark: |
-| A/B testing (headers and cookies routing)     | :heavy_check_mark: | :heavy_minus_sign: |
-| Blue/Green deployments (traffic switch)       | :heavy_check_mark: | :heavy_check_mark: |
-| Blue/Green deployments (traffic mirrroring)   | :heavy_minus_sign: | :heavy_minus_sign: |
-| Webhooks (acceptance/load testing)            | :heavy_check_mark: | :heavy_check_mark: |
-| Manual gating (approve/pause/resume)          | :heavy_check_mark: | :heavy_check_mark: |
-| Request success rate check (L7 metric)        | :heavy_minus_sign: | :heavy_minus_sign: |
-| Request duration check (L7 metric)            | :heavy_minus_sign: | :heavy_minus_sign: |
-| Custom metric checks                          | :heavy_check_mark: | :heavy_check_mark: |
+| Feature                                    | Gateway API        | SMI                |
+|--------------------------------------------|--------------------|--------------------|
+| Canary deployments (weighted traffic)      | :heavy_check_mark: | :heavy_check_mark: |
+| Canary deployments with session affinity   | :heavy_check_mark: | :heavy_minus_sign: |
+| A/B testing (headers and cookies routing)  | :heavy_check_mark: | :heavy_minus_sign: |
+| Blue/Green deployments (traffic switch)    | :heavy_check_mark: | :heavy_check_mark: |
+| Blue/Green deployments (traffic mirroring) | :heavy_minus_sign: | :heavy_minus_sign: |
+| Webhooks (acceptance/load testing)         | :heavy_check_mark: | :heavy_check_mark: |
+| Manual gating (approve/pause/resume)       | :heavy_check_mark: | :heavy_check_mark: |
+| Request success rate check (L7 metric)     | :heavy_minus_sign: | :heavy_minus_sign: |
+| Request duration check (L7 metric)         | :heavy_minus_sign: | :heavy_minus_sign: |
+| Custom metric checks                       | :heavy_check_mark: | :heavy_check_mark: |
 
-For all [Gateway API](https://gateway-api.sigs.k8s.io/) implementations like
-[Contour](https://projectcontour.io/guides/gateway-api/) or
-[Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
-and [SMI](https://smi-spec.io) compatible service mesh solutions like 
-[Nginx Service Mesh](https://docs.nginx.com/nginx-service-mesh/),
-[Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus)
+For all the [Gateway API](https://gateway-api.sigs.k8s.io/) compatible ingress controllers and service meshes,
+the [Prometheus MetricTemplates](https://docs.flagger.app/usage/metrics#prometheus)
 can be used to implement the request success rate and request duration checks.
 
 ### Roadmap
 
-#### [GitOps Toolkit](https://github.com/fluxcd/flux2) compatibility
+#### [GitOps Toolkit](https://fluxcd.io/flux/components/) compatibility
 
 - Migrate Flagger to Kubernetes controller-runtime and [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder)
 - Make the Canary status compatible with [kstatus](https://github.com/kubernetes-sigs/cli-utils)
@@ -242,7 +226,7 @@ can be used to implement the request success rate and request duration checks.
 
 #### Integrations
 
-- Add support for ingress controllers like HAProxy, ALB, and Apache APISIX
+- Migrate Linkerd, Kuma and other service mesh integrations to Gateway API
 
 ### Contributing
 

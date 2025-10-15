@@ -10,8 +10,7 @@ version in production by gradually shifting traffic to the new version while mea
 and running conformance tests.
 
 Flagger implements several deployment strategies (Canary releases, A/B testing, Blue/Green mirroring)
-using a service mesh (App Mesh, Istio, Linkerd, Kuma, Open Service Mesh)
-or an ingress controller (Contour, Gloo, NGINX, Skipper, Traefik, APISIX) for traffic routing.
+using a service mesh or an ingress controller for traffic routing.
 For release analysis, Flagger can query Prometheus, InfluxDB, Datadog, New Relic, CloudWatch, Stackdriver
 or Graphite and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
@@ -19,26 +18,23 @@ or Graphite and for alerting it uses Slack, MS Teams, Discord and Rocket.
 
 Flagger can be configured with Kubernetes custom resources and is compatible with
 any CI/CD solutions made for Kubernetes. Since Flagger is declarative and reacts to Kubernetes events,
-it can be used in **GitOps** pipelines together with tools like [Flux](install/flagger-install-with-flux.md),
-JenkinsX, Carvel, Argo, etc.
+it can be used in **GitOps** pipelines together with tools like [Flux CD](install/flagger-install-with-flux.md).
 
-Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) project
+Flagger is a [Cloud Native Computing Foundation](https://cncf.io/) graduated project
 and part of [Flux](https://fluxcd.io) family of GitOps tools.
 
 ## Getting started
 
 To get started with Flagger, choose one of the supported routing providers and
-[install](install/flagger-install-on-kubernetes.md) Flagger with Helm or Kustomize.
+[install](install/flagger-install-with-flux.md) Flagger with Flux CD.
 
 After installing Flagger, you can follow one of these tutorials to get started:
 
 **Service mesh tutorials**
 
+* [Gateway API](tutorials/gatewayapi-progressive-delivery.md)
 * [Istio](tutorials/istio-progressive-delivery.md)
 * [Linkerd](tutorials/linkerd-progressive-delivery.md)
-* [AWS App Mesh](tutorials/appmesh-progressive-delivery.md)
-* [AWS App Mesh: Canary Deployment Using Flagger](https://www.eksworkshop.com/advanced/340_appmesh_flagger/)
-* [Open Service Mesh](tutorials/osm-progressive-delivery.md)
 * [Kuma](tutorials/kuma-progressive-delivery.md)
 
 **Ingress controller tutorials**
@@ -49,12 +45,6 @@ After installing Flagger, you can follow one of these tutorials to get started:
 * [Skipper Ingress](tutorials/skipper-progressive-delivery.md)
 * [Traefik](tutorials/traefik-progressive-delivery.md)
 * [Apache APISIX](tutorials/apisix-progressive-delivery.md)
-
-**Hands-on GitOps workshops**
-
-* [Istio](https://github.com/stefanprodan/gitops-istio)
-* [Linkerd](https://helm.workshop.flagger.dev)
-* [AWS App Mesh](https://eks.handson.flagger.dev)
 
 The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, 
 please see our [Trademark Usage page](https://www.linuxfoundation.org/legal/trademark-usage).
