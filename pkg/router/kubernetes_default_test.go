@@ -64,6 +64,39 @@ func TestServiceRouter_Create(t *testing.T) {
 	assert.Equal(t, "None", primarySvc.Spec.ClusterIP)
 }
 
+func TestServiceRouter_TrafficDistribution(t *testing.T) {
+	mocks := newFixture(nil)
+	trafficDistribution := "PreferClose"
+	mocks.canary.Spec.Service.TrafficDistribution = trafficDistribution
+
+	router := &KubernetesDefaultRouter{
+		kubeClient:    mocks.kubeClient,
+		flaggerClient: mocks.flaggerClient,
+		logger:        mocks.logger,
+	}
+
+	err := router.Initialize(mocks.canary)
+	require.NoError(t, err)
+
+	err = router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, canarySvc.Spec.TrafficDistribution)
+	assert.Equal(t, trafficDistribution, *canarySvc.Spec.TrafficDistribution)
+
+	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, primarySvc.Spec.TrafficDistribution)
+	assert.Equal(t, trafficDistribution, *primarySvc.Spec.TrafficDistribution)
+
+	apexSvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, apexSvc.Spec.TrafficDistribution)
+	assert.Equal(t, trafficDistribution, *apexSvc.Spec.TrafficDistribution)
+}
+
 func TestServiceRouter_Update(t *testing.T) {
 	mocks := newFixture(nil)
 	router := &KubernetesDefaultRouter{

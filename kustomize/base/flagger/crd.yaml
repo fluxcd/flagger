@@ -191,11 +191,18 @@ spec:
                     appProtocol:
                       description: Application protocol of the port
                       type: string
+                    trafficDistribution:
+                      description: Traffic distribution of the service
+                      type: string
+                      enum:
+                        - PreferClose
+                        - PreferSameZone
+                        - PreferSameNode
                     targetPort:
                       description: Container target port name
                       x-kubernetes-int-or-string: true
                     portDiscovery:
-                      description: Enable port dicovery
+                      description: Enable port discovery
                       type: boolean
                     headless:
                       description: Headless if set to true, generates headless Kubernetes services.
