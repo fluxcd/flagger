@@ -23,14 +23,16 @@ import (
 	"testing"
 	"time"
 
-	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
-	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	v1 "github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1"
+	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 )
 
 func TestGatewayAPIRouter_Reconcile(t *testing.T) {
@@ -537,4 +539,67 @@ func TestGatewayAPIRouter_makeFilters(t *testing.T) {
 		)
 		assert.Equal(t, "", filtersDiff)
 	}
+}
+
+func TestGatewayAPIRouter_makeFilters_CORS(t *testing.T) {
+	canary := newTestGatewayAPICanary()
+	mocks := newFixture(canary)
+
+	// Configure CORS policy
+	canary.Spec.Service.CorsPolicy = &istiov1beta1.CorsPolicy{
+		AllowOrigins:     []*istiov1alpha1.StringMatch{{Regex: ".*example.com"}}, // ignored
+		AllowOrigin:      []string{"https://example.com", "https://app.example.com"},
+		AllowMethods:     []string{"GET", "POST", "PUT"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"X-Custom-Header"},
+		AllowCredentials: true,
+		MaxAge:           "24h",
+	}
+
+	router := &GatewayAPIRouter{
+		gatewayAPIClient: mocks.meshClient,
+		kubeClient:       mocks.kubeClient,
+		logger:           mocks.logger,
+	}
+
+	filters := router.makeFilters(canary)
+
+	// Find the CORS filter
+	var corsFilter *v1.HTTPRouteFilter
+	for i := range filters {
+		if filters[i].Type == v1.HTTPRouteFilterCORS {
+			corsFilter = &filters[i]
+			break
+		}
+	}
+
+	require.NotNil(t, corsFilter, "CORS filter should be present")
+	require.NotNil(t, corsFilter.CORS, "CORS configuration should not be nil")
+
+	// Assert AllowOrigins
+	assert.Len(t, corsFilter.CORS.AllowOrigins, 2)
+	assert.Equal(t, v1.CORSOrigin("https://example.com"), corsFilter.CORS.AllowOrigins[0])
+	assert.Equal(t, v1.CORSOrigin("https://app.example.com"), corsFilter.CORS.AllowOrigins[1])
+
+	// Assert AllowMethods
+	assert.Len(t, corsFilter.CORS.AllowMethods, 3)
+	assert.Equal(t, v1.HTTPMethodWithWildcard("GET"), corsFilter.CORS.AllowMethods[0])
+	assert.Equal(t, v1.HTTPMethodWithWildcard("POST"), corsFilter.CORS.AllowMethods[1])
+	assert.Equal(t, v1.HTTPMethodWithWildcard("PUT"), corsFilter.CORS.AllowMethods[2])
+
+	// Assert AllowHeaders
+	assert.Len(t, corsFilter.CORS.AllowHeaders, 2)
+	assert.Equal(t, v1.HTTPHeaderName("Content-Type"), corsFilter.CORS.AllowHeaders[0])
+	assert.Equal(t, v1.HTTPHeaderName("Authorization"), corsFilter.CORS.AllowHeaders[1])
+
+	// Assert ExposeHeaders
+	assert.Len(t, corsFilter.CORS.ExposeHeaders, 1)
+	assert.Equal(t, v1.HTTPHeaderName("X-Custom-Header"), corsFilter.CORS.ExposeHeaders[0])
+
+	// Assert AllowCredentials
+	require.NotNil(t, corsFilter.CORS.AllowCredentials)
+	assert.True(t, *corsFilter.CORS.AllowCredentials)
+
+	// Assert MaxAge (24h = 86400 seconds)
+	assert.Equal(t, int32(86400), corsFilter.CORS.MaxAge)
 }
