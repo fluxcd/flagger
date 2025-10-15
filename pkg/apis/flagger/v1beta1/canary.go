@@ -20,10 +20,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
-	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/fluxcd/flagger/pkg/apis/gatewayapi/v1beta1"
+	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
 )
 
 const (
@@ -149,6 +150,11 @@ type CanaryService struct {
 	// https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol
 	// +optional
 	AppProtocol string `json:"appProtocol,omitempty"`
+
+	// TrafficDistribution of the service
+	// https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution
+	// +optional
+	TrafficDistribution string `json:"trafficDistribution,omitempty"`
 
 	// PortDiscovery adds all container ports to the generated Kubernetes service
 	PortDiscovery bool `json:"portDiscovery"`

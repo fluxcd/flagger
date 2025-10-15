@@ -165,6 +165,11 @@ func buildService(canary *flaggerv1.Canary, name string, src *corev1.Service) *c
 		//   Operation cannot be fulfilled on services "mysvc-canary": the object has been modified; please apply your changes to the latest version and try again
 		delete(svc.ObjectMeta.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
 	}
+
+	if v := canary.Spec.Service.TrafficDistribution; v != "" {
+		svc.Spec.TrafficDistribution = &v
+	}
+
 	return svc
 }
 

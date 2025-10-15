@@ -121,6 +121,10 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		svcSpec.Ports[0].AppProtocol = &v
 	}
 
+	if v := canary.Spec.Service.TrafficDistribution; v != "" {
+		svcSpec.TrafficDistribution = &v
+	}
+
 	// set additional ports
 	for n, p := range c.ports {
 		cp := corev1.ServicePort{
