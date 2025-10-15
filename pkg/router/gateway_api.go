@@ -839,6 +839,14 @@ func (gwr *GatewayAPIRouter) makeFilters(canary *flaggerv1.Canary) []v1.HTTPRout
 		filters = append(filters, mirrorFilter)
 	}
 
+	if canary.Spec.Service.CorsPolicy != nil {
+		corsFilter := v1.HTTPRouteFilter{
+			Type: v1.HTTPRouteFilterCORS,
+			CORS: gwr.toV1CORSFilter(canary.Spec.Service.CorsPolicy),
+		}
+		filters = append(filters, corsFilter)
+	}
+
 	return filters
 }
 
@@ -852,6 +860,62 @@ func toV1RequestMirrorFilter(requestMirror v1beta1.HTTPRequestMirrorFilter) *v1.
 			Port:      (*v1.PortNumber)(requestMirror.BackendRef.Port),
 		},
 	}
+}
+
+func (gwr *GatewayAPIRouter) toV1CORSFilter(corsPolicy *istiov1beta1.CorsPolicy) *v1.HTTPCORSFilter {
+	cors := &v1.HTTPCORSFilter{}
+
+	// Note: CorsPolicy.AllowOrigins (StringMatch patterns) is not mapped because
+	// Gateway API HTTPCORSFilter.AllowOrigins only supports simple origin strings,
+	if len(corsPolicy.AllowOrigins) > 0 {
+		gwr.logger.Errorf("'corsPolicy.allowOrigins' is not supported by Gateway API, use 'corsPolicy.allowOrigin' instead")
+	}
+
+	// Map AllowOrigin to AllowOrigins
+	// not pattern matching like Istio's StringMatch type.
+	if len(corsPolicy.AllowOrigin) > 0 {
+		for _, origin := range corsPolicy.AllowOrigin {
+			cors.AllowOrigins = append(cors.AllowOrigins, v1.CORSOrigin(origin))
+		}
+	}
+
+	// Map AllowMethods
+	if len(corsPolicy.AllowMethods) > 0 {
+		for _, method := range corsPolicy.AllowMethods {
+			cors.AllowMethods = append(cors.AllowMethods, v1.HTTPMethodWithWildcard(method))
+		}
+	}
+
+	// Map AllowHeaders
+	if len(corsPolicy.AllowHeaders) > 0 {
+		for _, header := range corsPolicy.AllowHeaders {
+			cors.AllowHeaders = append(cors.AllowHeaders, v1.HTTPHeaderName(header))
+		}
+	}
+
+	// Map ExposeHeaders
+	if len(corsPolicy.ExposeHeaders) > 0 {
+		for _, header := range corsPolicy.ExposeHeaders {
+			cors.ExposeHeaders = append(cors.ExposeHeaders, v1.HTTPHeaderName(header))
+		}
+	}
+
+	// Map AllowCredentials
+	if corsPolicy.AllowCredentials {
+		allow := true
+		cors.AllowCredentials = &allow
+	}
+
+	// Map MaxAge - convert duration string to seconds
+	if corsPolicy.MaxAge != "" {
+		// Parse duration string (e.g., "1d", "24h", "5s")
+		duration, err := time.ParseDuration(corsPolicy.MaxAge)
+		if err == nil {
+			cors.MaxAge = int32(duration.Seconds())
+		}
+	}
+
+	return cors
 }
 
 func toV1ParentRefs(gatewayRefs []v1beta1.ParentReference) []v1.ParentReference {
