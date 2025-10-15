@@ -213,12 +213,42 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			if svc.ObjectMeta.Annotations == nil {
 				svc.ObjectMeta.Annotations = make(map[string]string)
 			}
-			if diff := cmp.Diff(filterMetadata(metadata.Annotations), svc.ObjectMeta.Annotations); diff != "" {
-				svcClone.ObjectMeta.Annotations = filterMetadata(metadata.Annotations)
+
+			// Preserve unmanaged metadata
+			unmanagedAnnotations := make(map[string]string)
+			if canary.Spec.Service.UnmanagedMetadata != nil {
+				for _, key := range canary.Spec.Service.UnmanagedMetadata.Annotations {
+					if value, ok := svc.ObjectMeta.Annotations[key]; ok {
+						unmanagedAnnotations[key] = value
+					}
+				}
+			}
+
+			unmanagedLabels := make(map[string]string)
+			if canary.Spec.Service.UnmanagedMetadata != nil {
+				for _, key := range canary.Spec.Service.UnmanagedMetadata.Labels {
+					if value, ok := svc.ObjectMeta.Labels[key]; ok {
+						unmanagedLabels[key] = value
+					}
+				}
+			}
+
+			newAnnotations := filterMetadata(metadata.Annotations)
+			for k, v := range unmanagedAnnotations {
+				newAnnotations[k] = v
+			}
+
+			newLabels := metadata.Labels
+			for k, v := range unmanagedLabels {
+				newLabels[k] = v
+			}
+
+			if diff := cmp.Diff(newAnnotations, svc.ObjectMeta.Annotations); diff != "" {
+				svcClone.ObjectMeta.Annotations = newAnnotations
 				updateService = true
 			}
-			if diff := cmp.Diff(metadata.Labels, svc.ObjectMeta.Labels); diff != "" {
-				svcClone.ObjectMeta.Labels = metadata.Labels
+			if diff := cmp.Diff(newLabels, svc.ObjectMeta.Labels); diff != "" {
+				svcClone.ObjectMeta.Labels = newLabels
 				updateService = true
 			}
 		}
