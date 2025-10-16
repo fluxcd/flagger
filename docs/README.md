@@ -9,7 +9,7 @@ features:
 - title: Safer Releases
   details: Reduce the risk of introducing a new software version in production by gradually shifting traffic to the new version while measuring metrics like HTTP/gRPC request success rate and latency.
 - title: Flexible Traffic Routing
-  details: Shift and route traffic between app versions using an ingress controller or a service mesh compatible with Kubernetes Gateway API.
+  details: Shift and route traffic between app versions automatically using an ingress controller or a service mesh compatible with Kubernetes Gateway API.
 - title:  Extensible Validation
   details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics and webhooks for running acceptance tests, load tests, or any other custom validation. 
 footer: Apache License 2.0 | Copyright © 2018-2025 The Flux authors
