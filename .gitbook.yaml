@@ -5,7 +5,6 @@ redirects:
   usage/progressive-delivery: tutorials/istio-progressive-delivery.md
   usage/ab-testing: tutorials/istio-ab-testing.md
   usage/blue-green: tutorials/kubernetes-blue-green.md
-  usage/appmesh-progressive-delivery: tutorials/appmesh-progressive-delivery.md
   usage/linkerd-progressive-delivery: tutorials/linkerd-progressive-delivery.md
   usage/contour-progressive-delivery: tutorials/contour-progressive-delivery.md
   usage/gloo-progressive-delivery: tutorials/gloo-progressive-delivery.md
@@ -13,7 +12,6 @@ redirects:
   usage/skipper-progressive-delivery: tutorials/skipper-progressive-delivery.md
   usage/crossover-progressive-delivery: tutorials/crossover-progressive-delivery.md
   usage/traefik-progressive-delivery: tutorials/traefik-progressive-delivery.md
-  usage/osm-progressive-delivery: tutorials/osm-progressive-delivery.md
   usage/kuma-progressive-delivery: tutorials/kuma-progressive-delivery.md
   usage/gatewayapi-progressive-delivery: tutorials/gatewayapi-progressive-delivery.md
   usage/apisix-progressive-delivery: tutorials/apisix-progressive-delivery.md

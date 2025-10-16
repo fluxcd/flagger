@@ -7,9 +7,6 @@
 
 * [Flagger Install on Kubernetes](install/flagger-install-on-kubernetes.md)
 * [Flagger Install with Flux](install/flagger-install-with-flux.md)
-* [Flagger Install on GKE Istio](install/flagger-install-on-google-cloud.md)
-* [Flagger Install on EKS App Mesh](install/flagger-install-on-eks-appmesh.md)
-* [Flagger Install on Alibaba ServiceMesh](install/flagger-install-on-alibaba-servicemesh.md)
 
 ## Usage
 
@@ -22,20 +19,18 @@
 
 ## Tutorials
 
+* [Gateway API Canary Deployments](tutorials/gatewayapi-progressive-delivery.md)
 * [Istio Canary Deployments](tutorials/istio-progressive-delivery.md)
 * [Istio A/B Testing](tutorials/istio-ab-testing.md)
 * [Linkerd Canary Deployments](tutorials/linkerd-progressive-delivery.md)
-* [App Mesh Canary Deployments](tutorials/appmesh-progressive-delivery.md)
+* [Kuma Canary Deployments](tutorials/kuma-progressive-delivery.md)
+* [Knative Canary Deployments](tutorials/knative-progressive-delivery.md)
 * [Contour Canary Deployments](tutorials/contour-progressive-delivery.md)
 * [Gloo Canary Deployments](tutorials/gloo-progressive-delivery.md)
 * [NGINX Canary Deployments](tutorials/nginx-progressive-delivery.md)
 * [Skipper Canary Deployments](tutorials/skipper-progressive-delivery.md)
 * [Traefik Canary Deployments](tutorials/traefik-progressive-delivery.md)
 * [Apache APISIX Canary Deployments](tutorials/apisix-progressive-delivery.md)
-* [Open Service Mesh Deployments](tutorials/osm-progressive-delivery.md)
-* [Kuma Canary Deployments](tutorials/kuma-progressive-delivery.md)
-* [Gateway API Canary Deployments](tutorials/gatewayapi-progressive-delivery.md)
-* [Knative Canary Deployments](tutorials/knative-progressive-delivery.md)
 * [Blue/Green Deployments](tutorials/kubernetes-blue-green.md)
 * [Canary analysis with Prometheus Operator](tutorials/prometheus-operator.md)
 * [Canary analysis with KEDA ScaledObjects](tutorials/keda-scaledobject.md)

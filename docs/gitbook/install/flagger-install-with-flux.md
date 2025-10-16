@@ -35,46 +35,43 @@ metadata:
     toolkit.fluxcd.io/tenant: sre-team
 ```
 
-Define a Flux `HelmRepository` that points to where the Flagger Helm charts are stored:
+Define a Flux `OCIRepository` that points to where the Flagger Helm charts are stored:
 
 ```yaml
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: HelmRepository
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
 metadata:
   name: flagger
   namespace: flagger-system
 spec:
   interval: 1h
-  url: oci://ghcr.io/fluxcd/charts
-  type: oci
+  url: oci://ghcr.io/fluxcd/charts/flagger
+  layerSelector:
+    mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+    operation: copy
+  ref:
+    semver: "1.x" # update to the latest version
 ```
 
 Define a Flux `HelmRelease` that verifies and installs Flagger's latest version on the cluster:
 
 ```yaml
 ---
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: flagger
   namespace: flagger-system
 spec:
-  interval: 1h
+  interval: 12h
   releaseName: flagger
   install: # override existing Flagger CRDs
     crds: CreateReplace
   upgrade: # update Flagger CRDs
     crds: CreateReplace
-  chart:
-    spec:
-      chart: flagger
-      version: 1.x # update Flagger to the latest minor version
-      interval: 6h # scan for new versions every six hours
-      sourceRef:
-        kind: HelmRepository
-        name: flagger
-      verify: # verify the chart signature with Cosign keyless
-        provider: cosign 
+  chartRef:
+    kind: OCIRepository
+    name: flagger
   values:
     nodeSelector:
       kubernetes.io/os: linux
@@ -88,7 +85,7 @@ After Flux reconciles the changes on your cluster, you can check if Flagger got 
 ```console
 $ helm list -n flagger-system 
 NAME    NAMESPACE       REVISION        STATUS          CHART           APP VERSION
-flagger flagger-system  1               deployed        flagger-1.23.0  1.23.0  
+flagger flagger-system  1               deployed        flagger-1.42.0  1.42.0  
 ```
 
 To uninstall Flagger, delete the `flagger.yaml` from your repository, then Flux will uninstall
@@ -108,7 +105,7 @@ Define a Flux `OCIRepository` that points to where the Flagger Kustomize overlay
 
 ```yaml
 ---
-apiVersion: source.toolkit.fluxcd.io/v1beta2
+apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
   name: flagger-loadtester
@@ -117,21 +114,20 @@ spec:
   interval: 6h # scan for new versions every six hours
   url: oci://ghcr.io/fluxcd/flagger-manifests
   ref:
-    semver: 1.x # update to the latest version 
-  verify: # verify the artifact signature with Cosign keyless
-    provider: cosign
+    semver: "*" # update to the latest version
 ```
 
 Define a Flux `Kustomization` that deploys the Flagger load tester to the `apps` namespace:
 
 ```yaml
 ---
-apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: flagger-loadtester
   namespace: apps
 spec:
+  targetNamespace: apps
   interval: 6h
   wait: true
   timeout: 5m
@@ -140,7 +136,6 @@ spec:
     kind: OCIRepository
     name: flagger-loadtester
   path: ./tester
-  targetNamespace: apps
 ```
 
 Copy the above manifests into a file called `flagger-loadtester.yaml`, place the YAML file

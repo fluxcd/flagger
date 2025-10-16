@@ -59,15 +59,6 @@ $ helm upgrade -i flagger flagger/flagger \
 ```
 
 
-To install Flagger for **Open Service Mesh** (requires OSM to have been installed with Prometheus):
-
-```console
-$ helm upgrade -i flagger flagger/flagger \
-    --namespace=osm-system \
-    --set meshProvider=osm \
-    --set metricsServer=http://osm-prometheus.osm-system.svc:7070
-```
-
 To install Flagger for **Kuma Service Mesh** (requires Kuma to have been installed with Prometheus):
 
 ```console
