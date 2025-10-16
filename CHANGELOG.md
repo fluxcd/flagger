@@ -2,6 +2,69 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.42.0
+
+**Release date:** 2025-10-16
+
+This release comes with enhancements to Gateway API support, new metrics capabilities, and various bug fixes.
+
+Flagger now supports Gateway API v1.4.0 and adds CORS policy configuration for Gateway API HTTPRoutes.
+For more information, please see the [Gateway API tutorial](https://docs.flagger.app/main/tutorials/gatewayapi-progressive-delivery#customising-the-httproute).
+
+Session affinity support has been enhanced with [cookie attributes](https://docs.flagger.app/main/usage/deployment-strategies#configuring-additional-cookie-attributes)
+configuration for better control over session management.
+
+A new `.spec.service.unmanagedMetadata` field has been added to the Canary API to allow 3rd-party
+controllers to set labels and annotations on the Kubernetes Services created by Flagger.
+
+When running Flagger on Kubernetes 1.33 or later, users can now specify the traffic distribution
+using the new `.spec.service.trafficDistribution` Canary field. Depending on the Kubernetes version
+the traffic distribution can be set to `PreferClose`, `PreferSameZone` or `PreferSameNode`.
+See the [Kubernetes Service docs](https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution) for more details.
+
+This release is built with Go 1.25. The Kubernetes dependencies have been updated to 1.34,
+and the Traefik API has been migrated from `traefik.containo.us` to `traefik.io`.
+
+#### Improvements
+- Update Gateway API to v1.4.0
+  [#1842](https://github.com/fluxcd/flagger/pull/1842)
+- Add support for CORS policy to Gateway API
+  [#1843](https://github.com/fluxcd/flagger/pull/1843)
+- Add support for setting traffic distribution
+  [#1844](https://github.com/fluxcd/flagger/pull/1844)
+- Add count metrics for canary successes and failures
+  [#1812](https://github.com/fluxcd/flagger/pull/1812)
+- Add support for cookie attributes in session affinity
+  [#1826](https://github.com/fluxcd/flagger/pull/1826)
+- Add `unmanagedMetadata` to canary service specification
+  [#1823](https://github.com/fluxcd/flagger/pull/1823)
+- Update dependencies to Kubernetes 1.34
+  [#1832](https://github.com/fluxcd/flagger/pull/1832)
+- Build with Go 1.25
+  [#1832](https://github.com/fluxcd/flagger/pull/1832)
+- Update Traefik API from traefik.containo.us to traefik.io
+  [#1835](https://github.com/fluxcd/flagger/pull/1835)
+- Update GitOps install docs to latest Flux APIs
+  [#1845](https://github.com/fluxcd/flagger/pull/1845)
+- loadtester: add pod security context
+  [#1803](https://github.com/fluxcd/flagger/pull/1803)
+- Release loadtester 0.36.0
+  [#1846](https://github.com/fluxcd/flagger/pull/1846)
+
+#### Fixes
+- Fix: Gateway router should wait for accepted condition
+  [#1791](https://github.com/fluxcd/flagger/pull/1791)
+- Fix: Send succeeded webhooks with correct phase
+  [#1792](https://github.com/fluxcd/flagger/pull/1792)
+- Fix: Honor event webhook timeout
+  [#1797](https://github.com/fluxcd/flagger/pull/1797)
+- Fix: Default namespace for cross-namespace ref validation
+  [#1828](https://github.com/fluxcd/flagger/pull/1828)
+- Fix: APISIX E2E test
+  [#1831](https://github.com/fluxcd/flagger/pull/1831)
+- Fix: Correct typo in AutoscalerReference type name
+  [#1739](https://github.com/fluxcd/flagger/pull/1739)
+
 ## 1.41.0
 
 **Release date:** 2025-04-02
