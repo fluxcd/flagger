@@ -32,9 +32,8 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 * **Canary** (progressive traffic shifting)
     * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery),
       [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery),
-      [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery),
-      [Open Service Mesh](https://docs.flagger.app/tutorials/osm-progressive-delivery),
-      [Kuma Service Mesh](https://docs.flagger.app/tutorials/kuma-progressive-delivery)
+      [Kuma Service Mesh](https://docs.flagger.app/tutorials/kuma-progressive-delivery),
+      [Gateway API](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery),
     * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery),
       [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery),
       [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery),
@@ -43,16 +42,16 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 
 * **A/B Testing** (HTTP headers and cookies traffic routing)
     * [Istio](https://docs.flagger.app/tutorials/istio-ab-testing),
-      [App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery#a-b-testing),
+      [Gateway API](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery#a-b-testing),
       [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery#a-b-testing),
       [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery#a-b-testing)
 * **Blue/Green** (traffic switching and mirroring)
     * [Kubernetes CNI](https://docs.flagger.app/tutorials/kubernetes-blue-green),
       [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery#traffic-mirroring),
-      Linkerd, App Mesh, OSM, Kuma, Contour, Gloo, NGINX, Skipper, Traefik 
+      Linkerd, Gateway API, Kuma, Contour, Gloo, NGINX, Skipper, Traefik 
 
 Flagger's application analysis can be extended with metric queries targeting Prometheus, Datadog,
-CloudWatch, New Relic, Graphite, Dynatrace, InfluxDB and Google Cloud Monitoring (Stackdriver).
+CloudWatch, New Relic, Graphite, Dynatrace, InfluxDB and Google Cloud Monitoring.
 
 Flagger can be configured to [send notifications](https://docs.flagger.app/usage/alerting) to
 Slack, Microsoft Teams, Discord and Rocket.
@@ -73,13 +72,7 @@ It works by using Git as a single source of truth for declarative infrastructure
 With Git at the center of your delivery pipelines, developers can make pull requests
 to accelerate and simplify application deployments and operations tasks to Kubernetes.
 
-[Weaveworks](https://www.weave.works/technologies/gitops/)
 :::
-
-GitOps tutorials:
-* [Progressive Delivery for Istio with Flagger and Flux](https://github.com/stefanprodan/gitops-istio)
-* [Progressive Delivery for AWS App Mesh with Flagger and Flux](https://eks.handson.flagger.dev)
-* [Progressive Delivery for Linkerd and Contour with Flagger and Flux](https://github.com/stefanprodan/gitops-linkerd)
 
 ## Getting Help
 
