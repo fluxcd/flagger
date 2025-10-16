@@ -185,7 +185,7 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 		err = n.Post(canary.Name, canary.Namespace, message, fields, string(severity))
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
-				Errorf("alert provider $s.%s send error: %v", alert.ProviderRef.Name, providerNamespace, err)
+				Errorf("alert provider %s.%s send error: %v", alert.ProviderRef.Name, providerNamespace, err)
 		}
 
 	}

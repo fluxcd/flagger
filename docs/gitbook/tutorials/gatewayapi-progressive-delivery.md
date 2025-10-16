@@ -2,7 +2,7 @@
 
 This guide shows you how to use [Gateway API](https://gateway-api.sigs.k8s.io/) and Flagger to automate canary deployments and A/B testing.
 
-![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-gatewayapi-canary.png)
+![Flagger Gateway API Integration](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-gatewayapi-canary.png)
 
 ## Prerequisites
 
@@ -285,6 +285,11 @@ kubectl port-forward -n istio-ingress svc/gateway-istio 8080:80
 Now you can access podinfo via `curl -H "Host: www.example.com" localhost:8080`.
 
 ## Automated canary promotion
+
+With the application bootstrapped, Flagger will continuously monitor the deployment for changes.
+When a new revision is detected, Flagger will start a canary analysis and gradually shift traffic to the new version.
+
+![Flagger Canary Stages](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-steps.png)
 
 Trigger a canary deployment by updating the container image:
 
