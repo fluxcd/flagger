@@ -40,6 +40,12 @@ func TestServiceRouter_Create(t *testing.T) {
 		kubeClient:    mocks.kubeClient,
 		flaggerClient: mocks.flaggerClient,
 		logger:        mocks.logger,
+		matchLabels: map[string]string{
+			"name":         "podinfo",
+			"test-label-1": "test-label-value-1",
+		},
+		labelSelector: "name",
+		labelValue:    "podinfo",
 	}
 	appProtocol := "http"
 
@@ -52,6 +58,9 @@ func TestServiceRouter_Create(t *testing.T) {
 	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
 	require.NoError(t, err)
 
+	assert.Equal(t, 2, len(canarySvc.Spec.Selector))
+	assert.Equal(t, "podinfo", canarySvc.Spec.Selector["name"])
+	assert.Equal(t, "test-label-value-1", canarySvc.Spec.Selector["test-label-1"])
 	assert.Equal(t, &appProtocol, canarySvc.Spec.Ports[0].AppProtocol)
 	assert.Equal(t, "http", canarySvc.Spec.Ports[0].Name)
 	assert.Equal(t, int32(9898), canarySvc.Spec.Ports[0].Port)
@@ -59,6 +68,10 @@ func TestServiceRouter_Create(t *testing.T) {
 
 	primarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
+
+	assert.Equal(t, 2, len(primarySvc.Spec.Selector))
+	assert.Equal(t, "podinfo-primary", primarySvc.Spec.Selector["name"])
+	assert.Equal(t, "test-label-value-1", primarySvc.Spec.Selector["test-label-1"])
 	assert.Equal(t, "http", primarySvc.Spec.Ports[0].Name)
 	assert.Equal(t, int32(9898), primarySvc.Spec.Ports[0].Port)
 	assert.Equal(t, "None", primarySvc.Spec.ClusterIP)
