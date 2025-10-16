@@ -1,5 +1,6 @@
 root: ./docs/gitbook
 
+
 redirects:
   how-it-works: usage/how-it-works.md
   usage/progressive-delivery: tutorials/istio-progressive-delivery.md
