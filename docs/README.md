@@ -29,7 +29,7 @@ about how the new version impacts the production environment.
 :::
 
 Flagger can run automated application analysis, testing, promotion and rollback for the following deployment strategies:
-* **Canary** (progressive traffic shifting)
+* **Canary** (progressive traffic shifting with session affinity)
     * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery),
       [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery),
       [Kuma Service Mesh](https://docs.flagger.app/tutorials/kuma-progressive-delivery),
