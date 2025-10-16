@@ -9,10 +9,10 @@ features:
 - title: Safer Releases
   details: Reduce the risk of introducing a new software version in production by gradually shifting traffic to the new version while measuring metrics like HTTP/gRPC request success rate and latency.
 - title: Flexible Traffic Routing
-  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd, Kuma, OSM or AWS App Mesh. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
+  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd, Kuma or Gateway API implementations. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
 - title:  Extensible Validation
   details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics and webhooks for running acceptance tests, load tests, or any other custom validation. 
-footer: Apache License 2.0 | Copyright © 2018-2022 The Flux authors
+footer: Apache License 2.0 | Copyright © 2018-2025 The Flux authors
 ---
 
 ## Progressive Delivery
@@ -33,7 +33,7 @@ Flagger can run automated application analysis, testing, promotion and rollback 
     * [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery),
       [Linkerd](https://docs.flagger.app/tutorials/linkerd-progressive-delivery),
       [Kuma Service Mesh](https://docs.flagger.app/tutorials/kuma-progressive-delivery),
-      [Gateway API](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery),
+      [Gateway API](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery)
     * [Contour](https://docs.flagger.app/tutorials/contour-progressive-delivery),
       [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery),
       [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery),
