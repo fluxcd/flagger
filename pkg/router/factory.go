@@ -62,11 +62,11 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 }
 
 // KubernetesRouter returns a KubernetesRouter interface implementation
-func (factory *Factory) KubernetesRouter(kind string, labelSelector string, labelValue string, ports map[string]int32) KubernetesRouter {
-	switch kind {
-	case "Service":
-		return &KubernetesNoopRouter{}
-	default: // Daemonset or Deployment
+func (factory *Factory) KubernetesRouter(apiVersion string, kind string, labelSelector string, labelValue string, ports map[string]int32) KubernetesRouter {
+	group := strings.Split(apiVersion, "/")[0]
+
+	switch {
+	case group == "apps" && (kind == "Deployment" || kind == "DaemonSet"):
 		return &KubernetesDefaultRouter{
 			logger:        factory.logger,
 			flaggerClient: factory.flaggerClient,
@@ -75,6 +75,9 @@ func (factory *Factory) KubernetesRouter(kind string, labelSelector string, labe
 			labelValue:    labelValue,
 			ports:         ports,
 		}
+
+	default:
+		return &KubernetesNoopRouter{}
 	}
 }
 
