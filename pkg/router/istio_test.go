@@ -617,6 +617,39 @@ func TestIstioRouter_Delegate(t *testing.T) {
 		err := router.Reconcile(mocks.canary)
 		require.Error(t, err)
 	})
+
+	t.Run("syncs when enabled", func(t *testing.T) {
+		mocks := newFixture(nil)
+		mocks.canary.Spec.Service.Hosts = []string{}
+		mocks.canary.Spec.Service.Gateways = []string{}
+		mocks.canary.Spec.Service.PortDiscovery = false
+
+		router := &IstioRouter{
+			logger:        mocks.logger,
+			flaggerClient: mocks.flaggerClient,
+			istioClient:   mocks.meshClient,
+			kubeClient:    mocks.kubeClient,
+		}
+
+		err := router.Reconcile(mocks.canary)
+		require.NoError(t, err)
+
+		vs, err := mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Len(t, vs.Spec.Http, 1)
+		require.Len(t, vs.Spec.Http[0].Route, 2)
+
+		// enable delegation
+		mocks.canary.Spec.Service.Delegation = true
+
+		err = router.Reconcile(mocks.canary)
+		require.NoError(t, err)
+
+		vs, err = mocks.meshClient.NetworkingV1beta1().VirtualServices("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Len(t, vs.Spec.Gateways, 0)
+		assert.Len(t, vs.Spec.Hosts, 0)
+	})
 }
 
 func TestIstioRouter_Finalize(t *testing.T) {
