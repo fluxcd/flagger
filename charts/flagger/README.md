@@ -188,6 +188,8 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `namespace`                          | When specified, Flagger will restrict itself to watching Canary objects from that namespace                                                        | `""`                                  |
 | `deploymentLabels`                   | Labels to add to Flagger deployment                                                                                                                | `{}`                                  |
 | `podLabels`                          | Labels to add to pods of Flagger deployment                                                                                                        | `{}`                                  |
+| `additionalContainers`               | List of additional containers to add to Flagger deployment                                                         | `[]`                                  |
+
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
