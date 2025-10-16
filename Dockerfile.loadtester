@@ -6,11 +6,11 @@ ARG REVISION
 
 RUN apk --no-cache add alpine-sdk perl curl bash tar
 
-RUN HELM3_VERSION=3.17.2 && \
+RUN HELM3_VERSION=3.19.0 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
 chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
-RUN KUBECTL_VERSION=v1.31.3 &&  \
+RUN KUBECTL_VERSION=v1.34.1 &&  \
 curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
 chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 
