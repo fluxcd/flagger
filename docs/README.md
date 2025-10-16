@@ -9,7 +9,7 @@ features:
 - title: Safer Releases
   details: Reduce the risk of introducing a new software version in production by gradually shifting traffic to the new version while measuring metrics like HTTP/gRPC request success rate and latency.
 - title: Flexible Traffic Routing
-  details: Shift and route traffic between app versions using a service mesh like Istio, Linkerd, Kuma or Gateway API implementations. Or if a service mesh does not meet your needs, use an Ingress controller like Contour, Gloo, NGINX, Skipper or Traefik.
+  details: Shift and route traffic between app versions using an ingress controller or a service mesh compatible with Kubernetes Gateway API.
 - title:  Extensible Validation
   details: Besides the builtin metrics checks, you can extend your application analysis with custom metrics and webhooks for running acceptance tests, load tests, or any other custom validation. 
 footer: Apache License 2.0 | Copyright © 2018-2025 The Flux authors
@@ -38,8 +38,9 @@ Flagger can run automated application analysis, testing, promotion and rollback 
       [Gloo](https://docs.flagger.app/tutorials/gloo-progressive-delivery),
       [NGINX](https://docs.flagger.app/tutorials/nginx-progressive-delivery),
       [Skipper](https://docs.flagger.app/tutorials/skipper-progressive-delivery),
-      [Traefik](https://docs.flagger.app/tutorials/traefik-progressive-delivery)
-
+      [Traefik](https://docs.flagger.app/tutorials/traefik-progressive-delivery),
+      [Apache APISIX](https://docs.flagger.app/tutorials/apisix-progressive-delivery),
+      [Knative](https://docs.flagger.app/tutorials/knative-progressive-delivery)
 * **A/B Testing** (HTTP headers and cookies traffic routing)
     * [Istio](https://docs.flagger.app/tutorials/istio-ab-testing),
       [Gateway API](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery#a-b-testing),
@@ -48,7 +49,7 @@ Flagger can run automated application analysis, testing, promotion and rollback 
 * **Blue/Green** (traffic switching and mirroring)
     * [Kubernetes CNI](https://docs.flagger.app/tutorials/kubernetes-blue-green),
       [Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery#traffic-mirroring),
-      Linkerd, Gateway API, Kuma, Contour, Gloo, NGINX, Skipper, Traefik 
+      Linkerd, Kuma, Contour, Gloo, NGINX, Skipper, Traefik, Apache 
 
 Flagger's application analysis can be extended with metric queries targeting Prometheus, Datadog,
 CloudWatch, New Relic, Graphite, Dynatrace, InfluxDB and Google Cloud Monitoring.
