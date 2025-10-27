@@ -158,7 +158,7 @@ func setStatusPhase(flaggerClient clientset.Interface, cd *flaggerv1.Canary, pha
 		cdCopy.Status.Phase = phase
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 
-		if phase != flaggerv1.CanaryPhaseProgressing && phase != flaggerv1.CanaryPhaseWaiting {
+		if phase != flaggerv1.CanaryPhaseProgressing && phase != flaggerv1.CanaryPhaseWaiting && phase != flaggerv1.CanaryPhasePromoting {
 			cdCopy.Status.CanaryWeight = 0
 			cdCopy.Status.Iterations = 0
 			if phase == flaggerv1.CanaryPhaseWaitingPromotion {
