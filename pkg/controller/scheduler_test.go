@@ -60,6 +60,19 @@ func assertPhase(flaggerClient clientset.Interface, canary string, phase flagger
 	return nil
 }
 
+func assertCanaryWeight(flaggerClient clientset.Interface, canary string, canaryWeight int) error {
+	c, err := flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), canary, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if c.Status.CanaryWeight != canaryWeight {
+		return fmt.Errorf("got canary weight %d wanted %d", c.Status.CanaryWeight, canaryWeight)
+	}
+
+	return nil
+}
+
 func alwaysReady() bool {
 	return true
 }
