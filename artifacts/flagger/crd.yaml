@@ -226,6 +226,25 @@ spec:
                     delegation:
                       description: enable behaving as a delegate VirtualService
                       type: boolean
+                    ports:
+                      description: Service ports
+                      type: array
+                      items:
+                        type: object
+                        required: ["port"]
+                        properties:
+                          port:
+                            description: Container port number
+                            type: number
+                          portName:
+                            description: Container port name
+                            type: string
+                          appProtocol:
+                            description: Application protocol of the port
+                            type: string
+                          targetPort:
+                            description: Container target port name
+                            x-kubernetes-int-or-string: true
                     match:
                       description: URI match conditions
                       type: array

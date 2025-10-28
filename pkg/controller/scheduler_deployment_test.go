@@ -533,6 +533,52 @@ func TestScheduler_DeploymentPortDiscovery(t *testing.T) {
 	}
 }
 
+func TestScheduler_DeploymentExplicitPorts(t *testing.T) {
+	mocks := newDeploymentFixture(nil)
+
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	// explicitly define multiple ports
+	cd.Spec.Service.Ports = []flaggerv1.ServicePort{
+		{
+			PortName:   "grpc",
+			Port:       9999,
+			TargetPort: intstr.FromInt(9090),
+		},
+		{
+			PortName:   "http",
+			Port:       8888,
+			TargetPort: intstr.FromString("web"),
+		},
+	}
+	// single port config will be ignored
+	cd.Spec.Service.Port = 80
+	// any port found via discovery will also be ignored
+	cd.Spec.Service.PortDiscovery = true
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), cd, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	canarySvc, err := mocks.kubeClient.CoreV1().Services("default").Get(context.TODO(), "podinfo-canary", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Len(t, canarySvc.Spec.Ports, 2)
+
+	matchPorts := func(lookup string) bool {
+		switch lookup {
+		case
+			"grpc 9999->9090",
+			"http 8888->web":
+			return true
+		}
+		return false
+	}
+
+	for _, port := range canarySvc.Spec.Ports {
+		require.True(t, matchPorts(fmt.Sprintf("%s %v->%v", port.Name, port.Port, port.TargetPort.String())))
+	}
+}
+
 func TestScheduler_DeploymentTargetPortNumber(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
 

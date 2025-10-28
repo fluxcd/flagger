@@ -85,7 +85,7 @@ func (c *KubernetesDefaultRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute i
 	return 0, 0, nil
 }
 
-func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string, metadata *flaggerv1.CustomMetadata) error {
+func (c *KubernetesDefaultRouter) getApexServicePort(canary *flaggerv1.Canary) corev1.ServicePort {
 	portName := canary.Spec.Service.PortName
 	if portName == "" {
 		portName = "http"
@@ -100,32 +100,23 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		targetPort = canary.Spec.Service.TargetPort
 	}
 
-	// set pod selector and apex port
-	svcSpec := corev1.ServiceSpec{
-		Type:     corev1.ServiceTypeClusterIP,
-		Selector: map[string]string{c.labelSelector: podSelector},
-		Ports: []corev1.ServicePort{
-			{
-				Name:       portName,
-				Protocol:   corev1.ProtocolTCP,
-				Port:       canary.Spec.Service.Port,
-				TargetPort: targetPort,
-			},
-		},
-	}
-	if canary.Spec.Service.Headless {
-		svcSpec.ClusterIP = "None"
+	cp := corev1.ServicePort{
+		Name:       portName,
+		Protocol:   corev1.ProtocolTCP,
+		Port:       canary.Spec.Service.Port,
+		TargetPort: targetPort,
 	}
 
 	if v := canary.Spec.Service.AppProtocol; v != "" {
-		svcSpec.Ports[0].AppProtocol = &v
+		cp.AppProtocol = &v
 	}
 
-	if v := canary.Spec.Service.TrafficDistribution; v != "" {
-		svcSpec.TrafficDistribution = &v
-	}
+	return cp
+}
 
-	// set additional ports
+func (c *KubernetesDefaultRouter) getDiscoveryServicePorts(canary *flaggerv1.Canary) []corev1.ServicePort {
+	var ports []corev1.ServicePort
+
 	for n, p := range c.ports {
 		cp := corev1.ServicePort{
 			Name:     n,
@@ -137,8 +128,73 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 			},
 		}
 
-		svcSpec.Ports = append(svcSpec.Ports, cp)
+		ports = append(ports, cp)
 	}
+
+	return ports
+}
+
+func (c *KubernetesDefaultRouter) getExplicitServicePorts(canary *flaggerv1.Canary) []corev1.ServicePort {
+	var ports []corev1.ServicePort
+
+	for _, p := range canary.Spec.Service.Ports {
+		portName := p.PortName
+
+		targetPort := intstr.IntOrString{
+			Type:   intstr.Int,
+			IntVal: p.Port,
+		}
+
+		if p.TargetPort.String() != "0" {
+			targetPort = p.TargetPort
+		}
+
+		cp := corev1.ServicePort{
+			Name:       portName,
+			Protocol:   corev1.ProtocolTCP,
+			Port:       p.Port,
+			TargetPort: targetPort,
+		}
+
+		if v := p.AppProtocol; v != "" {
+			cp.AppProtocol = &v
+		}
+
+		ports = append(ports, cp)
+	}
+
+	return ports
+}
+
+func (c *KubernetesDefaultRouter) getServicePorts(canary *flaggerv1.Canary) []corev1.ServicePort {
+	if len(canary.Spec.Service.Ports) == 0 {
+		return append(
+			[]corev1.ServicePort{
+				c.getApexServicePort(canary),
+			},
+			c.getDiscoveryServicePorts(canary)...,
+		)
+	} else {
+		return c.getExplicitServicePorts(canary)
+	}
+}
+
+func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, name string, podSelector string, metadata *flaggerv1.CustomMetadata) error {
+	// set pod selector
+	svcSpec := corev1.ServiceSpec{
+		Type:     corev1.ServiceTypeClusterIP,
+		Selector: map[string]string{c.labelSelector: podSelector},
+	}
+
+	if canary.Spec.Service.Headless {
+		svcSpec.ClusterIP = "None"
+	}
+
+	if v := canary.Spec.Service.TrafficDistribution; v != "" {
+		svcSpec.TrafficDistribution = &v
+	}
+
+	svcSpec.Ports = c.getServicePorts(canary)
 
 	if metadata == nil {
 		metadata = &flaggerv1.CustomMetadata{}
