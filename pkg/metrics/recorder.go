@@ -186,9 +186,51 @@ func (cr *Recorder) IncFailures(labels CanaryMetricLabels) {
 	cr.failures.WithLabelValues(labels.Values()...).Inc()
 }
 
+// DeleteMetrics deletes the canary related metrics
+func (cr *Recorder) DeleteMetrics(cd *flaggerv1.Canary) {
+	cr.DeleteDuration(cd)
+	cr.DeleteStatus(cd)
+	cr.DeleteWeight(cd)
+	for _, status := range []string{AnalysisStatusCompleted, AnalysisStatusSkipped} {
+		cr.DeleteSuccesses(CanaryMetricLabels{
+			Name:               cd.Spec.TargetRef.Name,
+			Namespace:          cd.Namespace,
+			DeploymentStrategy: cd.DeploymentStrategy(),
+			AnalysisStatus:     status,
+		})
+		cr.DeleteFailures(CanaryMetricLabels{
+			Name:               cd.Spec.TargetRef.Name,
+			Namespace:          cd.Namespace,
+			DeploymentStrategy: cd.DeploymentStrategy(),
+			AnalysisStatus:     status,
+		})
+	}
+}
+
+// DeleteDuration deletes the canary durations metric
+func (cr *Recorder) DeleteDuration(cd *flaggerv1.Canary) {
+	cr.duration.DeleteLabelValues(cd.Spec.TargetRef.Name, cd.Namespace)
+}
+
 // DeleteStatus deletes the canary analysis status
 func (cr *Recorder) DeleteStatus(cd *flaggerv1.Canary) {
 	cr.status.DeleteLabelValues(cd.Spec.TargetRef.Name, cd.Namespace)
+}
+
+// DeleteWeight sets the weight values for primary and canary destinations
+func (cr *Recorder) DeleteWeight(cd *flaggerv1.Canary) {
+	cr.weight.DeleteLabelValues(fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name), cd.Namespace)
+	cr.weight.DeleteLabelValues(cd.Spec.TargetRef.Name, cd.Namespace)
+}
+
+// DeleteSuccesses deletes the total success metric
+func (cr *Recorder) DeleteSuccesses(labels CanaryMetricLabels) {
+	cr.successes.DeleteLabelValues(labels.Values()...)
+}
+
+// DeleteFailures deletes the total failures metric
+func (cr *Recorder) DeleteFailures(labels CanaryMetricLabels) {
+	cr.failures.DeleteLabelValues(labels.Values()...)
 }
 
 // GetStatusMetric returns the status metric

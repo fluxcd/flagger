@@ -298,7 +298,7 @@ func (c *Controller) syncHandler(key string) error {
 
 	// Clean the metrics if marked for deletion
 	if cd.ObjectMeta.DeletionTimestamp != nil {
-		c.recorder.DeleteStatus(cd)
+		c.recorder.DeleteMetrics(cd)
 	}
 
 	// set status condition for new canaries
