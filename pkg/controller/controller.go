@@ -296,6 +296,11 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
+	// Clean the metrics if marked for deletion
+	if cd.ObjectMeta.DeletionTimestamp != nil {
+		c.recorder.DeleteStatus(cd)
+	}
+
 	// set status condition for new canaries
 	if cd.Status.Conditions == nil {
 		if err := c.setPhaseInitializing(cd); err != nil {

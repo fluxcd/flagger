@@ -186,6 +186,11 @@ func (cr *Recorder) IncFailures(labels CanaryMetricLabels) {
 	cr.failures.WithLabelValues(labels.Values()...).Inc()
 }
 
+// DeleteStatus deletes the canary analysis status
+func (cr *Recorder) DeleteStatus(cd *flaggerv1.Canary) {
+	cr.status.DeleteLabelValues(cd.Spec.TargetRef.Name, cd.Namespace)
+}
+
 // GetStatusMetric returns the status metric
 func (cr *Recorder) GetStatusMetric() *prometheus.GaugeVec {
 	return cr.status
