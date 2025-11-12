@@ -33,6 +33,11 @@ import (
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
+const (
+	signozTokenSecretKey = "apiKey"
+	signozHeaderKey      = "SIGNOZ-API-KEY"
+)
+
 // SignozAPIPath is the default query range endpoint appended to the base address.
 var SignozAPIPath = "/api/v5/query_range"
 
@@ -87,10 +92,10 @@ func NewSignozProvider(provider flaggerv1.MetricTemplateProvider, credentials ma
 	}
 
 	if provider.SecretRef != nil {
-		if apiKey, ok := credentials["apiKey"]; ok {
+		if apiKey, ok := credentials[signozTokenSecretKey]; ok {
 			sp.apiKey = string(apiKey)
 		} else {
-			return nil, fmt.Errorf("%s credentials does not contain %s", provider.Type, "apiKey")
+			return nil, fmt.Errorf("%s credentials does not contain %s", provider.Type, signozTokenSecretKey)
 		}
 	}
 
@@ -124,7 +129,7 @@ func (p *SignozProvider) RunQuery(query string) (float64, error) {
 
 	req.Header.Set("Content-Type", "application/json")
 	if p.apiKey != "" {
-		req.Header.Set("SIGNOZ-API-KEY", p.apiKey)
+		req.Header.Set(signozHeaderKey, p.apiKey)
 	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
