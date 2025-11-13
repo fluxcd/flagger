@@ -177,7 +177,6 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 		queryResult string
 	}{
 		{name: "multiple series", queryResult: `{"status":"success","data":{"data":{"results":[{"queryName":"A","aggregations":[{"series":[{"values":[{"timestamp":1714404069294,"value":1}]},{"values":[{"timestamp":1714404069294,"value":2}]}]}]}]}}}`},
-		{name: "multiple series", queryResult: `{"status":"success","data":{"data":{"results":[{"queryName":"A","aggregations":[{"series":[{"values":[{"timestamp":1714404069294,"value":1}]},{"values":[{"timestamp":1714404069294,"value":2}]}]}]}]}}}`},
 	}
 
 	for _, tt := range multipleResultTests {
@@ -290,5 +289,56 @@ func TestSignozProvider_RunQueryWithProviderHeaders(t *testing.T) {
 		val, err := sp.RunQuery(template.Spec.Query)
 		require.NoError(t, err)
 		assert.Equal(t, float64(100), val)
+	})
+}
+
+func TestSignozProvider_RunQueryWithPartialValues(t *testing.T) {
+	t.Run("filters partial values and returns last non-partial value", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Response with multiple values including partial ones
+			json := `{"status":"success","data":{"type":"time_series","data":{"results":[{"queryName":"A","aggregations":[{"index":0,"alias":"","series":[{"labels":[],"values":[{"timestamp":1742602572000,"value":50},{"timestamp":1742602573000,"value":75},{"timestamp":1742602574000,"value":100,"partial":true},{"timestamp":1742602575000,"value":200,"partial":true}]}]}]}]}}}`
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
+
+		clients := signozFake()
+
+		template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
+		require.NoError(t, err)
+		template.Spec.Provider.Address = ts.URL
+
+		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
+		require.NoError(t, err)
+
+		val, err := sp.RunQuery(template.Spec.Query)
+		require.NoError(t, err)
+		// Should return 75, the last non-partial value, not 200
+		assert.Equal(t, float64(75), val)
+	})
+
+	t.Run("returns error when all values are partial", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json := `{"status":"success","data":{"type":"time_series","data":{"results":[{"queryName":"A","aggregations":[{"index":0,"alias":"","series":[{"labels":[],"values":[{"timestamp":1742602572000,"value":50,"partial":true},{"timestamp":1742602573000,"value":75,"partial":true}]}]}]}]}}}`
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
+
+		clients := signozFake()
+
+		template, err := clients.flaggerClient.FlaggerV1beta1().MetricTemplates("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
+		require.NoError(t, err)
+		template.Spec.Provider.Address = ts.URL
+
+		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
+		require.NoError(t, err)
+
+		_, err = sp.RunQuery(template.Spec.Query)
+		require.True(t, errors.Is(err, ErrNoValuesFound))
 	})
 }

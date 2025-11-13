@@ -17,6 +17,7 @@ limitations under the License.
 package providers
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -26,7 +27,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 	"time"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -136,7 +136,6 @@ func (p *SignozProvider) RunQuery(query string) (float64, error) {
 	}
 	q["start"] = start
 	q["end"] = now
-	q["requestType"] = "time_series"
 
 	payload, err := json.Marshal(q)
 	if err != nil {
@@ -151,7 +150,7 @@ func (p *SignozProvider) RunQuery(query string) (float64, error) {
 	u.Path = path.Join(p.url.Path, u.Path)
 	u = p.url.ResolveReference(u)
 
-	req, err := http.NewRequest("POST", u.String(), io.NopCloser(strings.NewReader(string(payload))))
+	req, err := http.NewRequest("POST", u.String(), bytes.NewReader(payload))
 	if err != nil {
 		return 0, fmt.Errorf("http.NewRequest failed: %w", err)
 	}
