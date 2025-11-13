@@ -26,7 +26,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -34,14 +33,13 @@ import (
 )
 
 const (
-	signozTokenSecretKey = "apiKey"
-	signozHeaderKey      = "SIGNOZ-API-KEY"
+	signozTokenSecretKey                      = "apiKey"
+	signozHeaderKey                           = "SIGNOZ-API-KEY"
+	signozFromDeltaMultiplierOnMetricInterval = 10
 )
 
-// SignozAPIPath is the default query range endpoint appended to the base address.
 var SignozAPIPath = "/api/v5/query_range"
 
-// SignozProvider executes SigNoz Query Range API requests
 type SignozProvider struct {
 	timeout   time.Duration
 	url       url.URL
@@ -49,36 +47,49 @@ type SignozProvider struct {
 	apiKey    string
 	client    *http.Client
 	queryPath string
+	fromDelta int64
 }
 
-// signozResponse models the SigNoz Query Range API response structure
 type signozResponse struct {
-	Data struct {
-		Result []struct {
-			Series []struct {
-				Labels      map[string]string `json:"labels"`
-				LabelString string            `json:"labelString"`
-				Values      []struct {
-					Timestamp int64  `json:"timestamp"`
-					Value     string `json:"value"`
-				} `json:"values"`
-			} `json:"series"`
-			QueryName string `json:"queryName"`
-		} `json:"result"`
+	Status string `json:"status"`
+	Data   struct {
+		Type string `json:"type"`
+		Data struct {
+			Results []struct {
+				QueryName    string `json:"queryName"`
+				Aggregations []struct {
+					Index  int    `json:"index"`
+					Alias  string `json:"alias"`
+					Series []struct {
+						Labels []struct {
+							Key struct {
+								Name string `json:"name"`
+							} `json:"key"`
+							Value string `json:"value"`
+						} `json:"labels"`
+						Values []struct {
+							Timestamp int64   `json:"timestamp"`
+							Value     float64 `json:"value"`
+							Partial   bool    `json:"partial,omitempty"`
+						} `json:"values"`
+					} `json:"series"`
+				} `json:"aggregations"`
+			} `json:"results"`
+		} `json:"data"`
 	} `json:"data"`
 }
 
 // NewSignozProvider takes a provider spec and the credentials map,
 // validates the address, extracts the API key from the provided Secret,
 // and returns a client ready to execute requests against the SigNoz API.
-func NewSignozProvider(provider flaggerv1.MetricTemplateProvider, credentials map[string][]byte) (*SignozProvider, error) {
+func NewSignozProvider(metricInterval string, provider flaggerv1.MetricTemplateProvider, credentials map[string][]byte) (*SignozProvider, error) {
 	signozURL, err := url.Parse(provider.Address)
 	if provider.Address == "" || err != nil {
 		return nil, fmt.Errorf("%s address %s is not a valid URL", provider.Type, provider.Address)
 	}
 
 	sp := SignozProvider{
-		timeout:   5 * time.Second,
+		timeout:   30 * time.Second,
 		url:       *signozURL,
 		headers:   provider.Headers,
 		client:    http.DefaultClient,
@@ -99,6 +110,12 @@ func NewSignozProvider(provider flaggerv1.MetricTemplateProvider, credentials ma
 		}
 	}
 
+	md, err := time.ParseDuration(metricInterval)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing metric interval: %w", err)
+	}
+	sp.fromDelta = int64(signozFromDeltaMultiplierOnMetricInterval * md.Milliseconds())
+
 	return &sp, nil
 }
 
@@ -111,6 +128,22 @@ func NewSignozProvider(provider flaggerv1.MetricTemplateProvider, credentials ma
 // - Returns ErrMultipleValuesReturned when multiple series are found.
 // - Returns ErrNoValuesFound on missing/NaN values.
 func (p *SignozProvider) RunQuery(query string) (float64, error) {
+	now := time.Now().UnixMilli()
+	start := now - p.fromDelta
+	var q map[string]interface{}
+	if err := json.Unmarshal([]byte(query), &q); err != nil {
+		return 0, fmt.Errorf("error unmarshaling query: %w", err)
+	}
+	q["start"] = start
+	q["end"] = now
+	q["requestType"] = "time_series"
+
+	payload, err := json.Marshal(q)
+	if err != nil {
+		return 0, fmt.Errorf("error marshaling updated query: %w", err)
+	}
+
+	// Build URL
 	u, err := url.Parse("." + p.queryPath)
 	if err != nil {
 		return 0, fmt.Errorf("url.Parse failed: %w", err)
@@ -118,15 +151,13 @@ func (p *SignozProvider) RunQuery(query string) (float64, error) {
 	u.Path = path.Join(p.url.Path, u.Path)
 	u = p.url.ResolveReference(u)
 
-	req, err := http.NewRequest("POST", u.String(), io.NopCloser(strings.NewReader(query)))
+	req, err := http.NewRequest("POST", u.String(), io.NopCloser(strings.NewReader(string(payload))))
 	if err != nil {
 		return 0, fmt.Errorf("http.NewRequest failed: %w", err)
 	}
-
 	if p.headers != nil {
-		req.Header = p.headers
+		req.Header = p.headers.Clone()
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 	if p.apiKey != "" {
 		req.Header.Set(signozHeaderKey, p.apiKey)
@@ -134,75 +165,105 @@ func (p *SignozProvider) RunQuery(query string) (float64, error) {
 
 	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
 	defer cancel()
-
-	r, err := p.client.Do(req.WithContext(ctx))
+	resp, err := p.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("request failed: %w", err)
 	}
-	defer r.Body.Close()
+	defer resp.Body.Close()
 
-	b, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return 0, fmt.Errorf("error reading body: %w", err)
 	}
-
-	if r.StatusCode >= 400 {
-		return 0, fmt.Errorf("error response: %s", string(b))
+	if resp.StatusCode >= 400 {
+		return 0, fmt.Errorf("error response: %s", string(body))
 	}
 
-	var resp signozResponse
-	if err := json.Unmarshal(b, &resp); err != nil {
-		return 0, fmt.Errorf("error unmarshaling result: %w, '%s'", err, string(b))
+	var sr signozResponse
+	if err := json.Unmarshal(body, &sr); err != nil {
+		return 0, fmt.Errorf("error unmarshaling result: %w, '%s'", err, string(body))
 	}
 
-	// Ensure we have results
-	if len(resp.Data.Result) == 0 {
+	if sr.Status != "success" {
+		return 0, fmt.Errorf("SigNoz query failed with status: %s", sr.Status)
+	}
+
+	if len(sr.Data.Data.Results) == 0 {
 		return 0, fmt.Errorf("%w", ErrNoValuesFound)
 	}
-	if len(resp.Data.Result) > 1 {
+
+	// For formula queries, we expect a single result with aggregations
+	result := sr.Data.Data.Results[0]
+	if len(result.Aggregations) == 0 {
+		return 0, fmt.Errorf("%w", ErrNoValuesFound)
+	}
+
+	// Get the first aggregation (usually the formula result)
+	agg := result.Aggregations[0]
+	if len(agg.Series) == 0 {
+		return 0, fmt.Errorf("%w", ErrNoValuesFound)
+	}
+
+	// For formula results, there should be a single series
+	if len(agg.Series) > 1 {
 		return 0, fmt.Errorf("%w", ErrMultipleValuesReturned)
 	}
 
-	result := resp.Data.Result[0]
-
-	// Check for multiple series
-	if len(result.Series) == 0 {
-		return 0, fmt.Errorf("%w", ErrNoValuesFound)
-	}
-	if len(result.Series) > 1 {
-		return 0, fmt.Errorf("%w", ErrMultipleValuesReturned)
-	}
-
-	series := result.Series[0]
+	series := agg.Series[0]
 	if len(series.Values) == 0 {
 		return 0, fmt.Errorf("%w", ErrNoValuesFound)
 	}
 
-	// Get the last value from the series
-	lastValue := series.Values[len(series.Values)-1]
-	f, err := strconv.ParseFloat(lastValue.Value, 64)
-	if err != nil {
-		return 0, fmt.Errorf("error parsing value: %w", err)
+	// Get the last non-partial value from the series
+	var lastValue float64
+	found := false
+	for i := len(series.Values) - 1; i >= 0; i-- {
+		if !series.Values[i].Partial {
+			lastValue = series.Values[i].Value
+			found = true
+			break
+		}
 	}
 
-	if math.IsNaN(f) {
+	if !found {
 		return 0, fmt.Errorf("%w", ErrNoValuesFound)
 	}
 
-	return f, nil
+	if math.IsNaN(lastValue) {
+		return 0, fmt.Errorf("%w", ErrNoValuesFound)
+	}
+
+	return lastValue, nil
 }
 
-// IsOnline runs a minimal query and expects a value of 1
+// IsOnline probes SigNoz health.
 func (p *SignozProvider) IsOnline() (bool, error) {
-	now := time.Now().UnixMilli()
-	body := fmt.Sprintf(`{"start": %d, "end": %d, "requestType": "time_series", "compositeQuery": {"queries": [{"type": "builder_formula", "spec": {"name": "F1", "expression": "1", "disabled": false}}]}}`, now-60000, now)
+	healthURL := p.url
+	healthURL.Path = path.Join(p.url.Path, "/api/v1/health")
 
-	v, err := p.RunQuery(body)
+	req, err := http.NewRequest("GET", healthURL.String(), nil)
 	if err != nil {
-		return false, fmt.Errorf("running query failed: %w", err)
+		return false, fmt.Errorf("http.NewRequest failed: %w", err)
 	}
-	if v != float64(1) {
-		return false, fmt.Errorf("value is not 1 for query: builder_formula 1")
+	if p.headers != nil {
+		req.Header = p.headers.Clone()
+	}
+	if p.apiKey != "" {
+		req.Header.Set(signozHeaderKey, p.apiKey)
+	}
+
+	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
+	defer cancel()
+
+	resp, err := p.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return false, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		return false, fmt.Errorf("health check failed with status %d: %s", resp.StatusCode, string(b))
 	}
 	return true, nil
 }

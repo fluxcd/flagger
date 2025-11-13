@@ -26,7 +26,7 @@ type Factory struct{}
 func (factory Factory) Provider(metricInterval string, provider flaggerv1.MetricTemplateProvider, credentials map[string][]byte, config *rest.Config) (Interface, error) {
 	switch provider.Type {
 	case "signoz":
-		return NewSignozProvider(provider, credentials)
+		return NewSignozProvider(metricInterval, provider, credentials)
 	case "prometheus":
 		return NewPrometheusProvider(provider, credentials)
 	case "datadog":

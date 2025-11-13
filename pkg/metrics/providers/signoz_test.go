@@ -92,16 +92,16 @@ func TestNewSignozProvider(t *testing.T) {
 	secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
 	require.NoError(t, err)
 
-	sp, err := NewSignozProvider(template.Spec.Provider, secret.Data)
+	sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
 	require.NoError(t, err)
 
 	assert.Equal(t, "http://signoz:3301", sp.url.String())
 	assert.Equal(t, "test-signoz-token", sp.apiKey)
+	assert.Equal(t, int64(600000), sp.fromDelta) // 1m * 10 = 10m = 600000ms
 }
 
 func TestSignozProvider_RunQuery(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		expectedBody := `{"requestType":"time_series"}`
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, http.MethodPost, r.Method)
 			assert.True(t, strings.HasSuffix(r.URL.Path, "/api/v5/query_range"))
@@ -112,7 +112,10 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 
 			b, _ := io.ReadAll(r.Body)
 			_ = r.Body.Close()
-			assert.Equal(t, expectedBody, string(b))
+			// Verify that start and end timestamps are injected
+			assert.Contains(t, string(b), `"start":`)
+			assert.Contains(t, string(b), `"end":`)
+			assert.Contains(t, string(b), `"requestType":"time_series"`)
 
 			json := `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1742602572000,"value":"100"}]}],"queryName":"A"}]}}`
 			w.Write([]byte(json))
@@ -128,7 +131,7 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		sp, err := NewSignozProvider(template.Spec.Provider, secret.Data)
+		sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
 		require.NoError(t, err)
 
 		val, err := sp.RunQuery(template.Spec.Query)
@@ -161,7 +164,7 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 			secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			sp, err := NewSignozProvider(template.Spec.Provider, secret.Data)
+			sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
 			require.NoError(t, err)
 
 			_, err = sp.RunQuery(template.Spec.Query)
@@ -193,7 +196,7 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 			secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			sp, err := NewSignozProvider(template.Spec.Provider, secret.Data)
+			sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
 			require.NoError(t, err)
 
 			_, err = sp.RunQuery(template.Spec.Query)
@@ -205,6 +208,7 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 func TestSignozProvider_IsOnline(t *testing.T) {
 	t.Run("fail", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.True(t, strings.HasSuffix(r.URL.Path, "/api/v1/health"))
 			w.WriteHeader(http.StatusBadGateway)
 			w.Write([]byte("bad gateway"))
 		}))
@@ -219,7 +223,7 @@ func TestSignozProvider_IsOnline(t *testing.T) {
 		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		sp, err := NewSignozProvider(template.Spec.Provider, secret.Data)
+		sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
 		require.NoError(t, err)
 
 		ok, err := sp.IsOnline()
@@ -229,8 +233,8 @@ func TestSignozProvider_IsOnline(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			json := `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1714404069294,"value":"1"}]}],"queryName":"F1"}]}}`
-			w.Write([]byte(json))
+			assert.True(t, strings.HasSuffix(r.URL.Path, "/api/v1/health"))
+			w.WriteHeader(http.StatusOK)
 		}))
 		defer ts.Close()
 
@@ -243,7 +247,7 @@ func TestSignozProvider_IsOnline(t *testing.T) {
 		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		sp, err := NewSignozProvider(template.Spec.Provider, secret.Data)
+		sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
 		require.NoError(t, err)
 
 		ok, err := sp.IsOnline()
@@ -254,12 +258,14 @@ func TestSignozProvider_IsOnline(t *testing.T) {
 
 func TestSignozProvider_RunQueryWithProviderHeaders(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		expectedBody := `{"requestType":"time_series"}`
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, []string{"tenant1"}, r.Header.Values("X-Scope-OrgID"))
 			b, _ := io.ReadAll(r.Body)
 			_ = r.Body.Close()
-			assert.Equal(t, expectedBody, string(b))
+			// Verify that start and end timestamps are injected
+			assert.Contains(t, string(b), `"start":`)
+			assert.Contains(t, string(b), `"end":`)
+			assert.Contains(t, string(b), `"requestType":"time_series"`)
 			json := `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1742602572000,"value":"100"}]}],"queryName":"A"}]}}`
 			w.Write([]byte(json))
 		}))
@@ -278,7 +284,7 @@ func TestSignozProvider_RunQueryWithProviderHeaders(t *testing.T) {
 		secret, err := clients.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "signoz", metav1.GetOptions{})
 		require.NoError(t, err)
 
-		sp, err := NewSignozProvider(template.Spec.Provider, secret.Data)
+		sp, err := NewSignozProvider("1m", template.Spec.Provider, secret.Data)
 		require.NoError(t, err)
 
 		val, err := sp.RunQuery(template.Spec.Query)
