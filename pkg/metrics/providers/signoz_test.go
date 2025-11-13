@@ -117,7 +117,7 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 			assert.Contains(t, string(b), `"end":`)
 			assert.Contains(t, string(b), `"requestType":"time_series"`)
 
-			json := `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1742602572000,"value":"100"}]}],"queryName":"A"}]}}`
+			json := `{"status":"success","data":{"type":"time_series","data":{"results":[{"queryName":"A","aggregations":[{"index":0,"alias":"","series":[{"labels":[],"values":[{"timestamp":1742602572000,"value":100}]}]}]}]}}}`
 			w.Write([]byte(json))
 		}))
 		defer ts.Close()
@@ -143,9 +143,9 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 		name        string
 		queryResult string
 	}{
-		{name: "no values result", queryResult: `{"data":{"result":[]}}`},
-		{name: "NaN result in series", queryResult: `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1714404069294,"value":"NaN"}]}],"queryName":"A"}]}}`},
-		{name: "empty series", queryResult: `{"data":{"result":[{"series":[],"queryName":"A"}]}}`},
+		{name: "no values result", queryResult: `{"status":"success","data":{"data":{"results":[]}}}`},
+		{name: "empty series", queryResult: `{"status":"success","data":{"data":{"results":[{"queryName":"A","aggregations":[{"series":[]}]}]}}}`},
+		{name: "empty values", queryResult: `{"status":"success","data":{"data":{"results":[{"queryName":"A","aggregations":[{"series":[{"values":[]}]}]}]}}}`},
 	}
 
 	for _, tt := range noResultTests {
@@ -176,8 +176,8 @@ func TestSignozProvider_RunQuery(t *testing.T) {
 		name        string
 		queryResult string
 	}{
-		{name: "multiple series", queryResult: `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1714404069294,"value":"1"}]},{"labels":{},"labelString":"","values":[{"timestamp":1714404069294,"value":"2"}]}],"queryName":"A"}]}}`},
-		{name: "multiple results", queryResult: `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1714404069294,"value":"1"}]}],"queryName":"A"},{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1714404069294,"value":"2"}]}],"queryName":"B"}]}}`},
+		{name: "multiple series", queryResult: `{"status":"success","data":{"data":{"results":[{"queryName":"A","aggregations":[{"series":[{"values":[{"timestamp":1714404069294,"value":1}]},{"values":[{"timestamp":1714404069294,"value":2}]}]}]}]}}}`},
+		{name: "multiple series", queryResult: `{"status":"success","data":{"data":{"results":[{"queryName":"A","aggregations":[{"series":[{"values":[{"timestamp":1714404069294,"value":1}]},{"values":[{"timestamp":1714404069294,"value":2}]}]}]}]}}}`},
 	}
 
 	for _, tt := range multipleResultTests {
@@ -266,7 +266,7 @@ func TestSignozProvider_RunQueryWithProviderHeaders(t *testing.T) {
 			assert.Contains(t, string(b), `"start":`)
 			assert.Contains(t, string(b), `"end":`)
 			assert.Contains(t, string(b), `"requestType":"time_series"`)
-			json := `{"data":{"result":[{"series":[{"labels":{},"labelString":"","values":[{"timestamp":1742602572000,"value":"100"}]}],"queryName":"A"}]}}`
+			json := `{"status":"success","data":{"type":"time_series","data":{"results":[{"queryName":"A","aggregations":[{"index":0,"alias":"","series":[{"labels":[],"values":[{"timestamp":1742602572000,"value":100}]}]}]}]}}}`
 			w.Write([]byte(json))
 		}))
 		defer ts.Close()
