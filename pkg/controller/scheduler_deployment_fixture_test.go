@@ -856,4 +856,3 @@ func newDeploymentTestAlertProvider() *flaggerv1.AlertProvider {
 		},
 	}
 }
-

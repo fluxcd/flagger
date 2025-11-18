@@ -735,4 +735,3 @@ func newDaemonSetTestAlertProvider() *flaggerv1.AlertProvider {
 		},
 	}
 }
-

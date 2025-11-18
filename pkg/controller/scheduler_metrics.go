@@ -280,7 +280,12 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 	}
 
 	for _, metric := range canary.GetAnalysis().Metrics {
-		c.recordEventInfof(canary, "metric: %s-%s", metric.Name, metric.TemplateRef)
+		templateRefName := ""
+		if metric.TemplateRef != nil {
+			templateRefName = metric.TemplateRef.Name
+		}
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Debugf("Processing metric: %s-%s", metric.Name, templateRefName)
 		if metric.TemplateRef != nil {
 			namespace := canary.Namespace
 			if metric.TemplateRef.Namespace != canary.Namespace && metric.TemplateRef.Namespace != "" {
@@ -348,7 +353,8 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 				return false
 			}
 
-			c.recordEventInfof(canary, "Metric %s reported value: %v for %s.%s", metric.Name, val, canary.Name, canary.Namespace)
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Debugf("Metric %s reported value: %v", metric.Name, val)
 			c.recorder.SetAnalysis(canary, metric.Name, val)
 
 			if metric.ThresholdRange != nil {
@@ -401,4 +407,3 @@ func toMetricModel(r *flaggerv1.Canary, interval string, variables map[string]st
 		Variables: variables,
 	}
 }
-
