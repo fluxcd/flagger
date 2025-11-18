@@ -475,4 +475,3 @@ func checkCustomResourceType(obj any, logger *zap.SugaredLogger) (flaggerv1.Cana
 func int32p(i int32) *int32 {
 	return &i
 }
-

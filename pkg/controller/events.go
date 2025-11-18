@@ -253,4 +253,3 @@ func alertMetadata(canary *flaggerv1.Canary) []notifier.Field {
 	}
 	return fields
 }
-

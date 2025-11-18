@@ -75,7 +75,7 @@ func TestNewNerdGraphProvider(t *testing.T) {
 		}
 		_, err := NewNerdGraphProvider("1m", flaggerv1.MetricTemplateProvider{}, cs)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), newrelicAccountIdSecretKey)
+		assert.Contains(t, err.Error(), nerdGraphAccountIDSecretKey)
 	})
 
 	t.Run("invalid account id", func(t *testing.T) {
@@ -211,6 +211,44 @@ func TestNerdGraphProvider_RunQuery(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error response")
 	})
+
+	t.Run("template variables already rendered", func(t *testing.T) {
+		// This test demonstrates that template variables like {{ target }} and {{ namespace }}
+		// are already rendered by the time RunQuery is called
+		renderedQuery := "SELECT percentage(count(*), WHERE error IS true) FROM Transaction WHERE appName = 'myapp' AND `kubernetes.namespace` = 'production'"
+		expectedResult := 2.5
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var reqBody nerdGraphQuery
+			b, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+			err = json.Unmarshal(b, &reqBody)
+			require.NoError(t, err)
+
+			// Verify the rendered query (with actual values) is in the GraphQL query
+			assert.Contains(t, reqBody.Query, renderedQuery)
+			assert.Contains(t, reqBody.Query, "appName = 'myapp'")
+			assert.Contains(t, reqBody.Query, "`kubernetes.namespace` = 'production'")
+
+			jsonResp := fmt.Sprintf(`{"data": {"actor": {"account": {"nrql": {"results": [{"percentage": %f}]}}}}}`, expectedResult)
+			w.Write([]byte(jsonResp))
+		}))
+		defer ts.Close()
+
+		provider, err := NewNerdGraphProvider("1m",
+			flaggerv1.MetricTemplateProvider{Address: ts.URL},
+			map[string][]byte{
+				"newrelic_api_key":    []byte(apiKey),
+				"newrelic_account_id": []byte(accountID),
+			},
+		)
+		require.NoError(t, err)
+
+		// Pass the already-rendered query (as would happen in real usage)
+		val, err := provider.RunQuery(renderedQuery)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedResult, val)
+	})
 }
 
 func TestNerdGraphProvider_IsOnline(t *testing.T) {
@@ -336,4 +374,3 @@ func Test_findResultValue(t *testing.T) {
 		require.True(t, errors.Is(err, ErrNoValuesFound))
 	})
 }
-

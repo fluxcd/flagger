@@ -503,4 +503,3 @@ func verifyKubernetesVersion(kubeClient kubernetes.Interface, logger *zap.Sugare
 
 	logger.Infof("Connected to Kubernetes API %s", ver)
 }
-
