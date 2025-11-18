@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
@@ -42,6 +43,8 @@ import (
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/fluxcd/flagger/pkg/client/clientset/versioned/fake"
 	informers "github.com/fluxcd/flagger/pkg/client/informers/externalversions"
+	flaggerinformers "github.com/fluxcd/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
+	flaggerlisters "github.com/fluxcd/flagger/pkg/client/listers/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/logger"
 	"github.com/fluxcd/flagger/pkg/metrics"
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
@@ -75,8 +78,10 @@ func (f fixture) makeReady(t *testing.T, name string) {
 		Get(context.TODO(), name, metav1.GetOptions{})
 	require.NoError(t, err)
 
-	p.Status = appsv1.DeploymentStatus{Replicas: 1, UpdatedReplicas: 1,
-		ReadyReplicas: 1, AvailableReplicas: 1}
+	p.Status = appsv1.DeploymentStatus{
+		Replicas: 1, UpdatedReplicas: 1,
+		ReadyReplicas: 1, AvailableReplicas: 1,
+	}
 
 	_, err = f.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), p, metav1.UpdateOptions{})
 	require.NoError(t, err)
@@ -114,10 +119,22 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	// init controller
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, 0)
 
+	// create informers
+	canaryInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
+	metricInformer := flaggerInformerFactory.Flagger().V1beta1().MetricTemplates()
+	alertInformer := flaggerInformerFactory.Flagger().V1beta1().AlertProviders()
+
+	// create Informers struct with maps
 	fi := Informers{
-		CanaryInformer: flaggerInformerFactory.Flagger().V1beta1().Canaries(),
-		MetricInformer: flaggerInformerFactory.Flagger().V1beta1().MetricTemplates(),
-		AlertInformer:  flaggerInformerFactory.Flagger().V1beta1().AlertProviders(),
+		CanaryInformers: map[string]flaggerinformers.CanaryInformer{
+			"default": canaryInformer,
+		},
+		MetricInformers: map[string]flaggerinformers.MetricTemplateInformer{
+			"default": metricInformer,
+		},
+		AlertInformers: map[string]flaggerinformers.AlertProviderInformer{
+			"default": alertInformer,
+		},
 	}
 
 	// init router
@@ -134,11 +151,30 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	}
 	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, nil, configTracker, []string{"app", "name"}, []string{""}, logger)
 
+	var allInformersSynced []cache.InformerSynced
+	for _, inf := range fi.CanaryInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	for _, inf := range fi.MetricInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	for _, inf := range fi.AlertInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	flaggerSyncedFunc := func() bool {
+		for _, synced := range allInformersSynced {
+			if !synced() {
+				return false
+			}
+		}
+		return true
+	}
+
 	ctrl := &Controller{
 		kubeClient:       kubeClient,
 		flaggerClient:    flaggerClient,
 		flaggerInformers: fi,
-		flaggerSynced:    fi.CanaryInformer.Informer().HasSynced,
+		flaggerSynced:    flaggerSyncedFunc,
 		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
 		eventRecorder:    &record.FakeRecorder{},
 		logger:           logger,
@@ -149,12 +185,25 @@ func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 		recorder:         metrics.NewRecorder(controllerAgentName, false),
 		routerFactory:    rf,
 		notifier:         &notifier.NopNotifier{},
+		alertLister:      make(map[string]flaggerlisters.AlertProviderLister),
+		canaryLister:     make(map[string]flaggerlisters.CanaryLister),
+		metricLister:     make(map[string]flaggerlisters.MetricTemplateLister),
 	}
-	ctrl.flaggerSynced = alwaysReady
-	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
-	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDeploymentTestMetricTemplate())
-	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDeploymentTestMetricTemplateCustomVars())
-	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newDeploymentTestAlertProvider())
+
+	for ns, inf := range fi.CanaryInformers {
+		ctrl.canaryLister[ns] = inf.Lister()
+	}
+	for ns, inf := range fi.MetricInformers {
+		ctrl.metricLister[ns] = inf.Lister()
+	}
+	for ns, inf := range fi.AlertInformers {
+		ctrl.alertLister[ns] = inf.Lister()
+	}
+
+	ctrl.flaggerInformers.CanaryInformers["default"].Informer().GetIndexer().Add(c)
+	ctrl.flaggerInformers.MetricInformers["default"].Informer().GetIndexer().Add(newDeploymentTestMetricTemplate())
+	ctrl.flaggerInformers.MetricInformers["default"].Informer().GetIndexer().Add(newDeploymentTestMetricTemplateCustomVars())
+	ctrl.flaggerInformers.AlertInformers["default"].Informer().GetIndexer().Add(newDeploymentTestAlertProvider())
 
 	meshRouter := rf.MeshRouter("istio", "")
 
@@ -807,3 +856,4 @@ func newDeploymentTestAlertProvider() *flaggerv1.AlertProvider {
 		},
 	}
 }
+

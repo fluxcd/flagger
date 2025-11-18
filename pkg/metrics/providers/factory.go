@@ -33,6 +33,8 @@ func (factory Factory) Provider(metricInterval string, provider flaggerv1.Metric
 		return NewCloudWatchProvider(metricInterval, provider)
 	case "newrelic":
 		return NewNewRelicProvider(metricInterval, provider, credentials)
+	case "newrelic-nerdgraph":
+		return NewNerdGraphProvider(metricInterval, provider, credentials)
 	case "graphite":
 		return NewGraphiteProvider(provider, credentials)
 	case "stackdriver":
