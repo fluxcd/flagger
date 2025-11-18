@@ -492,7 +492,10 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 		if canary.Status.SessionAffinityCookie == "" {
 			canary.Status.SessionAffinityCookie = fmt.Sprintf("%s=%s", canary.Spec.Analysis.SessionAffinity.CookieName, randSeq())
 		}
-		primaryCookie := fmt.Sprintf("%s=%s", canary.Spec.Analysis.SessionAffinity.PrimaryCookieName, randSeq())
+		// if the status doesn't have the primary cookie, then generate a new primary cookie.
+		if canary.Status.PrimarySessionAffinityCookie == "" {
+			canary.Status.PrimarySessionAffinityCookie = fmt.Sprintf("%s=%s", canary.Spec.Analysis.SessionAffinity.PrimaryCookieName, randSeq())
+		}
 
 		// add response modifier to the canary backend ref in the rule that does weighted routing
 		// to include the canary cookie.
@@ -503,7 +506,7 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 				Add: []v1.HTTPHeader{
 					{
 						Name:  setCookieHeader,
-						Value: canary.Spec.Analysis.SessionAffinity.BuildCookie(canary.Status.SessionAffinityCookie),
+						Value: canary.Spec.Analysis.SessionAffinity.BuildCookie(canary.Status.SessionAffinityCookie, canary.Spec.Analysis.SessionAffinity.GetMaxAge()),
 					},
 				},
 			},
@@ -522,10 +525,8 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 				ResponseHeaderModifier: &v1.HTTPHeaderFilter{
 					Add: []v1.HTTPHeader{
 						{
-							Name: setCookieHeader,
-							Value: fmt.Sprintf("%s; %s=%d", primaryCookie, maxAgeAttr,
-								int(interval.Seconds()),
-							),
+							Name:  setCookieHeader,
+							Value: canary.Spec.Analysis.SessionAffinity.BuildCookie(canary.Status.PrimarySessionAffinityCookie, int(interval.Seconds())),
 						},
 					},
 				},
@@ -566,7 +567,7 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 		// primary cookie and send them to the primary backend, only if a primary cookie name has
 		// been specified.
 		if canary.Spec.Analysis.SessionAffinity.PrimaryCookieName != "" {
-			cookieKeyAndVal = strings.Split(primaryCookie, "=")
+			cookieKeyAndVal = strings.Split(canary.Status.PrimarySessionAffinityCookie, "=")
 			regexMatchType = v1.HeaderMatchRegularExpression
 			primaryCookieMatch := v1.HTTPRouteMatch{
 				Headers: []v1.HTTPHeaderMatch{

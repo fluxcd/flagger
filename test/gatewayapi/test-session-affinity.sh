@@ -107,7 +107,7 @@ done
 echo '>>> Verifying session affinity'
 if ! URL=http://localhost:8888 HOST=www.example.com CANARY_VERSION=6.1.0 \
   CANARY_COOKIE_NAME=canary-flagger-cookie PRIMARY_VERSION=6.0.4 PRIMARY_COOKIE_NAME=primary-flagger-cookie \
-    go run ${REPO_ROOT}/test/gatewayapi/verify_session_affinity.go; then
+    go run ${REPO_ROOT}/test/verify_session_affinity.go; then
     echo "failed to verify session affinity"
     exit $?
 fi

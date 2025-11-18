@@ -15,3 +15,6 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 
 "$REPO_ROOT"/test/workloads/init.sh
 "$DIR"/test-delegation.sh
+
+"$REPO_ROOT"/test/workloads/init.sh
+"$DIR"/test-session-affinity.sh

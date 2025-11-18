@@ -78,6 +78,8 @@ type CanaryStatus struct {
 	// +optional
 	SessionAffinityCookie string `json:"sessionAffinityCookie,omitempty"`
 	// +optional
+	PrimarySessionAffinityCookie string `json:"primarySessionAffinityCookie,omitempty"`
+	// +optional
 	TrackedConfigs *map[string]string `json:"trackedConfigs,omitempty"`
 	// +optional
 	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`

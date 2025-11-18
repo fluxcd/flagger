@@ -424,7 +424,7 @@ func (gwr *GatewayAPIV1Beta1Router) getSessionAffinityRouteRules(canary *flagger
 						Add: []v1beta1.HTTPHeader{
 							{
 								Name:  setCookieHeader,
-								Value: canary.Spec.Analysis.SessionAffinity.BuildCookie(canary.Status.SessionAffinityCookie),
+								Value: canary.Spec.Analysis.SessionAffinity.BuildCookie(canary.Status.SessionAffinityCookie, canary.Spec.Analysis.SessionAffinity.GetMaxAge()),
 							},
 						},
 					},

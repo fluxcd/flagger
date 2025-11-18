@@ -706,9 +706,9 @@ func (c *Canary) DeploymentStrategy() string {
 }
 
 // BuildCookie returns the cookie that should be used as the value of a Set-Cookie header
-func (s *SessionAffinity) BuildCookie(cookieName string) string {
+func (s *SessionAffinity) BuildCookie(cookieName string, maxAge int) string {
 	cookie := fmt.Sprintf("%s; %s=%d", cookieName, "Max-Age",
-		s.GetMaxAge(),
+		maxAge,
 	)
 
 	if s.Domain != "" {
