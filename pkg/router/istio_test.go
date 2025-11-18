@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
@@ -401,6 +402,175 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 				assert.Nil(t, mirrorWeight)
 			}
 		}
+	})
+}
+
+func TestIstioRouter_getSessionAffinityRoutes(t *testing.T) {
+	mocks := newFixture(nil)
+	t.Run("without primary cookie", func(t *testing.T) {
+		canary := mocks.canary.DeepCopy()
+		cookieKey := "flagger-cookie"
+		canary.Spec.Analysis.SessionAffinity = &flaggerv1.SessionAffinity{
+			CookieName: cookieKey,
+			MaxAge:     300,
+		}
+
+		router := &IstioRouter{
+			logger:        mocks.logger,
+			flaggerClient: mocks.flaggerClient,
+			istioClient:   mocks.meshClient,
+			kubeClient:    mocks.kubeClient,
+		}
+
+		_, pSvcName, cSvcName := canary.GetServiceNames()
+		weightedRoute := &istiov1beta1.HTTPRoute{
+			Route: []istiov1beta1.HTTPRouteDestination{
+				router.makeDestination(canary, pSvcName, 100),
+				router.makeDestination(canary, cSvcName, 0),
+			},
+		}
+		rules, err := router.getSessionAffinityRouteRules(canary, 10, weightedRoute)
+		require.NoError(t, err)
+		assert.Equal(t, len(rules), 2)
+		assert.True(t, strings.HasPrefix(canary.Status.SessionAffinityCookie, cookieKey))
+
+		stickyRule := rules[0]
+		cookieMatch := stickyRule.Match[0].Headers[cookieHeader]
+		assert.NotNil(t, cookieMatch.Regex)
+		assert.Contains(t, cookieMatch.Regex, cookieKey)
+
+		assert.Equal(t, len(stickyRule.Route), 2)
+		for _, route := range stickyRule.Route {
+			if string(route.Destination.Host) == pSvcName {
+				assert.Equal(t, route.Weight, int(0))
+			}
+			if string(route.Destination.Host) == cSvcName {
+				assert.Equal(t, route.Weight, int(100))
+			}
+		}
+
+		weightedRule := rules[1]
+		var found bool
+		for _, route := range weightedRule.Route {
+			if string(route.Destination.Host) == cSvcName {
+				found = true
+
+				assert.NotNil(t, route.Headers.Response.Add)
+				assert.Equal(t, route.Headers.Response.Add[setCookieHeader], fmt.Sprintf("%s; %s=%d", canary.Status.SessionAffinityCookie, maxAgeAttr, 300))
+			}
+		}
+		assert.True(t, found)
+
+		rules, err = router.getSessionAffinityRouteRules(canary, 0, weightedRoute)
+		require.NoError(t, err)
+		assert.Empty(t, canary.Status.SessionAffinityCookie)
+		assert.Contains(t, canary.Status.PreviousSessionAffinityCookie, cookieKey)
+
+		stickyRule = rules[0]
+		cookieMatch = stickyRule.Match[0].Headers[cookieHeader]
+		assert.NotNil(t, cookieMatch.Regex)
+		assert.Contains(t, cookieMatch.Regex, cookieKey)
+
+		assert.NotNil(t, stickyRule.Headers.Response.Add)
+		assert.Equal(t, stickyRule.Headers.Response.Add[setCookieHeader], fmt.Sprintf("%s; %s=%d", canary.Status.PreviousSessionAffinityCookie, maxAgeAttr, -1))
+	})
+
+	t.Run("with primary cookie", func(t *testing.T) {
+		canary := mocks.canary.DeepCopy()
+		mocks := newFixture(canary)
+		canaryCookieKey := "canary-flagger-cookie"
+		primaryCookieKey := "primary-flagger-cookie"
+		canary.Spec.Analysis.Interval = "15s"
+		canary.Spec.Analysis.SessionAffinity = &flaggerv1.SessionAffinity{
+			CookieName:        canaryCookieKey,
+			PrimaryCookieName: primaryCookieKey,
+			MaxAge:            300,
+		}
+
+		router := &IstioRouter{
+			logger:        mocks.logger,
+			flaggerClient: mocks.flaggerClient,
+			istioClient:   mocks.meshClient,
+			kubeClient:    mocks.kubeClient,
+		}
+
+		_, pSvcName, cSvcName := canary.GetServiceNames()
+		weightedRoute := &istiov1beta1.HTTPRoute{
+			Route: []istiov1beta1.HTTPRouteDestination{
+				router.makeDestination(canary, pSvcName, 100),
+				router.makeDestination(canary, cSvcName, 0),
+			},
+		}
+		rules, err := router.getSessionAffinityRouteRules(canary, 10, weightedRoute)
+		require.NoError(t, err)
+		assert.Equal(t, len(rules), 3)
+		assert.True(t, strings.HasPrefix(canary.Status.SessionAffinityCookie, canaryCookieKey))
+
+		canaryStickyRule := rules[0]
+		cookieMatch := canaryStickyRule.Match[0].Headers[cookieHeader]
+		assert.NotNil(t, cookieMatch.Regex)
+		assert.Contains(t, cookieMatch.Regex, canaryCookieKey)
+
+		assert.Equal(t, len(canaryStickyRule.Route), 2)
+		for _, route := range canaryStickyRule.Route {
+			if string(route.Destination.Host) == pSvcName {
+				assert.Equal(t, route.Weight, int(0))
+			}
+			if string(route.Destination.Host) == cSvcName {
+				assert.Equal(t, route.Weight, int(100))
+			}
+		}
+
+		primaryStickyRule := rules[1]
+		cookieMatch = primaryStickyRule.Match[0].Headers[cookieHeader]
+		assert.NotNil(t, cookieMatch.Regex)
+		assert.Contains(t, cookieMatch.Regex, primaryCookieKey)
+
+		assert.Equal(t, len(primaryStickyRule.Route), 2)
+		for _, route := range primaryStickyRule.Route {
+			if string(route.Destination.Host) == pSvcName {
+				assert.Equal(t, route.Weight, int(100))
+			}
+			if string(route.Destination.Host) == cSvcName {
+				assert.Equal(t, route.Weight, int(0))
+			}
+		}
+
+		weightedRule := rules[2]
+		var c int
+		for _, route := range weightedRule.Route {
+			if string(route.Destination.Host) == cSvcName {
+				c += 1
+
+				assert.NotNil(t, route.Headers.Response.Add)
+				assert.Equal(t, route.Headers.Response.Add[setCookieHeader], fmt.Sprintf("%s; %s=%d", canary.Status.SessionAffinityCookie, maxAgeAttr, 300))
+			}
+
+			if string(route.Destination.Host) == pSvcName {
+				c += 1
+
+				assert.NotNil(t, route.Headers.Response.Add)
+				assert.Contains(t, route.Headers.Response.Add[setCookieHeader], canary.Status.PrimarySessionAffinityCookie)
+
+				interval, err := time.ParseDuration(canary.Spec.Analysis.Interval)
+				require.NoError(t, err)
+				assert.Contains(t, route.Headers.Response.Add[setCookieHeader], fmt.Sprintf("%s=%d", maxAgeAttr, int(interval.Seconds())))
+			}
+		}
+		assert.Equal(t, 2, c)
+
+		rules, err = router.getSessionAffinityRouteRules(canary, 0, weightedRoute)
+		require.NoError(t, err)
+		assert.Empty(t, canary.Status.SessionAffinityCookie)
+		assert.Contains(t, canary.Status.PreviousSessionAffinityCookie, canaryCookieKey)
+
+		canaryStickyRule = rules[0]
+		cookieMatch = canaryStickyRule.Match[0].Headers[cookieHeader]
+		assert.NotNil(t, cookieMatch.Regex)
+		assert.Contains(t, cookieMatch.Regex, canaryCookieKey)
+
+		assert.NotNil(t, canaryStickyRule.Headers.Response.Add)
+		assert.Equal(t, canaryStickyRule.Headers.Response.Add[setCookieHeader], fmt.Sprintf("%s; %s=%d", canary.Status.PreviousSessionAffinityCookie, maxAgeAttr, -1))
 	})
 }
 
