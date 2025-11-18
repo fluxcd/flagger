@@ -404,6 +404,9 @@ You can load `app.example.com` in your browser and refresh it until you see the 
 All subsequent requests after that will be served by `podinfo:6.0.1` and not `podinfo:6.0.0` because of the session affinity
 configured by Flagger with Istio.
 
+To configure stickiness for the Primary deployment to ensure fair weighted traffic routing, please
+checkout the [deployment strategies docs](../usage/deployment-strategies.md#canary-release-with-session-affinity).
+
 ## Traffic mirroring
 
 ![Flagger Canary Traffic Shadowing](https://raw.githubusercontent.com/fluxcd/flagger/main/docs/diagrams/flagger-canary-traffic-mirroring.png)
