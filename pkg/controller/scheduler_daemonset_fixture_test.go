@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
@@ -37,6 +38,8 @@ import (
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	fakeFlagger "github.com/fluxcd/flagger/pkg/client/clientset/versioned/fake"
 	informers "github.com/fluxcd/flagger/pkg/client/informers/externalversions"
+	flaggerinformers "github.com/fluxcd/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
+	flaggerlisters "github.com/fluxcd/flagger/pkg/client/listers/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/logger"
 	"github.com/fluxcd/flagger/pkg/metrics"
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
@@ -85,10 +88,22 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 	// init controller
 	flaggerInformerFactory := informers.NewSharedInformerFactory(flaggerClient, 0)
 
+	// create informers
+	canaryInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
+	metricInformer := flaggerInformerFactory.Flagger().V1beta1().MetricTemplates()
+	alertInformer := flaggerInformerFactory.Flagger().V1beta1().AlertProviders()
+
+	// create Informers struct with maps
 	fi := Informers{
-		CanaryInformer: flaggerInformerFactory.Flagger().V1beta1().Canaries(),
-		MetricInformer: flaggerInformerFactory.Flagger().V1beta1().MetricTemplates(),
-		AlertInformer:  flaggerInformerFactory.Flagger().V1beta1().AlertProviders(),
+		CanaryInformers: map[string]flaggerinformers.CanaryInformer{
+			"default": canaryInformer,
+		},
+		MetricInformers: map[string]flaggerinformers.MetricTemplateInformer{
+			"default": metricInformer,
+		},
+		AlertInformers: map[string]flaggerinformers.AlertProviderInformer{
+			"default": alertInformer,
+		},
 	}
 
 	// init router
@@ -105,11 +120,30 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 	}
 	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, nil, configTracker, []string{"app", "name"}, []string{""}, logger)
 
+	var allInformersSynced []cache.InformerSynced
+	for _, inf := range fi.CanaryInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	for _, inf := range fi.MetricInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	for _, inf := range fi.AlertInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	flaggerSyncedFunc := func() bool {
+		for _, synced := range allInformersSynced {
+			if !synced() {
+				return false
+			}
+		}
+		return true
+	}
+
 	ctrl := &Controller{
 		kubeClient:       kubeClient,
 		flaggerClient:    flaggerClient,
 		flaggerInformers: fi,
-		flaggerSynced:    fi.CanaryInformer.Informer().HasSynced,
+		flaggerSynced:    flaggerSyncedFunc, // Use the new sync func
 		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
 		eventRecorder:    &record.FakeRecorder{},
 		logger:           logger,
@@ -120,11 +154,24 @@ func newDaemonSetFixture(c *flaggerv1.Canary) daemonSetFixture {
 		recorder:         metrics.NewRecorder(controllerAgentName, false),
 		routerFactory:    rf,
 		notifier:         &notifier.NopNotifier{},
+		alertLister:      make(map[string]flaggerlisters.AlertProviderLister),
+		canaryLister:     make(map[string]flaggerlisters.CanaryLister),
+		metricLister:     make(map[string]flaggerlisters.MetricTemplateLister),
 	}
-	ctrl.flaggerSynced = alwaysReady
-	ctrl.flaggerInformers.CanaryInformer.Informer().GetIndexer().Add(c)
-	ctrl.flaggerInformers.MetricInformer.Informer().GetIndexer().Add(newDaemonSetTestMetricTemplate())
-	ctrl.flaggerInformers.AlertInformer.Informer().GetIndexer().Add(newDaemonSetTestAlertProvider())
+
+	for ns, inf := range fi.CanaryInformers {
+		ctrl.canaryLister[ns] = inf.Lister()
+	}
+	for ns, inf := range fi.MetricInformers {
+		ctrl.metricLister[ns] = inf.Lister()
+	}
+	for ns, inf := range fi.AlertInformers {
+		ctrl.alertLister[ns] = inf.Lister()
+	}
+
+	ctrl.flaggerInformers.CanaryInformers["default"].Informer().GetIndexer().Add(c)
+	ctrl.flaggerInformers.MetricInformers["default"].Informer().GetIndexer().Add(newDaemonSetTestMetricTemplate())
+	ctrl.flaggerInformers.AlertInformers["default"].Informer().GetIndexer().Add(newDaemonSetTestAlertProvider())
 
 	meshRouter := rf.MeshRouter("istio", "")
 
@@ -688,3 +735,4 @@ func newDaemonSetTestAlertProvider() *flaggerv1.AlertProvider {
 		},
 	}
 }
+
