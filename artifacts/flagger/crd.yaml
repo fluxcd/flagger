@@ -1144,6 +1144,7 @@ spec:
                               - event
                               - rollback
                               - confirm-traffic-increase
+                              - pre-canary-scale-zero-rollout
                           muteAlert:
                             description: Mute all alerts for the webhook
                             type: boolean
