@@ -30,19 +30,16 @@ import (
 )
 
 const (
-	nerdGraphDefaultHost        = "https://api.newrelic.com/graphql"
-	nerdGraphAPIKeySecretKey    = "newrelic_api_key"
-	nerdGraphAccountIDSecretKey = "newrelic_account_id"
-	nerdGraphAPIKeyHeaderKey    = "Api-Key"
-	nerdGraphContentTypeHeader  = "application/json"
+	nerdGraphDefaultHost       = "https://api.newrelic.com/graphql"
+	nerdGraphAPIKeySecretKey   = "newrelic_api_key"
+	nerdGraphAPIKeyHeaderKey   = "Api-Key"
+	nerdGraphContentTypeHeader = "application/json"
 
 	nerdGraphRunQueryTemplate = `
-	query {
+	query ($query: Nrql!) {
 	  actor {
 	    account(id: %s) {
-	      nrql(query: """
-	        %s SINCE %s SECONDS ago
-	      """) {
+	      nrql(query: $query) {
 	        results
 	      }
 	    }
@@ -70,6 +67,11 @@ type nerdGraphGQLResponse struct {
 	Errors []nerdGraphError `json:"errors"`
 }
 
+type nerdGraphPayload struct {
+	Query     string         `json:"query"`
+	Variables map[string]any `json:"variables"`
+}
+
 // nerdGraphError represents a single error in a GraphQL response
 type nerdGraphError struct {
 	Message string `json:"message"`
@@ -92,9 +94,9 @@ func NewNerdGraphProvider(
 		return nil, fmt.Errorf("newrelic credentials does not contain the key '%s'", nerdGraphAPIKeySecretKey)
 	}
 
-	accountIDBytes, ok := credentials[nerdGraphAccountIDSecretKey]
+	accountIDBytes, ok := credentials[newrelicAccountIdSecretKey]
 	if !ok {
-		return nil, fmt.Errorf("newrelic credentials does not contain the key '%s'", nerdGraphAccountIDSecretKey)
+		return nil, fmt.Errorf("newrelic credentials does not contain the key '%s'", newrelicAccountIdSecretKey)
 	}
 	accountID := string(accountIDBytes)
 	if _, err := strconv.Atoi(accountID); err != nil {
@@ -118,9 +120,22 @@ func NewNerdGraphProvider(
 // RunQuery executes the NerdGraph query and returns the first numeric result
 func (p *NerdGraphProvider) RunQuery(query string) (float64, error) {
 	since := strconv.FormatInt(p.fromDelta, 10)
-	fullQuery := fmt.Sprintf(nerdGraphRunQueryTemplate, p.accountID, query, since)
+	fullQuery := fmt.Sprintf("%s SINCE %s SECONDS ago", query, since)
+	queryTemplate := fmt.Sprintf(nerdGraphRunQueryTemplate, p.accountID)
 
-	req, err := p.newNerdGraphRequest(fullQuery)
+	payload := nerdGraphPayload{
+		Query: queryTemplate,
+		Variables: map[string]any{
+			"query": fullQuery,
+		},
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return 0, fmt.Errorf("error marshalling payload: %w", err)
+	}
+
+	req, err := p.newNerdGraphRequest(payloadBytes)
 	if err != nil {
 		return 0, err
 	}
@@ -167,7 +182,13 @@ func (p *NerdGraphProvider) RunQuery(query string) (float64, error) {
 // IsOnline checks if the NerdGraph API is reachable and credentials are valid
 func (p *NerdGraphProvider) IsOnline() (bool, error) {
 	pingQuery := "{ actor { user { name } } }"
-	req, err := p.newNerdGraphRequest(pingQuery)
+	query := nerdGraphQuery{Query: pingQuery}
+	payload, err := json.Marshal(query)
+	if err != nil {
+		return false, fmt.Errorf("error marshaling ping query: %w", err)
+	}
+
+	req, err := p.newNerdGraphRequest(payload)
 	if err != nil {
 		return false, fmt.Errorf("error creating http.NewRequest: %w", err)
 	}
@@ -202,13 +223,7 @@ func (p *NerdGraphProvider) IsOnline() (bool, error) {
 }
 
 // newNerdGraphRequest creates a new HTTP POST request for the NerdGraph API
-func (p *NerdGraphProvider) newNerdGraphRequest(query string) (*http.Request, error) {
-	gqlQuery := nerdGraphQuery{Query: query}
-	payload, err := json.Marshal(gqlQuery)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling query: %w", err)
-	}
-
+func (p *NerdGraphProvider) newNerdGraphRequest(payload []byte) (*http.Request, error) {
 	req, err := http.NewRequest("POST", p.endpoint, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, fmt.Errorf("error creating http.NewRequest: %w", err)
