@@ -30,10 +30,11 @@ import (
 )
 
 const (
-	nerdGraphDefaultHost       = "https://api.newrelic.com/graphql"
-	nerdGraphAPIKeySecretKey   = "newrelic_api_key"
-	nerdGraphAPIKeyHeaderKey   = "Api-Key"
-	nerdGraphContentTypeHeader = "application/json"
+	nerdGraphDefaultHost        = "https://api.newrelic.com/graphql"
+	nerdGraphAPIKeySecretKey    = "newrelic_api_key"
+	nerdGraphAccountIDSecretKey = "newrelic_account_id"
+	nerdGraphAPIKeyHeaderKey    = "Api-Key"
+	nerdGraphContentTypeHeader  = "application/json"
 
 	nerdGraphRunQueryTemplate = `
 	query ($query: Nrql!) {
@@ -94,9 +95,9 @@ func NewNerdGraphProvider(
 		return nil, fmt.Errorf("newrelic credentials does not contain the key '%s'", nerdGraphAPIKeySecretKey)
 	}
 
-	accountIDBytes, ok := credentials[newrelicAccountIdSecretKey]
+	accountIDBytes, ok := credentials[nerdGraphAccountIDSecretKey]
 	if !ok {
-		return nil, fmt.Errorf("newrelic credentials does not contain the key '%s'", newrelicAccountIdSecretKey)
+		return nil, fmt.Errorf("newrelic credentials does not contain the key '%s'", nerdGraphAccountIDSecretKey)
 	}
 	accountID := string(accountIDBytes)
 	if _, err := strconv.Atoi(accountID); err != nil {
