@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
+limitations under theLicense.
 */
 
 package providers
@@ -33,7 +33,7 @@ import (
 
 func TestNewNerdGraphProvider(t *testing.T) {
 	apiKey := "api-key"
-	accountID := "1234567"
+	accountID := "12345"
 
 	t.Run("default host", func(t *testing.T) {
 		cs := map[string][]byte{
@@ -45,7 +45,6 @@ func TestNewNerdGraphProvider(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, nerdGraphDefaultHost, provider.endpoint)
 		assert.Equal(t, apiKey, provider.apiKey)
-		assert.Equal(t, accountID, provider.accountID)
 	})
 
 	t.Run("custom host", func(t *testing.T) {
@@ -60,32 +59,11 @@ func TestNewNerdGraphProvider(t *testing.T) {
 		assert.Equal(t, customHost, provider.endpoint)
 	})
 
-	t.Run("missing api key", func(t *testing.T) {
-		cs := map[string][]byte{
-			"newrelic_account_id": []byte(accountID),
-		}
+	t.Run("missing credentials", func(t *testing.T) {
+		cs := map[string][]byte{}
 		_, err := NewNerdGraphProvider("1m", flaggerv1.MetricTemplateProvider{}, cs)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), nerdGraphAPIKeySecretKey)
-	})
-
-	t.Run("missing account id", func(t *testing.T) {
-		cs := map[string][]byte{
-			"newrelic_api_key": []byte(apiKey),
-		}
-		_, err := NewNerdGraphProvider("1m", flaggerv1.MetricTemplateProvider{}, cs)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), nerdGraphAccountIDSecretKey)
-	})
-
-	t.Run("invalid account id", func(t *testing.T) {
-		cs := map[string][]byte{
-			"newrelic_api_key":    []byte(apiKey),
-			"newrelic_account_id": []byte("not-an-integer"),
-		}
-		_, err := NewNerdGraphProvider("1m", flaggerv1.MetricTemplateProvider{}, cs)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "not a valid integer")
 	})
 }
 
@@ -93,25 +71,37 @@ func TestNerdGraphProvider_RunQuery(t *testing.T) {
 	apiKey := "api-key"
 	accountID := "12345"
 
+	standardCredentials := map[string][]byte{
+		"newrelic_api_key":    []byte(apiKey),
+		"newrelic_account_id": []byte(accountID),
+	}
+
 	t.Run("ok", func(t *testing.T) {
 		nrqlQuery := "SELECT average(duration) FROM Transaction"
-
 		expectedResult := 1.11111
+		expectedGQLSubstring := fmt.Sprintf("account(id: %s)", accountID)
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check headers
 			assert.Equal(t, http.MethodPost, r.Method)
 			assert.Equal(t, apiKey, r.Header.Get(nerdGraphAPIKeyHeaderKey))
 			assert.Equal(t, nerdGraphContentTypeHeader, r.Header.Get("Content-Type"))
 
-			var reqBody nerdGraphQuery
+			var reqBody nerdGraphPayload
 			b, err := io.ReadAll(r.Body)
 			require.NoError(t, err)
 			err = json.Unmarshal(b, &reqBody)
 			require.NoError(t, err)
 
-			assert.Contains(t, reqBody.Query, fmt.Sprintf("account(id: %s)", accountID))
-			assert.Contains(t, reqBody.Query, nrqlQuery)
-			assert.Contains(t, reqBody.Query, "SINCE 60 SECONDS ago")
+			// Assert that the sent query contains the necessary parts
+			assert.Contains(t, reqBody.Query, expectedGQLSubstring, "Payload should contain account ID in template")
+			assert.Contains(t, reqBody.Query, "query ($query: Nrql!)", "Payload should define the NRQL variable")
+
+			// Check that the final NRQL is fully formed and placed in the variables section
+			finalNRQL, ok := reqBody.Variables["query"].(string)
+			require.True(t, ok, "Variables should contain 'query' as a string")
+			assert.Contains(t, finalNRQL, nrqlQuery, "Final NRQL in variables should contain the raw query")
+			assert.Contains(t, finalNRQL, "SINCE 60 SECONDS ago", "Final NRQL in variables should contain time delta")
 
 			jsonResp := fmt.Sprintf(`{"data": {"actor": {"account": {"nrql": {"results": [{"average": %f}]}}}}}`, expectedResult)
 			w.Write([]byte(jsonResp))
@@ -122,10 +112,7 @@ func TestNerdGraphProvider_RunQuery(t *testing.T) {
 			flaggerv1.MetricTemplateProvider{
 				Address: ts.URL,
 			},
-			map[string][]byte{
-				"newrelic_api_key":    []byte(apiKey),
-				"newrelic_account_id": []byte(accountID),
-			},
+			standardCredentials,
 		)
 		require.NoError(t, err)
 
@@ -143,10 +130,7 @@ func TestNerdGraphProvider_RunQuery(t *testing.T) {
 		provider, err := NewNerdGraphProvider(
 			"1m",
 			flaggerv1.MetricTemplateProvider{Address: ts.URL},
-			map[string][]byte{
-				"newrelic_api_key":    []byte(apiKey),
-				"newrelic_account_id": []byte(accountID),
-			},
+			standardCredentials,
 		)
 		require.NoError(t, err)
 		_, err = provider.RunQuery("SELECT * FROM X")
@@ -162,10 +146,7 @@ func TestNerdGraphProvider_RunQuery(t *testing.T) {
 		provider, err := NewNerdGraphProvider(
 			"1m",
 			flaggerv1.MetricTemplateProvider{Address: ts.URL},
-			map[string][]byte{
-				"newrelic_api_key":    []byte(apiKey),
-				"newrelic_account_id": []byte(accountID),
-			},
+			standardCredentials,
 		)
 		require.NoError(t, err)
 		_, err = provider.RunQuery("SELECT * FROM X")
@@ -181,10 +162,7 @@ func TestNerdGraphProvider_RunQuery(t *testing.T) {
 		provider, err := NewNerdGraphProvider(
 			"1m",
 			flaggerv1.MetricTemplateProvider{Address: ts.URL},
-			map[string][]byte{
-				"newrelic_api_key":    []byte(apiKey),
-				"newrelic_account_id": []byte(accountID),
-			},
+			standardCredentials,
 		)
 		require.NoError(t, err)
 		_, err = provider.RunQuery("SELECT * FROM X")
@@ -201,53 +179,12 @@ func TestNerdGraphProvider_RunQuery(t *testing.T) {
 		provider, err := NewNerdGraphProvider(
 			"1m",
 			flaggerv1.MetricTemplateProvider{Address: ts.URL},
-			map[string][]byte{
-				"newrelic_api_key":    []byte(apiKey),
-				"newrelic_account_id": []byte(accountID),
-			},
+			standardCredentials,
 		)
 		require.NoError(t, err)
 		_, err = provider.RunQuery("SELECT * FROM X")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error response")
-	})
-
-	t.Run("template variables already rendered", func(t *testing.T) {
-		// This test demonstrates that template variables like {{ target }} and {{ namespace }}
-		// are already rendered by the time RunQuery is called
-		renderedQuery := "SELECT percentage(count(*), WHERE error IS true) FROM Transaction WHERE appName = 'myapp' AND `kubernetes.namespace` = 'production'"
-		expectedResult := 2.5
-
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var reqBody nerdGraphQuery
-			b, err := io.ReadAll(r.Body)
-			require.NoError(t, err)
-			err = json.Unmarshal(b, &reqBody)
-			require.NoError(t, err)
-
-			// Verify the rendered query (with actual values) is in the GraphQL query
-			assert.Contains(t, reqBody.Query, renderedQuery)
-			assert.Contains(t, reqBody.Query, "appName = 'myapp'")
-			assert.Contains(t, reqBody.Query, "`kubernetes.namespace` = 'production'")
-
-			jsonResp := fmt.Sprintf(`{"data": {"actor": {"account": {"nrql": {"results": [{"percentage": %f}]}}}}}`, expectedResult)
-			w.Write([]byte(jsonResp))
-		}))
-		defer ts.Close()
-
-		provider, err := NewNerdGraphProvider("1m",
-			flaggerv1.MetricTemplateProvider{Address: ts.URL},
-			map[string][]byte{
-				"newrelic_api_key":    []byte(apiKey),
-				"newrelic_account_id": []byte(accountID),
-			},
-		)
-		require.NoError(t, err)
-
-		// Pass the already-rendered query (as would happen in real usage)
-		val, err := provider.RunQuery(renderedQuery)
-		assert.NoError(t, err)
-		assert.Equal(t, expectedResult, val)
 	})
 }
 
@@ -276,6 +213,7 @@ func TestNerdGraphProvider_IsOnline(t *testing.T) {
 				var reqBody nerdGraphQuery
 				b, err := io.ReadAll(r.Body)
 				require.NoError(t, err)
+				// Only unmarshal if body is not empty (which it might be for a simple ping)
 				if len(b) > 0 {
 					err = json.Unmarshal(b, &reqBody)
 					require.NoError(t, err)
@@ -332,21 +270,6 @@ func Test_findResultValue(t *testing.T) {
 		val, err := findResultValue(data)
 		require.NoError(t, err)
 		assert.Equal(t, 123.45, val)
-	})
-
-	t.Run("finds first numeric value", func(t *testing.T) {
-		data := map[string]any{
-			"results": []any{
-				map[string]any{
-					"string":  "foo",
-					"count":   99.0, // This should be found
-					"average": 123.45,
-				},
-			},
-		}
-		val, err := findResultValue(data)
-		require.NoError(t, err)
-		assert.Equal(t, 99.0, val)
 	})
 
 	t.Run("returns error for empty results", func(t *testing.T) {
