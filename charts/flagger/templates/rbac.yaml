@@ -289,6 +289,14 @@ rules:
       - revisions
     verbs:
       - get
+  - apiGroups:
+      - external.metrics.k8s.io
+    resources:
+      - '*'
+    verbs:
+      - get
+      - watch
+      - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
