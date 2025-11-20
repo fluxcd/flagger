@@ -24,11 +24,12 @@ require (
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 	gopkg.in/h2non/gock.v1 v1.1.2
-	k8s.io/api v0.34.1
-	k8s.io/apimachinery v0.34.1
-	k8s.io/client-go v0.34.1
-	k8s.io/code-generator v0.34.1
+	k8s.io/api v0.34.2
+	k8s.io/apimachinery v0.34.2
+	k8s.io/client-go v0.34.2
+	k8s.io/code-generator v0.34.2
 	k8s.io/klog/v2 v2.130.1
+	k8s.io/metrics v0.34.2
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	knative.dev/serving v0.46.6
 )
