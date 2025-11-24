@@ -33,6 +33,7 @@ type Factory struct {
 	configTracker      Tracker
 	labels             []string
 	includeLabelPrefix []string
+	useServerSideHash  bool
 }
 
 func NewFactory(kubeClient kubernetes.Interface,
@@ -41,6 +42,7 @@ func NewFactory(kubeClient kubernetes.Interface,
 	configTracker Tracker,
 	labels []string,
 	includeLabelPrefix []string,
+	useServerSideHash bool,
 	logger *zap.SugaredLogger) *Factory {
 	return &Factory{
 		kubeClient:         kubeClient,
@@ -50,6 +52,7 @@ func NewFactory(kubeClient kubernetes.Interface,
 		configTracker:      configTracker,
 		labels:             labels,
 		includeLabelPrefix: includeLabelPrefix,
+		useServerSideHash:  useServerSideHash,
 	}
 }
 
@@ -61,6 +64,7 @@ func (factory *Factory) Controller(obj v1beta1.LocalObjectReference) Controller 
 		labels:             factory.labels,
 		configTracker:      factory.configTracker,
 		includeLabelPrefix: factory.includeLabelPrefix,
+		useServerSideHash:  factory.useServerSideHash,
 	}
 	daemonSetCtrl := &DaemonSetController{
 		logger:             factory.logger,

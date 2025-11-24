@@ -64,7 +64,8 @@ func (kc *KnativeController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.C
 	if err != nil {
 		return fmt.Errorf("Knative Service %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
-	return syncCanaryStatus(kc.flaggerClient, cd, status, service.Status.LatestCreatedRevisionName, func(copy *flaggerv1.Canary) {})
+	hash := ComputeHash(service.Status.LatestCreatedRevisionName)
+	return syncCanaryStatus(kc.flaggerClient, cd, status, hash, func(copy *flaggerv1.Canary) {})
 }
 
 // SetStatusFailedChecks updates the canary failed checks counter
