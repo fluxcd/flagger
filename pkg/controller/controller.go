@@ -41,6 +41,7 @@ import (
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	flaggerscheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	flaggerinformers "github.com/fluxcd/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
+	flaggerlisters "github.com/fluxcd/flagger/pkg/client/listers/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/metrics"
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
 	"github.com/fluxcd/flagger/pkg/notifier"
@@ -69,6 +70,9 @@ type Controller struct {
 	canaryFactory        *canary.Factory
 	routerFactory        *router.Factory
 	observerFactory      *observers.Factory
+	alertLister          map[string]flaggerlisters.AlertProviderLister
+	canaryLister         map[string]flaggerlisters.CanaryLister
+	metricLister         map[string]flaggerlisters.MetricTemplateLister
 	meshProvider         string
 	eventWebhook         string
 	clusterName          string
@@ -76,9 +80,9 @@ type Controller struct {
 }
 
 type Informers struct {
-	CanaryInformer flaggerinformers.CanaryInformer
-	MetricInformer flaggerinformers.MetricTemplateInformer
-	AlertInformer  flaggerinformers.AlertProviderInformer
+	CanaryInformers map[string]flaggerinformers.CanaryInformer
+	MetricInformers map[string]flaggerinformers.MetricTemplateInformer
+	AlertInformers  map[string]flaggerinformers.AlertProviderInformer
 }
 
 func NewController(
@@ -111,13 +115,33 @@ func NewController(
 	recorder := metrics.NewRecorder(controllerAgentName, true)
 	recorder.SetInfo(version, meshProvider)
 
+	var allInformersSynced []cache.InformerSynced
+	for _, inf := range flaggerInformers.CanaryInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	for _, inf := range flaggerInformers.MetricInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+	for _, inf := range flaggerInformers.AlertInformers {
+		allInformersSynced = append(allInformersSynced, inf.Informer().HasSynced)
+	}
+
+	flaggerSyncedFunc := func() bool {
+		for _, synced := range allInformersSynced {
+			if !synced() {
+				return false
+			}
+		}
+		return true
+	}
+
 	ctrl := &Controller{
 		kubeConfig:           kubeConfig,
 		kubeClient:           kubeClient,
 		knativeClient:        knativeClient,
 		flaggerClient:        flaggerClient,
 		flaggerInformers:     flaggerInformers,
-		flaggerSynced:        flaggerInformers.CanaryInformer.Informer().HasSynced,
+		flaggerSynced:        flaggerSyncedFunc,
 		workqueue:            workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerAgentName),
 		eventRecorder:        eventRecorder,
 		logger:               logger,
@@ -133,56 +157,71 @@ func NewController(
 		eventWebhook:         eventWebhook,
 		clusterName:          clusterName,
 		noCrossNamespaceRefs: noCrossNamespaceRefs,
+		alertLister:          make(map[string]flaggerlisters.AlertProviderLister),
+		canaryLister:         make(map[string]flaggerlisters.CanaryLister),
+		metricLister:         make(map[string]flaggerlisters.MetricTemplateLister),
 	}
 
-	flaggerInformers.CanaryInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: ctrl.enqueue,
-		UpdateFunc: func(old, new interface{}) {
-			oldCanary, ok := checkCustomResourceType(old, logger)
-			if !ok {
-				return
-			}
-			newCanary, ok := checkCustomResourceType(new, logger)
-			if !ok {
-				return
-			}
+	for ns, inf := range flaggerInformers.CanaryInformers {
+		ctrl.canaryLister[ns] = inf.Lister()
+	}
+	for ns, inf := range flaggerInformers.MetricInformers {
+		ctrl.metricLister[ns] = inf.Lister()
+	}
+	for ns, inf := range flaggerInformers.AlertInformers {
+		ctrl.alertLister[ns] = inf.Lister()
+	}
 
-			if diff := cmp.Diff(newCanary.Spec, oldCanary.Spec); diff != "" {
-				ctrl.logger.Debugf("Diff detected %s.%s %s", oldCanary.Name, oldCanary.Namespace, diff)
-
-				// warn about routing conflicts when service name changes
-				if oldCanary.Spec.Service.Name != "" && oldCanary.Spec.Service.Name != newCanary.Spec.Service.Name {
-					ctrl.logger.With("canary", fmt.Sprintf("%s.%s", oldCanary.Name, oldCanary.Namespace)).
-						Warnf("The service name changed to %s, remove %s objects to avoid routing conflicts",
-							newCanary.Spec.Service.Name, oldCanary.Spec.Service.Name)
-				}
-
-				ctrl.enqueue(new)
-			} else if !newCanary.DeletionTimestamp.IsZero() && hasFinalizer(&newCanary) ||
-				!hasFinalizer(&newCanary) && newCanary.Spec.RevertOnDeletion {
-				// If this was marked for deletion and has finalizers enqueue for finalizing or
-				// if this canary doesn't have finalizers and RevertOnDeletion is true updated speck enqueue
-				ctrl.enqueue(new)
-			}
-
-			// If canary no longer desires reverting, finalizers should be removed
-			if oldCanary.Spec.RevertOnDeletion && !newCanary.Spec.RevertOnDeletion {
-				ctrl.logger.Infof("%s.%s opting out, deleting finalizers", newCanary.Name, newCanary.Namespace)
-				err := ctrl.removeFinalizer(&newCanary)
-				if err != nil {
-					ctrl.logger.Warnf("Failed to remove finalizers for %s.%s: %v", oldCanary.Name, oldCanary.Namespace, err)
+	for _, informer := range flaggerInformers.CanaryInformers {
+		informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+			AddFunc: ctrl.enqueue,
+			UpdateFunc: func(old, new any) {
+				oldCanary, ok := checkCustomResourceType(old, logger)
+				if !ok {
 					return
 				}
-			}
-		},
-		DeleteFunc: func(old interface{}) {
-			r, ok := checkCustomResourceType(old, logger)
-			if ok {
-				ctrl.logger.Infof("Deleting %s.%s from cache", r.Name, r.Namespace)
-				ctrl.canaries.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
-			}
-		},
-	})
+				newCanary, ok := checkCustomResourceType(new, logger)
+				if !ok {
+					return
+				}
+
+				if diff := cmp.Diff(newCanary.Spec, oldCanary.Spec); diff != "" {
+					ctrl.logger.Debugf("Diff detected %s.%s %s", oldCanary.Name, oldCanary.Namespace, diff)
+
+					// warn about routing conflicts when service name changes
+					if oldCanary.Spec.Service.Name != "" && oldCanary.Spec.Service.Name != newCanary.Spec.Service.Name {
+						ctrl.logger.With("canary", fmt.Sprintf("%s.%s", oldCanary.Name, oldCanary.Namespace)).
+							Warnf("The service name changed to %s, remove %s objects to avoid routing conflicts",
+								newCanary.Spec.Service.Name, oldCanary.Spec.Service.Name)
+					}
+
+					ctrl.enqueue(new)
+				} else if !newCanary.DeletionTimestamp.IsZero() && hasFinalizer(&newCanary) ||
+					!hasFinalizer(&newCanary) && newCanary.Spec.RevertOnDeletion {
+					// If this was marked for deletion and has finalizers enqueue for finalizing or
+					// if this canary doesn't have finalizers and RevertOnDeletion is true updated speck enqueue
+					ctrl.enqueue(new)
+				}
+
+				// If canary no longer desires reverting, finalizers should be removed
+				if oldCanary.Spec.RevertOnDeletion && !newCanary.Spec.RevertOnDeletion {
+					ctrl.logger.Infof("%s.%s opting out, deleting finalizers", newCanary.Name, newCanary.Namespace)
+					err := ctrl.removeFinalizer(&newCanary)
+					if err != nil {
+						ctrl.logger.Warnf("Failed to remove finalizers for %s.%s: %v", oldCanary.Name, oldCanary.Namespace, err)
+						return
+					}
+				}
+			},
+			DeleteFunc: func(old any) {
+				r, ok := checkCustomResourceType(old, logger)
+				if ok {
+					ctrl.logger.Infof("Deleting %s.%s from cache", r.Name, r.Namespace)
+					ctrl.canaries.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
+				}
+			},
+		})
+	}
 
 	return ctrl
 }
@@ -194,7 +233,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 
 	c.logger.Info("Starting operator")
 
-	for i := 0; i < threadiness; i++ {
+	for range threadiness {
 		go wait.Until(func() {
 			for c.processNextWorkItem() {
 			}
@@ -222,7 +261,7 @@ func (c *Controller) processNextWorkItem() bool {
 		return false
 	}
 
-	err := func(obj interface{}) error {
+	err := func(obj any) error {
 		defer c.workqueue.Done(obj)
 		var key string
 		var ok bool
@@ -241,7 +280,6 @@ func (c *Controller) processNextWorkItem() bool {
 		c.workqueue.Forget(obj)
 		return nil
 	}(obj)
-
 	if err != nil {
 		utilruntime.HandleError(err)
 		return true
@@ -256,18 +294,33 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-	cd, err := c.flaggerInformers.CanaryInformer.Lister().Canaries(namespace).Get(name)
+
+	// look up the lister for this specific namespace
+	lister, ok := c.canaryLister[namespace]
+	if !ok {
+		// If no specific lister, check for the "all-namespaces" lister
+		lister, ok = c.canaryLister[""]
+		if !ok {
+			utilruntime.HandleError(fmt.Errorf("invalid resource key: %s, no lister for namespace %s or all-namespaces", key, namespace))
+			return nil
+		}
+	}
+
+	// get the object from the correct lister
+	cd, err := lister.Canaries(namespace).Get(name)
 	if errors.IsNotFound(err) {
 		utilruntime.HandleError(fmt.Errorf("%s in work queue no longer exists", key))
 		return nil
 	}
+
+	cd = cd.DeepCopy()
 
 	if err := c.verifyCanary(cd); err != nil {
 		return fmt.Errorf("invalid canary spec: %s", err)
 	}
 
 	// Finalize if canary has been marked for deletion and revert is desired
-	if cd.Spec.RevertOnDeletion && cd.ObjectMeta.DeletionTimestamp != nil {
+	if cd.Spec.RevertOnDeletion && cd.DeletionTimestamp != nil {
 		// If finalizers have been previously removed proceed
 		if !hasFinalizer(cd) {
 			c.logger.Infof("Canary %s.%s has been finalized", cd.Name, cd.Namespace)
@@ -311,14 +364,13 @@ func (c *Controller) syncHandler(key string) error {
 		if err := c.addFinalizer(cd); err != nil {
 			return fmt.Errorf("unable to add finalizer to canary %s.%s: %w", cd.Name, cd.Namespace, err)
 		}
-
 	}
 	c.logger.Infof("Synced %s", key)
 
 	return nil
 }
 
-func (c *Controller) enqueue(obj interface{}) {
+func (c *Controller) enqueue(obj any) {
 	var key string
 	var err error
 	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
@@ -410,7 +462,7 @@ func verifySessionAffinity(canary *flaggerv1.Canary) error {
 	return nil
 }
 
-func checkCustomResourceType(obj interface{}, logger *zap.SugaredLogger) (flaggerv1.Canary, bool) {
+func checkCustomResourceType(obj any, logger *zap.SugaredLogger) (flaggerv1.Canary, bool) {
 	var roll *flaggerv1.Canary
 	var ok bool
 	if roll, ok = obj.(*flaggerv1.Canary); !ok {

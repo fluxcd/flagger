@@ -460,6 +460,60 @@ Reference the template in the canary analysis:
         interval: 1m
 ```
 
+## New Relic NerdGraph
+
+You can create custom metric checks using the New Relic NerdGraph provider, which uses New Relic's GraphQL API for more flexible querying capabilities.
+
+Create a secret with your New Relic API credentials:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: newrelic-nerdgraph
+  namespace: istio-system
+data:
+  newrelic_api_key: your-user-api-key
+  newrelic_account_id: your-account-id
+```
+
+New Relic NerdGraph template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: newrelic-nerdgraph-error-rate
+  namespace: istio-system
+spec:
+  provider:
+    type: newrelic-nerdgraph
+    address: https://api.newrelic.com/graphql  # optional, defaults to this URL
+    secretRef:
+      name: newrelic-nerdgraph
+  query: |
+    SELECT percentage(count(*), WHERE error IS true) 
+    FROM Transaction 
+    WHERE appName = '{{ target }}' 
+    AND `kubernetes.namespace` = '{{ namespace }}'
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "nerdgraph error rate"
+        templateRef:
+          name: newrelic-nerdgraph-error-rate
+          namespace: istio-system
+        thresholdRange:
+          max: 5
+        interval: 1m
+```
+
+The NerdGraph provider automatically wraps your NRQL query with the appropriate GraphQL structure and time window based on the metric interval. The query should return a single numeric value that will be used for the threshold comparison.
+
 ## Graphite
 
 You can create custom metric checks using the Graphite provider.

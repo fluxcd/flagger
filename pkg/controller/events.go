@@ -29,25 +29,25 @@ import (
 	"github.com/fluxcd/flagger/pkg/notifier"
 )
 
-func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...interface{}) {
+func (c *Controller) recordEventInfof(r *flaggerv1.Canary, template string, args ...any) {
 	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeNormal, "Synced", fmt.Sprintf(template, args...))
 	c.sendEventToWebhook(r, corev1.EventTypeNormal, template, args)
 }
 
-func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, args ...interface{}) {
+func (c *Controller) recordEventErrorf(r *flaggerv1.Canary, template string, args ...any) {
 	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Errorf(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 	c.sendEventToWebhook(r, corev1.EventTypeWarning, template, args)
 }
 
-func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...interface{}) {
+func (c *Controller) recordEventWarningf(r *flaggerv1.Canary, template string, args ...any) {
 	c.logger.With("canary", fmt.Sprintf("%s.%s", r.Name, r.Namespace)).Infof(template, args...)
 	c.eventRecorder.Event(r, corev1.EventTypeWarning, "Synced", fmt.Sprintf(template, args...))
 	c.sendEventToWebhook(r, corev1.EventTypeWarning, template, args)
 }
 
-func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template string, args []interface{}) {
+func (c *Controller) sendEventToWebhook(r *flaggerv1.Canary, eventType, template string, args []any) {
 	webhookOverride := false
 	for _, canaryWebhook := range r.GetAnalysis().Webhooks {
 		if canaryWebhook.Type == flaggerv1.EventHook {
@@ -122,8 +122,20 @@ func (c *Controller) alert(canary *flaggerv1.Canary, message string, metadata bo
 			providerNamespace = alert.ProviderRef.Namespace
 		}
 
-		// find alert provider
-		provider, err := c.flaggerInformers.AlertInformer.Lister().AlertProviders(providerNamespace).Get(alert.ProviderRef.Name)
+		// look up the lister for this specific namespace
+		lister, ok := c.alertLister[providerNamespace]
+		if !ok {
+			// if no specific lister, check for the "all-namespaces" lister
+			lister, ok = c.alertLister[""]
+			if !ok {
+				c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+					Errorf("alert provider %s.%s error: no lister for namespace %s or all-namespaces", alert.ProviderRef.Name, providerNamespace, providerNamespace)
+				continue
+			}
+		}
+
+		// get the object from the correct lister
+		provider, err := lister.AlertProviders(providerNamespace).Get(alert.ProviderRef.Name)
 		if err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
 				Errorf("alert provider %s.%s error: %v", alert.ProviderRef.Name, providerNamespace, err)
