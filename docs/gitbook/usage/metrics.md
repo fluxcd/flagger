@@ -326,6 +326,22 @@ Reference the template in the canary analysis:
         interval: 1m
 ```
 
+### Datadog Rate Limits
+
+For bigger setups, you might run into rate limits on the Datadog API. To avoid this,
+you can use the Datadog Cluster Agent to retrieve metrics in batches instead. It will then
+expose these metrics as an external metrics server.
+
+See [Datadog Documentation](https://docs.datadoghq.com/containers/guide/cluster_agent_autoscaling_metrics).
+
+Once you have enabled Datadog's external metrics endpoint and `DatadogMetric` CRD (without
+necessarily using `registerAPIService`), you can use Flagger's
+[External Metrics Provider](#kubernetes-external-metrics) to query the metrics from there.
+
+The server address is usually `datadog-cluster-agent-metrics-server` and exposed on port 8443.
+ExternalMetrics will be named as `datadogmetric@<namespace>:<metricname>`, for example
+`datadogmetric@istio-system:istio-mesh-request-count`.
+
 ## Amazon CloudWatch
 
 You can create custom metric checks using the CloudWatch metrics provider.
@@ -780,4 +796,38 @@ Reference the template in the canary analysis:
         thresholdRange:
           max: 99
         interval: 1m
+```
+
+## Kubernetes External Metrics
+
+You can query an external metrics provider that implements the
+[Kubernetes External Metrics API](https://kubernetes.io/docs/reference/external-api/external-metrics.v1beta1/).
+
+By default, Flagger will use its bound Service Account for authentication. *Optionally* you can provide a Bearer token through a Secret (that must contain a field named `token`) :
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: external-metric-server-token
+  namespace: default
+data:
+  token: your-access-token
+```
+
+External Metrics template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: my-external-metric
+  namespace: default
+spec:
+  provider:
+    type: externalmetrics
+    address: https://external-metrics-server.default.svc.cluster.local:8443
+    secretRef: # Optional
+      name: external-metric-server-token
+  query: webapp-frontend/job-success-rate?labelSelector=env%3Dproduction
 ```

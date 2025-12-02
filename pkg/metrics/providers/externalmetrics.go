@@ -59,7 +59,7 @@ func NewExternalMetricsProvider(metricInterval string,
 		return nil, fmt.Errorf("the Url of the external metric service must be provided")
 	}
 
-	externalMetrics := ExternalMetricsProvider{
+	emp := ExternalMetricsProvider{
 		metricServiceEndpoint: fmt.Sprintf("%s%s", provider.Address, metricServiceEndpointPath),
 		timeout:               5 * time.Second,
 		client:                http.DefaultClient,
@@ -68,13 +68,14 @@ func NewExternalMetricsProvider(metricInterval string,
 	if provider.InsecureSkipVerify {
 		t := http.DefaultTransport.(*http.Transport).Clone()
 		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		externalMetrics.client = &http.Client{Transport: t}
+		emp.client = &http.Client{Transport: t}
 	}
 
 	if b, ok := credentials[applicationBearerToken]; ok {
-		externalMetrics.bearerToken = string(b)
+		emp.bearerToken = string(b)
 	} else {
-		// Read service account token from volume mount
+		// In the absence of a provided token, 
+		// read service account token from volume mount
 		token, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 		if err != nil {
 			return nil, fmt.Errorf("error reading service account token: %w", err)
@@ -82,19 +83,18 @@ func NewExternalMetricsProvider(metricInterval string,
 		if len(token) == 0 {
 			return nil, fmt.Errorf("pod's service account token is empty")
 		}
-		externalMetrics.bearerToken = string(token)
+		emp.bearerToken = string(token)
 	}
 
-	return &externalMetrics, nil
+	return &emp, nil
 }
 
 // RunQuery retrieves the ExternalMetricValue from the ExternalMetricsProvider.metricServiceUrl
 // and returns the first result as a float64
 func (p *ExternalMetricsProvider) RunQuery(query string) (float64, error) {
+	u := fmt.Sprintf("%s%s%s", p.metricServiceEndpoint, namespacesPath, query)
 
-	metricsQueryUrl := fmt.Sprintf("%s%s%s", p.metricServiceEndpoint, namespacesPath, query)
-
-	req, err := http.NewRequest("GET", metricsQueryUrl, nil)
+	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		return 0, fmt.Errorf("error http.NewRequest: %w", err)
 	}
@@ -134,19 +134,19 @@ func (p *ExternalMetricsProvider) RunQuery(query string) (float64, error) {
 }
 
 // IsOnline will only check the TCP endpoint reachability,
-// given that external metric servers don't have a common health check endpoint defined
+// given that external metric servers don't have a standard health check endpoint defined
 func (p *ExternalMetricsProvider) IsOnline() (bool, error) {
 	var d net.Dialer
 
 	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
 
-	metricServiceUrl, err := url.Parse(p.metricServiceEndpoint)
+	u, err := url.Parse(p.metricServiceEndpoint)
 	if err != nil {
 		return false, fmt.Errorf("error parsing metric service url: %w", err)
 	}
 
-	conn, err := d.DialContext(ctx, "tcp", metricServiceUrl.Host)
+	conn, err := d.DialContext(ctx, "tcp", u.Host)
 	defer conn.Close()
 	if err != nil {
 		return false, fmt.Errorf("connection failed: %w", err)

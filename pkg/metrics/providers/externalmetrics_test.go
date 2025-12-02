@@ -53,7 +53,7 @@ func TestNewExternalMetricsProvider(t *testing.T) {
 		applicationBearerToken: []byte(testBearerToken),
 	}
 
-	providermetric:= flaggerv1.MetricTemplateProvider{
+	providermetric := flaggerv1.MetricTemplateProvider{
 		Address:            testMetricServerAddress,
 		InsecureSkipVerify: false,
 	}
