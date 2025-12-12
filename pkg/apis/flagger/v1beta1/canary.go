@@ -241,12 +241,38 @@ type CanaryService struct {
 	// Flagger will not add, remove or change the value of these annotations.
 	// +optional
 	UnmanagedMetadata *UnmanagedMetadata `json:"unmanagedMetadata,omitempty"`
+
+	// For service with more than 1 port->targetPort mappings, which can't be done
+	// with `PortDiscovery`. Should work with providers that support multiple
+	// ports, e.g. Istio and Linkerd.
+	// When this field is set, it will override the fields `Port` / `PortName` /
+	// `TargetPort` / `AppProtocol` / `PortDiscovery`.
+	// +optional
+	Ports []ServicePort `json:"ports,omitempty"`
 }
 
 // UnmanagedMetadata is a list of metadata keys that should be ignored by Flagger.
 type UnmanagedMetadata struct {
 	Annotations []string `json:"annotations,omitempty"`
 	Labels      []string `json:"labels,omitempty"`
+}
+
+type ServicePort struct {
+	// Port of the generated Kubernetes service
+	Port int32 `json:"port"`
+
+	// Port name of the generated Kubernetes service
+	PortName string `json:"portName"`
+
+	// Target port number or name of the generated Kubernetes service
+	// Defaults to CanaryService.Port
+	// +optional
+	TargetPort intstr.IntOrString `json:"targetPort,omitempty"`
+
+	// AppProtocol of the service
+	// https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol
+	// +optional
+	AppProtocol string `json:"appProtocol,omitempty"`
 }
 
 // CanaryAnalysis is used to describe how the analysis should be done
