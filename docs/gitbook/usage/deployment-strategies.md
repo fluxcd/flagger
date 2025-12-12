@@ -474,7 +474,7 @@ can also configure stickiness for the Primary deployment. You can configure this
       primaryCookieName: primary-flagger-cookie
 ```
 
-> Note: This is only supported for the Gateway API provider for now.
+> Note: This is only supported for the Gateway API and Istio providers for now.
 
 Let's understand what the above configuration does. All the session affinity stuff in the above section
 still occurs, but now the response header for requests routed to the primary deployment also include a
