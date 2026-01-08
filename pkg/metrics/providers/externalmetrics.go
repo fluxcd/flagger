@@ -40,7 +40,7 @@ const (
 	applicationBearerToken = "token"
 )
 
-// ExternalMetricsProvider executes datadog queries
+// ExternalMetricsProvider fetches metrics from an ExternalMetricsProvider.
 type ExternalMetricsProvider struct {
 	metricServiceEndpoint string
 	bearerToken           string
