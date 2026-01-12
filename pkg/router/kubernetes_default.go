@@ -85,7 +85,7 @@ func (c *KubernetesDefaultRouter) GetRoutes(_ *flaggerv1.Canary) (primaryRoute i
 	return 0, 0, nil
 }
 
-func (c *KubernetesDefaultRouter) getApexServicePort(canary *flaggerv1.Canary) corev1.ServicePort {
+func (c *KubernetesDefaultRouter) getDefaultServicePorts(canary *flaggerv1.Canary) []corev1.ServicePort {
 	portName := canary.Spec.Service.PortName
 	if portName == "" {
 		portName = "http"
@@ -111,12 +111,10 @@ func (c *KubernetesDefaultRouter) getApexServicePort(canary *flaggerv1.Canary) c
 		cp.AppProtocol = &v
 	}
 
-	return cp
-}
+	// apex port
+	ports := []corev1.ServicePort{cp}
 
-func (c *KubernetesDefaultRouter) getDiscoveryServicePorts(canary *flaggerv1.Canary) []corev1.ServicePort {
-	var ports []corev1.ServicePort
-
+	// additional ports from PortDiscovery
 	for n, p := range c.ports {
 		cp := corev1.ServicePort{
 			Name:     n,
@@ -168,12 +166,7 @@ func (c *KubernetesDefaultRouter) getExplicitServicePorts(canary *flaggerv1.Cana
 
 func (c *KubernetesDefaultRouter) getServicePorts(canary *flaggerv1.Canary) []corev1.ServicePort {
 	if len(canary.Spec.Service.Ports) == 0 {
-		return append(
-			[]corev1.ServicePort{
-				c.getApexServicePort(canary),
-			},
-			c.getDiscoveryServicePorts(canary)...,
-		)
+		return c.getDefaultServicePorts(canary)
 	} else {
 		return c.getExplicitServicePorts(canary)
 	}
