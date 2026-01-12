@@ -262,7 +262,7 @@ type ServicePort struct {
 	Port int32 `json:"port"`
 
 	// Port name of the generated Kubernetes service
-	PortName string `json:"portName"`
+	PortName string `json:"portName,omitempty"`
 
 	// Target port number or name of the generated Kubernetes service
 	// Defaults to CanaryService.Port
