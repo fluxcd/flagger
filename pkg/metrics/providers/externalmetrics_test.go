@@ -17,178 +17,213 @@ limitations under the License.
 package providers
 
 import (
-	json2 "encoding/json"
-	"errors"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/inf.v0"
 	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	"k8s.io/metrics/pkg/apis/external_metrics"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8stesting "k8s.io/client-go/testing"
+	emv1beta1 "k8s.io/metrics/pkg/apis/external_metrics/v1beta1"
+	fakeemc "k8s.io/metrics/pkg/client/external_metrics/fake"
 )
 
 const (
-	testMetricValue         = 1.11111
 	testMetricName          = "myMetric"
 	testMetricNamespace     = "default"
-	testBearerToken         = "mytoken"
 	testMetricServerAddress = "https://external-metrics.default.svc.cluster.local"
+	testQuery               = "default/myMetric?labelSelector=label1%3Dvalue1"
 )
 
 var (
 	testMetricLabels       = [...]string{"label1"}
 	testMetricLabelsValues = [...]string{"value1"}
+	// 11111e-4 = 1.1111
+	testMetricValue = resource.NewDecimalQuantity(*inf.NewDec(11111, 4), resource.DecimalSI)
 )
 
-func TestNewExternalMetricsProvider(t *testing.T) {
-	cred := map[string][]byte{
-		applicationBearerToken: []byte(testBearerToken),
+func TestExternalMetrics_NewProvider(t *testing.T) {
+	tests := []struct {
+		name               string
+		Address            string
+		InsecureSkipVerify bool
+		creds              map[string][]byte
+		builderFunc        func() (*rest.Config, error)
+		wantErr            bool
+	}{
+		{
+			name:               "Custom provider address and token",
+			Address:            testMetricServerAddress,
+			InsecureSkipVerify: false,
+			creds: map[string][]byte{
+				"token": []byte("test-token"),
+			},
+			builderFunc: func() (*rest.Config, error) { return &rest.Config{}, nil },
+			wantErr:     false,
+		},
+		{
+			name:               "In cluster, automatic address and token",
+			Address:            "",
+			InsecureSkipVerify: true,
+			creds:              map[string][]byte{},
+			builderFunc: func() (*rest.Config, error) {
+				return &rest.Config{
+					Host:            "https://kubernetes.default.svc",
+					BearerToken:     "fake-token",
+					TLSClientConfig: rest.TLSClientConfig{Insecure: true},
+				}, nil
+			},
+			wantErr: false,
+		},
 	}
 
-	providermetric := flaggerv1.MetricTemplateProvider{
-		Address:            testMetricServerAddress,
-		InsecureSkipVerify: false,
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mtp := flaggerv1.MetricTemplateProvider{
+				Address:            tt.Address,
+				InsecureSkipVerify: tt.InsecureSkipVerify,
+			}
+			emp, err := newExternalMetricsProviderWithBuilder(mtp, tt.creds, tt.builderFunc)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, emp)
+			assert.Equal(t, 5*time.Second, emp.timeout)
+		})
+	}
+}
+
+func TestExternalMetrics_ParseQuery(t *testing.T) {
+	tests := []struct {
+		name              string
+		query             string
+		wantNamespace     string
+		wantMetricName    string
+		wantLabelSelector string
+		wantErr           bool
+	}{
+		{
+			name:              "General case",
+			query:             testQuery,
+			wantNamespace:     testMetricNamespace,
+			wantMetricName:    testMetricName,
+			wantLabelSelector: labels.Set{testMetricLabels[0]: testMetricLabelsValues[0]}.AsSelector().String(),
+			wantErr:           false,
+		},
+		{
+			name:              "Still OK without labelSelector",
+			query:             testQuery[:strings.Index(testQuery, "?")],
+			wantNamespace:     testMetricNamespace,
+			wantMetricName:    testMetricName,
+			wantLabelSelector: labels.Everything().String(),
+			wantErr:           false,
+		},
+		{
+			name:              "No namespace uses default",
+			query:             "/metric_only",
+			wantNamespace:     "default",
+			wantMetricName:    "metric_only",
+			wantLabelSelector: labels.Everything().String(),
+			wantErr:           false,
+		},
+		{
+			name:    "Missing metric name - namespaceonly",
+			query:   "namespaceonly/",
+			wantErr: true,
+		},
+		{
+			name:    "Missing metric name - slash only",
+			query:   "/",
+			wantErr: true,
+		},
+		{
+			name:    "Missing metric name - empty",
+			query:   "",
+			wantErr: true,
+		},
 	}
 
-	// Should be OK
-	emp, err := NewExternalMetricsProvider("100s", provider, cred)
-	require.NoError(t, err)
-
-	assert.Equal(t, fmt.Sprintf("%s/apis/external.metrics.k8s.io/v1beta1", testMetricServerAddress), emp.metricServiceEndpoint)
-	assert.Equal(t, 5*time.Second, emp.timeout)
-	assert.Equal(t, testBearerToken, emp.bearerToken)
-
-	// No token and none in the filesystem
-	_, err = NewExternalMetricsProvider("100s", provider, map[string][]byte{})
-	require.Error(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotNamespace, gotMetricName, gotLabelSelector, err := parseExternalMetricsQuery(tt.query)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantNamespace, gotNamespace)
+				assert.Equal(t, tt.wantMetricName, gotMetricName)
+				assert.Equal(t, tt.wantLabelSelector, gotLabelSelector.String())
+			}
+		})
+	}
 }
 
 func TestExternalMetrics_RunQuery(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		eq := fmt.Sprintf("%s/%s?%s=%s", testMetricNamespace, testMetricName, testMetricLabels[0], testMetricLabelsValues[0])
-
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			aq := fmt.Sprintf("%s?%s", r.URL.EscapedPath(), r.URL.RawQuery)
-			assert.Equal(t, fmt.Sprintf("%s%s%s", metricServiceEndpointPath, namespacesPath, eq), aq)
-			assert.Equal(t, fmt.Sprintf("Bearer %s", testBearerToken), r.Header.Get(autorisationHeaderKey))
-
-			q, err := resource.ParseQuantity(strconv.FormatFloat(testMetricValue, 'f', -1, 64))
-			assert.NoError(t, err)
-
-			ret := &external_metrics.ExternalMetricValueList{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: "external.metrics.k8s.io/v1beta1",
-					Kind:       "ExternalMetricValueList",
-				},
-				ListMeta: v1.ListMeta{},
-				Items: []external_metrics.ExternalMetricValue{
-					{
-						MetricName: testMetricName,
-						MetricLabels: map[string]string{
-							testMetricLabels[0]: testMetricLabelsValues[0],
-						},
-						Value: q,
+	fakeExternalMetricsClient := fakeemc.FakeExternalMetricsClient{}
+	fakeExternalMetricsClient.Fake.AddReactor("list", "*", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &emv1beta1.ExternalMetricValueList{
+			Items: []emv1beta1.ExternalMetricValue{
+				{
+					MetricName: testMetricName,
+					Value:      *testMetricValue,
+					MetricLabels: map[string]string{
+						testMetricLabels[0]: testMetricLabelsValues[0],
 					},
+					Timestamp: metav1.Now(),
 				},
-			}
-			json, err := json2.Marshal(ret)
-			assert.NoError(t, err)
-			w.Write(json)
-		}))
-		defer ts.Close()
-
-		dp, err := NewExternalMetricsProvider("1m",
-			flaggerv1.MetricTemplateProvider{Address: ts.URL},
-			map[string][]byte{
-				applicationBearerToken: []byte(testBearerToken),
 			},
-		)
-		require.NoError(t, err)
-
-		f, err := dp.RunQuery(eq)
-		require.NoError(t, err)
-		assert.Equal(t, testMetricValue, f)
+		}, nil
 	})
 
-	t.Run("no values", func(t *testing.T) {
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ret := &external_metrics.ExternalMetricValueList{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: "external.metrics.k8s.io/v1beta1",
-					Kind:       "ExternalMetricValueList",
-				},
-				ListMeta: v1.ListMeta{},
-				Items:    []external_metrics.ExternalMetricValue{},
-			}
-			json, err := json2.Marshal(ret)
-			assert.NoError(t, err)
-			w.Write(json)
-		}))
-		defer ts.Close()
+	emp := &ExternalMetricsProvider{
+		timeout: 5 * time.Second,
+		client:  &fakeExternalMetricsClient,
+	}
 
-		dp, err := NewExternalMetricsProvider("1m",
-			flaggerv1.MetricTemplateProvider{Address: ts.URL},
-			map[string][]byte{},
-		)
-		require.NoError(t, err)
-		_, err = dp.RunQuery("")
-		require.True(t, errors.Is(err, ErrNoValuesFound))
-	})
-	t.Run("TLS verify", func(t *testing.T) {
-		ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			v := resource.MustParse("1")
-			ret := &external_metrics.ExternalMetricValueList{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: "external.metrics.k8s.io/v1beta1",
-					Kind:       "ExternalMetricValueList",
-				},
-				ListMeta: v1.ListMeta{},
-				Items: []external_metrics.ExternalMetricValue{
-					{
-						MetricName: testMetricName,
-						MetricLabels: map[string]string{
-							testMetricLabels[0]: testMetricLabelsValues[0],
-						},
-						Value: v,
-					},
-				},
-			}
-			json, err := json2.Marshal(ret)
-			assert.NoError(t, err)
-			w.Write(json)
-		}))
-		defer ts.Close()
+	tests := []struct {
+		name  string
+		query string
+	}{
+		{
+			name:  "Full query with label selector",
+			query: testQuery,
+		},
+		{
+			name:  "Namespace and metric only",
+			query: "namespace/" + testMetricName,
+		},
+		{
+			name:  "Metric only, default namespace",
+			query: testMetricName,
+		},
+	}
 
-		// verify that there's an error without InsecureSkipVerify
-		dp, err := NewExternalMetricsProvider("1m",
-			flaggerv1.MetricTemplateProvider{
-				Address:            ts.URL,
-				InsecureSkipVerify: false,
-			},
-			map[string][]byte{},
-		)
-		require.NoError(t, err)
-		_, err = dp.RunQuery("")
-		require.Error(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := emp.RunQuery(tt.query)
+			require.NoError(t, err)
+			assert.Equal(t, testMetricValue.AsApproximateFloat64(), f)
+		})
+	}
+}
 
-		// Now verify that there's no error when skipping TLS verification
-		dp, err = NewExternalMetricsProvider("1m",
-			flaggerv1.MetricTemplateProvider{
-				Address:            ts.URL,
-				InsecureSkipVerify: true,
-			},
-			map[string][]byte{},
-		)
-		require.NoError(t, err)
-		_, err = dp.RunQuery("")
-		require.NoError(t, err)
-	})
+func TestExternalMetrics_IsOnline(t *testing.T) {
+	emp := &ExternalMetricsProvider{
+		timeout: 5 * time.Second,
+		client:  &fakeemc.FakeExternalMetricsClient{},
+	}
+
+	online, err := emp.IsOnline()
+	require.NoError(t, err)
+	assert.True(t, online)
 }

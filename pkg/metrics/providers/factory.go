@@ -30,7 +30,7 @@ func (factory Factory) Provider(metricInterval string, provider flaggerv1.Metric
 	case "datadog":
 		return NewDatadogProvider(metricInterval, provider, credentials)
 	case "externalmetrics":
-		return NewExternalMetricsProvider(metricInterval, provider, credentials)
+		return NewExternalMetricsProvider(provider, credentials)
 	case "cloudwatch":
 		return NewCloudWatchProvider(metricInterval, provider)
 	case "newrelic":
