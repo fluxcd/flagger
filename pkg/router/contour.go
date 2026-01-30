@@ -46,7 +46,6 @@ type ContourRouter struct {
 
 // Reconcile creates or updates the HTTP proxy
 func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
-	const annotation = "projectcontour.io/ingress.class"
 
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
@@ -163,6 +162,10 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 	}
 	newMetadata.Annotations = filterMetadata(newMetadata.Annotations)
 
+	if cr.ingressClass != "" {
+		newSpec.IngressClassName = cr.ingressClass
+	}
+
 	proxy, err := cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		proxy = &contourv1.HTTPProxy{
@@ -189,10 +192,7 @@ func (cr *ContourRouter) Reconcile(canary *flaggerv1.Canary) error {
 		}
 
 		if cr.ingressClass != "" {
-			if proxy.Annotations == nil {
-				proxy.Annotations = make(map[string]string)
-			}
-			proxy.Annotations[annotation] = cr.ingressClass
+			proxy.Spec.IngressClassName = cr.ingressClass
 		}
 
 		_, err = cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Create(context.TODO(), proxy, metav1.CreateOptions{})
@@ -380,6 +380,10 @@ func (cr *ContourRouter) SetRoutes(
 				},
 			},
 		}
+	}
+
+	if cr.ingressClass != "" {
+		proxy.Spec.IngressClassName = cr.ingressClass
 	}
 
 	_, err = cr.contourClient.ProjectcontourV1().HTTPProxies(canary.Namespace).Update(context.TODO(), proxy, metav1.UpdateOptions{})
