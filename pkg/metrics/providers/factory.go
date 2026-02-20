@@ -41,6 +41,8 @@ func (factory Factory) Provider(metricInterval string, provider flaggerv1.Metric
 		return NewInfluxdbProvider(provider, credentials)
 	case "dynatrace":
 		return NewDynatraceProvider(metricInterval, provider, credentials)
+	case "dynatraceDQL":
+		return NewDynatraceDQLProvider(metricInterval, provider, credentials)
 	case "keptn":
 		return NewKeptnProvider(config)
 	case "splunk":
