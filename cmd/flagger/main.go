@@ -112,7 +112,7 @@ func init() {
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
 	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object.")
-	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, contour, knative, gloo, nginx, skipper, traefik, apisix, osm or kuma.")
+	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be apisix, appmesh, appmesh:v1beta2, contour, gatewayapi:v1, gatewayapi:v1beta1, gloo, istio, knative, kubernetes, kuma, linkerd, nginx, osm, skipper, smi:v1alpha1, smi:v1alpha2, smi:v1alpha3, or traefik.")
 	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors.")
 	flag.StringVar(&ingressAnnotationsPrefix, "ingress-annotations-prefix", "nginx.ingress.kubernetes.io", "Annotations prefix for NGINX ingresses.")
 	flag.StringVar(&ingressClass, "ingress-class", "", "Ingress class used for annotating HTTPProxy objects.")
