@@ -204,6 +204,11 @@ deploymentLabels: { }
 noCrossNamespaceRefs: false
 
 #Placeholder to supply additional volumes to the flagger pod
-additionalVolumes: {}
+additionalVolumes: []
   # - name: tmpfs
   #   emptyDir: {}
+
+# Placeholder to supply additional volume mounts to the flagger container
+additionalVolumeMounts: []
+  # - name: tmpfs
+  #   mountPath: /tmp
