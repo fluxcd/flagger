@@ -38,6 +38,7 @@ type Factory struct {
 	ingressClass             string
 	logger                   *zap.SugaredLogger
 	setOwnerRefs             bool
+	clusterManager           *ClusterManager
 }
 
 func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
@@ -47,7 +48,8 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 	ingressClass string,
 	logger *zap.SugaredLogger,
 	meshClient clientset.Interface,
-	setOwnerRefs bool) *Factory {
+	setOwnerRefs bool,
+	clusterManager *ClusterManager) *Factory {
 	return &Factory{
 		kubeConfig:               kubeConfig,
 		meshClient:               meshClient,
@@ -58,6 +60,7 @@ func NewFactory(kubeConfig *restclient.Config, kubeClient kubernetes.Interface,
 		ingressClass:             ingressClass,
 		logger:                   logger,
 		setOwnerRefs:             setOwnerRefs,
+		clusterManager:           clusterManager,
 	}
 }
 
@@ -109,11 +112,12 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 		}
 	case provider == flaggerv1.IstioProvider:
 		return &IstioRouter{
-			logger:        factory.logger,
-			flaggerClient: factory.flaggerClient,
-			kubeClient:    factory.kubeClient,
-			istioClient:   factory.meshClient,
-			setOwnerRefs:  factory.setOwnerRefs,
+			logger:         factory.logger,
+			flaggerClient:  factory.flaggerClient,
+			kubeClient:     factory.kubeClient,
+			istioClients:   factory.getMeshClients(),
+			setOwnerRefs:   factory.setOwnerRefs,
+			clusterManager: factory.clusterManager,
 		}
 	case strings.HasPrefix(provider, flaggerv1.SMIProvider+":v1alpha1"):
 		mesh := strings.TrimPrefix(provider, flaggerv1.SMIProvider+":v1alpha1:")
@@ -225,11 +229,24 @@ func (factory *Factory) MeshRouter(provider string, labelSelector string) Interf
 		return &NopRouter{}
 	default:
 		return &IstioRouter{
-			logger:        factory.logger,
-			flaggerClient: factory.flaggerClient,
-			kubeClient:    factory.kubeClient,
-			istioClient:   factory.meshClient,
-			setOwnerRefs:  factory.setOwnerRefs,
+			logger:         factory.logger,
+			flaggerClient:  factory.flaggerClient,
+			kubeClient:     factory.kubeClient,
+			istioClients:   factory.getMeshClients(),
+			setOwnerRefs:   factory.setOwnerRefs,
+			clusterManager: factory.clusterManager,
 		}
 	}
+}
+
+func (factory *Factory) getMeshClients() []clientset.Interface {
+	if factory.clusterManager != nil {
+		return factory.clusterManager.GetClients()
+	}
+	return []clientset.Interface{factory.meshClient}
+}
+
+// IsMultiClusterEnabled returns true if multi-cluster support is enabled
+func (factory *Factory) IsMultiClusterEnabled() bool {
+	return factory.clusterManager != nil
 }
