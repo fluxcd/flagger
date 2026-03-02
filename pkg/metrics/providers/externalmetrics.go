@@ -30,7 +30,6 @@ import (
 
 // ExternalMetricsProvider fetches metrics from an ExternalMetricsProvider.
 type ExternalMetricsProvider struct {
-	timeout time.Duration
 	client  externalmetrics_client.NamespacedMetricsGetter
 }
 
@@ -60,13 +59,12 @@ func newExternalMetricsProviderWithBuilder(
 	if provider.Address != "" {
 		restConfig.Host = provider.Address
 	}
-	restConfig.TLSClientConfig = rest.TLSClientConfig{
-		Insecure: provider.InsecureSkipVerify,
-	}
+	restConfig.TLSClientConfig.Insecure = provider.InsecureSkipVerify
 	if tokenBytes, ok := credentials["token"]; ok {
 		restConfig.BearerToken = string(tokenBytes)
 	}
-	// TODO: handle user name/password auth if needed
+
+	restConfig.Timeout = 5 * time.Second
 
 	client, err := externalmetrics_client.NewForConfig(restConfig)
 	if err != nil {
@@ -74,7 +72,6 @@ func newExternalMetricsProviderWithBuilder(
 	}
 
 	return &ExternalMetricsProvider{
-		timeout: 5 * time.Second,
 		client:  client,
 	}, nil
 }
@@ -83,7 +80,6 @@ func newExternalMetricsProviderWithBuilder(
 // at the ExternalMetricsProvider's address, using the provided query string,
 // and returns the *first* result as a float64.
 func (p *ExternalMetricsProvider) RunQuery(query string) (float64, error) {
-	// The Provider interface only allows a plain string query so decode it
 	namespace, metricName, selector, err := parseExternalMetricsQuery(query)
 	if err != nil {
 		return 0, fmt.Errorf("error parsing metric query: %w", err)
@@ -121,6 +117,7 @@ func (p *ExternalMetricsProvider) IsOnline() (bool, error) {
 // where only the metricName is required.
 // and returns the namespace, metricName, and labelSelector separately.
 func parseExternalMetricsQuery(query string) (namespace string, metricName string, labelSelector labels.Selector, err error) {
+	// Adding a dummy protocol so we can leverage url.Parse for parsing the query string, easily extracting the path and query parameters.
 	u, err := url.Parse("dummy:///" + query)
 	if err != nil {
 		return "", "", labels.Everything(), fmt.Errorf("malformed query string, expected <namespace>/<metricName>?labelSelector=<urlencoded label selectors>, got %s", query)

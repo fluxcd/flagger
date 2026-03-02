@@ -98,7 +98,6 @@ func TestExternalMetrics_NewProvider(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, emp)
-			assert.Equal(t, 5*time.Second, emp.timeout)
 		})
 	}
 }
@@ -186,7 +185,6 @@ func TestExternalMetrics_RunQuery(t *testing.T) {
 	})
 
 	emp := &ExternalMetricsProvider{
-		timeout: 5 * time.Second,
 		client:  &fakeExternalMetricsClient,
 	}
 
@@ -219,7 +217,6 @@ func TestExternalMetrics_RunQuery(t *testing.T) {
 
 func TestExternalMetrics_IsOnline(t *testing.T) {
 	emp := &ExternalMetricsProvider{
-		timeout: 5 * time.Second,
 		client:  &fakeemc.FakeExternalMetricsClient{},
 	}
 
