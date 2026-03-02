@@ -80,7 +80,7 @@ func newExternalMetricsProviderWithBuilder(
 }
 
 // RunQuery retrieves the ExternalMetricValue from the External Metrics API
-// at the ExternalMetricsProvider's Address, using the provided query string,
+// at the ExternalMetricsProvider's address, using the provided query string,
 // and returns the *first* result as a float64.
 func (p *ExternalMetricsProvider) RunQuery(query string) (float64, error) {
 	// The Provider interface only allows a plain string query so decode it
