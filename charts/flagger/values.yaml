@@ -207,3 +207,6 @@ noCrossNamespaceRefs: false
 additionalVolumes: {}
   # - name: tmpfs
   #   emptyDir: {}
+
+# Array of extra objects to deploy with the release
+extraDeploy: []
