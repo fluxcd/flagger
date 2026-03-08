@@ -179,27 +179,33 @@ func TestScheduler_DeploymentAnalysisPhases(t *testing.T) {
 	// detect changes
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+	require.NoError(t, assertCanaryWeight(mocks.flaggerClient, "podinfo", 0))
 	mocks.makeCanaryReady(t)
 
 	// progressing
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+	require.NoError(t, assertCanaryWeight(mocks.flaggerClient, "podinfo", 100))
 
 	// start promotion
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting))
+	require.NoError(t, assertCanaryWeight(mocks.flaggerClient, "podinfo", 100))
 
 	// end promotion
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhasePromoting))
+	require.NoError(t, assertCanaryWeight(mocks.flaggerClient, "podinfo", 50))
 
 	// finalising
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseFinalising))
+	require.NoError(t, assertCanaryWeight(mocks.flaggerClient, "podinfo", 0))
 
 	// succeeded
 	mocks.ctrl.advanceCanary("podinfo", "default")
 	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseSucceeded))
+	require.NoError(t, assertCanaryWeight(mocks.flaggerClient, "podinfo", 0))
 }
 
 func TestScheduler_DeploymentBlueGreenAnalysisPhases(t *testing.T) {
