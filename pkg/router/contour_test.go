@@ -50,7 +50,7 @@ func TestContourRouter_Reconcile(t *testing.T) {
 	require.Len(t, services, 2)
 	assert.Equal(t, int64(100), services[0].Weight)
 	assert.Equal(t, int64(0), services[1].Weight)
-	assert.Equal(t, "contour", proxy.Annotations["projectcontour.io/ingress.class"])
+	assert.Equal(t, "contour", proxy.Spec.IngressClassName)
 
 	// test update
 	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
