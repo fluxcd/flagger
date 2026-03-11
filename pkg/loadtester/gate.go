@@ -16,7 +16,12 @@ limitations under the License.
 
 package loadtester
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+)
 
 type GateStorage struct {
 	backend string
@@ -44,4 +49,16 @@ func (gs *GateStorage) isOpen(key string) (locked bool) {
 		return val.(bool)
 	}
 	return
+}
+
+func gateKey(payload *flaggerv1.CanaryWebhookPayload) string {
+	key := fmt.Sprintf("%s.%s", payload.Name, payload.Namespace)
+	if payload.Checksum != "" {
+		return fmt.Sprintf("%s.%s", key, payload.Checksum)
+	}
+	return key
+}
+
+func rollbackKey(payload *flaggerv1.CanaryWebhookPayload) string {
+	return fmt.Sprintf("rollback.%s", gateKey(payload))
 }
