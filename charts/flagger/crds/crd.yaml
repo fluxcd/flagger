@@ -1354,6 +1354,7 @@ spec:
                         - dynatrace
                         - keptn
                         - splunk
+                        - signoz
                     address:
                       description: API address of this provider
                       type: string
