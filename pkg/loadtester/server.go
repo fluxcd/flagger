@@ -66,7 +66,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
-		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		canaryName := gateKey(canary)
 		approved := gate.isOpen(canaryName)
 		if approved {
 			w.WriteHeader(http.StatusOK)
@@ -102,7 +102,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
-		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		canaryName := gateKey(canary)
 		gate.open(canaryName)
 
 		w.WriteHeader(http.StatusAccepted)
@@ -133,7 +133,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
-		canaryName := fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)
+		canaryName := gateKey(canary)
 		gate.close(canaryName)
 
 		w.WriteHeader(http.StatusAccepted)
@@ -164,7 +164,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
-		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
+		canaryName := rollbackKey(canary)
 		approved := gate.isOpen(canaryName)
 		if approved {
 			w.WriteHeader(http.StatusOK)
@@ -199,7 +199,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
-		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
+		canaryName := rollbackKey(canary)
 		gate.open(canaryName)
 
 		w.WriteHeader(http.StatusAccepted)
@@ -229,7 +229,7 @@ func ListenAndServe(port string, timeout time.Duration, logger *zap.SugaredLogge
 			return
 		}
 
-		canaryName := fmt.Sprintf("rollback.%s.%s", canary.Name, canary.Namespace)
+		canaryName := rollbackKey(canary)
 		gate.close(canaryName)
 
 		w.WriteHeader(http.StatusAccepted)

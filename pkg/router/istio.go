@@ -40,11 +40,12 @@ import (
 
 // IstioRouter is managing Istio virtual services
 type IstioRouter struct {
-	kubeClient    kubernetes.Interface
-	istioClient   clientset.Interface
-	flaggerClient clientset.Interface
-	logger        *zap.SugaredLogger
-	setOwnerRefs  bool
+	kubeClient     kubernetes.Interface
+	istioClients   []clientset.Interface
+	flaggerClient  clientset.Interface
+	logger         *zap.SugaredLogger
+	setOwnerRefs   bool
+	clusterManager *ClusterManager
 }
 
 const cookieHeader = "Cookie"
@@ -53,31 +54,65 @@ const maxAgeAttr = "Max-Age"
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
+// resolveNamespace checks if a namespace exists on a remote cluster.
+// For the local cluster, always returns the original namespace.
+func (ir *IstioRouter) resolveNamespace(cluster MultiClusterClient, namespace string) string {
+	if ir.clusterManager != nil {
+		return ir.clusterManager.ResolveNamespace(cluster, namespace)
+	}
+	return namespace
+}
+
 // Reconcile creates or updates the Istio virtual service and destination rules
 func (ir *IstioRouter) Reconcile(canary *flaggerv1.Canary) error {
+	clusters := ir.getClusters()
+	if len(clusters) == 0 {
+		return fmt.Errorf("no Istio clients available")
+	}
+
+	// Local cluster (first client) — must succeed
+	if err := ir.reconcileWithClient(canary, clusters[0].IstioClient); err != nil {
+		return err
+	}
+
+	// Remote clusters — best effort, with automated namespace creation
+	for i := 1; i < len(clusters); i++ {
+		ns := ir.resolveNamespace(clusters[i], canary.Namespace)
+		remoteCanary := canary.DeepCopy()
+		remoteCanary.Namespace = ns
+		if err := ir.reconcileWithClient(remoteCanary, clusters[i].IstioClient); err != nil {
+			ir.logger.Warnf("Multi-cluster: failed to reconcile on remote cluster %d: %v", i, err)
+		} else {
+			ir.logger.Infof("Multi-cluster: successfully reconciled on remote cluster %d in namespace %s", i, ns)
+		}
+	}
+	return nil
+}
+
+func (ir *IstioRouter) reconcileWithClient(canary *flaggerv1.Canary, istioClient clientset.Interface) error {
 	_, primaryName, canaryName := canary.GetServiceNames()
 
-	if err := ir.reconcileDestinationRule(canary, canaryName); err != nil {
+	if err := ir.reconcileDestinationRule(canary, canaryName, istioClient); err != nil {
 		return fmt.Errorf("reconcileDestinationRule failed: %w", err)
 	}
 
-	if err := ir.reconcileDestinationRule(canary, primaryName); err != nil {
+	if err := ir.reconcileDestinationRule(canary, primaryName, istioClient); err != nil {
 		return fmt.Errorf("reconcileDestinationRule failed: %w", err)
 	}
 
-	if err := ir.reconcileVirtualService(canary); err != nil {
+	if err := ir.reconcileVirtualService(canary, istioClient); err != nil {
 		return fmt.Errorf("reconcileVirtualService failed: %w", err)
 	}
 	return nil
 }
 
-func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name string) error {
+func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name string, istioClient clientset.Interface) error {
 	newSpec := istiov1beta1.DestinationRuleSpec{
 		Host:          name,
 		TrafficPolicy: canary.Spec.Service.TrafficPolicy,
 	}
 
-	destinationRule, err := ir.istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	destinationRule, err := istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
 		destinationRule = &istiov1beta1.DestinationRule{
@@ -96,7 +131,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 				}),
 			}
 		}
-		_, err = ir.istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Create(context.TODO(), destinationRule, metav1.CreateOptions{})
+		_, err = istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Create(context.TODO(), destinationRule, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("DestinationRule %s.%s create error: %w", name, canary.Namespace, err)
 		}
@@ -112,7 +147,7 @@ func (ir *IstioRouter) reconcileDestinationRule(canary *flaggerv1.Canary, name s
 		if diff := cmp.Diff(newSpec, destinationRule.Spec); diff != "" {
 			clone := destinationRule.DeepCopy()
 			clone.Spec = newSpec
-			_, err = ir.istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
+			_, err = istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("DestinationRule %s.%s update error: %w", name, canary.Namespace, err)
 			}
@@ -141,7 +176,7 @@ func canaryToL4Match(canary *flaggerv1.Canary) []istiov1beta1.L4MatchAttributes 
 	return match
 }
 
-func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
+func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary, istioClient clientset.Interface) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
 	if canary.Spec.Service.Delegation {
@@ -260,7 +295,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 		}
 	}
 
-	virtualService, err := ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	virtualService, err := istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	// insert
 	if errors.IsNotFound(err) {
 		virtualService = &istiov1beta1.VirtualService{
@@ -281,7 +316,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				}),
 			}
 		}
-		_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Create(context.TODO(), virtualService, metav1.CreateOptions{})
+		_, err = istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Create(context.TODO(), virtualService, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s create error: %w", apexName, canary.Namespace, err)
 		}
@@ -359,7 +394,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				vtClone.ObjectMeta.Annotations[configAnnotation] = string(b)
 			}
 
-			_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vtClone, metav1.UpdateOptions{})
+			_, err = istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vtClone, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 			}
@@ -380,7 +415,7 @@ func (ir *IstioRouter) GetRoutes(canary *flaggerv1.Canary) (
 ) {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 	vs := &istiov1beta1.VirtualService{}
-	vs, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	vs, err = ir.getClusters()[0].IstioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		err = fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 		return
@@ -472,9 +507,40 @@ func (ir *IstioRouter) SetRoutes(
 	canaryWeight int,
 	mirrored bool,
 ) error {
+	clusters := ir.getClusters()
+	if len(clusters) == 0 {
+		return fmt.Errorf("no Istio clients available")
+	}
+
+	// Local cluster (first client) — must succeed
+	if err := ir.setRoutesWithClient(canary, primaryWeight, canaryWeight, mirrored, clusters[0].IstioClient); err != nil {
+		return err
+	}
+
+	// Remote clusters — best effort, with automated namespace creation
+	for i := 1; i < len(clusters); i++ {
+		ns := ir.resolveNamespace(clusters[i], canary.Namespace)
+		remoteCanary := canary.DeepCopy()
+		remoteCanary.Namespace = ns
+		if err := ir.setRoutesWithClient(remoteCanary, primaryWeight, canaryWeight, mirrored, clusters[i].IstioClient); err != nil {
+			ir.logger.Warnf("Multi-cluster: failed to set routes on remote cluster %d: %v", i, err)
+		} else {
+			ir.logger.Infof("Multi-cluster: successfully set routes on remote cluster %d in namespace %s", i, ns)
+		}
+	}
+	return nil
+}
+
+func (ir *IstioRouter) setRoutesWithClient(
+	canary *flaggerv1.Canary,
+	primaryWeight int,
+	canaryWeight int,
+	mirrored bool,
+	istioClient clientset.Interface,
+) error {
 	apexName, primaryName, canaryName := canary.GetServiceNames()
 
-	vs, err := ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	vs, err := istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s get query error %v", apexName, canary.Namespace, err)
 	}
@@ -494,7 +560,7 @@ func (ir *IstioRouter) SetRoutes(
 			weightedRoute,
 		}
 
-		vs, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
+		vs, err = istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
 		}
@@ -567,7 +633,7 @@ func (ir *IstioRouter) SetRoutes(
 		}
 	}
 
-	vs, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
+	vs, err = istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), vsCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update failed: %w", apexName, canary.Namespace, err)
 	}
@@ -575,11 +641,47 @@ func (ir *IstioRouter) SetRoutes(
 }
 
 func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
-	// Need to see if I can get the annotation orig-configuration
-	apexName, _, _ := canary.GetServiceNames()
+	clusters := ir.getClusters()
+	if len(clusters) == 0 {
+		return fmt.Errorf("no Istio clients available")
+	}
 
-	vs, err := ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
+	// Local cluster (first client) — must succeed
+	if err := ir.finalizeWithClient(canary, clusters[0].IstioClient, false); err != nil {
+		return err
+	}
+
+	// Remote clusters — best effort, with automated namespace creation
+	for i := 1; i < len(clusters); i++ {
+		ns := ir.resolveNamespace(clusters[i], canary.Namespace)
+		remoteCanary := canary.DeepCopy()
+		remoteCanary.Namespace = ns
+		if err := ir.finalizeWithClient(remoteCanary, clusters[i].IstioClient, true); err != nil {
+			ir.logger.Warnf("Multi-cluster: failed to finalize on remote cluster %d: %v", i, err)
+		} else {
+			ir.logger.Infof("Multi-cluster: successfully finalized on remote cluster %d in namespace %s", i, ns)
+		}
+	}
+	return nil
+}
+
+func (ir *IstioRouter) finalizeWithClient(canary *flaggerv1.Canary, istioClient clientset.Interface, isRemote bool) error {
+	apexName, primaryName, canaryName := canary.GetServiceNames()
+
+	// On remote clusters, DestinationRules must be explicitly deleted as OwnerReferences don't work across clusters
+	if isRemote {
+		for _, name := range []string{primaryName, canaryName} {
+			if err := istioClient.NetworkingV1beta1().DestinationRules(canary.Namespace).Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
+				ir.logger.Warnf("Multi-cluster: failed to delete DestinationRule %s on remote cluster: %v", name, err)
+			}
+		}
+	}
+
+	vs, err := istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Get(context.TODO(), apexName, metav1.GetOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) && isRemote {
+			return nil
+		}
 		return fmt.Errorf("VirtualService %s.%s get query error: %w", apexName, canary.Namespace, err)
 	}
 
@@ -597,6 +699,13 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 				apexName, canary.Namespace, configAnnotation)
 		}
 	} else {
+		// If original configuration is not found and it's a remote cluster, delete the VirtualService
+		if isRemote {
+			if err := istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Delete(context.TODO(), apexName, metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
+				return fmt.Errorf("Multi-cluster: failed to delete VirtualService %s on remote cluster: %w", apexName, err)
+			}
+			return nil
+		}
 		ir.logger.Warnf("VirtualService %s.%s original configuration not found, unable to revert", apexName, canary.Namespace)
 		return nil
 	}
@@ -604,11 +713,25 @@ func (ir *IstioRouter) Finalize(canary *flaggerv1.Canary) error {
 	clone := vs.DeepCopy()
 	clone.Spec = storedSpec
 
-	_, err = ir.istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
+	_, err = istioClient.NetworkingV1beta1().VirtualServices(canary.Namespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("VirtualService %s.%s update error: %w", apexName, canary.Namespace, err)
 	}
 	return nil
+}
+
+func (ir *IstioRouter) getClusters() []MultiClusterClient {
+	if ir.clusterManager != nil {
+		return ir.clusterManager.GetMultiClusterClients()
+	}
+	var clients []MultiClusterClient
+	for _, c := range ir.istioClients {
+		clients = append(clients, MultiClusterClient{
+			IstioClient: c,
+			KubeClient:  ir.kubeClient,
+		})
+	}
+	return clients
 }
 
 // mergeMatchConditions appends the URI match rules to canary conditions
