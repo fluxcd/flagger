@@ -621,7 +621,62 @@ spec:
     |> yield(name: "count")
 ```
 
-## Dynatrace
+## Dynatrace DQL
+
+You can create custom metric checks using the Dynatrace DQL provider.
+
+Create a secret with your Dynatrace token:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dynatrace
+  namespace: istio-system
+data:
+  dynatrace_token: ZHQwYz...
+```
+
+Dynatrace metric template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: response-time-95pct
+  namespace: istio-system
+spec:
+  provider:
+    type: dynatraceDQL
+    address: https://xxxxxxxx.live.dynatrace.com
+    secretRef:
+      name: dynatrace
+  query: |
+    timeseries reqs = sum(dt.service.request.count),
+    filter: {
+        matchesValue(k8s.namespace.name, "{{ namespace }}")
+        AND matchesValue(k8s.workload.name, "{{ target }}")
+    }
+    | fields r = arraySum(reqs)
+    | fields r = coalesce(r, 0)
+
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "response-time-95pct"
+        templateRef:
+          name: response-time-95pct
+          namespace: istio-system
+        thresholdRange:
+          max: 1000
+        interval: 1m
+```
+
+## Dynatrace Metrics API
 
 You can create custom metric checks using the Dynatrace provider.
 
