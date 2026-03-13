@@ -157,5 +157,40 @@ patches:
               - -mesh-provider=istio
               - -metrics-server=http://prometheus.istio-system:9090
               - -include-label-prefix=app.kubernetes.io
+              - -namespace=production,staging
 EOF
+```
+
+## Namespace Configuration
+
+By default, Flagger watches all namespaces for Canary resources. You can restrict Flagger to watch specific namespaces by setting the `--namespace` flag with a comma-separated list of namespaces:
+
+**Single namespace:**
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=istio-system \
+--set crd.create=false \
+--set meshProvider=istio \
+--set metricsServer=http://prometheus:9090 \
+--set namespace=production
+```
+
+**Multiple namespaces:**
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=istio-system \
+--set crd.create=false \
+--set meshProvider=istio \
+--set metricsServer=http://prometheus:9090 \
+--set namespace=production,staging,testing
+```
+
+**Watch all namespaces (default):**
+```bash
+helm upgrade -i flagger flagger/flagger \
+--namespace=istio-system \
+--set crd.create=false \
+--set meshProvider=istio \
+--set metricsServer=http://prometheus:9090
+# No namespace flag means watch all namespaces
 ```
