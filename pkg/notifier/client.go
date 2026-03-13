@@ -73,14 +73,14 @@ func postMessage(address, token, proxy string, payload interface{}) error {
 
 	res, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return fmt.Errorf("sending notification failed: %w", err)
+		return fmt.Errorf("sending notification failed to send: %w", err)
 	}
 
 	defer res.Body.Close()
 	statusCode := res.StatusCode
-	if statusCode != 200 {
+	if statusCode < 200 || 300 <= statusCode {
 		body, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("sending notification failed: %s", string(body))
+		return fmt.Errorf("sending notification bad response %d: %s", statusCode, string(body))
 	}
 
 	return nil
