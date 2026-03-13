@@ -319,9 +319,6 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	// check if canary revision changed during analysis
 	if restart := c.hasCanaryRevisionChanged(cd, canaryController); restart {
-		c.recordEventInfof(cd, "New revision detected! Restarting analysis for %s.%s",
-			cd.Spec.TargetRef.Name, cd.Namespace)
-
 		// route all traffic back to primary
 		primaryWeight = c.totalWeight(cd)
 		canaryWeight = 0
@@ -340,6 +337,16 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		if err := canaryController.SyncStatus(cd, status); err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 		}
+
+		cd, err = c.flaggerClient.FlaggerV1beta1().Canaries(cd.Namespace).Get(context.TODO(), cd.Name, metav1.GetOptions{})
+		if err != nil {
+			c.recordEventWarningf(cd, "%v", err)
+			return
+		}
+		
+		c.recordEventInfof(cd, "New revision detected! Restarting analysis for %s.%s",
+			cd.Spec.TargetRef.Name, cd.Namespace)
+		
 		return
 	}
 
@@ -884,14 +891,20 @@ func (c *Controller) checkCanaryStatus(canary *flaggerv1.Canary, canaryControlle
 		return true
 	}
 
-	var err error
-	canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(context.TODO(), canary.Name, metav1.GetOptions{})
-	if err != nil {
-		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
-		return false
-	}
-
 	if shouldAdvance {
+		var err error
+		// sync canary status to ensure checksum is up to date in all events
+		if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseProgressing}); err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+			return false
+		}
+
+		canary, err = c.flaggerClient.FlaggerV1beta1().Canaries(canary.Namespace).Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		if err != nil {
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+			return false
+		}
+		
 		// check confirm-rollout gate
 		if isApproved := c.runConfirmRolloutHooks(canary, canaryController); !isApproved {
 			return false
