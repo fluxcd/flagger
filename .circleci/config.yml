@@ -1,0 +1,28 @@
+version: 2.1
+
+orbs:
+  releaser: truelayer/releaser@3
+  rust: truelayer/rust@2
+
+# Definitions for shared steps.
+definitions:
+  filters:
+    on_tag: &on_tag
+      tags:
+        only: /v[0-9]+(\.[0-9]+)*(-\w+)?/
+      branches:
+        ignore: /.*/
+
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      - releaser/docker-build-and-push:
+          image_name: "flagger"
+          context:
+            - org-global
+            - euw1-development
+          registries: "jfrog,aws_ecr"
+          with_cachepot: true
+          filters:
+            <<: *on_tag
