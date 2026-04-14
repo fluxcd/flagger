@@ -43,6 +43,7 @@ import (
 	"github.com/fluxcd/flagger/pkg/canary"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 	informers "github.com/fluxcd/flagger/pkg/client/informers/externalversions"
+	flaggerinformers "github.com/fluxcd/flagger/pkg/client/informers/externalversions/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/controller"
 	"github.com/fluxcd/flagger/pkg/logger"
 	"github.com/fluxcd/flagger/pkg/metrics/observers"
@@ -111,7 +112,7 @@ func init() {
 	flag.IntVar(&threadiness, "threadiness", 2, "Worker concurrency.")
 	flag.BoolVar(&zapReplaceGlobals, "zap-replace-globals", false, "Whether to change the logging level of the global zap logger.")
 	flag.StringVar(&zapEncoding, "zap-encoding", "json", "Zap logger encoding.")
-	flag.StringVar(&namespace, "namespace", "", "Namespace that flagger would watch canary object.")
+	flag.StringVar(&namespace, "namespace", "", "Comma-separated list of namespaces to watch. If empty, watches all namespaces.")
 	flag.StringVar(&meshProvider, "mesh-provider", "istio", "Service mesh provider, can be istio, linkerd, appmesh, contour, knative, gloo, nginx, skipper, traefik, apisix, osm or kuma.")
 	flag.StringVar(&selectorLabels, "selector-labels", "app,name,app.kubernetes.io/name", "List of pod labels that Flagger uses to create pod selectors.")
 	flag.StringVar(&ingressAnnotationsPrefix, "ingress-annotations-prefix", "nginx.ingress.kubernetes.io", "Annotations prefix for NGINX ingresses.")
@@ -296,34 +297,88 @@ func main() {
 	}
 }
 
+func parseNamespaces(namespaceFlag string) []string {
+	if namespaceFlag == "" {
+		return []string{}
+	}
+	namespaces := strings.Split(namespaceFlag, ",")
+	result := make([]string, 0, len(namespaces))
+	for _, ns := range namespaces {
+		trimmed := strings.TrimSpace(ns)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
+
 func startInformers(flaggerClient clientset.Interface, logger *zap.SugaredLogger, stopCh <-chan struct{}) controller.Informers {
-	flaggerInformerFactory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(namespace))
+	namespaces := parseNamespaces(namespace)
+	canaryInformers := make(map[string]flaggerinformers.CanaryInformer)
+	metricInformers := make(map[string]flaggerinformers.MetricTemplateInformer)
+	alertInformers := make(map[string]flaggerinformers.AlertProviderInformer)
 
-	logger.Info("Waiting for canary informer cache to sync")
-	canaryInformer := flaggerInformerFactory.Flagger().V1beta1().Canaries()
-	go canaryInformer.Informer().Run(stopCh)
-	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, canaryInformer.Informer().HasSynced); !ok {
-		logger.Fatalf("failed to wait for cache to sync")
+	// this slice will hold all the sync functions we need to wait for
+	var allSyncs []cache.InformerSynced
+
+	if len(namespaces) == 0 {
+		// watch all namespaces
+		logger.Info("Watching all namespaces")
+		factory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(""))
+
+		canary := factory.Flagger().V1beta1().Canaries()
+		canaryInformers[""] = canary // keyed to "" because it's watching all namespaces
+		allSyncs = append(allSyncs, canary.Informer().HasSynced)
+
+		metric := factory.Flagger().V1beta1().MetricTemplates()
+		metricInformers[""] = metric
+		allSyncs = append(allSyncs, metric.Informer().HasSynced)
+
+		alert := factory.Flagger().V1beta1().AlertProviders()
+		alertInformers[""] = alert
+		allSyncs = append(allSyncs, alert.Informer().HasSynced)
+
+	} else {
+		// watch a specific list of namespaces
+		logger.Infof("Watching namespaces: %v", namespaces)
+
+		for _, ns := range namespaces {
+			factory := informers.NewSharedInformerFactoryWithOptions(flaggerClient, time.Second*30, informers.WithNamespace(ns))
+
+			canary := factory.Flagger().V1beta1().Canaries()
+			canaryInformers[ns] = canary // Use string 'ns' as map key
+			allSyncs = append(allSyncs, canary.Informer().HasSynced)
+
+			metric := factory.Flagger().V1beta1().MetricTemplates()
+			metricInformers[ns] = metric
+			allSyncs = append(allSyncs, metric.Informer().HasSynced)
+
+			alert := factory.Flagger().V1beta1().AlertProviders()
+			alertInformers[ns] = alert
+			allSyncs = append(allSyncs, alert.Informer().HasSynced)
+		}
 	}
 
-	logger.Info("Waiting for metric template informer cache to sync")
-	metricInformer := flaggerInformerFactory.Flagger().V1beta1().MetricTemplates()
-	go metricInformer.Informer().Run(stopCh)
-	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, metricInformer.Informer().HasSynced); !ok {
-		logger.Fatalf("failed to wait for cache to sync")
+	logger.Info("Starting informers")
+	for _, inf := range canaryInformers {
+		go inf.Informer().Run(stopCh)
+	}
+	for _, inf := range metricInformers {
+		go inf.Informer().Run(stopCh)
+	}
+	for _, inf := range alertInformers {
+		go inf.Informer().Run(stopCh)
 	}
 
-	logger.Info("Waiting for alert provider informer cache to sync")
-	alertInformer := flaggerInformerFactory.Flagger().V1beta1().AlertProviders()
-	go alertInformer.Informer().Run(stopCh)
-	if ok := cache.WaitForNamedCacheSync("flagger", stopCh, alertInformer.Informer().HasSynced); !ok {
-		logger.Fatalf("failed to wait for cache to sync")
+	logger.Info("Waiting for informer caches to sync")
+	if ok := cache.WaitForCacheSync(stopCh, allSyncs...); !ok {
+		logger.Fatalf("failed to wait for caches to sync")
 	}
 
 	return controller.Informers{
-		CanaryInformer: canaryInformer,
-		MetricInformer: metricInformer,
-		AlertInformer:  alertInformer,
+		CanaryInformers: canaryInformers,
+		MetricInformers: metricInformers,
+		AlertInformers:  alertInformers,
 	}
 }
 

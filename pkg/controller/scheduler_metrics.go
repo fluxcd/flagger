@@ -59,7 +59,18 @@ func (c *Controller) checkMetricProviderAvailability(canary *flaggerv1.Canary) e
 				namespace = metric.TemplateRef.Namespace
 			}
 
-			template, err := c.flaggerInformers.MetricInformer.Lister().MetricTemplates(namespace).Get(metric.TemplateRef.Name)
+			// look up the lister for this specific namespace
+			lister, ok := c.metricLister[namespace]
+			if !ok {
+				// If no specific lister, check for the "all-namespaces" lister
+				lister, ok = c.metricLister[""]
+				if !ok {
+					return fmt.Errorf("metric template %s.%s error: no lister for namespace %s or all-namespaces", metric.TemplateRef.Name, namespace, namespace)
+				}
+			}
+
+			// get the object from the correct lister
+			template, err := lister.MetricTemplates(namespace).Get(metric.TemplateRef.Name)
 			if err != nil {
 				return fmt.Errorf("metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
 			}
@@ -269,13 +280,31 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 	}
 
 	for _, metric := range canary.GetAnalysis().Metrics {
+		templateRefName := ""
+		if metric.TemplateRef != nil {
+			templateRefName = metric.TemplateRef.Name
+		}
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+			Debugf("Processing metric: %s-%s", metric.Name, templateRefName)
 		if metric.TemplateRef != nil {
 			namespace := canary.Namespace
 			if metric.TemplateRef.Namespace != canary.Namespace && metric.TemplateRef.Namespace != "" {
 				namespace = metric.TemplateRef.Namespace
 			}
 
-			template, err := c.flaggerInformers.MetricInformer.Lister().MetricTemplates(namespace).Get(metric.TemplateRef.Name)
+			// look up the lister for this specific namespace
+			lister, ok := c.metricLister[namespace]
+			if !ok {
+				// if no specific lister, check for the "all-namespaces" lister
+				lister, ok = c.metricLister[""]
+				if !ok {
+					c.recordEventErrorf(canary, "Metric template %s.%s error: no lister for namespace %s or all-namespaces", metric.TemplateRef.Name, namespace, namespace)
+					return false
+				}
+			}
+
+			// get the object from the correct lister
+			template, err := lister.MetricTemplates(namespace).Get(metric.TemplateRef.Name)
 			if err != nil {
 				c.recordEventErrorf(canary, "Metric template %s.%s error: %v", metric.TemplateRef.Name, namespace, err)
 				return false
@@ -324,6 +353,8 @@ func (c *Controller) runMetricChecks(canary *flaggerv1.Canary) bool {
 				return false
 			}
 
+			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).
+				Debugf("Metric %s reported value: %v", metric.Name, val)
 			c.recorder.SetAnalysis(canary, metric.Name, val)
 
 			if metric.ThresholdRange != nil {
