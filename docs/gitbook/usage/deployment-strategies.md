@@ -160,7 +160,7 @@ We would have steps (canary weight : primary weight):
 * 1 (1 : 99)
 * 2 (2 : 98)
 * 10 (10 : 90)
-* 80 (20 : 60)
+* 80 (80 : 20)
 * promotion
 
 ## A/B Testing
