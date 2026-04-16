@@ -85,6 +85,26 @@ spec:
                 provider:
                   description: Traffic managent provider
                   type: string
+                  enum:
+                    - apisix
+                    - appmesh
+                    - appmesh:v1beta2
+                    - contour
+                    - gatewayapi:v1
+                    - gatewayapi:v1beta1
+                    - gloo
+                    - istio
+                    - knative
+                    - kubernetes
+                    - kuma
+                    - linkerd
+                    - nginx
+                    - osm
+                    - skipper
+                    - smi:v1alpha1
+                    - smi:v1alpha2
+                    - smi:v1alpha3
+                    - traefik
                 metricsServer:
                   description: Prometheus URL
                   type: string
