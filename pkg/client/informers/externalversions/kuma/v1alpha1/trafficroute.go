@@ -56,7 +56,7 @@ func NewTrafficRouteInformer(client versioned.Interface, resyncPeriod time.Durat
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredTrafficRouteInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
@@ -81,7 +81,7 @@ func NewFilteredTrafficRouteInformer(client versioned.Interface, resyncPeriod ti
 				}
 				return client.KumaV1alpha1().TrafficRoutes().Watch(ctx, options)
 			},
-		},
+		}, client),
 		&apiskumav1alpha1.TrafficRoute{},
 		resyncPeriod,
 		indexers,
