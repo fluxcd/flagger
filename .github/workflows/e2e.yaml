@@ -38,7 +38,7 @@ jobs:
           - knative
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Setup Kubernetes
         uses: helm/kind-action@v1.14.0
         if: matrix.provider != 'skipper'
@@ -47,7 +47,7 @@ jobs:
           cluster_name: kind
           node_image: kindest/node:v1.35.1@sha256:05d7bcdefbda08b4e038f644c4df690cdac3fba8b06f8289f30e10026720a1ab
       - name: Setup Kubernetes for skipper
-        uses: helm/kind-action@v1.12.0
+        uses: helm/kind-action@v1.14.0
         if: matrix.provider == 'skipper'
         with:
           version: v0.23.0
