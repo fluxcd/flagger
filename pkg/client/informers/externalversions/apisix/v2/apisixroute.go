@@ -57,7 +57,7 @@ func NewApisixRouteInformer(client versioned.Interface, namespace string, resync
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredApisixRouteInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
@@ -82,7 +82,7 @@ func NewFilteredApisixRouteInformer(client versioned.Interface, namespace string
 				}
 				return client.ApisixV2().ApisixRoutes(namespace).Watch(ctx, options)
 			},
-		},
+		}, client),
 		&apisapisixv2.ApisixRoute{},
 		resyncPeriod,
 		indexers,

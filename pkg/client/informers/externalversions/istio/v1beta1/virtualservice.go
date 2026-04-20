@@ -57,7 +57,7 @@ func NewVirtualServiceInformer(client versioned.Interface, namespace string, res
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredVirtualServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
@@ -82,7 +82,7 @@ func NewFilteredVirtualServiceInformer(client versioned.Interface, namespace str
 				}
 				return client.NetworkingV1beta1().VirtualServices(namespace).Watch(ctx, options)
 			},
-		},
+		}, client),
 		&apisistiov1beta1.VirtualService{},
 		resyncPeriod,
 		indexers,
