@@ -2,9 +2,9 @@
 
 set -o errexit
 
-GATEWAY_API_VER="v1.0.0"
+GATEWAY_API_VER="v1.5.1"
 REPO_ROOT=$(git rev-parse --show-toplevel)
-ISTIO_VER="1.20.0"
+ISTIO_VER="1.29.2"
 
 mkdir -p ${REPO_ROOT}/bin
 
