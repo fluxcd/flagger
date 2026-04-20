@@ -369,10 +369,6 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			},
 		})
 	}
-	var timeout v1.Duration
-	if canary.Spec.Service.Timeout != "" {
-		timeout = v1.Duration(canary.Spec.Service.Timeout)
-	}
 
 	weightedRouteRule := &v1.HTTPRouteRule{
 		Matches: matches,
@@ -440,9 +436,6 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 				{
 					BackendRef: gwr.makeBackendRef(primarySvcName, initialPrimaryWeight, canary.Spec.Service.Port),
 				},
-			},
-			Timeouts: &v1.HTTPRouteTimeouts{
-				Request: &timeout,
 			},
 		})
 
