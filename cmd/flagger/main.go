@@ -127,6 +127,8 @@ func init() {
 
 func main() {
 	klog.InitFlags(nil)
+	flag.Set("legacy_stderr_threshold_behavior", "false") //nolint:errcheck
+	flag.Set("stderrthreshold", "INFO")                   //nolint:errcheck
 	flag.Parse()
 
 	if ver {
