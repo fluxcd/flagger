@@ -2,6 +2,65 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.43.0
+
+**Release date:** 2026-04-21
+
+This release comes with a new Kubernetes External Metrics provider, enhanced session
+affinity support for Istio and Gateway API, and various bug fixes.
+
+Flagger now supports the Kubernetes External Metrics API, enabling the use of the
+Datadog Cluster Agent or any other server implementing the Kubernetes External
+Metrics API for metric collection. For more information, please see the
+[External Metrics tutorial](https://docs.flagger.app/usage/metrics#kubernetes-external-metrics).
+
+Session affinity has been enhanced with support for setting a primary cookie name
+in Istio routers. This allows the primary deployment's traffic to be routed based
+on the session cookie while canary analysis is in progress. For more details, see
+the [Istio tutorial](https://docs.flagger.app/tutorials/istio-progressive-delivery#session-affinity).
+
+This release is built with Go 1.25. The Kubernetes dependencies have been updated
+to 1.35, and the Traefik API has been migrated from `traefik.containo.us` to
+`traefik.io`.
+
+#### Improvements
+- Add Kubernetes External Metrics provider
+  [#1863](https://github.com/fluxcd/flagger/pull/1863)
+- Add support for setting primary cookie name in Istio router
+  [#1861](https://github.com/fluxcd/flagger/pull/1861)
+- Add primarySessionAffinityCookie field to sessionAffinity for Gateway API
+  [#1858](https://github.com/fluxcd/flagger/pull/1858)
+- Set ingress class via ingressClassName for Contour HTTPProxy
+  [#1870](https://github.com/fluxcd/flagger/pull/1870)
+- Add additionalVolumeMounts support for Flagger chart
+  [#1880](https://github.com/fluxcd/flagger/pull/1880)
+- List valid mesh providers in CRD and help docs
+  [#1874](https://github.com/fluxcd/flagger/pull/1874)
+- Warn when mesh/metrics provider or canary target type isn't valid
+  [#1874](https://github.com/fluxcd/flagger/pull/1874)
+- Remove deprecated policy/v1beta1 API from PodDisruptionBudget templates
+  [#1885](https://github.com/fluxcd/flagger/pull/1885)
+- Update Kubernetes packages to 1.35
+  [#1901](https://github.com/fluxcd/flagger/pull/1901)
+- Update Traefik API from traefik.containo.us to traefik.io
+  [#1868](https://github.com/fluxcd/flagger/pull/1868)
+- Update Go dependencies
+  [#1900](https://github.com/fluxcd/flagger/pull/1900)
+- Gateway API: only add timeout when specified
+  [#1902](https://github.com/fluxcd/flagger/pull/1902)
+
+#### Fixes
+- Fix bug where CanaryWeight is reset to 0 during CanaryPhasePromoting
+  [#1851](https://github.com/fluxcd/flagger/pull/1851)
+- Fix MS Teams notifier to handle 202 status code
+  [#1887](https://github.com/fluxcd/flagger/pull/1887)
+- Include HTTP status code in Prometheus error responses
+  [#1878](https://github.com/fluxcd/flagger/pull/1878)
+- Fix Datadog metrics to provide HTTP status code on error
+  [#1858](https://github.com/fluxcd/flagger/pull/1858)
+- Fix Helm Chart compatibility with Prometheus v3.0+
+  [#1811](https://github.com/fluxcd/flagger/pull/1811)
+
 ## 1.42.0
 
 **Release date:** 2025-10-16
