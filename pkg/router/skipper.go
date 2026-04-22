@@ -128,7 +128,7 @@ func (skp *SkipperRouter) Reconcile(canary *flaggerv1.Canary) error {
 		return fmt.Errorf("ingress %s.%s query error: %w", canaryIngressName, canary.Namespace, err)
 	}
 
-	// existant, updating
+	// existent, updating
 	if cmp.Diff(iClone.Spec, canaryIngress.Spec) != "" {
 		ingressClone := canaryIngress.DeepCopy()
 		ingressClone.Spec = iClone.Spec
