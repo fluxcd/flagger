@@ -7,19 +7,28 @@ latest stable version on Kubernetes.
 ## Flagger OCI artifacts
 
 Flagger OCI artifacts (container images, Helm charts, Kustomize overlays) are published to
-GitHub Container Registry, and they are signed with Cosign at every release.
+GitHub Container Registry, and they are signed with [Cosign](https://docs.sigstore.dev/cosign/)
+and GitHub Actions OIDC at every release.
 
 OCI artifacts
 
 - `ghcr.io/fluxcd/flagger:<version>` multi-arch container images
-- `ghcr.io/fluxcd/flagger-manifest:<version>` Kubernetes manifests
+- `ghcr.io/fluxcd/flagger-manifests:<version>` Kubernetes manifests
 - `ghcr.io/fluxcd/charts/flagger:<version>` Helm charts
+
+Starting with Flagger 1.43, artifacts are signed with Cosign v3 using the
+[sigstore bundle format](https://github.com/sigstore/cosign/blob/main/specs/BUNDLE_SPEC.md).
+Verifying these signatures with Flux requires **Flux 2.8 or later**.
 
 ## Prerequisites
 
 To follow this guide you’ll need a Kubernetes cluster with Flux installed on it.
 Please see the Flux [get started guide](https://fluxcd.io/flux/get-started/)
 or the Flux [installation guide](https://fluxcd.io/flux/installation/).
+
+To verify the Flagger OCI artifacts at reconciliation time, Flux 2.8 or later is
+required. Earlier versions ship Cosign v2 and cannot verify the sigstore bundles
+produced by the Flagger 1.43+ release workflow.
 
 ## Deploy Flagger with Flux
 
@@ -51,7 +60,18 @@ spec:
     operation: copy
   ref:
     semver: "1.x" # update to the latest version
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+      - issuer: ^https://token\.actions\.githubusercontent\.com$
+        subject: ^https://github\.com/fluxcd/flagger/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+$
 ```
+
+The `.spec.verify` block instructs Flux to perform Cosign keyless verification and to
+reject the artifact unless it was signed by the Flagger release workflow running on a
+tagged release (`vX.Y.Z`). See the Flux
+[OCIRepository verification](https://fluxcd.io/flux/components/source/ocirepositories/#verification)
+documentation for more details.
 
 Define a Flux `HelmRelease` that verifies and installs Flagger's latest version on the cluster:
 
@@ -115,7 +135,15 @@ spec:
   url: oci://ghcr.io/fluxcd/flagger-manifests
   ref:
     semver: "*" # update to the latest version
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+      - issuer: ^https://token\.actions\.githubusercontent\.com$
+        subject: ^https://github\.com/fluxcd/flagger/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+$
 ```
+
+As with the Helm chart, the `.spec.verify` block ensures that only manifests signed by
+the official Flagger release workflow are fetched and applied to the cluster.
 
 Define a Flux `Kustomization` that deploys the Flagger load tester to the `apps` namespace:
 
