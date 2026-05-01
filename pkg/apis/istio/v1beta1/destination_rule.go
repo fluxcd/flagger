@@ -620,6 +620,21 @@ type OutlierDetection struct {
 	// no effect.
 	Consecutive5xxErrors *uint32 `json:"consecutive5xxErrors,omitempty"`
 
+	// Determines whether to distinguish local origin failures from external errors. If set to true
+	// `consecutiveLocalOriginFailures` is taken into account for outlier detection calculations.
+	// This should be used when you want to derive the outlier detection status based on the errors
+	// seen locally such as failure to connect, timeout while connecting etc. rather than the status code
+	// returned by upstream service. This is especially useful when the upstream service explicitly returns
+	// a 5xx for some requests and you want to ignore those responses from upstream service while determining
+	// the outlier detection status of a host.
+	// Defaults to false.
+	SplitExternalLocalOriginErrors bool `json:"splitExternalLocalOriginErrors,omitempty"`
+
+	// The number of consecutive locally originated failures before ejection
+	// occurs. Defaults to 5. Parameter takes effect only when `splitExternalLocalOriginErrors`
+	// is set to true.
+	ConsecutiveLocalOriginFailures *uint32 `json:"consecutiveLocalOriginFailures,omitempty"`
+
 	// Time interval between ejection sweep analysis. format:
 	// 1h/1m/1s/1ms. MUST BE >=1ms. Default is 10s.
 	Interval string `json:"interval,omitempty"`

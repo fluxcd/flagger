@@ -728,6 +728,11 @@ func (in *OutlierDetection) DeepCopyInto(out *OutlierDetection) {
 		*out = new(uint32)
 		**out = **in
 	}
+	if in.ConsecutiveLocalOriginFailures != nil {
+		in, out := &in.ConsecutiveLocalOriginFailures, &out.ConsecutiveLocalOriginFailures
+		*out = new(uint32)
+		**out = **in
+	}
 	return
 }
 
