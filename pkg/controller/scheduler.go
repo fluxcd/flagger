@@ -182,7 +182,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	// init controller based on target kind
 	canaryController := c.canaryFactory.Controller(cd.Spec.TargetRef)
 
-	labelSelector, labelValue, ports, err := canaryController.GetMetadata(cd)
+	matchLabels, labelSelector, labelValue, ports, err := canaryController.GetMetadata(cd)
 	if err != nil {
 		c.recordEventWarningf(cd, "%v", err)
 		return
@@ -194,7 +194,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	// init Kubernetes router
-	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, labelSelector, labelValue, ports)
+	kubeRouter := c.routerFactory.KubernetesRouter(cd.Spec.TargetRef.Kind, matchLabels, labelSelector, labelValue, ports)
 
 	// reconcile the canary/primary services
 	if err := kubeRouter.Initialize(cd); err != nil {
