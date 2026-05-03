@@ -1383,6 +1383,7 @@ spec:
                         - newrelic
                         - graphite
                         - dynatrace
+                        - dynatraceDQL
                         - keptn
                         - splunk
                     address:
