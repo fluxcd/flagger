@@ -84,6 +84,28 @@ func TestServer_HandleNewBashTaskCmdExitNonZero(t *testing.T) {
 	assert.Equal(t, "command false failed: : exit status 1", resp.Body.String())
 }
 
+func TestGateStorageScopesApprovalByChecksum(t *testing.T) {
+	gate := NewGateStorage("in-memory")
+	current := &flaggerv1.CanaryWebhookPayload{Name: "podinfo", Namespace: "test", Checksum: "abc123"}
+	stale := &flaggerv1.CanaryWebhookPayload{Name: "podinfo", Namespace: "test", Checksum: "def456"}
+
+	gate.open(gateKey(current))
+
+	assert.True(t, gate.isOpen(gateKey(current)))
+	assert.False(t, gate.isOpen(gateKey(stale)))
+}
+
+func TestGateStorageScopesRollbackByChecksum(t *testing.T) {
+	gate := NewGateStorage("in-memory")
+	current := &flaggerv1.CanaryWebhookPayload{Name: "podinfo", Namespace: "test", Checksum: "abc123"}
+	stale := &flaggerv1.CanaryWebhookPayload{Name: "podinfo", Namespace: "test", Checksum: "def456"}
+
+	gate.open(rollbackKey(current))
+
+	assert.True(t, gate.isOpen(rollbackKey(current)))
+	assert.False(t, gate.isOpen(rollbackKey(stale)))
+}
+
 func newJsonRequest(method string, url string, v interface{}) *http.Request {
 	payload, _ := json.Marshal(v)
 	req, _ := http.NewRequest(method, url, bytes.NewReader(payload))
