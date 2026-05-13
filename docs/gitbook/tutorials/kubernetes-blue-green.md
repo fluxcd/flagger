@@ -13,6 +13,8 @@ Flagger requires a Kubernetes cluster **v1.16** or newer.
 Install Flagger and the Prometheus add-on:
 
 ```bash
+kubectl create ns flagger
+
 helm repo add flagger https://flagger.app
 
 helm upgrade -i flagger flagger/flagger \
