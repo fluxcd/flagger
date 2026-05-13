@@ -17,8 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"encoding/json"
-
+	"bytes"
+	"encoding/gob"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -188,8 +188,11 @@ type ApisixRouteAuthenticationJwtAuth struct {
 }
 
 func (p ApisixRoutePluginConfig) DeepCopyInto(out *ApisixRoutePluginConfig) {
-	b, _ := json.Marshal(&p)
-	_ = json.Unmarshal(b, out)
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	dec := gob.NewDecoder(&buf)
+	_ = enc.Encode(p)
+	_ = dec.Decode(out)
 }
 
 func (p *ApisixRoutePluginConfig) DeepCopy() *ApisixRoutePluginConfig {
