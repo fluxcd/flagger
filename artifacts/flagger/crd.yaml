@@ -1477,6 +1477,7 @@ spec:
                     - discord
                     - rocket
                     - gchat
+                    - ringcentral
                 channel:
                   description: Alert channel for this provider
                   type: string
