@@ -79,6 +79,8 @@ istio:
   host: flagger-loadtester.flagger
   gateway:
     enabled: false
+  virtualservice:
+    gateway: null
   tls:
     enabled: false
     httpsRedirect: false
