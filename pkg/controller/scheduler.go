@@ -833,6 +833,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 
 	canarySucceeded := canary.DeepCopy()
 	canarySucceeded.Status.Phase = flaggerv1.CanaryPhaseSucceeded
+	c.runPostRolloutHooks(canarySucceeded, flaggerv1.CanaryPhaseSucceeded)
 	c.recordEventInfof(canarySucceeded, "Promotion completed! Canary analysis was skipped for %s.%s",
 		canary.Spec.TargetRef.Name, canary.Namespace)
 	c.alert(canarySucceeded, "Canary analysis was skipped, promotion finished.",
