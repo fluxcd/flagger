@@ -168,6 +168,11 @@ type CanaryService struct {
 	// +optional
 	Timeout string `json:"timeout,omitempty"`
 
+	// BackendTimeout specifies a timeout for an individual request from the gateway
+	// to a backend. Only supported by the Gateway API provider.
+	// +optional
+	BackendTimeout string `json:"backendTimeout,omitempty"`
+
 	// Gateways attached to the generated Istio virtual service
 	// Defaults to the internal mesh gateway
 	// +optional

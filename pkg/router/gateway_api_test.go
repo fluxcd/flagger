@@ -61,6 +61,7 @@ func TestGatewayAPIRouter_Reconcile(t *testing.T) {
 
 	timeout := routeRules[0].Timeouts
 	assert.Equal(t, string(*timeout.Request), canary.Spec.Service.Timeout)
+	assert.Equal(t, string(*timeout.BackendRequest), canary.Spec.Service.BackendTimeout)
 
 	// assert that http route annotations injected by the networking controller is preserved.
 	httpRoute.Annotations["foo"] = "bar"

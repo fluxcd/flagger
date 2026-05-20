@@ -720,6 +720,38 @@ The above procedures can be extended with [custom metrics](../usage/metrics.md) 
 Besides the `hosts` and `gatewayRefs` fields, you can customize the generated HTTPRoute with various options
 exposed under the `spec.service` field of the Canary.
 
+### Timeouts
+
+You can configure request timeouts on the generated HTTPRoute using the `spec.service.timeout` and
+`spec.service.backendTimeout` fields of the Canary. Both values are
+[Gateway API Duration](https://gateway-api.sigs.k8s.io/geps/gep-2257/) strings (e.g. `5s`, `500ms`).
+
+- `timeout` maps to `HTTPRouteTimeouts.Request` and bounds the total request duration from when the gateway
+  receives the request to when the response is sent back to the client.
+- `backendTimeout` maps to `HTTPRouteTimeouts.BackendRequest` and bounds the duration of an individual
+  request from the gateway to a backend. When set together with `timeout`, `backendTimeout` must be
+  less than or equal to `timeout`.
+
+> **Note:** Timeouts require a Gateway API implementation that supports
+> [`HTTPRouteTimeouts`](https://gateway-api.sigs.k8s.io/api-types/httproute/#timeouts).
+> `backendTimeout` additionally requires support for the `BackendRequest` timeout field.
+
+Example configuration:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  service:
+    # Total request timeout (gateway to client)
+    timeout: 5s
+    # Per-attempt backend request timeout (gateway to backend)
+    backendTimeout: 2s
+```
+
 ### Header Manipulation
 
 You can configure request and response header manipulation using the `spec.service.headers` field of the Canary.
