@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
-	hpav2 "k8s.io/api/autoscaling/v2beta2"
+	hpav2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -300,7 +300,7 @@ func newDeploymentTestCanary() *flaggerv1.Canary {
 			},
 			AutoscalerRef: &flaggerv1.AutoscalerReference{
 				Name:       "podinfo",
-				APIVersion: "autoscaling/v2beta2",
+				APIVersion: "autoscaling/v2",
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
@@ -362,7 +362,7 @@ func newDeploymentTestCanaryAB() *flaggerv1.Canary {
 			},
 			AutoscalerRef: &flaggerv1.AutoscalerReference{
 				Name:       "podinfo",
-				APIVersion: "autoscaling/v2beta2",
+				APIVersion: "autoscaling/v2",
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,
