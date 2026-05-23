@@ -398,7 +398,7 @@ func newDeploymentControllerTestCanary(cc canaryConfigs) *flaggerv1.Canary {
 			},
 			AutoscalerRef: &flaggerv1.AutoscalerReference{
 				Name:       "podinfo",
-				APIVersion: "autoscaling/v2beta2",
+				APIVersion: "autoscaling/v2",
 				Kind:       "HorizontalPodAutoscaler",
 			}, Service: flaggerv1.CanaryService{
 				Port: 9898,

@@ -191,14 +191,6 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 				if hpa.Spec.MinReplicas != nil && *hpa.Spec.MinReplicas > 1 {
 					replicas = hpa.Spec.MinReplicas
 				}
-			} else {
-				// fallback to v2beta2
-				hpa, err := c.kubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
-				if err == nil {
-					if hpa.Spec.MinReplicas != nil && *hpa.Spec.MinReplicas > 1 {
-						replicas = hpa.Spec.MinReplicas
-					}
-				}
 			}
 		} else if cd.Spec.AutoscalerRef.Kind == "ScaledObject" {
 			so, err := c.flaggerClient.KedaV1alpha1().ScaledObjects(cd.Namespace).Get(context.TODO(), cd.Spec.AutoscalerRef.Name, metav1.GetOptions{})
