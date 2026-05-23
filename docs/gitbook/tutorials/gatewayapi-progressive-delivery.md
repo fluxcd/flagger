@@ -733,7 +733,7 @@ You can configure request timeouts on the generated HTTPRoute using the `spec.se
   less than or equal to `timeout`.
 
 > **Note:** Timeouts require a Gateway API implementation that supports
-> [`HTTPRouteTimeouts`](https://gateway-api.sigs.k8s.io/api-types/httproute/#timeouts).
+> [`HTTPRouteTimeouts`](https://gateway-api.sigs.k8s.io/guides/user-guides/http-timeouts/).
 > `backendTimeout` additionally requires support for the `BackendRequest` timeout field.
 
 Example configuration:
