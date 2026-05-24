@@ -108,11 +108,8 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			},
 		},
 	}
-	if canary.Spec.Service.Timeout != "" {
-		timeout := v1.Duration(canary.Spec.Service.Timeout)
-		httpRouteSpec.Rules[0].Timeouts = &v1.HTTPRouteTimeouts{
-			Request: &timeout,
-		}
+	if canary.Spec.Service.Timeout != "" || canary.Spec.Service.BackendTimeout != "" {
+		httpRouteSpec.Rules[0].Timeouts = makeHTTPRouteTimeouts(canary)
 	}
 
 	// A/B testing
@@ -129,11 +126,8 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 				},
 			},
 		})
-		if canary.Spec.Service.Timeout != "" {
-			timeout := v1.Duration(canary.Spec.Service.Timeout)
-			httpRouteSpec.Rules[1].Timeouts = &v1.HTTPRouteTimeouts{
-				Request: &timeout,
-			}
+		if canary.Spec.Service.Timeout != "" || canary.Spec.Service.BackendTimeout != "" {
+			httpRouteSpec.Rules[1].Timeouts = makeHTTPRouteTimeouts(canary)
 		}
 	}
 
@@ -382,11 +376,8 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			},
 		},
 	}
-	if canary.Spec.Service.Timeout != "" {
-		timeout := v1.Duration(canary.Spec.Service.Timeout)
-		weightedRouteRule.Timeouts = &v1.HTTPRouteTimeouts{
-			Request: &timeout,
-		}
+	if canary.Spec.Service.Timeout != "" || canary.Spec.Service.BackendTimeout != "" {
+		weightedRouteRule.Timeouts = makeHTTPRouteTimeouts(canary)
 	}
 
 	// If B/G mirroring is enabled, then add a route filter which mirrors the traffic
@@ -439,11 +430,8 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 			},
 		})
 
-		if canary.Spec.Service.Timeout != "" {
-			timeout := v1.Duration(canary.Spec.Service.Timeout)
-			hrClone.Spec.Rules[1].Timeouts = &v1.HTTPRouteTimeouts{
-				Request: &timeout,
-			}
+		if canary.Spec.Service.Timeout != "" || canary.Spec.Service.BackendTimeout != "" {
+			hrClone.Spec.Rules[1].Timeouts = makeHTTPRouteTimeouts(canary)
 		}
 	}
 
@@ -709,6 +697,19 @@ func (gwr *GatewayAPIRouter) mapRouteMatches(requestMatches []istiov1beta1.HTTPM
 	}
 
 	return matches, nil
+}
+
+func makeHTTPRouteTimeouts(canary *flaggerv1.Canary) *v1.HTTPRouteTimeouts {
+	timeouts := &v1.HTTPRouteTimeouts{}
+	if canary.Spec.Service.Timeout != "" {
+		timeout := v1.Duration(canary.Spec.Service.Timeout)
+		timeouts.Request = &timeout
+	}
+	if canary.Spec.Service.BackendTimeout != "" {
+		backendTimeout := v1.Duration(canary.Spec.Service.BackendTimeout)
+		timeouts.BackendRequest = &backendTimeout
+	}
+	return timeouts
 }
 
 func (gwr *GatewayAPIRouter) makeBackendRef(svcName string, weight, port int32) v1.BackendRef {

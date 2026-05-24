@@ -230,6 +230,9 @@ spec:
                     timeout:
                       description: HTTP or gRPC request timeout
                       type: string
+                    backendTimeout:
+                      description: Backend request timeout (Gateway API only)
+                      type: string
                     meshName:
                       description: AppMesh mesh name
                       type: string

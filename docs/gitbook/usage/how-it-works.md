@@ -230,6 +230,9 @@ spec:
       attempts: 3
       perTryTimeout: 1s
     timeout: 5s
+    # backendTimeout is only supported by the Gateway API provider and
+    # maps to HTTPRouteTimeouts.BackendRequest.
+    backendTimeout: 2s
 ```
 
 When using **Istio** as the mesh provider, you can also specify HTTP header operations,

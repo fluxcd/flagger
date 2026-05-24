@@ -593,7 +593,8 @@ func newTestGatewayAPICanary() *flaggerv1.Canary {
 						Name: "podinfo",
 					},
 				},
-				Timeout: "10s",
+				Timeout:        "10s",
+				BackendTimeout: "5s",
 			},
 			Analysis: &flaggerv1.CanaryAnalysis{
 				Threshold:  10,
