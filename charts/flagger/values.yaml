@@ -129,6 +129,8 @@ rbac:
   create: true
   # rbac.pspEnabled: `true` if PodSecurityPolicy resources should be created
   pspEnabled: false
+  # rbac.annotations: Set annotations on ClusterRoleBinding
+  annotations: {}
 
 crd:
   # crd.create: `true` if custom resource definitions should be created
