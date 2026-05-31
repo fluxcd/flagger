@@ -108,6 +108,21 @@ func (c *Controller) runPreRolloutHooks(canary *flaggerv1.Canary) bool {
 	return true
 }
 
+func (c *Controller) runPreScaleToZeroCanaryRolloutHooks(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) bool {
+        for _, webhook := range canary.GetAnalysis().Webhooks {
+                if webhook.Type == flaggerv1.PreCanaryScaleZero {
+                        err := CallWebhook(canary.Name, canary.Namespace, phase, webhook)
+                        if err != nil {
+                                c.recordEventWarningf(canary, "pre-canary-scale-zero-rollout hook %s failed %v", webhook.Name, err)
+                                return false
+                        } else {
+                                c.recordEventInfof(canary, "pre-canary-scale-zero-rollout check %s passed", webhook.Name)
+                        }
+                }
+        }
+        return true
+}
+
 func (c *Controller) runPostRolloutHooks(canary *flaggerv1.Canary, phase flaggerv1.CanaryPhase) bool {
 	for _, webhook := range canary.GetAnalysis().Webhooks {
 		if webhook.Type == flaggerv1.PostRolloutHook {
