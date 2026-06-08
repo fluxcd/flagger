@@ -56,38 +56,39 @@ import (
 )
 
 var (
-	masterURL                string
-	kubeconfig               string
-	kubeconfigQPS            int
-	kubeconfigBurst          int
-	metricsServer            string
-	controlLoopInterval      time.Duration
-	logLevel                 string
-	port                     string
-	msteamsURL               string
-	msteamsProxyURL          string
-	includeLabelPrefix       string
-	slackURL                 string
-	slackToken               string
-	slackProxyURL            string
-	slackUser                string
-	slackChannel             string
-	eventWebhook             string
-	threadiness              int
-	zapReplaceGlobals        bool
-	zapEncoding              string
-	namespace                string
-	meshProvider             string
-	selectorLabels           string
-	ingressAnnotationsPrefix string
-	ingressClass             string
-	enableLeaderElection     bool
-	leaderElectionNamespace  string
-	enableConfigTracking     bool
-	ver                      bool
-	kubeconfigServiceMesh    string
-	clusterName              string
-	noCrossNamespaceRefs     bool
+	masterURL                      string
+	kubeconfig                     string
+	kubeconfigQPS                  int
+	kubeconfigBurst                int
+	metricsServer                  string
+	controlLoopInterval            time.Duration
+	logLevel                       string
+	port                           string
+	msteamsURL                     string
+	msteamsProxyURL                string
+	includeLabelPrefix             string
+	slackURL                       string
+	slackToken                     string
+	slackProxyURL                  string
+	slackUser                      string
+	slackChannel                   string
+	eventWebhook                   string
+	threadiness                    int
+	zapReplaceGlobals              bool
+	zapEncoding                    string
+	namespace                      string
+	meshProvider                   string
+	selectorLabels                 string
+	ingressAnnotationsPrefix       string
+	ingressClass                   string
+	enableLeaderElection           bool
+	leaderElectionNamespace        string
+	enableConfigTracking           bool
+	enableConfigBinaryDataTracking bool
+	ver                            bool
+	kubeconfigServiceMesh          string
+	clusterName                    string
+	noCrossNamespaceRefs           bool
 )
 
 func init() {
@@ -119,6 +120,7 @@ func init() {
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election.")
 	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "kube-system", "Namespace used to create the leader election config map.")
 	flag.BoolVar(&enableConfigTracking, "enable-config-tracking", true, "Enable secrets and configmaps tracking.")
+	flag.BoolVar(&enableConfigBinaryDataTracking, "enable-config-binary-data-tracking", false, "Enable tracking of binary data in configmaps.")
 	flag.BoolVar(&ver, "version", false, "Print version")
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
 	flag.StringVar(&clusterName, "cluster-name", "", "Cluster name to be included in alert msgs.")
@@ -233,9 +235,10 @@ func main() {
 	var configTracker canary.Tracker
 	if enableConfigTracking {
 		configTracker = &canary.ConfigTracker{
-			Logger:        logger,
-			KubeClient:    kubeClient,
-			FlaggerClient: flaggerClient,
+			Logger:          logger,
+			KubeClient:      kubeClient,
+			FlaggerClient:   flaggerClient,
+			TrackBinaryData: enableConfigBinaryDataTracking,
 		}
 	} else {
 		configTracker = &canary.NopTracker{}

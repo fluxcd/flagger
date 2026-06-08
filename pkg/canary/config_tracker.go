@@ -37,9 +37,10 @@ import (
 
 // ConfigTracker is managing the operations for Kubernetes ConfigMaps and Secrets
 type ConfigTracker struct {
-	KubeClient    kubernetes.Interface
-	FlaggerClient clientset.Interface
-	Logger        *zap.SugaredLogger
+	KubeClient      kubernetes.Interface
+	FlaggerClient   clientset.Interface
+	Logger          *zap.SugaredLogger
+	TrackBinaryData bool
 }
 
 type ConfigRefType string
@@ -89,7 +90,7 @@ func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*Co
 	return &ConfigRef{
 		Name:     config.Name,
 		Type:     ConfigRefMap,
-		Checksum: checksum(ct.getFullDataFromConfigMap(*config)),
+		Checksum: checksum(ct.getDataFromConfigMap(*config)),
 	}, nil
 }
 
@@ -117,33 +118,22 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 	return &ConfigRef{
 		Name:     secret.Name,
 		Type:     ConfigRefSecret,
-		Checksum: checksum(ct.getFullDataFromSecret(*secret)),
+		Checksum: checksum(secret.Data),
 	}, nil
 }
 
-// getFullDataFromConfigMap fetches both data and binaryData in the configmap
-func (ct *ConfigTracker) getFullDataFromConfigMap(config corev1.ConfigMap) map[string]string {
-	fullData := make(map[string]string)
-	maps.Copy(fullData, config.Data)
+// getDataFromConfigMap fetches both data and binaryData with regards to TrackBinaryData in the configmap
+func (ct *ConfigTracker) getDataFromConfigMap(config corev1.ConfigMap) map[string]string {
+	data := make(map[string]string)
+	maps.Copy(data, config.Data)
 
-	for k, v := range config.BinaryData {
-		fullData[k] = string(v)
-
+	if ct.TrackBinaryData {
+		for k, v := range config.BinaryData {
+			data[k] = string(v)
+		}
 	}
 
-	return fullData
-}
-
-// getFullDataFromSecret fetches both data and stringData in the secret
-func (ct *ConfigTracker) getFullDataFromSecret(secret corev1.Secret) map[string]string {
-	fullData := make(map[string]string)
-	maps.Copy(fullData, secret.StringData)
-
-	for k, v := range secret.Data {
-		fullData[k] = string(v)
-	}
-
-	return fullData
+	return data
 }
 
 // GetTargetConfigs scans the target deployment for Kubernetes ConfigMaps and Secrets
@@ -358,8 +348,10 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 					Labels:          labels,
 					OwnerReferences: ownerReferences,
 				},
-				Data:       config.Data,
-				BinaryData: config.BinaryData,
+				Data: config.Data,
+			}
+			if ct.TrackBinaryData {
+				primaryConfigMap.BinaryData = config.BinaryData
 			}
 
 			// update or insert primary ConfigMap
@@ -412,9 +404,8 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 					Labels:          labels,
 					OwnerReferences: ownerReferences,
 				},
-				Type:       secret.Type,
-				Data:       secret.Data,
-				StringData: secret.StringData,
+				Type: secret.Type,
+				Data: secret.Data,
 			}
 
 			// update or insert primary Secret

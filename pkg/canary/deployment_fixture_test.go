@@ -299,9 +299,6 @@ func newDeploymentControllerTestSecret() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
-		},
 	}
 }
 
@@ -315,9 +312,6 @@ func newDeploymentControllerTestSecretProjected() *corev1.Secret {
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
-		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
 		},
 	}
 }
@@ -333,9 +327,6 @@ func newDeploymentControllerTestSecretEnv() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
-		},
 	}
 }
 
@@ -349,9 +340,6 @@ func newDeploymentControllerTestSecretVol() *corev1.Secret {
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
-		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
 		},
 	}
 }
@@ -372,9 +360,6 @@ func newDeploymentControllerTestSecretTrackerEnabled() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
-		},
 	}
 }
 
@@ -394,9 +379,6 @@ func newDeploymentControllerTestSecretTrackerDisabled() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
-		},
 	}
 }
 
@@ -411,9 +393,6 @@ func newDeploymentControllerTestSecretInit() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
-		},
 	}
 }
 
@@ -427,9 +406,6 @@ func newDeploymentControllerTestSecretInitEnv() *corev1.Secret {
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
-		},
-		StringData: map[string]string{
-			"apiKey_string": "test",
 		},
 	}
 }
