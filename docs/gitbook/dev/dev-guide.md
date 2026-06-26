@@ -8,7 +8,7 @@ Flagger is written in Go and uses Go modules for dependency management.
 
 On your dev machine install the following tools:
 
-* go >= 1.25
+* go >= 1.26
 * kubectl >= 1.30
 * kustomize >= 5.0
 * helm >= 3.0
