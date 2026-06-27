@@ -90,6 +90,11 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 			assert.Equal(t, configMapProjected.Data["color"], configPrimaryProjected.Data["color"])
 		}
 
+		assert.Equal(t, "podinfo-config-init-env-primary",
+			depPrimary.Spec.Template.Spec.InitContainers[0].Env[0].ValueFrom.ConfigMapKeyRef.Name)
+		assert.Equal(t, "podinfo-config-init-all-env-primary",
+			depPrimary.Spec.Template.Spec.InitContainers[0].EnvFrom[0].ConfigMapRef.Name)
+
 		_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-tracker-enabled", metav1.GetOptions{})
 		assert.NoError(t, err)
 		_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-tracker-enabled-primary", metav1.GetOptions{})
@@ -165,6 +170,11 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMapProjected.Data["color"], configPrimaryProjected.Data["color"])
 		}
+
+		assert.Equal(t, "podinfo-config-init-env-primary",
+			daePrimary.Spec.Template.Spec.InitContainers[0].Env[0].ValueFrom.ConfigMapKeyRef.Name)
+		assert.Equal(t, "podinfo-config-init-all-env-primary",
+			daePrimary.Spec.Template.Spec.InitContainers[0].EnvFrom[0].ConfigMapRef.Name)
 
 		_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-tracker-enabled", metav1.GetOptions{})
 		assert.NoError(t, err)
@@ -243,6 +253,11 @@ func TestConfigTracker_Secrets(t *testing.T) {
 			assert.Equal(t, string(secretProjected.Data["apiKey"]), string(secretPrimaryProjected.Data["apiKey"]))
 		}
 
+		assert.Equal(t, "podinfo-secret-init-env-primary",
+			depPrimary.Spec.Template.Spec.InitContainers[0].Env[1].ValueFrom.SecretKeyRef.Name)
+		assert.Equal(t, "podinfo-secret-init-all-env-primary",
+			depPrimary.Spec.Template.Spec.InitContainers[0].EnvFrom[1].SecretRef.Name)
+
 		_, err = mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-tracker-enabled", metav1.GetOptions{})
 		assert.NoError(t, err)
 		_, err = mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-tracker-enabled-primary", metav1.GetOptions{})
@@ -317,6 +332,11 @@ func TestConfigTracker_Secrets(t *testing.T) {
 		if assert.NoError(t, err) {
 			assert.Equal(t, string(secretProjected.Data["apiKey"]), string(secretPrimaryProjected.Data["apiKey"]))
 		}
+
+		assert.Equal(t, "podinfo-secret-init-env-primary",
+			daePrimary.Spec.Template.Spec.InitContainers[0].Env[1].ValueFrom.SecretKeyRef.Name)
+		assert.Equal(t, "podinfo-secret-init-all-env-primary",
+			daePrimary.Spec.Template.Spec.InitContainers[0].EnvFrom[1].SecretRef.Name)
 
 		_, err = mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-tracker-enabled", metav1.GetOptions{})
 		assert.NoError(t, err)

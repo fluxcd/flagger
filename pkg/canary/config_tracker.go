@@ -78,7 +78,7 @@ func configIsDisabled(annotations map[string]string) bool {
 func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*ConfigRef, error) {
 	config, err := ct.KubeClient.CoreV1().ConfigMaps(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("configmap  %s.%s get query error: %w", name, namespace, err)
+		return nil, fmt.Errorf("configmap %s.%s get query error: %w", name, namespace, err)
 	}
 
 	if configIsDisabled(config.GetAnnotations()) {
@@ -449,6 +449,42 @@ func (ct *ConfigTracker) ApplyPrimaryConfigs(spec corev1.PodSpec, refs map[strin
 
 	// update containers
 	for _, container := range spec.Containers {
+		// update env
+		for i, env := range container.Env {
+			if env.ValueFrom != nil {
+				switch {
+				case env.ValueFrom.ConfigMapKeyRef != nil:
+					name := fmt.Sprintf("%s/%s", ConfigRefMap, env.ValueFrom.ConfigMapKeyRef.Name)
+					if _, exists := refs[name]; exists {
+						container.Env[i].ValueFrom.ConfigMapKeyRef.Name += "-primary"
+					}
+				case env.ValueFrom.SecretKeyRef != nil:
+					name := fmt.Sprintf("%s/%s", ConfigRefSecret, env.ValueFrom.SecretKeyRef.Name)
+					if _, exists := refs[name]; exists {
+						container.Env[i].ValueFrom.SecretKeyRef.Name += "-primary"
+					}
+				}
+			}
+		}
+		// update envFrom
+		for i, envFrom := range container.EnvFrom {
+			switch {
+			case envFrom.ConfigMapRef != nil:
+				name := fmt.Sprintf("%s/%s", ConfigRefMap, envFrom.ConfigMapRef.Name)
+				if _, exists := refs[name]; exists {
+					container.EnvFrom[i].ConfigMapRef.Name += "-primary"
+				}
+			case envFrom.SecretRef != nil:
+				name := fmt.Sprintf("%s/%s", ConfigRefSecret, envFrom.SecretRef.Name)
+				if _, exists := refs[name]; exists {
+					container.EnvFrom[i].SecretRef.Name += "-primary"
+				}
+			}
+		}
+	}
+
+	// update init containers
+	for _, container := range spec.InitContainers {
 		// update env
 		for i, env := range container.Env {
 			if env.ValueFrom != nil {
