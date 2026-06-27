@@ -88,6 +88,9 @@ var (
 	kubeconfigServiceMesh    string
 	clusterName              string
 	noCrossNamespaceRefs     bool
+	istioMultiClusterEnabled bool
+	istioMultiClusterLabel   string
+	istioMultiClusterNs      string
 )
 
 func init() {
@@ -123,6 +126,9 @@ func init() {
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
 	flag.StringVar(&clusterName, "cluster-name", "", "Cluster name to be included in alert msgs.")
 	flag.BoolVar(&noCrossNamespaceRefs, "no-cross-namespace-refs", false, "When set to true, Flagger can only refer to resources in the same namespace.")
+	flag.BoolVar(&istioMultiClusterEnabled, "istio-multicluster-enabled", false, "Enable Istio multi-cluster support.")
+	flag.StringVar(&istioMultiClusterLabel, "istio-multicluster-secret-label", "istio/multiCluster=true", "Label on secrets for Istio multi-cluster discovery.")
+	flag.StringVar(&istioMultiClusterNs, "istio-multicluster-secret-namespace", "istio-system", "Namespace where Istio multi-cluster secrets are located.")
 }
 
 func main() {
@@ -228,7 +234,13 @@ func main() {
 		setOwnerRefs = false
 	}
 
-	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, knativeClient, ingressAnnotationsPrefix, ingressClass, logger, meshClient, setOwnerRefs)
+	var clusterManager *router.ClusterManager
+	if istioMultiClusterEnabled {
+		clusterManager = router.NewClusterManager(kubeClient, meshClient, logger, istioMultiClusterLabel, istioMultiClusterNs)
+		clusterManager.Start(stopCh)
+	}
+
+	routerFactory := router.NewFactory(cfg, kubeClient, flaggerClient, knativeClient, ingressAnnotationsPrefix, ingressClass, logger, meshClient, setOwnerRefs, clusterManager)
 
 	var configTracker canary.Tracker
 	if enableConfigTracking {

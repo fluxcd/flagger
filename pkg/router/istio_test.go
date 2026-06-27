@@ -33,6 +33,7 @@ import (
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	istiov1alpha1 "github.com/fluxcd/flagger/pkg/apis/istio/common/v1alpha1"
 	istiov1beta1 "github.com/fluxcd/flagger/pkg/apis/istio/v1beta1"
+	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
 func TestUnmarshalVirtualService(t *testing.T) {
@@ -80,7 +81,7 @@ func TestIstioRouter_Sync(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -148,7 +149,7 @@ func TestIstioRouter_SetRoutes(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -418,7 +419,7 @@ func TestIstioRouter_getSessionAffinityRoutes(t *testing.T) {
 		router := &IstioRouter{
 			logger:        mocks.logger,
 			flaggerClient: mocks.flaggerClient,
-			istioClient:   mocks.meshClient,
+			istioClients:  []clientset.Interface{mocks.meshClient},
 			kubeClient:    mocks.kubeClient,
 		}
 
@@ -490,7 +491,7 @@ func TestIstioRouter_getSessionAffinityRoutes(t *testing.T) {
 		router := &IstioRouter{
 			logger:        mocks.logger,
 			flaggerClient: mocks.flaggerClient,
-			istioClient:   mocks.meshClient,
+			istioClients:  []clientset.Interface{mocks.meshClient},
 			kubeClient:    mocks.kubeClient,
 		}
 
@@ -579,7 +580,7 @@ func TestIstioRouter_GetRoutes(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -635,7 +636,7 @@ func TestIstioRouter_HTTPRequestHeaders(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -655,7 +656,7 @@ func TestIstioRouter_CORS(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -675,7 +676,7 @@ func TestIstioRouter_ABTest(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -725,7 +726,7 @@ func TestIstioRouter_GatewayPort(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -749,7 +750,7 @@ func TestIstioRouter_Delegate(t *testing.T) {
 		router := &IstioRouter{
 			logger:        mocks.logger,
 			flaggerClient: mocks.flaggerClient,
-			istioClient:   mocks.meshClient,
+			istioClients:  []clientset.Interface{mocks.meshClient},
 			kubeClient:    mocks.kubeClient,
 		}
 
@@ -780,7 +781,7 @@ func TestIstioRouter_Delegate(t *testing.T) {
 		router := &IstioRouter{
 			logger:        mocks.logger,
 			flaggerClient: mocks.flaggerClient,
-			istioClient:   mocks.meshClient,
+			istioClients:  []clientset.Interface{mocks.meshClient},
 			kubeClient:    mocks.kubeClient,
 		}
 
@@ -794,7 +795,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -847,7 +848,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 	for _, table := range tables {
 		var err error
 		if table.createVS {
-			vs, err := router.istioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
+			vs, err := router.getClusters()[0].IstioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
 			require.NoError(t, err)
 
 			if vs.Annotations == nil {
@@ -862,7 +863,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 			case "kubectl":
 				vs.Annotations[kubectlAnnotation] = `{"apiVersion": "networking.istio.io/v1beta1","kind": "VirtualService","metadata": {"annotations": {},"name": "podinfo","namespace": "test"},  "spec": {"gateways": ["istio-system/ingressgateway"],"hosts": ["podinfo"],"http": [{"route": [{"destination": {"host": "podinfo"}}]}]}}`
 			}
-			_, err = router.istioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Update(context.TODO(), vs, metav1.UpdateOptions{})
+			_, err = router.getClusters()[0].IstioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Update(context.TODO(), vs, metav1.UpdateOptions{})
 			require.NoError(t, err)
 		}
 
@@ -879,7 +880,7 @@ func TestIstioRouter_Finalize(t *testing.T) {
 		}
 
 		if table.spec != nil {
-			vs, err := router.istioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
+			vs, err := router.getClusters()[0].IstioClient.NetworkingV1beta1().VirtualServices(table.canary.Namespace).Get(context.TODO(), table.canary.Name, metav1.GetOptions{})
 			require.NoError(t, err)
 			require.Equal(t, *table.spec, vs.Spec)
 		}
@@ -891,7 +892,7 @@ func TestIstioRouter_Match(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -1011,7 +1012,7 @@ func TestIstioRouter_SetRoutesTCP(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 
@@ -1051,7 +1052,7 @@ func TestIstioRouter_GetRoutesTCP(t *testing.T) {
 	router := &IstioRouter{
 		logger:        mocks.logger,
 		flaggerClient: mocks.flaggerClient,
-		istioClient:   mocks.meshClient,
+		istioClients:  []clientset.Interface{mocks.meshClient},
 		kubeClient:    mocks.kubeClient,
 	}
 

@@ -18,8 +18,8 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -80,12 +80,12 @@ func (c *Controller) finalize(old interface{}) error {
 		Cap:      canary.GetAnalysisInterval(),
 		Steps:    4,
 	}
-	retry.OnError(backoff, func(err error) bool {
-		return err.Error() == "retriable error"
+	err = retry.OnError(backoff, func(err error) bool {
+		return strings.Contains(err.Error(), "retriable: ")
 	}, func() error {
 		retriable, err := canaryController.IsCanaryReady(canary)
 		if err != nil && retriable {
-			return errors.New("retriable error")
+			return fmt.Errorf("retriable: %w", err)
 		}
 		return err
 	})

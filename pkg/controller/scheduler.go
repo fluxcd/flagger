@@ -550,9 +550,6 @@ func (c *Controller) runPromotionTrafficShift(canary *flaggerv1.Canary, canaryCo
 			}
 		}
 	}
-
-	return
-
 }
 
 func (c *Controller) runCanary(canary *flaggerv1.Canary, canaryController canary.Controller,

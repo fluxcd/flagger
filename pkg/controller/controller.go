@@ -159,9 +159,9 @@ func NewController(
 
 				ctrl.enqueue(new)
 			} else if !newCanary.DeletionTimestamp.IsZero() && hasFinalizer(&newCanary) ||
-				!hasFinalizer(&newCanary) && newCanary.Spec.RevertOnDeletion {
+				!hasFinalizer(&newCanary) && (newCanary.Spec.RevertOnDeletion || ctrl.routerFactory.IsMultiClusterEnabled()) {
 				// If this was marked for deletion and has finalizers enqueue for finalizing or
-				// if this canary doesn't have finalizers and RevertOnDeletion is true updated speck enqueue
+				// if this canary doesn't have finalizers and RevertOnDeletion is true (or multi-cluster is enabled) updated speck enqueue
 				ctrl.enqueue(new)
 			}
 
@@ -266,8 +266,8 @@ func (c *Controller) syncHandler(key string) error {
 		return fmt.Errorf("invalid canary spec: %s", err)
 	}
 
-	// Finalize if canary has been marked for deletion and revert is desired
-	if cd.Spec.RevertOnDeletion && cd.ObjectMeta.DeletionTimestamp != nil {
+	// Finalize if canary has been marked for deletion and revert is desired (or multi-cluster is enabled)
+	if (cd.Spec.RevertOnDeletion || c.routerFactory.IsMultiClusterEnabled()) && cd.ObjectMeta.DeletionTimestamp != nil {
 		// If finalizers have been previously removed proceed
 		if !hasFinalizer(cd) {
 			c.logger.Infof("Canary %s.%s has been finalized", cd.Name, cd.Namespace)
@@ -306,8 +306,8 @@ func (c *Controller) syncHandler(key string) error {
 
 	c.canaries.Store(fmt.Sprintf("%s.%s", cd.Name, cd.Namespace), cd)
 
-	// If opt in for revertOnDeletion add finalizer if not present
-	if cd.Spec.RevertOnDeletion && !hasFinalizer(cd) {
+	// If opt in for revertOnDeletion (or multi-cluster is enabled) add finalizer if not present
+	if (cd.Spec.RevertOnDeletion || c.routerFactory.IsMultiClusterEnabled()) && !hasFinalizer(cd) {
 		if err := c.addFinalizer(cd); err != nil {
 			return fmt.Errorf("unable to add finalizer to canary %s.%s: %w", cd.Name, cd.Namespace, err)
 		}
