@@ -58,10 +58,14 @@ func TestWebhooks(t *testing.T) {
 					{Phase: flaggerv1.CanaryPhaseInitialized, Metadata: map[string]string{"eventMessage": "Confirm-rollout check confirm-rollout-webhook passed"}},
 					{Phase: flaggerv1.CanaryPhaseProgressing, Metadata: map[string]string{"eventMessage": "New revision detected! Scaling up podinfo.default"}},
 					{Phase: flaggerv1.CanaryPhaseProgressing, Metadata: map[string]string{"eventMessage": "Copying podinfo.default template spec to podinfo-primary.default"}},
+					{Phase: flaggerv1.CanaryPhaseSucceeded, Metadata: map[string]string{"eventMessage": "Post-rollout check post-rollout-webhook passed"}},
 					{Phase: flaggerv1.CanaryPhaseSucceeded, Metadata: map[string]string{"eventMessage": "Promotion completed! Canary analysis was skipped for podinfo.default"}},
 				},
 				"confirm-rollout": {
 					{Phase: flaggerv1.CanaryPhaseInitialized, Metadata: map[string]string{"eventMessage": ""}},
+				},
+				"post-rollout": {
+					{Phase: flaggerv1.CanaryPhaseSucceeded, Metadata: map[string]string{"eventMessage": ""}},
 				},
 			},
 			test: func(t *testing.T, mocks fixture) {
