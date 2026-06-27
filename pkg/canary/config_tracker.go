@@ -123,14 +123,14 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 }
 
 // getDataFromConfigMap fetches both data and binaryData with regards to TrackBinaryData in the configmap
-func (ct *ConfigTracker) getDataFromConfigMap(config corev1.ConfigMap) map[string]string {
-	data := make(map[string]string)
-	maps.Copy(data, config.Data)
+func (ct *ConfigTracker) getDataFromConfigMap(config corev1.ConfigMap) map[string][]byte {
+	data := make(map[string][]byte)
+	for k, v := range config.Data {
+		data[k] = []byte(v)
+	}
 
 	if ct.TrackBinaryData {
-		for k, v := range config.BinaryData {
-			data[k] = string(v)
-		}
+		maps.Copy(data, config.BinaryData)
 	}
 
 	return data
