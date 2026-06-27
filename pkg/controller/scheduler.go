@@ -301,7 +301,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 				// instead of rolling back traffic to the unhealthy primary
 				if cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
 					cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
-					c.handleFailedPromotion(cd, canaryController, err)
+					c.handleFailedPromotion(cd, canaryController, meshRouter, err)
 				} else {
 					c.rollback(cd, canaryController, meshRouter, scalerReconciler)
 				}
@@ -997,14 +997,28 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 }
 
 // handleFailedPromotion marks the rollout as failed when the primary is unhealthy
-// during promotion, without scaling the canary down or routing to the primary.
-func (c *Controller) handleFailedPromotion(canary *flaggerv1.Canary, canaryController canary.Controller, err error) {
+// during promotion and routes all traffic back to the canary, the only healthy
+// copy of the new revision. Traffic may already have been shifted to the primary
+// by runPromotionTrafficShift, so it must be moved back explicitly.
+func (c *Controller) handleFailedPromotion(canary *flaggerv1.Canary, canaryController canary.Controller,
+	meshRouter router.Interface, err error) {
 	c.recordEventWarningf(canary, "Promotion of %s.%s failed, primary not ready: %v",
 		canary.Spec.TargetRef.Name, canary.Namespace, err)
 	c.alert(canary, fmt.Sprintf("Promotion failed, primary not ready: %v", err),
 		false, flaggerv1.SeverityError)
 
-	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFailed); err != nil {
+	// route all traffic to the canary, off the unhealthy primary
+	primaryWeight := 0
+	canaryWeight := c.totalWeight(canary)
+	if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
+		return
+	}
+	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
+
+	// mark as failed while reporting the weight that matches the routing
+	if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{
+		Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: canaryWeight}); err != nil {
 		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 		return
 	}
