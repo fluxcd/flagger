@@ -162,6 +162,26 @@ If port discovery is enabled, Flagger scans the target workload and extracts the
 excluding the port specified in the canary service and service mesh sidecar ports.
 These ports will be used when generating the ClusterIP services.
 
+Alternatively, you can explicitly define multiple ports using the `ports` field, which provides more control
+over port configuration and takes precedence over the single `port` fields and port discovery:
+
+```yaml
+spec:
+  service:
+    name: podinfo
+    ports:
+      - port: 9999
+        portName: grpc
+        appProtocol: grpc
+        targetPort: 9090
+      - port: 8888
+        portName: http
+        appProtocol: http
+        targetPort: web
+```
+
+When `ports` is specified, it overrides the `port`, `portName`, `targetPort`, `appProtocol`, and `portDiscovery` fields.
+
 Based on the canary spec service, Flagger creates the following Kubernetes ClusterIP service:
 
 * `<service.name>.<namespace>.svc.cluster.local`  
