@@ -297,7 +297,14 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		if err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			if !retriable {
-				c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+				// during promotion the canary is the only healthy copy, halt
+				// instead of rolling back traffic to the unhealthy primary
+				if cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+					cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+					c.handleFailedPromotion(cd, canaryController, err)
+				} else {
+					c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+				}
 			}
 			return
 		}
@@ -975,6 +982,29 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 
 	// mark canary as failed
 	if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+		return
+	}
+
+	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
+	c.recorder.IncFailures(metrics.CanaryMetricLabels{
+		Name:               canary.Spec.TargetRef.Name,
+		Namespace:          canary.Namespace,
+		DeploymentStrategy: canary.DeploymentStrategy(),
+		AnalysisStatus:     metrics.AnalysisStatusCompleted,
+	})
+	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
+}
+
+// handleFailedPromotion marks the rollout as failed when the primary is unhealthy
+// during promotion, without scaling the canary down or routing to the primary.
+func (c *Controller) handleFailedPromotion(canary *flaggerv1.Canary, canaryController canary.Controller, err error) {
+	c.recordEventWarningf(canary, "Promotion of %s.%s failed, primary not ready: %v",
+		canary.Spec.TargetRef.Name, canary.Namespace, err)
+	c.alert(canary, fmt.Sprintf("Promotion failed, primary not ready: %v", err),
+		false, flaggerv1.SeverityError)
+
+	if err := canaryController.SetStatusPhase(canary, flaggerv1.CanaryPhaseFailed); err != nil {
 		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 		return
 	}

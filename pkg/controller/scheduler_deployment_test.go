@@ -116,6 +116,67 @@ func TestScheduler_DeploymentRollback(t *testing.T) {
 	assert.Equal(t, flaggerv1.CanaryPhaseFailed, c.Status.Phase)
 }
 
+// when the primary fails to become ready during promotion, the healthy canary
+// must be kept instead of rolled back to the broken primary (#1898)
+func TestScheduler_DeploymentPromotionPrimaryNotReady(t *testing.T) {
+	mocks := newDeploymentFixture(nil)
+
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// update
+	dep2 := newDeploymentTestDeploymentV2()
+	_, err := mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// detect changes -> progressing, canary scaled up
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makeCanaryReady(t)
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+
+	canaryDep, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, canaryDep.Spec.Replicas)
+	canaryReplicas := *canaryDep.Spec.Replicas
+	require.Greater(t, canaryReplicas, int32(0))
+
+	// simulate: analysis succeeded, spec promoted to primary, now finishing promotion
+	cd, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	err = mocks.deployer.SetStatusPhase(cd, flaggerv1.CanaryPhasePromoting)
+	require.NoError(t, err)
+
+	// known routing state at promotion time (split between primary and canary)
+	require.NoError(t, mocks.router.SetRoutes(mocks.canary, 50, 50, false))
+
+	// the promoted primary fails to roll out
+	mocks.makePrimaryNotReady(t)
+
+	// advance: Flagger observes the primary is stuck
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// the canary must NOT be scaled to zero - it is the only healthy copy serving traffic
+	canaryDep, err = mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, canaryDep.Spec.Replicas)
+	assert.Equal(t, canaryReplicas, *canaryDep.Spec.Replicas, "canary must not be scaled to zero when promotion fails")
+
+	// traffic must NOT be shifted entirely onto the broken primary
+	primaryWeight, canaryWeight, _, err := mocks.router.GetRoutes(mocks.canary)
+	require.NoError(t, err)
+	assert.NotEqual(t, 100, primaryWeight, "traffic must not be routed entirely to the unhealthy primary")
+	assert.Greater(t, canaryWeight, 0, "canary must keep serving traffic when promotion fails")
+
+	// the rollout is reported as failed so it stops advancing and alerts
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseFailed, c.Status.Phase)
+}
+
 func TestScheduler_DeploymentSkipAnalysis(t *testing.T) {
 	mocks := newDeploymentFixture(nil)
 	// initializing

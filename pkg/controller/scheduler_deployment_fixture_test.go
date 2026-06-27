@@ -82,6 +82,39 @@ func (f fixture) makeReady(t *testing.T, name string) {
 	require.NoError(t, err)
 }
 
+// makePrimaryNotReady puts the primary into a stuck rollout (progress deadline exceeded).
+func (f fixture) makePrimaryNotReady(t *testing.T) {
+	primaryName := fmt.Sprintf("%s-primary", f.canary.Spec.TargetRef.Name)
+	p, err := f.kubeClient.AppsV1().
+		Deployments("default").
+		Get(context.TODO(), primaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	p.Status = appsv1.DeploymentStatus{
+		ObservedGeneration: p.Generation,
+		Replicas:           1,
+		UpdatedReplicas:    1,
+		ReadyReplicas:      0,
+		AvailableReplicas:  0,
+		Conditions: []appsv1.DeploymentCondition{
+			{
+				Type:   appsv1.DeploymentProgressing,
+				Status: corev1.ConditionFalse,
+				Reason: "ProgressDeadlineExceeded",
+			},
+			{
+				Type:           appsv1.DeploymentAvailable,
+				Status:         corev1.ConditionFalse,
+				Reason:         "MinimumReplicasUnavailable",
+				LastUpdateTime: metav1.Now(),
+			},
+		},
+	}
+
+	_, err = f.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), p, metav1.UpdateOptions{})
+	require.NoError(t, err)
+}
+
 func newDeploymentFixture(c *flaggerv1.Canary) fixture {
 	if c == nil {
 		c = newDeploymentTestCanary()
