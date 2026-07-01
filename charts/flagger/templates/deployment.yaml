@@ -44,6 +44,7 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}
     spec:
+      automountServiceAccountToken: true
       serviceAccountName: {{ template "flagger.serviceAccountName" . }}
       {{- if .Values.affinity }}
       affinity:
