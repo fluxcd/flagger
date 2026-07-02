@@ -58,13 +58,26 @@ func (kc *KnativeController) GetMetadata(canary *flaggerv1.Canary) (string, stri
 	return "", "", make(map[string]int32), nil
 }
 
+// knativeSnapshot returns the content hash of the latest created revision
+// name together with its change fence. The hash input lives in the service
+// status, which changes without bumping metadata.generation, so the fence
+// counter is the revision name itself: the fence then matches exactly when
+// the hash input is unchanged, making absorption safe for algorithm changes
+// only.
+func knativeSnapshot(service *serving.Service) targetSnapshot {
+	return targetSnapshot{
+		hash:  ComputeStringHash(service.Status.LatestCreatedRevisionName),
+		fence: encodeFence(service.UID, service.Status.LatestCreatedRevisionName, ""),
+	}
+}
+
 // SyncStatus encodes list of revisions and updates the canary status
 func (kc *KnativeController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.CanaryStatus) error {
 	service, err := kc.knativeClient.ServingV1().Services(cd.Namespace).Get(context.TODO(), cd.Spec.TargetRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Knative Service %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
-	return syncCanaryStatus(kc.flaggerClient, cd, status, service.Status.LatestCreatedRevisionName, func(copy *flaggerv1.Canary) {})
+	return syncCanaryStatus(kc.flaggerClient, cd, status, knativeSnapshot(service), func(copy *flaggerv1.Canary) {})
 }
 
 // SetStatusFailedChecks updates the canary failed checks counter
@@ -141,7 +154,12 @@ func (kc *KnativeController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error
 	if err != nil {
 		return true, fmt.Errorf("Knative Service %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
-	return hasSpecChanged(cd, service.Status.LatestCreatedRevisionName)
+	// the migration heuristic compares the latest revision with the promoted
+	// one recorded on the service, catching revisions created while Flagger
+	// was not running
+	return hasSpecChanged(kc.logger, kc.flaggerClient, cd, knativeSnapshot(service), func() (bool, error) {
+		return service.Status.LatestCreatedRevisionName != service.Annotations["flagger.app/primary-revision"], nil
+	})
 }
 
 func (kc *KnativeController) HaveDependenciesChanged(canary *flaggerv1.Canary) (bool, error) {

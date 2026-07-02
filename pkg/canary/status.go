@@ -29,9 +29,7 @@ import (
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
 )
 
-func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, status flaggerv1.CanaryStatus, canaryResource interface{}, setAll func(cdCopy *flaggerv1.Canary)) error {
-	hash := ComputeHash(canaryResource)
-
+func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, status flaggerv1.CanaryStatus, snap targetSnapshot, setAll func(cdCopy *flaggerv1.Canary)) error {
 	firstTry := true
 	name, ns := cd.GetName(), cd.GetNamespace()
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
@@ -47,9 +45,10 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		cdCopy.Status.CanaryWeight = status.CanaryWeight
 		cdCopy.Status.FailedChecks = status.FailedChecks
 		cdCopy.Status.Iterations = status.Iterations
-		cdCopy.Status.LastAppliedSpec = hash
+		cdCopy.Status.LastAppliedSpec = snap.hash
+		cdCopy.Status.LastTrackedRevision = snap.fence
 		if status.Phase == flaggerv1.CanaryPhaseInitialized {
-			cdCopy.Status.LastPromotedSpec = hash
+			cdCopy.Status.LastPromotedSpec = snap.hash
 		}
 		cdCopy.Status.LastTransitionTime = metav1.Now()
 		setAll(cdCopy)
@@ -63,6 +62,75 @@ func syncCanaryStatus(flaggerClient clientset.Interface, cd *flaggerv1.Canary, s
 		return
 	})
 
+	if err != nil {
+		return fmt.Errorf("failed after retries: %w", err)
+	}
+	return nil
+}
+
+// persistSpecTracking records the (lastAppliedSpec, lastTrackedRevision) pair
+// after a hash drift absorption, fence refresh, manual rollback or spec
+// tracking migration decision, and rewrites lastPromotedSpec in lockstep when
+// it pointed at the same spec as lastAppliedSpec (idle canary). The write is
+// based on the status values the decision was computed from and is aborted if
+// another writer changed them in the meantime; cd is never mutated in place.
+func persistSpecTracking(flaggerClient clientset.Interface, cd *flaggerv1.Canary, snap targetSnapshot) error {
+	name, ns := cd.GetName(), cd.GetNamespace()
+	basedOnApplied := cd.Status.LastAppliedSpec
+	basedOnPromoted := cd.Status.LastPromotedSpec
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		fresh, err := flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
+		}
+		if fresh.Status.LastAppliedSpec != basedOnApplied {
+			// another writer updated the tracked spec; the next reconcile
+			// will re-make the decision against the fresh status
+			return nil
+		}
+		if fresh.Status.LastAppliedSpec == snap.hash && fresh.Status.LastTrackedRevision == snap.fence {
+			// already persisted
+			return nil
+		}
+
+		cdCopy := fresh.DeepCopy()
+		cdCopy.Status.LastAppliedSpec = snap.hash
+		cdCopy.Status.LastTrackedRevision = snap.fence
+		if basedOnPromoted != "" && basedOnPromoted == basedOnApplied {
+			cdCopy.Status.LastPromotedSpec = snap.hash
+		}
+
+		return updateStatusWithUpgrade(flaggerClient, cdCopy)
+	})
+	if err != nil {
+		return fmt.Errorf("failed after retries: %w", err)
+	}
+	return nil
+}
+
+// refreshTrackedRevision updates lastTrackedRevision after Flagger's own
+// writes to the target (scaling), which advance the server change counter
+// without altering the normalized spec. The fence only moves while the
+// recorded lastAppliedSpec still matches the hash of the written object: a
+// mismatch means a concurrent change is pending (or the status predates the
+// tracking format) and the stale fence must remain in place so the change is
+// detected by hash comparison instead of being absorbed.
+func refreshTrackedRevision(flaggerClient clientset.Interface, cd *flaggerv1.Canary, snap targetSnapshot) error {
+	name, ns := cd.GetName(), cd.GetNamespace()
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		fresh, err := flaggerClient.FlaggerV1beta1().Canaries(ns).Get(context.TODO(), name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("canary %s.%s get query failed: %w", name, ns, err)
+		}
+		if fresh.Status.LastAppliedSpec != snap.hash || fresh.Status.LastTrackedRevision == snap.fence {
+			return nil
+		}
+
+		cdCopy := fresh.DeepCopy()
+		cdCopy.Status.LastTrackedRevision = snap.fence
+
+		return updateStatusWithUpgrade(flaggerClient, cdCopy)
+	})
 	if err != nil {
 		return fmt.Errorf("failed after retries: %w", err)
 	}

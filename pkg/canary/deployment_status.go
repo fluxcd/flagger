@@ -37,7 +37,12 @@ func (c *DeploymentController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1
 		return fmt.Errorf("GetConfigRefs failed: %w", err)
 	}
 
-	return syncCanaryStatus(c.flaggerClient, cd, status, dep.Spec.Template, func(cdCopy *flaggerv1.Canary) {
+	snap, err := deploymentSnapshot(dep)
+	if err != nil {
+		return err
+	}
+
+	return syncCanaryStatus(c.flaggerClient, cd, status, snap, func(cdCopy *flaggerv1.Canary) {
 		cdCopy.Status.TrackedConfigs = configs
 	})
 }

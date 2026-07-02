@@ -32,22 +32,17 @@ func (c *DaemonSetController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.
 		return fmt.Errorf("daemonset %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
-	// ignore `daemonSetScaleDownNodeSelector` node selector
-	for key := range daemonSetScaleDownNodeSelector {
-		delete(dae.Spec.Template.Spec.NodeSelector, key)
-	}
-
-	// since nil and capacity zero map would have different hash, we have to initialize here
-	if dae.Spec.Template.Spec.NodeSelector == nil {
-		dae.Spec.Template.Spec.NodeSelector = map[string]string{}
-	}
-
 	configs, err := c.configTracker.GetConfigRefs(cd)
 	if err != nil {
 		return fmt.Errorf("GetConfigRefs failed: %w", err)
 	}
 
-	return syncCanaryStatus(c.flaggerClient, cd, status, dae.Spec.Template, func(cdCopy *flaggerv1.Canary) {
+	snap, err := daemonSetSnapshot(dae)
+	if err != nil {
+		return err
+	}
+
+	return syncCanaryStatus(c.flaggerClient, cd, status, snap, func(cdCopy *flaggerv1.Canary) {
 		cdCopy.Status.TrackedConfigs = configs
 	})
 }
