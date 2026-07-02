@@ -17,10 +17,13 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sTesting "k8s.io/client-go/testing"
 
@@ -103,4 +106,30 @@ func TestFinalizer_removeFinalizer(t *testing.T) {
 			require.Nil(t, err)
 		}
 	}
+}
+
+func TestFinalizer_finalizeReturnsReadinessError(t *testing.T) {
+	mocks := newDeploymentFixture(nil)
+	mocks.canary.Spec.Provider = flaggerv1.KubernetesProvider
+
+	dep, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	dep.Status = appsv1.DeploymentStatus{
+		ObservedGeneration: dep.Generation,
+		Conditions: []appsv1.DeploymentCondition{
+			{
+				Type:   appsv1.DeploymentProgressing,
+				Status: "False",
+				Reason: "ProgressDeadlineExceeded",
+			},
+		},
+	}
+
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	err = mocks.ctrl.finalize(mocks.canary)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "canary not ready during finalizing")
 }

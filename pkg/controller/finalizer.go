@@ -80,7 +80,7 @@ func (c *Controller) finalize(old interface{}) error {
 		Cap:      canary.GetAnalysisInterval(),
 		Steps:    4,
 	}
-	retry.OnError(backoff, func(err error) bool {
+	err = retry.OnError(backoff, func(err error) bool {
 		return err.Error() == "retriable error"
 	}, func() error {
 		retriable, err := canaryController.IsCanaryReady(canary)
