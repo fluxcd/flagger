@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/signalfx/signalflow-client-go v0.1.0
+	github.com/signalfx/signalflow-client-go/v2 v2.3.0
 	github.com/signalfx/signalfx-go v1.57.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.27.1

@@ -26,8 +26,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/signalfx/signalflow-client-go/signalflow"
-	"github.com/signalfx/signalflow-client-go/signalflow/messages"
+	"github.com/signalfx/signalflow-client-go/v2/signalflow"
+	"github.com/signalfx/signalflow-client-go/v2/signalflow/messages"
 	"github.com/signalfx/signalfx-go/idtool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,7 +77,8 @@ func TestSplunkProvider_RunQuery(t *testing.T) {
 		parsedUrl, err := url.Parse(fakeBackend.URL())
 		require.NoError(t, err)
 
-		sp, err := NewSplunkProvider("1m",
+		sp, err := NewSplunkProvider(
+			"1m",
 			flaggerv1.MetricTemplateProvider{Address: fmt.Sprintf("http://%s", parsedUrl.Host)},
 			map[string][]byte{
 				signalFxTokenSecretKey: []byte(fakeBackend.AccessToken),
@@ -110,7 +111,8 @@ func TestSplunkProvider_RunQuery(t *testing.T) {
 		parsedUrl, err := url.Parse(fakeBackend.URL())
 		require.NoError(t, err)
 
-		sp, err := NewSplunkProvider("1m",
+		sp, err := NewSplunkProvider(
+			"1m",
 			flaggerv1.MetricTemplateProvider{Address: fmt.Sprintf("http://%s", parsedUrl.Host)},
 			map[string][]byte{
 				signalFxTokenSecretKey: []byte(fakeBackend.AccessToken),
@@ -141,7 +143,8 @@ func TestSplunkProvider_RunQuery(t *testing.T) {
 		parsedUrl, err := url.Parse(fakeBackend.URL())
 		require.NoError(t, err)
 
-		sp, err := NewSplunkProvider("1m",
+		sp, err := NewSplunkProvider(
+			"1m",
 			flaggerv1.MetricTemplateProvider{Address: fmt.Sprintf("http://%s", parsedUrl.Host)},
 			map[string][]byte{
 				signalFxTokenSecretKey: []byte(fakeBackend.AccessToken),
@@ -169,7 +172,8 @@ func TestSplunkProvider_IsOnline(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			sp, err := NewSplunkProvider("1m",
+			sp, err := NewSplunkProvider(
+				"1m",
 				flaggerv1.MetricTemplateProvider{Address: ts.URL},
 				map[string][]byte{
 					signalFxTokenSecretKey: []byte(token),

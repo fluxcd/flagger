@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/signalfx/signalflow-client-go/signalflow"
-	"github.com/signalfx/signalflow-client-go/signalflow/messages"
+	"github.com/signalfx/signalflow-client-go/v2/signalflow"
+	"github.com/signalfx/signalflow-client-go/v2/signalflow/messages"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
@@ -54,15 +54,14 @@ type SplunkProvider struct {
 	fromDelta int64
 }
 
-type splunkResponse struct {
-}
+type splunkResponse struct{}
 
 // NewSplunkProvider takes a canary spec, a provider spec and the credentials map, and
 // returns a Splunk client ready to execute queries against the API
 func NewSplunkProvider(metricInterval string,
 	provider flaggerv1.MetricTemplateProvider,
-	credentials map[string][]byte) (*SplunkProvider, error) {
-
+	credentials map[string][]byte,
+) (*SplunkProvider, error) {
 	address := provider.Address
 	if address == "" {
 		return nil, fmt.Errorf("splunk endpoint is not set")
