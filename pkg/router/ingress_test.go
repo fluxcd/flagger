@@ -100,6 +100,65 @@ func TestIngressRouter_GetSetRoutes(t *testing.T) {
 	assert.Equal(t, "0", inCanary.Annotations[canaryWeightAn])
 }
 
+func TestIngressRouter_GetSetRoutes_WithMatch(t *testing.T) {
+	mocks := newFixture(nil)
+	router := &IngressRouter{
+		logger:            mocks.logger,
+		kubeClient:        mocks.kubeClient,
+		annotationsPrefix: "prefix1.nginx.ingress.kubernetes.io",
+	}
+	mocks.ingressCanary.Spec.Analysis.Match = []istiov1alpha3.HTTPMatchRequest{
+		{
+			Headers: map[string]istiov1alpha1.StringMatch{
+				"x-canary": {
+					Exact: "always",
+				},
+			},
+		},
+	}
+	err := router.Reconcile(mocks.ingressCanary)
+	require.NoError(t, err)
+
+	p, c, m, err := router.GetRoutes(mocks.ingressCanary)
+	require.NoError(t, err)
+
+	p = 50
+	c = 50
+	m = false
+
+	err = router.SetRoutes(mocks.ingressCanary, p, c, m)
+	require.NoError(t, err)
+
+	canaryAn := "prefix1.nginx.ingress.kubernetes.io/canary"
+	canaryWeightAn := "prefix1.nginx.ingress.kubernetes.io/canary-weight"
+	canaryByHeaderAn := "prefix1.nginx.ingress.kubernetes.io/canary-by-header"
+	canaryByHeaderValueAn := "prefix1.nginx.ingress.kubernetes.io/canary-by-header-value"
+
+	canaryName := fmt.Sprintf("%s-canary", mocks.ingressCanary.Spec.IngressRef.Name)
+	inCanary, err := router.kubeClient.NetworkingV1().Ingresses("default").Get(context.TODO(), canaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	// test rollout
+	assert.Equal(t, "true", inCanary.Annotations[canaryAn])
+	assert.Equal(t, "50", inCanary.Annotations[canaryWeightAn])
+	assert.Equal(t, "x-canary", inCanary.Annotations[canaryByHeaderAn])
+	assert.Equal(t, "always", inCanary.Annotations[canaryByHeaderValueAn])
+
+	p = 100
+	c = 0
+	m = false
+
+	err = router.SetRoutes(mocks.ingressCanary, p, c, m)
+	require.NoError(t, err)
+
+	inCanary, err = router.kubeClient.NetworkingV1().Ingresses("default").Get(context.TODO(), canaryName, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	// test promotion
+	assert.Equal(t, "true", inCanary.Annotations[canaryAn])
+	assert.Equal(t, "0", inCanary.Annotations[canaryWeightAn])
+}
+
 func TestIngressRouter_ABTest(t *testing.T) {
 	mocks := newFixture(nil)
 	router := &IngressRouter{
