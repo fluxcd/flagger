@@ -180,6 +180,9 @@ func NewController(
 			if ok {
 				ctrl.logger.Infof("Deleting %s.%s from cache", r.Name, r.Namespace)
 				ctrl.canaries.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
+				// record the terminated phase so deleted canaries can be filtered
+				// out of the flagger_canary_phase metric (e.g. flagger_canary_phase < 9)
+				ctrl.recorder.SetPhase(&r, flaggerv1.CanaryPhaseTerminated)
 			}
 		},
 	})

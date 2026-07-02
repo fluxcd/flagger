@@ -197,6 +197,9 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		actualStatus := testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
 		assert.Equal(t, float64(1), actualStatus)
 
+		actualPhase := testutil.ToFloat64(mocks.ctrl.recorder.GetPhaseMetric().WithLabelValues("podinfo", "default"))
+		assert.Equal(t, float64(1), actualPhase) // Initialized
+
 		actualTotal := testutil.ToFloat64(mocks.ctrl.recorder.GetTotalMetric().WithLabelValues("default"))
 		assert.GreaterOrEqual(t, actualTotal, float64(0))
 		dep2 := newDeploymentTestDeploymentV2()
@@ -209,6 +212,9 @@ func TestController_MetricsStateTransition(t *testing.T) {
 
 		actualStatus = testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
 		assert.Equal(t, float64(0), actualStatus)
+
+		actualPhase = testutil.ToFloat64(mocks.ctrl.recorder.GetPhaseMetric().WithLabelValues("podinfo", "default"))
+		assert.Equal(t, float64(3), actualPhase) // Progressing
 
 		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo-primary", "default"))
 		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "default"))
@@ -234,6 +240,9 @@ func TestController_MetricsStateTransition(t *testing.T) {
 
 		successCount := testutil.ToFloat64(mocks.ctrl.recorder.GetSuccessesMetric().WithLabelValues("podinfo", "default", "canary", "completed"))
 		assert.Equal(t, float64(1), successCount)
+
+		actualPhase = testutil.ToFloat64(mocks.ctrl.recorder.GetPhaseMetric().WithLabelValues("podinfo", "default"))
+		assert.Equal(t, float64(7), actualPhase) // Succeeded
 	})
 
 	t.Run("failed canary rollback with count metrics", func(t *testing.T) {
@@ -269,6 +278,9 @@ func TestController_MetricsStateTransition(t *testing.T) {
 
 		actualStatus := testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
 		assert.Equal(t, float64(2), actualStatus)
+
+		actualPhase := testutil.ToFloat64(mocks.ctrl.recorder.GetPhaseMetric().WithLabelValues("podinfo", "default"))
+		assert.Equal(t, float64(8), actualPhase) // Failed
 
 		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo-primary", "default"))
 		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "default"))
