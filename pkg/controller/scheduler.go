@@ -297,7 +297,14 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 		if err != nil {
 			c.recordEventWarningf(cd, "%v", err)
 			if !retriable {
-				c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+				// during promotion the canary is the only healthy copy, halt
+				// instead of rolling back traffic to the unhealthy primary
+				if cd.Status.Phase == flaggerv1.CanaryPhasePromoting ||
+					cd.Status.Phase == flaggerv1.CanaryPhaseFinalising {
+					c.handleFailedPromotion(cd, canaryController, meshRouter, err)
+				} else {
+					c.rollback(cd, canaryController, meshRouter, scalerReconciler)
+				}
 			}
 			return
 		}
@@ -976,6 +983,43 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 
 	// mark canary as failed
 	if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: 0}); err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
+		return
+	}
+
+	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
+	c.recorder.IncFailures(metrics.CanaryMetricLabels{
+		Name:               canary.Spec.TargetRef.Name,
+		Namespace:          canary.Namespace,
+		DeploymentStrategy: canary.DeploymentStrategy(),
+		AnalysisStatus:     metrics.AnalysisStatusCompleted,
+	})
+	c.runPostRolloutHooks(canary, flaggerv1.CanaryPhaseFailed)
+}
+
+// handleFailedPromotion marks the rollout as failed when the primary is unhealthy
+// during promotion and routes all traffic back to the canary, the only healthy
+// copy of the new revision. Traffic may already have been shifted to the primary
+// by runPromotionTrafficShift, so it must be moved back explicitly.
+func (c *Controller) handleFailedPromotion(canary *flaggerv1.Canary, canaryController canary.Controller,
+	meshRouter router.Interface, err error) {
+	c.recordEventWarningf(canary, "Promotion of %s.%s failed, primary not ready: %v",
+		canary.Spec.TargetRef.Name, canary.Namespace, err)
+	c.alert(canary, fmt.Sprintf("Promotion failed, primary not ready: %v", err),
+		false, flaggerv1.SeverityError)
+
+	// route all traffic to the canary, off the unhealthy primary
+	primaryWeight := 0
+	canaryWeight := c.totalWeight(canary)
+	if err := meshRouter.SetRoutes(canary, primaryWeight, canaryWeight, false); err != nil {
+		c.recordEventWarningf(canary, "%v", err)
+		return
+	}
+	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
+
+	// mark as failed while reporting the weight that matches the routing
+	if err := canaryController.SyncStatus(canary, flaggerv1.CanaryStatus{
+		Phase: flaggerv1.CanaryPhaseFailed, CanaryWeight: canaryWeight}); err != nil {
 		c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
 		return
 	}
