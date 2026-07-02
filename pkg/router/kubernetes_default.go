@@ -206,9 +206,11 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 
 		portsDiff := cmp.Diff(svcSpec.Ports, svc.Spec.Ports, cmpopts.SortSlices(sortPorts))
 		selectorsDiff := cmp.Diff(svcSpec.Selector, svc.Spec.Selector)
-		if portsDiff != "" || selectorsDiff != "" {
+		trafficDistributionDiff := cmp.Diff(svcSpec.TrafficDistribution, svc.Spec.TrafficDistribution)
+		if portsDiff != "" || selectorsDiff != "" || trafficDistributionDiff != "" {
 			svcClone.Spec.Ports = svcSpec.Ports
 			svcClone.Spec.Selector = svcSpec.Selector
+			svcClone.Spec.TrafficDistribution = svcSpec.TrafficDistribution
 			updateService = true
 		}
 
