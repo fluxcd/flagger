@@ -1045,9 +1045,11 @@ func (c *Controller) setPhaseInitialized(cd *flaggerv1.Canary, canaryController 
 		if err != nil {
 			return fmt.Errorf("failed to get canary %s.%s: %w", cd.Name, cd.Namespace, err)
 		}
-		// We need to sync the LastAppliedSpec and TrackedConfigs of the `cd` Canary object as it
-		// is used later to determine whether target revision has changed in `shouldAdvance()`.
+		// We need to sync the LastAppliedSpec, LastTrackedRevision and TrackedConfigs of the
+		// `cd` Canary object as they are used later to determine whether target revision
+		// has changed in `shouldAdvance()`.
 		cd.Status.LastAppliedSpec = canary.Status.LastAppliedSpec
+		cd.Status.LastTrackedRevision = canary.Status.LastTrackedRevision
 		cd.Status.TrackedConfigs = canary.Status.TrackedConfigs
 
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseInitialized)

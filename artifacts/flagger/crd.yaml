@@ -1276,6 +1276,9 @@ spec:
                 lastPromotedSpec:
                   description: LastPromotedSpec of this canary
                   type: string
+                lastTrackedRevision:
+                  description: LastTrackedRevision is the change fence of the canary target
+                  type: string
                 lastTransitionTime:
                   description: LastTransitionTime of this canary
                   format: date-time
