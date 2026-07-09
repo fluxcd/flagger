@@ -29,6 +29,7 @@ test-coverage: fmt test-codegen
 	rm cover.out
 
 crd:
+	npx prettier -w artifacts/flagger/crd.yaml
 	cat artifacts/flagger/crd.yaml > charts/flagger/crds/crd.yaml
 	cat artifacts/flagger/crd.yaml > kustomize/base/flagger/crd.yaml
 
