@@ -41,6 +41,7 @@ RUN CGO_ENABLED=0 go build -o loadtester ./cmd/loadtester/*
 
 FROM bash:5.2
 
+ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 
 RUN addgroup -S app && \
@@ -64,9 +65,14 @@ RUN chown -R app:app /tmp/ghz
 
 USER app
 
-# test load generator tools
-RUN hey -n 1 -c 1 https://flagger.app > /dev/null && echo $? | grep 0
-RUN wrk -d 1s -c 1 -t 1 https://flagger.app > /dev/null && echo $? | grep 0
+# test load generator tools. skip if we're not running on the host arch - qemu has network
+# bugs that lead to segfaults.
+RUN if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
+      hey -n 1 -c 1 https://flagger.app > /dev/null && \
+      wrk -d 1s -c 1 -t 1 https://flagger.app > /dev/null; \
+    else \
+      echo "Skipping runtime smoke test under emulation: $BUILDPLATFORM -> $TARGETPLATFORM"; \
+    fi
 
 COPY --from=builder --chown=app:app /workspace/loadtester .
 
