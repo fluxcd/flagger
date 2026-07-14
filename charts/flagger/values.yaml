@@ -152,6 +152,8 @@ resources:
     memory: "32Mi"
     cpu: "10m"
 
+additionalContainers: []
+
 nodeSelector: {}
 
 tolerations: []
