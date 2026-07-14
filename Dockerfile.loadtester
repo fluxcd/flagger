@@ -6,11 +6,11 @@ ARG REVISION
 
 RUN apk --no-cache add alpine-sdk perl curl bash tar
 
-RUN HELM3_VERSION=3.20.1 && \
+RUN HELM3_VERSION=3.21.1 && \
 curl -sSL "https://get.helm.sh/helm-v${HELM3_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz && \
 chmod +x linux-${TARGETARCH}/helm && mv linux-${TARGETARCH}/helm /usr/local/bin/helm
 
-RUN KUBECTL_VERSION=v1.35.1 &&  \
+RUN KUBECTL_VERSION=v1.36.2 &&  \
 curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
 chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 
@@ -41,6 +41,7 @@ RUN CGO_ENABLED=0 go build -o loadtester ./cmd/loadtester/*
 
 FROM bash:5.2
 
+ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 
 RUN addgroup -S app && \
@@ -64,9 +65,14 @@ RUN chown -R app:app /tmp/ghz
 
 USER app
 
-# test load generator tools
-RUN hey -n 1 -c 1 https://flagger.app > /dev/null && echo $? | grep 0
-RUN wrk -d 1s -c 1 -t 1 https://flagger.app > /dev/null && echo $? | grep 0
+# test load generator tools. skip if we're not running on the host arch - qemu has network
+# bugs that lead to segfaults.
+RUN if [ "$TARGETPLATFORM" = "$BUILDPLATFORM" ]; then \
+      hey -n 1 -c 1 https://flagger.app > /dev/null && \
+      wrk -d 1s -c 1 -t 1 https://flagger.app > /dev/null; \
+    else \
+      echo "Skipping runtime smoke test under emulation: $BUILDPLATFORM -> $TARGETPLATFORM"; \
+    fi
 
 COPY --from=builder --chown=app:app /workspace/loadtester .
 
