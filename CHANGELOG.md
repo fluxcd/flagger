@@ -2,6 +2,53 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.44.0
+
+**Release date:** 2026-07-14
+
+This release comes with Gateway API and Istio traffic policy enhancements,
+Kubernetes 1.36 support, and fixes for rollout promotion and finalization.
+
+Flagger now supports configuring the Gateway API `backendRequest` timeout with
+the new `.spec.service.backendTimeout` field. This complements the existing
+`.spec.service.timeout` field, which configures the overall HTTPRoute request
+timeout.
+
+Istio outlier detection support has been extended with
+`splitExternalLocalOriginErrors` and `consecutiveLocalOriginFailures`, allowing
+users to configure ejection behavior for locally-originated failures separately
+from upstream 5xx responses.
+
+This release is built with Go 1.26. The Kubernetes dependencies have been updated
+to 1.36, and the deprecated `autoscaling/v2beta2` HorizontalPodAutoscaler
+fallback has been removed.
+
+#### Improvements
+- Add support for Istio splitExternalLocalOriginErrors and consecutiveLocalOriginFailures
+  [#1907](https://github.com/fluxcd/flagger/pull/1907)
+- Add backendRequest timeout support for Gateway API HTTPRoutes
+  [#1920](https://github.com/fluxcd/flagger/pull/1920)
+- Remove autoscaling/v2beta2 HorizontalPodAutoscaler fallback
+  [#1921](https://github.com/fluxcd/flagger/pull/1921)
+- Update Kubernetes packages to 1.36
+  [#1922](https://github.com/fluxcd/flagger/pull/1922)
+- Build with Go 1.26
+  [#1922](https://github.com/fluxcd/flagger/pull/1922)
+- Upgrade SignalFlow client dependency to v2
+  [#1936](https://github.com/fluxcd/flagger/pull/1936)
+- Update Go dependencies
+  [#1941](https://github.com/fluxcd/flagger/pull/1941)
+
+#### Fixes
+- Run post-rollout hooks when skipAnalysis is true
+  [#1918](https://github.com/fluxcd/flagger/pull/1918)
+- Update init container ConfigMap and Secret refs in primary workloads
+  [#1925](https://github.com/fluxcd/flagger/pull/1925)
+- Keep the canary serving traffic when primary promotion fails
+  [#1931](https://github.com/fluxcd/flagger/pull/1931)
+- Return finalizer readiness errors and retry finalization later
+  [#1939](https://github.com/fluxcd/flagger/pull/1939)
+
 ## 1.43.0
 
 **Release date:** 2026-04-21
