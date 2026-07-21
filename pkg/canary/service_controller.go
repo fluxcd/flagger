@@ -222,14 +222,39 @@ func (c *ServiceController) Promote(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-// HasServiceChanged returns true if the canary service spec has changed
+// serviceSnapshot returns the content hash of the service spec together with
+// its change fence. Services do not increment metadata.generation, so the
+// fence uses resourceVersion: it moves on every write (including status
+// updates by other controllers), which limits how often drift can be
+// absorbed, but "resourceVersion unchanged" always proves the object is
+// byte-identical, so absorption can never swallow a real change.
+func serviceSnapshot(svc *corev1.Service) (targetSnapshot, error) {
+	hash, err := ComputeSpecHash(&svc.Spec)
+	if err != nil {
+		return targetSnapshot{}, fmt.Errorf("service %s.%s: %w", svc.Name, svc.Namespace, err)
+	}
+
+	return targetSnapshot{
+		hash:            hash,
+		fence:           encodeFence(svc.UID, svc.ResourceVersion, ""),
+		volatileCounter: true,
+	}, nil
+}
+
+// HasTargetChanged returns true if the canary service spec has changed
 func (c *ServiceController) HasTargetChanged(cd *flaggerv1.Canary) (bool, error) {
 	targetName := cd.Spec.TargetRef.Name
 	canary, err := c.kubeClient.CoreV1().Services(cd.Namespace).Get(context.TODO(), targetName, metav1.GetOptions{})
 	if err != nil {
 		return false, fmt.Errorf("service %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
-	return hasSpecChanged(cd, canary.Spec)
+
+	snap, err := serviceSnapshot(canary)
+	if err != nil {
+		return false, err
+	}
+
+	return hasSpecChanged(c.logger, c.flaggerClient, cd, snap, nil)
 }
 
 // Scale sets the canary deployment replicas
@@ -247,7 +272,12 @@ func (c *ServiceController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Ca
 		return fmt.Errorf("service %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
-	return syncCanaryStatus(c.flaggerClient, cd, status, dep.Spec, func(cdCopy *flaggerv1.Canary) {})
+	snap, err := serviceSnapshot(dep)
+	if err != nil {
+		return err
+	}
+
+	return syncCanaryStatus(c.flaggerClient, cd, status, snap, func(cdCopy *flaggerv1.Canary) {})
 }
 
 func (c *ServiceController) HaveDependenciesChanged(_ *flaggerv1.Canary) (bool, error) {

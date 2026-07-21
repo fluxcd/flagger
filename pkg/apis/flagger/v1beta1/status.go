@@ -85,6 +85,14 @@ type CanaryStatus struct {
 	LastAppliedSpec string `json:"lastAppliedSpec,omitempty"`
 	// +optional
 	LastPromotedSpec string `json:"lastPromotedSpec,omitempty"`
+	// LastTrackedRevision is the server-side change fence for the target workload,
+	// recorded as <uid>/<counter>[/<deployment-revision>]. The counter is
+	// metadata.generation for Deployments/DaemonSets and metadata.resourceVersion
+	// for Services. It identifies the exact object state that LastAppliedSpec
+	// was computed from, allowing hash drift caused by Flagger or cluster
+	// upgrades to be absorbed without triggering a canary analysis.
+	// +optional
+	LastTrackedRevision string `json:"lastTrackedRevision,omitempty"`
 	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 	// +optional
