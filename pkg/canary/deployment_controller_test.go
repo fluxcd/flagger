@@ -69,6 +69,42 @@ func TestDeploymentController_Sync_InconsistentNaming(t *testing.T) {
 	assert.Equal(t, primarySelectorValue, fmt.Sprintf("%s-primary", dc.labelValue))
 }
 
+func TestDeploymentController_GetMetadata(t *testing.T) {
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
+	mocks.initializeCanary(t)
+
+	matchLabels, label, labelValue, _, err := mocks.controller.GetMetadata(mocks.canary)
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]string{"name": "podinfo", "test-label-1": "test-label-value-1"}, matchLabels)
+	assert.Equal(t, "name", label)
+	assert.Equal(t, "podinfo", labelValue)
+
+	mocks.controller.labels = []string{"app", "name", "test-label-1"}
+
+	matchLabels, label, labelValue, _, err = mocks.controller.GetMetadata(mocks.canary)
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]string{"name": "podinfo", "test-label-1": "test-label-value-1"}, matchLabels)
+	assert.Equal(t, "name", label)
+	assert.Equal(t, "podinfo", labelValue)
+}
+
+func TestDeploymentController_Initialize(t *testing.T) {
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
+	mocks.initializeCanary(t)
+
+	depPrimary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	depPrimaryMatchLabels := depPrimary.Spec.Selector.MatchLabels
+	assert.Equal(t, 2, len(depPrimaryMatchLabels))
+	assert.Equal(t, "podinfo-primary", depPrimaryMatchLabels["name"])
+	assert.Equal(t, "test-label-value-1", depPrimaryMatchLabels["test-label-1"])
+}
+
 func TestDeploymentController_Promote(t *testing.T) {
 	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
 	mocks := newDeploymentFixture(dc)
