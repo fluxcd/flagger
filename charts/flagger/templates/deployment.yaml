@@ -160,6 +160,9 @@ spec:
           {{- if .Values.noCrossNamespaceRefs }}
           - -no-cross-namespace-refs={{ .Values.noCrossNamespaceRefs }}
           {{- end }}
+          {{- if .Values.useServerSideHash }}
+          - -use-server-side-hash={{ .Values.useServerSideHash }}
+          {{- end }}
           livenessProbe:
             exec:
               command:
