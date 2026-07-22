@@ -141,26 +141,31 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 		configPrimaryInit, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-init-env-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMap.Data["color"], configPrimaryInit.Data["color"])
+			assert.Equal(t, configMap.BinaryData["color_binary"], configPrimaryInit.BinaryData["color_binary"])
 		}
 
 		configPrimaryInitEnv, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-init-all-env-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMap.Data["color"], configPrimaryInitEnv.Data["color"])
+			assert.Equal(t, configMap.BinaryData["color_binary"], configPrimaryInitEnv.BinaryData["color_binary"])
 		}
 
 		configPrimary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMap.Data["color"], configPrimary.Data["color"])
+			assert.Equal(t, configMap.BinaryData["color_binary"], configPrimary.BinaryData["color_binary"])
 		}
 
 		configPrimaryEnv, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-all-env-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMap.Data["color"], configPrimaryEnv.Data["color"])
+			assert.Equal(t, configMap.BinaryData["color_binary"], configPrimaryEnv.BinaryData["color_binary"])
 		}
 
 		configPrimaryVol, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-vol-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMap.Data["color"], configPrimaryVol.Data["color"])
+			assert.Equal(t, configMap.BinaryData["color_binary"], configPrimaryVol.BinaryData["color_binary"])
 		}
 
 		configProjectedName := daePrimary.Spec.Template.Spec.Volumes[2].VolumeSource.Projected.Sources[0].ConfigMap.Name
@@ -169,6 +174,7 @@ func TestConfigTracker_ConfigMaps(t *testing.T) {
 		configPrimaryProjected, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-vol-primary", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, configMapProjected.Data["color"], configPrimaryProjected.Data["color"])
+			assert.Equal(t, configMap.BinaryData["color_binary"], configPrimaryProjected.BinaryData["color_binary"])
 		}
 
 		assert.Equal(t, "podinfo-config-init-env-primary",
@@ -441,5 +447,111 @@ func TestConfigTracker_ConfigOwnerMultiDeployment(t *testing.T) {
 		secretPrimary, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-env-primary", metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Len(t, secretPrimary.OwnerReferences, 2)
+	})
+}
+
+func TestConfigTracker_TrackBinaryDataEnabled(t *testing.T) {
+	t.Run("checksum computation includes binary data", func(t *testing.T) {
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+
+		mocks := newDeploymentFixture(dc)
+		ct := mocks.controller.configTracker.(*ConfigTracker)
+		ct.TrackBinaryData = true
+
+		config := newDeploymentControllerTestConfigMap()
+		mocks.kubeClient.CoreV1().ConfigMaps("default").Create(context.TODO(), config, metav1.CreateOptions{})
+
+		ref, err := ct.getRefFromConfigMap("podinfo-config-env", "default")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+
+		// Verify checksum includes binary data by checking it's not empty
+		assert.NotEmpty(t, ref.Checksum)
+	})
+
+	t.Run("primary configmaps include binary data", func(t *testing.T) {
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDeploymentFixture(dc)
+		ct := mocks.controller.configTracker.(*ConfigTracker)
+		ct.TrackBinaryData = true
+
+		configMap := newDeploymentControllerTestConfigMap()
+
+		mocks.initializeCanary(t)
+
+		// Verify all primary ConfigMaps include binary data
+		configMapsToCheck := []string{
+			"podinfo-config-init-env-primary",
+			"podinfo-config-all-env-primary",
+			"podinfo-config-env-primary",
+			"podinfo-config-vol-primary",
+		}
+
+		for _, cmName := range configMapsToCheck {
+			cm, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), cmName, metav1.GetOptions{})
+			if assert.NoError(t, err) {
+				assert.Equal(t, configMap.BinaryData["color_binary"], cm.BinaryData["color_binary"],
+					"ConfigMap %s should have binary data", cmName)
+			}
+		}
+	})
+
+	t.Run("daemonset primary configmaps include binary data", func(t *testing.T) {
+		dc := daemonsetConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+		mocks := newDaemonSetFixture(dc)
+		ct := mocks.controller.configTracker.(*ConfigTracker)
+		ct.TrackBinaryData = true
+
+		configMap := newDaemonSetControllerTestConfigMap()
+
+		_, err := mocks.controller.Initialize(mocks.canary)
+		require.NoError(t, err)
+
+		// Verify all primary ConfigMaps include binary data
+		configMapsToCheck := []string{
+			"podinfo-config-init-env-primary",
+			"podinfo-config-all-env-primary",
+			"podinfo-config-env-primary",
+			"podinfo-config-vol-primary",
+		}
+
+		for _, cmName := range configMapsToCheck {
+			cm, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), cmName, metav1.GetOptions{})
+			if assert.NoError(t, err) {
+				assert.Equal(t, configMap.BinaryData["color_binary"], cm.BinaryData["color_binary"],
+					"ConfigMap %s should have binary data", cmName)
+			}
+		}
+	})
+
+	t.Run("config changes detected with binary data modifications", func(t *testing.T) {
+		dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+
+		// Create fixture and enable binary data tracking
+		mocks := newDeploymentFixture(dc)
+		ct := mocks.controller.configTracker.(*ConfigTracker)
+		ct.TrackBinaryData = true
+
+		// Get the initial config and compute its checksum with binary data
+		config, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-env", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		ref1, err := ct.getRefFromConfigMap("podinfo-config-env", "default")
+		require.NoError(t, err)
+		require.NotNil(t, ref1)
+		checksum1 := ref1.Checksum
+
+		// Update binary data in the ConfigMap
+		config.BinaryData["color_binary"] = []byte("Ymx1ZQo=")
+		mocks.kubeClient.CoreV1().ConfigMaps("default").Update(context.TODO(), config, metav1.UpdateOptions{})
+
+		// Get the updated config and compute its checksum with binary data
+		ref2, err := ct.getRefFromConfigMap("podinfo-config-env", "default")
+		require.NoError(t, err)
+		require.NotNil(t, ref2)
+		checksum2 := ref2.Checksum
+
+		// Checksums should differ when binary data is modified
+		assert.NotEqual(t, checksum1, checksum2, "checksum should change when binary data is modified")
 	})
 }

@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 
 	"go.uber.org/zap"
@@ -36,9 +37,10 @@ import (
 
 // ConfigTracker is managing the operations for Kubernetes ConfigMaps and Secrets
 type ConfigTracker struct {
-	KubeClient    kubernetes.Interface
-	FlaggerClient clientset.Interface
-	Logger        *zap.SugaredLogger
+	KubeClient      kubernetes.Interface
+	FlaggerClient   clientset.Interface
+	Logger          *zap.SugaredLogger
+	TrackBinaryData bool
 }
 
 type ConfigRefType string
@@ -88,7 +90,7 @@ func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*Co
 	return &ConfigRef{
 		Name:     config.Name,
 		Type:     ConfigRefMap,
-		Checksum: checksum(config.Data),
+		Checksum: checksum(ct.getDataFromConfigMap(*config)),
 	}, nil
 }
 
@@ -118,6 +120,20 @@ func (ct *ConfigTracker) getRefFromSecret(name string, namespace string) (*Confi
 		Type:     ConfigRefSecret,
 		Checksum: checksum(secret.Data),
 	}, nil
+}
+
+// getDataFromConfigMap fetches both data and binaryData with regards to TrackBinaryData in the configmap
+func (ct *ConfigTracker) getDataFromConfigMap(config corev1.ConfigMap) map[string][]byte {
+	data := make(map[string][]byte)
+	for k, v := range config.Data {
+		data[k] = []byte(v)
+	}
+
+	if ct.TrackBinaryData {
+		maps.Copy(data, config.BinaryData)
+	}
+
+	return data
 }
 
 // GetTargetConfigs scans the target deployment for Kubernetes ConfigMaps and Secrets
@@ -333,6 +349,9 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 					OwnerReferences: ownerReferences,
 				},
 				Data: config.Data,
+			}
+			if ct.TrackBinaryData {
+				primaryConfigMap.BinaryData = config.BinaryData
 			}
 
 			// update or insert primary ConfigMap
