@@ -798,6 +798,111 @@ Reference the template in the canary analysis:
         interval: 1m
 ```
 
+## Azure Monitor Workspace
+
+You can create custom metric checks using the Azure Monitor provider, which queries the
+[Prometheus compatible API](https://learn.microsoft.com/azure/azure-monitor/metrics/prometheus-api-promql)
+of an [Azure Monitor Workspace](https://learn.microsoft.com/azure/azure-monitor/metrics/azure-monitor-workspace-overview).
+
+Queries are authenticated with a Microsoft Entra ID token, so no authentication proxy is
+required in front of the workspace. Set `address` to the workspace **Query endpoint** and grant
+the identity that Flagger uses the `Monitoring Data Reader` role on the workspace. Azure
+Government and Azure China workspaces are detected from the endpoint.
+
+With no `secretRef`, Flagger authenticates with the
+[workload identity](https://learn.microsoft.com/azure/aks/workload-identity-overview) of its own
+pod. This requires a federated credential for the `system:serviceaccount:flagger-system:flagger`
+subject, and a Flagger install that carries the annotation and label the webhook looks for:
+
+```yaml
+serviceAccount:
+  annotations:
+    azure.workload.identity/client-id: your-managed-identity-client-id
+podLabels:
+  azure.workload.identity/use: "true"
+```
+
+The metric template then needs no credentials:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: request-success-rate
+  namespace: istio-system
+spec:
+  provider:
+    type: azuremonitor
+    address: https://flagger-abc1.eastus.prometheus.monitor.azure.com
+  query: |
+    100 - sum(
+        rate(
+            istio_requests_total{
+              reporter="destination",
+              destination_workload_namespace="{{ namespace }}",
+              destination_workload="{{ target }}",
+              response_code=~"5.."
+            }[{{ interval }}]
+        )
+    )
+    /
+    sum(
+        rate(
+            istio_requests_total{
+              reporter="destination",
+              destination_workload_namespace="{{ namespace }}",
+              destination_workload="{{ target }}"
+            }[{{ interval }}]
+        )
+    ) * 100
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "request success rate"
+        templateRef:
+          name: request-success-rate
+          namespace: istio-system
+        thresholdRange:
+          min: 99
+        interval: 1m
+```
+
+To use a different identity, reference a secret with `secretRef`. The keys it contains select
+the identity:
+
+| Secret keys | Identity used |
+| --- | --- |
+| `clientId`, `tenantId`, `clientSecret` | Microsoft Entra ID application (service principal) |
+| `clientId`, `tenantId` | Workload identity, for an identity other than the pod default |
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-monitor
+  namespace: istio-system
+stringData:
+  clientId: your-application-id
+  tenantId: your-tenant-id
+  clientSecret: your-client-secret
+```
+
+Because Flagger can authenticate with its own identity, `address` is restricted to an `https`
+workspace query endpoint and `insecureSkipVerify` is not supported.
+
+Troubleshooting:
+
+* `no token file specified` or `no client ID specified` means the workload identity webhook did
+  not project a token into the Flagger pod. Check the service account annotation and pod label.
+* A `403` response means the identity is missing the `Monitoring Data Reader` role assignment
+  on the Azure Monitor Workspace.
+* A `429` response means the workspace query limits have been reached. Flagger treats this as a
+  failed metric check, which can cause a canary to be rolled back.
+
 ## Kubernetes External Metrics
 
 You can query an external metrics provider that implements the
