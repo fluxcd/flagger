@@ -29,8 +29,9 @@ import (
 )
 
 var sidecars = map[string]bool{
-	"istio-proxy": true,
-	"envoy":       true,
+	"istio-proxy":   true,
+	"envoy":         true,
+	"linkerd-proxy": true,
 }
 
 func getPorts(cd *flaggerv1.Canary, cs []corev1.Container) map[string]int32 {
