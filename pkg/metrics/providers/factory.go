@@ -56,6 +56,8 @@ func (factory Factory) Provider(metricInterval string, provider flaggerv1.Metric
 		return NewKeptnProvider(config)
 	case "splunk":
 		return NewSplunkProvider(metricInterval, provider, credentials)
+	case "azuremonitor":
+		return NewAzureMonitorProvider(provider, credentials)
 	default:
 		factory.logger.Warnf("unknown metrics provider '%s', using prometheus", provider.Type)
 		return NewPrometheusProvider(provider, credentials)
