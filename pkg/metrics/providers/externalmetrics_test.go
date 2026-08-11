@@ -18,6 +18,10 @@ package providers
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -97,6 +101,67 @@ func TestExternalMetrics_NewProvider_NilConfig(t *testing.T) {
 	mtp := flaggerv1.MetricTemplateProvider{}
 	_, err := NewExternalMetricsProvider(mtp, nil, nil)
 	require.Error(t, err)
+}
+
+func TestExternalMetrics_CustomProviderAddressDoesNotSendInheritedAuth(t *testing.T) {
+	tokenFile := filepath.Join(t.TempDir(), "token")
+	require.NoError(t, os.WriteFile(tokenFile, []byte("operator-file-token"), 0o600))
+
+	tests := []struct {
+		name              string
+		credentials       map[string][]byte
+		wantAuthorization string
+	}{
+		{
+			name:              "without credentials",
+			credentials:       nil,
+			wantAuthorization: "",
+		},
+		{
+			name: "with provider token",
+			credentials: map[string][]byte{
+				"token": []byte("provider-token"),
+			},
+			wantAuthorization: "Bearer provider-token",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			authHeaders := make(chan string, 1)
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				authHeaders <- r.Header.Get("Authorization")
+				w.Header().Set("Content-Type", "application/json")
+				_, err := w.Write([]byte(`{
+					"kind": "ExternalMetricValueList",
+					"apiVersion": "external.metrics.k8s.io/v1beta1",
+					"metadata": {},
+					"items": []
+				}`))
+				require.NoError(t, err)
+			}))
+			defer ts.Close()
+
+			emp, err := NewExternalMetricsProvider(
+				flaggerv1.MetricTemplateProvider{
+					Address: ts.URL,
+				},
+				tt.credentials,
+				&rest.Config{
+					Host:            "https://kubernetes.default.svc",
+					BearerToken:     "operator-token",
+					BearerTokenFile: tokenFile,
+				},
+			)
+			require.NoError(t, err)
+
+			online, err := emp.IsOnline()
+			require.NoError(t, err)
+			assert.True(t, online)
+			require.Len(t, authHeaders, 1)
+			assert.Equal(t, tt.wantAuthorization, <-authHeaders)
+		})
+	}
 }
 
 func TestExternalMetrics_ParseQuery(t *testing.T) {
