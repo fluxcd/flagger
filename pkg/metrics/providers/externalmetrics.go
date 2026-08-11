@@ -47,19 +47,7 @@ func NewExternalMetricsProvider(
 		)
 	}
 
-	// clone to avoid mutating the shared config
-	restConfig := rest.CopyConfig(config)
-
-	// apply overrides from MetricTemplateProvider
-	if provider.Address != "" {
-		restConfig.Host = provider.Address
-	}
-	restConfig.TLSClientConfig.Insecure = provider.InsecureSkipVerify
-	if tokenBytes, ok := credentials["token"]; ok {
-		restConfig.BearerToken = string(tokenBytes)
-	}
-
-	restConfig.Timeout = 5 * time.Second
+	restConfig := externalMetricsRestConfig(provider, credentials, config)
 
 	client, err := externalmetrics_client.NewForConfig(restConfig)
 	if err != nil {
@@ -69,6 +57,29 @@ func NewExternalMetricsProvider(
 	return &ExternalMetricsProvider{
 		client: client,
 	}, nil
+}
+
+func externalMetricsRestConfig(
+	provider flaggerv1.MetricTemplateProvider,
+	credentials map[string][]byte,
+	config *rest.Config,
+) *rest.Config {
+	var restConfig *rest.Config
+	if provider.Address == "" {
+		restConfig = rest.CopyConfig(config)
+	} else {
+		restConfig = &rest.Config{
+			Host: provider.Address,
+		}
+	}
+
+	restConfig.TLSClientConfig.Insecure = provider.InsecureSkipVerify
+	if tokenBytes, ok := credentials["token"]; ok {
+		restConfig.BearerToken = strings.TrimSpace(string(tokenBytes))
+	}
+	restConfig.Timeout = 5 * time.Second
+
+	return restConfig
 }
 
 // RunQuery retrieves the ExternalMetricValue from the External Metrics API
