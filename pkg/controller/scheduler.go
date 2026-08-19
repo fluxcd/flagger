@@ -189,8 +189,21 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 	}
 
 	var scalerReconciler canary.ScalerReconciler
+	cleanupSweepKey := hpaCleanupSweepKey(cd)
 	if cd.Spec.AutoscalerRef != nil {
+		c.hpaCleanupSweeps.Delete(cleanupSweepKey)
 		scalerReconciler = c.canaryFactory.ScalerReconciler(cd.Spec.AutoscalerRef.Kind)
+	} else if _, cleanupComplete := c.hpaCleanupSweeps.Load(cleanupSweepKey); !cleanupComplete {
+		// Garbage collect a primary autoscaler left behind by a removed
+		// autoscalerRef. Remember successful sweeps to avoid an HPA list on
+		// every analysis tick, but retry failures without blocking the rollout.
+		if hpaReconciler := c.canaryFactory.ScalerReconciler("HorizontalPodAutoscaler"); hpaReconciler != nil {
+			if err := hpaReconciler.ReconcilePrimaryScaler(cd, true); err != nil {
+				c.recordEventWarningf(cd, "%v", err)
+			} else {
+				c.hpaCleanupSweeps.Store(cleanupSweepKey, struct{}{})
+			}
+		}
 	}
 
 	// init Kubernetes router

@@ -27,8 +27,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	hpav2 "k8s.io/api/autoscaling/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	"github.com/fluxcd/flagger/pkg/notifier"
@@ -40,6 +45,153 @@ func TestScheduler_DeploymentInit(t *testing.T) {
 
 	_, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
 	require.NoError(t, err)
+}
+
+func TestScheduler_DeploymentCleansStaleHPAOnStartup(t *testing.T) {
+	canary := newDeploymentTestCanary()
+	canary.UID = "podinfo-uid"
+	canary.Spec.AutoscalerRef = nil
+	mocks := newDeploymentFixture(canary)
+
+	staleHPA := newDeploymentTestHPA()
+	staleHPA.Name = "podinfo-primary"
+	staleHPA.Spec.ScaleTargetRef.Name = "podinfo-primary"
+	staleHPA.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(canary, flaggerv1.SchemeGroupVersion.WithKind(flaggerv1.CanaryKind)),
+	}
+	_, err := mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Create(context.TODO(), staleHPA, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
+}
+
+func TestScheduler_DeploymentRemovesPrimaryHPAWhenAutoscalerRefIsRemoved(t *testing.T) {
+	canary := newDeploymentTestCanary()
+	canary.UID = "podinfo-uid"
+	canary.Spec.AutoscalerRef.APIVersion = hpav2.SchemeGroupVersion.String()
+	autoscalerRef := *canary.Spec.AutoscalerRef
+	mocks := newDeploymentFixture(canary)
+
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makePrimaryReady(t)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	primaryHPA, err := mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.True(t, metav1.IsControlledBy(primaryHPA, canary))
+
+	updatedCanary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	updatedCanary.Spec.AutoscalerRef = nil
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), updatedCanary, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	require.NoError(t, mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Delete(context.TODO(), "podinfo", metav1.DeleteOptions{}))
+
+	listCalls := 0
+	fakeClient := mocks.kubeClient.(*fake.Clientset)
+	fakeClient.PrependReactor("list", "horizontalpodautoscalers", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		listCalls++
+		return false, nil, nil
+	})
+
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
+
+	// The primary workload stays healthy and cleanup remains idempotent.
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
+	primary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, int32(1), primary.Status.ReadyReplicas)
+	require.Equal(t, 1, listCalls, "successful cleanup should only list HPAs once")
+
+	// Re-enabling autoscaling clears the successful cleanup marker and recreates
+	// the managed primary HPA.
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Create(context.TODO(), newDeploymentTestHPA(), metav1.CreateOptions{})
+	require.NoError(t, err)
+	updatedCanary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	updatedCanary.Spec.AutoscalerRef = &autoscalerRef
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), updatedCanary, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	// Disabling autoscaling again performs another cleanup sweep.
+	updatedCanary, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	updatedCanary.Spec.AutoscalerRef = nil
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), updatedCanary, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	require.NoError(t, mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Delete(context.TODO(), "podinfo", metav1.DeleteOptions{}))
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
+	require.Equal(t, 2, listCalls, "removing autoscalerRef again should trigger a new cleanup sweep")
+}
+
+func TestScheduler_DeploymentHPAListFailureDoesNotBlockInitialization(t *testing.T) {
+	canary := newDeploymentTestCanary()
+	canary.UID = "podinfo-uid"
+	canary.Spec.AutoscalerRef = nil
+	mocks := newDeploymentFixture(canary)
+
+	listCalls := 0
+	fakeClient := mocks.kubeClient.(*fake.Clientset)
+	fakeClient.PrependReactor("list", "horizontalpodautoscalers", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		listCalls++
+		return true, nil, apierrors.NewServiceUnavailable("autoscaling/v2 is unavailable")
+	})
+
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makePrimaryReady(t)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	require.Equal(t, 2, listCalls, "failed cleanup should be retried on the next reconciliation")
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized))
+}
+
+func TestScheduler_DeploymentHPADeleteFailureIsRetriedAndDoesNotBlockReconciliation(t *testing.T) {
+	canary := newDeploymentTestCanary()
+	canary.UID = "podinfo-uid"
+	canary.Spec.AutoscalerRef.APIVersion = hpav2.SchemeGroupVersion.String()
+	mocks := newDeploymentFixture(canary)
+
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makePrimaryReady(t)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	updatedCanary, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	updatedCanary.Spec.AutoscalerRef = nil
+	_, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Update(context.TODO(), updatedCanary, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	require.NoError(t, mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Delete(context.TODO(), "podinfo", metav1.DeleteOptions{}))
+
+	deleteCalls := 0
+	fakeClient := mocks.kubeClient.(*fake.Clientset)
+	fakeClient.PrependReactor("delete", "horizontalpodautoscalers", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		deleteAction := action.(k8stesting.DeleteAction)
+		if deleteAction.GetName() != "podinfo-primary" {
+			return false, nil, nil
+		}
+		deleteCalls++
+		return true, nil, apierrors.NewServiceUnavailable("autoscaling/v2 delete is unavailable")
+	})
+
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	require.Equal(t, 2, deleteCalls, "failed deletion should be retried on the next reconciliation")
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized))
 }
 
 func TestScheduler_DeploymentNewRevision(t *testing.T) {
