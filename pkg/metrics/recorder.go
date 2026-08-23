@@ -94,7 +94,7 @@ func NewRecorder(controller string, register bool) Recorder {
 		Subsystem: controller,
 		Name:      "canary_weight",
 		Help:      "The virtual service destination weight current value",
-	}, []string{"workload", "namespace"})
+	}, []string{"name", "workload", "namespace"})
 
 	analysis := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
@@ -172,8 +172,8 @@ func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase)
 
 // SetWeight sets the weight values for primary and canary destinations
 func (cr *Recorder) SetWeight(cd *flaggerv1.Canary, primary int, canary int) {
-	cr.weight.WithLabelValues(fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name), cd.Namespace).Set(float64(primary))
-	cr.weight.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(canary))
+	cr.weight.WithLabelValues(cd.Name, fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name), cd.Namespace).Set(float64(primary))
+	cr.weight.WithLabelValues(cd.Name, cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(canary))
 }
 
 // IncSuccesses increments the total number of canary successes
@@ -184,6 +184,25 @@ func (cr *Recorder) IncSuccesses(labels CanaryMetricLabels) {
 // IncFailures increments the total number of canary failures
 func (cr *Recorder) IncFailures(labels CanaryMetricLabels) {
 	cr.failures.WithLabelValues(labels.Values()...).Inc()
+}
+
+// DeleteFor removes all per-canary metric series matching the given
+// name and namespace. Called when a Canary resource is deleted so that
+// stale series do not linger in the Prometheus registry.
+func (cr *Recorder) DeleteFor(name, namespace string) {
+	labels := prometheus.Labels{"name": name, "namespace": namespace}
+	cr.duration.DeletePartialMatch(labels)
+	cr.status.DeletePartialMatch(labels)
+	cr.weight.DeletePartialMatch(labels)
+	cr.analysis.DeletePartialMatch(labels)
+	cr.successes.DeletePartialMatch(labels)
+	cr.failures.DeletePartialMatch(labels)
+}
+
+// DeleteTotalFor removes the per-namespace canary_total series. Called
+// once a namespace no longer contains any Canary resources.
+func (cr *Recorder) DeleteTotalFor(namespace string) {
+	cr.total.DeleteLabelValues(namespace)
 }
 
 // GetStatusMetric returns the status metric

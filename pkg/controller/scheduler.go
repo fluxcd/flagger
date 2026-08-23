@@ -153,6 +153,17 @@ func (c *Controller) scheduleCanaries() {
 	for k, v := range stats {
 		c.recorder.SetTotal(k, v)
 	}
+
+	// remove canary_total series for namespaces that no longer contain any canaries
+	for ns := range c.trackedNamespaces {
+		if _, ok := stats[ns]; !ok {
+			c.recorder.DeleteTotalFor(ns)
+			delete(c.trackedNamespaces, ns)
+		}
+	}
+	for ns := range stats {
+		c.trackedNamespaces[ns] = struct{}{}
+	}
 }
 
 func (c *Controller) advanceCanary(name string, namespace string) {

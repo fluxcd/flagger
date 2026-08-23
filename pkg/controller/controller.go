@@ -64,6 +64,10 @@ type Controller struct {
 	logger               *zap.SugaredLogger
 	canaries             *sync.Map
 	jobs                 map[string]CanaryJob
+	// namespaces we have previously reported a canary_total value for;
+	// used to remove stale per-namespace series when a namespace no
+	// longer contains any Canary resources.
+	trackedNamespaces    map[string]struct{}
 	recorder             metrics.Recorder
 	notifier             notifier.Interface
 	canaryFactory        *canary.Factory
@@ -123,6 +127,7 @@ func NewController(
 		logger:               logger,
 		canaries:             new(sync.Map),
 		jobs:                 map[string]CanaryJob{},
+		trackedNamespaces:    map[string]struct{}{},
 		flaggerWindow:        flaggerWindow,
 		observerFactory:      observerFactory,
 		recorder:             recorder,
@@ -180,6 +185,7 @@ func NewController(
 			if ok {
 				ctrl.logger.Infof("Deleting %s.%s from cache", r.Name, r.Namespace)
 				ctrl.canaries.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
+				ctrl.recorder.DeleteFor(r.Name, r.Namespace)
 			}
 		},
 	})

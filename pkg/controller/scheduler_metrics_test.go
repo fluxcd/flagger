@@ -210,8 +210,8 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		actualStatus = testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
 		assert.Equal(t, float64(0), actualStatus)
 
-		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo-primary", "default"))
-		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "default"))
+		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo-primary", "default"))
+		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo", "default"))
 
 		t.Logf("Progression weights - Primary: %f, Canary: %f", actualPrimaryWeight, actualCanaryWeight)
 		assert.GreaterOrEqual(t, actualPrimaryWeight, float64(50))
@@ -270,8 +270,8 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		actualStatus := testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
 		assert.Equal(t, float64(2), actualStatus)
 
-		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo-primary", "default"))
-		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "default"))
+		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo-primary", "default"))
+		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo", "default"))
 		assert.Equal(t, float64(100), actualPrimaryWeight)
 		assert.Equal(t, float64(0), actualCanaryWeight)
 
