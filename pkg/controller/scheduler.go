@@ -947,12 +947,6 @@ func (c *Controller) hasCanaryRevisionChanged(canary *flaggerv1.Canary, canaryCo
 
 func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.Controller,
 	meshRouter router.Interface, scalerReconciler canary.ScalerReconciler) {
-	if canary.Status.FailedChecks >= canary.GetAnalysisThreshold() {
-		c.recordEventWarningf(canary, "Rolling back %s.%s failed checks threshold reached %v",
-			canary.Name, canary.Namespace, canary.Status.FailedChecks)
-		c.alert(canary, fmt.Sprintf("Failed checks threshold reached %v", canary.Status.FailedChecks),
-			false, flaggerv1.SeverityError)
-	}
 
 	// route all traffic back to primary
 	primaryWeight := c.totalWeight(canary)
@@ -964,8 +958,18 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 
 	canaryPhaseFailed := canary.DeepCopy()
 	canaryPhaseFailed.Status.Phase = flaggerv1.CanaryPhaseFailed
-	c.recordEventWarningf(canaryPhaseFailed, "Canary failed! Scaling down %s.%s",
-		canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
+
+	if canary.Status.FailedChecks >= canary.GetAnalysisThreshold() {
+		c.recordEventWarningf(canary, "Rolling back %s.%s failed checks threshold reached %v",
+			canary.Name, canary.Namespace, canary.Status.FailedChecks)
+		c.alert(canary, fmt.Sprintf("Failed checks threshold reached %v! Scaling down %s.%s", canary.Status.FailedChecks, canary.Name, canary.Namespace),
+			false, flaggerv1.SeverityError)
+	} else {
+		c.recordEventWarningf(canaryPhaseFailed, "Canary failed! Scaling down %s.%s",
+			canaryPhaseFailed.Name, canaryPhaseFailed.Namespace)
+		c.alert(canary, fmt.Sprintf("Canary failed! Scaling down %s.%s", canaryPhaseFailed.Name, canaryPhaseFailed.Namespace),
+			false, flaggerv1.SeverityError)
+	}
 
 	c.recorder.SetWeight(canary, primaryWeight, canaryWeight)
 
