@@ -39,6 +39,9 @@ const (
 
 // CanaryMetricLabels holds labels for canary metrics
 type CanaryMetricLabels struct {
+	// Canary is the name of the Canary resource
+	Canary string
+	// Name is the name of the target workload (spec.targetRef.name)
 	Name               string
 	Namespace          string
 	DeploymentStrategy string
@@ -47,7 +50,7 @@ type CanaryMetricLabels struct {
 
 // Values returns label values as a slice for Prometheus metrics
 func (c CanaryMetricLabels) Values() []string {
-	return []string{c.Name, c.Namespace, c.DeploymentStrategy, c.AnalysisStatus}
+	return []string{c.Canary, c.Name, c.Namespace, c.DeploymentStrategy, c.AnalysisStatus}
 }
 
 // Recorder records the canary analysis as Prometheus metrics
@@ -75,7 +78,7 @@ func NewRecorder(controller string, register bool) Recorder {
 		Name:      "canary_duration_seconds",
 		Help:      "Seconds spent performing canary analysis.",
 		Buckets:   prometheus.DefBuckets,
-	}, []string{"name", "namespace"})
+	}, []string{"canary", "name", "namespace"})
 
 	total := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
@@ -88,31 +91,31 @@ func NewRecorder(controller string, register bool) Recorder {
 		Subsystem: controller,
 		Name:      "canary_status",
 		Help:      "Last canary analysis result",
-	}, []string{"name", "namespace"})
+	}, []string{"canary", "name", "namespace"})
 
 	weight := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
 		Name:      "canary_weight",
 		Help:      "The virtual service destination weight current value",
-	}, []string{"name", "workload", "namespace"})
+	}, []string{"canary", "workload", "namespace"})
 
 	analysis := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
 		Name:      "canary_metric_analysis",
 		Help:      "Last canary analysis result per metric",
-	}, []string{"name", "namespace", "metric"})
+	}, []string{"canary", "name", "namespace", "metric"})
 
 	successes := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: controller,
 		Name:      "canary_successes_total",
 		Help:      "Total number of canary successes",
-	}, []string{"name", "namespace", "deployment_strategy", "analysis_status"})
+	}, []string{"canary", "name", "namespace", "deployment_strategy", "analysis_status"})
 
 	failures := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: controller,
 		Name:      "canary_failures_total",
 		Help:      "Total number of canary failures",
-	}, []string{"name", "namespace", "deployment_strategy", "analysis_status"})
+	}, []string{"canary", "name", "namespace", "deployment_strategy", "analysis_status"})
 
 	if register {
 		prometheus.MustRegister(info)
@@ -144,7 +147,7 @@ func (cr *Recorder) SetInfo(version string, meshProvider string) {
 
 // SetDuration sets the time spent in seconds performing canary analysis
 func (cr *Recorder) SetDuration(cd *flaggerv1.Canary, duration time.Duration) {
-	cr.duration.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Observe(duration.Seconds())
+	cr.duration.WithLabelValues(cd.Name, cd.Spec.TargetRef.Name, cd.Namespace).Observe(duration.Seconds())
 }
 
 // SetTotal sets the total number of canaries per namespace
@@ -153,7 +156,7 @@ func (cr *Recorder) SetTotal(namespace string, total int) {
 }
 
 func (cr *Recorder) SetAnalysis(cd *flaggerv1.Canary, metricTemplateName string, val float64) {
-	cr.analysis.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace, metricTemplateName).Set(val)
+	cr.analysis.WithLabelValues(cd.Name, cd.Spec.TargetRef.Name, cd.Namespace, metricTemplateName).Set(val)
 }
 
 // SetStatus sets the last known canary analysis status
@@ -167,7 +170,7 @@ func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase)
 	default:
 		status = 1
 	}
-	cr.status.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(status))
+	cr.status.WithLabelValues(cd.Name, cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(status))
 }
 
 // SetWeight sets the weight values for primary and canary destinations
@@ -190,7 +193,7 @@ func (cr *Recorder) IncFailures(labels CanaryMetricLabels) {
 // name and namespace. Called when a Canary resource is deleted so that
 // stale series do not linger in the Prometheus registry.
 func (cr *Recorder) DeleteFor(name, namespace string) {
-	labels := prometheus.Labels{"name": name, "namespace": namespace}
+	labels := prometheus.Labels{"canary": name, "namespace": namespace}
 	cr.duration.DeletePartialMatch(labels)
 	cr.status.DeletePartialMatch(labels)
 	cr.weight.DeletePartialMatch(labels)
