@@ -297,6 +297,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	if !shouldAdvance {
 		c.recorder.SetStatus(cd, cd.Status.Phase)
+		// keep the weight gauge populated in steady state (e.g. after a
+		// controller restart or right after initialization), otherwise it
+		// is only emitted once a canary starts progressing
+		if primaryWeight, canaryWeight, _, err := meshRouter.GetRoutes(cd); err == nil {
+			c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
+		}
 		return
 	}
 
