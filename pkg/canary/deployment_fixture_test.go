@@ -143,6 +143,9 @@ func newDeploymentControllerTestConfigMap() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -157,6 +160,9 @@ func newDeploymentControllerTestConfigMapV2() *corev1.ConfigMap {
 			"color":  "blue",
 			"output": "console",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("Ymx1ZAo="),
+		},
 	}
 }
 
@@ -169,6 +175,9 @@ func newDeploymentControllerTestConfigMapInit() *corev1.ConfigMap {
 		},
 		Data: map[string]string{
 			"color": "red",
+		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
 		},
 	}
 }
@@ -183,6 +192,9 @@ func newDeploymentControllerTestConfigMapInitEnv() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -196,6 +208,9 @@ func newDeploymentControllerTestConfigProjected() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -208,6 +223,9 @@ func newDeploymentControllerTestConfigMapEnv() *corev1.ConfigMap {
 		},
 		Data: map[string]string{
 			"color": "red",
+		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
 		},
 	}
 }
@@ -227,6 +245,9 @@ func newDeploymentControllerTestConfigMapTrackerEnabled() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -245,6 +266,9 @@ func newDeploymentControllerTestConfigMapTrackerDisabled() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -257,6 +281,9 @@ func newDeploymentControllerTestConfigMapVol() *corev1.ConfigMap {
 		},
 		Data: map[string]string{
 			"color": "red",
+		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
 		},
 	}
 }
