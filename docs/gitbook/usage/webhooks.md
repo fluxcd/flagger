@@ -112,7 +112,7 @@ Event payload (HTTP POST):
   "name": "string (canary name)",
   "namespace": "string (canary namespace)",
   "phase": "string (canary phase)",
-  "checksum": "string (canary checksum"),
+  "checksum": "string (canary checksum)",
   "metadata": {
     "eventMessage": "string (canary event message)",
     "eventType": "string (canary event type)",
