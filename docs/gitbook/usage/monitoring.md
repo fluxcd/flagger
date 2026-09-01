@@ -108,6 +108,14 @@ flagger_canary_total{namespace="test"} 1
 # 0 - running, 1 - successful, 2 - failed
 flagger_canary_status{name="podinfo" namespace="test"} 1
 
+# Current canary phase gauge
+# 0 - Initializing, 1 - Initialized, 2 - Waiting, 3 - Progressing,
+# 4 - WaitingPromotion, 5 - Promoting, 6 - Finalising, 7 - Succeeded,
+# 8 - Failed, 9 - Terminating, 10 - Terminated
+# A deleted canary keeps emitting the metric with the Terminated value (10),
+# so queries can filter out removed canaries with e.g. flagger_canary_phase < 9
+flagger_canary_phase{name="podinfo" namespace="test"} 7
+
 # Canary traffic weight gauge
 flagger_canary_weight{workload="podinfo-primary" namespace="test"} 95
 flagger_canary_weight{workload="podinfo" namespace="test"} 5

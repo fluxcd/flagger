@@ -37,6 +37,24 @@ const (
 	AnalysisStatusSkipped   = "skipped"
 )
 
+// canaryPhaseValues maps each canary phase to a unique integer value
+// exposed by the flagger_canary_phase metric. Unlike flagger_canary_status
+// (which collapses all phases into running/successful/failed), this mapping
+// keeps every phase distinct so they can be rendered on a Grafana state-timeline.
+var canaryPhaseValues = map[flaggerv1.CanaryPhase]float64{
+	flaggerv1.CanaryPhaseInitializing:     0,
+	flaggerv1.CanaryPhaseInitialized:      1,
+	flaggerv1.CanaryPhaseWaiting:          2,
+	flaggerv1.CanaryPhaseProgressing:      3,
+	flaggerv1.CanaryPhaseWaitingPromotion: 4,
+	flaggerv1.CanaryPhasePromoting:        5,
+	flaggerv1.CanaryPhaseFinalising:       6,
+	flaggerv1.CanaryPhaseSucceeded:        7,
+	flaggerv1.CanaryPhaseFailed:           8,
+	flaggerv1.CanaryPhaseTerminating:      9,
+	flaggerv1.CanaryPhaseTerminated:       10,
+}
+
 // CanaryMetricLabels holds labels for canary metrics
 type CanaryMetricLabels struct {
 	Name               string
@@ -56,6 +74,7 @@ type Recorder struct {
 	duration  *prometheus.HistogramVec
 	total     *prometheus.GaugeVec
 	status    *prometheus.GaugeVec
+	phase     *prometheus.GaugeVec
 	weight    *prometheus.GaugeVec
 	analysis  *prometheus.GaugeVec
 	successes *prometheus.CounterVec
@@ -90,6 +109,14 @@ func NewRecorder(controller string, register bool) Recorder {
 		Help:      "Last canary analysis result",
 	}, []string{"name", "namespace"})
 
+	phase := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Subsystem: controller,
+		Name:      "canary_phase",
+		Help: "Current canary phase " +
+			"(0=Initializing, 1=Initialized, 2=Waiting, 3=Progressing, 4=WaitingPromotion, " +
+			"5=Promoting, 6=Finalising, 7=Succeeded, 8=Failed, 9=Terminating, 10=Terminated)",
+	}, []string{"name", "namespace"})
+
 	weight := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
 		Name:      "canary_weight",
@@ -119,6 +146,7 @@ func NewRecorder(controller string, register bool) Recorder {
 		prometheus.MustRegister(duration)
 		prometheus.MustRegister(total)
 		prometheus.MustRegister(status)
+		prometheus.MustRegister(phase)
 		prometheus.MustRegister(weight)
 		prometheus.MustRegister(analysis)
 		prometheus.MustRegister(successes)
@@ -130,6 +158,7 @@ func NewRecorder(controller string, register bool) Recorder {
 		duration:  duration,
 		total:     total,
 		status:    status,
+		phase:     phase,
 		weight:    weight,
 		analysis:  analysis,
 		successes: successes,
@@ -168,6 +197,17 @@ func (cr *Recorder) SetStatus(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase)
 		status = 1
 	}
 	cr.status.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Set(float64(status))
+	cr.SetPhase(cd, phase)
+}
+
+// SetPhase sets the canary phase as a unique value per phase, see canaryPhaseValues.
+// Unknown phases are ignored to avoid recording a misleading value.
+func (cr *Recorder) SetPhase(cd *flaggerv1.Canary, phase flaggerv1.CanaryPhase) {
+	value, ok := canaryPhaseValues[phase]
+	if !ok {
+		return
+	}
+	cr.phase.WithLabelValues(cd.Spec.TargetRef.Name, cd.Namespace).Set(value)
 }
 
 // SetWeight sets the weight values for primary and canary destinations
@@ -189,6 +229,11 @@ func (cr *Recorder) IncFailures(labels CanaryMetricLabels) {
 // GetStatusMetric returns the status metric
 func (cr *Recorder) GetStatusMetric() *prometheus.GaugeVec {
 	return cr.status
+}
+
+// GetPhaseMetric returns the phase metric
+func (cr *Recorder) GetPhaseMetric() *prometheus.GaugeVec {
+	return cr.phase
 }
 
 // GetWeightMetric returns the weight metric
