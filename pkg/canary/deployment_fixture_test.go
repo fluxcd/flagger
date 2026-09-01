@@ -143,6 +143,9 @@ func newDeploymentControllerTestConfigMap() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -157,6 +160,9 @@ func newDeploymentControllerTestConfigMapV2() *corev1.ConfigMap {
 			"color":  "blue",
 			"output": "console",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("Ymx1ZAo="),
+		},
 	}
 }
 
@@ -169,6 +175,9 @@ func newDeploymentControllerTestConfigMapInit() *corev1.ConfigMap {
 		},
 		Data: map[string]string{
 			"color": "red",
+		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
 		},
 	}
 }
@@ -183,6 +192,9 @@ func newDeploymentControllerTestConfigMapInitEnv() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -196,6 +208,9 @@ func newDeploymentControllerTestConfigProjected() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -208,6 +223,9 @@ func newDeploymentControllerTestConfigMapEnv() *corev1.ConfigMap {
 		},
 		Data: map[string]string{
 			"color": "red",
+		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
 		},
 	}
 }
@@ -227,6 +245,9 @@ func newDeploymentControllerTestConfigMapTrackerEnabled() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -245,6 +266,9 @@ func newDeploymentControllerTestConfigMapTrackerDisabled() *corev1.ConfigMap {
 		Data: map[string]string{
 			"color": "red",
 		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
+		},
 	}
 }
 
@@ -257,6 +281,9 @@ func newDeploymentControllerTestConfigMapVol() *corev1.ConfigMap {
 		},
 		Data: map[string]string{
 			"color": "red",
+		},
+		BinaryData: map[string][]byte{
+			"color_binary": []byte("cmVkCg=="),
 		},
 	}
 }
@@ -272,6 +299,9 @@ func newDeploymentControllerTestSecret() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
+		},
 	}
 }
 
@@ -285,6 +315,9 @@ func newDeploymentControllerTestSecretProjected() *corev1.Secret {
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
+		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
 		},
 	}
 }
@@ -300,6 +333,9 @@ func newDeploymentControllerTestSecretEnv() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
+		},
 	}
 }
 
@@ -313,6 +349,9 @@ func newDeploymentControllerTestSecretVol() *corev1.Secret {
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
+		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
 		},
 	}
 }
@@ -333,6 +372,9 @@ func newDeploymentControllerTestSecretTrackerEnabled() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
+		},
 	}
 }
 
@@ -352,6 +394,9 @@ func newDeploymentControllerTestSecretTrackerDisabled() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
+		},
 	}
 }
 
@@ -366,6 +411,9 @@ func newDeploymentControllerTestSecretInit() *corev1.Secret {
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
 		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
+		},
 	}
 }
 
@@ -379,6 +427,9 @@ func newDeploymentControllerTestSecretInitEnv() *corev1.Secret {
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"apiKey": []byte("test"),
+		},
+		StringData: map[string]string{
+			"apiKey_string": "test",
 		},
 	}
 }
