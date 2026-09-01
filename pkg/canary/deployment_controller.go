@@ -44,6 +44,33 @@ type DeploymentController struct {
 	includeLabelPrefix []string
 }
 
+// deploymentRevisionAnnotation is set by the Kubernetes deployment controller
+// and incremented only when the pod template changes (a rollout).
+const deploymentRevisionAnnotation = "deployment.kubernetes.io/revision"
+
+// deploymentSnapshot returns the content hash of the deployment pod template
+// together with its change fence. The revision component is recorded only
+// while it provably corresponds to the current template: the revision
+// annotation is written asynchronously by the deployment controller, so it is
+// trusted only when rollouts are not paused and the controller has observed
+// the current generation.
+func deploymentSnapshot(dep *appsv1.Deployment) (targetSnapshot, error) {
+	hash, err := ComputeSpecHash(&dep.Spec.Template)
+	if err != nil {
+		return targetSnapshot{}, fmt.Errorf("deployment %s.%s: %w", dep.Name, dep.Namespace, err)
+	}
+
+	revision := ""
+	if !dep.Spec.Paused && dep.Status.ObservedGeneration == dep.Generation {
+		revision = dep.Annotations[deploymentRevisionAnnotation]
+	}
+
+	return targetSnapshot{
+		hash:  hash,
+		fence: encodeFence(dep.UID, fmt.Sprintf("%d", dep.Generation), revision),
+	}, nil
+}
+
 // Initialize creates the primary deployment if it does not exist.
 func (c *DeploymentController) Initialize(cd *flaggerv1.Canary) (bool, error) {
 	if err := c.createPrimaryDeployment(cd, c.includeLabelPrefix); err != nil {
@@ -144,7 +171,27 @@ func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, err
 		return false, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	return hasSpecChanged(cd, canary.Spec.Template)
+	snap, err := deploymentSnapshot(canary)
+	if err != nil {
+		return false, err
+	}
+
+	return hasSpecChanged(c.logger, c.flaggerClient, cd, snap, func() (bool, error) {
+		return c.canaryImagesDiffer(cd, canary)
+	})
+}
+
+// canaryImagesDiffer compares the canary container images against the primary
+// ones; used as a safety heuristic when migrating the spec tracking from a
+// previous Flagger version, to catch rollouts applied while Flagger was not
+// running.
+func (c *DeploymentController) canaryImagesDiffer(cd *flaggerv1.Canary, canary *appsv1.Deployment) (bool, error) {
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+	primary, err := c.kubeClient.AppsV1().Deployments(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+	if err != nil {
+		return false, fmt.Errorf("deployment %s.%s get query error: %w", primaryName, cd.Namespace, err)
+	}
+	return podImagesDiffer(canary.Spec.Template.Spec, primary.Spec.Template.Spec), nil
 }
 
 // ScaleToZero Scale sets the canary deployment replicas
@@ -156,11 +203,31 @@ func (c *DeploymentController) ScaleToZero(cd *flaggerv1.Canary) error {
 	}
 
 	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, 0))
-	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
+	scaled, err := c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("deployment %s.%s patch query error: %w", targetName, cd.Namespace, err)
 	}
+	c.refreshTracking(cd, scaled)
 	return nil
+}
+
+// refreshTracking keeps the canary status fence current after Flagger's own
+// scaling writes, which advance the deployment generation without changing
+// the pod template. The snapshot is taken from the object returned by the
+// write (not a re-read, which could observe a concurrent user change);
+// refreshTrackedRevision only moves the fence when the recorded
+// lastAppliedSpec still matches the template hash, so a concurrent template
+// change is never marked as seen. Failures are non-fatal: a stale fence
+// degrades to hash comparison, never to absorption.
+func (c *DeploymentController) refreshTracking(cd *flaggerv1.Canary, dep *appsv1.Deployment) {
+	snap, err := deploymentSnapshot(dep)
+	if err == nil {
+		err = refreshTrackedRevision(c.flaggerClient, cd, snap)
+	}
+	if err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			Warnf("failed to refresh tracked revision: %v", err)
+	}
 }
 
 func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
@@ -203,6 +270,9 @@ func (c *DeploymentController) ScaleFromZero(cd *flaggerv1.Canary) error {
 	}
 
 	patch := []byte(fmt.Sprintf(`{"spec":{"replicas": %d}}`, *replicas))
+	// no fence refresh here: this path is followed by a SyncStatus write in
+	// the scheduler, and a transiently stale fence self-heals through the
+	// fence-refresh rule on the next change detection
 	_, err = c.kubeClient.AppsV1().Deployments(dep.Namespace).Patch(context.TODO(), dep.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("scaling up %s.%s to %d failed: %v", dep.GetName(), dep.Namespace, *replicas, err)

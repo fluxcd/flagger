@@ -77,6 +77,7 @@ func (factory *Factory) Controller(obj v1beta1.LocalObjectReference) Controller 
 		includeLabelPrefix: factory.includeLabelPrefix,
 	}
 	knativeCtrl := &KnativeController{
+		logger:        factory.logger,
 		flaggerClient: factory.flaggerClient,
 		knativeClient: factory.knativeClient,
 	}
