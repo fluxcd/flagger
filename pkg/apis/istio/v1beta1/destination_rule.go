@@ -368,7 +368,10 @@ type LocalityLbSetting struct {
 	FailoverPriority []string `json:"failover_priority,omitempty"`
 	// enable locality load balancing, this is DestinationRule-level and will override mesh wide settings in entirety.
 	// e.g. true means that turn on locality load balancing for this DestinationRule no matter what mesh wide settings is.
-	Enabled bool `json:"enabled,omitempty"`
+	// This is a pointer so that an explicit `enabled: false` is preserved when the
+	// DestinationRule is generated (a plain bool with omitempty would drop it and
+	// Istio would fall back to the mesh-wide default, which is enabled).
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 // Describes how traffic originating in the 'from' zone or sub-zone is
