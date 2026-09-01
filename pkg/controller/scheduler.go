@@ -153,6 +153,17 @@ func (c *Controller) scheduleCanaries() {
 	for k, v := range stats {
 		c.recorder.SetTotal(k, v)
 	}
+
+	// remove canary_total series for namespaces that no longer contain any canaries
+	for ns := range c.trackedNamespaces {
+		if _, ok := stats[ns]; !ok {
+			c.recorder.DeleteTotalFor(ns)
+			delete(c.trackedNamespaces, ns)
+		}
+	}
+	for ns := range stats {
+		c.trackedNamespaces[ns] = struct{}{}
+	}
 }
 
 func (c *Controller) advanceCanary(name string, namespace string) {
@@ -286,6 +297,12 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 	if !shouldAdvance {
 		c.recorder.SetStatus(cd, cd.Status.Phase)
+		// keep the weight gauge populated in steady state (e.g. after a
+		// controller restart or right after initialization), otherwise it
+		// is only emitted once a canary starts progressing
+		if primaryWeight, canaryWeight, _, err := meshRouter.GetRoutes(cd); err == nil {
+			c.recorder.SetWeight(cd, primaryWeight, canaryWeight)
+		}
 		return
 	}
 
@@ -410,6 +427,7 @@ func (c *Controller) advanceCanary(name string, namespace string) {
 
 		c.recorder.SetStatus(cd, flaggerv1.CanaryPhaseSucceeded)
 		c.recorder.IncSuccesses(metrics.CanaryMetricLabels{
+			Canary:             cd.Name,
 			Name:               cd.Spec.TargetRef.Name,
 			Namespace:          cd.Namespace,
 			DeploymentStrategy: cd.DeploymentStrategy(),
@@ -832,6 +850,7 @@ func (c *Controller) shouldSkipAnalysis(canary *flaggerv1.Canary, canaryControll
 	// notify
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
 	c.recorder.IncSuccesses(metrics.CanaryMetricLabels{
+		Canary:             canary.Name,
 		Name:               canary.Spec.TargetRef.Name,
 		Namespace:          canary.Namespace,
 		DeploymentStrategy: canary.DeploymentStrategy(),
@@ -989,6 +1008,7 @@ func (c *Controller) rollback(canary *flaggerv1.Canary, canaryController canary.
 
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
 	c.recorder.IncFailures(metrics.CanaryMetricLabels{
+		Canary:             canary.Name,
 		Name:               canary.Spec.TargetRef.Name,
 		Namespace:          canary.Namespace,
 		DeploymentStrategy: canary.DeploymentStrategy(),
@@ -1026,6 +1046,7 @@ func (c *Controller) handleFailedPromotion(canary *flaggerv1.Canary, canaryContr
 
 	c.recorder.SetStatus(canary, flaggerv1.CanaryPhaseFailed)
 	c.recorder.IncFailures(metrics.CanaryMetricLabels{
+		Canary:             canary.Name,
 		Name:               canary.Spec.TargetRef.Name,
 		Namespace:          canary.Namespace,
 		DeploymentStrategy: canary.DeploymentStrategy(),

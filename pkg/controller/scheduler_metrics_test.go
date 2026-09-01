@@ -194,7 +194,7 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		mocks.makePrimaryReady(t)
 		mocks.ctrl.advanceCanary("podinfo", "default")
 
-		actualStatus := testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
+		actualStatus := testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "podinfo", "default"))
 		assert.Equal(t, float64(1), actualStatus)
 
 		actualTotal := testutil.ToFloat64(mocks.ctrl.recorder.GetTotalMetric().WithLabelValues("default"))
@@ -207,11 +207,11 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		mocks.makeCanaryReady(t)
 		mocks.ctrl.advanceCanary("podinfo", "default")
 
-		actualStatus = testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
+		actualStatus = testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "podinfo", "default"))
 		assert.Equal(t, float64(0), actualStatus)
 
-		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo-primary", "default"))
-		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "default"))
+		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo-primary", "default"))
+		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo", "default"))
 
 		t.Logf("Progression weights - Primary: %f, Canary: %f", actualPrimaryWeight, actualCanaryWeight)
 		assert.GreaterOrEqual(t, actualPrimaryWeight, float64(50))
@@ -232,7 +232,7 @@ func TestController_MetricsStateTransition(t *testing.T) {
 			}
 		}
 
-		successCount := testutil.ToFloat64(mocks.ctrl.recorder.GetSuccessesMetric().WithLabelValues("podinfo", "default", "canary", "completed"))
+		successCount := testutil.ToFloat64(mocks.ctrl.recorder.GetSuccessesMetric().WithLabelValues("podinfo", "podinfo", "default", "canary", "completed"))
 		assert.Equal(t, float64(1), successCount)
 	})
 
@@ -267,15 +267,15 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		mocks.ctrl.advanceCanary("podinfo", "default")
 		mocks.ctrl.advanceCanary("podinfo", "default")
 
-		actualStatus := testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "default"))
+		actualStatus := testutil.ToFloat64(mocks.ctrl.recorder.GetStatusMetric().WithLabelValues("podinfo", "podinfo", "default"))
 		assert.Equal(t, float64(2), actualStatus)
 
-		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo-primary", "default"))
-		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "default"))
+		actualPrimaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo-primary", "default"))
+		actualCanaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo", "default"))
 		assert.Equal(t, float64(100), actualPrimaryWeight)
 		assert.Equal(t, float64(0), actualCanaryWeight)
 
-		failureCount := testutil.ToFloat64(mocks.ctrl.recorder.GetFailuresMetric().WithLabelValues("podinfo", "default", "canary", "completed"))
+		failureCount := testutil.ToFloat64(mocks.ctrl.recorder.GetFailuresMetric().WithLabelValues("podinfo", "podinfo", "default", "canary", "completed"))
 		assert.Equal(t, float64(1), failureCount)
 	})
 
@@ -303,8 +303,32 @@ func TestController_MetricsStateTransition(t *testing.T) {
 		mocks.makeCanaryReady(t)
 		mocks.ctrl.advanceCanary("podinfo", "default")
 
-		successCount := testutil.ToFloat64(mocks.ctrl.recorder.GetSuccessesMetric().WithLabelValues("podinfo", "default", "canary", "skipped"))
+		successCount := testutil.ToFloat64(mocks.ctrl.recorder.GetSuccessesMetric().WithLabelValues("podinfo", "podinfo", "default", "canary", "skipped"))
 		assert.Equal(t, float64(1), successCount)
+	})
+
+	t.Run("weight is emitted for an initialized canary before progression", func(t *testing.T) {
+		mocks := newDeploymentFixture(nil)
+
+		// drive the canary to the Initialized phase
+		mocks.ctrl.advanceCanary("podinfo", "default")
+		mocks.makePrimaryReady(t)
+		mocks.ctrl.advanceCanary("podinfo", "default")
+
+		c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, flaggerv1.CanaryPhaseInitialized, c.Status.Phase)
+
+		// a steady-state reconcile (no changes, shouldAdvance == false) must still
+		// populate the weight gauge, otherwise it is absent until the canary progresses
+		mocks.ctrl.advanceCanary("podinfo", "default")
+
+		assert.Equal(t, 2, testutil.CollectAndCount(mocks.ctrl.recorder.GetWeightMetric(), "flagger_canary_weight"))
+
+		primaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo-primary", "default"))
+		canaryWeight := testutil.ToFloat64(mocks.ctrl.recorder.GetWeightMetric().WithLabelValues("podinfo", "podinfo", "default"))
+		assert.Equal(t, float64(100), primaryWeight)
+		assert.Equal(t, float64(0), canaryWeight)
 	})
 }
 
@@ -347,10 +371,10 @@ func TestController_AnalysisMetricsRecording(t *testing.T) {
 		result := mocks.ctrl.runMetricChecks(canary)
 		assert.True(t, result)
 
-		successRateMetric := mocks.ctrl.recorder.GetAnalysisMetric().WithLabelValues("podinfo", "default", "request-success-rate")
+		successRateMetric := mocks.ctrl.recorder.GetAnalysisMetric().WithLabelValues("podinfo", "podinfo", "default", "request-success-rate")
 		assert.NotNil(t, successRateMetric)
 
-		durationMetric := mocks.ctrl.recorder.GetAnalysisMetric().WithLabelValues("podinfo", "default", "request-duration")
+		durationMetric := mocks.ctrl.recorder.GetAnalysisMetric().WithLabelValues("podinfo", "podinfo", "default", "request-duration")
 		assert.NotNil(t, durationMetric)
 	})
 }

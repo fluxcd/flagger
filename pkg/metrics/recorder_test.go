@@ -62,7 +62,7 @@ func TestRecorder_GetterMethodsWithData(t *testing.T) {
 			name:       "SetAndGetStatus",
 			setupFunc:  func(r Recorder) { r.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded) },
 			getterFunc: func(r Recorder) interface{} { return r.GetStatusMetric() },
-			labels:     []string{"podinfo", "default"},
+			labels:     []string{"podinfo", "podinfo", "default"},
 			expected:   1.0,
 			checkValue: true,
 		},
@@ -86,27 +86,27 @@ func TestRecorder_GetterMethodsWithData(t *testing.T) {
 			name:       "SetAndGetAnalysis",
 			setupFunc:  func(r Recorder) { r.SetAnalysis(canary, "request-success-rate", 99.5) },
 			getterFunc: func(r Recorder) interface{} { return r.GetAnalysisMetric() },
-			labels:     []string{"podinfo", "default", "request-success-rate"},
+			labels:     []string{"podinfo", "podinfo", "default", "request-success-rate"},
 			expected:   99.5,
 			checkValue: true,
 		},
 		{
 			name: "IncAndGetSuccesses",
 			setupFunc: func(r Recorder) {
-				r.IncSuccesses(CanaryMetricLabels{Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
+				r.IncSuccesses(CanaryMetricLabels{Canary: "podinfo", Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
 			},
 			getterFunc: func(r Recorder) interface{} { return r.GetSuccessesMetric() },
-			labels:     []string{"podinfo", "default", "canary", "completed"},
+			labels:     []string{"podinfo", "podinfo", "default", "canary", "completed"},
 			expected:   1.0,
 			checkValue: true,
 		},
 		{
 			name: "IncAndGetFailures",
 			setupFunc: func(r Recorder) {
-				r.IncFailures(CanaryMetricLabels{Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
+				r.IncFailures(CanaryMetricLabels{Canary: "podinfo", Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
 			},
 			getterFunc: func(r Recorder) interface{} { return r.GetFailuresMetric() },
-			labels:     []string{"podinfo", "default", "canary", "completed"},
+			labels:     []string{"podinfo", "podinfo", "default", "canary", "completed"},
 			expected:   1.0,
 			checkValue: true,
 		},
@@ -130,4 +130,68 @@ func TestRecorder_GetterMethodsWithData(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRecorder_DeleteFor(t *testing.T) {
+	recorder := NewRecorder("test_delete", false)
+
+	canary := &flaggerv1.Canary{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "podinfo",
+			Namespace: "default",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.LocalObjectReference{
+				Name: "podinfo",
+			},
+		},
+	}
+	other := &flaggerv1.Canary{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "keep-me",
+			Namespace: "default",
+		},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.LocalObjectReference{
+				Name: "keep-me",
+			},
+		},
+	}
+
+	recorder.SetStatus(canary, flaggerv1.CanaryPhaseSucceeded)
+	recorder.SetWeight(canary, 90, 10)
+	recorder.SetAnalysis(canary, "request-success-rate", 99.5)
+	recorder.SetDuration(canary, time.Second)
+	recorder.IncSuccesses(CanaryMetricLabels{Canary: "podinfo", Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
+	recorder.IncFailures(CanaryMetricLabels{Canary: "podinfo", Name: "podinfo", Namespace: "default", DeploymentStrategy: "canary", AnalysisStatus: "completed"})
+
+	recorder.SetStatus(other, flaggerv1.CanaryPhaseSucceeded)
+	recorder.SetWeight(other, 100, 0)
+
+	recorder.DeleteFor("podinfo", "default")
+
+	// only the unrelated "keep-me" canary should have series remaining
+	assert.Equal(t, 1, testutil.CollectAndCount(recorder.GetStatusMetric(), "test_delete_canary_status"))
+	assert.Equal(t, 2, testutil.CollectAndCount(recorder.GetWeightMetric(), "test_delete_canary_weight"))
+	assert.Equal(t, 0, testutil.CollectAndCount(recorder.GetAnalysisMetric(), "test_delete_canary_metric_analysis"))
+	assert.Equal(t, 0, testutil.CollectAndCount(recorder.GetSuccessesMetric(), "test_delete_canary_successes_total"))
+	assert.Equal(t, 0, testutil.CollectAndCount(recorder.GetFailuresMetric(), "test_delete_canary_failures_total"))
+
+	// unrelated canary's series must be preserved
+	assert.Equal(t, float64(1), testutil.ToFloat64(recorder.GetStatusMetric().WithLabelValues("keep-me", "keep-me", "default")))
+	assert.Equal(t, float64(100), testutil.ToFloat64(recorder.GetWeightMetric().WithLabelValues("keep-me", "keep-me-primary", "default")))
+}
+
+func TestRecorder_DeleteTotalFor(t *testing.T) {
+	recorder := NewRecorder("test_delete_total", false)
+
+	recorder.SetTotal("ns-a", 2)
+	recorder.SetTotal("ns-b", 1)
+
+	assert.Equal(t, 2, testutil.CollectAndCount(recorder.GetTotalMetric(), "test_delete_total_canary_total"))
+
+	recorder.DeleteTotalFor("ns-a")
+
+	assert.Equal(t, 1, testutil.CollectAndCount(recorder.GetTotalMetric(), "test_delete_total_canary_total"))
+	assert.Equal(t, float64(1), testutil.ToFloat64(recorder.GetTotalMetric().WithLabelValues("ns-b")))
 }
