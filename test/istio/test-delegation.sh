@@ -52,7 +52,7 @@ spec:
         namespace: test
 EOF
 
-echo '>>> Initialising canary for delegate'
+echo '>>> Initialising canary'
 cat <<EOF | kubectl apply -f -
 apiVersion: flagger.app/v1beta1
 kind: Canary
@@ -68,8 +68,7 @@ spec:
   service:
     port: 80
     targetPort: 9898
-    portDiscovery: true
-    delegation: true
+    delegation: false # start with delegation disabled to make sure it works properly after it's enabled
   analysis:
     interval: 15s
     threshold: 15
@@ -101,6 +100,46 @@ until ${ok}; do
 done
 
 echo '✔ Canary initialization test passed'
+
+echo '>>> Enabling delegation on canary'
+kubectl patch canary podinfo -n test --type=merge -p '{"spec":{"service":{"delegation":true}}}'
+
+echo '>>> Waiting for VirtualService to be updated with delegation...'
+
+retries=30
+count=0
+ok=false
+
+until ${ok}; do
+    VS_YAML=$(kubectl get virtualservice/podinfo -n test -o yaml 2>/dev/null)
+
+    # A VirtualService is considered INVALID if it contains a 'hosts:' or 'gateways:' key
+    # that is NOT immediately followed by an empty array '[]'.
+    if [[ -n "${VS_YAML}" ]] && ! echo "${VS_YAML}" | grep -vE '^  (hosts|gateways): \[\]$' | grep -qE '^  (hosts|gateways):'; then
+        echo "✔ Validation Passed: 'gateways' and 'hosts' are either absent or empty."
+        ok=true
+    else
+        # If ok is not true, print a status message.
+        echo "VirtualService not ready yet ('gateways' or 'hosts' key is present). Retrying..."
+        ok=false
+    fi
+
+    if ${ok}; then
+        break
+    fi
+
+    count=$(($count + 1))
+    if [[ ${count} -eq ${retries} ]]; then
+        kubectl -n istio-system logs deployment/flagger
+        kubectl get virtualservice/podinfo -n test -o yaml
+        echo "No more retries left"
+        exit 1
+    fi
+
+    sleep 5
+done
+
+echo '✔ VirtualService delegation enabled'
 
 echo '>>> Triggering canary deployment'
 kubectl -n test set image deployment/podinfo podinfod=ghcr.io/stefanprodan/podinfo:6.0.1
