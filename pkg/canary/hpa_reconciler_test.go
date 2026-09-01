@@ -8,7 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	hpav2 "k8s.io/api/autoscaling/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func Test_reconcilePrimaryHpa(t *testing.T) {
@@ -31,6 +33,94 @@ func Test_reconcilePrimaryHpa(t *testing.T) {
 	// assert that we return an error if no HPAs are found.
 	err = hpaReconciler.reconcilePrimaryHpa(mocks.canary, true)
 	require.Error(t, err)
+}
+
+func TestHPAReconciler_ReconcilePrimaryScaler_RemovesManagedHPAWhenAutoscalerRefIsRemoved(t *testing.T) {
+	mocks := newScalerReconcilerFixture(scalerConfig{
+		targetName: "podinfo",
+		scaler:     "HorizontalPodAutoscaler",
+	})
+	mocks.canary.UID = "podinfo-uid"
+	hpaReconciler := mocks.scalerReconciler.(*HPAReconciler)
+	autoscalerRef := *mocks.canary.Spec.AutoscalerRef
+
+	require.NoError(t, hpaReconciler.ReconcilePrimaryScaler(mocks.canary, true))
+
+	primaryHPA, err := mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.True(t, metav1.IsControlledBy(primaryHPA, mocks.canary))
+
+	require.NoError(t, mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Delete(context.TODO(), "podinfo", metav1.DeleteOptions{}))
+	mocks.canary.Spec.AutoscalerRef = nil
+	require.NoError(t, hpaReconciler.ReconcilePrimaryScaler(mocks.canary, true))
+
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
+
+	// Cleanup is idempotent and the primary HPA stays deleted.
+	require.NoError(t, hpaReconciler.ReconcilePrimaryScaler(mocks.canary, true))
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
+
+	// Restoring the source HPA and autoscalerRef recreates the managed primary HPA.
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Create(context.TODO(), newScalerReconcilerTestHPAV2(), metav1.CreateOptions{})
+	require.NoError(t, err)
+	mocks.canary.Spec.AutoscalerRef = &autoscalerRef
+	require.NoError(t, hpaReconciler.ReconcilePrimaryScaler(mocks.canary, true))
+
+	primaryHPA, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.True(t, metav1.IsControlledBy(primaryHPA, mocks.canary))
+}
+
+func TestHPAReconciler_ReconcilePrimaryScaler_PreservesUnmanagedHPA(t *testing.T) {
+	mocks := newScalerReconcilerFixture(scalerConfig{
+		targetName: "podinfo",
+		scaler:     "HorizontalPodAutoscaler",
+	})
+	mocks.canary.UID = "podinfo-uid"
+	mocks.canary.Spec.AutoscalerRef = nil
+	hpaReconciler := mocks.scalerReconciler.(*HPAReconciler)
+
+	unmanagedHPA := newScalerReconcilerTestHPAV2()
+	unmanagedHPA.Name = "podinfo-primary"
+	unmanagedHPA.Spec.ScaleTargetRef.Name = "podinfo-primary"
+	_, err := mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Create(context.TODO(), unmanagedHPA, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	require.NoError(t, hpaReconciler.ReconcilePrimaryScaler(mocks.canary, true))
+
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+}
+
+func TestHPAReconciler_ReconcilePrimaryScaler_PreservesHPAOwnedByAnotherCanary(t *testing.T) {
+	mocks := newScalerReconcilerFixture(scalerConfig{
+		targetName: "podinfo",
+		scaler:     "HorizontalPodAutoscaler",
+	})
+	mocks.canary.UID = "podinfo-uid"
+	mocks.canary.Spec.AutoscalerRef = nil
+	hpaReconciler := mocks.scalerReconciler.(*HPAReconciler)
+
+	controller := true
+	foreignHPA := newScalerReconcilerTestHPAV2()
+	foreignHPA.Name = "podinfo-primary"
+	foreignHPA.Spec.ScaleTargetRef.Name = "podinfo-primary"
+	foreignHPA.OwnerReferences = []metav1.OwnerReference{{
+		APIVersion: flaggerv1.SchemeGroupVersion.String(),
+		Kind:       flaggerv1.CanaryKind,
+		Name:       "other-canary",
+		UID:        types.UID("other-canary-uid"),
+		Controller: &controller,
+	}}
+	_, err := mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Create(context.TODO(), foreignHPA, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	require.NoError(t, hpaReconciler.ReconcilePrimaryScaler(mocks.canary, true))
+
+	_, err = mocks.kubeClient.AutoscalingV2().HorizontalPodAutoscalers("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
 }
 
 func Test_reconcilePrimaryHpaV2(t *testing.T) {

@@ -78,6 +78,9 @@ Based on the above configuration, Flagger generates the following Kubernetes obj
 * `deployment/<targetRef.name>-primary`
 * `hpa/<autoscalerRef.name>-primary`
 
+When `autoscalerRef` is removed, Flagger deletes the generated primary HPA if
+it is controlled by the Canary.
+
 The primary deployment is considered the stable release of your app,
 by default all traffic is routed to this version and the target deployment is scaled to zero.
 Flagger will detect changes to the target deployment (including secrets and configmaps)

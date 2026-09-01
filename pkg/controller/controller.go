@@ -50,6 +50,10 @@ import (
 
 const controllerAgentName = "flagger"
 
+func hpaCleanupSweepKey(canary *flaggerv1.Canary) string {
+	return fmt.Sprintf("%s/%s/%s", canary.Namespace, canary.Name, canary.UID)
+}
+
 // Controller is managing the canary objects and schedules canary deployments
 type Controller struct {
 	kubeConfig           *rest.Config
@@ -63,6 +67,7 @@ type Controller struct {
 	eventRecorder        record.EventRecorder
 	logger               *zap.SugaredLogger
 	canaries             *sync.Map
+	hpaCleanupSweeps     sync.Map
 	jobs                 map[string]CanaryJob
 	recorder             metrics.Recorder
 	notifier             notifier.Interface
@@ -180,6 +185,7 @@ func NewController(
 			if ok {
 				ctrl.logger.Infof("Deleting %s.%s from cache", r.Name, r.Namespace)
 				ctrl.canaries.Delete(fmt.Sprintf("%s.%s", r.Name, r.Namespace))
+				ctrl.hpaCleanupSweeps.Delete(hpaCleanupSweepKey(&r))
 			}
 		},
 	})

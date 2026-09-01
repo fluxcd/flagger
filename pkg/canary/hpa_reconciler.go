@@ -3,6 +3,7 @@ package canary
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	clientset "github.com/fluxcd/flagger/pkg/client/clientset/versioned"
@@ -25,12 +26,48 @@ type HPAReconciler struct {
 }
 
 func (hr *HPAReconciler) ReconcilePrimaryScaler(cd *flaggerv1.Canary, init bool) error {
-	if cd.Spec.AutoscalerRef != nil {
-		if err := hr.reconcilePrimaryHpa(cd, init); err != nil {
-			return err
-		}
+	if cd.Spec.AutoscalerRef == nil {
+		return hr.cleanupPrimaryHpas(cd)
 	}
+	return hr.reconcilePrimaryHpa(cd, init)
+}
+
+func (hr *HPAReconciler) cleanupPrimaryHpas(cd *flaggerv1.Canary) error {
+	if cd.UID == "" {
+		return nil
+	}
+
+	hpas, err := hr.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("HorizontalPodAutoscaler list query error in namespace %s: %w", cd.Namespace, err)
+	}
+
+	for i := range hpas.Items {
+		hpa := &hpas.Items[i]
+		if !isFlaggerManagedPrimaryHpa(hpa, cd) {
+			continue
+		}
+
+		err := hr.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).Delete(context.TODO(), hpa.Name, metav1.DeleteOptions{})
+		if errors.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			return fmt.Errorf("deleting HorizontalPodAutoscaler v2 %s.%s failed: %w", hpa.Name, hpa.Namespace, err)
+		}
+
+		hr.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).Infof(
+			"HorizontalPodAutoscaler v2 %s.%s deleted", hpa.Name, cd.Namespace)
+	}
+
 	return nil
+}
+
+func isFlaggerManagedPrimaryHpa(hpa *hpav2.HorizontalPodAutoscaler, cd *flaggerv1.Canary) bool {
+	return cd.UID != "" &&
+		strings.HasSuffix(hpa.Name, "-primary") &&
+		hpa.Spec.ScaleTargetRef.Name == fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name) &&
+		metav1.IsControlledBy(hpa, cd)
 }
 
 func (hr *HPAReconciler) reconcilePrimaryHpa(cd *flaggerv1.Canary, init bool) error {
