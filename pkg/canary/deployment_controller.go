@@ -42,6 +42,7 @@ type DeploymentController struct {
 	configTracker      Tracker
 	labels             []string
 	includeLabelPrefix []string
+	useServerSideHash  bool
 }
 
 // Initialize creates the primary deployment if it does not exist.
@@ -144,7 +145,11 @@ func (c *DeploymentController) HasTargetChanged(cd *flaggerv1.Canary) (bool, err
 		return false, fmt.Errorf("deployment %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	return hasSpecChanged(cd, canary.Spec.Template)
+	if c.useServerSideHash {
+		return hasDeploymentSpecChanged(c.kubeClient, cd, canary)
+	} else {
+		return hasSpecChanged(cd, canary.Spec.Template)
+	}
 }
 
 // ScaleToZero Scale sets the canary deployment replicas

@@ -88,6 +88,7 @@ var (
 	kubeconfigServiceMesh    string
 	clusterName              string
 	noCrossNamespaceRefs     bool
+	useServerSideHash        bool
 )
 
 func init() {
@@ -123,6 +124,7 @@ func init() {
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
 	flag.StringVar(&clusterName, "cluster-name", "", "Cluster name to be included in alert msgs.")
 	flag.BoolVar(&noCrossNamespaceRefs, "no-cross-namespace-refs", false, "When set to true, Flagger can only refer to resources in the same namespace.")
+	flag.BoolVar(&useServerSideHash, "use-server-side-hash", false, "Enable server-side hash computation for deployments to avoid redeployments when upgrading Flagger versions.")
 }
 
 func main() {
@@ -243,7 +245,7 @@ func main() {
 
 	includeLabelPrefixArray := strings.Split(includeLabelPrefix, ",")
 
-	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, knativeClient, configTracker, labels, includeLabelPrefixArray, logger)
+	canaryFactory := canary.NewFactory(kubeClient, flaggerClient, knativeClient, configTracker, labels, includeLabelPrefixArray, useServerSideHash, logger)
 
 	c := controller.NewController(
 		kubeClient,

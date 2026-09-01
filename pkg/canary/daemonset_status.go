@@ -47,7 +47,8 @@ func (c *DaemonSetController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.
 		return fmt.Errorf("GetConfigRefs failed: %w", err)
 	}
 
-	return syncCanaryStatus(c.flaggerClient, cd, status, dae.Spec.Template, func(cdCopy *flaggerv1.Canary) {
+	hash := ComputeHash(dae.Spec.Template)
+	return syncCanaryStatus(c.flaggerClient, cd, status, hash, func(cdCopy *flaggerv1.Canary) {
 		cdCopy.Status.TrackedConfigs = configs
 	})
 }

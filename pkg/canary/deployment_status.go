@@ -37,7 +37,17 @@ func (c *DeploymentController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1
 		return fmt.Errorf("GetConfigRefs failed: %w", err)
 	}
 
-	return syncCanaryStatus(c.flaggerClient, cd, status, dep.Spec.Template, func(cdCopy *flaggerv1.Canary) {
+	var hash string
+	if c.useServerSideHash {
+		hash, err = GetReplicaSetHash(c.kubeClient, dep)
+		if err != nil {
+			return fmt.Errorf("failed to compute server-side hash from deployment %s.%s: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
+		}
+	} else {
+		hash = ComputeHash(dep.Spec.Template)
+	}
+
+	return syncCanaryStatus(c.flaggerClient, cd, status, hash, func(cdCopy *flaggerv1.Canary) {
 		cdCopy.Status.TrackedConfigs = configs
 	})
 }
