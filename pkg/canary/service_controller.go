@@ -61,8 +61,8 @@ func (c *ServiceController) SetStatusPhase(cd *flaggerv1.Canary, phase flaggerv1
 }
 
 // GetMetadata returns the pod label selector, label value and svc ports
-func (c *ServiceController) GetMetadata(_ *flaggerv1.Canary) (string, string, map[string]int32, error) {
-	return "", "", nil, nil
+func (c *ServiceController) GetMetadata(_ *flaggerv1.Canary) (map[string]string, string, string, map[string]int32, error) {
+	return nil, "", "", nil, nil
 }
 
 // Initialize creates or updates the primary and canary services to prepare for the canary release process targeted on the K8s service

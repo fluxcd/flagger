@@ -23,7 +23,7 @@ import (
 type Controller interface {
 	IsPrimaryReady(canary *flaggerv1.Canary) (bool, error)
 	IsCanaryReady(canary *flaggerv1.Canary) (bool, error)
-	GetMetadata(canary *flaggerv1.Canary) (string, string, map[string]int32, error)
+	GetMetadata(canary *flaggerv1.Canary) (map[string]string, string, string, map[string]int32, error)
 	SyncStatus(canary *flaggerv1.Canary, status flaggerv1.CanaryStatus) error
 	SetStatusFailedChecks(canary *flaggerv1.Canary, val int) error
 	SetStatusWeight(canary *flaggerv1.Canary, val int) error

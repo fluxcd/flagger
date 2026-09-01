@@ -54,8 +54,8 @@ func (kc *KnativeController) IsCanaryReady(cd *flaggerv1.Canary) (bool, error) {
 	return true, nil
 }
 
-func (kc *KnativeController) GetMetadata(canary *flaggerv1.Canary) (string, string, map[string]int32, error) {
-	return "", "", make(map[string]int32), nil
+func (kc *KnativeController) GetMetadata(canary *flaggerv1.Canary) (map[string]string, string, string, map[string]int32, error) {
+	return nil, "", "", make(map[string]int32), nil
 }
 
 // SyncStatus encodes list of revisions and updates the canary status

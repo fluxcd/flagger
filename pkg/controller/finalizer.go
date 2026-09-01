@@ -93,13 +93,13 @@ func (c *Controller) finalize(old interface{}) error {
 		return fmt.Errorf("canary not ready during finalizing: %w", err)
 	}
 
-	labelSelector, labelValue, ports, err := canaryController.GetMetadata(canary)
+	matchLabels, labelSelector, labelValue, ports, err := canaryController.GetMetadata(canary)
 	if err != nil {
 		return fmt.Errorf("failed to get metadata for router finalizing: %w", err)
 	}
 
 	// Revert the Kubernetes service
-	router := c.routerFactory.KubernetesRouter(canary.Spec.TargetRef.Kind, labelSelector, labelValue, ports)
+	router := c.routerFactory.KubernetesRouter(canary.Spec.TargetRef.Kind, matchLabels, labelSelector, labelValue, ports)
 	if err := router.Finalize(canary); err != nil {
 		return fmt.Errorf("failed revert router: %w", err)
 	}

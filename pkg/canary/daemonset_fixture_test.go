@@ -379,7 +379,8 @@ func newDaemonSetControllerTestPodInfo(dc daemonsetConfigs) *appsv1.DaemonSet {
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					dc.label: dc.labelValue,
+					dc.label:       dc.labelValue,
+					"test-label-1": "test-label-value-1",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
