@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.45.0
+
+**Release date:** 2026-09-01
+
+This release comes with a new Azure Monitor Workspace metrics provider,
+improvements to service reconciliation, and fixes for custom External Metrics
+provider authentication.
+
+Additionally, a bug which made port discovery incompatible with Linkerd has
+been fixed.
+
+#### Improvements
+- Add Azure Monitor Workspace metrics provider
+  [#1954](https://github.com/fluxcd/flagger/pull/1954)
+- Exclude Linkerd proxy sidecar ports from workload port discovery
+  [#1955](https://github.com/fluxcd/flagger/pull/1955)
+- Update Go dependencies
+  [#1958](https://github.com/fluxcd/flagger/pull/1958)
+
+#### Fixes
+- Reconcile Kubernetes Service trafficDistribution updates
+  [#1943](https://github.com/fluxcd/flagger/pull/1943)
+- Build clean externalmetrics client config for custom provider addresses
+  [#1957](https://github.com/fluxcd/flagger/pull/1957)
+
 ## 1.44.0
 
 **Release date:** 2026-07-14
