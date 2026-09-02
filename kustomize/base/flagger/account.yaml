@@ -3,4 +3,3 @@ kind: ServiceAccount
 metadata:
   name: flagger
   namespace: flagger-system
-
