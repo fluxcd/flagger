@@ -398,14 +398,14 @@ This can be done via mounting a Kubernetes secret in the tester's Deployment.
 to see if the process has finished (Default is 5s). `pollTimeout` represents the time in seconds
 the web-hook will try to call Concord before timing out (Default is 30s).
 
-If you need to start a Pod/Job to run tests, you can do so using `kubectl`.
+If you need to start a Pod/Job to run tests, you can do so using `kubectl`. This is available in the same Helm test runner chart as specified in the Integration Testing section.
 
 ```yaml
   analysis:
     webhooks:
       - name: "smoke test"
         type: pre-rollout
-        url: http://flagger-kubectltester.kube-system/
+        url: http://flagger-helmtester.kube-system/
         timeout: 3m
         metadata:
           type: "kubectl"
