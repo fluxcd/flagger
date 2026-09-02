@@ -190,6 +190,8 @@ The following tables lists the configurable parameters of the Flagger chart and 
 | `additionalVolumeMounts`             | Extra volume mounts to add to the Flagger container                                                                         | `[]`                                  |
 | `deploymentLabels`                   | Labels to add to Flagger deployment                                                                                                                | `{}`                                  |
 | `podLabels`                          | Labels to add to pods of Flagger deployment                                                                                                        | `{}`                                  |
+| `additionalContainers`               | List of additional containers to add to Flagger deployment                                                         | `[]`                                  |
+
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm upgrade`. For example,
 
