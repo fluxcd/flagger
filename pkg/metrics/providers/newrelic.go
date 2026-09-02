@@ -47,7 +47,7 @@ type NewRelicProvider struct {
 
 type newRelicResponse struct {
 	Results []struct {
-		Result *float64 `json:"result"`
+		Field map[string]*float64 `json:"result"`
 	} `json:"results"`
 }
 
