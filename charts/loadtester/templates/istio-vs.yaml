@@ -7,6 +7,9 @@ spec:
   gateways:
   - {{ include "loadtester.fullname" . }}
   hosts:
+  {{- if .Values.istio.virtualservice.gateway }}
+  - {{ .Values.istio.virtualservice.gateway }}
+  {{- else}}
   - {{ .Values.istio.host }}
   http:
   - route:
