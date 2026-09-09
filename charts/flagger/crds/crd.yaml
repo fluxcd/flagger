@@ -149,10 +149,13 @@ spec:
                       properties:
                         minReplicas:
                           type: integer
-                          minimum: 1
+                          minimum: 0
                         maxReplicas:
                           type: integer
                           minimum: 1
+                  x-kubernetes-validations:
+                    - message: minReplicas must be greater than or equal to 1 for HorizontalPodAutoscaler
+                      rule: "self.kind == 'ScaledObject' || !has(self.primaryScalerReplicas) || !has(self.primaryScalerReplicas.minReplicas) || self.primaryScalerReplicas.minReplicas >= 1"
                 ingressRef:
                   description: Ingress selector
                   type: object
