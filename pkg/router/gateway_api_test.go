@@ -18,6 +18,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -706,5 +707,107 @@ func TestGatewayAPIRouter_GetRoutes(t *testing.T) {
 		assert.Equal(t, 90, primaryWeight)
 		assert.Equal(t, 10, canaryWeight)
 		assert.False(t, mirrored)
+	})
+}
+
+func TestGatewayAPIRouter_Finalize(t *testing.T) {
+	canary := newTestGatewayAPICanary()
+
+	originalSpec := v1.HTTPRouteSpec{
+		Hostnames: []v1.Hostname{"podinfo.example.com"},
+		Rules: []v1.HTTPRouteRule{
+			{
+				BackendRefs: []v1.HTTPBackendRef{
+					{
+						BackendRef: v1.BackendRef{
+							BackendObjectReference: v1.BackendObjectReference{
+								Name: "podinfo",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("errors when the HTTPRoute is not found", func(t *testing.T) {
+		mocks := newFixture(canary)
+		router := &GatewayAPIRouter{
+			gatewayAPIClient: mocks.meshClient,
+			kubeClient:       mocks.kubeClient,
+			logger:           mocks.logger,
+		}
+
+		err := router.Finalize(canary)
+		require.Error(t, err)
+	})
+
+	t.Run("does not error when no original configuration is stored", func(t *testing.T) {
+		mocks := newFixture(canary)
+		router := &GatewayAPIRouter{
+			gatewayAPIClient: mocks.meshClient,
+			kubeClient:       mocks.kubeClient,
+			logger:           mocks.logger,
+		}
+		require.NoError(t, router.Reconcile(canary))
+
+		require.NoError(t, router.Finalize(canary))
+	})
+
+	t.Run("restores the spec stored in the flagger config annotation", func(t *testing.T) {
+		mocks := newFixture(canary)
+		router := &GatewayAPIRouter{
+			gatewayAPIClient: mocks.meshClient,
+			kubeClient:       mocks.kubeClient,
+			logger:           mocks.logger,
+		}
+		require.NoError(t, router.Reconcile(canary))
+
+		httpRoute, err := router.gatewayAPIClient.GatewayapiV1().HTTPRoutes(canary.Namespace).
+			Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		b, err := json.Marshal(originalSpec)
+		require.NoError(t, err)
+		httpRoute.Annotations = map[string]string{configAnnotation: string(b)}
+		_, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes(canary.Namespace).
+			Update(context.TODO(), httpRoute, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		require.NoError(t, router.Finalize(canary))
+
+		httpRoute, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes(canary.Namespace).
+			Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, originalSpec, httpRoute.Spec)
+	})
+
+	t.Run("restores the spec embedded in the kubectl annotation", func(t *testing.T) {
+		mocks := newFixture(canary)
+		router := &GatewayAPIRouter{
+			gatewayAPIClient: mocks.meshClient,
+			kubeClient:       mocks.kubeClient,
+			logger:           mocks.logger,
+		}
+		require.NoError(t, router.Reconcile(canary))
+
+		httpRoute, err := router.gatewayAPIClient.GatewayapiV1().HTTPRoutes(canary.Namespace).
+			Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		stored := v1.HTTPRoute{Spec: originalSpec}
+		b, err := json.Marshal(stored)
+		require.NoError(t, err)
+		httpRoute.Annotations = map[string]string{kubectlAnnotation: string(b)}
+		_, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes(canary.Namespace).
+			Update(context.TODO(), httpRoute, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		require.NoError(t, router.Finalize(canary))
+
+		httpRoute, err = router.gatewayAPIClient.GatewayapiV1().HTTPRoutes(canary.Namespace).
+			Get(context.TODO(), canary.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, originalSpec, httpRoute.Spec)
 	})
 }
