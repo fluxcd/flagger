@@ -18,6 +18,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"slices"
@@ -241,6 +242,24 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			hrClone.Spec = httpRouteSpec
 			hrClone.ObjectMeta.Annotations = mergedAnnotations
 			hrClone.ObjectMeta.Labels = newMetadata.Labels
+
+			// If the kubectl annotation is present it will be used to restore the HTTPRoute on Finalize,
+			// so there is no need to duplicate the original spec. Otherwise, store it so that it can be
+			// restored once the canary is deleted with revertOnDeletion enabled.
+			if _, ok := hrClone.Annotations[kubectlAnnotation]; !ok && specDiff != "" {
+				if _, ok := hrClone.Annotations[configAnnotation]; !ok {
+					b, err := json.Marshal(httpRoute.Spec)
+					if err != nil {
+						gwr.logger.Warnf("Unable to marshal HTTPRoute %s for orig-configuration annotation", httpRoute.Name)
+					} else {
+						if hrClone.ObjectMeta.Annotations == nil {
+							hrClone.ObjectMeta.Annotations = make(map[string]string)
+						}
+						hrClone.ObjectMeta.Annotations[configAnnotation] = string(b)
+					}
+				}
+			}
+
 			_, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).
 				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 			if err != nil {
@@ -443,7 +462,44 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	return nil
 }
 
-func (gwr *GatewayAPIRouter) Finalize(_ *flaggerv1.Canary) error {
+// Finalize restores the HTTPRoute to the state it was in before Flagger took it over,
+// so that traffic keeps flowing to the target service after the canary is deleted.
+func (gwr *GatewayAPIRouter) Finalize(canary *flaggerv1.Canary) error {
+	apexSvcName, _, _ := canary.GetServiceNames()
+	hrNamespace := canary.Namespace
+
+	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).Get(
+		context.TODO(), apexSvcName, metav1.GetOptions{},
+	)
+	if err != nil {
+		return fmt.Errorf("HTTPRoute %s.%s get query error: %w", apexSvcName, hrNamespace, err)
+	}
+
+	var storedSpec v1.HTTPRouteSpec
+	if a, ok := httpRoute.Annotations[kubectlAnnotation]; ok {
+		var storedHTTPRoute v1.HTTPRoute
+		if err := json.Unmarshal([]byte(a), &storedHTTPRoute); err != nil {
+			return fmt.Errorf("HTTPRoute %s.%s failed to unmarshal annotation %s",
+				apexSvcName, hrNamespace, kubectlAnnotation)
+		}
+		storedSpec = storedHTTPRoute.Spec
+	} else if a, ok := httpRoute.Annotations[configAnnotation]; ok {
+		if err := json.Unmarshal([]byte(a), &storedSpec); err != nil {
+			return fmt.Errorf("HTTPRoute %s.%s failed to unmarshal annotation %s",
+				apexSvcName, hrNamespace, configAnnotation)
+		}
+	} else {
+		gwr.logger.Warnf("HTTPRoute %s.%s original configuration not found, unable to revert", apexSvcName, hrNamespace)
+		return nil
+	}
+
+	clone := httpRoute.DeepCopy()
+	clone.Spec = storedSpec
+
+	_, err = gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).Update(context.TODO(), clone, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("HTTPRoute %s.%s update error: %w", apexSvcName, hrNamespace, err)
+	}
 	return nil
 }
 
