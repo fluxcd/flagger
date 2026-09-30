@@ -120,6 +120,12 @@ command flag in the Flagger deployment manifest under containers args
 or by setting `--set configTracking.enabled=false` when installing Flagger with Helm,
 but disabling config-tracking using the per Secret/ConfigMap annotation may fit your use-case better.
 
+The primary copy of a ConfigMap includes both `data` and `binaryData`,
+but only changes to `data` trigger a canary analysis by default.
+To also detect changes to `binaryData`, use the `-enable-config-binary-data-tracking`
+command flag or set `--set configTracking.binaryData=true` when installing Flagger with Helm.
+Enabling or disabling this flag starts one analysis for each canary whose target references a ConfigMap with `binaryData`.
+
 The autoscaler reference is optional, when specified,
 Flagger will pause the traffic increase while the target and primary deployments are scaled up or down.
 HPA can help reduce the resource usage during the canary analysis.

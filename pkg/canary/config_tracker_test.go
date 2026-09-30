@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sTesting "k8s.io/client-go/testing"
@@ -391,6 +392,71 @@ func TestConfigTracker_HasConfigChanged_ShouldReturnErrorWhenAPIServerIsDown(t *
 		_, err := mocks.controller.configTracker.HasConfigChanged(mocks.canary)
 		assert.Error(t, err)
 	})
+}
+
+func TestConfigTracker_ConfigMapBinaryData(t *testing.T) {
+	invalidUTF8A := map[string][]byte{"truststore.p12": {0xff}}
+	invalidUTF8B := map[string][]byte{"truststore.p12": {0xfe}}
+
+	t.Run("primary keeps binaryData", func(t *testing.T) {
+		mocks := newBinaryDataTestFixture(t, false, invalidUTF8A)
+		mocks.initializeCanary(t)
+
+		primary, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-vol-primary", metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, invalidUTF8A, primary.BinaryData)
+	})
+
+	t.Run("checksum stays data only unless binaryData is tracked", func(t *testing.T) {
+		for _, mocks := range []deploymentControllerFixture{
+			newBinaryDataTestFixture(t, false, invalidUTF8A),
+			newBinaryDataTestFixture(t, true, nil),
+		} {
+			assert.Equal(t, checksum(newDeploymentControllerTestConfigMapVol().Data), (*mocks.canary.Status.TrackedConfigs)["configmap/podinfo-config-vol"])
+		}
+	})
+
+	t.Run("binaryData change", func(t *testing.T) {
+		for _, track := range []bool{false, true} {
+			mocks := newBinaryDataTestFixture(t, track, invalidUTF8A)
+			changed, err := mocks.controller.configTracker.HasConfigChanged(mocks.canary)
+			require.NoError(t, err)
+			assert.False(t, changed)
+
+			updateConfigMapVol(t, mocks, func(cm *corev1.ConfigMap) { cm.BinaryData = invalidUTF8B })
+			changed, err = mocks.controller.configTracker.HasConfigChanged(mocks.canary)
+			require.NoError(t, err)
+			assert.Equal(t, track, changed, "tracking %v", track)
+		}
+	})
+
+	t.Run("data change with binaryData tracked", func(t *testing.T) {
+		mocks := newBinaryDataTestFixture(t, true, invalidUTF8A)
+		updateConfigMapVol(t, mocks, func(cm *corev1.ConfigMap) { cm.Data["color"] = "blue" })
+
+		changed, err := mocks.controller.configTracker.HasConfigChanged(mocks.canary)
+		require.NoError(t, err)
+		assert.True(t, changed)
+	})
+}
+
+func newBinaryDataTestFixture(t *testing.T, trackBinaryData bool, binaryData map[string][]byte) deploymentControllerFixture {
+	mocks := newDeploymentFixture(deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"})
+	mocks.controller.configTracker.(*ConfigTracker).TrackBinaryData = trackBinaryData
+	updateConfigMapVol(t, mocks, func(cm *corev1.ConfigMap) { cm.BinaryData = binaryData })
+
+	configs, err := mocks.controller.configTracker.GetConfigRefs(mocks.canary)
+	require.NoError(t, err)
+	mocks.canary.Status.TrackedConfigs = configs
+	return mocks
+}
+
+func updateConfigMapVol(t *testing.T, mocks deploymentControllerFixture, update func(*corev1.ConfigMap)) {
+	configMap, err := mocks.kubeClient.CoreV1().ConfigMaps("default").Get(context.TODO(), "podinfo-config-vol", metav1.GetOptions{})
+	require.NoError(t, err)
+	update(configMap)
+	_, err = mocks.kubeClient.CoreV1().ConfigMaps("default").Update(context.TODO(), configMap, metav1.UpdateOptions{})
+	require.NoError(t, err)
 }
 
 func Test_fieldIsMandatory(t *testing.T) {

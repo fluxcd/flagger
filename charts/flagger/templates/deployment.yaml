@@ -104,6 +104,9 @@ spec:
           {{- end }}
           {{- if .Values.configTracking }}
           - -enable-config-tracking={{ .Values.configTracking.enabled }}
+          {{- if .Values.configTracking.binaryData }}
+          - -enable-config-binary-data-tracking={{ .Values.configTracking.binaryData }}
+          {{- end }}
           {{- end }}
           {{- if .Values.namespace }}
           - -namespace={{ .Values.namespace }}

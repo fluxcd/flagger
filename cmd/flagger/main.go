@@ -84,6 +84,7 @@ var (
 	enableLeaderElection     bool
 	leaderElectionNamespace  string
 	enableConfigTracking     bool
+	enableConfigBinaryData   bool
 	ver                      bool
 	kubeconfigServiceMesh    string
 	clusterName              string
@@ -119,6 +120,7 @@ func init() {
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election.")
 	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "kube-system", "Namespace used to create the leader election config map.")
 	flag.BoolVar(&enableConfigTracking, "enable-config-tracking", true, "Enable secrets and configmaps tracking.")
+	flag.BoolVar(&enableConfigBinaryData, "enable-config-binary-data-tracking", false, "Enable change detection for configmaps binaryData.")
 	flag.BoolVar(&ver, "version", false, "Print version")
 	flag.StringVar(&kubeconfigServiceMesh, "kubeconfig-service-mesh", "", "Path to a kubeconfig for the service mesh control plane cluster.")
 	flag.StringVar(&clusterName, "cluster-name", "", "Cluster name to be included in alert msgs.")
@@ -233,9 +235,10 @@ func main() {
 	var configTracker canary.Tracker
 	if enableConfigTracking {
 		configTracker = &canary.ConfigTracker{
-			Logger:        logger,
-			KubeClient:    kubeClient,
-			FlaggerClient: flaggerClient,
+			Logger:          logger,
+			KubeClient:      kubeClient,
+			FlaggerClient:   flaggerClient,
+			TrackBinaryData: enableConfigBinaryData,
 		}
 	} else {
 		configTracker = &canary.NopTracker{}

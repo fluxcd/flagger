@@ -45,6 +45,8 @@ selectorLabels: ""
 # when enabled, flagger will track changes in Secrets and ConfigMaps referenced in the target deployment (enabled by default)
 configTracking:
   enabled: true
+  # when enabled, changes to ConfigMap binaryData will trigger a canary analysis (disabled by default)
+  binaryData: false
 
 # annotations prefix for NGINX ingresses
 ingressAnnotationsPrefix: ""

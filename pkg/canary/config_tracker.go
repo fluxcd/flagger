@@ -36,9 +36,10 @@ import (
 
 // ConfigTracker is managing the operations for Kubernetes ConfigMaps and Secrets
 type ConfigTracker struct {
-	KubeClient    kubernetes.Interface
-	FlaggerClient clientset.Interface
-	Logger        *zap.SugaredLogger
+	KubeClient      kubernetes.Interface
+	FlaggerClient   clientset.Interface
+	Logger          *zap.SugaredLogger
+	TrackBinaryData bool
 }
 
 type ConfigRefType string
@@ -88,8 +89,19 @@ func (ct *ConfigTracker) getRefFromConfigMap(name string, namespace string) (*Co
 	return &ConfigRef{
 		Name:     config.Name,
 		Type:     ConfigRefMap,
-		Checksum: checksum(config.Data),
+		Checksum: ct.configMapChecksum(config),
 	}, nil
+}
+
+func (ct *ConfigTracker) configMapChecksum(config *corev1.ConfigMap) string {
+	if !ct.TrackBinaryData || len(config.BinaryData) == 0 {
+		return checksum(config.Data)
+	}
+
+	return checksum(struct {
+		Data       map[string]string
+		BinaryData map[string][]byte
+	}{config.Data, config.BinaryData})
 }
 
 // getRefFromConfigMap transforms a Kubernetes Secret into a ConfigRef
@@ -332,7 +344,8 @@ func (ct *ConfigTracker) CreatePrimaryConfigs(cd *flaggerv1.Canary, refs map[str
 					Labels:          labels,
 					OwnerReferences: ownerReferences,
 				},
-				Data: config.Data,
+				Data:       config.Data,
+				BinaryData: config.BinaryData,
 			}
 
 			// update or insert primary ConfigMap
