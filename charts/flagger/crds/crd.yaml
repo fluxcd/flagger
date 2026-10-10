@@ -1389,6 +1389,7 @@ spec:
                         - keptn
                         - splunk
                         - azuremonitor
+                        - amp
                     address:
                       description: API address of this provider
                       type: string
