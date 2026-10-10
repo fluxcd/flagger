@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+#### Improvements
+- Add Amazon Managed Prometheus metrics provider
+  [#962](https://github.com/fluxcd/flagger/issues/962)
+
 ## 1.45.0
 
 **Release date:** 2026-09-01
