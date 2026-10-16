@@ -96,7 +96,7 @@ func (s *StackDriverProvider) RunQuery(query string) (float64, error) {
 				errStr = errStr + " Error Detail: " + d.String()
 			}
 
-			return 0, fmt.Errorf("error requesting stackdriver: %s", err)
+			return 0, fmt.Errorf("error requesting stackdriver: %s", errStr)
 		}
 		return 0, fmt.Errorf("error requesting stackdriver: %s", err)
 	}
