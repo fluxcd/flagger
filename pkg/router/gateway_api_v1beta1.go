@@ -173,19 +173,23 @@ func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
 		cmpopts.EquateEmpty(),
 	}
 	if canary.Spec.Analysis.SessionAffinity != nil {
-		ignoreRoute := cmpopts.IgnoreSliceElements(func(r v1beta1.HTTPRouteRule) bool {
-			// Ignore the rule that does sticky routing, i.e. matches against the `Cookie` header.
-			for _, match := range r.Matches {
-				for _, headerMatch := range match.Headers {
-					if *headerMatch.Type == v1beta1HeaderMatchRegex && headerMatch.Name == cookieHeader &&
-						strings.Contains(headerMatch.Value, canary.Spec.Analysis.SessionAffinity.CookieName) {
-						return true
+		ignoreCookieRouteFunc := func(name string) func(r v1beta1.HTTPRouteRule) bool {
+			return func(r v1beta1.HTTPRouteRule) bool {
+				// Ignore the rule that does sticky routing, i.e. matches against the `Cookie` header.
+				for _, match := range r.Matches {
+					for _, headerMatch := range match.Headers {
+						if *headerMatch.Type == v1beta1HeaderMatchRegex && headerMatch.Name == cookieHeader &&
+							strings.Contains(headerMatch.Value, name) {
+							return true
+						}
 					}
 				}
+				return false
 			}
-			return false
-		})
-		ignoreCmpOptions = append(ignoreCmpOptions, ignoreRoute)
+		}
+		ignoreCanaryRoute := cmpopts.IgnoreSliceElements(ignoreCookieRouteFunc(canary.Spec.Analysis.SessionAffinity.CookieName))
+		ignorePrimaryRoute := cmpopts.IgnoreSliceElements(ignoreCookieRouteFunc(canary.Spec.Analysis.SessionAffinity.PrimaryCookieName))
+		ignoreCmpOptions = append(ignoreCmpOptions, ignoreCanaryRoute, ignorePrimaryRoute)
 		// Ignore backend specific filters, since we use that to insert the `Set-Cookie` header in responses.
 		ignoreCmpOptions = append(ignoreCmpOptions, cmpopts.IgnoreFields(v1beta1.HTTPBackendRef{}, "Filters"))
 	}
@@ -406,6 +410,7 @@ func (gwr *GatewayAPIV1Beta1Router) getSessionAffinityRouteRules(canary *flagger
 	weightedRouteRule *v1beta1.HTTPRouteRule) ([]v1beta1.HTTPRouteRule, error) {
 	_, primarySvcName, canarySvcName := canary.GetServiceNames()
 	stickyRouteRule := *weightedRouteRule
+	stickyRouteRule.Filters = append([]v1beta1.HTTPRouteFilter(nil), weightedRouteRule.Filters...)
 
 	// If a canary run is active, we want all responses corresponding to requests hitting the canary deployment
 	// (due to weighted routing) to include a `Set-Cookie` header. All requests that have the `Cookie` header
