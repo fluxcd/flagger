@@ -157,6 +157,9 @@ func (p *PrometheusProvider) RunQuery(query string) (float64, error) {
 		if v.Values != nil {
 			return 0, fmt.Errorf("%w", ErrMultipleValuesReturned)
 		}
+		if len(v.Value) < 2 {
+			continue
+		}
 		metricValue := v.Value[1]
 		switch metricValue.(type) {
 		case string:
