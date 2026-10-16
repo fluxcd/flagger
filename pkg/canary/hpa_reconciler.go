@@ -129,7 +129,7 @@ func (hr *HPAReconciler) reconcilePrimaryHpaV2(cd *flaggerv1.Canary, hpa *hpav2.
 				primaryHpaClone.Spec.Metrics = hpaSpec.Metrics
 				primaryHpaClone.Spec.Behavior = hpaSpec.Behavior
 
-				hr.updateObjectMeta(primaryHpaClone.ObjectMeta, hpa.ObjectMeta)
+				hr.updateObjectMeta(&primaryHpaClone.ObjectMeta, hpa.ObjectMeta)
 
 				_, err = hr.kubeClient.AutoscalingV2().HorizontalPodAutoscalers(cd.Namespace).Update(context.TODO(), primaryHpaClone, metav1.UpdateOptions{})
 				return err
@@ -153,7 +153,7 @@ func (hr *HPAReconciler) ResumeTargetScaler(cd *flaggerv1.Canary) error {
 	return nil
 }
 
-func (hr *HPAReconciler) updateObjectMeta(updateMeta, readMeta metav1.ObjectMeta) {
+func (hr *HPAReconciler) updateObjectMeta(updateMeta *metav1.ObjectMeta, readMeta metav1.ObjectMeta) {
 	// update hpa annotations
 	filteredAnnotations := includeLabelsByPrefix(readMeta.Annotations, hr.includeLabelPrefix)
 	updateMeta.Annotations = filteredAnnotations
