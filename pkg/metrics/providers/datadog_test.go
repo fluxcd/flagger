@@ -112,6 +112,25 @@ func TestDatadogProvider_RunQuery(t *testing.T) {
 		_, err = dp.RunQuery("")
 		require.True(t, errors.Is(err, ErrNoValuesFound))
 	})
+
+	t.Run("single element pointlist pair", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			json := `{"series": [{"pointlist": [[1577232000000]]}]}`
+			w.Write([]byte(json))
+		}))
+		defer ts.Close()
+
+		dp, err := NewDatadogProvider("1m",
+			flaggerv1.MetricTemplateProvider{Address: ts.URL},
+			map[string][]byte{
+				datadogApplicationKeySecretKey: []byte(appKey),
+				datadogAPIKeySecretKey:         []byte(apiKey),
+			},
+		)
+		require.NoError(t, err)
+		_, err = dp.RunQuery("")
+		require.True(t, errors.Is(err, ErrNoValuesFound))
+	})
 }
 
 func TestDatadogProvider_IsOnline(t *testing.T) {

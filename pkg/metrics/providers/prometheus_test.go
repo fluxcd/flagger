@@ -152,6 +152,7 @@ func TestPrometheusProvider_RunQueryWithBasicAuth(t *testing.T) {
 	}{
 		{name: "no values result", queryResult: `{"status":"success","data":{"resultType":"vector","result":[]}}`},
 		{name: "NaN result", queryResult: `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1643023250.379,"NaN"]}]}}`},
+		{name: "malformed value array", queryResult: `{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[]}]}}`},
 	}
 
 	for _, tt := range noResultTests {
