@@ -463,7 +463,9 @@ func (gwr *GatewayAPIRouter) getSessionAffinityRouteRules(canary *flaggerv1.Cana
 	weightedRouteRule *v1.HTTPRouteRule) ([]v1.HTTPRouteRule, error) {
 	_, primarySvcName, canarySvcName := canary.GetServiceNames()
 	stickyCanaryRouteRule := *weightedRouteRule
+	stickyCanaryRouteRule.Filters = append([]v1.HTTPRouteFilter(nil), weightedRouteRule.Filters...)
 	stickyPrimaryRouteRule := *weightedRouteRule
+	stickyPrimaryRouteRule.Filters = append([]v1.HTTPRouteFilter(nil), weightedRouteRule.Filters...)
 
 	// If a canary run is active, we want all responses corresponding to requests hitting the canary deployment
 	// (due to weighted routing) to include a `Set-Cookie` header. All requests that have the `Cookie` header
