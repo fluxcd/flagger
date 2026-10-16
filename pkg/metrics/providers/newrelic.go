@@ -111,7 +111,7 @@ func (p *NewRelicProvider) RunQuery(query string) (float64, error) {
 	}
 
 	if r.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("error response: %s: %w", string(b), err)
+		return 0, fmt.Errorf("error response: %s: %s", string(b), r.Status)
 	}
 
 	var res newRelicResponse
