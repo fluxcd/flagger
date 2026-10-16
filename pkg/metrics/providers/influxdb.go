@@ -72,7 +72,7 @@ func (i *InfluxdbProvider) RunQuery(query string) (float64, error) {
 	}
 	for result.Next() {
 		if result.Err() != nil {
-			return 0, fmt.Errorf("query error: %s", err)
+			return 0, fmt.Errorf("query error: %s", result.Err())
 		}
 		if result.Record().Value() == nil {
 			return 0, fmt.Errorf("invalid response: %s: %w", result.Record().String(), ErrNoValuesFound)
@@ -85,7 +85,7 @@ func (i *InfluxdbProvider) RunQuery(query string) (float64, error) {
 		return 0, fmt.Errorf("invalid response: %s", result.Record().String())
 	}
 
-	return 0, nil
+	return 0, fmt.Errorf("no query results: %w", ErrNoValuesFound)
 }
 
 // IsOnline runs a simple query against the default bucket.
@@ -99,7 +99,7 @@ func (i *InfluxdbProvider) IsOnline() (bool, error) {
 	}
 	for result.Next() {
 		if result.Err() != nil {
-			return false, fmt.Errorf("query error: %s", err)
+			return false, fmt.Errorf("query error: %s", result.Err())
 		}
 	}
 

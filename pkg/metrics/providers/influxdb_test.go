@@ -17,6 +17,7 @@ limitations under the License.
 package providers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -24,6 +25,7 @@ import (
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 
 	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
@@ -128,4 +130,24 @@ func TestInfluxdbProvider_RunQuery(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, float, 1.4)
+}
+
+func TestInfluxdbProvider_RunQueryNoResults(t *testing.T) {
+	emptyCSV := `#datatype,string,long
+#group,false,false
+#default,_result,
+,result,table
+`
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(emptyCSV))
+	}))
+	defer ts.Close()
+
+	client := influxdb2.NewClient(ts.URL, "x")
+	provider := InfluxdbProvider{
+		client: client,
+		org:    "fake-org",
+	}
+	_, err := provider.RunQuery(`from(bucket: "default") |> range(start: -2h)`)
+	require.True(t, errors.Is(err, ErrNoValuesFound))
 }
