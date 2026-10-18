@@ -251,6 +251,7 @@ func (task *ConcordTask) startProcess() (string, error) {
 
 func (task *ConcordTask) checkStatus(ctx context.Context, instanceID string, interval time.Duration) (bool, error) {
 	tickChan := time.NewTicker(interval).C
+	timeout := time.After(task.PollTimeout)
 	for {
 		select {
 		case <-tickChan:
@@ -272,7 +273,7 @@ func (task *ConcordTask) checkStatus(ctx context.Context, instanceID string, int
 			if process.Status == concordStatusFailed {
 				return false, fmt.Errorf("concord instanceID: %s failed", instanceID)
 			}
-		case <-time.After(task.PollTimeout):
+		case <-timeout:
 			return false, fmt.Errorf("concord process timed out, after %d seconds", int64(task.PollTimeout/time.Second))
 		case <-ctx.Done():
 			return false, errors.New("context timedout")
