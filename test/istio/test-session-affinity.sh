@@ -117,7 +117,7 @@ if ! URL=http://localhost:8080 HOST=localhost CANARY_VERSION=6.0.1 \
   CANARY_COOKIE_NAME=canary-flagger-cookie PRIMARY_VERSION=6.0.0 PRIMARY_COOKIE_NAME=primary-flagger-cookie \
     go run ${REPO_ROOT}/test/verify_session_affinity.go; then
     echo "failed to verify session affinity"
-    exit $?
+    exit 1
 fi
 
 echo '>>> Waiting for canary promotion'
