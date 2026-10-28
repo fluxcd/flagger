@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -114,6 +115,48 @@ func TestScheduler_DeploymentRollback(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, flaggerv1.CanaryPhaseFailed, c.Status.Phase)
+}
+
+// a new revision arriving while a failed canary's primary is not ready must
+// still start an analysis once the primary is ready again
+func TestScheduler_DeploymentFailedNewRevisionPrimaryNotReady(t *testing.T) {
+	mocks := newDeploymentFixture(nil)
+
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	// put the canary in the failed phase
+	err := mocks.deployer.SyncStatus(mocks.canary, flaggerv1.CanaryStatus{Phase: flaggerv1.CanaryPhaseFailed})
+	require.NoError(t, err)
+
+	// primary becomes not ready (retriable)
+	primary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	primary.Status = appsv1.DeploymentStatus{Replicas: 1, UpdatedReplicas: 1}
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), primary, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// new revision while the primary is not ready
+	dep2 := newDeploymentTestDeploymentV2()
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseFailed, c.Status.Phase)
+
+	// primary is ready again, the new revision must be picked up
+	mocks.makePrimaryReady(t)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseProgressing, c.Status.Phase)
 }
 
 // when the primary fails to become ready during promotion, the healthy canary
