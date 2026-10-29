@@ -951,4 +951,4 @@ this will create conflicts!
         - --source=istio-virtualservice # of these two
 ```
 
-[Checkout ExternalDNS documentation](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/istio.md)
+[Checkout ExternalDNS documentation](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/sources/istio.md)
