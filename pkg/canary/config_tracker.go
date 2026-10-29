@@ -155,22 +155,22 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 	for _, volume := range vs {
 		if cmv := volume.ConfigMap; cmv != nil {
 			name := cmv.Name
-			configMapNames[name] = fieldIsMandatory(cmv.Optional)
+			configMapNames[name] = configMapNames[name] || fieldIsMandatory(cmv.Optional)
 		}
 		if sv := volume.Secret; sv != nil {
 			name := sv.SecretName
-			secretNames[name] = fieldIsMandatory(sv.Optional)
+			secretNames[name] = secretNames[name] || fieldIsMandatory(sv.Optional)
 		}
 
 		if projected := volume.Projected; projected != nil {
 			for _, source := range projected.Sources {
 				if cmv := source.ConfigMap; cmv != nil {
 					name := cmv.Name
-					configMapNames[name] = fieldIsMandatory(cmv.Optional)
+					configMapNames[name] = configMapNames[name] || fieldIsMandatory(cmv.Optional)
 				}
 				if sv := source.Secret; sv != nil {
 					name := sv.Name
-					secretNames[name] = fieldIsMandatory(sv.Optional)
+					secretNames[name] = secretNames[name] || fieldIsMandatory(sv.Optional)
 				}
 			}
 		}
@@ -183,10 +183,10 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 				switch {
 				case env.ValueFrom.ConfigMapKeyRef != nil:
 					name := env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name
-					configMapNames[name] = fieldIsMandatory(env.ValueFrom.ConfigMapKeyRef.Optional)
+					configMapNames[name] = configMapNames[name] || fieldIsMandatory(env.ValueFrom.ConfigMapKeyRef.Optional)
 				case env.ValueFrom.SecretKeyRef != nil:
 					name := env.ValueFrom.SecretKeyRef.LocalObjectReference.Name
-					secretNames[name] = fieldIsMandatory(env.ValueFrom.SecretKeyRef.Optional)
+					secretNames[name] = secretNames[name] || fieldIsMandatory(env.ValueFrom.SecretKeyRef.Optional)
 				}
 			}
 		}
@@ -195,10 +195,10 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 			switch {
 			case envFrom.ConfigMapRef != nil:
 				name := envFrom.ConfigMapRef.LocalObjectReference.Name
-				configMapNames[name] = fieldIsMandatory(envFrom.ConfigMapRef.Optional)
+				configMapNames[name] = configMapNames[name] || fieldIsMandatory(envFrom.ConfigMapRef.Optional)
 			case envFrom.SecretRef != nil:
 				name := envFrom.SecretRef.LocalObjectReference.Name
-				secretNames[name] = fieldIsMandatory(envFrom.SecretRef.Optional)
+				secretNames[name] = secretNames[name] || fieldIsMandatory(envFrom.SecretRef.Optional)
 			}
 		}
 	}
