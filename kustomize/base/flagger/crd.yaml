@@ -648,6 +648,32 @@ spec:
                             maximum: 65535
                             minimum: 1
                             type: integer
+                    existingRefs:
+                      description: |
+                        Existing objects whose primary and canary backend weights Flagger manages instead of
+                        generating an HTTPRoute. Like gatewayRefs, an entry names its target by kind and name;
+                        only the HTTPRoute kind is supported, in the namespace of the Canary. Only supported with the gatewayapi:v1
+                        provider and weighted analysis. It cannot be combined with gatewayRefs, hosts, match,
+                        rewrite, headers, retries, timeout, backendTimeout, mirror, corsPolicy, analysis
+                        iterations, session affinity or mirroring. Only analysis.match and analysis.primaryMatch
+                        are allowed, to pin a request to the canary or to the primary.
+                      type: array
+                      maxItems: 32
+                      items:
+                        type: object
+                        required: ["kind", "name"]
+                        properties:
+                          group:
+                            description: Group of the referent, defaults to gateway.networking.k8s.io
+                            type: string
+                          kind:
+                            description: Kind of the referent, only HTTPRoute is supported
+                            type: string
+                            enum: ["HTTPRoute"]
+                          name:
+                            description: Name of the referent
+                            type: string
+                            minLength: 1
                     corsPolicy:
                       description: Istio Cross-Origin Resource Sharing policy (CORS)
                       type: object
@@ -1016,6 +1042,72 @@ spec:
                       type: number
                     match:
                       description: A/B testing match conditions
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          headers:
+                            type: object
+                            additionalProperties:
+                              oneOf:
+                                - required: ["exact"]
+                                - required: ["prefix"]
+                                - required: ["suffix"]
+                                - required: ["regex"]
+                              type: object
+                              properties:
+                                exact:
+                                  format: string
+                                  type: string
+                                prefix:
+                                  format: string
+                                  type: string
+                                suffix:
+                                  format: string
+                                  type: string
+                                regex:
+                                  description: RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)
+                                  format: string
+                                  type: string
+                          queryParams:
+                            description: Query parameters for matching.
+                            type: object
+                            additionalProperties:
+                              oneOf:
+                              - not:
+                                  anyOf:
+                                  - required:
+                                    - exact
+                                  - required:
+                                    - prefix
+                                  - required:
+                                    - regex
+                              - required:
+                                - exact
+                              - required:
+                                - prefix
+                              - required:
+                                - regex
+                              properties:
+                                exact:
+                                  type: string
+                                prefix:
+                                  type: string
+                                regex:
+                                  description: RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+                                  type: string
+                              type: object
+                          sourceLabels:
+                            description: Applicable only when the 'mesh' gateway is included in the service.gateways list
+                            type: object
+                            additionalProperties:
+                              format: string
+                              type: string
+                    primaryMatch:
+                      description: |
+                        HTTP match conditions that pin the request to the primary (current) version. Only with
+                        service.existingRefs: requires analysis.match, which pins to the canary. Headers and query
+                        parameters only.
                       type: array
                       items:
                         type: object
