@@ -55,7 +55,7 @@ jobs:
           node_image: kindest/node:v1.24.12@sha256:0bdca26bd7fe65c823640b14253ea7bac4baad9336b332c94850f84d8102f873
       - name: Build container image
         run: |
-          docker build -t test/flagger:latest .
+          docker build --pull -t test/flagger:latest .
           kind load docker-image test/flagger:latest
       - name: Run tests
         run: |
