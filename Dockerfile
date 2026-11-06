@@ -31,7 +31,8 @@ RUN xx-go build \
 
 FROM alpine:3.22
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache upgrade && \
+    apk --no-cache add ca-certificates
 
 USER nobody
 
