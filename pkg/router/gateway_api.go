@@ -242,7 +242,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			httpRoute.Spec, httpRouteSpec,
 			ignoreCmpOptions...,
 		)
-		labelsDiff := cmp.Diff(newMetadata.Labels, httpRoute.Labels, cmpopts.EquateEmpty())
+		labelsDiff := cmp.Diff(mergedLabels, httpRoute.Labels, cmpopts.EquateEmpty())
 		annotationsDiff := cmp.Diff(mergedAnnotations, httpRoute.Annotations, cmpopts.EquateEmpty())
 		if (specDiff != "" && httpRoute.Name != "") || labelsDiff != "" || annotationsDiff != "" {
 			hrClone := httpRoute.DeepCopy()
