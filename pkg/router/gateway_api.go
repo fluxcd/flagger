@@ -248,7 +248,7 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			hrClone := httpRoute.DeepCopy()
 			hrClone.Spec = httpRouteSpec
 			hrClone.ObjectMeta.Annotations = mergedAnnotations
-			hrClone.ObjectMeta.Labels = newMetadata.Labels
+			hrClone.ObjectMeta.Labels = mergedLabels
 			_, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).
 				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 			if err != nil {
