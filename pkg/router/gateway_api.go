@@ -221,10 +221,18 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 
 	if httpRoute != nil {
 		// Preserve the existing annotations added by other controllers such as AWS Gateway API Controller.
-		mergedAnnotations := newMetadata.Annotations
-		for key, val := range httpRoute.Annotations {
+		mergedAnnotations := httpRoute.Annotations
+		for key, val := range newMetadata.Annotations {
 			if _, ok := mergedAnnotations[key]; !ok {
 				mergedAnnotations[key] = val
+			}
+		}
+
+		// Preserve the existing label added by other controllers such as Helm Controller.
+		mergedLabels := httpRoute.Labels
+		for key, val := range newMetadata.Labels {
+			if _, ok := mergedLabels[key]; !ok {
+				mergedLabels[key] = val
 			}
 		}
 
@@ -234,13 +242,13 @@ func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
 			httpRoute.Spec, httpRouteSpec,
 			ignoreCmpOptions...,
 		)
-		labelsDiff := cmp.Diff(newMetadata.Labels, httpRoute.Labels, cmpopts.EquateEmpty())
+		labelsDiff := cmp.Diff(mergedLabels, httpRoute.Labels, cmpopts.EquateEmpty())
 		annotationsDiff := cmp.Diff(mergedAnnotations, httpRoute.Annotations, cmpopts.EquateEmpty())
 		if (specDiff != "" && httpRoute.Name != "") || labelsDiff != "" || annotationsDiff != "" {
 			hrClone := httpRoute.DeepCopy()
 			hrClone.Spec = httpRouteSpec
 			hrClone.ObjectMeta.Annotations = mergedAnnotations
-			hrClone.ObjectMeta.Labels = newMetadata.Labels
+			hrClone.ObjectMeta.Labels = mergedLabels
 			_, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).
 				Update(context.TODO(), hrClone, metav1.UpdateOptions{})
 			if err != nil {
