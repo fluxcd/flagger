@@ -211,7 +211,12 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 			if required {
 				return nil, fmt.Errorf("configmap %s.%s get query error: %w", configMapName, cd.Namespace, err)
 			}
-			ct.Logger.Errorf("configmap %s.%s get query failed: %w", configMapName, cd.Namespace, err)
+			// optional refs are allowed to be missing, same as for the kubelet
+			if errors.IsNotFound(err) {
+				ct.Logger.Debugf("optional configmap %s.%s not found, skipping", configMapName, cd.Namespace)
+			} else {
+				ct.Logger.Errorf("configmap %s.%s get query failed: %v", configMapName, cd.Namespace, err)
+			}
 			continue
 		}
 		if config != nil {
@@ -225,7 +230,11 @@ func (ct *ConfigTracker) GetTargetConfigs(cd *flaggerv1.Canary) (map[string]Conf
 			if required {
 				return nil, fmt.Errorf("secret %s.%s get query error: %v", secretName, cd.Namespace, err)
 			}
-			ct.Logger.Errorf("secret %s.%s get query failed: %v", secretName, cd.Namespace, err)
+			if errors.IsNotFound(err) {
+				ct.Logger.Debugf("optional secret %s.%s not found, skipping", secretName, cd.Namespace)
+			} else {
+				ct.Logger.Errorf("secret %s.%s get query failed: %v", secretName, cd.Namespace, err)
+			}
 			continue
 		}
 		if secret != nil {

@@ -23,10 +23,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/fake"
 	k8sTesting "k8s.io/client-go/testing"
+
+	flaggerv1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 )
 
 func TestConfigIsDisabled(t *testing.T) {
@@ -441,5 +449,79 @@ func TestConfigTracker_ConfigOwnerMultiDeployment(t *testing.T) {
 		secretPrimary, err := mocks.kubeClient.CoreV1().Secrets("default").Get(context.TODO(), "podinfo-secret-env-primary", metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Len(t, secretPrimary.OwnerReferences, 2)
+	})
+}
+
+func TestConfigTracker_GetTargetConfigs_OptionalRefs(t *testing.T) {
+	optional := true
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: "default"},
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name: "podinfo",
+						Env: []corev1.EnvVar{
+							{
+								Name: "TOKEN",
+								ValueFrom: &corev1.EnvVarSource{
+									SecretKeyRef: &corev1.SecretKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{Name: "missing-secret"},
+										Key:                  "token",
+										Optional:             &optional,
+									},
+								},
+							},
+							{
+								Name: "COLOR",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{Name: "missing-configmap"},
+										Key:                  "color",
+										Optional:             &optional,
+									},
+								},
+							},
+						},
+					}},
+				},
+			},
+		},
+	}
+	cd := &flaggerv1.Canary{
+		ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: "default"},
+		Spec: flaggerv1.CanarySpec{
+			TargetRef: flaggerv1.LocalObjectReference{Name: "podinfo", Kind: "Deployment"},
+		},
+	}
+
+	newTracker := func(kubeClient *fake.Clientset) (*ConfigTracker, *observer.ObservedLogs) {
+		core, logs := observer.New(zapcore.DebugLevel)
+		return &ConfigTracker{KubeClient: kubeClient, Logger: zap.New(core).Sugar()}, logs
+	}
+
+	t.Run("missing optional refs are skipped without error logs", func(t *testing.T) {
+		tracker, logs := newTracker(fake.NewSimpleClientset(dep))
+
+		refs, err := tracker.GetTargetConfigs(cd)
+		require.NoError(t, err)
+		assert.Empty(t, refs)
+		assert.Zero(t, logs.FilterLevelExact(zapcore.ErrorLevel).Len())
+		assert.Equal(t, 2, logs.FilterLevelExact(zapcore.DebugLevel).FilterMessageSnippet("not found, skipping").Len())
+	})
+
+	t.Run("other errors on optional refs are still logged as errors", func(t *testing.T) {
+		kubeClient := fake.NewSimpleClientset(dep)
+		for _, resource := range []string{"secrets", "configmaps"} {
+			kubeClient.PrependReactor("get", resource, func(action k8sTesting.Action) (bool, runtime.Object, error) {
+				return true, nil, errors.New("server error")
+			})
+		}
+		tracker, logs := newTracker(kubeClient)
+
+		refs, err := tracker.GetTargetConfigs(cd)
+		require.NoError(t, err)
+		assert.Empty(t, refs)
+		assert.Equal(t, 2, logs.FilterLevelExact(zapcore.ErrorLevel).Len())
 	})
 }
