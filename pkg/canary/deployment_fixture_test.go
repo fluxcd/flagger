@@ -430,7 +430,8 @@ func newDeploymentControllerTest(dc deploymentConfigs) *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					dc.label: dc.labelValue,
+					dc.label:       dc.labelValue,
+					"test-label-1": "test-label-value-1",
 				},
 			},
 			Template: corev1.PodTemplateSpec{

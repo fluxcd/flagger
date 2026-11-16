@@ -40,6 +40,7 @@ type KubernetesDefaultRouter struct {
 	kubeClient    kubernetes.Interface
 	flaggerClient clientset.Interface
 	logger        *zap.SugaredLogger
+	matchLabels   map[string]string
 	labelSelector string
 	labelValue    string
 	ports         map[string]int32
@@ -100,10 +101,16 @@ func (c *KubernetesDefaultRouter) reconcileService(canary *flaggerv1.Canary, nam
 		targetPort = canary.Spec.Service.TargetPort
 	}
 
+	selector := map[string]string{}
+	for k, v := range c.matchLabels {
+		selector[k] = v
+	}
+	selector[c.labelSelector] = podSelector
+
 	// set pod selector and apex port
 	svcSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeClusterIP,
-		Selector: map[string]string{c.labelSelector: podSelector},
+		Selector: selector,
 		Ports: []corev1.ServicePort{
 			{
 				Name:       portName,
