@@ -94,7 +94,7 @@ func NewRecorder(controller string, register bool) Recorder {
 		Subsystem: controller,
 		Name:      "canary_weight",
 		Help:      "The virtual service destination weight current value",
-	}, []string{"workload", "namespace"})
+	}, []string{"name", "namespace"})
 
 	analysis := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: controller,
