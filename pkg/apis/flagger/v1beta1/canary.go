@@ -183,6 +183,19 @@ type CanaryService struct {
 	// +optional
 	GatewayRefs []v1beta1.ParentReference `json:"gatewayRefs,omitempty"`
 
+	// ExistingRefs lists existing objects whose primary and canary backend weights Flagger
+	// manages. When set, Flagger does not generate an HTTPRoute: in every rule of a referenced
+	// HTTPRoute that has a backendRef to the apex, primary or canary Service it keeps exactly two
+	// backendRefs (primary and canary) with the computed weights and leaves everything else of
+	// the route untouched. Like gatewayRefs, an entry names its target by kind and name; today
+	// only the HTTPRoute kind is supported, in the namespace of the Canary.
+	// Only supported with the gatewayapi:v1 provider and weighted analysis; it cannot be combined
+	// with gatewayRefs, hosts, match, rewrite, headers, retries, timeout, backendTimeout, mirror,
+	// corsPolicy, analysis iterations, session affinity or mirroring. Only analysis.match and
+	// analysis.primaryMatch are allowed, to pin a request to the canary or to the primary.
+	// +optional
+	ExistingRefs []ExistingReference `json:"existingRefs,omitempty"`
+
 	// Hosts attached to the generated Istio virtual service or Gateway API HTTPRoute.
 	// Defaults to the service name
 	// +optional
@@ -310,6 +323,14 @@ type CanaryAnalysis struct {
 	// A/B testing HTTP header match conditions
 	// +optional
 	Match []istiov1beta1.HTTPMatchRequest `json:"match,omitempty"`
+
+	// PrimaryMatch holds the HTTP match conditions (headers and query parameters) that pin a
+	// request to the primary (current) version. It is only used together with
+	// spec.service.existingRefs, where analysis.match pins a request to the canary: for every
+	// weighted rule of a referenced route Flagger adds one rule per pin, so both versions stay
+	// reachable at any weight, e.g. while the canary is at 100% and not yet promoted.
+	// +optional
+	PrimaryMatch []istiov1beta1.HTTPMatchRequest `json:"primaryMatch,omitempty"`
 
 	// SessionAffinity represents the session affinity settings for a canary run.
 	// +optional
@@ -497,6 +518,28 @@ type CrossNamespaceObjectReference struct {
 	// Namespace of the referent
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
+}
+
+// ExistingRefKindHTTPRoute is the only kind spec.service.existingRefs supports today.
+const ExistingRefKindHTTPRoute = "HTTPRoute"
+
+// ExistingRefGroupGatewayAPI is the API group of the HTTPRoute kind.
+const ExistingRefGroupGatewayAPI = "gateway.networking.k8s.io"
+
+// ExistingReference identifies an existing object whose traffic split Flagger manages instead of
+// generating one. Like a Gateway API ParentReference it names its target by group, kind and name.
+// The object is in the namespace of the Canary, because the Services Flagger routes to are the
+// ones of the Canary.
+type ExistingReference struct {
+	// Group of the referent. Defaults to the group of the kind: gateway.networking.k8s.io.
+	// +optional
+	Group string `json:"group,omitempty"`
+
+	// Kind of the referent. Only HTTPRoute is supported.
+	Kind string `json:"kind"`
+
+	// Name of the referent
+	Name string `json:"name"`
 }
 
 // LocalObjectReference contains enough information to let you locate the typed

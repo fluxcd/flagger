@@ -718,7 +718,8 @@ The above procedures can be extended with [custom metrics](../usage/metrics.md) 
 ## Customising the HTTPRoute
 
 Besides the `hosts` and `gatewayRefs` fields, you can customize the generated HTTPRoute with various options
-exposed under the `spec.service` field of the Canary.
+exposed under the `spec.service` field of the Canary. If the HTTPRoutes already exist and you want Flagger to
+manage only their weights, see [Using existing HTTPRoutes](#using-existing-httproutes).
 
 ### Timeouts
 
@@ -876,3 +877,138 @@ spec:
         - Authorization
       maxAge: 24h
 ```
+
+## Using existing HTTPRoutes
+
+By default Flagger generates one HTTPRoute named after the Canary service and owns all of it. When the HTTPRoutes
+already exist, for example because a service is exposed through several of them (one per gateway, one for in-mesh
+traffic) or because your tooling creates them with retries, URL rewrites and timeouts, list them in
+`spec.service.existingRefs`. Flagger then **does not generate an HTTPRoute**: it only manages the primary and
+canary backend weights of the routes you point it at.
+
+Like `gatewayRefs`, an entry names its target by kind and name. Only the `HTTPRoute` kind is supported, in the
+namespace of the Canary.
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: test
+spec:
+  provider: gatewayapi:v1
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  service:
+    port: 9898
+    existingRefs:
+      - kind: HTTPRoute
+        name: podinfo-ingress-route
+      - kind: HTTPRoute
+        name: podinfo-svc-route
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+```
+
+Each route needs, in at least one of its rules, a `backendRef` to the apex Service (`podinfo`). Flagger replaces
+the backends of every rule that points at `podinfo`, `podinfo-primary` or `podinfo-canary` with exactly two, the
+primary and the canary, with the computed weights, and leaves everything else of the route alone: parents,
+hostnames, matches, filters, timeouts, retry, the other rules and the backends to other Services.
+
+```yaml
+# before: a route that you manage
+rules:
+  - name: default-ingress-rule
+    matches:
+      - path: {type: PathPrefix, value: /podinfo}
+    filters:
+      - type: URLRewrite
+        urlRewrite: {path: {type: ReplacePrefixMatch, replacePrefixMatch: /}}
+    retry: {attempts: 3}
+    backendRefs:
+      - name: podinfo
+        port: 9898
+---
+# while Flagger shifts traffic: only the backends change
+rules:
+  - name: default-ingress-rule
+    matches:
+      - path: {type: PathPrefix, value: /podinfo}
+    filters:
+      - type: URLRewrite
+        urlRewrite: {path: {type: ReplacePrefixMatch, replacePrefixMatch: /}}
+    retry: {attempts: 3}
+    backendRefs:
+      - {name: podinfo-primary, port: 9898, weight: 80}
+      - {name: podinfo-canary, port: 9898, weight: 20}
+```
+
+A few things to know:
+
+- Every listed route gets the same weights. Flagger reads the current weights from the first route in the list,
+  so list the route that carries your main traffic first.
+- If the Canary is deleted with `spec.revertOnDeletion: true`, Flagger puts the apex Service back in the routes.
+  Otherwise the routes are left as they are.
+- Flagger changes the `backendRefs` of the routes after you created them. If a tool such as Terraform or Helm
+  manages the same routes, make it ignore the `backendRefs` of the rules, or it will reset them to the apex Service
+  during a rollout.
+- A route that has no `backendRef` to the apex, primary or canary Service makes the reconciliation fail with an
+  error naming the route, before any route is changed. Do not list a route that sends its traffic somewhere else,
+  such as to a gateway.
+
+`existingRefs` is only supported with the `gatewayapi:v1` provider and with the weighted (canary) analysis. It
+cannot be combined with the fields that configure the generated HTTPRoute: `gatewayRefs`, `hosts`, `match`,
+`rewrite`, `headers`, `retries`, `timeout`, `backendTimeout`, `mirror` and `corsPolicy`, nor with
+`analysis.iterations`, `analysis.sessionAffinity` and `analysis.mirror`. The referenced routes keep their own
+configuration.
+
+### Reaching the canary or the primary directly
+
+While a rollout runs, the weights decide which version a request gets. In particular, when the canary has reached
+`maxWeight: 100` and is waiting for promotion, the primary has weight 0 and a request can no longer be sent to it.
+To keep both versions reachable at any weight, give Flagger a match for each of them with `analysis.match` (the
+canary) and `analysis.primaryMatch` (the primary). They are set together and only use headers and query parameters:
+
+```yaml
+spec:
+  service:
+    existingRefs:
+      - kind: HTTPRoute
+        name: podinfo-ingress-route
+  analysis:
+    maxWeight: 100
+    stepWeight: 20
+    match:
+      - headers:
+          x-version:
+            exact: canary
+    primaryMatch:
+      - headers:
+          x-version:
+            exact: primary
+```
+
+For every rule with a primary and a canary backend, Flagger adds two rules in front of it. They are copies of the
+rule, so the rewrite, the retry and the timeouts apply to them as well, with the header merged into the matches:
+
+| Rule | Matches | Backends |
+|------|---------|----------|
+| `<rule>-canary-pin` | the matches of the rule and `x-version: canary` | canary only |
+| `<rule>-primary-pin` | the matches of the rule and `x-version: primary` | primary only |
+| `<rule>` | the matches of the rule | primary and canary, with the weights |
+
+Gateway API ranks a match with more header matches higher, so a request that carries the header always goes to the
+version it names, whatever the weights are, and a request without it follows the weights. A request sent with
+`x-version: primary` still reaches the primary at 100% canary, until the canary is promoted. The extra rules are
+named after the rule they copy (when it has a name) and are removed when you remove `match` and `primaryMatch`, or
+when the Canary is deleted with `revertOnDeletion`.
+
+The two matches must be different, can only use `exact` or `regex` on headers or query parameters, and cannot be
+combined with `analysis.iterations` (A/B testing and blue/green): the paths and the methods come from the route.
+Requests that carry a header go straight to a version and are counted in the metrics of that version, for example
+those of a load test.

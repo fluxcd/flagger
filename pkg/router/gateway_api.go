@@ -63,6 +63,10 @@ type GatewayAPIRouter struct {
 }
 
 func (gwr *GatewayAPIRouter) Reconcile(canary *flaggerv1.Canary) error {
+	if canary.HasExistingRefs() {
+		return gwr.reconcileExistingRefs(canary)
+	}
+
 	if len(canary.Spec.Service.GatewayRefs) == 0 {
 		return fmt.Errorf("GatewayRefs must be specified when using Gateway API as a provider.")
 	}
@@ -260,6 +264,10 @@ func (gwr *GatewayAPIRouter) GetRoutes(canary *flaggerv1.Canary) (
 	mirrored bool,
 	err error,
 ) {
+	if canary.HasExistingRefs() {
+		return gwr.getRoutesFromExistingRefs(canary)
+	}
+
 	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
 	hrNamespace := canary.Namespace
 	httpRoute, err := gwr.gatewayAPIClient.GatewayapiV1().HTTPRoutes(hrNamespace).Get(context.TODO(), apexSvcName, metav1.GetOptions{})
@@ -338,6 +346,10 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	canaryWeight int,
 	mirrored bool,
 ) error {
+	if canary.HasExistingRefs() {
+		return gwr.setRoutesOnExistingRefs(canary, primaryWeight, canaryWeight)
+	}
+
 	pWeight := int32(primaryWeight)
 	cWeight := int32(canaryWeight)
 	apexSvcName, primarySvcName, canarySvcName := canary.GetServiceNames()
@@ -443,7 +455,10 @@ func (gwr *GatewayAPIRouter) SetRoutes(
 	return nil
 }
 
-func (gwr *GatewayAPIRouter) Finalize(_ *flaggerv1.Canary) error {
+func (gwr *GatewayAPIRouter) Finalize(canary *flaggerv1.Canary) error {
+	if canary.HasExistingRefs() {
+		return gwr.finalizeExistingRefs(canary)
+	}
 	return nil
 }
 

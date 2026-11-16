@@ -56,6 +56,10 @@ type GatewayAPIV1Beta1Router struct {
 }
 
 func (gwr *GatewayAPIV1Beta1Router) Reconcile(canary *flaggerv1.Canary) error {
+	if canary.HasExistingRefs() {
+		return fmt.Errorf("spec.service.existingRefs requires the %s:v1 provider", flaggerv1.GatewayAPIProvider)
+	}
+
 	if len(canary.Spec.Service.GatewayRefs) == 0 {
 		return fmt.Errorf("GatewayRefs must be specified when using Gateway API as a provider.")
 	}
