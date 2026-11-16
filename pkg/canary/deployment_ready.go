@@ -42,7 +42,7 @@ func (c *DeploymentController) IsPrimaryReady(cd *flaggerv1.Canary) (bool, error
 		return retriable, fmt.Errorf("%s.%s not ready: %w", primaryName, cd.Namespace, err)
 	}
 
-	if primary.Spec.Replicas == int32p(0) {
+	if primary.Spec.Replicas != nil && *primary.Spec.Replicas == 0 {
 		return false, fmt.Errorf("halt %s.%s advancement: primary deployment is scaled to zero",
 			cd.Name, cd.Namespace)
 	}

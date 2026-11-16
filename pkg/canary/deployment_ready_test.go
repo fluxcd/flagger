@@ -17,6 +17,8 @@ limitations under the License.
 package canary
 
 import (
+	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -37,6 +39,29 @@ func TestDeploymentController_IsReady(t *testing.T) {
 
 	_, err = mocks.controller.IsCanaryReady(mocks.canary)
 	require.NoError(t, err)
+}
+
+func TestDeploymentController_IsPrimaryReady_scaledToZero(t *testing.T) {
+	dc := deploymentConfigs{name: "podinfo", label: "name", labelValue: "podinfo"}
+	mocks := newDeploymentFixture(dc)
+	mocks.initializeCanary(t)
+
+	primaryName := fmt.Sprintf("%s-primary", mocks.canary.Spec.TargetRef.Name)
+	primary, err := mocks.controller.kubeClient.AppsV1().
+		Deployments(mocks.canary.Namespace).Get(context.TODO(), primaryName, v1.GetOptions{})
+	require.NoError(t, err)
+
+	// scale the primary deployment to zero while reporting a healthy status
+	primary.Spec.Replicas = int32p(0)
+	primary.Status = appsv1.DeploymentStatus{}
+	_, err = mocks.controller.kubeClient.AppsV1().
+		Deployments(mocks.canary.Namespace).Update(context.TODO(), primary, v1.UpdateOptions{})
+	require.NoError(t, err)
+
+	retriable, err := mocks.controller.IsPrimaryReady(mocks.canary)
+	require.Error(t, err)
+	assert.False(t, retriable)
+	assert.Contains(t, err.Error(), "scaled to zero")
 }
 
 func TestDeploymentController_isDeploymentReady(t *testing.T) {
