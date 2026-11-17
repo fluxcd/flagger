@@ -47,7 +47,7 @@ helm upgrade -i flagger flagger/flagger \
 
 Note that the Istio kubeconfig must be stored in a Kubernetes secret with a data key named `kubeconfig`.
 For more details on how to configure Istio multi-cluster
-credentials read the [Istio docs](https://istio.io/docs/setup/install/multicluster/shared-vpn/#credentials).
+credentials read the [Istio docs](https://istio.io/latest/docs/setup/install/multicluster/primary-remote/).
 
 Deploy Flagger for Linkerd:
 
