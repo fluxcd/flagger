@@ -18,12 +18,20 @@ package loadtester
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -171,4 +179,42 @@ func TestConcordTask_AdditionalArguments(t *testing.T) {
 	if part != nil {
 		t.Errorf("Didn't expect additional parts, but got %v", part)
 	}
+}
+
+func TestConcordTask_PollTimeout(t *testing.T) {
+	var polls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodPost:
+			fmt.Fprint(w, `{"instanceId":"45beb7c7-6aa2-40e4-ba1d-488f78700ab7","ok":true}`)
+		case http.MethodGet:
+			polls.Add(1)
+			fmt.Fprint(w, `{"instanceId":"45beb7c7-6aa2-40e4-ba1d-488f78700ab7","status":"RUNNING"}`)
+		}
+	}))
+	defer server.Close()
+
+	apiKeyPath := filepath.Join(t.TempDir(), "api-key")
+	require.NoError(t, os.WriteFile(apiKeyPath, []byte("test-key"), 0600))
+	task, err := NewConcordTask(map[string]string{
+		"server":     server.URL,
+		"org":        "test-org",
+		"project":    "test-project",
+		"repo":       "test-repo",
+		"entrypoint": "default",
+		"endpoint":   "http://podinfo-canary:9898",
+		"apiKeyPath": apiKeyPath,
+	}, "podinfo.test", zap.NewNop().Sugar())
+	require.NoError(t, err)
+	task.PollInterval = 10 * time.Millisecond
+	task.PollTimeout = 100 * time.Millisecond
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	result, err := task.Run(ctx)
+	assert.False(t, result.ok)
+	require.ErrorContains(t, err, "concord process timed out")
+	assert.NoError(t, ctx.Err(), "Polling should time out before the task context")
+	assert.Positive(t, polls.Load(), "Expected status polling before timeout")
 }
