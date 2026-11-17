@@ -858,7 +858,26 @@ func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController ca
 		return true, nil
 	}
 
-	// Make sure to sync lastAppliedSpec even if the canary is in a failed state.
+	newTarget, err := canaryController.HasTargetChanged(canary)
+	if err != nil {
+		return false, err
+	}
+	if newTarget {
+		return true, nil
+	}
+
+	newCfg, err := canaryController.HaveDependenciesChanged(canary)
+	if err != nil {
+		return false, err
+	}
+	if newCfg {
+		return true, nil
+	}
+
+	// No target or dependency change. For a Failed canary, still sync status so
+	// TrackedConfigs stay current — but only after the change checks above.
+	// Syncing first would rewrite lastAppliedSpec to the new revision and hide
+	// the change forever if advanceCanary then returns early (e.g. primary not ready).
 	if canary.Status.Phase == flaggerv1.CanaryPhaseFailed {
 		if err := canaryController.SyncStatus(canary, canary.Status); err != nil {
 			c.logger.With("canary", fmt.Sprintf("%s.%s", canary.Name, canary.Namespace)).Errorf("%v", err)
@@ -866,20 +885,7 @@ func (c *Controller) shouldAdvance(canary *flaggerv1.Canary, canaryController ca
 		}
 	}
 
-	newTarget, err := canaryController.HasTargetChanged(canary)
-	if err != nil {
-		return false, err
-	}
-	if newTarget {
-		return newTarget, nil
-	}
-
-	newCfg, err := canaryController.HaveDependenciesChanged(canary)
-	if err != nil {
-		return false, err
-	}
-
-	return newCfg, nil
+	return false, nil
 
 }
 

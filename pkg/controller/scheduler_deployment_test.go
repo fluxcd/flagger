@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -772,4 +773,64 @@ func TestScheduler_DeploymentAlerts(t *testing.T) {
 
 	// initialization done - now send alert
 	mocks.ctrl.advanceCanary("podinfo", "default")
+}
+
+// A Failed canary that receives a new target revision while the primary is not
+// ready must keep lastAppliedSpec unchanged so the revision is detected once
+// the primary recovers (#1995).
+func TestScheduler_DeploymentFailedKeepsNewRevisionUntilPrimaryReady(t *testing.T) {
+	mocks := newDeploymentFixture(nil)
+
+	// initializing
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	mocks.makePrimaryReady(t)
+
+	// initialized
+	mocks.ctrl.advanceCanary("podinfo", "default")
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseInitialized))
+
+	c, err := mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	oldApplied := c.Status.LastAppliedSpec
+	require.NotEmpty(t, oldApplied)
+
+	// put canary into Failed without rewriting lastAppliedSpec
+	err = mocks.deployer.SetStatusPhase(c, flaggerv1.CanaryPhaseFailed)
+	require.NoError(t, err)
+
+	// primary is temporarily not ready (retriable: waiting for replicas, not ProgressDeadlineExceeded)
+	primary, err := mocks.kubeClient.AppsV1().Deployments("default").Get(context.TODO(), "podinfo-primary", metav1.GetOptions{})
+	require.NoError(t, err)
+	primary.Status = appsv1.DeploymentStatus{
+		ObservedGeneration: primary.Generation,
+		Replicas:           1,
+		UpdatedReplicas:    1,
+		ReadyReplicas:      0,
+		AvailableReplicas:  0,
+	}
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), primary, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	dep2 := newDeploymentTestDeploymentV2()
+	_, err = mocks.kubeClient.AppsV1().Deployments("default").Update(context.TODO(), dep2, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// tick while primary is not ready: must not consume the new revision
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, flaggerv1.CanaryPhaseFailed, c.Status.Phase)
+	assert.Equal(t, oldApplied, c.Status.LastAppliedSpec,
+		"lastAppliedSpec must stay on the old revision while the primary is not ready")
+
+	// once the primary is ready again, the pending revision starts a new analysis
+	mocks.makePrimaryReady(t)
+	mocks.ctrl.advanceCanary("podinfo", "default")
+
+	require.NoError(t, assertPhase(mocks.flaggerClient, "podinfo", flaggerv1.CanaryPhaseProgressing))
+	c, err = mocks.flaggerClient.FlaggerV1beta1().Canaries("default").Get(context.TODO(), "podinfo", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.NotEqual(t, oldApplied, c.Status.LastAppliedSpec,
+		"lastAppliedSpec should advance once analysis starts for the new revision")
 }
