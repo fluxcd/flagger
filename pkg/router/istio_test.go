@@ -1077,3 +1077,47 @@ func TestIstioRouter_GetRoutesTCP(t *testing.T) {
 	// A TCP Canary resource has mirroring disabled
 	assert.False(t, m)
 }
+
+func TestIstioRouter_LocalityLbSettingEnabledFalse(t *testing.T) {
+	enabled := false
+	canary := newTestCanary()
+	canary.Spec.Service.TrafficPolicy = &istiov1beta1.TrafficPolicy{
+		LoadBalancer: &istiov1beta1.LoadBalancerSettings{
+			Simple: istiov1beta1.SimpleLB("RANDOM"),
+			LocalityLbSetting: &istiov1beta1.LocalityLbSetting{
+				Enabled: &enabled,
+			},
+		},
+		OutlierDetection: &istiov1beta1.OutlierDetection{
+			ConsecutiveErrors: 5,
+			Interval:          "10s",
+			BaseEjectionTime:  "10s",
+		},
+	}
+	mocks := newFixture(canary)
+	router := &IstioRouter{
+		logger:        mocks.logger,
+		flaggerClient: mocks.flaggerClient,
+		istioClient:   mocks.meshClient,
+		kubeClient:    mocks.kubeClient,
+	}
+
+	err := router.Reconcile(mocks.canary)
+	require.NoError(t, err)
+
+	for _, name := range []string{"podinfo-primary", "podinfo-canary"} {
+		dr, err := mocks.meshClient.NetworkingV1beta1().DestinationRules("default").Get(context.TODO(), name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, dr.Spec.TrafficPolicy)
+		require.NotNil(t, dr.Spec.TrafficPolicy.LoadBalancer)
+		require.NotNil(t, dr.Spec.TrafficPolicy.LoadBalancer.LocalityLbSetting)
+		require.NotNil(t, dr.Spec.TrafficPolicy.LoadBalancer.LocalityLbSetting.Enabled)
+		assert.False(t, *dr.Spec.TrafficPolicy.LoadBalancer.LocalityLbSetting.Enabled)
+
+		// an explicit `enabled: false` must survive serialization, otherwise Istio
+		// falls back to the mesh-wide default (enabled) when outlierDetection is set
+		b, err := json.Marshal(dr.Spec.TrafficPolicy.LoadBalancer)
+		require.NoError(t, err)
+		assert.Contains(t, string(b), `"localityLbSetting":{"enabled":false}`)
+	}
+}
