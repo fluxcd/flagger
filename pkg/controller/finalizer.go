@@ -51,6 +51,10 @@ func (c *Controller) finalize(old interface{}) error {
 			return fmt.Errorf("failed to update status: %w", err)
 		}
 
+		// record the terminating phase on the flagger_canary_phase metric;
+		// the final Terminated phase is recorded by the informer delete handler
+		c.recorder.SetPhase(canary, flaggerv1.CanaryPhaseTerminating)
+
 		// record event
 		c.recordEventInfof(canary, "Terminating canary %s.%s", canary.Name, canary.Namespace)
 	}
