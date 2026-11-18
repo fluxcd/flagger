@@ -247,7 +247,8 @@ func (c *ServiceController) SyncStatus(cd *flaggerv1.Canary, status flaggerv1.Ca
 		return fmt.Errorf("service %s.%s get query error: %w", cd.Spec.TargetRef.Name, cd.Namespace, err)
 	}
 
-	return syncCanaryStatus(c.flaggerClient, cd, status, dep.Spec, func(cdCopy *flaggerv1.Canary) {})
+	hash := ComputeHash(dep.Spec)
+	return syncCanaryStatus(c.flaggerClient, cd, status, hash, func(cdCopy *flaggerv1.Canary) {})
 }
 
 func (c *ServiceController) HaveDependenciesChanged(_ *flaggerv1.Canary) (bool, error) {
