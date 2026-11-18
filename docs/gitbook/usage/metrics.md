@@ -423,6 +423,64 @@ Reference the template in the canary analysis:
 
 **Note** that Flagger need AWS IAM permission to perform `cloudwatch:GetMetricData` to use this provider.
 
+## Amazon Managed Prometheus
+
+You can create custom metric checks targeting [Amazon Managed Service for Prometheus](https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-Prometheus.html) by setting the provider type to `amp`. Queries are written in PromQL and sent to the workspace Prometheus-compatible query API.
+
+Set `address` to the AMP workspace query URL and `region` to the workspace AWS region. Flagger signs requests with AWS Signature Version 4 using the default credential chain (environment variables, IRSA, or shared config). Grant the identity that Flagger uses the `aps:QueryMetrics` permission.
+
+AMP template example:
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: not-found-percentage
+  namespace: istio-system
+spec:
+  provider:
+    type: amp
+    address: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-xxx-yyy
+    region: us-west-2
+  query: |
+    100 - sum(
+        rate(
+            istio_requests_total{
+              reporter="destination",
+              destination_workload_namespace="{{ namespace }}",
+              destination_workload="{{ target }}",
+              response_code!="404"
+            }[{{ interval }}]
+        )
+    )
+    /
+    sum(
+        rate(
+            istio_requests_total{
+              reporter="destination",
+              destination_workload_namespace="{{ namespace }}",
+              destination_workload="{{ target }}"
+            }[{{ interval }}]
+        )
+    ) * 100
+```
+
+Reference the template in the canary analysis:
+
+```yaml
+  analysis:
+    metrics:
+      - name: "404s percentage"
+        templateRef:
+          name: not-found-percentage
+          namespace: istio-system
+        thresholdRange:
+          max: 5
+        interval: 1m
+```
+
+**Note** that Flagger needs AWS IAM permission to perform `aps:QueryMetrics` to use this provider.
+
 ## New Relic
 
 You can create custom metric checks using the New Relic provider.
