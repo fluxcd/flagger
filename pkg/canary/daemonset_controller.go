@@ -37,6 +37,26 @@ var (
 	daemonSetScaleDownNodeSelector = map[string]string{"flagger.app/scale-to-zero": "true"}
 )
 
+// daemonSetSnapshot returns the content hash of the daemonset pod template —
+// normalized so that Flagger's own scale-to-zero node selector does not
+// register as a spec change — together with its change fence.
+func daemonSetSnapshot(dae *appsv1.DaemonSet) (targetSnapshot, error) {
+	template := dae.Spec.Template.DeepCopy()
+	for key := range daemonSetScaleDownNodeSelector {
+		delete(template.Spec.NodeSelector, key)
+	}
+
+	hash, err := ComputeSpecHash(template)
+	if err != nil {
+		return targetSnapshot{}, fmt.Errorf("daemonset %s.%s: %w", dae.Name, dae.Namespace, err)
+	}
+
+	return targetSnapshot{
+		hash:  hash,
+		fence: encodeFence(dae.UID, fmt.Sprintf("%d", dae.Generation), ""),
+	}, nil
+}
+
 // DaemonSetController is managing the operations for Kubernetes DaemonSet kind
 type DaemonSetController struct {
 	kubeClient         kubernetes.Interface
@@ -65,11 +85,31 @@ func (c *DaemonSetController) ScaleToZero(cd *flaggerv1.Canary) error {
 		daeCopy.Spec.Template.Spec.NodeSelector[k] = v
 	}
 
-	_, err = c.kubeClient.AppsV1().DaemonSets(dae.Namespace).Update(context.TODO(), daeCopy, metav1.UpdateOptions{})
+	scaled, err := c.kubeClient.AppsV1().DaemonSets(dae.Namespace).Update(context.TODO(), daeCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("updating daemonset %s.%s failed: %w", daeCopy.GetName(), daeCopy.Namespace, err)
 	}
+	c.refreshTracking(cd, scaled)
 	return nil
+}
+
+// refreshTracking keeps the canary status fence current after Flagger's own
+// scaling writes, which advance the daemonset generation while leaving the
+// normalized pod template unchanged. The snapshot is taken from the object
+// returned by the write (not a re-read, which could observe a concurrent user
+// change); refreshTrackedRevision only moves the fence when the recorded
+// lastAppliedSpec still matches the template hash, so a concurrent template
+// change is never marked as seen. Failures are non-fatal: a stale fence
+// degrades to hash comparison, never to absorption.
+func (c *DaemonSetController) refreshTracking(cd *flaggerv1.Canary, dae *appsv1.DaemonSet) {
+	snap, err := daemonSetSnapshot(dae)
+	if err == nil {
+		err = refreshTrackedRevision(c.flaggerClient, cd, snap)
+	}
+	if err != nil {
+		c.logger.With("canary", fmt.Sprintf("%s.%s", cd.Name, cd.Namespace)).
+			Warnf("failed to refresh tracked revision: %v", err)
+	}
 }
 
 func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
@@ -84,6 +124,9 @@ func (c *DaemonSetController) ScaleFromZero(cd *flaggerv1.Canary) error {
 		delete(depCopy.Spec.Template.Spec.NodeSelector, k)
 	}
 
+	// no fence refresh here: this path is followed by a SyncStatus write in
+	// the scheduler, and a transiently stale fence self-heals through the
+	// fence-refresh rule on the next change detection
 	_, err = c.kubeClient.AppsV1().DaemonSets(dep.Namespace).Update(context.TODO(), depCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("scaling up daemonset %s.%s failed: %w", depCopy.GetName(), depCopy.Namespace, err)
@@ -192,17 +235,27 @@ func (c *DaemonSetController) HasTargetChanged(cd *flaggerv1.Canary) (bool, erro
 		return false, fmt.Errorf("daemonset %s.%s get query error: %w", targetName, cd.Namespace, err)
 	}
 
-	// ignore `daemonSetScaleDownNodeSelector` node selector
-	for key := range daemonSetScaleDownNodeSelector {
-		delete(canary.Spec.Template.Spec.NodeSelector, key)
+	snap, err := daemonSetSnapshot(canary)
+	if err != nil {
+		return false, err
 	}
 
-	// since nil and capacity zero map would have different hash, we have to initialize here
-	if canary.Spec.Template.Spec.NodeSelector == nil {
-		canary.Spec.Template.Spec.NodeSelector = map[string]string{}
-	}
+	return hasSpecChanged(c.logger, c.flaggerClient, cd, snap, func() (bool, error) {
+		return c.canaryImagesDiffer(cd, canary)
+	})
+}
 
-	return hasSpecChanged(cd, canary.Spec.Template)
+// canaryImagesDiffer compares the canary container images against the primary
+// ones; used as a safety heuristic when migrating the spec tracking from a
+// previous Flagger version, to catch rollouts applied while Flagger was not
+// running.
+func (c *DaemonSetController) canaryImagesDiffer(cd *flaggerv1.Canary, canary *appsv1.DaemonSet) (bool, error) {
+	primaryName := fmt.Sprintf("%s-primary", cd.Spec.TargetRef.Name)
+	primary, err := c.kubeClient.AppsV1().DaemonSets(cd.Namespace).Get(context.TODO(), primaryName, metav1.GetOptions{})
+	if err != nil {
+		return false, fmt.Errorf("daemonset %s.%s get query error: %w", primaryName, cd.Namespace, err)
+	}
+	return podImagesDiffer(canary.Spec.Template.Spec, primary.Spec.Template.Spec), nil
 }
 
 // GetMetadata returns the pod label selector and svc ports
