@@ -212,11 +212,13 @@ func setPrimaryScaledObjectQueries(cd *flaggerv1.Canary, triggers []keda.ScaleTr
 }
 
 func makeObjectMetaSo(name string, labels map[string]string, annotations map[string]string, cd *flaggerv1.Canary) metav1.ObjectMeta {
+	filteredAnnotations := filterMetadata(annotations)
+	delete(filteredAnnotations, keda.PausedReplicasAnnotation)
 	return metav1.ObjectMeta{
 		Name:        name,
 		Namespace:   cd.Namespace,
 		Labels:      filterMetadata(labels),
-		Annotations: filterMetadata(annotations),
+		Annotations: filteredAnnotations,
 		OwnerReferences: []metav1.OwnerReference{
 			*metav1.NewControllerRef(cd, schema.GroupVersionKind{
 				Group:   flaggerv1.SchemeGroupVersion.Group,
